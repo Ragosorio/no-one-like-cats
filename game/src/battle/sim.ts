@@ -5,7 +5,7 @@
 import { Rng } from '../core/rng';
 import { CELL, Cell, DIRS, ModuleInst, ShipBlueprint, ShipModel } from './ship';
 import { GRAVITY, DT } from './ballistics';
-import { BattleCatDef, CatState, ElementId, ShotDef, StatusId } from './types';
+import { BattleCatDef, CatFx, CatState, ElementId, ShotDef, StatusId } from './types';
 
 export interface PathPoint {
   x: number;
@@ -23,7 +23,7 @@ export type BattleEvent =
   | { k: 'impact'; x: number; y: number; side: number; radius: number; element: ElementId; crit: boolean; path: number; at: number; total: number }
   | { k: 'cell'; side: number; cell: Cell; dmg: number; destroyed: boolean; path: number; at: number }
   | { k: 'chunk'; side: number; cells: Cell[]; path: number; at: number }
-  | { k: 'cat'; side: number; uid: string; dmg: number; ko: boolean; shield: boolean; revived?: boolean; path: number; at: number }
+  | { k: 'cat'; side: number; uid: string; dmg: number; ko: boolean; shield: boolean; revived?: boolean; element?: ElementId; fx: CatFx; overboard?: boolean; dot?: boolean; path: number; at: number }
   | { k: 'reaction'; name: string; x: number; y: number; mult: number; path: number; at: number }
   | { k: 'module'; side: number; id: number; kind: ModuleInst['kind']; path: number; at: number }
   | { k: 'splash'; x: number; y: number; path: number; at: number }
@@ -121,6 +121,7 @@ export class Battle {
       shields: def.limitation === 'shields' ? def.shields ?? 3 : 0,
       lives: def.limitation === 'secondLife' ? 2 : 1,
       rage: 0,
+      fx: { burning: 0, shocked: 0, wet: 0, frozen: 0 },
     }));
     const hasShield = ship.modules.some((m) => m.kind === 'shield');
     const shieldMax = hasShield ? s.shieldHp ?? Math.round(120 * s.hpMul) : 0;
@@ -170,6 +171,19 @@ export class Battle {
     const p = this.cellCenter(side, tip, cannon.y);
     return { x: p.x + (s.setup.flip ? -CELL : CELL), y: p.y - 6 };
   }
+  /** muzzle of a specific cannon module */
+  cannonMuzzle(side: number, moduleId: number) {
+    const s = this.sides[side];
+    const m = s.ship.modules[moduleId];
+    const tip = s.setup.flip ? m.x : m.x + m.w - 1;
+    const p = this.cellCenter(side, tip, m.y);
+    return { x: p.x + (s.setup.flip ? -CELL * 0.6 : CELL * 0.6), y: p.y - 8 };
+  }
+  /** alive, not-overloaded cannons */
+  cannons(side: number) {
+    return this.sides[side].ship.modules.filter((m) => m.kind === 'cannon' && m.alive && m.disabled <= 0);
+  }
+
   /** fraction of the arc the shooter can preview (mast alive = long) */
   previewMul(side: number) {
     const mast = this.sides[side].ship.modules.find((m) => m.kind === 'mast');
@@ -203,6 +217,14 @@ export class Battle {
     for (const c of s.cats) {
       if (c.cooldown > 0) c.cooldown--;
       if (c.stunned > 0) c.stunned--;
+      if (c.ko) continue;
+      if (c.fx.burning > 0) {
+        const dmg = Math.max(1, Math.round(c.maxHp * 0.07));
+        c.hp -= dmg;
+        if (c.hp <= 0) this.koOrRevive(c);
+        ev.push({ k: 'cat', side, uid: c.def.uid, dmg, ko: c.ko, shield: false, element: 'fire', fx: { ...c.fx }, dot: true, path: -1, at: 0 });
+      }
+      for (const k of ['burning', 'shocked', 'wet', 'frozen'] as const) if (c.fx[k] > 0) c.fx[k]--;
     }
     // statuses
     const cells = ship.cells();
@@ -220,7 +242,7 @@ export class Battle {
           const destroyed = c.hp <= 0;
           if (destroyed) ship.destroyCell(c.x, c.y);
           ev.push({ k: 'tick', side, cell: c, dmg, status: st, destroyed });
-          this.damageCatsInCell(side, c, Math.round(dmg * 0.5), ev, -1, 0);
+          this.damageCatsInCell(side, c, Math.round(dmg * 0.5), ev, -1, 0, st === 'burning' ? 'fire' : 'nature');
         }
         if (left <= 0) delete c.status[st];
         else c.status[st] = left;
@@ -238,7 +260,7 @@ export class Battle {
     }
     const chunks = ship.collapse();
     for (const ch of chunks) ev.push({ k: 'chunk', side, cells: ch, path: -1, at: 0 });
-    this.updateExposure(side);
+    ev.push(...this.updateExposure(side));
     this.checkVictory();
     return ev;
   }
@@ -253,7 +275,7 @@ export class Battle {
   /**
    * Resolve a shot. shooter: cat uid or 'cannon'. Returns paths for the view and ordered events.
    */
-  fire(side: 0 | 1, shooter: string, angle: number, power: number, ult = false): { paths: ShotPath[]; events: BattleEvent[]; shot: ShotDef; atk: number } {
+  fire(side: 0 | 1, shooter: string, angle: number, power: number, ult = false, cannonId?: number): { paths: ShotPath[]; events: BattleEvent[]; shot: ShotDef; atk: number } {
     const s = this.sides[side];
     let shot: ShotDef = NEUTRAL_SHOT;
     let atk = s.setup.cannonAtk;
@@ -265,7 +287,7 @@ export class Battle {
         atk = cat.def.atk * (1 + cat.rage * 0.5);
       }
     }
-    const origin = this.muzzle(side, cat?.def.uid);
+    const origin = cannonId !== undefined ? this.cannonMuzzle(side, cannonId) : this.muzzle(side, cat?.def.uid);
     const windNow = this.wind + this.sides[side].windNext;
     this.sides[side].windNext = 0;
     const paths = this.buildPaths(shot, origin, angle, power, windNow, side);
@@ -287,7 +309,7 @@ export class Battle {
       } else cat.ultCharge = Math.min(1, cat.ultCharge + 0.34);
     }
     if (shot.trajectory === 'gust') this.sides[1 - side].windNext = side === 0 ? 90 : -90;
-    for (let i = 0; i < 2; i++) this.updateExposure(i);
+    for (let i = 0; i < 2; i++) events.push(...this.updateExposure(i));
     this.checkVictory();
     return { paths, events, shot, atk };
   }
@@ -503,7 +525,7 @@ export class Battle {
         }
       }
       ev.push({ k: 'cell', side: a.side, cell: a.c, dmg, destroyed, path, at });
-      if (a.d < radius) this.damageCatsInCell(a.side, a.c, Math.round(base * fall * (shot.catMul ?? 0.5) * CAT_K), ev, path, at);
+      if (a.d < radius) this.damageCatsInCell(a.side, a.c, Math.round(base * fall * (shot.catMul ?? 0.5) * CAT_K), ev, path, at, shot.element);
     }
     // conduction chain (wet + electric)
     if (shot.element === 'electric') this.conduct(targetSide, x, y, base, ev, path, at);
@@ -617,8 +639,8 @@ export class Battle {
       if (c.module !== undefined) {
         const cat = this.sides[side].cats.find((k) => k.room === c.module && !k.ko);
         if (cat) {
-          cat.stunned = Math.max(cat.stunned, 1);
-          this.damageCatsInCell(side, c, Math.round(base * 0.25), ev, path, at);
+          cat.stunned = Math.max(cat.stunned, 2);
+          this.damageCatsInCell(side, c, Math.round(base * 0.25), ev, path, at, 'electric');
         }
       }
     }
@@ -640,62 +662,91 @@ export class Battle {
         if (mid !== undefined) this.reportModule(side, mid, ev, path, at);
       } else if (FLAMMABLE.has(c.material)) c.status.burning = 2;
       ev.push({ k: 'cell', side, cell: c, dmg, destroyed, path, at });
-      this.damageCatsInCell(side, c, Math.round(dmg * 0.4), ev, path, at);
+      this.damageCatsInCell(side, c, Math.round(dmg * 0.4), ev, path, at, 'fire');
     }
   }
 
-  private damageCatsInCell(side: number, cell: Cell, dmg: number, ev: BattleEvent[], path: number, at: number) {
+  private damageCatsInCell(side: number, cell: Cell, dmg: number, ev: BattleEvent[], path: number, at: number, el: ElementId = 'neutral') {
     if (dmg <= 0 || cell.module === undefined) {
       // exposed cats can be hit through destroyed rooms: check by position
       const exposed = this.sides[side].cats.filter((c) => c.exposed && !c.ko);
       for (const c of exposed) {
         const m = this.sides[side].ship.modules[c.room];
-        if (cell.x >= m.x - 1 && cell.x <= m.x + m.w && cell.y >= m.y - 1 && cell.y <= m.y + m.h) this.hitCat(c, dmg, ev, path, at);
+        if (cell.x >= m.x - 1 && cell.x <= m.x + m.w && cell.y >= m.y - 1 && cell.y <= m.y + m.h) this.hitCat(c, dmg, ev, path, at, el);
       }
       return;
     }
     const cat = this.sides[side].cats.find((c) => c.room === cell.module && !c.ko);
-    if (cat) this.hitCat(cat, dmg, ev, path, at);
+    if (cat) this.hitCat(cat, dmg, ev, path, at, el);
   }
 
-  private hitCat(c: CatState, dmg: number, ev: BattleEvent[], path: number, at: number) {
+  private hitCat(c: CatState, dmg: number, ev: BattleEvent[], path: number, at: number, el: ElementId = 'neutral') {
     if (c.ko || dmg <= 0) return;
     if (c.shields > 0) {
       c.shields--;
-      ev.push({ k: 'cat', side: c.side, uid: c.def.uid, dmg: 0, ko: false, shield: true, path, at });
+      ev.push({ k: 'cat', side: c.side, uid: c.def.uid, dmg: 0, ko: false, shield: true, element: el, fx: { ...c.fx }, path, at });
       return;
+    }
+    // elemental status on the cat itself
+    if (el === 'fire') {
+      if (c.fx.wet > 0) c.fx.wet = 0;
+      else c.fx.burning = 2;
+    } else if (el === 'water') {
+      c.fx.burning = 0;
+      c.fx.wet = 2;
+    } else if (el === 'electric') {
+      c.fx.shocked = 1;
+      if (c.fx.wet > 0) {
+        c.stunned = Math.max(c.stunned, 2);
+        dmg *= 1.5;
+      }
+    } else if (el === 'ice') {
+      c.fx.frozen = 2;
+      c.stunned = Math.max(c.stunned, 2);
+      c.fx.burning = 0;
     }
     const real = Math.round(dmg * (c.exposed ? 1.5 : 1) * (c.def.limitation === 'glass' ? 3 : 1));
     c.hp -= real;
     c.ultCharge = Math.min(1, c.ultCharge + 0.12);
-    let revived = false;
-    if (c.hp <= 0) {
-      c.lives--;
-      if (c.lives > 0) {
-        c.hp = Math.round(c.maxHp * 0.6);
-        revived = true;
-      } else {
-        c.hp = 0;
-        c.ko = true;
-        // berserk/rage for allies
-        for (const ally of this.sides[c.side].cats) if (!ally.ko && ally.def.limitation === 'berserk') ally.rage++;
-      }
-    }
-    ev.push({ k: 'cat', side: c.side, uid: c.def.uid, dmg: real, ko: c.ko, shield: false, revived, path, at });
+    const revived = c.hp <= 0 ? this.koOrRevive(c) : false;
+    ev.push({ k: 'cat', side: c.side, uid: c.def.uid, dmg: real, ko: c.ko, shield: false, revived, element: el, fx: { ...c.fx }, path, at });
   }
 
-  private updateExposure(side: number) {
+  /** returns true if the cat used a second life */
+  private koOrRevive(c: CatState): boolean {
+    c.lives--;
+    if (c.lives > 0) {
+      c.hp = Math.round(c.maxHp * 0.6);
+      return true;
+    }
+    c.hp = 0;
+    c.ko = true;
+    c.fx = { burning: 0, shocked: 0, wet: 0, frozen: 0 };
+    for (const ally of this.sides[c.side].cats) if (!ally.ko && ally.def.limitation === 'berserk') ally.rage++;
+    return false;
+  }
+
+  private updateExposure(side: number): BattleEvent[] {
+    const ev: BattleEvent[] = [];
     const s = this.sides[side];
     for (const c of s.cats) {
       const room = s.ship.modules[c.room];
       if (!room.alive && !c.exposed) c.exposed = true;
-      // a cat whose whole room sank is KO (fell into the sea)
-      if (!c.ko && s.ship.moduleCells(room.id).length === 0 && !room.alive) {
-        // falls overboard: big damage
-        c.hp = Math.max(0, c.hp - Math.round(c.maxHp * 0.5));
-        if (c.hp <= 0) c.ko = true;
+      // the whole room sank: the cat falls into the sea
+      if (!c.ko && !c.overboard && s.ship.moduleCells(room.id).length === 0 && !room.alive) {
+        c.overboard = true;
+        const dmg = Math.round(c.maxHp * 0.5);
+        c.hp -= dmg;
+        if (c.hp <= 0) {
+          c.hp = 0;
+          c.ko = true;
+          c.fx = { burning: 0, shocked: 0, wet: 0, frozen: 0 };
+        }
+        c.fx.wet = c.ko ? 0 : 2;
+        ev.push({ k: 'cat', side, uid: c.def.uid, dmg, ko: c.ko, shield: false, element: 'water', fx: { ...c.fx }, overboard: true, path: -1, at: 0 });
       }
     }
+    return ev;
   }
 
   checkVictory() {

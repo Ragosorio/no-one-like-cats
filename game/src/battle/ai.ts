@@ -54,7 +54,6 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
     const ult = b.canUlt(c) && r.chance(profile.ultChance);
     shooters.push({ id: c.def.uid, shot: ult ? c.def.ultimate! : c.def.shot, ult });
   }
-  if (!shooters.length && b.canCannon(side)) shooters.push({ id: 'cannon', shot: { id: 'cannon', name: '', element: 'neutral', trajectory: 'ballistic', power: 1, radius: 70 }, ult: false });
   if (!shooters.length) return null;
 
   // targets: alive module centers with value
@@ -143,4 +142,41 @@ function scorePaths(b: Battle, paths: ShotPath[], targets: { x: number; y: numbe
     if (hit && hit.side === enemy) score += 0.5;
   }
   return score;
+}
+
+/**
+ * Automatic ship cannons: they aim at the most valuable enemy module with modest accuracy.
+ * `sigmaDeg` controls spread (upgrades/mast make it tighter).
+ */
+export function aimCannon(b: Battle, side: 0 | 1, cannonId: number, seed: number, sigmaDeg = 2.6): { angle: number; power: number } {
+  const r = new Rng(seed);
+  const enemy = 1 - side;
+  const es = b.sides[enemy];
+  const o = b.cannonMuzzle(side, cannonId);
+  const shot: ShotDef = { id: 'cannon', name: '', element: 'neutral', trajectory: 'ballistic', power: 1, radius: 70 };
+  const targets: { x: number; y: number; v: number }[] = [];
+  for (const m of es.ship.modules) {
+    if (!m.alive) continue;
+    const cells = es.ship.moduleCells(m.id);
+    if (!cells.length) continue;
+    const cc = cells[Math.floor(cells.length / 2)];
+    const p = b.cellCenter(enemy, cc.x, cc.y);
+    targets.push({ x: p.x, y: p.y, v: MODULE_VALUE[m.kind] ?? 1 });
+  }
+  const dir = enemy === 1 ? 1 : -1;
+  let best = { angle: dir > 0 ? -0.6 : Math.PI + 0.6, power: 800, score: -1 };
+  for (let ai = 0; ai < 16; ai++) {
+    const elev = (10 + ai * 3.5) * (Math.PI / 180);
+    const angle = dir > 0 ? -elev : Math.PI + elev;
+    for (let pi = 0; pi < 8; pi++) {
+      const power = 560 + pi * 90;
+      const paths = b.buildPaths(shot, o, angle, power, b.wind, side);
+      const sc = scorePaths(b, paths, targets, enemy, shot) + r.next() * 0.3;
+      if (sc > best.score) best = { angle, power, score: sc };
+    }
+  }
+  return {
+    angle: best.angle + gauss(r) * ((sigmaDeg * Math.PI) / 180),
+    power: best.power * (1 + gauss(r) * 0.04),
+  };
 }

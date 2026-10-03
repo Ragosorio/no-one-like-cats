@@ -35,6 +35,11 @@ export class ShipView extends Container {
   statusLayer = new Container();
   bobT = Math.random() * 10;
   baseY = 0;
+  baseX = NaN;
+  kickRot = 0;
+  kickX = 0;
+  kickVr = 0;
+  kickVx = 0;
 
   constructor(public model: ShipModel, public flip: boolean) {
     super();
@@ -260,10 +265,24 @@ export class ShipView extends Container {
     }
   }
 
+  /** impact reaction: tilt + shove with a spring (strength 0..1) */
+  hitReact(localX: number, strength: number) {
+    const dir = localX < this.model.cols * 20 ? -1 : 1;
+    this.kickVr += dir * 0.9 * strength;
+    this.kickVx += (this.flip ? 1 : -1) * 260 * strength;
+  }
+
   bob(dt: number) {
+    if (Number.isNaN(this.baseX)) this.baseX = this.x;
     this.bobT += dt;
-    this.y = this.baseY + Math.sin(this.bobT * 1.4) * 5;
-    this.rotation = Math.sin(this.bobT * 0.9) * 0.012;
+    // damped springs for impact kicks
+    this.kickVr += -this.kickRot * 90 * dt - this.kickVr * 7 * dt;
+    this.kickRot += this.kickVr * dt;
+    this.kickVx += -this.kickX * 60 * dt - this.kickVx * 6 * dt;
+    this.kickX += this.kickVx * dt;
+    this.y = this.baseY + Math.sin(this.bobT * 1.4) * 6;
+    this.x = this.baseX + this.kickX;
+    this.rotation = Math.sin(this.bobT * 0.9) * 0.015 + this.kickRot;
   }
 }
 

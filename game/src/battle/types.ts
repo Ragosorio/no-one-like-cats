@@ -102,4 +102,15 @@ export interface CatState {
   shields: number;
   lives: number;
   rage: number;
+  /** visible status effects on the cat itself (turns left) */
+  fx: CatFx;
+  /** fell into the sea (room sank) */
+  overboard?: boolean;
+}
+
+export interface CatFx {
+  burning: number;
+  shocked: number;
+  wet: number;
+  frozen: number;
 }

@@ -6,7 +6,9 @@ import { Sea } from '../battle/sea';
 import { CELL } from '../battle/ship';
 import { ShipView } from '../battle/shipView';
 import { Battle, BattleEvent, SideSetup, ShotPath, VictoryReason } from '../battle/sim';
-import { decide, DIFFICULTY } from '../battle/ai';
+import { decide, DIFFICULTY, aimCannon } from '../battle/ai';
+import { CatStatusView, playKO, playOverboard } from '../battle/catFx';
+import { SkyLife } from '../battle/sky';
 import { CatState, ShotDef } from '../battle/types';
 import { Particles } from '../fx/particles';
 import { Shaker, flash, onomatopoeia, floatText, time, speedLines, sparkles } from '../fx/juice';
@@ -60,7 +62,14 @@ const ONO: Record<string, [string, number]> = {
 
 export class BattleScene extends Scene {
   sim!: Battle;
+  camRoot = new Container();
   world = new Container();
+  /** world-space fx layer (zooms with the camera) */
+  wfx = new Container();
+  sky!: SkyLife;
+  statusViews = new Map<string, CatStatusView>();
+  cam = { x: W / 2, y: H / 2, z: 1, tx: W / 2, ty: H / 2, tz: 1 };
+  follow: Container | null = null;
   sea!: Sea;
   ships: ShipView[] = [];
   catViews = new Map<string, BattleCat>();
@@ -72,7 +81,7 @@ export class BattleScene extends Scene {
   shaker = new Shaker(this.world);
   top!: BattleTopBar;
   cards: CrewCard[] = [];
-  selected: string = 'cannon';
+  selected: string = '';
   ultArmed = false;
   phase: 'intro' | 'aim' | 'flight' | 'enemy' | 'end' = 'intro';
   dragging = false;
@@ -105,9 +114,12 @@ export class BattleScene extends Scene {
     await preloadCats(slugs);
 
     this.sea = new Sea(WATER_Y, sp.palette);
-    this.addChild(this.world, this.ui, this.overlay);
+    this.sky = new SkyLife(WATER_Y);
+    this.sky.wind = this.sim.wind;
+    this.camRoot.addChild(this.world);
+    this.addChild(this.camRoot, this.ui, this.overlay);
     const shipsLayer = new Container();
-    this.world.addChild(this.sea, shipsLayer, this.debris, this.sea.frontLayer(), this.fxp, this.aimG);
+    this.world.addChild(this.sea, this.sky, shipsLayer, this.debris, this.sea.frontLayer(), this.fxp, this.aimG, this.wfx);
     for (let side = 0; side < 2; side++) {
       const s = this.sim.sides[side];
       const v = new ShipView(s.ship, s.setup.flip);
@@ -123,9 +135,11 @@ export class BattleScene extends Scene {
         bc.position.set(p.x + CELL, p.y + m.h * CELL + 2);
         v.decor.addChild(bc);
         this.catViews.set(c.def.uid, bc);
+        this.statusViews.set(c.def.uid, new CatStatusView(bc));
       }
     }
     this.buildHud();
+    if (import.meta.env.DEV) (window as unknown as { __battle: BattleScene }).__battle = this;
     this.eventMode = 'static';
     this.hitArea = { contains: () => true };
     this.on('pointerdown', this.down, this);
@@ -142,13 +156,14 @@ export class BattleScene extends Scene {
     window.removeEventListener('keydown', this.onKey);
     window.removeEventListener('keyup', this.onKeyUp);
     this.shaker.destroy();
+    this.sky?.destroy();
   }
 
   private onKey = (e: KeyboardEvent) => {
     if (e.code === 'Space') this.fast = true;
     if (this.phase !== 'aim') return;
     const n = parseInt(e.key, 10);
-    if (n >= 1 && n <= this.cards.length) this.select(this.cards[n - 1].cat?.def.uid ?? 'cannon');
+    if (n >= 1 && n <= this.cards.length) this.select(this.cards[n - 1].cat!.def.uid);
   };
   private onKeyUp = (e: KeyboardEvent) => {
     if (e.code === 'Space') this.fast = false;
@@ -160,17 +175,20 @@ export class BattleScene extends Scene {
     this.ui.addChild(this.top);
     this.top.setWind(this.sim.wind);
     const s = this.sim.sides[0];
-    const list: (CatState | null)[] = [...s.cats, null];
-    list.forEach((c, i) => {
+    s.cats.forEach((c, i) => {
       const card = new CrewCard(
         c,
-        () => this.select(c ? c.def.uid : 'cannon'),
-        () => c && this.armUlt(c),
+        () => this.select(c.def.uid),
+        () => this.armUlt(c),
       );
       card.position.set(40 + i * 220, H - 172);
       this.ui.addChild(card);
       this.cards.push(card);
     });
+    const cannons = this.sim.cannons(0).length;
+    const auto = txt(`💣 CAÑONES AUTOMÁTICOS ×${cannons}\nDisparan solos al final de tu turno`, { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: C.paper, lineHeight: 20 });
+    auto.position.set(40 + s.cats.length * 220 + 10, H - 120);
+    this.ui.addChild(auto);
     const hint = txt('ARRASTRA PARA APUNTAR · SUELTA PARA DISPARAR · 1-5 ELIGE GATO · ESPACIO ACELERA', {
       fontFamily: F.ui,
       fontWeight: '700',
@@ -182,6 +200,8 @@ export class BattleScene extends Scene {
   }
 
   refreshCards() {
+    for (let side = 0; side < 2; side++)
+      for (const c of this.sim.sides[side].cats) if (!c.ko) this.statusViews.get(c.def.uid)?.set(c.fx);
     for (const c of this.cards) {
       c.draw();
       c.ultBtn.visible = !!c.cat && this.phase === 'aim' && this.sim.canUlt(c.cat) && c.cat.cooldown <= 0;
@@ -194,22 +214,18 @@ export class BattleScene extends Scene {
 
   select(uid: string) {
     if (this.phase !== 'aim') return;
-    if (uid !== 'cannon') {
-      const c = this.sim.sides[0].cats.find((k) => k.def.uid === uid);
-      if (!c || c.ko || c.cooldown > 0 || c.stunned > 0) {
-        sfx('error');
-        return;
-      }
-    } else if (!this.sim.canCannon(0)) {
+    const sc = this.sim.sides[0].cats.find((k) => k.def.uid === uid);
+    if (!sc || sc.ko || sc.cooldown > 0 || sc.stunned > 0) {
       sfx('error');
       return;
     }
     this.selected = uid;
     this.ultArmed = false;
-    for (const c of this.cards) c.setSelected((c.cat?.def.uid ?? 'cannon') === uid);
+    for (const c of this.cards) c.setSelected(c.cat?.def.uid === uid);
     const bc = this.catViews.get(uid);
     if (bc) {
       gsap.fromTo(bc.scale, { x: 1.15, y: 0.85 }, { x: 1, y: 1, duration: 0.4, ease: 'elastic.out(1.2,0.4)' });
+      gsap.fromTo(bc, { y: bc.y - 26 }, { y: bc.y, duration: 0.35, ease: 'bounce.out' });
       sfx('meow', 0.9 + Math.random() * 0.3);
     }
     this.refreshCards();
@@ -226,7 +242,6 @@ export class BattleScene extends Scene {
   }
 
   currentShot(): ShotDef {
-    if (this.selected === 'cannon') return { id: 'cannon', name: 'Cañonazo', element: 'neutral', trajectory: 'ballistic', power: 1, radius: 70, preview: 0.45 };
     const c = this.sim.sides[0].cats.find((k) => k.def.uid === this.selected)!;
     return this.ultArmed && c.def.ultimate ? c.def.ultimate : c.def.shot;
   }
@@ -285,15 +300,18 @@ export class BattleScene extends Scene {
     if (this.sim.winner !== null) return this.finish();
     this.phase = 'aim';
     const avail = this.sim.shooters(0);
-    if (!avail.find((c) => c.def.uid === this.selected)) this.selected = avail[0]?.def.uid ?? 'cannon';
-    if (this.selected === 'cannon' && !this.sim.canCannon(0) && !avail.length) {
-      // nothing can shoot: skip turn
-      floatText(this.overlay, W / 2, H / 2, 'NADIE PUEDE DISPARAR…', { color: C.paper, size: 50 });
+    if (!avail.find((c) => c.def.uid === this.selected)) this.selected = avail[0]?.def.uid ?? '';
+    if (!avail.length) {
+      // nobody can shoot: the cannons still fire
+      floatText(this.overlay, W / 2, H / 2, 'TUS GATOS ESTÁN FUERA… ¡CAÑONES, FUEGO!', { color: C.paper, size: 46 });
+      await wait(700);
+      await this.autoVolley(0);
       this.sim.endTurn();
-      await wait(900);
+      this.refreshCards();
+      if (this.sim.winner !== null) return this.finish();
       return this.enemyTurn();
     }
-    for (const c of this.cards) c.setSelected((c.cat?.def.uid ?? 'cannon') === this.selected);
+    for (const c of this.cards) c.setSelected(c.cat?.def.uid === this.selected);
     this.ultArmed = false;
     this.refreshCards();
     this.turnBanner('TU TURNO', C.yellow);
@@ -318,14 +336,13 @@ export class BattleScene extends Scene {
     this.turnBanner('TURNO ENEMIGO', C.pinkHot);
     await wait(this.fast ? 300 : 900);
     const d = decide(this.sim, 1, DIFFICULTY[this.spec.difficulty], this.aiMemory, Math.floor(Math.random() * 1e9));
-    if (!d) {
-      this.sim.endTurn();
-      return this.playerTurn();
+    if (d) {
+      const cat = this.sim.sides[1].cats.find((c) => c.def.uid === d.shooter);
+      if (d.ult && cat) await this.ultCutIn(cat);
+      const res = this.sim.fire(1, d.shooter, d.angle, d.power, d.ult);
+      await this.animateShot(1, d.shooter, res.paths, res.events, res.shot);
     }
-    const cat = this.sim.sides[1].cats.find((c) => c.def.uid === d.shooter);
-    if (d.ult && cat) await this.ultCutIn(cat);
-    const res = this.sim.fire(1, d.shooter, d.angle, d.power, d.ult);
-    await this.animateShot(1, d.shooter, res.paths, res.events, res.shot);
+    if (this.sim.winner === null) await this.autoVolley(1);
     this.sim.endTurn();
     this.refreshCards();
     if (this.sim.winner !== null) return this.finish();
@@ -361,7 +378,7 @@ export class BattleScene extends Scene {
 
   drawAim() {
     const shot = this.currentShot();
-    const o = this.sim.muzzle(0, this.selected === 'cannon' ? undefined : this.selected);
+    const o = this.sim.muzzle(0, this.selected);
     const paths = this.sim.buildPaths(shot, o, this.aim.angle, this.aim.power, this.sim.wind, 0);
     const g = this.aimG;
     g.clear();
@@ -391,6 +408,7 @@ export class BattleScene extends Scene {
     const res = this.sim.fire(0, this.selected, this.aim.angle, this.aim.power, ult);
     this.refreshCards();
     await this.animateShot(0, this.selected, res.paths, res.events, res.shot);
+    if (this.sim.winner === null) await this.autoVolley(0);
     this.sim.endTurn();
     this.refreshCards();
     if (this.sim.winner !== null) return this.finish();
@@ -433,6 +451,32 @@ export class BattleScene extends Scene {
     gsap.to(layer, { alpha: 0, duration: 0.2, onComplete: () => layer.destroy({ children: true }) });
   }
 
+  // ---------------------------------------------------------------- automatic cannons
+  async autoVolley(side: 0 | 1) {
+    const cannons = this.sim.cannons(side);
+    if (!cannons.length) return;
+    const v = this.ships[side];
+    const gp = this.overlay.toLocal(v.getGlobalPosition());
+    const label = poster(cannons.length > 1 ? `¡ANDANADA ×${cannons.length}!` : '¡CAÑONAZO!', 54, C.paper, { stroke: { color: C.ink, width: 8 } });
+    label.anchor.set(0.5);
+    label.rotation = side === 0 ? -0.06 : 0.06;
+    label.position.set(gp.x + v.width / 2, gp.y - 60);
+    this.overlay.addChild(label);
+    gsap.from(label.scale, { x: 0.2, y: 0.2, duration: 0.18, ease: 'back.out(3)' });
+    gsap.to(label, { alpha: 0, delay: 0.9, duration: 0.25, onComplete: () => label.destroy() });
+    for (const m of cannons) {
+      if (this.sim.winner !== null) break;
+      if (!m.alive) continue;
+      const a = aimCannon(this.sim, side, m.id, Math.floor(Math.random() * 1e9), side === 0 ? 2.2 : 2.8);
+      const res = this.sim.fire(side, 'cannon', a.angle, a.power, false, m.id);
+      const mz = this.sim.cannonMuzzle(side, m.id);
+      this.fxp.burst(mz.x, mz.y, { count: 18, tint: [C.yellow, C.orange, C.paper, 0x8a95a3], speed: [100, 420], gravity: -60, life: [0.2, 0.6], angle: side === 0 ? [-0.6, 0.6] : [Math.PI - 0.6, Math.PI + 0.6] });
+      v.hitReact?.(side === 0 ? 0 : 9999, 0.12);
+      await this.animateShot(side, 'cannon', res.paths, res.events, res.shot, true);
+      this.refreshCards();
+    }
+  }
+
   // ---------------------------------------------------------------- animation of events
   async playTicks(ev: BattleEvent[]) {
     if (!ev.length) return;
@@ -441,15 +485,15 @@ export class BattleScene extends Scene {
     this.refreshCards();
   }
 
-  animateShot(side: number, shooter: string, paths: ShotPath[], events: BattleEvent[], shot: ShotDef): Promise<void> {
+  animateShot(side: number, shooter: string, paths: ShotPath[], events: BattleEvent[], shot: ShotDef, quick = false): Promise<void> {
     return new Promise((resolve) => {
       const fx = elementFx(shot.element === 'neutral' ? 'fire' : shot.element);
       const bc = this.catViews.get(shooter);
       if (bc) {
         gsap.timeline().to(bc.scale, { x: 1.2, y: 0.8, duration: 0.08 }).to(bc.scale, { x: 0.9, y: 1.15, duration: 0.06 }).to(bc.scale, { x: 1, y: 1, duration: 0.3, ease: 'elastic.out(1,0.4)' });
       }
-      sfx(shot.element === 'electric' ? 'zap' : 'shoot');
-      this.shaker.add(0.12);
+      sfx(shot.element === 'electric' ? 'zap' : 'shoot', quick ? 1.25 : 1);
+      this.shaker.add(quick ? 0.06 : 0.12);
       const o = paths[0].points[0];
       this.fxp.burst(o.x, o.y, { count: 14, tint: [fx.main, fx.accent, C.paper], speed: [80, 380], gravity: 0, life: [0.15, 0.35] });
       const balls = paths.map(() => {
@@ -463,12 +507,16 @@ export class BattleScene extends Scene {
         this.world.addChild(g);
         return g;
       });
+      if (!quick) {
+        this.follow = balls[0];
+        this.cam.tz = 1.16;
+      }
       const idx = paths.map(() => 0);
       const done = paths.map(() => false);
       const consumed = new Set<BattleEvent>();
       let acc = 0;
       const tick = (t: Ticker) => {
-        acc += (t.deltaMS / 1000) * time.scale * (this.fast ? 2.5 : 1);
+        acc += (t.deltaMS / 1000) * time.scale * (this.fast ? 2.5 : 1) * (quick ? 1.7 : 1);
         const stepDt = 1 / 120;
         while (acc >= stepDt) {
           acc -= stepDt;
@@ -499,9 +547,17 @@ export class BattleScene extends Scene {
         }
         if (done.every(Boolean)) {
           Ticker.shared.remove(tick);
+          this.follow = null;
+          window.setTimeout(() => {
+            if (!this.follow) {
+              this.cam.tx = W / 2;
+              this.cam.ty = H / 2;
+              this.cam.tz = 1;
+            }
+          }, quick ? 100 : 450);
           for (const e of events) if (!consumed.has(e)) this.applyEvent(e);
           this.refreshCards();
-          window.setTimeout(resolve, this.fast ? 200 : 650);
+          window.setTimeout(resolve, this.fast || quick ? 200 : 650);
         }
       };
       Ticker.shared.add(tick);
@@ -523,7 +579,7 @@ export class BattleScene extends Scene {
         if (e.destroyed) v.knockOff(e.cell, this.debris, p, 0.4);
         else v.refreshCell(e.cell);
         if (e.status === 'burning') this.fxp.burst(p.x, p.y, { count: 6, tint: [C.orange, C.yellow], speed: [40, 120], gravity: -200, life: [0.3, 0.6] });
-        floatText(this.overlay, p.x, p.y - 20, `-${e.dmg}`, { color: C.orange, size: 26, rise: 40 });
+        floatText(this.wfx, p.x, p.y - 20, `-${e.dmg}`, { color: C.orange, size: 26, rise: 40 });
         break;
       }
       case 'spread':
@@ -539,9 +595,12 @@ export class BattleScene extends Scene {
         this.shaker.add(Math.min(0.75, 0.15 + e.total / 1500));
         if (big && !settings.reduceFlashes) flash(this.overlay, C.paper, 0.3, 0.12);
         this.fxp.burst(e.x, e.y, { count: big ? 48 : 28, tint: [fx.main, fx.accent, C.ink, C.paper], speed: [200, 850], life: [0.4, 1], scale: [0.4, 1.3], stepped: true });
-        onomatopoeia(this.overlay, e.x, e.y - 90, word, { color: col, size: big ? 130 : 96 });
-        if (e.total > 0) floatText(this.overlay, e.x + 70, e.y - 30, `-${e.total}`, { color: e.crit ? C.pinkHot : C.paper, size: e.crit ? 64 : 46, font: F.heavy });
-        if (e.crit) floatText(this.overlay, e.x - 60, e.y - 170, '¡CRÍTICO!', { color: C.pinkHot, size: 54, rot: -0.2 });
+        onomatopoeia(this.wfx, e.x, e.y - 90, word, { color: col, size: big ? 130 : 96 });
+        const sv = this.ships[e.side];
+        sv.hitReact?.(e.x - sv.x, Math.min(1, 0.2 + e.total / 900));
+        this.cam.z += Math.min(0.08, 0.02 + e.total / 8000);
+        if (e.total > 0) floatText(this.wfx, e.x + 70, e.y - 30, `-${e.total}`, { color: e.crit ? C.pinkHot : C.paper, size: e.crit ? 64 : 46, font: F.heavy });
+        if (e.crit) floatText(this.wfx, e.x - 60, e.y - 170, '¡CRÍTICO!', { color: C.pinkHot, size: 54, rot: -0.2 });
         break;
       }
       case 'chunk': {
@@ -551,33 +610,60 @@ export class BattleScene extends Scene {
           this.fxp.burst(sx, WATER_Y, { count: 40, tint: [C.paper, C.megaBlue, 0x7fd8ff], angle: [-Math.PI * 0.95, -Math.PI * 0.05], speed: [300, 850] });
         });
         const p = this.sim.cellCenter(e.side, e.cells[0].x, e.cells[0].y);
-        onomatopoeia(this.overlay, p.x, p.y - 160, 'CRACK!', { color: C.pinkHot, size: 100 });
+        onomatopoeia(this.wfx, p.x, p.y - 160, 'CRACK!', { color: C.pinkHot, size: 100 });
         this.shaker.add(0.4);
         sfx('bigboom');
         break;
       }
       case 'cat': {
         const bc = this.catViews.get(e.uid);
-        if (!bc) break;
-        const gp = this.overlay.toLocal(bc.getGlobalPosition());
+        if (!bc || bc.destroyed) break;
+        const st = this.statusViews.get(e.uid);
+        const gp = this.wfx.toLocal(bc.getGlobalPosition());
         if (e.shield) {
           sfx('shield');
-          floatText(this.overlay, gp.x, gp.y - 120, '¡BLOCK!', { color: C.cyan, size: 48 });
+          floatText(this.wfx, gp.x, gp.y - 120, '¡BLOCK!', { color: C.cyan, size: 48 });
           break;
         }
-        floatText(this.overlay, gp.x, gp.y - 140, `-${e.dmg}`, { color: C.red, size: 40, font: F.heavy });
-        gsap.fromTo(bc, { x: bc.x - 8 }, { x: bc.x, duration: 0.3, ease: 'elastic.out(1,0.3)' });
-        bc.impactFrame(90, false);
+        if (!e.ko) st?.set(e.fx);
+        if (e.dmg > 0) {
+          floatText(this.wfx, gp.x, gp.y - 140, e.dot ? `-${e.dmg} 🔥` : `-${e.dmg}`, { color: e.dot ? C.orange : C.red, size: e.dot ? 30 : 40, font: F.heavy });
+        }
+        if (!e.dot && !e.overboard) {
+          gsap.fromTo(bc, { x: bc.x + (e.side === 0 ? -14 : 14) }, { x: bc.x, duration: 0.35, ease: 'elastic.out(1,0.3)' });
+          if (e.element === 'electric' && !e.ko) st?.electrocute();
+          else bc.impactFrame(90, false);
+          if (e.element === 'fire' && e.fx.burning > 0 && !e.ko) floatText(this.wfx, gp.x, gp.y - 190, '¡AY AY AY!', { color: C.orange, size: 34, rot: 0.15 });
+          if (e.element === 'ice' && e.fx.frozen > 0 && !e.ko) floatText(this.wfx, gp.x, gp.y - 190, '¡CONGELADO!', { color: 0xc6f0e4, size: 34 });
+          // allies flinch
+          for (const [uid, other] of this.catViews) {
+            if (uid === e.uid || other.destroyed) continue;
+            const oc = this.sim.sides[e.side].cats.find((k) => k.def.uid === uid);
+            if (oc && !oc.ko) gsap.fromTo(other.scale, { x: 1.08, y: 0.92 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
+          }
+        }
         if (e.revived) {
-          floatText(this.overlay, gp.x, gp.y - 200, '¡SEGUNDA VIDA!', { color: C.lilac, size: 50 });
+          floatText(this.wfx, gp.x, gp.y - 200, '¡SEGUNDA VIDA!', { color: C.lilac, size: 50 });
           sfx('reveal');
         }
+        const splash = (x: number) => this.fxp.burst(x, WATER_Y, { count: 34, tint: [C.paper, C.megaBlue, 0x7fd8ff], angle: [-Math.PI * 0.95, -Math.PI * 0.05], speed: [250, 700] });
         if (e.ko) {
-          sfx('meow', 0.6);
           if (e.side === 0) this.stats.catsLost++;
-          onomatopoeia(this.overlay, gp.x, gp.y - 160, '¡MIAU!', { color: C.paper, size: 80 });
-          gsap.to(bc, { y: bc.y + 500, rotation: e.side === 0 ? -2 : 2, duration: 1.2, ease: 'power2.in' });
-          gsap.to(bc, { alpha: 0, delay: 0.9, duration: 0.3 });
+          st?.set({ burning: 0, shocked: 0, wet: 0, frozen: 0 });
+          playKO(bc, this.wfx, this.world, WATER_Y, e.side, splash);
+          this.cam.tx = gp.x;
+          this.cam.ty = gp.y - 60;
+          this.cam.tz = 1.25;
+          time.slowmo(0.5, 500);
+          window.setTimeout(() => {
+            if (!this.follow) {
+              this.cam.tx = W / 2;
+              this.cam.ty = H / 2;
+              this.cam.tz = 1;
+            }
+          }, 1300);
+        } else if (e.overboard) {
+          playOverboard(bc, this.wfx, WATER_Y, splash);
         }
         break;
       }
@@ -589,7 +675,7 @@ export class BattleScene extends Scene {
         const plate = new Graphics().rect(-t.width / 2 - 18, -48, t.width + 36, 96).fill(C.yellow).stroke({ width: 6, color: C.ink });
         plate.position.copyFrom(t.position);
         plate.rotation = t.rotation;
-        this.overlay.addChild(plate, t);
+        this.wfx.addChild(plate, t);
         sfx('levelup');
         gsap.from([t.scale, plate.scale], { x: 0.2, y: 0.2, duration: 0.2, ease: 'back.out(3)' });
         gsap.to([t, plate], { alpha: 0, delay: 1.1, duration: 0.3, onComplete: () => (t.destroy(), plate.destroy()) });
@@ -602,7 +688,7 @@ export class BattleScene extends Scene {
         const m = this.sim.sides[e.side].ship.modules[e.id];
         const p = this.sim.cellCenter(e.side, m.x, m.y);
         const label = e.kind === 'core' ? '¡NÚCLEO DESTRUIDO!' : '¡MÓDULO DESTRUIDO!';
-        floatText(this.overlay, p.x, p.y - 260, label, { color: e.kind === 'core' ? C.pinkHot : C.yellow, size: e.kind === 'core' ? 70 : 42, font: F.poster, rise: 50, dur: 1.4 });
+        floatText(this.wfx, p.x, p.y - 260, label, { color: e.kind === 'core' ? C.pinkHot : C.yellow, size: e.kind === 'core' ? 70 : 42, font: F.poster, rise: 50, dur: 1.4 });
         if (e.kind === 'core') {
           this.shaker.add(1);
           flash(this.overlay, C.white, 0.8, 0.3);
@@ -613,18 +699,18 @@ export class BattleScene extends Scene {
       case 'splash': {
         sfx('splash');
         this.fxp.burst(e.x, WATER_Y, { count: 28, tint: [C.paper, C.megaBlue], angle: [-Math.PI * 0.9, -Math.PI * 0.1], speed: [200, 600] });
-        onomatopoeia(this.overlay, e.x, WATER_Y - 70, '¡PLOP!', { color: C.cyan, size: 64 });
+        onomatopoeia(this.wfx, e.x, WATER_Y - 70, '¡PLOP!', { color: C.cyan, size: 64 });
         break;
       }
       case 'shieldHit': {
         sfx('shield');
         const ship = this.ships[e.side];
-        const gp = this.overlay.toLocal(ship.getGlobalPosition());
+        const gp = this.wfx.toLocal(ship.getGlobalPosition());
         const bub = new Graphics().ellipse(0, 0, ship.width * 0.62, ship.height * 0.7).stroke({ width: 8, color: C.cyan }).fill({ color: C.cyan, alpha: 0.15 });
         bub.position.set(gp.x + ship.width / 2, gp.y + ship.height / 2);
-        this.overlay.addChild(bub);
+        this.wfx.addChild(bub);
         gsap.fromTo(bub, { alpha: 1 }, { alpha: 0, duration: 0.5, onComplete: () => bub.destroy() });
-        if (e.broken) floatText(this.overlay, bub.x, bub.y - 200, '¡ESCUDO ROTO!', { color: C.cyan, size: 56 });
+        if (e.broken) floatText(this.wfx, bub.x, bub.y - 200, '¡ESCUDO ROTO!', { color: C.cyan, size: 56 });
         break;
       }
     }
@@ -688,6 +774,24 @@ export class BattleScene extends Scene {
 
   override update(dt: number) {
     for (const v of this.ships) v.bob(dt * time.scale);
+    // camera rig: follow projectile, ease back to the wide shot
+    if (this.follow && !this.follow.destroyed) {
+      const lead = this.follow.x < W / 2 ? 120 : -60;
+      this.cam.tx = this.follow.x + lead * 0.5;
+      this.cam.ty = Math.min(this.follow.y, WATER_Y - 200);
+    }
+    const k = 1 - Math.exp(-dt * 4);
+    this.cam.x += (this.cam.tx - this.cam.x) * k;
+    this.cam.y += (this.cam.ty - this.cam.y) * k;
+    this.cam.z += (this.cam.tz - this.cam.z) * (1 - Math.exp(-dt * 5));
+    const z = Math.max(1, this.cam.z);
+    const hw = W / (2 * z);
+    const hh = H / (2 * z);
+    const cx = Math.max(hw, Math.min(W - hw, this.cam.x));
+    const cy = Math.max(hh, Math.min(H - hh, this.cam.y));
+    this.camRoot.scale.set(z);
+    this.camRoot.position.set(W / 2 - cx * z, H / 2 - cy * z);
+    if (this.sky) this.sky.wind = this.sim?.wind ?? 0;
     // burning cells emit flames
     this.burnAcc += dt;
     if (this.burnAcc > 0.12 && this.sim) {
