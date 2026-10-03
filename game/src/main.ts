@@ -15,6 +15,7 @@ import { audio } from './core/audio';
 import { loadSettings } from './core/settings';
 import { F } from './ui/theme';
 import { BattleSandbox } from './scenes/BattleSandbox';
+import { ArtLab } from './scenes/ArtLab';
 
 async function loadFonts() {
   const fams = Object.values(F);
@@ -28,7 +29,8 @@ async function boot() {
   await game.init(document.getElementById('app')!);
   scenes.init();
   window.addEventListener('pointerdown', () => audio.unlock(), { once: false });
-  scenes.go(new BattleSandbox(), 'none');
+  const dev = new URLSearchParams(location.search).get('scene');
+  scenes.go(dev === 'art' ? new ArtLab() : new BattleSandbox(), 'none');
 }
 
 boot();
