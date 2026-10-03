@@ -1,0 +1,105 @@
+/** Combat data types (pure, serializable). Content defines these; the sim interprets them. */
+export type ElementId =
+  | 'fire'
+  | 'water'
+  | 'nature'
+  | 'earth'
+  | 'electric'
+  | 'ice'
+  | 'wind'
+  | 'magic'
+  | 'spirit'
+  | 'cosmic'
+  | 'void'
+  | 'neutral';
+
+export type StatusId = 'wet' | 'burning' | 'frozen' | 'charged' | 'rooted' | 'cursed' | 'voided' | 'steam';
+
+export type Trajectory =
+  | 'ballistic' // normal arc
+  | 'bounce' // bounces once then explodes
+  | 'torpedo' // enters water and runs straight under the waterline
+  | 'beam' // almost straight, fast (gravity ×0.2)
+  | 'spread' // N shards in a fan
+  | 'heavy' // gravity ×1.6, pierces layers
+  | 'gust' // straight, low damage, leaves a wind current
+  | 'seed' // plants roots that tick each turn
+  | 'orb' // slow, light gravity, pulls toward nearest mass
+  | 'homing' // soft homing toward the aimed cell
+  | 'phase' // void: passes through, erasing cells along the line
+  | 'meteor' // ultimate: falls from the sky on the aimed x
+  | 'cluster'; // splits into N bomblets at apex
+
+export interface StatusApply {
+  id: StatusId;
+  turns: number;
+}
+
+export interface ShotDef {
+  id: string;
+  name: string;
+  element: ElementId;
+  trajectory: Trajectory;
+  /** damage multiplier relative to cat attack */
+  power: number;
+  /** explosion radius in px */
+  radius: number;
+  projectiles?: number;
+  spreadDeg?: number;
+  gravityScale?: number;
+  windScale?: number;
+  speedMul?: number;
+  /** cells pierced before exploding (heavy/phase) */
+  pierce?: number;
+  statuses?: StatusApply[];
+  /** fraction of trajectory shown in the aim preview (0..1) */
+  preview?: number;
+  /** extra damage to cats (vs structure) */
+  catMul?: number;
+  /** structural multiplier */
+  structMul?: number;
+  limits?: { usesPerBattle?: number; chargeTurns?: number; cooldown?: number };
+  /** shouted on ultimate */
+  shout?: string;
+}
+
+export type Limitation = 'oneShot' | 'charge' | 'berserk' | 'secondLife' | 'shields' | 'glass' | 'unstable' | 'none';
+
+export interface BattleCatDef {
+  uid: string;
+  catId: string;
+  slug: string;
+  name: string;
+  elements: ElementId[];
+  tint?: number;
+  level: number;
+  stars: number;
+  hp: number;
+  atk: number;
+  shot: ShotDef;
+  ultimate?: ShotDef;
+  limitation?: Limitation;
+  /** initial shields for 'shields' limitation */
+  shields?: number;
+  /** free-text passive id interpreted by the sim */
+  passive?: string;
+}
+
+export interface CatState {
+  def: BattleCatDef;
+  side: 0 | 1;
+  hp: number;
+  maxHp: number;
+  /** catroom module id on its ship */
+  room: number;
+  ko: boolean;
+  exposed: boolean;
+  stunned: number;
+  cooldown: number;
+  ultCharge: number; // 0..1 meter
+  ultUsed: number;
+  charging: number; // turns charged for 'charge' limitation
+  shields: number;
+  lives: number;
+  rage: number;
+}

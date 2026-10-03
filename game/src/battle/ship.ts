@@ -15,7 +15,8 @@ export type ModuleKind =
   | 'powder'
   | 'arcane';
 
-export type CellStatus = 'wet' | 'burning' | 'frozen' | 'charged';
+import type { StatusId } from './types';
+export type CellStatus = StatusId;
 
 export interface Cell {
   x: number;
@@ -40,6 +41,8 @@ export interface ModuleInst {
   slot?: number;
   /** level of the module (from shipyard) */
   level: number;
+  /** turns disabled (overload) */
+  disabled: number;
 }
 
 export interface ShipBlueprint {
@@ -52,7 +55,7 @@ export interface ShipBlueprint {
 
 export const MATERIAL_HP: Record<Material, number> = { wood: 60, iron: 140, crystal: 90, bone: 110, void: 200 };
 
-export const CELL = 34; // logical px per cell
+export const CELL = 40; // logical px per cell
 
 export class ShipModel {
   cols: number;
@@ -78,7 +81,7 @@ export class ShipModel {
       this.grid.push(row);
     }
     bp.modules.forEach((m, i) => {
-      const inst: ModuleInst = { id: i, kind: m.kind, x: m.x, y: m.y, w: m.w, h: m.h, alive: true, slot: m.slot, level: m.level ?? 1 };
+      const inst: ModuleInst = { id: i, kind: m.kind, x: m.x, y: m.y, w: m.w, h: m.h, alive: true, slot: m.slot, level: m.level ?? 1, disabled: 0 };
       this.modules.push(inst);
       for (let yy = m.y; yy < m.y + m.h; yy++)
         for (let xx = m.x; xx < m.x + m.w; xx++) {
