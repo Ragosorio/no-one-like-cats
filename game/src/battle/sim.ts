@@ -378,7 +378,7 @@ export class Battle {
           vy = 0;
         }
         const hit = this.cellAt(x, y);
-        if (hit && (traj !== 'phase' || hit.side !== side)) {
+        if (hit && hit.side !== side) {
           if (pierced.has(hit.cell)) continue;
           if (pierceLeft > 0) {
             pierceLeft--;
