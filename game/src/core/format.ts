@@ -1,11 +1,17 @@
 const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
 
-/** Formats big numbers incrementally-game style: 999, 1.23K, 45.6M, 7.89B ... then aa, ab, ac. */
-export function fmt(n: number, decimals = 2): string {
+/**
+ * Formats numbers per balance.json notation: < 10,000 → "9,999"; otherwise 3 significant
+ * digits + suffix (12.3K · 4.70M · 48.0B), then aa, ab, ac… idle-style.
+ */
+export function fmt(n: number): string {
   if (!isFinite(n)) return '∞';
   const sign = n < 0 ? '-' : '';
   n = Math.abs(n);
-  if (n < 1000) return sign + (n < 10 && n % 1 !== 0 ? n.toFixed(1) : Math.floor(n).toString());
+  if (n < 10000) {
+    if (n < 10 && n % 1 !== 0) return sign + n.toFixed(1);
+    return sign + Math.floor(n).toLocaleString('en-US');
+  }
   const tier = Math.floor(Math.log10(n) / 3);
   let suffix: string;
   if (tier < SUFFIXES.length) suffix = SUFFIXES[tier];
@@ -14,8 +20,8 @@ export function fmt(n: number, decimals = 2): string {
     suffix = String.fromCharCode(97 + Math.floor(t / 26)) + String.fromCharCode(97 + (t % 26));
   }
   const scaled = n / Math.pow(1000, tier);
-  const d = scaled >= 100 ? 0 : scaled >= 10 ? Math.min(1, decimals) : decimals;
-  return sign + scaled.toFixed(d).replace(/\.0+$/, '') + suffix;
+  const d = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+  return sign + scaled.toFixed(d) + suffix;
 }
 
 /** mm:ss or h:mm:ss */
