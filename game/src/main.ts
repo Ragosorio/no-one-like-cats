@@ -20,6 +20,7 @@ import { IslandSandbox } from './scenes/IslandSandbox';
 import { BattleScene } from './scenes/BattleScene';
 import { devBattle } from './dev/devBattle';
 import { TitleScene } from './scenes/TitleScene';
+import { ShipArtLab } from './scenes/ShipArtLab';
 
 async function loadFonts() {
   const fams = Object.values(F);
@@ -35,7 +36,7 @@ async function boot() {
   window.addEventListener('pointerdown', () => audio.unlock(), { once: false });
   const dev = new URLSearchParams(location.search).get('scene');
   const devB = () => new BattleScene(devBattle((r) => { console.log('battle result', r); scenes.go(devB()); }));
-  scenes.go(dev === 'title' ? new TitleScene(() => scenes.go(devB()), false) : dev === 'art' ? new ArtLab() : dev === 'island' ? new IslandSandbox() : dev === 'sandbox' ? new BattleSandbox() : devB(), 'none');
+  scenes.go(dev === 'shiplab' ? new ShipArtLab() : dev === 'title' ? new TitleScene(() => scenes.go(devB()), false) : dev === 'art' ? new ArtLab() : dev === 'island' ? new IslandSandbox() : dev === 'sandbox' ? new BattleSandbox() : devB(), 'none');
 }
 
 boot();
