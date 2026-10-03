@@ -70,6 +70,7 @@ export class BattleScene extends Scene {
   statusViews = new Map<string, CatStatusView>();
   cam = { x: W / 2, y: H / 2, z: 1, tx: W / 2, ty: H / 2, tz: 1 };
   follow: Container | null = null;
+  sinking = new Set<Container>();
   sea!: Sea;
   ships: ShipView[] = [];
   catViews = new Map<string, BattleCat>();
@@ -338,6 +339,16 @@ export class BattleScene extends Scene {
     const d = decide(this.sim, 1, DIFFICULTY[this.spec.difficulty], this.aiMemory, Math.floor(Math.random() * 1e9));
     if (d) {
       const cat = this.sim.sides[1].cats.find((c) => c.def.uid === d.shooter);
+      const bc = this.catViews.get(d.shooter);
+      if (bc && !this.fast) {
+        const wp = this.world.toLocal(bc.getGlobalPosition());
+        this.cam.tx = wp.x;
+        this.cam.ty = wp.y - 80;
+        this.cam.tz = 1.22;
+        gsap.timeline().to(bc.scale, { x: 1.12, y: 0.9, duration: 0.25 }).to(bc.scale, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
+        sfx('meow', 0.8);
+        await wait(650);
+      }
       if (d.ult && cat) await this.ultCutIn(cat);
       const res = this.sim.fire(1, d.shooter, d.angle, d.power, d.ult);
       await this.animateShot(1, d.shooter, res.paths, res.events, res.shot);
@@ -717,12 +728,47 @@ export class BattleScene extends Scene {
   }
 
   // ---------------------------------------------------------------- end
+  /** storyboard (e): chain explosions accelerating, then the loser's ship sinks tilted */
+  async sinkSequence(loser: number) {
+    const v = this.ships[loser];
+    const cells = this.sim.sides[loser].ship.cells();
+    this.cam.tx = v.x + v.width / 2;
+    this.cam.ty = v.y + v.height / 2;
+    this.cam.tz = 1.15;
+    time.slowmo(0.6, 600);
+    let delay = 120;
+    const n = Math.min(10, cells.length);
+    for (let i = 0; i < n; i++) {
+      const c = cells[Math.floor(Math.random() * cells.length)];
+      const p = this.sim.cellCenter(loser, c.x, c.y);
+      window.setTimeout(() => {
+        sfx(i === n - 1 ? 'bigboom' : 'boom', 1 + i * 0.06);
+        this.fxp.burst(p.x, p.y, { count: 26, tint: [C.orange, C.yellow, C.red, C.ink], speed: [150, 700], life: [0.4, 0.9], scale: [0.5, 1.3], stepped: true });
+        this.shaker.add(0.25);
+        v.hitReact?.(p.x - v.x, 0.35);
+        if (i % 3 === 0) onomatopoeia(this.wfx, p.x, p.y - 60, ['¡BOOM!', '¡KABOOM!', '¡KRAK!', '¡PUM!'][i % 4], { color: C.yellow, size: 90 });
+      }, delay * i);
+      delay = Math.max(60, delay - 8);
+    }
+    await wait(delay * n + 200);
+    sfx('splash');
+    this.sinking.add(v);
+    gsap.to(v, { y: v.y + 520, rotation: loser === 1 ? 0.35 : -0.35, duration: 1.6, ease: 'power2.in' });
+    for (let i = 0; i < 4; i++)
+      window.setTimeout(() => this.fxp.burst(v.x + Math.random() * v.width, WATER_Y, { count: 30, tint: [C.paper, C.megaBlue, 0x7fd8ff], angle: [-Math.PI * 0.95, -Math.PI * 0.05], speed: [250, 750] }), 300 + i * 280);
+    onomatopoeia(this.wfx, v.x + v.width / 2, WATER_Y - 160, loser === 1 ? '¡HUNDIDO!' : '¡GLU GLU GLU!', { color: C.paper, size: 120, dur: 1.4 });
+    await wait(1500);
+    this.cam.tx = W / 2;
+    this.cam.ty = H / 2;
+    this.cam.tz = 1;
+  }
+
   async finish(): Promise<void> {
     if (this.phase === 'end') return;
     this.phase = 'end';
     this.refreshCards();
     const won = this.sim.winner === 0;
-    await wait(700);
+    await this.sinkSequence(won ? 1 : 0);
     const layer = new Container();
     this.overlay.addChild(layer);
     const dim = new Graphics().rect(0, 0, W, H).fill({ color: won ? C.paper : C.oceanNoir, alpha: 0.92 });
@@ -773,7 +819,7 @@ export class BattleScene extends Scene {
   }
 
   override update(dt: number) {
-    for (const v of this.ships) v.bob(dt * time.scale);
+    for (const v of this.ships) if (!this.sinking.has(v)) v.bob(dt * time.scale);
     // camera rig: follow projectile, ease back to the wide shot
     if (this.follow && !this.follow.destroyed) {
       const lead = this.follow.x < W / 2 ? 120 : -60;
