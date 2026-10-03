@@ -1,0 +1,38 @@
+/** Display meta for elements (icons/names). Gameplay data lives in content. */
+export const ELEMENT_ICON: Record<string, string> = {
+  fire: '🔥',
+  water: '💧',
+  nature: '🌱',
+  earth: '🪨',
+  electric: '⚡',
+  ice: '❄️',
+  wind: '🌪️',
+  magic: '✨',
+  spirit: '👻',
+  cosmic: '🌌',
+  void: '🕳️',
+  light: '☀️',
+  tech: '💾',
+  sound: '🎵',
+  time: '🕰️',
+  shadow: '🌑',
+};
+
+export const ELEMENT_NAME: Record<string, string> = {
+  fire: 'FUEGO',
+  water: 'AGUA',
+  nature: 'NATURALEZA',
+  earth: 'TIERRA',
+  electric: 'RAYO',
+  ice: 'HIELO',
+  wind: 'VIENTO',
+  magic: 'MAGIA',
+  spirit: 'ESPÍRITU',
+  cosmic: 'CÓSMICO',
+  void: 'VACÍO',
+  light: 'LUZ',
+  tech: 'TECH',
+  sound: 'SONIDO',
+  time: 'TIEMPO',
+  shadow: 'SOMBRA',
+};

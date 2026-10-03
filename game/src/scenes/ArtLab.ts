@@ -5,6 +5,9 @@ import { paperBg, poster, txt } from '../ui/widgets';
 import { C, F } from '../ui/theme';
 import { BattleCat, IslandCat, preloadCats, catTexture } from '../art/catArt';
 import { ComicFilter, InkFilter } from '../fx/filters';
+import { playCatReveal } from '../fx/sequences/catReveal';
+import { scenes } from '../core/scenes';
+import { Button } from '../ui/widgets';
 
 /** Dev scene: compare cat render styles. */
 export class ArtLab extends Scene {
@@ -47,5 +50,11 @@ export class ArtLab extends Scene {
     const legend = txt('isla · cómic  /  battle form · manga tinta', { fontFamily: F.ui, fontSize: 22 });
     legend.position.set(40, H - 50);
     this.addChild(legend);
+    const b = new Button('REVELAR', async () => {
+      await preloadCats(['regal_cosmic_cat']);
+      await playCatReveal(scenes.overlayLayer, { slug: 'regal_cosmic_cat', name: 'Nova Real', elements: ['cosmic', 'magic'], rarity: 'legendary', serial: 47, caption: 'Mochi y Levi se fueron a invocar otro… y volvieron con ESTO.', subtitle: 'ARTILLERO · ULT: SUPERNOVA DE ESTAMBRE' });
+    }, { w: 240 });
+    b.position.set(W - 300, 30);
+    this.addChild(b);
   }
 }

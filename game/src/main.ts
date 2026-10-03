@@ -16,6 +16,7 @@ import { loadSettings } from './core/settings';
 import { F } from './ui/theme';
 import { BattleSandbox } from './scenes/BattleSandbox';
 import { ArtLab } from './scenes/ArtLab';
+import { IslandSandbox } from './scenes/IslandSandbox';
 
 async function loadFonts() {
   const fams = Object.values(F);
@@ -30,7 +31,7 @@ async function boot() {
   scenes.init();
   window.addEventListener('pointerdown', () => audio.unlock(), { once: false });
   const dev = new URLSearchParams(location.search).get('scene');
-  scenes.go(dev === 'art' ? new ArtLab() : new BattleSandbox(), 'none');
+  scenes.go(dev === 'art' ? new ArtLab() : dev === 'island' ? new IslandSandbox() : new BattleSandbox(), 'none');
 }
 
 boot();
