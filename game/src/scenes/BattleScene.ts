@@ -635,10 +635,11 @@ export class BattleScene extends Scene {
     await this.playTicks(ev);
     await this.checkBossPhase();
     if (this.sim.winner !== null) return this.finish();
-    this.phase = 'aim';
     this.shotsLeft = this.sim.extraShots(0);
     const avail = this.sim.shooters(0);
     if (!avail.find((c) => c.def.uid === this.selected)) this.selected = avail[0]?.def.uid ?? '';
+    // only accept aiming input when someone can actually shoot
+    this.phase = avail.length ? 'aim' : 'flight';
     if (!avail.length) {
       // nobody can shoot: the cannons still fire
       floatText(this.overlay, W / 2, H / 2, 'TUS GATOS ESTÁN FUERA… ¡CAÑONES, FUEGO!', { color: C.paper, size: 46 });
