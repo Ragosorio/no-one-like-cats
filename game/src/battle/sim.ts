@@ -832,4 +832,10 @@ export class Battle {
   hullPct(side: number) {
     return Math.max(0, Math.min(1, this.sides[side].ship.integrity()));
   }
+  /** HUD hull bar: empty exactly when the ship sinks (integrity 28% or fully flooded) */
+  hullBar(side: number) {
+    const s = this.sides[side];
+    const hull = (s.ship.integrity() - 0.28) / (1 - 0.28);
+    return Math.max(0, Math.min(1, hull, 1 - (s.flood ?? 0)));
+  }
 }

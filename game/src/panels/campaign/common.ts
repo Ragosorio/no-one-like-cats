@@ -200,7 +200,8 @@ export function tickUp(t: Text, to: number, o: { prefix?: string; suffix?: strin
     duration: d,
     ease: 'power3.out',
     onUpdate: () => {
-      t.text = `${o.prefix ?? ''}${f(obj.v)}${o.suffix ?? ''}`;
+      if (t.destroyed) return;
+      t.text = `${o.prefix ?? ''}${f(Number.isInteger(to) ? Math.round(obj.v) : obj.v)}${o.suffix ?? ''}`;
       const now = performance.now();
       if (now - lastTick > 55) {
         lastTick = now;

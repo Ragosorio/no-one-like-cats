@@ -66,7 +66,8 @@ interface ModDecor {
   broken: boolean;
   sails: SailInst[];
   flag?: { sprite: Sprite; frames: SailFrames; phase: number; limp: boolean };
-  barrel?: Graphics;
+  barrel?: Container;
+  barrelGfx?: Graphics;
   barrelLen?: number;
   glow?: Sprite;
   glowBase?: number;
@@ -1157,11 +1158,14 @@ export class AnimeShipView extends Container {
           anchor = this.cellAt(m.x, m.y + m.h - 1);
           d.barrelLen = Math.min(64, Wd - 18);
         }
-        const b = new Graphics();
-        drawBarrel(b, st, false, d.barrelLen);
+        const b = new Container();
+        const bg = new Graphics();
+        drawBarrel(bg, st, false, d.barrelLen);
+        b.addChild(bg);
         b.rotation = mi.embedded ? 0 : -0.12;
         root.addChild(b);
         d.barrel = b;
+        d.barrelGfx = bg;
         const glow = new Sprite(glowTexture());
         glow.anchor.set(0.5);
         glow.tint = st.muzzle;
@@ -1382,8 +1386,8 @@ export class AnimeShipView extends Container {
         break;
       }
       case 'cannon': {
-        if (d.barrel) {
-          drawBarrel(d.barrel, st, true, d.barrelLen);
+        if (d.barrel && d.barrelGfx) {
+          drawBarrel(d.barrelGfx, st, true, d.barrelLen);
           gsap.fromTo(d.barrel, { rotation: -0.5 }, { rotation: 0.18, duration: 0.6, ease: 'bounce.out' });
         }
         break;

@@ -88,8 +88,8 @@ function plotCard(fid: string, cw: number, rerender: () => void, lives: (() => v
   card.addChild(bg, title, reg);
   // pen illustration
   const pen = penArt(f.level, 2, 2);
-  pen.position.set(cw / 2, 56);
-  pen.scale.set(0.82);
+  pen.position.set(cw / 2, 74);
+  pen.scale.set(0.76);
   card.addChild(pen);
   let y = 210;
   const tmr = f.busy ? G.timerFor('farm_upgrade', f.id) : f.crop && !f.ready ? G.timerFor('crop', f.id) : null;

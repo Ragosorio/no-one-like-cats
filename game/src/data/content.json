@@ -2516,7 +2516,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión de elementos incluya 🔥 y 🌿. Primera Resonancia del tutorial (Canelo + Brote): resultado garantizado en 90 s (balance.timer_rules.tutorial_first_resonance).",
+    "how": "Resonancia cuya unión de elementos incluya 🔥 y 🌿. Primera Resonancia del tutorial (Canelo + Brote): resultado garantizado en 90 s.",
     "balanceSource": "resonance"
    },
    "hint": "Huele a otoño y a parrillada.",
@@ -4859,7 +4859,7 @@
     "minParentLevel": 20
    },
    "hint": null,
-   "lore": "Relik, el coloso amonita. Recuerda capas de mar que ya nadie recuerda.",
+   "lore": "Gea, la colosa amonita. Recuerda capas de mar que ya nadie recuerda.",
    "balanceName": "Gea, Corazon de Piedra"
   },
   {
@@ -5329,7 +5329,7 @@
      "structureCap": 0.35
     },
     "limitation": null,
-    "passive": "Maneki: en el Cat's Gambit suma +3/+2/+1 puntos de probabilidad a las mesas x2/x5/x20 (balance.gambit.cat_mods.maneki).",
+    "passive": "Maneki: en el Cat's Gambit suma +3/+2/+1 puntos de probabilidad a las mesas x2/x5/x20.",
     "star3": "★3: Suerte dura 3 turnos.",
     "star5": "★5: su cascabel suena cuando un tiro tuyo va a ser crítico (vista previa)."
    },
@@ -5408,7 +5408,7 @@
      "id": "unstable",
      "text": "INESTABLE: cada disparo es de un elemento aleatorio (ruleta visible en el retrato)."
     },
-    "passive": "Caos: habilita en el Cat's Gambit la mesa x50 'todo o nada' (balance.gambit.cat_mods.caos).",
+    "passive": "Caos: habilita en el Cat's Gambit la mesa x50 'todo o nada'.",
     "star3": "★3: puedes elegir 1 de 2 elementos sorteados.",
     "star5": "★5: el bloque borrado es 3x2."
    },
@@ -5760,7 +5760,7 @@
   "times": "balance.rarities.resonance_time_s por rareza del RESULTADO (Común 3 min, Raro 10, Épico 30, Legendario 45). El reloj se muestra como UNO solo con dos fases: 'Resonando' (65%) y 'Eclosionando' (35% = hatch_share_of_time). Al empezar la 2.ª fase el portal toma el COLOR de la rareza (pista honesta: dorado = Épico o más).",
   "secretBucket": "El bucket '???' (0.5%) contiene: especies Épicas/Legendarias de Resonancia NO registradas cuyos elementos ya conoces (regla de sim.py) + los gatos secretos cuya condición se cumple en esa pareja. La UI lo muestra como una sola fila '??? x%'.",
   "secretPity": "DISEÑO (no simulado): si la pareja cumple la condición de un gato secreto, cada intento fallido suma +0.5 puntos al bucket '???' de esa misma condición (tope 5%).",
-  "firstResonance": "Tutorial (balance.timer_rules.tutorial_first_resonance): Canelo + Brote, resultado garantizado en 90 s. Diseño elige PIMENTÓN (Raro) de las dos opciones que permite balance (Pimentón o Chispa), porque la regla 'el primer resultado de cada sistema nuevo es bueno' pide ≥ Raro.",
+  "firstResonance": "Tutorial: Canelo + Brote, resultado garantizado en 90 s. Diseño elige PIMENTÓN (Raro) de las dos opciones que permite balance (Pimentón o Chispa), porque la regla 'el primer resultado de cada sistema nuevo es bueno' pide ≥ Raro.",
   "duplicates": "Duplicado → balance.rarities.duplicate_orbs (10/20/35/60/100). Si el duplicado trae mutación, el jugador elige: quedarse los orbes o transferir la mutación al gato que ya tiene.",
   "mutations": "Desde el hito de Reino 'Mutaciones' (KL20): 8% por Resonancia (x2 si ambos padres viven en el mismo hábitat). El hábitat sesga el sorteo hacia su mutación temática (fuego → Chamuscado/Scorched). Solo efectos de combate (no tocan la economía de balance).",
   "inheritance": "Desde 'Herencia' (KL30): 50% de que el hijo herede el RASGO de un padre (si no, rasgo de su especie). Desde 'Linaje' (KL35): 10% de mutación 'Eco Paterno' (hereda un modificador de disparo: Fireball + Triple Shot = Triple Fireball).",
@@ -8364,7 +8364,7 @@
   {
    "cat": "s_maneki",
    "condition": "Dos padres con oficio Banquero (balance worker 'banker'), ambos Nv15+.",
-   "bucket": "secret (balance.resonance.bucket_weights.secret)",
+   "bucket": "secret",
    "altRoute": "10.º Gato Callejero."
   },
   {
@@ -13732,7 +13732,7 @@
     "Aparecen solos (sin aceptar). Reloj ROJO pequeño; no se pausan ni se extienden.",
     "Cadencia: 1 microevento cada 6-10 min de juego ACTIVO (input en los últimos 60 s), nunca durante una batalla, un modal T3/T4 o un jefe: esperan.",
     "Nunca el mismo dos veces seguidas; pesos por 'weight' entre los elegibles por su trigger.",
-    "Premios indexados a la producción (segundos de ingreso), por eso valen igual en el minuto 10 que en la hora 5. No están en sim.py (balance.meta.not_simulated).",
+    "Premios indexados a la producción (segundos de ingreso), por eso valen igual en el minuto 10 que en la hora 5. No están en sim.py.",
     "Si lo ignoras, se va sin castigo."
    ],
    "flash": [
@@ -14503,7 +14503,7 @@
    "id": "workers",
    "name": "Gatos trabajadores",
    "source": "balance.automation",
-   "rule": "Panel de Oficios: asigna gatos con oficio (balance.cats.workers). Trabajando NO suben al barco."
+   "rule": "Panel de Oficios: asigna gatos con oficio. Trabajando NO suben al barco."
   },
   {
    "kl": 28,

@@ -41,6 +41,8 @@ function pick<T>(a: T[]): T {
   return a[Math.floor(Math.random() * a.length)];
 }
 
+let lastHeadline = '';
+
 export class ResultsScene extends Scene {
   private shaker!: Shaker;
   private world = new Container();
@@ -132,12 +134,15 @@ export class ResultsScene extends Scene {
     if (boss) headline = z === 1 ? `${mvpName} LE ROMPE LOS BIGOTES AL CAPITÁN` : `${mvpName} HUNDE A ${boss.name.toUpperCase()}`;
     else if (first) headline = `${mvpName} PARTE BARCO EN TRES`;
     else {
-      const opts = [`${mvpName} PARTE BARCO EN TRES`];
-      if (L.result.reason === 'core') opts.push(`${mvpName} LE REVIENTA EL NÚCLEO A ${enemy.toUpperCase()}`);
-      if (L.result.reason === 'sunk') opts.push(`${mvpName} MANDA A ${enemy.toUpperCase()} A DORMIR CON LOS PECES`);
-      if (L.result.reason === 'crew') opts.push(`${mvpName} NOQUEA A TODA LA TRIPULACIÓN ENEMIGA`);
-      headline = pick(opts);
+      const E = enemy.toUpperCase();
+      const opts = [`${mvpName} PARTE BARCO EN TRES`, `${mvpName} DEJA A ${E} COMO COLADERA`, `${mvpName} 1 — ${E} 0`, `«NO VIMOS VENIR AL GATO», DICE ${E}`, `${mvpName} ATACA DE NUEVO: CUNDE EL PÁNICO`];
+      if (L.result.reason === 'core') opts.push(`${mvpName} LE REVIENTA EL NÚCLEO A ${E}`, `NÚCLEO DE ${E}: «FUE UN GATO»`);
+      if (L.result.reason === 'sunk') opts.push(`${mvpName} MANDA A ${E} A DORMIR CON LOS PECES`);
+      if (L.result.reason === 'crew') opts.push(`${mvpName} NOQUEA A TODA LA TRIPULACIÓN ENEMIGA`, `${E} SE QUEDA SIN GATOS (Y SIN DIGNIDAD)`);
+      const fresh = opts.filter((o) => o !== lastHeadline);
+      headline = pick(fresh.length ? fresh : opts);
     }
+    lastHeadline = headline;
     const turns = Math.max(1, L.result.turns || 1);
     const sub = boss
       ? `«${boss.lines.defeat}» — ${boss.name}, minutos antes de hundirse. La tripulación de la ${shipName} celebra con pescado.`

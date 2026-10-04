@@ -94,7 +94,18 @@ async function boot() {
   window.addEventListener('beforeunload', () => {
     if (G.s.cats.length) G.save();
   });
+  // tab hidden / app backgrounded: flush now (beforeunload never fires on mobile kills)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && G.s.cats.length) G.save();
+  });
   const q = new URLSearchParams(location.search);
+  if (import.meta.env.DEV) {
+    const gsap = (await import('gsap')).default;
+    (window as unknown as { __gsap: typeof gsap; __scenes: typeof scenes }).__gsap = gsap;
+    (window as unknown as { __scenes: typeof scenes }).__scenes = scenes;
+    // ?realtime=1: animations follow wall-clock even when the tab is throttled (testing)
+    if (q.get('realtime') === '1') gsap.ticker.lagSmoothing(0);
+  }
   await route(q.get('scene'), q.get('new') === '1');
 }
 

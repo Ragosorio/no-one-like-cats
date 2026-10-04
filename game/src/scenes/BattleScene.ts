@@ -260,8 +260,8 @@ export class BattleScene extends Scene {
       c.draw();
       c.ultBtn.visible = !!c.cat && this.phase === 'aim' && this.sim.canUlt(c.cat) && c.cat.cooldown <= 0;
     }
-    this.top.hullA.set(this.sim.hullPct(0));
-    this.top.hullB.set(this.sim.hullPct(1));
+    this.top.hullA.set(this.sim.cfg.mode === 'duel' ? this.sim.hullPct(0) : this.sim.hullBar(0));
+    this.top.hullB.set(this.sim.cfg.mode === 'duel' ? this.sim.hullPct(1) : this.sim.hullBar(1));
     this.top.setWind(this.sim.wind);
     this.top.turn.text = `TURNO ${this.sim.turn}`;
   }

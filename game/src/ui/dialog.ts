@@ -229,7 +229,7 @@ class CaptionBox extends Container {
     this.position.set(70, 70);
   }
   layout(full: string) {
-    const m = CanvasTextMetrics.measureText(full, CAP_STYLE);
+    const m = CanvasTextMetrics.measureText(wrap(full, CAP_STYLE, 1100), CAP_STYLE);
     const w = Math.min(1100, m.width) + 60;
     const h = m.height + 40;
     this.bg.clear().rect(10, 10, w, h).fill(C.ink).rect(0, 0, w, h).fill(C.yellow).stroke({ width: 5, color: C.ink, alignment: 1 });
@@ -482,7 +482,7 @@ async function nextTip() {
   const th = titleT ? 36 : 0;
   const bw = Math.max(260, m.width + 50, titleT ? titleT.width + 50 : 0);
   const bh = m.height + 64 + th;
-  const bx = 150;
+  const bx = 196;
   const by = -bh;
   const bubble = new Container();
   const g = new Graphics();

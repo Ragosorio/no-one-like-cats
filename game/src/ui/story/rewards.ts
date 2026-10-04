@@ -177,11 +177,11 @@ export async function missionPanel(layer: Container, items: DoneItem[], short: b
     // Luzterna's mini caption
     const quip = doneQuip();
     const qb = new Container();
-    const qt = txt(quip, { fontFamily: F.ui, fontWeight: '700', fontSize: 19, fill: C.ink, wordWrap: true, wordWrapWidth: PW - 190 });
+    const qt = txt(quip, { fontFamily: F.ui, fontWeight: '700', fontSize: 19, fill: C.ink, wordWrap: true, wordWrapWidth: PW - 230 });
     qt.position.set(14, 8);
-    const qw = Math.min(PW - 160, qt.width + 28);
+    const qw = Math.min(PW - 186, qt.width + 28);
     qb.addChild(new Graphics().rect(5, 5, qw, qt.height + 16).fill(C.ink).rect(0, 0, qw, qt.height + 16).fill(C.yellow).stroke({ width: 3, color: C.ink, alignment: 1 }), qt);
-    qb.position.set(120, PH - qt.height - 34);
+    qb.position.set(158, PH - qt.height - 34);
     panel.addChild(qb);
     const lz = new LuzternaPortrait(150, 0.9);
     lz.position.set(70, PH + 18);
