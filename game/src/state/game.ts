@@ -136,6 +136,14 @@ export interface GameState {
   layouts?: Record<string, { kind: string; x: number; y: number; w: number; h: number; slot?: number }[]>;
   /** per-feature scratch state, namespaced by owner module (e.g. ext.bank, ext.koRanks) */
   ext?: Record<string, unknown>;
+  /** player profile (asked in the prologue): name + gender for gendered Spanish ('x' = prefers not to say → neutral) */
+  player?: { name: string; gender: 'm' | 'f' | 'x' };
+  /** Tienda: decorations owned (by id → count) and placed on the island */
+  decor?: { owned: Record<string, number>; placed: { uid: string; id: string; region: string; x: number; y: number }[] };
+  /** Casino + Gacha: pull tickets, per-banner pity counters, stats */
+  casino?: { tickets: number; pity: Record<string, number>; stats: Record<string, number> };
+  /** cat accessories (gacha): owned by id → count, equipped by cat uid → accessory id */
+  accessories?: { owned: Record<string, number>; equipped: Record<string, string> };
 }
 
 export interface GameEvents extends Record<string, unknown> {
