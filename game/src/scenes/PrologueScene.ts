@@ -24,7 +24,7 @@ import { AnimeShipView, ANIME_BLUEPRINTS } from '../battle/anime';
 import { cancelDialogs, newspaper, say } from '../ui/dialog';
 import { preloadStoryArt } from '../ui/story/portrait';
 import { BEAT_BY_ID } from '../data/content';
-import { clean } from '../ui/story/text';
+import { clean, loadingTip } from '../ui/story/text';
 import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
 
 const WATER_Y = 800;
@@ -117,16 +117,16 @@ export class PrologueScene extends Scene {
     music.play('tension');
     const black = new Graphics().rect(0, 0, W, H).fill(C.chaos);
     this.addChild(black);
-    const loading = poster('…', 60, C.cyan);
+    const loading = txt(loadingTip(), { fontFamily: F.ui, fontWeight: '700', fontSize: 24, fill: C.cyan, align: 'center', wordWrap: true, wordWrapWidth: 1100 });
     loading.anchor.set(0.5);
-    loading.position.set(W / 2, H / 2);
+    loading.position.set(W / 2, H - 120);
+    loading.alpha = 0.8;
     this.addChild(loading);
     await Promise.all([preloadCats(['regal_cosmic_cat']), preloadStoryArt()]);
     loading.destroy();
     if (this.destroyed) return;
     this.build();
     this.addSkip();
-    (globalThis as unknown as { __prologue: unknown }).__prologue = this;
     void this.run();
   }
 

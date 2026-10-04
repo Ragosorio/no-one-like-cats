@@ -20,7 +20,7 @@ import type { MissionReward } from '../../state/sys/missions';
 import { clean, doneQuip } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
 import { onomatopoeia, sparkles } from '../../fx/juice';
-import { destroyDeep } from './tweens';
+import { destroyDeep, settle } from './tweens';
 
 const CHAIN: Record<MissionDef['chain'], { name: string; color: number; text: number }> = {
   historia: { name: 'HISTORIA', color: C.pinkHot, text: C.ink },
@@ -193,7 +193,8 @@ export async function missionPanel(layer: Container, items: DoneItem[], short: b
   gsap.from(panel, { x: W + PW + 60, duration: 0.38, ease: 'back.out(1.3)' });
 
   const stay = short ? 2.0 : 3.4 + Math.min(1.5, items.length * 0.3);
-  await new Promise<void>((res) => {
+  // hard cap in real time so a killed tween can never leave the story queue waiting forever
+  await settle((res) => {
     let closing = false;
     const close = () => {
       if (closing) return;
@@ -216,7 +217,8 @@ export async function missionPanel(layer: Container, items: DoneItem[], short: b
       close();
     });
     gsap.delayedCall(stay, close);
-  });
+  }, (stay + 3) * 1000);
+  destroyDeep(c);
 }
 
 // ------------------------------------------------------------------ kingdom
@@ -267,7 +269,7 @@ export function kingdomBanner(layer: Container, kl: number, lines: string[]) {
 }
 
 const RULE_QUIPS: [RegExp, string][] = [
-  [/recolectar todo/i, 'Ya aprendiste. Toma: un botón.'],
+  [/recolectar todo/i, 'Se acabó picarle casita por casita. De nada.'],
   [/alimentar hasta/i, 'Mira los números rodar. Qué rico.'],
   [/repiten/i, 'Ya aprendiste a sembrar. Ahora deja de hacerlo tú.'],
   [/x10|max/i, 'Comprar de diez en diez. Como la gente con dinero.'],
@@ -369,7 +371,7 @@ export async function milestonePoster(layer: Container, kl: number, rules: strin
   p.scale.set(reduce ? 1 : 0.6);
   p.alpha = 0;
   dim.alpha = 0;
-  await new Promise<void>((res) =>
+  await settle((res) =>
     gsap
       .timeline({ onComplete: res })
       .to(dim, { alpha: 1, duration: 0.2 }, 0)
@@ -381,29 +383,17 @@ export async function milestonePoster(layer: Container, kl: number, rules: strin
         sfx('fanfare');
         onomatopoeia(root, W / 2 + 380, H / 2 - 250, '¡NUEVA REGLA!', { size: 90, color: C.yellow, dur: 1.2 });
       }),
+    1500,
   );
   gsap.to(star, { rotation: Math.PI * 2, duration: 8, repeat: -1, ease: 'none' });
-  await new Promise<void>((res) => {
-    let done = false;
-    const fin = () => {
-      if (done) return;
-      done = true;
-      res();
-    };
+  await settle((fin) => {
     dim.on('pointertap', fin);
     p.eventMode = 'static';
     p.on('pointertap', fin);
     gsap.delayedCall(5, fin);
-  });
-  await new Promise<void>((res) =>
-    gsap.to(root, {
-      alpha: 0,
-      duration: 0.25,
-      onComplete: () => {
-        gsap.killTweensOf(star);
-        destroyDeep(root);
-        res();
-      },
-    }),
-  );
+  }, 9000);
+  if (!root.destroyed) root.eventMode = 'none';
+  await settle((done) => gsap.to(root, { alpha: 0, duration: 0.25, onComplete: done }), 700);
+  gsap.killTweensOf(star);
+  destroyDeep(root);
 }

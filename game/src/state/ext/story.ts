@@ -44,7 +44,8 @@ export function nameFirstCat(raw: string) {
   if (!c) return '';
   const name = sanitizeName(raw, c.name || catName(c.species));
   c.name = name;
-  if (!c.moments.includes('named')) c.moments.push(`Se llama ${name}. Así, sin más.`);
+  c.moments = c.moments.filter((m) => !m.startsWith('Se llama '));
+  c.moments.push(`Se llama ${name}. Así, sin más.`);
   G.count('name_cat');
   checkMissions();
   G.save();

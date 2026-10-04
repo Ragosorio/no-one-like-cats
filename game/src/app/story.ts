@@ -25,7 +25,7 @@ import { offlineReport } from '../ui/story/offline';
 import { darkSky } from '../ui/story/effects';
 import { preloadStoryArt } from '../ui/story/portrait';
 import { applyAudioSettings, openSettings } from '../panels/Settings';
-import { killTweensDeep } from '../ui/story/tweens';
+import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
 import { goIsland, goTitle } from './flow';
 
 // ------------------------------------------------------------------ beat plan (M1: b01–b11)
@@ -56,8 +56,8 @@ const ON_DONE: Record<string, BeatRef[]> = {
   K07: [{ beat: 'b08_pimenton' }],
   H08: [{ beat: 'b10_bigotes', part: 'b', lines: [2, 3, 4] }],
 };
-/** the 'new' tip of these missions is already said by a beat / special UI */
-const COVERED = new Set(['H01', 'H02', 'H03', 'H05', 'H06', 'H08', 'H09']);
+/** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
+const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07']);
 
 interface QueuedBeat {
   key: string;
@@ -117,7 +117,8 @@ function canPanel() {
   return canTip() && !overlayBlocked();
 }
 function canBeat() {
-  return canPanel() && !busy && !panelShowing;
+  // completed-mission panels go first, then the beat
+  return canPanel() && !busy && !panelShowing && done.length === 0;
 }
 
 /** Luzterna calls you "grumete" until Boss 1, "Capi" afterwards; Canelo keeps the name you gave him. */
@@ -309,9 +310,9 @@ export function initStory() {
       if (l) tip(l[1]);
     }
   });
+  // Earth arrives with Boss 1 (b10 part b carries "NUEVO ELEMENTO DESCUBIERTO: TIERRA"); dedupes with H08 done
   G.on('element', (p) => {
-    // first element discovery outside a beat: a short Luzterna aside (b10 carries the Earth line)
-    if (p.id !== 'earth' && !beatSeen(`element_${p.id}`)) markBeat(`element_${p.id}`);
+    if (p.id === 'earth') for (const r of ON_DONE.H08 ?? []) queueBeat(r);
   });
   catchUp();
   pumpTimer = window.setInterval(() => {
@@ -337,6 +338,7 @@ function resetQueues() {
   panelTimes.length = 0;
   renamePrompted = false;
   busy = false;
+  panelShowing = false;
 }
 
 export async function maybeIntro(info: BootInfo) {
@@ -395,8 +397,8 @@ export async function wipeSaveAndRestart() {
   cancelDialogs();
   clearTips();
   resetQueues();
-  for (const ch of [...storyLayer().children]) ch.destroy({ children: true });
-  for (const ch of [...scenes.overlayLayer.children]) if (ch !== storyLayer()) ch.destroy({ children: true });
+  for (const ch of [...storyLayer().children]) destroyDeep(ch);
+  for (const ch of [...scenes.overlayLayer.children]) if (ch !== storyLayer()) destroyDeep(ch);
   G.reset();
   await goTitle();
 }
@@ -409,14 +411,12 @@ export async function wipeSaveAndRestart() {
   /** freeze/thaw rendering (for screenshots) */
   freeze: () => game.pixi.ticker.stop(),
   thaw: () => game.pixi.ticker.start(),
-  scene: () => scenes.current,
   settings: () => openSettings(),
   /** test helper: queue a beat by id (ignores beatsSeen) */
   beat: (id: string) => {
     const ref = [...Object.values(ON_NEW), ...Object.values(ON_DONE)].flat().find((r) => r.beat === id) ?? { beat: id };
     beats.push({ key: id + '#dbg', ref: { ...ref, lines: undefined, part: undefined, delay: 0 }, notBefore: 0 });
   },
-  app: () => game.pixi,
   /** slow everything down: __story.speed(0.2) */
   speed: (k: number) => gsap.globalTimeline.timeScale(k),
 };

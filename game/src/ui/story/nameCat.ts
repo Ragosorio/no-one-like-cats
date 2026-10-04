@@ -223,10 +223,12 @@ export async function promptCatName(layer: Container, current: string, slug = 'c
           gsap.killTweensOf(caret);
           gsap.killTweensOf(cat.scale);
           destroyDeep(root);
-          resolve(final);
         },
       });
       gsap.to(dim, { alpha: 0, delay: 0.95, duration: 0.25 });
+      // the name applies right away; the poster finishes its exit on its own
+      root.eventMode = 'none';
+      resolve(final);
     }
   });
 }

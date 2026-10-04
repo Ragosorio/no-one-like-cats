@@ -12,6 +12,10 @@ import '@fontsource/space-grotesk/700.css';
 import './island/safety';
 import './core/safety';
 import '@fontsource/playfair-display/400-italic.css';
+import 'pixi.js/mesh';
+import 'pixi.js/graphics';
+import 'pixi.js/text';
+import 'pixi.js/sprite-tiling';
 import { Ticker } from 'pixi.js';
 import { game } from './core/App';
 import { scenes } from './core/scenes';
@@ -22,6 +26,8 @@ import { G } from './state/game';
 import { bootGame, newGame } from './state';
 import { goIsland, goMap, goTitle } from './app/flow';
 import { mountMicroOverlay } from './ui/micro/MicroOverlay';
+import { initStory } from './app/story';
+import { applyAudioSettings } from './panels/Settings';
 import './state/sys/micro';
 
 async function loadFonts() {
@@ -78,6 +84,8 @@ async function boot() {
   await game.init(document.getElementById('app')!);
   scenes.init();
   mountMicroOverlay();
+  applyAudioSettings();
+  initStory();
   window.addEventListener('pointerdown', () => audio.unlock());
   // the economy clock runs whenever a save is loaded (island, map, battles…)
   Ticker.shared.add((t) => {

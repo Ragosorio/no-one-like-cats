@@ -21,7 +21,7 @@ import { halftoneTexture, paperTexture } from '../art/textures';
 import { InkFilter } from '../fx/filters';
 import { clean, isDirection, speaker, Speaker } from './story/text';
 import { LuzternaPortrait, makePortrait, Portrait, preloadStoryArt } from './story/portrait';
-import { destroyDeep } from './story/tweens';
+import { destroyDeep, settle } from './story/tweens';
 
 export type Line = [speaker: string, text: string];
 
@@ -382,29 +382,22 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
     await typeAndWait(box.body, text, box.body.style as TextStyle, BX.w - 110, cps, sp, () => (box.arrow.visible = true));
   }
 
-  // out
+  // out (input is released right away; the fade can't hang even if the layer dies meanwhile)
   cancelers.delete(cancel);
   window.removeEventListener('keydown', onKey);
+  _blocking--;
+  if (root.destroyed) return;
   root.eventMode = 'none';
-  if (root.destroyed) {
-    _blocking--;
-    return;
-  }
-  await new Promise<void>((res) => {
-    const tl = gsap.timeline({
-      onComplete: () => {
-        destroyDeep(root);
-        res();
-      },
-    });
+  await settle((done) => {
+    const tl = gsap.timeline({ onComplete: done });
     tl.to([box, cap, portraitLayer], { alpha: 0, duration: 0.2 }, 0);
     tl.to(dim, { alpha: 0, duration: 0.25 }, 0);
     if (bars.length) {
       tl.to(bars[0], { y: -80, duration: 0.25 }, 0);
       tl.to(bars[1], { y: H, duration: 0.25 }, 0);
     }
-  });
-  _blocking--;
+  }, 700);
+  destroyDeep(root);
 
   function typeAndWait(t: Text, text: string, style: TextStyle, width: number, rate: number, sp: Speaker, onTyped?: () => void) {
     return new Promise<void>((res) => {
@@ -458,11 +451,24 @@ export function clearTips() {
   tipShowing = null;
 }
 
+let tipWaiting = false;
 async function nextTip() {
+  if (!tipQueue.length || tipShowing || tipWaiting) return;
+  // never on top of a blocking dialog: wait for it to close
+  if (_blocking > 0) {
+    tipWaiting = true;
+    window.setTimeout(() => {
+      tipWaiting = false;
+      void nextTip();
+    }, 600);
+    return;
+  }
   const req = tipQueue.shift();
   if (!req) return;
   const sp = speaker(req.speaker);
+  tipWaiting = true;
   await preloadStoryArt(sp.slug ? [sp.slug] : []);
+  tipWaiting = false;
   const layer = toTop();
   const c = new Container();
   c.label = 'tip';
@@ -517,6 +523,11 @@ async function nextTip() {
     if (closing) return;
     closing = true;
     typer.kill();
+    if (c.destroyed) {
+      if (tipShowing === c) tipShowing = null;
+      void nextTip();
+      return;
+    }
     gsap.killTweensOf(c);
     gsap.to(c, {
       x: c.x - 320,
@@ -679,14 +690,21 @@ export async function newspaper(headline: string, o: NewsOpts = {}): Promise<voi
   stamp.alpha = 0;
   page.addChild(stamp);
 
-  // spin in (classic newspaper)
+  // spin in (classic newspaper) — cancellable from the start, never hangs if the layer dies
+  let cancelled = false;
+  let finishWait: (() => void) | null = null;
+  const cancelNews = () => {
+    cancelled = true;
+    finishWait?.();
+  };
+  cancelers.add(cancelNews);
   sfx('whoosh');
   const reduce = settings.reduceMotion;
   page.scale.set(0.05);
   page.rotation = reduce ? 0 : -Math.PI * 4;
-  await new Promise<void>((res) => {
+  await settle((done) => {
     gsap
-      .timeline({ onComplete: res })
+      .timeline({ onComplete: done })
       .to(page, { rotation: -0.035, duration: reduce ? 0.2 : 0.8, ease: 'power2.out' }, 0)
       .to(page.scale, { x: 1, y: 1, duration: reduce ? 0.2 : 0.8, ease: 'back.out(1.2)' }, 0)
       .call(() => {
@@ -696,49 +714,45 @@ export async function newspaper(headline: string, o: NewsOpts = {}): Promise<voi
       .to(stamp, { alpha: 1, duration: 0.01 }, '+=0.15')
       .fromTo(stamp.scale, { x: 2.4, y: 2.4 }, { x: 1, y: 1, duration: 0.18, ease: 'power4.in' }, '<')
       .call(() => sfx('hit', 0.7));
-  });
-  const hint = poster('CLIC PARA CONTINUAR', 26, C.paper);
-  hint.anchor.set(0.5);
-  hint.position.set(W / 2, H - 22);
-  root.addChild(hint);
-  gsap.to(hint, { alpha: 0.3, duration: 0.5, yoyo: true, repeat: -1 });
-  await new Promise<void>((res) => {
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      cancelers.delete(finish);
-      window.removeEventListener('keydown', onKey);
-      res();
-    };
-    cancelers.add(finish);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') finish();
-    };
-    window.addEventListener('keydown', onKey);
-    dim.on('pointertap', finish);
-    page.eventMode = 'static';
-    page.on('pointertap', finish);
-    if (o.auto) gsap.delayedCall(o.auto, finish);
-  });
-  sfx('paper');
-  if (root.destroyed) {
-    _blocking--;
-    return;
+  }, 2500);
+  let hint: Text | null = null;
+  if (!cancelled && !root.destroyed) {
+    hint = poster('CLIC PARA CONTINUAR', 26, C.paper);
+    hint.anchor.set(0.5);
+    hint.position.set(W / 2, H - 22);
+    root.addChild(hint);
+    gsap.to(hint, { alpha: 0.3, duration: 0.5, yoyo: true, repeat: -1 });
+    await new Promise<void>((res) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        window.removeEventListener('keydown', onKey);
+        res();
+      };
+      finishWait = finish;
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') finish();
+      };
+      window.addEventListener('keydown', onKey);
+      dim.on('pointertap', finish);
+      page.eventMode = 'static';
+      page.on('pointertap', finish);
+      if (o.auto) gsap.delayedCall(o.auto, finish);
+    });
   }
-  await new Promise<void>((res) =>
-    gsap
-      .timeline({
-        onComplete: () => {
-          gsap.killTweensOf(hint);
-          destroyDeep(root);
-          res();
-        },
-      })
-      .to(page, { y: page.y + 80, rotation: 0.08, alpha: 0, duration: 0.25, ease: 'power2.in' }, 0)
-      .to([dim, hint], { alpha: 0, duration: 0.25 }, 0),
-  );
+  cancelers.delete(cancelNews);
   _blocking--;
+  if (root.destroyed) return;
+  sfx('paper');
+  root.eventMode = 'none';
+  await settle((done) => {
+    gsap
+      .timeline({ onComplete: done })
+      .to(page, { y: page.y + 80, rotation: 0.08, alpha: 0, duration: 0.25, ease: 'power2.in' }, 0)
+      .to(hint ? [dim, hint] : [dim], { alpha: 0, duration: 0.25 }, 0);
+  }, 700);
+  destroyDeep(root);
 }
 
 export { wait as storyWait };

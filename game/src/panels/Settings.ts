@@ -11,6 +11,11 @@ import { settings, saveSettings } from '../core/settings';
 import { audio, sfx } from '../core/audio';
 import { clean } from '../ui/story/text';
 
+// The HUD imports this module on every island/map screen, so this also guarantees the story layer
+// (beats, Luzterna tips, mission panels) is listening on dev routes like ?scene=island&new=1.
+// initStory() is idempotent; the title flow calls it via maybeIntro() too.
+void import('../app/story').then((m) => m.initStory()).catch(() => undefined);
+
 /** push settings into the audio engine (safe before the AudioContext exists) */
 export function applyAudioSettings() {
   audio.sfxVolume = settings.sfxVolume;

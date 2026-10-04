@@ -22,7 +22,9 @@ export class GameApp {
     parent.appendChild(this.pixi.canvas);
     this.pixi.stage.addChild(this.root);
     this.fit();
-    window.addEventListener('resize', () => this.fit());
+    // fit after Pixi has resized its screen (window 'resize' fires before resizeTo updates)
+    this.pixi.renderer.on('resize', () => this.fit());
+    window.addEventListener('resize', () => requestAnimationFrame(() => this.fit()));
   }
 
   fit() {

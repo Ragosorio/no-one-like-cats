@@ -18,3 +18,21 @@ export function destroyDeep(o: Container | null | undefined) {
   killTweensDeep(o);
   o.destroy({ children: true });
 }
+
+/** await a gsap animation, but never longer than maxMs of real time (its targets may be destroyed/killed) */
+export function settle(start: (done: () => void) => void, maxMs: number): Promise<void> {
+  return new Promise<void>((res) => {
+    let fin = false;
+    const done = () => {
+      if (fin) return;
+      fin = true;
+      res();
+    };
+    window.setTimeout(done, maxMs);
+    try {
+      start(done);
+    } catch {
+      done();
+    }
+  });
+}

@@ -16,7 +16,7 @@ import { sparkles } from '../../fx/juice';
 import type { OfflineSummary } from '../../state/ext/story';
 import { clean, loadingTip, sysMsg, tone } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
-import { destroyDeep } from './tweens';
+import { destroyDeep, settle } from './tweens';
 
 export async function offlineReport(layer: Container, s: OfflineSummary, opts: { canCollectAll: boolean; onCollectAll?: () => number }): Promise<void> {
   await Promise.all([preloadCats(['canelo_cozy_cat']), preloadStoryArt()]);
@@ -209,14 +209,11 @@ export async function offlineReport(layer: Container, s: OfflineSummary, opts: {
         const n = opts.onCollectAll();
         if (n > 0) sfx('coin', 1.2);
       }
+      root.eventMode = 'none';
       gsap.to(page, { y: page.y + 60, alpha: 0, duration: 0.25, ease: 'power2.in' });
-      gsap.to(dim, {
-        alpha: 0,
-        duration: 0.3,
-        onComplete: () => {
-          destroyDeep(root);
-          resolve();
-        },
+      void settle((done) => gsap.to(dim, { alpha: 0, duration: 0.3, onComplete: done }), 700).then(() => {
+        destroyDeep(root);
+        resolve();
       });
     }
   });
