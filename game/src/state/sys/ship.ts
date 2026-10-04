@@ -4,6 +4,7 @@ import { SHIP_BY_ID } from '../../data/content';
 import { BAL, FamilyId, modulePower, moduleCost, mkCap, mkMaterials } from '../econ';
 import { cat as getCat, catPow } from './cats';
 import { ShipBlueprint, MATERIAL_HP, Material } from '../../battle/ship';
+import { WEAPON_TYPES, weaponShot } from '../../battle/weapons';
 
 export const FAMILIES: FamilyId[] = ['hull', 'weapon', 'shield', 'engine', 'core'];
 export const FAMILY_NAME: Record<FamilyId, string> = { hull: 'Casco', weapon: 'Armas', shield: 'Escudos', engine: 'Motor', core: 'Núcleo' };
@@ -159,4 +160,33 @@ export function playerBlueprint(shipId = G.s.ship.active): { bp: ShipBlueprint; 
 
 export function roman(n: number) {
   return ['0', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII'][n] ?? String(n);
+}
+
+// ---------------------------------------------------------------- weapon types per cannon slot
+export function weaponUnlocked(id: string) {
+  const w = WEAPON_TYPES.find((x) => x.id === id);
+  if (!w) return false;
+  if (w.unlock === 'start') return true;
+  if (w.unlock.startsWith('element:')) return G.s.elements.includes(w.unlock.split(':')[1]);
+  return G.has(w.unlock);
+}
+export function cannonCount(shipId = G.s.ship.active) {
+  return SHIP_BY_ID.get(shipId)?.modules.filter((m) => m.kind === 'cannon').length ?? 0;
+}
+export function weaponsOf(shipId = G.s.ship.active): string[] {
+  const n = cannonCount(shipId);
+  const cur = G.s.ship.weapons?.[shipId] ?? [];
+  return Array.from({ length: n }, (_, i) => cur[i] ?? 'canon');
+}
+export function setWeapon(shipId: string, slot: number, id: string) {
+  if (!weaponUnlocked(id)) return false;
+  G.s.ship.weapons ??= {};
+  const list = weaponsOf(shipId);
+  list[slot] = id;
+  G.s.ship.weapons[shipId] = list;
+  if (new Set(list).size >= 2) G.count('weapon_types_2');
+  return true;
+}
+export function cannonShotsFor(shipId = G.s.ship.active) {
+  return weaponsOf(shipId).map(weaponShot);
 }

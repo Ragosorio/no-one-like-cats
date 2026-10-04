@@ -41,6 +41,8 @@ export interface SideSetup {
   /** neutral cannon attack value */
   cannonAtk: number;
   shieldHp?: number;
+  /** weapon type shot per cannon module (in module order); default = neutral cannon */
+  cannonShots?: ShotDef[];
 }
 
 export interface BattleConfig {
@@ -177,6 +179,15 @@ export class Battle {
     const p = this.cellCenter(side, tip, cannon.y);
     return { x: p.x + (s.setup.flip ? -CELL : CELL), y: p.y - 6 };
   }
+  /** shot of a specific cannon module (weapon type) */
+  cannonShot(side: number, moduleId: number): ShotDef {
+    const s = this.sides[side];
+    const idx = s.ship.modules.filter((m) => m.kind === 'cannon').findIndex((m) => m.id === moduleId);
+    return s.setup.cannonShots?.[idx] ?? NEUTRAL_SHOT;
+  }
+  /** once-per-battle weapons already fired */
+  usedOnce = new Set<string>();
+
   /** muzzle of a specific cannon module */
   cannonMuzzle(side: number, moduleId: number) {
     const s = this.sides[side];
@@ -187,7 +198,14 @@ export class Battle {
   }
   /** alive, not-overloaded cannons */
   cannons(side: number) {
-    return this.sides[side].ship.modules.filter((m) => m.kind === 'cannon' && m.alive && m.disabled <= 0);
+    return this.sides[side].ship.modules.filter((m) => {
+      if (m.kind !== 'cannon' || !m.alive || m.disabled > 0) return false;
+      // rooted/frozen cannons don't fire; starbreaker fires once
+      const cells = this.sides[side].ship.moduleCells(m.id);
+      if (cells.some((c) => c.status.rooted || c.status.frozen)) return false;
+      if (this.cannonShot(side, m.id).id === 'starbreaker' && this.usedOnce.has(`${side}:${m.id}`)) return false;
+      return true;
+    });
   }
 
   /** fraction of the arc the shooter can preview (mast alive = long) */
@@ -290,6 +308,12 @@ export class Battle {
     let shot: ShotDef = NEUTRAL_SHOT;
     let atk = s.setup.cannonAtk;
     let cat: CatState | undefined;
+    if (shooter === 'cannon' && cannonId !== undefined) {
+      shot = this.cannonShot(side, cannonId);
+      const powder = s.ship.modules.some((m) => m.kind === 'powder' && m.alive);
+      atk = s.setup.cannonAtk * (powder ? 1.25 : 1);
+      if (shot.id === 'starbreaker') this.usedOnce.add(`${side}:${cannonId}`);
+    }
     if (shooter !== 'cannon') {
       cat = s.cats.find((c) => c.def.uid === shooter);
       if (cat) {

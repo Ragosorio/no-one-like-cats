@@ -153,7 +153,7 @@ export function aimCannon(b: Battle, side: 0 | 1, cannonId: number, seed: number
   const enemy = 1 - side;
   const es = b.sides[enemy];
   const o = b.cannonMuzzle(side, cannonId);
-  const shot: ShotDef = { id: 'cannon', name: '', element: 'neutral', trajectory: 'ballistic', power: 1, radius: 70 };
+  const shot: ShotDef = b.cannonShot(side, cannonId);
   const targets: { x: number; y: number; v: number }[] = [];
   for (const m of es.ship.modules) {
     if (!m.alive) continue;

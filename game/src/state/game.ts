@@ -116,7 +116,7 @@ export interface GameState {
   timers: Timer[];
   pinnedTimer: string | null;
   resonance: { jobs: ResonanceJob[]; pity: number; total: number; tutorialDone: boolean; slots: number };
-  ship: { owned: string[]; active: string; mk: Record<FamilyId, number>; crew: Record<string, string[]> };
+  ship: { owned: string[]; active: string; mk: Record<FamilyId, number>; crew: Record<string, string[]>; weapons?: Record<string, string[]> };
   campaign: { cleared: string[]; bossesDefeated: number; analysis: Record<string, number>; stageWins: Record<string, number> };
   missions: { active: string[]; done: string[]; progress: Record<string, number>; pinned: string[]; seenLines: string[] };
   counters: Record<string, number>;

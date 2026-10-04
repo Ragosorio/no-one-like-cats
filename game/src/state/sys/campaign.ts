@@ -3,7 +3,7 @@ import { G } from '../game';
 import { CATS, CONTENT, ZONES, StageDef, catDef, stageDef, zoneBoss, ROLE_BY_ID } from '../../data/content';
 import { BAL, absStage, battleCrystals, battleGold, battleScrap, blueprintAmount, catPower, enemyPower } from '../econ';
 import { adopt, cat as getCat, catHpBase, catPow } from './cats';
-import { crew, playerBlueprint, shipPower, mk, autoCrew } from './ship';
+import { crew, playerBlueprint, shipPower, mk, autoCrew, cannonShotsFor } from './ship';
 import { generateShip, specFromArchetype, STORY_SHIPS } from '../../battle/shipgen';
 import { battleCatFrom } from '../../battle/catShots';
 import type { BattleSpec, BattleResult } from '../../scenes/BattleScene';
@@ -124,7 +124,7 @@ export function buildBattle(zone: number, stage: number, onEnd: (r: BattleResult
     difficulty: DIFF_MAP[isBoss ? boss?.ai.difficulty ?? 'corsario' : sd?.aiDifficulty ?? pZone.aiDifficulty] ?? 'easy',
     palette: FACTION_PALETTE[zone],
     seed: Date.now() % 1e9,
-    player: { blueprint: pbp, hpMul, cats: playerCats, cannonAtk: Math.round(40 * pf * 1.6 * (1 + 0.1 * (mk('weapon') - 1))) },
+    player: { blueprint: pbp, hpMul, cats: playerCats, cannonAtk: Math.round(40 * pf * 1.6 * (1 + 0.1 * (mk('weapon') - 1))), cannonShots: cannonShotsFor() },
     enemy: { blueprint: bp, hpMul: isBoss ? 1.5 : sd?.type === 'elite' ? 1.2 : 1, cats: enemyCats, cannonAtk: Math.round(40 * ef * 1.6) },
     displayMul: Math.max(1, EP / 2) / 10,
     meta: { zone, stage, key, boss: isBoss, ep: EP, sp: SP, weaponMk: mk('weapon') },
