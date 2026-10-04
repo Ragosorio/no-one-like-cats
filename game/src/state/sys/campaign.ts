@@ -1,6 +1,6 @@
 /** Campaign: zones/stages, battle setup (SP/EP scaling), rewards for victory/defeat, boss unlocks. */
 import { G } from '../game';
-import { CONTENT, ZONES, StageDef, catDef, stageDef, zoneBoss, ROLE_BY_ID } from '../../data/content';
+import { CATS, CONTENT, ZONES, StageDef, catDef, stageDef, zoneBoss, ROLE_BY_ID } from '../../data/content';
 import { BAL, absStage, battleCrystals, battleGold, battleScrap, blueprintAmount, catPower, enemyPower } from '../econ';
 import { adopt, cat as getCat, catHpBase, catPow } from './cats';
 import { crew, playerBlueprint, shipPower, mk, autoCrew } from './ship';
@@ -94,12 +94,23 @@ export function buildBattle(zone: number, stage: number, onEnd: (r: BattleResult
     }
     bp = generateShip(spec);
   }
-  const enemyCatIds = sd?.enemyCats?.length ? sd.enemyCats : ['c_canelo'];
+  const boss0 = isBoss ? zoneBoss(zone) : undefined;
+  let enemyCatIds = sd?.enemyCats?.length ? [...sd.enemyCats] : [];
+  if (isBoss && boss0) {
+    // captain (by art) + crew from the zone's elements
+    const captain = CATS.find((c) => c.art.slug === boss0.captainArt.slug && !c.art.tint)?.id ?? 'c_canelo';
+    const els = boss0.elements.length ? boss0.elements : ZONES[zone - 1].elements;
+    const crewIds = CATS.filter((c) => c.rarity === 'common' && els.includes(c.elements[0])).map((c) => c.id);
+    enemyCatIds = [captain, ...crewIds.slice(0, 2)];
+  }
+  if (!enemyCatIds.length) enemyCatIds = ['c_canelo'];
   const enemyLevel = Math.max(1, Math.round(Math.log(EP / 5) / Math.log(1.07)) - 20);
+  const hpBoost = isBoss ? 1.6 : sd?.type === 'elite' ? 1.3 : 1;
   const enemyCats = enemyCatIds.map((sp, i) => {
     const def = catDef(sp);
     const role = ROLE_BY_ID.get(def.role);
-    return battleCatFrom({ uid: `e${i}`, species: sp, name: def.name, level: Math.max(1, Math.min(50, enemyLevel)), stars: 1, dmgMul: ef, hpMul: 1 }, role?.hp ?? 100);
+    const capMul = isBoss && i === 0 ? 2.5 / 1.6 : 1;
+    return battleCatFrom({ uid: `e${i}`, species: sp, name: isBoss && i === 0 && boss0 ? boss0.name : def.name, level: Math.max(1, Math.min(50, enemyLevel)), stars: 1, dmgMul: ef, hpMul: hpBoost * capMul }, role?.hp ?? 100);
   });
   const { bp: pbp, hpMul } = playerBlueprint();
   const boss = isBoss ? zoneBoss(zone) : undefined;
@@ -113,7 +124,7 @@ export function buildBattle(zone: number, stage: number, onEnd: (r: BattleResult
     palette: FACTION_PALETTE[zone],
     seed: Date.now() % 1e9,
     player: { blueprint: pbp, hpMul, cats: playerCats, cannonAtk: Math.round(40 * pf * 1.6 * (1 + 0.1 * (mk('weapon') - 1))) },
-    enemy: { blueprint: bp, hpMul: 1, cats: enemyCats, cannonAtk: Math.round(40 * ef * 1.6) },
+    enemy: { blueprint: bp, hpMul: isBoss ? 1.5 : sd?.type === 'elite' ? 1.2 : 1, cats: enemyCats, cannonAtk: Math.round(40 * ef * 1.6) },
     displayMul: Math.max(1, EP / 2) / 10,
     meta: { zone, stage, key, boss: isBoss, ep: EP, sp: SP, weaponMk: mk('weapon') },
     playerStyle: mk('hull') >= 7 ? 'cosmic' : 'pirate',

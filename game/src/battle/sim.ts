@@ -93,6 +93,8 @@ export class Battle {
   winner: 0 | 1 | null = null;
   reason: VictoryReason | null = null;
   log: string[] = [];
+  /** scales powder barrel blasts (attacker f(S) applies to the owner's barrels) */
+  powderMul = 1;
 
   constructor(public cfg: BattleConfig) {
     this.rng = new Rng(cfg.seed);
@@ -655,7 +657,8 @@ export class Battle {
     for (const c of ship.cells()) {
       const d = Math.hypot(c.x - m.x, c.y - m.y);
       if (d > 3) continue;
-      const dmg = Math.round(c.maxHp * (1.1 - d * 0.25));
+      // GDD: radius 3, 80 internal damage with linear falloff (+ burning)
+      const dmg = Math.round(80 * this.powderMul * (1 - d / 4));
       c.hp -= dmg;
       const destroyed = c.hp <= 0;
       if (destroyed) {

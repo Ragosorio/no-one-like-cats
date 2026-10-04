@@ -195,7 +195,7 @@ export const STORY_SHIPS: Record<string, ShipBlueprint> = {
       { kind: 'catroom', x: 2, y: 6, w: 2, h: 2, slot: 2 },
       { kind: 'cannon', x: 14, y: 4, w: 2, h: 1 },
       { kind: 'cannon', x: 13, y: 6, w: 2, h: 1 },
-      { kind: 'core', x: 7, y: 6, w: 2, h: 2 },
+      { kind: 'core', x: 6, y: 7, w: 2, h: 2 },
       // the 6 powder barrels on deck (chain explosions)
       { kind: 'powder', x: 3, y: 4, w: 1, h: 1 },
       { kind: 'powder', x: 4, y: 4, w: 1, h: 1 },
