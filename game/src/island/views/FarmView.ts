@@ -1,4 +1,6 @@
 /** A 2×2 fishing pen of the Muelle at sea level: fish shadows while growing, jumping fish when ready. */
+import { dimOf } from '../dimensions/defs';
+import { EXPANSIONS } from '../../data/content';
 import { Container, Graphics } from 'pixi.js';
 import { G, FarmPlot } from '../../state/game';
 import { isoToScreen } from '../iso';
@@ -120,7 +122,10 @@ export class FarmView {
     if (sig !== this.sig) {
       this.sig = sig;
       this.art.removeChildren().forEach((c) => c.destroy({ children: true }));
-      this.art.addChild(penArt(f.level, this.spot.w, this.spot.h, auto));
+      // the pen holds the dimension's own lagoon (lava in Inferno, neon in Noir…)
+      const biome = f.region === 'home' ? 'home' : EXPANSIONS.find((e) => e.id === f.region)?.biome;
+      const dim = dimOf(biome);
+      this.art.addChild(penArt(f.level, this.spot.w, this.spot.h, auto, dim.id === 'home' || dim.id === 'forest' ? undefined : dim.lagoon.a));
     }
     const want = f.crop ? (f.ready ? 6 : 4) : 1;
     while (this.fish.length < want) this.addFish();

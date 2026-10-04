@@ -940,7 +940,7 @@ export function lighthouseArt(): { c: Container; lamp: { x: number; y: number } 
 }
 
 /** Fishing pen at sea level (origin = anchor tile center at LAND level; drawn DROP lower) */
-export function penArt(level: number, fw = 2, fh = 2, auto = false): Container {
+export function penArt(level: number, fw = 2, fh = 2, auto = false, waterColor?: number): Container {
   const c = new Container();
   const g = new Graphics();
   c.y = DROP;
@@ -948,7 +948,7 @@ export function penArt(level: number, fw = 2, fh = 2, auto = false): Container {
   const b = P(fw - 0.58, -0.42);
   const d = P(-0.42, fh - 0.58);
   const e = P(fw - 0.58, fh - 0.58);
-  const water = level >= 10 ? 0x1c3a51 : level >= 5 ? 0x2c5f8f : 0x3a7fb1;
+  const water = waterColor ?? (level >= 10 ? 0x1c3a51 : level >= 5 ? 0x2c5f8f : 0x3a7fb1);
   g.poly([a.x, a.y, b.x, b.y, e.x, e.y, d.x, d.y]).fill(water);
   // net pattern
   for (let k = 1; k < 6; k++) {
