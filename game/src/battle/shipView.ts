@@ -10,6 +10,8 @@ const MAT_COLORS = {
   crystal: { fill: 0x8f6b93, dark: 0x5c3d5b, light: 0xc9b3d6 },
   bone: { fill: 0xe6dcc6, dark: 0xa89a7c, light: 0xfff8e6 },
   void: { fill: 0x231626, dark: 0x0d110f, light: 0x8a5cff },
+  stone: { fill: 0xb9b2a0, dark: 0x6f6a5e, light: 0xd9d4c4 },
+  canvas: { fill: 0xede4d6, dark: 0xb5a88f, light: 0xffffff },
 } as const;
 
 const MODULE_STYLE: Record<ModuleInst['kind'], { color: number; label: string }> = {

@@ -3,7 +3,7 @@
  * Pure logic (no rendering). Structural integrity: every block must connect (4-neighbour)
  * to the keel (bottom row). Disconnected chunks detach and sink.
  */
-export type Material = 'wood' | 'iron' | 'crystal' | 'bone' | 'void';
+export type Material = 'wood' | 'iron' | 'crystal' | 'bone' | 'void' | 'stone' | 'canvas';
 
 export type ModuleKind =
   | 'core'
@@ -53,7 +53,7 @@ export interface ShipBlueprint {
   modules: { kind: ModuleKind; x: number; y: number; w: number; h: number; slot?: number; level?: number }[];
 }
 
-export const MATERIAL_HP: Record<Material, number> = { wood: 60, iron: 140, crystal: 90, bone: 110, void: 200 };
+export const MATERIAL_HP: Record<Material, number> = { wood: 60, iron: 140, crystal: 90, bone: 110, void: 200, stone: 120, canvas: 30 };
 
 export const CELL = 40; // logical px per cell
 
@@ -75,7 +75,7 @@ export class ShipModel {
       for (let x = 0; x < bp.cols; x++) {
         const ch = line[x] ?? '.';
         const mat: Material | null =
-          ch === 'W' ? 'wood' : ch === 'I' ? 'iron' : ch === 'C' ? 'crystal' : ch === 'B' ? 'bone' : ch === 'V' ? 'void' : null;
+          ch === 'W' ? 'wood' : ch === 'I' ? 'iron' : ch === 'C' ? 'crystal' : ch === 'B' ? 'bone' : ch === 'V' ? 'void' : ch === 'S' ? 'stone' : ch === 'L' ? 'canvas' : null;
         row.push(mat ? this.mkCell(x, y, mat) : null);
       }
       this.grid.push(row);

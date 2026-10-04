@@ -545,6 +545,8 @@ export class Battle {
     if (!m.alive && !m._reported) {
       m._reported = true;
       ev.push({ k: 'module', side, id, kind: m.kind, path, at });
+      // powder barrels chain-explode
+      if (m.kind === 'powder') this.powderBlast(side, m, ev, path, at);
     }
   }
 

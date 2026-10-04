@@ -19,6 +19,7 @@ import { BattleCat, elementFx, preloadCats } from '../art/catArt';
 import { dotTexture, glowTexture } from '../art/textures';
 import { CrewCard, BattleTopBar } from '../battle/hud';
 import { settings } from '../core/settings';
+import { fmt } from '../core/format';
 
 export const WATER_Y = 820;
 
@@ -42,6 +43,9 @@ export interface BattleSpec {
   difficulty: keyof typeof DIFFICULTY;
   palette?: { skyTop: number; skyBottom: number; sea: number; seaDark: number };
   seed?: number;
+  /** shown numbers = internal × displayMul (numbers grow with progress; TTK stays) */
+  displayMul?: number;
+  meta?: { zone: number; stage: number; key: string; boss: boolean; ep: number; sp: number };
   onEnd: (r: BattleResult) => void;
 }
 
@@ -95,6 +99,11 @@ export class BattleScene extends Scene {
 
   constructor(public spec: BattleSpec) {
     super();
+  }
+
+  /** format a damage number for display (scaled by progress) */
+  show(n: number) {
+    return fmt(n * (this.spec.displayMul ?? 1));
   }
 
   override async enter() {
@@ -590,7 +599,7 @@ export class BattleScene extends Scene {
         if (e.destroyed) v.knockOff(e.cell, this.debris, p, 0.4);
         else v.refreshCell(e.cell);
         if (e.status === 'burning') this.fxp.burst(p.x, p.y, { count: 6, tint: [C.orange, C.yellow], speed: [40, 120], gravity: -200, life: [0.3, 0.6] });
-        floatText(this.wfx, p.x, p.y - 20, `-${e.dmg}`, { color: C.orange, size: 26, rise: 40 });
+        floatText(this.wfx, p.x, p.y - 20, `-${this.show(e.dmg)}`, { color: C.orange, size: 26, rise: 40 });
         break;
       }
       case 'spread':
@@ -610,7 +619,7 @@ export class BattleScene extends Scene {
         const sv = this.ships[e.side];
         sv.hitReact?.(e.x - sv.x, Math.min(1, 0.2 + e.total / 900));
         this.cam.z += Math.min(0.08, 0.02 + e.total / 8000);
-        if (e.total > 0) floatText(this.wfx, e.x + 70, e.y - 30, `-${e.total}`, { color: e.crit ? C.pinkHot : C.paper, size: e.crit ? 64 : 46, font: F.heavy });
+        if (e.total > 0) floatText(this.wfx, e.x + 70, e.y - 30, `-${this.show(e.total)}`, { color: e.crit ? C.pinkHot : C.paper, size: e.crit ? 64 : 46, font: F.heavy });
         if (e.crit) floatText(this.wfx, e.x - 60, e.y - 170, '¡CRÍTICO!', { color: C.pinkHot, size: 54, rot: -0.2 });
         break;
       }
@@ -638,7 +647,7 @@ export class BattleScene extends Scene {
         }
         if (!e.ko) st?.set(e.fx);
         if (e.dmg > 0) {
-          floatText(this.wfx, gp.x, gp.y - 140, e.dot ? `-${e.dmg} 🔥` : `-${e.dmg}`, { color: e.dot ? C.orange : C.red, size: e.dot ? 30 : 40, font: F.heavy });
+          floatText(this.wfx, gp.x, gp.y - 140, e.dot ? `-${this.show(e.dmg)} 🔥` : `-${this.show(e.dmg)}`, { color: e.dot ? C.orange : C.red, size: e.dot ? 30 : 40, font: F.heavy });
         }
         if (!e.dot && !e.overboard) {
           gsap.fromTo(bc, { x: bc.x + (e.side === 0 ? -14 : 14) }, { x: bc.x, duration: 0.35, ease: 'elastic.out(1,0.3)' });
