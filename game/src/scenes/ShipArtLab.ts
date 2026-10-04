@@ -6,7 +6,7 @@ import { Sea } from '../battle/sea';
 import { CELL, Cell, ShipBlueprint, ShipModel } from '../battle/ship';
 import { BLUEPRINTS } from '../battle/blueprints';
 import { AnimeShipView, ShipStyleId } from '../battle/anime';
-import { ANIME_BLUEPRINTS } from '../battle/anime/blueprintsAnime';
+import { ANIME_BLUEPRINTS, withMaterial } from '../battle/anime/blueprintsAnime';
 import { Button, poster, txt } from '../ui/widgets';
 import { C, F } from '../ui/theme';
 import type { StatusId } from '../battle/types';
@@ -19,6 +19,57 @@ const CREWS: [string, string][][] = [
 ];
 
 const WATER_Y = 830;
+
+const ALL_STYLES: ShipStyleId[] = ['raft', 'sloop', 'pirate', 'coral', 'coral6', 'cosmic', 'duck', 'rat', 'stone', 'kraken', 'library', 'bone', 'noctis', 'void'];
+const PAGES: ShipStyleId[][] = [
+  ['pirate', 'rat', 'cosmic'],
+  ['duck', 'stone', 'kraken'],
+  ['library', 'bone', 'noctis'],
+  ['raft', 'void', 'sloop'],
+  ['coral', 'rat', 'coral6'],
+];
+const LABEL: Record<ShipStyleId, string> = {
+  raft: 'MK1 · BALSA',
+  sloop: 'MK2 · BALANDRA',
+  pirate: 'MK3-4 · GALEÓN',
+  coral: 'MK5 · CORAL',
+  coral6: 'MK6 · CORAL RÚNICO',
+  cosmic: 'MK7 / Z5 · CÓSMICO',
+  duck: '1-1 · PATITO PIRATA',
+  rat: 'Z1 · BAHÍA SARDINA',
+  stone: 'Z2 · GUARDIA DE PIEDRA',
+  kraken: 'Z3 · FLOTA DEL KRAKEN',
+  library: 'Z4 · BIBLIOTECA HUNDIDA',
+  bone: 'Z6 · MAREA SIN NOMBRE',
+  noctis: 'EVENTO · BANDERA NEGRA',
+  void: '??? · NAVE DE NADIE',
+};
+
+/** a plan that suits each skin (the campaign generator supplies its own in real battles) */
+function bpFor(style: ShipStyleId): ShipBlueprint {
+  switch (style) {
+    case 'duck':
+      return ANIME_BLUEPRINTS.duckling;
+    case 'rat':
+      return ANIME_BLUEPRINTS.ratship;
+    case 'stone':
+      return ANIME_BLUEPRINTS.fortress;
+    case 'kraken':
+      return withMaterial(ANIME_BLUEPRINTS.ratship, 'I');
+    case 'library':
+      return withMaterial(ANIME_BLUEPRINTS.celestial, 'W');
+    case 'bone':
+      return withMaterial(ANIME_BLUEPRINTS.ratship, 'B');
+    case 'void':
+      return withMaterial(ANIME_BLUEPRINTS.ratship, 'V');
+    case 'cosmic':
+      return ANIME_BLUEPRINTS.celestial;
+    case 'noctis':
+      return ANIME_BLUEPRINTS.galleon;
+    default:
+      return ANIME_BLUEPRINTS.galleon;
+  }
+}
 
 interface Slot {
   style: ShipStyleId;
@@ -50,6 +101,9 @@ export class ShipArtLab extends Scene {
   info = txt('', { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink });
 
   noir = false;
+  page = 0;
+  gallery = false;
+  galleryLayer = new Container();
 
   /** sunny Yo-Ho sky or the battle's default noir palette */
   private makeSea() {
@@ -64,7 +118,7 @@ export class ShipArtLab extends Scene {
 
   override enter() {
     this.addChild(this.world, this.ui);
-    this.world.addChild(this.shipsLayer, this.debris, this.fx);
+    this.world.addChild(this.shipsLayer, this.debris, this.galleryLayer, this.fx);
     this.makeSea();
     this.buildShips();
     this.buildUi();
@@ -81,23 +135,20 @@ export class ShipArtLab extends Scene {
   }
 
   private plan(): { style: ShipStyleId; bp: ShipBlueprint; flip: boolean }[] {
-    if (this.useAnime)
-      return [
-        { style: 'pirate', bp: ANIME_BLUEPRINTS.galleon, flip: false },
-        { style: 'rat', bp: ANIME_BLUEPRINTS.ratship, flip: true },
-        { style: 'cosmic', bp: ANIME_BLUEPRINTS.celestial, flip: false },
-      ];
-    return [
-      { style: 'pirate', bp: BLUEPRINTS.sparrow, flip: false },
-      { style: 'rat', bp: BLUEPRINTS.balsa, flip: true },
-      { style: 'cosmic', bp: BLUEPRINTS.sparrow, flip: true },
-    ];
+    const styles = this.gallery ? ALL_STYLES : PAGES[this.page % PAGES.length];
+    return styles.map((style, i) => ({
+      style,
+      bp: this.useAnime ? bpFor(style) : i % 2 ? BLUEPRINTS.balsa : BLUEPRINTS.sparrow,
+      flip: this.gallery ? false : i === 1,
+    }));
   }
 
   private buildShips() {
     for (const s of this.slots) s.view.destroy({ children: true });
     this.slots = [];
+    for (const c of [...this.galleryLayer.children]) c.destroy({ children: true });
     const plan = this.plan();
+    if (this.gallery) return this.buildGallery(plan);
     const scale = 0.8;
     const gap = 40;
     const total = plan.reduce((a, p) => a + p.bp.cols * CELL * scale, 0) + gap * (plan.length - 1);
@@ -111,9 +162,50 @@ export class ShipArtLab extends Scene {
       view.baseY = view.y;
       this.shipsLayer.addChild(view);
       this.slots.push({ ...p, x, scale, model, view });
+      const tag = txt(LABEL[p.style], { fontFamily: F.poster, fontSize: 22, fill: C.paper, stroke: { color: C.ink, width: 5 } });
+      tag.anchor.set(0.5, 0);
+      tag.position.set(x + (p.bp.cols * CELL * scale) / 2, WATER_Y + 70);
+      this.galleryLayer.addChild(tag);
       x += p.bp.cols * CELL * scale + gap;
     }
     this.addCats();
+  }
+
+  /** every skin at once, small, in rows with their own strip of sea */
+  private buildGallery(plan: { style: ShipStyleId; bp: ShipBlueprint; flip: boolean }[]) {
+    const perRow = 5;
+    const scale = 0.4;
+    const rows = Math.ceil(plan.length / perRow);
+    for (let r = 0; r < rows; r++) {
+      const wy = 330 + r * 245;
+      const items = plan.slice(r * perRow, (r + 1) * perRow);
+      const cellW = W / perRow;
+      items.forEach((p, i) => {
+        const model = new ShipModel(p.bp, 1);
+        model.snapshotMax();
+        const view = new AnimeShipView(model, p.flip, p.style, { resolution: 1.5 });
+        view.scale.set(scale);
+        const x = cellW * i + (cellW - p.bp.cols * CELL * scale) / 2;
+        view.position.set(x, wy - view.waterLocalY * scale);
+        view.baseY = view.y;
+        this.shipsLayer.addChild(view);
+        this.slots.push({ ...p, x, scale, model, view });
+        const tag = txt(LABEL[p.style], { fontFamily: F.poster, fontSize: 18, fill: C.paper, stroke: { color: C.ink, width: 4 } });
+        tag.anchor.set(0.5, 0);
+        tag.position.set(cellW * i + cellW / 2, wy + 22);
+        this.galleryLayer.addChild(tag);
+      });
+      if (r < rows - 1 || wy < WATER_Y - 40) {
+        const band = new Graphics();
+        band.moveTo(0, wy + 6);
+        for (let x = 0; x <= W; x += 40) band.quadraticCurveTo(x + 20, wy + (x % 80 ? 2 : 10), x + 40, wy + 6);
+        band.lineTo(W, wy + 22).lineTo(0, wy + 22).closePath().fill({ color: this.noir ? 0x1c3a51 : 0x1a8bd0, alpha: 0.92 });
+        band.moveTo(0, wy + 6);
+        for (let x = 0; x <= W; x += 40) band.quadraticCurveTo(x + 20, wy + (x % 80 ? 2 : 10), x + 40, wy + 6);
+        band.stroke({ width: 3, color: 0xffffff, alpha: 0.85 });
+        this.galleryLayer.addChildAt(band, 0);
+      }
+    }
   }
 
   /** same placement as BattleScene: cat feet at the bottom of its catroom, inside view.decor */
@@ -153,17 +245,19 @@ export class ShipArtLab extends Scene {
       ['DESPRENDER', () => this.each((s) => this.detachChunk(s))],
       ['DISPARAR', () => this.each((s) => s.view.fireCannon())],
       ['AUTO', () => (this.auto = !this.auto), C.pinkHot],
+      ['ESTILOS ▶', () => ((this.gallery = false), (this.page = (this.page + 1) % PAGES.length), this.buildShips()), C.yellow],
+      ['GALERÍA', () => ((this.gallery = !this.gallery), this.cycleFocus(-1), this.buildShips()), C.mint],
       ['PLANOS', () => ((this.useAnime = !this.useAnime), this.buildShips())],
       ['RESET', () => this.buildShips(), C.paper],
       ['FOCO', () => this.cycleFocus(), C.yellow],
       ['GATOS', () => this.toggleCats(), C.paper],
       ['CIELO', () => ((this.noir = !this.noir), this.makeSea()), C.theatre],
     ];
-    const bw = 96;
+    const bw = 90;
     const bh = 44;
     acts.forEach(([label, fn, color], i) => {
-      const b = new Button(label, fn, { w: bw, h: bh, size: 19, color: color ?? C.pink, sound: false });
-      b.position.set(30 + i * (bw + 5), H - 70);
+      const b = new Button(label, fn, { w: bw, h: bh, size: 17, color: color ?? C.pink, sound: false });
+      b.position.set(24 + i * (bw + 4), H - 70);
       this.ui.addChild(b);
     });
     this.info.position.set(40, H - 104);

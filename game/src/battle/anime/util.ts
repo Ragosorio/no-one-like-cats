@@ -109,3 +109,10 @@ export function killTweensDeep(o: Container) {
   gsap.killTweensOf(o.position);
   for (const c of o.children) killTweensDeep(c as Container);
 }
+
+/** kill tweens on the subtree, then destroy (no-op if already destroyed) */
+export function safeDestroy(o: Container) {
+  if (o.destroyed) return;
+  killTweensDeep(o);
+  o.destroy({ children: true });
+}

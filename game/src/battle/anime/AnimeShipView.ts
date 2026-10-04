@@ -14,13 +14,14 @@ import { CanvasSource, Container, Graphics, MeshSimple, Sprite, Texture, earcut 
 import gsap from 'gsap';
 import { CELL, Cell, ModuleInst, ShipModel } from '../ship';
 import { glowTexture, sparkTexture } from '../../art/textures';
-import { ShipStyle, ShipStyleId, getStyle } from './styles';
+import { ShipStyle, ShipStyleId, getStyle, DebrisKind } from './styles';
 import { buildLayout, Lattice, ShipLayout } from './layout';
 import { makeTarget, paintShip, paintInterior, setPaintModel, PaintTarget, PaintInfo, localXf } from './paint';
-import { sailFrames, flagFrames, puffTexture, shardTexture, drawBarrel, drawOrb, SailFrames } from './decorArt';
+import { sailFrames, flagFrames, puffTexture, debrisTexture, drawBarrel, drawOrb, SailFrames } from './decorArt';
+import { buildFeatures, Feature } from './features';
 import { CellStatusFx, statusTint, hasAnyStatus } from './statusFx';
 import { addDebris } from './debris';
-import { Pt, hash, shash, css, clamp, reparentKeep, mix, killTweensDeep } from './util';
+import { Pt, hash, shash, css, clamp, reparentKeep, mix, killTweensDeep, safeDestroy } from './util';
 
 export type { ShipStyleId } from './styles';
 
@@ -102,6 +103,8 @@ interface Emitter {
 }
 
 const DMG_LEVELS = [0.18, 0.45, 0.72];
+/** debris materials that float on the surface for a while */
+const FLOATS = new Set<DebrisKind>(['wood', 'rubber', 'paper', 'feather']);
 
 function countStatus(st: Cell['status']) {
   let n = 0;
@@ -144,6 +147,9 @@ export class AnimeShipView extends Container {
   private interiorMeshes = new Map<number, MeshSimple>();
   private rigG = new Graphics();
   private bowsprit: Container | null = null;
+  private features: Feature[] = [];
+  readonly featureLayer = new Container();
+  private glitched: Piece[] = [];
   private bowAnchor: Cell | null = null;
   private puffs: Puff[] = [];
   private emitters: Emitter[] = [];
@@ -186,7 +192,7 @@ export class AnimeShipView extends Container {
     this.body.pivot.set(this.pivotX, this.waterLocalY);
     this.body.position.set(this.pivotX, this.waterLocalY);
     this.addChild(this.body);
-    this.body.addChild(this.backLayer, this.interiorLayer, this.hullLayer, this.foamG, this.moduleLayer, this.decor, this.statusLayer, this.smokeLayer);
+    this.body.addChild(this.backLayer, this.interiorLayer, this.hullLayer, this.foamG, this.featureLayer, this.moduleLayer, this.decor, this.statusLayer, this.smokeLayer);
     this.backLayer.addChild(this.rigG);
 
     // --- pieces
@@ -196,7 +202,19 @@ export class AnimeShipView extends Container {
 
     // --- decor
     for (const m of model.modules) this.addModuleDecor(m);
-    this.addBowsprit();
+    if (this.style.feat.bowsprit) this.addBowsprit();
+    this.features = buildFeatures({
+      st: this.style,
+      L: this.layout,
+      model,
+      flip,
+      bow: this.info.bow,
+      stern: this.info.stern,
+      waterY: this.waterLocalY,
+      root: (sx, sy) => this.decorRoot(sx, sy),
+      toLocal: (sx, sy) => this.L(sx, sy),
+    });
+    for (const f of this.features) (f.layer === 'back' ? this.backLayer : this.featureLayer).addChild(f.root);
     this.drawRigging();
     this.stepAnims();
   }
@@ -277,8 +295,14 @@ export class AnimeShipView extends Container {
     if (!p) return;
     const attached = this.removePiece(p);
     const waterY = this.waterInLayer(debrisLayer);
-    const frags = this.fragment(p);
     const cw0 = debrisLayer.toLocal(this.hullLayer.toGlobal({ x: p.cx, y: p.cy }));
+    if (this.style.feat.debris === 'glitch') {
+      // the void doesn't shatter: the cell is ERASED (transmission pixelation)
+      this.eraseInto(debrisLayer, p, attached, waterY);
+      this.queueKick(p.cx, p.cy, 0.2 * impulse);
+      return;
+    }
+    const frags = this.fragment(p);
     // push away from the ship's centre when the caller passes the cell centre itself
     const shipC = debrisLayer.toLocal(this.body.toGlobal({ x: this.pivotX, y: this.waterLocalY }));
     for (let i = 0; i < frags.length; i++) {
@@ -286,6 +310,7 @@ export class AnimeShipView extends Container {
       this.hullLayer.addChild(f);
       if (i === 0) for (const a of attached) reparentKeep(a, f);
       reparentKeep(f, debrisLayer);
+      this.trackDebris(f);
       let dx = cw0.x - worldPos.x;
       let dy = cw0.y - worldPos.y;
       if (Math.hypot(dx, dy) < 6) {
@@ -307,7 +332,7 @@ export class AnimeShipView extends Container {
         vr: (Math.random() - 0.5) * 12,
         g: 1500,
         waterY,
-        floats: p.isWood && Math.random() < 0.65,
+        floats: FLOATS.has(this.style.feat.debris) && Math.random() < 0.7,
         onSplash: (x) => this.splash(debrisLayer, x, waterY, 0.6),
       });
     }
@@ -334,6 +359,12 @@ export class AnimeShipView extends Container {
     }
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
+    if (this.style.feat.debris === 'glitch') {
+      const wy = this.waterInLayer(debrisLayer);
+      ps.forEach((p, i) => this.eraseInto(debrisLayer, p, i === 0 ? attached : [], wy));
+      this.reactLocal(cx, cy, 0.4, true);
+      return;
+    }
     const group = new Container();
     group.pivot.set(cx, cy);
     group.position.set(cx, cy);
@@ -345,6 +376,7 @@ export class AnimeShipView extends Container {
     for (const p of ps) this.drawRipEdges(p, rip, true);
     group.addChild(rip);
     reparentKeep(group, debrisLayer);
+    this.trackDebris(group);
     const waterY = this.waterInLayer(debrisLayer);
     const dir = cx > this.pivotX ? 1 : -1;
     const big = ps.length > 3;
@@ -508,7 +540,7 @@ export class AnimeShipView extends Container {
     flash.position.set(len + 14, 0);
     b.addChild(flash);
     gsap.to(flash.scale, { x: 1.4, y: 1.4, duration: 0.1 });
-    gsap.to(flash, { alpha: 0, duration: 0.12, delay: 0.06, onComplete: () => void (!flash.destroyed && flash.destroy()) });
+    gsap.to(flash, { alpha: 0, duration: 0.12, delay: 0.06, onComplete: () => safeDestroy(flash) });
     const mp = this.moduleLayer.toLocal(b.toGlobal({ x: len + 6, y: 0 }));
     for (let i = 0; i < 4; i++) this.spawnPuff(mp.x, mp.y, { tint: 0xd8d2dc, scale: 0.35 + Math.random() * 0.3, vx: (this.flip ? -1 : 1) * (40 + Math.random() * 60), vy: -20 - Math.random() * 30, life: 0.8 + Math.random() * 0.5 });
   }
@@ -521,17 +553,32 @@ export class AnimeShipView extends Container {
   }
 
   override destroy(options?: Parameters<Container['destroy']>[0]) {
-    const a = this.artTex;
-    const b = this.interiorTex;
     killTweensDeep(this);
     super.destroy(options ?? { children: true });
-    // debris may still be flying with our texture
-    const c = this.flashTex;
-    window.setTimeout(() => {
-      a.destroy(true);
-      b.destroy(true);
-      c.destroy(true);
-    }, 8000);
+    // debris may still be flying with our textures: free them when the last piece is gone
+    this.viewDestroyed = true;
+    if (this.liveDebris <= 0) this.disposeTextures();
+  }
+
+  private liveDebris = 0;
+  private viewDestroyed = false;
+  private texturesDisposed = false;
+
+  /** count debris objects that render with this view's textures */
+  private trackDebris(o: Container) {
+    this.liveDebris++;
+    o.once('destroyed', () => {
+      this.liveDebris--;
+      if (this.viewDestroyed && this.liveDebris <= 0) this.disposeTextures();
+    });
+  }
+
+  private disposeTextures() {
+    if (this.texturesDisposed) return;
+    this.texturesDisposed = true;
+    this.artTex.destroy(true);
+    this.interiorTex.destroy(true);
+    this.flashTex.destroy(true);
   }
 
   // ================================================================ pieces
@@ -644,6 +691,13 @@ export class AnimeShipView extends Container {
         out.push(d.root);
         this.mods.delete(id);
         if (d.m.kind === 'mast') this.drawRigging();
+      }
+    }
+    for (let i = this.features.length - 1; i >= 0; i--) {
+      const f = this.features[i];
+      if (f.anchor === p.cell) {
+        out.push(f.root);
+        this.features.splice(i, 1);
       }
     }
     if (this.bowAnchor === p.cell && this.bowsprit) {
@@ -1016,7 +1070,7 @@ export class AnimeShipView extends Container {
     const f = this.makeMesh(this.flashTex, p.ring);
     f.alpha = 0.9;
     p.root.addChild(f);
-    gsap.to(f, { alpha: 0, duration: 0.16, delay: 0.05, onComplete: () => void (!f.destroyed && f.destroy()) });
+    gsap.to(f, { alpha: 0, duration: 0.16, delay: 0.05, onComplete: () => safeDestroy(f) });
     const ang = Math.random() * Math.PI * 2;
     const a = 3 + strength * 3;
     gsap.fromTo(p.root, { x: p.cx + Math.cos(ang) * a, y: p.cy + Math.sin(ang) * a }, { x: p.cx, y: p.cy, duration: 0.3, ease: 'elastic.out(1.2,0.3)', overwrite: true });
@@ -1318,7 +1372,7 @@ export class AnimeShipView extends Container {
           const fall = this.waterLocalY - gp.y;
           gsap.to(scrap, { y: gp.y + fall, duration: 1.8, ease: 'power1.in' });
           gsap.to(scrap, { x: gp.x + (this.flip ? 60 : -60), rotation: 2.5, duration: 1.8, ease: 'sine.inOut' });
-          gsap.to(scrap, { alpha: 0, duration: 0.4, delay: 1.6, onComplete: () => void (!scrap.destroyed && scrap.destroy()) });
+          gsap.to(scrap, { alpha: 0, duration: 0.4, delay: 1.6, onComplete: () => safeDestroy(scrap) });
         }
         if (d.flag) {
           d.flag.limp = true;
@@ -1382,35 +1436,132 @@ export class AnimeShipView extends Container {
       this.smokeLayer.addChild(s);
       const a = Math.random() * Math.PI * 2;
       const r = 30 + Math.random() * 60;
-      gsap.to(s, { x: x + Math.cos(a) * r, y: y + Math.sin(a) * r - 20, rotation: 3, duration: 0.5 + Math.random() * 0.3, ease: 'power2.out' });
-      gsap.to(s, { alpha: 0, duration: 0.25, delay: 0.4, onComplete: () => void (!s.destroyed && s.destroy()) });
+      const d = 0.5 + Math.random() * 0.3;
+      gsap.to(s, { alpha: 0, duration: 0.25, delay: d - 0.25 });
+      gsap.to(s, {
+        x: x + Math.cos(a) * r,
+        y: y + Math.sin(a) * r - 20,
+        rotation: 3,
+        duration: d,
+        ease: 'power2.out',
+        onComplete: () => {
+          if (s.destroyed) return;
+          gsap.killTweensOf(s);
+          s.destroy();
+        },
+      });
+    }
+  }
+
+  private debrisTints(kind: DebrisKind): number[] {
+    const st = this.style;
+    switch (kind) {
+      case 'stone':
+        return [st.hull.base, st.hull.light, st.hull.shadow, st.accent.base];
+      case 'iron':
+        return [st.metal.light, st.hull.base, st.hull.light, st.trim.base];
+      case 'paper':
+        return [0xf6efdc, 0xe8dcc0, 0xfff8e8, st.accent.base];
+      case 'bone':
+        return [st.accent.base, st.accent.light, st.accent.shadow, st.hull.light];
+      case 'feather':
+        return [st.accent.base, st.accent.shadow, 0x2a2036, st.hull.light];
+      case 'coral':
+        return [st.hull.base, st.hull.light, st.accent.base, st.accent.light];
+      case 'rubber':
+        return [st.hull.base, st.hull.light, st.hull.shadow, 0xff8a1a];
+      case 'glitch':
+        return [0x000000, st.accent.base, 0xffffff, 0x00e5ff];
+      default:
+        return [st.wood.light, st.hull.light, st.hull.base, st.trim.base];
     }
   }
 
   private burstSplinters(layer: Container, x: number, y: number, waterY: number, impulse: number, from: { x: number; y: number }) {
     const st = this.style;
-    const n = Math.round(4 + impulse * 5);
+    const kind = st.feat.debris;
+    const tex = debrisTexture(kind);
+    const tints = this.debrisTints(kind);
+    const soft = kind === 'paper' || kind === 'feather';
+    const n = Math.round((soft ? 6 : 4) + impulse * 5);
     for (let i = 0; i < n; i++) {
-      const s = new Sprite(shardTexture());
+      const s = new Sprite(tex);
       s.anchor.set(0.5);
-      s.tint = [st.wood.light, st.hull.light, st.hull.base, st.trim.base][i % 4];
-      s.scale.set(0.5 + Math.random() * 0.6);
+      s.tint = tints[i % tints.length];
+      s.scale.set((kind === 'stone' ? 0.6 : 0.5) + Math.random() * 0.6);
       s.position.set(x, y);
       s.rotation = Math.random() * Math.PI * 2;
       layer.addChild(s);
       const a = Math.atan2(y - from.y, x - from.x) + (Math.random() - 0.5) * 2.2;
-      const sp = (220 + Math.random() * 380) * Math.max(0.5, impulse);
-      addDebris({ obj: s, kind: 'shard', vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 200, vr: (Math.random() - 0.5) * 20, g: 1500, waterY, life: 1.2, stepped: true });
+      const sp = (soft ? 160 : 220 + Math.random() * 380) * Math.max(0.5, impulse);
+      addDebris({
+        obj: s,
+        kind: 'shard',
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - (soft ? 260 : 200),
+        vr: (Math.random() - 0.5) * 20,
+        g: soft ? 500 : kind === 'stone' ? 1800 : 1500,
+        waterY,
+        life: soft ? 2.2 : 1.2,
+        stepped: true,
+        flutter: soft,
+      });
     }
-    for (let i = 0; i < 3; i++) {
+    if (kind === 'iron' || kind === 'coral') {
+      // hot sparks / glowing bits
+      for (let i = 0; i < 7; i++) {
+        const s = new Sprite(sparkTexture());
+        s.anchor.set(0.5);
+        s.tint = kind === 'iron' ? (i % 2 ? 0xffd400 : 0xfff2a8) : st.accent.light;
+        s.blendMode = 'add';
+        s.scale.set(0.18 + Math.random() * 0.18);
+        s.position.set(x, y);
+        layer.addChild(s);
+        const a = Math.random() * Math.PI * 2;
+        const sp = 200 + Math.random() * 300;
+        addDebris({ obj: s, kind: 'shard', vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 120, vr: 8, g: 900, waterY, life: 0.35 + Math.random() * 0.3, stepped: true });
+      }
+    }
+    const nPuff = kind === 'stone' ? 6 : kind === 'paper' || kind === 'glitch' ? 0 : 3;
+    const puffTint = kind === 'stone' ? 0xb9b2a0 : kind === 'bone' ? 0xe8e4f0 : kind === 'rubber' ? 0xfff2c0 : mix(st.wood.light, 0xdddddd, 0.5);
+    for (let i = 0; i < nPuff; i++) {
       const s = new Sprite(puffTexture());
       s.anchor.set(0.5);
-      s.tint = mix(st.wood.light, 0xdddddd, 0.5);
+      s.tint = puffTint;
       s.scale.set(0.3 + Math.random() * 0.25);
       s.position.set(x + (Math.random() - 0.5) * 20, y + (Math.random() - 0.5) * 20);
       layer.addChild(s);
       addDebris({ obj: s, kind: 'puff', vx: (Math.random() - 0.5) * 80, vy: -30 - Math.random() * 40, vr: (Math.random() - 0.5) * 2, g: 0, waterY, life: 0.6 + Math.random() * 0.4, grow: 1.1, stepped: true });
     }
+  }
+
+  /** void cells: blink out as transmission pixels instead of flying */
+  private eraseInto(layer: Container, p: Piece, attached: Container[], waterY: number) {
+    const st = this.style;
+    const ghost = new Container();
+    ghost.pivot.set(p.cx, p.cy);
+    ghost.position.set(p.cx, p.cy);
+    this.hullLayer.addChild(ghost);
+    ghost.addChild(p.root);
+    for (const a of attached) reparentKeep(a, ghost);
+    reparentKeep(ghost, layer);
+    this.trackDebris(ghost);
+    // the piece itself flickers and fades in place
+    addDebris({ obj: ghost, kind: 'puff', vx: (Math.random() - 0.5) * 30, vy: 0, vr: 0, g: 0, waterY, life: 0.45, grow: 0, stepped: true });
+    const cw = layer.toLocal(this.hullLayer.toGlobal({ x: p.cx, y: p.cy }));
+    const tex = debrisTexture('glitch');
+    const tints = this.debrisTints('glitch');
+    for (let i = 0; i < 14; i++) {
+      const s = new Sprite(tex);
+      s.anchor.set(0.5);
+      s.tint = tints[i % tints.length];
+      const sz = 0.5 + Math.random() * 1.1;
+      s.scale.set(sz * (1 + Math.random()), sz);
+      s.position.set(cw.x + (Math.random() - 0.5) * 34, cw.y + (Math.random() - 0.5) * 34);
+      layer.addChild(s);
+      addDebris({ obj: s, kind: 'shard', vx: (Math.random() - 0.5) * 60, vy: (Math.random() - 0.5) * 30, vr: 0, g: 0, waterY: waterY + 9999, life: 0.1 + Math.random() * 0.45, stepped: true });
+    }
+    void st;
   }
 
   private splash(layer: Container, x: number, waterY: number, size: number) {
@@ -1441,7 +1592,7 @@ export class AnimeShipView extends Container {
         ring.scale.set(1 + 1.2 * k.t, 1 + 0.6 * k.t);
         ring.alpha = 1 - k.t;
       },
-      onComplete: () => void (!ring.destroyed && ring.destroy()),
+      onComplete: () => safeDestroy(ring),
     });
   }
 
@@ -1465,6 +1616,19 @@ export class AnimeShipView extends Container {
       if (d.ring) d.ring.rotation = d.m.kind === 'arcane' ? f * 0.12 : 0;
       if (d.ring && d.m.kind === 'shield') d.ring.y = Math.sin(f * 0.5) * 2;
       if (d.sparks && hash(f, d.m.id) < 0.3) this.sparkBurst(d.smokePt[0] + (Math.random() - 0.5) * 20, d.smokePt[1] + 10, this.style.core.base, 2);
+    }
+    for (const ft of this.features) ft.step?.(f, t);
+    if (this.style.feat.extras.includes('glitch')) {
+      for (const g of this.glitched) if (this.pieces.has(g.cell)) g.root.x = g.cx;
+      this.glitched = [];
+      if (hash(f, 77) < 0.5) {
+        const all = [...this.pieces.values()];
+        for (let k = 0; k < 2 && all.length; k++) {
+          const pc = all[Math.floor(hash(f, k, 78) * all.length)];
+          pc.root.x = pc.cx + (hash(f, k, 79) - 0.5) * 10;
+          this.glitched.push(pc);
+        }
+      }
     }
     // statuses
     if (f % 6 === 0) for (const p of this.pieces.values()) if (!!p.fx !== hasAnyStatus(p.cell.status) || (p.fx && p.fx.kinds.size !== countStatus(p.cell.status))) this.syncStatus(p);

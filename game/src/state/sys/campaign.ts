@@ -8,6 +8,7 @@ import { generateShip, specFromArchetype, STORY_SHIPS } from '../../battle/shipg
 import { battleCatFrom } from '../../battle/catShots';
 import type { BattleSpec, BattleResult } from '../../scenes/BattleScene';
 import { DIFFICULTY } from '../../battle/ai';
+import { styleFor } from '../../battle/anime';
 
 export const STAGES_PER_ZONE = BAL.combat.stages_per_zone;
 
@@ -127,8 +128,8 @@ export function buildBattle(zone: number, stage: number, onEnd: (r: BattleResult
     enemy: { blueprint: bp, hpMul: isBoss ? 1.5 : sd?.type === 'elite' ? 1.2 : 1, cats: enemyCats, cannonAtk: Math.round(40 * ef * 1.6) },
     displayMul: Math.max(1, EP / 2) / 10,
     meta: { zone, stage, key, boss: isBoss, ep: EP, sp: SP, weaponMk: mk('weapon') },
-    playerStyle: mk('hull') >= 7 ? 'cosmic' : 'pirate',
-    enemyStyle: zone === 5 ? 'cosmic' : 'rat',
+    playerStyle: styleFor('player', { hullMk: mk('hull') }),
+    enemyStyle: styleFor('enemy', { zone, stageKey: key, boss: isBoss }),
     onEnd,
   } as BattleSpec;
 }

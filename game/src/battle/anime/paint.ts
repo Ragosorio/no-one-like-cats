@@ -10,6 +10,7 @@ import { CELL, ShipModel } from '../ship';
 import { ShipLayout, ModuleInfo } from './layout';
 import { ShipStyle } from './styles';
 import { css, hash, mix, rng, Pt } from './util';
+import { paintPattern } from './patterns';
 
 export interface PaintTarget {
   canvas: HTMLCanvasElement;
@@ -156,6 +157,15 @@ export function paintShip(T: PaintTarget, L: ShipLayout, model: ShipModel, st: S
   const info = paintDetails(ctx, L, model, st, waterY, R);
   // 6. outline (variable weight: heavier on the bottom/shadow side)
   shipXf(ctx, T, L);
+  if (st.feat.outlineGlow !== null) {
+    ctx.save();
+    ctx.shadowColor = css(st.feat.outlineGlow);
+    ctx.shadowBlur = 12 * T.R;
+    ctx.strokeStyle = css(st.feat.outlineGlow);
+    ctx.lineWidth = 7;
+    ctx.stroke(body);
+    ctx.restore();
+  }
   ctx.lineJoin = 'round';
   ctx.strokeStyle = css(st.ink);
   ctx.lineWidth = 5.5;
@@ -245,70 +255,31 @@ function paintHull(T: PaintTarget, L: ShipLayout, body: Path2D, st: ShipStyle, w
   shipXf(ctx, T, L);
   ctx.save();
   ctx.clip(body, 'evenodd');
-  // planks / plates (over the cel bands)
-  ctx.strokeStyle = css(st.hull.plank, 0.85);
-  ctx.lineWidth = 1.9;
-  for (let k = 1; k < nPl; k++) {
+  // surface pattern per skin (planks, stone, books, ribs, coral…)
+  const reshade = paintPattern({ ctx, L, st, plankY, nPl, R, waterY, res: T.R });
+  ctx.restore();
+  if (reshade) {
+    // opaque patterns hid the cel bands: lay them again, translucent
+    rim(T, L, body, 0, -S1, css(st.hull.deep), 0.45);
+    rim(T, L, body, 13, 0, css(st.hull.deep), 0.4);
+    rim(T, L, body, -7, 0, css(st.hull.light), 0.3);
+  }
+  shipXf(ctx, T, L);
+  ctx.save();
+  ctx.clip(body, 'evenodd');
+  // boot stripe at waterline
+  if (st.feat.waterStripe) {
+    ctx.fillStyle = css(st.stripe);
+    ctx.fillRect(-50, waterY - 3, L.wPx + 100, 8);
+    ctx.strokeStyle = css(st.ink, 0.85);
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    let on = false;
-    for (let x = L.minX; x <= L.maxX; x += 3) {
-      if (Number.isNaN(L.topS[x])) {
-        on = false;
-        continue;
-      }
-      const y = plankY(x, k);
-      if (on) ctx.lineTo(x, y);
-      else ctx.moveTo(x, y);
-      on = true;
-    }
+    ctx.moveTo(-50, waterY - 3);
+    ctx.lineTo(L.wPx + 50, waterY - 3);
+    ctx.moveTo(-50, waterY + 5);
+    ctx.lineTo(L.wPx + 50, waterY + 5);
     ctx.stroke();
   }
-  ctx.lineWidth = 1.5;
-  const seam = st.panels ? 46 : 74;
-  for (let k = 0; k < nPl; k++) {
-    for (let x0 = L.minX + ((k * 37) % seam) + 10; x0 < L.maxX - 6; x0 += seam) {
-      const x = Math.round(x0);
-      if (Number.isNaN(L.topS[x])) continue;
-      const y0 = plankY(x, k);
-      const y1 = plankY(x, k + 1);
-      ctx.beginPath();
-      ctx.moveTo(x, y0);
-      ctx.lineTo(x + 1, y1);
-      ctx.stroke();
-      if (st.panels) {
-        ctx.fillStyle = css(st.hull.light, 0.8);
-        ctx.beginPath();
-        ctx.arc(x + 4, y0 + 3.5, 1.3, 0, Math.PI * 2);
-        ctx.arc(x + 4, y1 - 3.5, 1.3, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-  if (!st.panels) {
-    ctx.strokeStyle = css(st.hull.light, 0.3);
-    ctx.lineWidth = 1.2;
-    for (let i = 0; i < len / 9; i++) {
-      const x = Math.round(L.minX + R() * len);
-      if (Number.isNaN(L.topS[x])) continue;
-      const k = Math.floor(R() * nPl);
-      const y = (plankY(x, k) + plankY(x, k + 1)) / 2;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + 6 + R() * 10, y + (R() - 0.5) * 1.5);
-      ctx.stroke();
-    }
-  }
-  // boot stripe at waterline
-  ctx.fillStyle = css(st.stripe);
-  ctx.fillRect(-50, waterY - 3, L.wPx + 100, 8);
-  ctx.strokeStyle = css(st.ink, 0.85);
-  ctx.lineWidth = 1.8;
-  ctx.beginPath();
-  ctx.moveTo(-50, waterY - 3);
-  ctx.lineTo(L.wPx + 50, waterY - 3);
-  ctx.moveTo(-50, waterY + 5);
-  ctx.lineTo(L.wPx + 50, waterY + 5);
-  ctx.stroke();
   ctx.restore();
 
   // gunwale molding
@@ -328,7 +299,7 @@ function paintHull(T: PaintTarget, L: ShipLayout, body: Path2D, st: ShipStyle, w
   ctx.stroke(body);
   ctx.restore();
   // gold studs along the molding
-  if (!st.neon.length) {
+  if (!st.neon.length && (st.feat.rail === 'rail' || st.feat.rail === 'rope' || st.feat.rail === 'lace')) {
     ctx.fillStyle = css(st.trim.shadow);
     for (let x = L.minX + 14; x < L.maxX - 8; x += 22) {
       const t = L.topY[x];
@@ -358,6 +329,13 @@ function paintHull(T: PaintTarget, L: ShipLayout, body: Path2D, st: ShipStyle, w
   streak(0.86, 0.89, 0.62, 3.6, 0.85);
   streak(0.7, 0.79, 1.15, 2.2, 0.5);
   streak(0.08, 0.16, 0.8, 2.4, 0.35);
+  if (st.feat.gloss > 0) {
+    const gl = st.feat.gloss;
+    streak(0.2, 0.5, 0.5, 4.2, 0.55 * gl);
+    streak(0.53, 0.56, 0.5, 4.2, 0.55 * gl);
+    streak(0.3, 0.62, nPl * 0.55, 2.4, 0.4 * gl);
+    streak(0.76, 0.86, nPl * 0.55, 2.4, 0.5 * gl);
+  }
 
   // cosmic neon strips
   if (st.neon.length) {
@@ -600,14 +578,17 @@ function paintDetails(ctx: CanvasRenderingContext2D, L: ShipLayout, model: ShipM
     anchor = [x, y];
     break;
   }
+  if (!st.feat.anchor) anchor = null;
   for (const p of holes) {
     if (anchor && Math.abs(p[0] - anchor[0]) < 34) continue;
-    porthole(ctx, p[0], p[1], st);
+    if (st.feat.portholes === 'none') continue;
+    if (st.feat.portholes === 'slit') arrowSlit(ctx, p[0], p[1], st);
+    else porthole(ctx, p[0], p[1], st);
   }
   if (anchor) drawAnchor(ctx, anchor[0], anchor[1], st, R);
 
   // --- life ring near the stern
-  for (let x = L.minX + 40; x < L.minX + len * 0.35; x += 8) {
+  for (let x = L.minX + 40; st.feat.lifeRing && x < L.minX + len * 0.35; x += 8) {
     const t = L.topY[Math.round(x)];
     if (Number.isNaN(t)) continue;
     const y = t + 32;
@@ -621,7 +602,7 @@ function paintDetails(ctx: CanvasRenderingContext2D, L: ShipLayout, model: ShipM
   const bx = L.maxX - 9;
   const bt = L.topY[Math.round(bx)];
   const bow: Pt = [L.maxX, Number.isNaN(bt) ? L.hPx * 0.5 : bt + 8];
-  if (!Number.isNaN(bt)) {
+  if (!Number.isNaN(bt) && st.feat.scroll) {
     ctx.save();
     ctx.translate(bx - 6, bt + 22);
     const spiral = () => {
@@ -652,13 +633,35 @@ function paintDetails(ctx: CanvasRenderingContext2D, L: ShipLayout, model: ShipM
   return { waterY, bow, stern };
 }
 
+function arrowSlit(ctx: CanvasRenderingContext2D, x: number, y: number, st: ShipStyle) {
+  const p = new Path2D();
+  p.roundRect(x - 3, y - 11, 6, 22, 3);
+  p.roundRect(x - 8, y - 2.5, 16, 5, 2.5);
+  ctx.fillStyle = css(st.trim.light);
+  ctx.save();
+  ctx.translate(-1.5, -1.5);
+  ctx.fill(p);
+  ctx.restore();
+  ctx.fillStyle = css(st.interior.base);
+  ctx.fill(p);
+  ctx.strokeStyle = css(st.ink);
+  ctx.lineWidth = 2;
+  ctx.stroke(p);
+  ctx.save();
+  ctx.clip(p);
+  ctx.fillStyle = css(st.window.glow, 0.55);
+  ctx.fillRect(x - 8, y + 2, 16, 10);
+  ctx.restore();
+}
+
 function porthole(ctx: CanvasRenderingContext2D, x: number, y: number, st: ShipStyle) {
   const r = 9.5;
-  if (st.neon.length) {
+  if (st.feat.portholes === 'glow') {
+    const gc = st.neon[2] ?? st.window.glow;
     ctx.save();
-    ctx.shadowColor = css(st.neon[2] ?? st.window.glow);
+    ctx.shadowColor = css(gc);
     ctx.shadowBlur = 14;
-    ctx.fillStyle = css(mix(st.neon[2] ?? st.window.glow, 0xffffff, 0.3));
+    ctx.fillStyle = css(mix(gc, 0xffffff, 0.3));
     ctx.beginPath();
     ctx.arc(x, y, r - 2.5, 0, Math.PI * 2);
     ctx.fill();
@@ -842,6 +845,8 @@ function lifeRing(ctx: CanvasRenderingContext2D, x: number, y: number, st: ShipS
 // ---------------------------------------------------------------- railing
 
 function paintRailing(ctx: CanvasRenderingContext2D, L: ShipLayout, st: ShipStyle) {
+  const kind = st.feat.rail;
+  if (kind === 'none') return;
   const posts: Pt[] = [];
   for (let x = L.minX + 10; x <= L.maxX - 10; x += 12) {
     const t = L.topY[Math.round(x)];
@@ -855,6 +860,9 @@ function paintRailing(ctx: CanvasRenderingContext2D, L: ShipLayout, st: ShipStyl
     }
     posts.push([x, t]);
   }
+  if (kind === 'crenel') return crenels(ctx, posts, st);
+  if (kind === 'rope') return ropeRail(ctx, posts, st);
+  if (kind === 'bone') return boneRail(ctx, posts, st);
   const col = st.neon.length ? st.trim.light : st.trim.base;
   // posts
   for (const [x, t] of posts) {
@@ -897,6 +905,99 @@ function paintRailing(ctx: CanvasRenderingContext2D, L: ShipLayout, st: ShipStyl
       ctx.stroke();
     }
     ctx.restore();
+  }
+}
+
+
+function segments(posts: Pt[], maxDy = 7) {
+  const out: Pt[][] = [];
+  let cur: Pt[] = [];
+  for (const p of posts) {
+    const last = cur[cur.length - 1];
+    if (Number.isNaN(p[0]) || (last && Math.abs(last[1] - p[1]) > maxDy)) {
+      if (cur.length) out.push(cur);
+      cur = Number.isNaN(p[0]) ? [] : [p];
+      continue;
+    }
+    cur.push(p);
+  }
+  if (cur.length) out.push(cur);
+  return out;
+}
+
+/** stone battlements: merlons every other post */
+function crenels(ctx: CanvasRenderingContext2D, posts: Pt[], st: ShipStyle) {
+  for (const seg of segments(posts, 9)) {
+    for (let i = 0; i < seg.length; i += 2) {
+      const [x, t] = seg[i];
+      ctx.beginPath();
+      ctx.roundRect(x - 6.5, t - 14, 13, 16, 2);
+      ctx.fillStyle = css(st.trim.base);
+      ctx.fill();
+      ctx.fillStyle = css(st.trim.shadow);
+      ctx.fillRect(x + 1.5, t - 12, 4.5, 13);
+      ctx.fillStyle = css(st.trim.light);
+      ctx.fillRect(x - 5, t - 12.5, 9, 2.2);
+      ctx.beginPath();
+      ctx.roundRect(x - 6.5, t - 14, 13, 16, 2);
+      inkStroke(ctx, st.ink, 2);
+      if (hash(Math.round(x), 4) > 0.6) {
+        ctx.fillStyle = css(st.accent.base);
+        ctx.beginPath();
+        ctx.ellipse(x - 2, t - 14, 5, 2.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+}
+
+/** wooden stakes + sagging rope */
+function ropeRail(ctx: CanvasRenderingContext2D, posts: Pt[], st: ShipStyle) {
+  for (const seg of segments(posts, 8)) {
+    const stakes = seg.filter((_, i) => i % 2 === 0);
+    for (let i = 0; i < stakes.length - 1; i++) {
+      const [x0, t0] = stakes[i];
+      const [x1, t1] = stakes[i + 1];
+      ctx.beginPath();
+      ctx.moveTo(x0, t0 - 10);
+      ctx.quadraticCurveTo((x0 + x1) / 2, (t0 + t1) / 2 - 4, x1, t1 - 10);
+      ctx.strokeStyle = css(st.ink);
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      ctx.strokeStyle = css(st.accent.base);
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+    }
+    for (const [x, t] of stakes) {
+      ctx.beginPath();
+      ctx.moveTo(x - 2.5, t + 2);
+      ctx.lineTo(x - 2.5, t - 11);
+      ctx.lineTo(x, t - 14);
+      ctx.lineTo(x + 2.5, t - 11);
+      ctx.lineTo(x + 2.5, t + 2);
+      ctx.closePath();
+      ctx.fillStyle = css(st.wood.base);
+      ctx.fill();
+      inkStroke(ctx, st.ink, 1.6);
+    }
+  }
+}
+
+/** bone spikes */
+function boneRail(ctx: CanvasRenderingContext2D, posts: Pt[], st: ShipStyle) {
+  for (const seg of segments(posts, 8)) {
+    for (const [x, t] of seg) {
+      const h = 9 + hash(Math.round(x), 2) * 6;
+      ctx.beginPath();
+      ctx.moveTo(x - 2.5, t + 2);
+      ctx.quadraticCurveTo(x - 2, t - h * 0.6, x + 1.5, t - h);
+      ctx.quadraticCurveTo(x + 1.5, t - h * 0.5, x + 2.5, t + 2);
+      ctx.closePath();
+      ctx.fillStyle = css(st.accent.base);
+      ctx.fill();
+      inkStroke(ctx, st.ink, 1.5);
+    }
   }
 }
 
@@ -1023,7 +1124,28 @@ function cabin(ctx: CanvasRenderingContext2D, L: ShipLayout, r: ReturnType<typeo
   ctx.fillRect(x0, top, x1 - x0, 7);
   ctx.strokeStyle = css(st.cabin.wallShadow, 0.7);
   ctx.lineWidth = 1.3;
-  for (let x = x0 + 13; x < x1; x += 12) ((ctx.beginPath(), ctx.moveTo(x, top), ctx.lineTo(x, bottom)), ctx.stroke());
+  if (st.feat.pattern === 'stone') {
+    for (let y = top + 10, r2 = 0; y < bottom; y += 11, r2++) {
+      ctx.beginPath();
+      ctx.moveTo(x0, y);
+      ctx.lineTo(x1, y);
+      for (let x = x0 + (r2 % 2) * 9 + 9; x < x1; x += 18) {
+        ctx.moveTo(x, y - 11);
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  } else if (st.feat.pattern === 'bookshelf') {
+    const cols = [0xb89558, 0x3f7a7a, 0xa8433f, 0xd9cdb8, 0x5a6fb0];
+    for (let y = top + 12; y < bottom - 4; y += 16) {
+      for (let x = x0 + 3, i = 0; x < x1 - 4; x += 5, i++) {
+        ctx.fillStyle = css(cols[(i * 7 + Math.round(y)) % cols.length], 0.9);
+        ctx.fillRect(x, y - 11 + (i % 3), 4, 11 - (i % 3));
+      }
+      ctx.fillStyle = css(st.wood.base);
+      ctx.fillRect(x0, y, x1 - x0, 2.5);
+    }
+  } else for (let x = x0 + 13; x < x1; x += 12) ((ctx.beginPath(), ctx.moveTo(x, top), ctx.lineTo(x, bottom)), ctx.stroke());
   ctx.restore();
   ctx.beginPath();
   ctx.rect(x0, top, x1 - x0, bottom - top);
@@ -1068,36 +1190,123 @@ function cabin(ctx: CanvasRenderingContext2D, L: ShipLayout, r: ReturnType<typeo
       inkStroke(ctx, st.ink, 2.2);
     }
   }
-  // roof
-  const roof = new Path2D();
-  roof.moveTo(r.x - 7, top + 4);
-  roof.lineTo(r.x + r.w + 7, top + 4);
-  roof.lineTo(r.x + r.w - 3, r.y + 9);
-  roof.quadraticCurveTo(r.cx, r.y - 1, r.x + 3, r.y + 9);
-  roof.closePath();
-  ctx.fillStyle = css(st.cabin.roof);
-  ctx.fill(roof);
-  ctx.save();
-  ctx.clip(roof);
-  ctx.fillStyle = css(st.cabin.roofShadow);
-  ctx.fillRect(r.x - 10, top - 3, r.w + 20, 10);
-  ctx.strokeStyle = css(st.cabin.roofShadow);
-  ctx.lineWidth = 1.5;
-  for (let x = r.x; x < r.x + r.w + 8; x += 9) ((ctx.beginPath(), ctx.moveTo(x, top + 4), ctx.lineTo(x + 3, r.y + 4)), ctx.stroke());
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.fillRect(r.x + 8, r.y + 7, r.w * 0.45, 2.5);
-  ctx.restore();
-  ctx.lineJoin = 'round';
-  ctx.strokeStyle = css(st.ink);
-  ctx.lineWidth = 3;
-  ctx.stroke(roof);
-  // scalloped trim under the eaves
-  ctx.fillStyle = css(st.neon[0] ?? st.trim.base);
-  for (let x = r.x - 4; x < r.x + r.w + 4; x += 9) {
+  // roof (per skin)
+  const kind = st.feat.cabinRoof;
+  if (kind === 'crenel') {
+    // stone tower: battlement top
     ctx.beginPath();
-    ctx.arc(x + 4.5, top + 4, 4.2, 0, Math.PI);
+    ctx.rect(r.x - 2, top - 6, r.w + 4, 12);
+    ctx.fillStyle = css(st.trim.base);
     ctx.fill();
-    inkStroke(ctx, st.ink, 1.4);
+    inkStroke(ctx, st.ink, 2.6);
+    for (let x = r.x - 2; x < r.x + r.w; x += 16) {
+      ctx.beginPath();
+      ctx.roundRect(x, top - 18, 10, 13, 1.5);
+      ctx.fillStyle = css(st.trim.base);
+      ctx.fill();
+      ctx.fillStyle = css(st.trim.shadow);
+      ctx.fillRect(x + 6, top - 16, 3, 10);
+      ctx.beginPath();
+      ctx.roundRect(x, top - 18, 10, 13, 1.5);
+      inkStroke(ctx, st.ink, 2);
+    }
+    // a little banner
+    ctx.beginPath();
+    ctx.moveTo(r.cx, top - 18);
+    ctx.lineTo(r.cx, top - 34);
+    inkStroke(ctx, st.ink, 2);
+    ctx.beginPath();
+    ctx.moveTo(r.cx, top - 34);
+    ctx.lineTo(r.cx - 13, top - 30);
+    ctx.lineTo(r.cx, top - 26);
+    ctx.closePath();
+    ctx.fillStyle = css(st.flag.base);
+    ctx.fill();
+    inkStroke(ctx, st.ink, 1.6);
+  } else if (kind === 'thatch') {
+    const roof = new Path2D();
+    roof.moveTo(r.x - 9, top + 6);
+    roof.quadraticCurveTo(r.cx, r.y - 14, r.x + r.w + 9, top + 6);
+    roof.closePath();
+    ctx.fillStyle = css(st.cabin.roof);
+    ctx.fill(roof);
+    ctx.save();
+    ctx.clip(roof);
+    ctx.strokeStyle = css(st.cabin.roofShadow);
+    ctx.lineWidth = 1.4;
+    for (let x = r.x - 10; x < r.x + r.w + 10; x += 5) ((ctx.beginPath(), ctx.moveTo(x, top + 8), ctx.lineTo(x + (x - r.cx) * 0.25, r.y - 6)), ctx.stroke());
+    ctx.restore();
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = css(st.ink);
+    ctx.lineWidth = 3;
+    ctx.stroke(roof);
+    // straw fringe
+    ctx.strokeStyle = css(st.cabin.roofShadow);
+    ctx.lineWidth = 1.6;
+    for (let x = r.x - 7; x < r.x + r.w + 8; x += 4) ((ctx.beginPath(), ctx.moveTo(x, top + 5), ctx.lineTo(x + 1, top + 10 + (x % 3))), ctx.stroke());
+  } else if (kind === 'dome') {
+    const roof = new Path2D();
+    roof.moveTo(r.x - 4, top + 5);
+    roof.bezierCurveTo(r.x - 2, r.y - 10, r.x + r.w + 2, r.y - 10, r.x + r.w + 4, top + 5);
+    roof.closePath();
+    ctx.fillStyle = css(st.cabin.roof);
+    ctx.fill(roof);
+    ctx.save();
+    ctx.clip(roof);
+    ctx.fillStyle = css(st.cabin.roofShadow);
+    ctx.fillRect(r.cx + 6, r.y - 12, r.w, 40);
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath();
+    ctx.ellipse(r.cx - 12, r.y + 4, 7, 3, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = css(st.ink);
+    ctx.lineWidth = 3;
+    ctx.stroke(roof);
+    // finial
+    ctx.beginPath();
+    ctx.arc(r.cx, r.y - 6, 4, 0, Math.PI * 2);
+    ctx.fillStyle = css(st.trim.base);
+    ctx.fill();
+    inkStroke(ctx, st.ink, 1.8);
+    ctx.beginPath();
+    ctx.rect(r.x - 4, top + 2, r.w + 8, 5);
+    ctx.fillStyle = css(st.trim.base);
+    ctx.fill();
+    inkStroke(ctx, st.ink, 1.8);
+  } else {
+  // roof
+    const roof = new Path2D();
+    roof.moveTo(r.x - 7, top + 4);
+    roof.lineTo(r.x + r.w + 7, top + 4);
+    roof.lineTo(r.x + r.w - 3, r.y + 9);
+    roof.quadraticCurveTo(r.cx, r.y - 1, r.x + 3, r.y + 9);
+    roof.closePath();
+    ctx.fillStyle = css(st.cabin.roof);
+    ctx.fill(roof);
+    ctx.save();
+    ctx.clip(roof);
+    ctx.fillStyle = css(st.cabin.roofShadow);
+    ctx.fillRect(r.x - 10, top - 3, r.w + 20, 10);
+    ctx.strokeStyle = css(st.cabin.roofShadow);
+    ctx.lineWidth = 1.5;
+    for (let x = r.x; x < r.x + r.w + 8; x += 9) ((ctx.beginPath(), ctx.moveTo(x, top + 4), ctx.lineTo(x + 3, r.y + 4)), ctx.stroke());
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(r.x + 8, r.y + 7, r.w * 0.45, 2.5);
+    ctx.restore();
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = css(st.ink);
+    ctx.lineWidth = 3;
+    ctx.stroke(roof);
+    // scalloped trim under the eaves
+    ctx.fillStyle = css(st.neon[0] ?? st.trim.base);
+    for (let x = r.x - 4; x < r.x + r.w + 4; x += 9) {
+      ctx.beginPath();
+      ctx.arc(x + 4.5, top + 4, 4.2, 0, Math.PI);
+      ctx.fill();
+      inkStroke(ctx, st.ink, 1.4);
+    }
   }
   // lantern on the bow-side corner
   const lx = x1 + 1;
@@ -1480,6 +1689,7 @@ function engine(ctx: CanvasRenderingContext2D, r: ReturnType<typeof rectOf>, st:
 export function paintInterior(T: PaintTarget, L: ShipLayout, st: ShipStyle) {
   const ctx = T.ctx;
   ctx.clearRect(0, 0, T.canvas.width, T.canvas.height);
+  if (st.feat.noInterior) return;
   shipXf(ctx, T, L);
   const shape = new Path2D();
   for (const loop of L.outline) {

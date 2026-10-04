@@ -3,7 +3,7 @@
  * cartoon smoke puffs, plus small vector props drawn with Pixi Graphics (cannon barrel, core orb, flames).
  */
 import { CanvasSource, Graphics, Texture } from 'pixi.js';
-import { ShipStyle, EmblemKind } from './styles';
+import { ShipStyle, EmblemKind, DebrisKind } from './styles';
 import { css, mix, rng } from './util';
 
 const RES = 2;
@@ -53,6 +53,10 @@ export function drawEmblem(g: CanvasRenderingContext2D, kind: EmblemKind, s: num
     g.shadowBlur = 10;
     g.fillStyle = '#ffffff';
     g.fill();
+    g.restore();
+    return;
+  }
+  if (drawEmblemExtra(g, kind, s, fill, shade, ink, glow, eyeCol)) {
     g.restore();
     return;
   }
@@ -166,6 +170,247 @@ export function drawEmblem(g: CanvasRenderingContext2D, kind: EmblemKind, s: num
     g.stroke();
   }
   g.restore();
+}
+
+
+/** emblems beyond the skulls/crescent; returns false if `kind` is not handled here */
+function drawEmblemExtra(g: CanvasRenderingContext2D, kind: EmblemKind, s: number, fill: string, shade: string, ink: string, glow: string | undefined, eye: string): boolean {
+  const blob = (p: Path2D, w = 4) => {
+    g.strokeStyle = ink;
+    g.lineWidth = w;
+    g.stroke(p);
+    g.fillStyle = fill;
+    g.fill(p);
+  };
+  switch (kind) {
+    case 'paw': {
+      const p = new Path2D();
+      p.ellipse(0, s * 0.12, s * 0.26, s * 0.22, 0, 0, Math.PI * 2);
+      for (const [x, y, r] of [[-s * 0.3, -s * 0.12, 0.1], [-s * 0.11, -s * 0.3, 0.11], [s * 0.11, -s * 0.3, 0.11], [s * 0.3, -s * 0.12, 0.1]]) {
+        p.moveTo(x + s * r, y);
+        p.ellipse(x, y, s * r, s * r * 1.2, 0, 0, Math.PI * 2);
+      }
+      blob(p);
+      g.save();
+      g.clip(p);
+      g.fillStyle = shade;
+      g.fillRect(-s, s * 0.18, s * 2, s);
+      g.restore();
+      g.fillStyle = 'rgba(255,255,255,0.7)';
+      g.beginPath();
+      g.ellipse(-s * 0.08, s * 0.04, s * 0.07, s * 0.04, -0.5, 0, Math.PI * 2);
+      g.fill();
+      return true;
+    }
+    case 'duck': {
+      // rubber duck silhouette with an eye patch
+      const p = new Path2D();
+      p.ellipse(-s * 0.05, s * 0.16, s * 0.4, s * 0.22, 0, 0, Math.PI * 2);
+      p.moveTo(s * 0.32, -s * 0.18);
+      p.arc(s * 0.12, -s * 0.18, s * 0.2, 0, Math.PI * 2);
+      blob(p);
+      const beak = new Path2D();
+      beak.moveTo(s * 0.28, -s * 0.2);
+      beak.quadraticCurveTo(s * 0.5, -s * 0.22, s * 0.5, -s * 0.12);
+      beak.quadraticCurveTo(s * 0.4, -s * 0.06, s * 0.27, -s * 0.1);
+      beak.closePath();
+      g.fillStyle = '#ff8a1a';
+      g.fill(beak);
+      g.strokeStyle = ink;
+      g.lineWidth = 2.5;
+      g.stroke(beak);
+      // patch + strap
+      g.beginPath();
+      g.moveTo(-s * 0.06, -s * 0.32);
+      g.lineTo(s * 0.3, -s * 0.06);
+      g.strokeStyle = eye;
+      g.lineWidth = 2;
+      g.stroke();
+      g.fillStyle = eye;
+      g.beginPath();
+      g.ellipse(s * 0.15, -s * 0.2, s * 0.065, s * 0.055, 0, 0, Math.PI * 2);
+      g.fill();
+      return true;
+    }
+    case 'tower': {
+      const p = new Path2D();
+      const w = s * 0.42;
+      p.moveTo(-w, s * 0.4);
+      p.lineTo(-w * 0.8, -s * 0.2);
+      for (let i = 0; i < 4; i++) {
+        const x0 = -w * 0.8 + (i / 3.5) * w * 1.6;
+        p.lineTo(x0, -s * 0.38);
+        p.lineTo(x0 + w * 0.22, -s * 0.38);
+        p.lineTo(x0 + w * 0.22, -s * 0.24);
+        p.lineTo(Math.min(w * 0.8, x0 + w * 0.46), -s * 0.24);
+      }
+      p.lineTo(w * 0.8, -s * 0.2);
+      p.lineTo(w, s * 0.4);
+      p.closePath();
+      blob(p);
+      g.fillStyle = eye === ink ? shade : eye;
+      g.beginPath();
+      g.moveTo(-s * 0.1, s * 0.4);
+      g.lineTo(-s * 0.1, s * 0.12);
+      g.arc(0, s * 0.12, s * 0.1, Math.PI, 0);
+      g.lineTo(s * 0.1, s * 0.4);
+      g.fill();
+      g.strokeStyle = shade;
+      g.lineWidth = 1.5;
+      for (const y of [-s * 0.05, s * 0.1, s * 0.25]) ((g.beginPath(), g.moveTo(-w * 0.8, y), g.lineTo(w * 0.85, y)), g.stroke());
+      return true;
+    }
+    case 'kraken': {
+      const p = new Path2D();
+      p.ellipse(0, -s * 0.14, s * 0.26, s * 0.24, 0, 0, Math.PI * 2);
+      blob(p);
+      g.lineCap = 'round';
+      for (let i = 0; i < 5; i++) {
+        const x = -s * 0.22 + i * s * 0.11;
+        const dir = i < 2 ? -1 : i > 2 ? 1 : 0;
+        const tp = new Path2D();
+        tp.moveTo(x, s * 0.04);
+        tp.bezierCurveTo(x + dir * s * 0.1, s * 0.2, x - dir * s * 0.05, s * 0.32, x + dir * s * 0.18, s * 0.38);
+        g.strokeStyle = ink;
+        g.lineWidth = s * 0.1 + 3;
+        g.stroke(tp);
+        g.strokeStyle = fill;
+        g.lineWidth = s * 0.1;
+        g.stroke(tp);
+      }
+      g.fillStyle = eye;
+      for (const sx of [-1, 1]) ((g.beginPath(), g.ellipse(sx * s * 0.1, -s * 0.12, s * 0.055, s * 0.075, 0, 0, Math.PI * 2)), g.fill());
+      return true;
+    }
+    case 'book': {
+      const p = new Path2D();
+      p.moveTo(0, -s * 0.22);
+      p.quadraticCurveTo(-s * 0.22, -s * 0.34, -s * 0.46, -s * 0.24);
+      p.lineTo(-s * 0.46, s * 0.26);
+      p.quadraticCurveTo(-s * 0.22, s * 0.16, 0, s * 0.28);
+      p.quadraticCurveTo(s * 0.22, s * 0.16, s * 0.46, s * 0.26);
+      p.lineTo(s * 0.46, -s * 0.24);
+      p.quadraticCurveTo(s * 0.22, -s * 0.34, 0, -s * 0.22);
+      p.closePath();
+      blob(p);
+      g.strokeStyle = shade;
+      g.lineWidth = 1.6;
+      for (let i = 0; i < 4; i++) {
+        const y = -s * 0.14 + i * s * 0.09;
+        g.beginPath();
+        g.moveTo(-s * 0.38, y);
+        g.quadraticCurveTo(-s * 0.2, y - s * 0.06, -s * 0.06, y);
+        g.moveTo(s * 0.06, y);
+        g.quadraticCurveTo(s * 0.2, y - s * 0.06, s * 0.38, y);
+        g.stroke();
+      }
+      g.beginPath();
+      g.moveTo(0, -s * 0.22);
+      g.lineTo(0, s * 0.28);
+      g.strokeStyle = ink;
+      g.lineWidth = 2;
+      g.stroke();
+      // arcane eye above the book
+      g.beginPath();
+      g.ellipse(0, -s * 0.4, s * 0.12, s * 0.06, 0, 0, Math.PI * 2);
+      g.fillStyle = fill;
+      g.fill();
+      g.strokeStyle = ink;
+      g.stroke();
+      g.fillStyle = eye;
+      g.beginPath();
+      g.arc(0, -s * 0.4, s * 0.035, 0, Math.PI * 2);
+      g.fill();
+      return true;
+    }
+    case 'fishbone': {
+      g.lineCap = 'round';
+      const spine = new Path2D();
+      spine.moveTo(-s * 0.36, 0);
+      spine.lineTo(s * 0.22, 0);
+      for (let i = 0; i < 5; i++) {
+        const x = -s * 0.24 + i * s * 0.1;
+        spine.moveTo(x, 0);
+        spine.quadraticCurveTo(x + s * 0.04, -s * 0.12, x - s * 0.02, -s * 0.2);
+        spine.moveTo(x, 0);
+        spine.quadraticCurveTo(x + s * 0.04, s * 0.12, x - s * 0.02, s * 0.2);
+      }
+      g.strokeStyle = ink;
+      g.lineWidth = 6;
+      g.stroke(spine);
+      g.strokeStyle = fill;
+      g.lineWidth = 3;
+      g.stroke(spine);
+      const head = new Path2D();
+      head.moveTo(s * 0.2, -s * 0.16);
+      head.quadraticCurveTo(s * 0.5, -s * 0.12, s * 0.5, 0);
+      head.quadraticCurveTo(s * 0.5, s * 0.12, s * 0.2, s * 0.16);
+      head.closePath();
+      const tail = new Path2D();
+      tail.moveTo(-s * 0.34, 0);
+      tail.lineTo(-s * 0.5, -s * 0.16);
+      tail.lineTo(-s * 0.46, 0);
+      tail.lineTo(-s * 0.5, s * 0.16);
+      tail.closePath();
+      blob(head, 3.5);
+      blob(tail, 3.5);
+      g.fillStyle = eye;
+      g.beginPath();
+      g.arc(s * 0.34, -s * 0.03, s * 0.045, 0, Math.PI * 2);
+      g.fill();
+      return true;
+    }
+    case 'mask': {
+      const p = new Path2D();
+      p.moveTo(-s * 0.46, -s * 0.12);
+      p.quadraticCurveTo(-s * 0.24, -s * 0.26, 0, -s * 0.12);
+      p.quadraticCurveTo(s * 0.24, -s * 0.26, s * 0.46, -s * 0.12);
+      p.quadraticCurveTo(s * 0.42, s * 0.16, s * 0.18, s * 0.16);
+      p.quadraticCurveTo(s * 0.04, s * 0.16, 0, s * 0.06);
+      p.quadraticCurveTo(-s * 0.04, s * 0.16, -s * 0.18, s * 0.16);
+      p.quadraticCurveTo(-s * 0.42, s * 0.16, -s * 0.46, -s * 0.12);
+      p.closePath();
+      // feathers
+      for (let i = 0; i < 3; i++) {
+        const f = new Path2D();
+        const a = -0.5 + i * 0.4;
+        f.ellipse(s * 0.3 + i * s * 0.05, -s * 0.34, s * 0.06, s * 0.2, a, 0, Math.PI * 2);
+        g.strokeStyle = ink;
+        g.lineWidth = 3;
+        g.stroke(f);
+        g.fillStyle = shade;
+        g.fill(f);
+      }
+      blob(p);
+      g.fillStyle = eye;
+      for (const sx of [-1, 1]) {
+        g.beginPath();
+        g.ellipse(sx * s * 0.2, -s * 0.02, s * 0.1, s * 0.055, sx * 0.25, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.fillStyle = 'rgba(255,255,255,0.7)';
+      g.beginPath();
+      g.ellipse(-s * 0.3, -s * 0.12, s * 0.06, s * 0.025, -0.3, 0, Math.PI * 2);
+      g.fill();
+      return true;
+    }
+    case 'question': {
+      g.shadowColor = glow ?? fill;
+      g.shadowBlur = 12;
+      g.font = `bold ${Math.round(s * 0.9)}px "Rubik Glitch", Anton, sans-serif`;
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillStyle = fill;
+      g.fillText('?', 0, s * 0.04);
+      g.shadowBlur = 0;
+      g.fillStyle = 'rgba(0,229,255,0.7)';
+      g.fillText('?', -s * 0.04, s * 0.02);
+      g.fillStyle = fill;
+      g.fillText('?', 0, s * 0.04);
+      return true;
+    }
+  }
+  return false;
 }
 
 // ---------------------------------------------------------------- sails
@@ -314,6 +559,7 @@ function paintSail(g: CanvasRenderingContext2D, st: ShipStyle, w: number, h: num
       g.restore();
     }
   }
+  paintSailDeco(g, st, w, h, b, sway, top);
   // emblem
   const es = Math.min(w, h) * 0.6;
   g.save();
@@ -393,6 +639,117 @@ function paintSail(g: CanvasRenderingContext2D, st: ShipStyle, w: number, h: num
     g.beginPath();
     g.ellipse(x, 2, 2.2, 3.4, 0, 0, Math.PI * 2);
     g.stroke();
+  }
+}
+
+
+function paintSailDeco(g: CanvasRenderingContext2D, st: ShipStyle, w: number, h: number, b: number, sway: number, top: number) {
+  const ink = css(st.ink);
+  const hw = w / 2;
+  const R = rng(4321);
+  switch (st.feat.sailDeco) {
+    case 'sock': {
+      // a striped sock sewn on as a patch (lower corner)
+      g.save();
+      g.translate(-hw * 0.55 + sway * 0.4, h * 0.62);
+      g.rotate(-0.35);
+      const sock = new Path2D();
+      sock.moveTo(-7, -16);
+      sock.lineTo(7, -16);
+      sock.lineTo(7, 4);
+      sock.quadraticCurveTo(7, 12, 16, 12);
+      sock.quadraticCurveTo(22, 14, 18, 20);
+      sock.lineTo(-2, 20);
+      sock.quadraticCurveTo(-7, 20, -7, 12);
+      sock.closePath();
+      g.fillStyle = '#f4f0e6';
+      g.fill(sock);
+      g.save();
+      g.clip(sock);
+      g.fillStyle = '#e8322e';
+      for (let y = -16; y < 22; y += 8) g.fillRect(-10, y, 34, 4);
+      g.restore();
+      g.strokeStyle = ink;
+      g.lineWidth = 2;
+      g.stroke(sock);
+      g.strokeStyle = css(st.sail.stitch);
+      g.lineWidth = 1;
+      g.setLineDash([2, 2]);
+      g.stroke(sock);
+      g.setLineDash([]);
+      g.restore();
+      break;
+    }
+    case 'writing': {
+      g.strokeStyle = css(st.sail.stitch, 0.75);
+      g.lineWidth = 1.2;
+      for (let row = 0; row < 7; row++) {
+        const y = top + 12 + row * ((h - 20) / 7);
+        let x = -hw + 8 + R() * 6;
+        while (x < hw - 10) {
+          const len = 6 + R() * 14;
+          g.beginPath();
+          g.moveTo(x + sway * 0.3, y);
+          for (let k = 0; k <= len; k += 3) g.lineTo(x + k + sway * 0.3, y + Math.sin(k * 1.3 + row) * 1.4);
+          g.stroke();
+          x += len + 4 + R() * 4;
+        }
+      }
+      // rune circle
+      g.strokeStyle = css(st.accent.shadow, 0.8);
+      g.lineWidth = 1.6;
+      g.beginPath();
+      g.arc(hw * 0.55 + sway * 0.4, top + 18, 9, 0, Math.PI * 2);
+      g.moveTo(hw * 0.55 + sway * 0.4 - 6, top + 18);
+      g.lineTo(hw * 0.55 + sway * 0.4 + 6, top + 18);
+      g.stroke();
+      break;
+    }
+    case 'constellation': {
+      const stars: [number, number][] = [];
+      for (let i = 0; i < 9; i++) stars.push([(R() - 0.5) * w * 0.85 + sway * 0.4, top + 8 + R() * (h - 14)]);
+      g.strokeStyle = 'rgba(200,250,255,0.45)';
+      g.lineWidth = 1;
+      g.beginPath();
+      stars.forEach((p, i) => (i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])));
+      g.stroke();
+      g.fillStyle = '#ffffff';
+      g.shadowColor = css(st.accent.base);
+      g.shadowBlur = 6;
+      for (const [x, y] of stars) {
+        const r = 1.2 + R() * 1.6 + b * 0.4;
+        g.beginPath();
+        g.moveTo(x, y - r * 2);
+        g.lineTo(x + r * 0.5, y - r * 0.5);
+        g.lineTo(x + r * 2, y);
+        g.lineTo(x + r * 0.5, y + r * 0.5);
+        g.lineTo(x, y + r * 2);
+        g.lineTo(x - r * 0.5, y + r * 0.5);
+        g.lineTo(x - r * 2, y);
+        g.lineTo(x - r * 0.5, y - r * 0.5);
+        g.closePath();
+        g.fill();
+      }
+      g.shadowBlur = 0;
+      break;
+    }
+    case 'lace': {
+      g.fillStyle = css(st.accent.base);
+      g.strokeStyle = ink;
+      g.lineWidth = 1.2;
+      for (let x = -hw - 4; x < hw + 4; x += 8) {
+        g.beginPath();
+        g.arc(x + 4, top + 3, 4.2, 0, Math.PI);
+        g.fill();
+        g.stroke();
+        g.fillStyle = css(st.sail.shadow);
+        g.beginPath();
+        g.arc(x + 4, top + 4.5, 1.3, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = css(st.accent.base);
+      }
+      break;
+    }
   }
 }
 
@@ -512,6 +869,168 @@ export function shardTexture(): Texture {
     g.lineWidth = 1.6;
     g.stroke();
   });
+  cache.set(key, [t]);
+  return t;
+}
+
+
+/** White-based debris sprites per material (tint them). */
+export function debrisTexture(kind: DebrisKind): Texture {
+  if (kind === 'wood') return shardTexture();
+  const key = `debris-${kind}`;
+  const hit = cache.get(key);
+  if (hit) return hit[0];
+  const ink = '#171317';
+  let t: Texture;
+  switch (kind) {
+    case 'stone':
+      t = canvasTex(22, 18, (g) => {
+        g.beginPath();
+        g.moveTo(2, 9);
+        g.lineTo(6, 2);
+        g.lineTo(16, 1.5);
+        g.lineTo(21, 8);
+        g.lineTo(17, 16.5);
+        g.lineTo(5, 16);
+        g.closePath();
+        g.fillStyle = '#ffffff';
+        g.fill();
+        g.fillStyle = '#c8c8c8';
+        g.beginPath();
+        g.moveTo(11, 9);
+        g.lineTo(21, 8);
+        g.lineTo(17, 16.5);
+        g.lineTo(9, 16);
+        g.closePath();
+        g.fill();
+        g.strokeStyle = ink;
+        g.lineWidth = 1.8;
+        g.lineJoin = 'round';
+        g.beginPath();
+        g.moveTo(2, 9);
+        g.lineTo(6, 2);
+        g.lineTo(16, 1.5);
+        g.lineTo(21, 8);
+        g.lineTo(17, 16.5);
+        g.lineTo(5, 16);
+        g.closePath();
+        g.stroke();
+      });
+      break;
+    case 'iron':
+      t = canvasTex(20, 14, (g) => {
+        g.beginPath();
+        g.moveTo(1.5, 3);
+        g.lineTo(18, 1.5);
+        g.lineTo(18.5, 12);
+        g.lineTo(3, 12.5);
+        g.closePath();
+        g.fillStyle = '#ffffff';
+        g.fill();
+        g.fillStyle = '#b8b8c0';
+        g.fillRect(2, 9, 16, 3);
+        g.strokeStyle = ink;
+        g.lineWidth = 1.6;
+        g.stroke();
+        g.fillStyle = '#e0e0e8';
+        for (const [x, y] of [[5, 5], [15, 4.5]]) ((g.beginPath(), g.arc(x, y, 1.4, 0, Math.PI * 2)), g.fill());
+      });
+      break;
+    case 'paper':
+      t = canvasTex(18, 22, (g) => {
+        g.beginPath();
+        g.moveTo(2, 2);
+        g.lineTo(13, 1.5);
+        g.lineTo(16.5, 5);
+        g.lineTo(16, 20.5);
+        g.lineTo(2.5, 20);
+        g.closePath();
+        g.fillStyle = '#ffffff';
+        g.fill();
+        g.strokeStyle = ink;
+        g.lineWidth = 1.4;
+        g.stroke();
+        g.strokeStyle = 'rgba(80,60,40,0.6)';
+        g.lineWidth = 1;
+        for (let y = 7; y < 19; y += 3) ((g.beginPath(), g.moveTo(4.5, y), g.lineTo(13.5, y)), g.stroke());
+      });
+      break;
+    case 'bone':
+      t = canvasTex(26, 12, (g) => {
+        const p = new Path2D();
+        p.roundRect(6, 4, 14, 4, 2);
+        for (const [x, y] of [[5, 3.5], [5, 8.5], [21, 3.5], [21, 8.5]]) {
+          p.moveTo(x + 3, y);
+          p.arc(x, y, 3, 0, Math.PI * 2);
+        }
+        g.strokeStyle = ink;
+        g.lineWidth = 3;
+        g.stroke(p);
+        g.fillStyle = '#ffffff';
+        g.fill(p);
+      });
+      break;
+    case 'feather':
+      t = canvasTex(12, 28, (g) => {
+        g.beginPath();
+        g.ellipse(6, 13, 4.5, 11.5, 0.15, 0, Math.PI * 2);
+        g.fillStyle = '#ffffff';
+        g.fill();
+        g.strokeStyle = ink;
+        g.lineWidth = 1.4;
+        g.stroke();
+        g.beginPath();
+        g.moveTo(5, 26);
+        g.lineTo(7, 2);
+        g.stroke();
+      });
+      break;
+    case 'coral':
+      t = canvasTex(20, 20, (g) => {
+        const p = new Path2D();
+        p.moveTo(10, 19);
+        p.lineTo(10, 10);
+        p.lineTo(4, 3);
+        p.moveTo(10, 11);
+        p.lineTo(16, 5);
+        p.moveTo(13, 8);
+        p.lineTo(17, 12);
+        g.lineCap = 'round';
+        g.strokeStyle = ink;
+        g.lineWidth = 6;
+        g.stroke(p);
+        g.strokeStyle = '#ffffff';
+        g.lineWidth = 3.4;
+        g.stroke(p);
+      });
+      break;
+    case 'rubber':
+      t = canvasTex(18, 16, (g) => {
+        g.beginPath();
+        g.moveTo(3, 8);
+        g.quadraticCurveTo(2, 2, 9, 2);
+        g.quadraticCurveTo(17, 2, 16, 9);
+        g.quadraticCurveTo(15, 15, 8, 14);
+        g.quadraticCurveTo(3, 14, 3, 8);
+        g.fillStyle = '#ffffff';
+        g.fill();
+        g.strokeStyle = ink;
+        g.lineWidth = 1.8;
+        g.stroke();
+        g.fillStyle = 'rgba(255,255,255,1)';
+        g.beginPath();
+        g.ellipse(7, 5.5, 2.5, 1.2, -0.4, 0, Math.PI * 2);
+        g.fill();
+      });
+      break;
+    case 'glitch':
+    default:
+      t = canvasTex(8, 8, (g) => {
+        g.fillStyle = '#ffffff';
+        g.fillRect(0, 0, 8, 8);
+      });
+      break;
+  }
   cache.set(key, [t]);
   return t;
 }

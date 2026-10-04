@@ -190,7 +190,7 @@ export interface RevealInfo {
   isNew: boolean;
   orbs: number;
   /** duplicate star bar */
-  dup?: { before: number; after: number; need: number; star: number; missing: number; ready: boolean };
+  dup?: { before: number; after: number; need: number; star: number; missing: number; ready: boolean; minLevel: number };
   dex: [number, number, number];
   chips: string[];
   mutation: string | null;
@@ -216,7 +216,7 @@ export function revealInfo(species: string, isNew: boolean, orbs: number, mutati
     const before = Math.max(0, after - orbs);
     const need = owned ? starNeed(owned) : 0;
     const missingBefore = Math.max(0, need - before);
-    dup = { before, after, need, star: (owned?.stars ?? 1) + 1, missing: missingBefore, ready: owned ? canStarUp(owned) : false };
+    dup = { before, after, need, star: (owned?.stars ?? 1) + 1, missing: missingBefore, ready: owned ? canStarUp(owned) : false, minLevel: owned ? starMinLevel(owned.stars) : 0 };
     caption = pickCopy('duplicate')
       .replace('{orbs}', String(orbs))
       .replace('{name}', def.name)

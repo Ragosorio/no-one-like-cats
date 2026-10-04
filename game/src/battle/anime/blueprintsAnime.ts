@@ -91,4 +91,60 @@ export const ANIME_BLUEPRINTS: Record<string, ShipBlueprint> = {
       { kind: 'powder', x: 14, y: 8, w: 1, h: 1 },
     ],
   },
+  /** El Patito Pirata (tutorial): a round rubber-duck tub; the head/beak is decor at the bow. */
+  duckling: {
+    cols: 14,
+    rows: 8,
+    hull: [
+      '..............',
+      '..............',
+      '..............',
+      '..............',
+      '.WWWWWWWWWWW..',
+      'WWWWWWWWWWWWW.',
+      'WWWWWWWWWWWWW.',
+      '.WWWWWWWWWWW..',
+    ],
+    modules: [
+      { kind: 'mast', x: 5, y: 0, w: 1, h: 4 },
+      { kind: 'catroom', x: 1, y: 2, w: 2, h: 2, slot: 0 },
+      { kind: 'catroom', x: 7, y: 2, w: 2, h: 2, slot: 1 },
+      { kind: 'cannon', x: 9, y: 3, w: 2, h: 1 },
+      { kind: 'core', x: 6, y: 5, w: 2, h: 2 },
+      { kind: 'catroom', x: 2, y: 5, w: 2, h: 2, slot: 2 },
+      { kind: 'powder', x: 10, y: 6, w: 1, h: 1 },
+    ],
+  },
+  /** Guardia de Piedra: floating fortress with a tower at each end. */
+  fortress: {
+    cols: 16,
+    rows: 11,
+    hull: [
+      '................',
+      '................',
+      '................',
+      'II..........II..',
+      'II..........II..',
+      'III........III..',
+      'IIIIIIIIIIIIIIII',
+      'IIIIIIIIIIIIIIII',
+      '.IIIIIIIIIIIIII.',
+      '..IIIIIIIIIIII..',
+      '...IIIIIIIIII...',
+    ],
+    modules: [
+      { kind: 'mast', x: 5, y: 2, w: 1, h: 4 },
+      { kind: 'catroom', x: 0, y: 1, w: 2, h: 2, slot: 0 },
+      { kind: 'catroom', x: 7, y: 4, w: 2, h: 2, slot: 1 },
+      { kind: 'cannon', x: 12, y: 2, w: 2, h: 1 },
+      { kind: 'core', x: 7, y: 7, w: 2, h: 2 },
+      { kind: 'catroom', x: 3, y: 7, w: 2, h: 2, slot: 2 },
+      { kind: 'powder', x: 11, y: 8, w: 1, h: 1 },
+    ],
+  },
 };
+
+/** Same plan with another hull material letter ('W' wood, 'I' iron, 'C' crystal, 'B' bone, 'V' void). */
+export function withMaterial(bp: ShipBlueprint, ch: 'W' | 'I' | 'C' | 'B' | 'V', keepCrystal = true): ShipBlueprint {
+  return { ...bp, hull: bp.hull.map((r) => r.replace(keepCrystal ? /[WIBV]/g : /[WICBV]/g, ch)) };
+}

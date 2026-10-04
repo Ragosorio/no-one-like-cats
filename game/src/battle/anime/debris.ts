@@ -30,6 +30,8 @@ export interface DebrisBody {
   big?: boolean;
   /** stepped (12 fps) motion like the anime FX */
   stepped?: boolean;
+  /** paper / feathers: slow swaying fall */
+  flutter?: boolean;
   acc?: number;
 }
 
@@ -79,10 +81,21 @@ function tick(_t: number, dms: number) {
     }
     if (b.state === 'air') {
       b.vy += b.g * step;
+      if (b.flutter) {
+        b.vy = Math.min(b.vy, 70);
+        b.vx *= 1 - 1.8 * step;
+        o.x += Math.sin(b.age! * 6 + o.y * 0.01) * 60 * step;
+        o.rotation = Math.sin(b.age! * 5) * 0.9;
+      } else o.rotation += b.vr * step;
       o.x += b.vx * step;
       o.y += b.vy * step;
-      o.rotation += b.vr * step;
-      if (b.kind === 'shard' && b.life && b.age! > b.life) o.alpha = Math.max(0, o.alpha - step * 3);
+      if (b.kind === 'shard' && b.life && b.age! > b.life) {
+        o.alpha = Math.max(0, o.alpha - step * 3);
+        if (o.alpha <= 0.01) {
+          kill(i);
+          continue;
+        }
+      }
       if (o.y >= b.waterY && b.vy > 0) {
         if (b.kind === 'drop' || b.kind === 'shard') {
           kill(i);
