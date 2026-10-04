@@ -10,6 +10,8 @@ import '@fontsource/rubik-glitch';
 import '@fontsource/space-grotesk';
 import '@fontsource/space-grotesk/700.css';
 import './island/safety';
+import './core/safety';
+import '@fontsource/playfair-display/400-italic.css';
 import { Ticker } from 'pixi.js';
 import { game } from './core/App';
 import { scenes } from './core/scenes';

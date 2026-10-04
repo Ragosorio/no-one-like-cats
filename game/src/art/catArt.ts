@@ -12,6 +12,7 @@ export const ELEMENT_FX: Record<string, { main: number; accent: number; dark: nu
   nature: { main: 0x5fbf4a, accent: 0xd4f27a, dark: 0x1f4a2a, particle: 'leaf' },
   earth: { main: 0xa8743f, accent: 0xe0b77a, dark: 0x3d2a1a, particle: 'rock' },
   electric: { main: 0xffe14a, accent: 0xffffff, dark: 0x3a3200, particle: 'spark' },
+  storm: { main: 0xffe14a, accent: 0x00e5ff, dark: 0x1f2b4a, particle: 'spark' },
   ice: { main: 0xa7e8d7, accent: 0xffffff, dark: 0x204a7a, particle: 'shard' },
   wind: { main: 0xc6f0e4, accent: 0xffffff, dark: 0x3a6f6a, particle: 'wisp' },
   magic: { main: 0x8a5cff, accent: 0xff7ab8, dark: 0x231626, particle: 'rune' },
