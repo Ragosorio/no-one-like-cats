@@ -700,3 +700,8 @@ export function buyCaja(id: string): Granted | null {
   if (cs().hist!.length > 40) cs().hist!.length = 40;
   return g;
 }
+
+// wake E11 when the Mesa unlocks (Jefe 1), not only on the first visit
+G.tickers.push(() => {
+  if (G.s.campaign.bossesDefeated >= 1 && !G.has('gambit_open') && !isCasinoHidden()) ensureGambitOpen();
+});

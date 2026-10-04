@@ -143,7 +143,7 @@ export interface GameState {
   /** Tienda: decorations owned (by id → count) and placed on the island */
   decor?: { owned: Record<string, number>; placed: { uid: string; id: string; region: string; x: number; y: number }[] };
   /** Casino + Gacha: pull tickets, per-banner pity counters, stats */
-  casino?: { tickets: number; pity: Record<string, number>; stats: Record<string, number> };
+  casino?: { tickets: number; pity: Record<string, number>; stats: Record<string, number>; chips?: number; sync?: unknown; gemBets?: unknown; hist?: unknown; welcomed?: boolean; streak?: number; [k: string]: unknown };
   /** cat accessories (gacha): owned by id → count, equipped by cat uid → accessory id */
   accessories?: { owned: Record<string, number>; equipped: Record<string, string> };
 }

@@ -10,6 +10,7 @@ import './sys/campaign';
 import './sys/secrets';
 import './sys/workforce';
 import './sys/decor';
+import './sys/casino';
 
 export function newGame() {
   G.reset();

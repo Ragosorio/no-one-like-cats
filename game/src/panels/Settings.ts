@@ -2,6 +2,7 @@
  * Ajustes (GDD 6.21): audio, accesibilidad, Tono (Sin filtro / Familiar) and "borrar partida"
  * with double confirmation. Owned by the story module.
  */
+import { isCasinoHidden, setCasinoHidden } from '../state/sys/casino';
 import { Container, FederatedPointerEvent, Graphics, Text } from 'pixi.js';
 import gsap from 'gsap';
 import { Modal, toast } from '../ui/modal';
@@ -205,6 +206,12 @@ export function openSettings(..._args: unknown[]) {
   });
   tFl.position.set(colW - 140, y);
   b.addChild(lFl, tFl);
+  y += 86;
+  const lCas = rowLabel('OCULTAR CASINO', 'sin mesa, sin fichas, sin tentaciones');
+  lCas.position.set(0, y);
+  const tCas = new Toggle(isCasinoHidden(), (v) => setCasinoHidden(v));
+  tCas.position.set(colW - 140, y);
+  b.addChild(lCas, tCas);
   y += 100;
 
   // ---------------- player profile (name + gender)
