@@ -22,7 +22,7 @@ import {
 
 export const SAVE_VERSION = 1;
 
-export type TimerKind = 'build' | 'habitat_upgrade' | 'farm_upgrade' | 'crop' | 'resonance' | 'yard' | 'expansion' | 'repair';
+export type TimerKind = 'build' | 'habitat_upgrade' | 'farm_upgrade' | 'crop' | 'resonance' | 'yard' | 'expansion' | 'repair' | 'expedition';
 
 export interface Timer {
   id: string;
@@ -122,6 +122,10 @@ export interface GameState {
   counters: Record<string, number>;
   flags: Record<string, boolean>;
   beatsSeen: string[];
+  expeditions: { id: string; zone: number; hours: number; cats: string[]; timerId: string; ready: boolean }[];
+  resQueue: { a: string; b: string }[];
+  /** worker role by cat uid */
+  workers: Record<string, string>;
   stats: { victories: number; defeats: number; modulesDestroyed: number; catsKO: number; goldEarned: number; perfects: number };
 }
 
@@ -177,6 +181,9 @@ export function defaultState(): GameState {
     counters: {},
     flags: {},
     beatsSeen: [],
+    expeditions: [],
+    resQueue: [],
+    workers: {},
     stats: { victories: 0, defeats: 0, modulesDestroyed: 0, catsKO: 0, goldEarned: 0, perfects: 0 },
   };
 }

@@ -62,7 +62,8 @@ export function habitatRate(h: Habitat) {
     const c = getCat(uid);
     if (c) sum += catGold(c);
   }
-  return sum * t.mult * globalGoldMult();
+  const bankers = h.cats.filter((u) => G.s.workers[u] === 'banker').length;
+  return sum * t.mult * (1 + 0.25 * bankers) * globalGoldMult();
 }
 export function habitatCap(h: Habitat) {
   return habitatRate(h) * habitatTier(h.tier).buffer_min * 60;
@@ -87,7 +88,7 @@ export function buildHabitat(element: string): Habitat | null {
   if (!G.spend({ gold: nextHabitatCost() })) return null;
   const h: Habitat = { id: G.uid('h'), element, tier: 1, region: spot.region, plot: spot.plot, buffer: 0, cats: [], busy: true };
   G.s.habitats.push(h);
-  G.startTimer('build', h.id, habitatTier(1).build_s * 1000, `Hábitat de ${element}`, 'mission');
+  G.startTimer('build', h.id, habitatTier(1).build_s * 1000 * buildTimeMul(), `Hábitat de ${element}`, 'mission');
   return h;
 }
 export function canUpgradeHabitat(h: Habitat) {
@@ -103,7 +104,7 @@ export function upgradeHabitat(h: Habitat) {
   G.spend({ gold: next.cost });
   if (next.crystals) G.s.crystals[h.element] -= next.crystals;
   h.busy = true;
-  G.startTimer('habitat_upgrade', h.id, next.build_s * 1000, `Mejorando a ${next.name}`, 'mission', { tier: next.tier });
+  G.startTimer('habitat_upgrade', h.id, next.build_s * 1000 * buildTimeMul(), `Mejorando a ${next.name}`, 'mission', { tier: next.tier });
   return true;
 }
 /** move a cat into a habitat (element rule + capacity) */
@@ -178,7 +179,13 @@ export function harvest(f: FarmPlot) {
   return food;
 }
 export function foodBonus() {
-  return expansionBonus('food');
+  const farmers = G.s.cats.filter((c) => G.s.workers[c.uid] === 'farmer').length;
+  return expansionBonus('food') + 0.2 * Math.min(3, farmers);
+}
+/** build-time multiplier from Constructor workers (−20% each, max 2) */
+export function buildTimeMul() {
+  const n = G.s.cats.filter((c) => G.s.workers[c.uid] === 'builder').length;
+  return 1 - 0.2 * Math.min(2, n);
 }
 export function canUpgradeFarm(f: FarmPlot) {
   return f.level < BAL.farms.upgrade.max_level && !f.busy && G.s.gold >= farmUpgradeCost(f.level + 1);
@@ -239,7 +246,7 @@ G.onTimer('crop', (t) => {
   const f = farm(t.ref);
   if (!f) return;
   f.ready = true;
-  if (G.s.kl >= 21 && G.has('auto_harvest_on')) harvest(f);
+  if (G.s.kl >= 21 && !G.has('auto_harvest_off')) harvest(f);
 });
 G.onTimer('farm_upgrade', (t) => {
   const f = farm(t.ref);

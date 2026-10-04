@@ -8,6 +8,7 @@ import { checkMissions } from './sys/missions';
 import './sys/resonance';
 import './sys/campaign';
 import './sys/secrets';
+import './sys/workforce';
 
 export function newGame() {
   G.reset();
