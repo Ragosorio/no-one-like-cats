@@ -55,7 +55,8 @@ export interface BattleSpec {
   displayMul?: number;
   playerStyle?: ShipStyleId;
   enemyStyle?: ShipStyleId;
-  meta?: { zone: number; stage: number; key: string; boss: boolean; ep: number; sp: number; weaponMk?: number };
+  meta?: { zone: number; stage: number; key: string; boss: boolean; ep: number; sp: number; weaponMk?: number; special?: string };
+  mode?: 'siege' | 'duel';
   onEnd: (r: BattleResult) => void;
 }
 
@@ -132,6 +133,7 @@ export class BattleScene extends Scene {
     this.sim = new Battle({
       seed: sp.seed ?? Math.floor(Math.random() * 1e9),
       waterY: WATER_Y,
+      mode: sp.mode,
       sides: [
         { ...sp.player, origin: { x: 70, y: originY(sp.player.blueprint) }, flip: false },
         { ...sp.enemy, origin: { x: W - 70 - eW, y: originY(sp.enemy.blueprint) }, flip: true },

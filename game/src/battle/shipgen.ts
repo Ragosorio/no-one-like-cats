@@ -153,6 +153,16 @@ export function generateShip(spec: ShipGenSpec): ShipBlueprint {
 
 /** Hand-made ships for story moments. */
 export const STORY_SHIPS: Record<string, ShipBlueprint> = {
+  /** duel platform: a wooden raft for 1–2 cats, no core */
+  duel_raft: {
+    cols: 7,
+    rows: 5,
+    hull: ['.......', '.......', 'WWWWWWW', 'WWWWWWW', '.WWWWW.'],
+    modules: [
+      { kind: 'catroom', x: 1, y: 0, w: 2, h: 2, slot: 0 },
+      { kind: 'catroom', x: 4, y: 0, w: 2, h: 2, slot: 1 },
+    ],
+  },
   patito: {
     cols: 10,
     rows: 8,

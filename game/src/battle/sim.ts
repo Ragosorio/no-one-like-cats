@@ -49,6 +49,8 @@ export interface BattleConfig {
   seed: number;
   waterY: number;
   wind?: number;
+  /** 'duel': cats on small platforms, only crew K.O. wins */
+  mode?: 'siege' | 'duel';
   sides: [SideSetup, SideSetup];
 }
 
@@ -814,9 +816,10 @@ export class Battle {
       const s = this.sides[side];
       const core = s.ship.modules.find((m) => m.kind === 'core');
       let lost: VictoryReason | null = null;
-      if (core && !core.alive) lost = 'core';
+      const duel = this.cfg.mode === 'duel';
+      if (!duel && core && !core.alive) lost = 'core';
       else if (s.cats.length && s.cats.every((c) => c.ko)) lost = 'crew';
-      else if (s.ship.integrity() < 0.28 || s.flood >= 1) lost = 'sunk';
+      else if (!duel && (s.ship.integrity() < 0.28 || s.flood >= 1)) lost = 'sunk';
       if (lost) {
         this.winner = (1 - side) as 0 | 1;
         this.reason = lost;

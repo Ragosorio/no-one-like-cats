@@ -258,3 +258,89 @@ export function claimBossCat(species: string) {
 }
 
 export { catPower };
+
+// ---------------------------------------------------------------- special battles (duels, secrets)
+export interface SpecialDef {
+  id: string;
+  name: string;
+  captain: string;
+  line: string;
+  enemyCats: string[];
+  power: number | 'frontier';
+  hpMul: number;
+  zone: number;
+}
+export const SPECIALS: Record<string, SpecialDef> = {
+  duel_guardian_bosque: {
+    id: 'duel_guardian_bosque',
+    name: 'Guardián Musgoso',
+    captain: 'Guardián Musgoso',
+    line: 'Rrr… este santuario tiene dueño. Y raíces.',
+    enemyCats: ['c_musgo'],
+    power: 'frontier',
+    hpMul: 2.2,
+    zone: 1,
+  },
+  duel_callejero: {
+    id: 'duel_callejero',
+    name: 'Gato Callejero',
+    captain: 'Callejero',
+    line: '¿Qué me ves? ¿Quieres pleito o quieres croquetas?',
+    enemyCats: ['c_chispa'],
+    power: 'frontier',
+    hpMul: 1,
+    zone: 1,
+  },
+};
+
+/** 1–2 cats per side on wooden rafts; only crew K.O. wins. */
+export function buildDuel(id: string, onEnd: (r: BattleResult) => void): BattleSpec {
+  const sp = SPECIALS[id];
+  const f = frontier();
+  const EP = sp.power === 'frontier' ? stagePower(Math.max(1, f.zone), Math.max(1, f.stage)) : sp.power;
+  const crewUids = crew().slice(0, 2);
+  const SP = shipPower();
+  const S = SP / EP;
+  const pf = fS(S);
+  const ef = fS(1 / S);
+  const playerCats = crewUids.map((u) => {
+    const c = getCat(u)!;
+    return battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf, hpMul: 1.4 }, catHpBase(c));
+  });
+  const enemyCats = sp.enemyCats.map((s2, i) => {
+    const def = catDef(s2);
+    return battleCatFrom({ uid: `e${i}`, species: s2, name: i === 0 ? sp.captain : def.name, level: 5, stars: 1, dmgMul: ef, hpMul: sp.hpMul }, ROLE_BY_ID.get(def.role)?.hp ?? 100);
+  });
+  return {
+    playerName: 'Tu balsa',
+    enemyName: sp.name,
+    captain: sp.captain,
+    captainLine: sp.line,
+    difficulty: 'normal',
+    palette: FACTION_PALETTE[sp.zone],
+    seed: Date.now() % 1e9,
+    mode: 'duel',
+    player: { blueprint: STORY_SHIPS.duel_raft, hpMul: 1.5, cats: playerCats, cannonAtk: 0 },
+    enemy: { blueprint: STORY_SHIPS.duel_raft, hpMul: 1.5, cats: enemyCats, cannonAtk: 0 },
+    displayMul: Math.max(1, EP / 2) / 10,
+    meta: { zone: sp.zone, stage: 0, key: id, boss: false, ep: EP, sp: SP, special: id },
+    playerStyle: 'raft',
+    enemyStyle: 'raft',
+    onEnd,
+  } as BattleSpec;
+}
+
+/** rewards for special battles */
+export function applySpecialResult(id: string, r: BattleResult) {
+  if (!r.won) {
+    G.purr('defeat', 'combat');
+    G.xp('defeat');
+    return { won: false };
+  }
+  G.flag(`won_${id}`);
+  G.purr('victory', 'combat');
+  G.bump('victory');
+  G.xp('victory');
+  G.count('wins');
+  return { won: true };
+}
