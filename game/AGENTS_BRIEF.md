@@ -57,3 +57,18 @@ El panel del navegador integrado corre a ~1 fps: **no lo uses para jugar**. Usa 
 | historia | 5185 | 9345 |
 
 Al terminar: apaga tu Vite y tu Chrome, y entrega un reporte breve: qué hiciste, archivos tocados (incluye cualquier archivo ajeno y por qué), cómo probarlo, pendientes/bugs conocidos.
+
+## ACTUALIZACIÓN (feedback nuevo del usuario) — aplica a TODOS
+- **Cero emojis en la UI.** Elementos → `elementIcon(el, size)` / `iconText('texto {fire} y {water}', style, { wrap })` de `src/ui/elementIcon.ts` (insignias SVG `public/icons/el-*.svg`, precargadas en el boot; `iconText` también convierte emojis viejos). Otros símbolos (📌🔒🛡🐟🏦⚓…) → `icon()` de `ui/icons.ts` o dibujo en código. `ELEMENT_ICON` de `data/elementsMeta.ts` queda obsoleto (no lo uses en textos). content.json ya no trae emojis de elementos en sus textos (salvo el campo `elements[].emoji`: no lo muestres).
+- Perfil del jugador: `G.s.player = { name, gender: 'm'|'f'|'x' }` (lo pregunta el prólogo). Texto con género/nombre: `gtxt('¿Miedo, {name}? Bienvenid{g:o|a|e}')` y `gword(m,f,x)` de `src/ui/gender.ts`.
+- Charla de gatos en la isla: `pickChatter(elements)` de `src/data/chatter.ts` (frase `a` y retractación `b`; tokens {name},{g:},{cat}).
+- Estado nuevo (opcional, inicializa con `??=`): `G.s.decor` (Tienda), `G.s.casino` (Casino/Gacha), `G.s.accessories`, `OwnedCat.holo` (variante foil del gacha).
+
+### Agentes nuevos
+| Agente | Archivos | Vite | CDP |
+|---|---|---|---|
+| **dimensiones** | `src/island/terrain.ts`, `src/island/sea.ts`, `src/island/ambient.ts`, `src/island/catActor.ts`, `src/island/dimensions/**` (nuevo), `src/island/chatter/**` (nuevo) | 5186 | 9346 |
+| **tienda** | `src/panels/shop/**` (nuevo), `src/state/sys/shop.ts` (nuevo), `src/state/sys/decor.ts` (nuevo), `src/island/decor/**` (nuevo) | 5187 | 9347 |
+| **casino** | `src/scenes/CasinoScene.ts` (nuevo), `src/panels/casino/**` (nuevo), `src/state/sys/casino.ts`, `src/state/sys/gacha.ts`, `src/state/sys/accessories.ts` (nuevos), `src/fx/sequences/gacha*.ts` (nuevo), `src/core/voice.ts` (nuevo) | 5188 | 9348 |
+El agente **isla** cede a **dimensiones**: terrain.ts, sea.ts, ambient.ts y catActor.ts (estilo visual por isla/dimensión y burbujas de charla). Isla conserva la jugabilidad (expansiones, limpieza, secretos, parcelas, paneles, HUD, worldUi, buildingArt, IslandScene).
+Contratos nuevos: tienda crea `src/panels/shop/Shop.ts` → `openShop(tab?: string)`; casino crea `src/scenes/CasinoScene.ts` y `src/panels/casino/open.ts` → `openCasino()` y `openGacha()`; isla agrega los botones TIENDA y CASINO en el HUD de la isla (import dinámico). Para entrar a una escena nueva usa `scenes.go(...)` desde tu propio módulo (el orquestador agregará `goCasino` a flow si hace falta).
