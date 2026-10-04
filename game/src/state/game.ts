@@ -127,6 +127,15 @@ export interface GameState {
   /** worker role by cat uid */
   workers: Record<string, string>;
   stats: { victories: number; defeats: number; modulesDestroyed: number; catsKO: number; goldEarned: number; perfects: number };
+  // ---- M2+ (optional so old saves load; owners initialise lazily with ??=)
+  /** relics (passive, fleet-wide) and artifacts (slotted per ship: equipped[shipId]) */
+  gear?: { relics: string[]; artifacts: string[]; equipped: Record<string, string[]> };
+  /** Encargos (errands) */
+  errands?: { offered: string[]; active: { id: string; progress: number; timerId?: string }[]; done: string[] };
+  /** shipyard layout editor: module placement per ship (overrides content layout) */
+  layouts?: Record<string, { kind: string; x: number; y: number; w: number; h: number; slot?: number }[]>;
+  /** per-feature scratch state, namespaced by owner module (e.g. ext.bank, ext.koRanks) */
+  ext?: Record<string, unknown>;
 }
 
 export interface GameEvents extends Record<string, unknown> {

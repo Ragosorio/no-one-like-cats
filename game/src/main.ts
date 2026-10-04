@@ -24,7 +24,7 @@ import { loadSettings } from './core/settings';
 import { F } from './ui/theme';
 import { G } from './state/game';
 import { bootGame, newGame } from './state';
-import { goIsland, goMap, goTitle } from './app/flow';
+import { goBattle, goIsland, goMap, goTitle } from './app/flow';
 import { mountMicroOverlay } from './ui/micro/MicroOverlay';
 import { initStory } from './app/story';
 import { applyAudioSettings } from './panels/Settings';
@@ -105,6 +105,22 @@ async function boot() {
     (window as unknown as { __scenes: typeof scenes }).__scenes = scenes;
     // ?realtime=1: animations follow wall-clock even when the tab is throttled (testing)
     if (q.get('realtime') === '1') gsap.ticker.lagSmoothing(0);
+    // ?save=post-boss1: load a fixture from game/test-saves/ into the save slot, then continue without the param
+    const fixture = q.get('save');
+    if (fixture) {
+      const res = await fetch(`/test-saves/${fixture}.json`);
+      if (res.ok) {
+        localStorage.setItem('nolc-save-v1', await res.text());
+      }
+      q.delete('save');
+      history.replaceState(null, '', `${location.pathname}${q.size ? `?${q}` : ''}`);
+    }
+  }
+  // ?stage=2-9: boot the save and jump straight into that campaign battle (dev)
+  if (import.meta.env.DEV && q.get('stage')) {
+    bootGame();
+    const [z, st] = q.get('stage')!.split('-').map(Number);
+    return goBattle(z, st);
   }
   await route(q.get('scene'), q.get('new') === '1');
 }
