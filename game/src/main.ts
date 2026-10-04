@@ -88,8 +88,10 @@ async function boot() {
   initStory();
   window.addEventListener('pointerdown', () => audio.unlock());
   // the economy clock runs whenever a save is loaded (island, map, battles…)
+  // dev: ?speed=4 runs the economy clock 4× faster (pacing tests); battles stay real-time
+  const speed = import.meta.env.DEV ? Math.max(1, Number(new URLSearchParams(location.search).get('speed')) || 1) : 1;
   Ticker.shared.add((t) => {
-    if (G.s.cats.length) G.tick(Math.min(1000, t.deltaMS));
+    if (G.s.cats.length) G.tick(Math.min(1000, t.deltaMS) * speed);
   });
   window.addEventListener('beforeunload', () => {
     if (G.s.cats.length) G.save();
