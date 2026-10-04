@@ -6,6 +6,7 @@
 import { Container, Graphics, Sprite } from 'pixi.js';
 import gsap from 'gsap';
 import { MeshSimple } from 'pixi.js';
+import { killTweensDeep } from './util';
 
 export type DebrisKind = 'chunk' | 'shard' | 'puff' | 'drop';
 
@@ -150,5 +151,8 @@ function darken(o: Container, step: number) {
 function kill(i: number) {
   const b = bodies[i];
   bodies.splice(i, 1);
-  if (!b.obj.destroyed) b.obj.destroy({ children: true });
+  if (!b.obj.destroyed) {
+    killTweensDeep(b.obj);
+    b.obj.destroy({ children: true });
+  }
 }

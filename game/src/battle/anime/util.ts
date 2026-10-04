@@ -1,4 +1,5 @@
 import { Container, Matrix } from 'pixi.js';
+import gsap from 'gsap';
 
 export type Pt = [number, number];
 
@@ -98,4 +99,13 @@ export function reparentKeep(obj: Container, parent: Container) {
 /** Smooth noise-ish wobble from sines (no allocation). */
 export function wob(t: number, seed: number) {
   return Math.sin(t * 1.7 + seed) * 0.6 + Math.sin(t * 3.1 + seed * 2.3) * 0.4;
+}
+
+/** Kill every gsap tween targeting this object (and its scale/position) or any descendant. */
+export function killTweensDeep(o: Container) {
+  if (o.destroyed) return;
+  gsap.killTweensOf(o);
+  gsap.killTweensOf(o.scale);
+  gsap.killTweensOf(o.position);
+  for (const c of o.children) killTweensDeep(c as Container);
 }

@@ -20,6 +20,7 @@ import { dotTexture, glowTexture } from '../art/textures';
 import { CrewCard, BattleTopBar } from '../battle/hud';
 import { settings } from '../core/settings';
 import { fmt } from '../core/format';
+import { G } from '../state/game';
 
 export const WATER_Y = 820;
 
@@ -75,6 +76,8 @@ export class BattleScene extends Scene {
   cam = { x: W / 2, y: H / 2, z: 1, tx: W / 2, ty: H / 2, tz: 1 };
   follow: Container | null = null;
   sinking = new Set<Container>();
+  /** elevation (rad) of the last player shot, for the 'lobbed shot' mission */
+  lastElevation = 0;
   sea!: Sea;
   ships: ShipView[] = [];
   catViews = new Map<string, BattleCat>();
@@ -210,6 +213,7 @@ export class BattleScene extends Scene {
   }
 
   refreshCards() {
+    if (!G.s.flags.first_meter_full && this.sim?.sides[0].cats.some((c) => c.ultCharge >= 1)) G.flag('first_meter_full');
     for (let side = 0; side < 2; side++)
       for (const c of this.sim.sides[side].cats) if (!c.ko) this.statusViews.get(c.def.uid)?.set(c.fx);
     for (const c of this.cards) {
@@ -424,7 +428,11 @@ export class BattleScene extends Scene {
     this.phase = 'flight';
     const cat = this.sim.sides[0].cats.find((c) => c.def.uid === this.selected);
     const ult = this.ultArmed && !!cat && this.sim.canUlt(cat);
-    if (ult && cat) await this.ultCutIn(cat);
+    if (ult && cat) {
+      await this.ultCutIn(cat);
+      G.count('ultimates');
+    }
+    this.lastElevation = -this.aim.angle;
     const res = this.sim.fire(0, this.selected, this.aim.angle, this.aim.power, ult);
     this.refreshCards();
     await this.animateShot(0, this.selected, res.paths, res.events, res.shot);
@@ -688,6 +696,11 @@ export class BattleScene extends Scene {
         break;
       }
       case 'reaction': {
+        if (!G.s.flags[`reaction_${e.name}`]) {
+          G.flag(`reaction_${e.name}`);
+          G.count('reactions_discovered');
+          floatText(this.wfx, e.x, e.y - 300, '¡SINERGIA DESCUBIERTA!', { color: C.yellow, size: 44, font: F.poster, rise: 40, dur: 1.6 });
+        }
         const t = poster(e.name, 76, C.ink, { stroke: { color: C.paper, width: 10 } });
         t.anchor.set(0.5);
         t.position.set(e.x, e.y - 220);
@@ -704,7 +717,11 @@ export class BattleScene extends Scene {
       case 'module': {
         const v = this.ships[e.side];
         v.updateModuleDecor();
-        if (e.side === 1) this.stats.modulesDestroyed++;
+        if (e.side === 1) {
+          this.stats.modulesDestroyed++;
+          if (e.kind === 'powder') G.count('destroy_powder');
+          if (this.phase === 'flight' && this.lastElevation > 0.75) G.count('destroy_module_arc');
+        }
         const m = this.sim.sides[e.side].ship.modules[e.id];
         const p = this.sim.cellCenter(e.side, m.x, m.y);
         const label = e.kind === 'core' ? '¡NÚCLEO DESTRUIDO!' : '¡MÓDULO DESTRUIDO!';

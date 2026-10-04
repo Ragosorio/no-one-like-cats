@@ -20,7 +20,7 @@ import { makeTarget, paintShip, paintInterior, setPaintModel, PaintTarget, Paint
 import { sailFrames, flagFrames, puffTexture, shardTexture, drawBarrel, drawOrb, SailFrames } from './decorArt';
 import { CellStatusFx, statusTint, hasAnyStatus } from './statusFx';
 import { addDebris } from './debris';
-import { Pt, hash, shash, css, clamp, reparentKeep, mix } from './util';
+import { Pt, hash, shash, css, clamp, reparentKeep, mix, killTweensDeep } from './util';
 
 export type { ShipStyleId } from './styles';
 
@@ -300,6 +300,7 @@ export class AnimeShipView extends Container {
         onSplash: (x) => this.splash(debrisLayer, x, waterY, 0.6),
       });
     }
+    killTweensDeep(p.root);
     p.root.destroy({ children: true });
     // splinters + dust in the debris layer
     this.burstSplinters(debrisLayer, cw0.x, cw0.y, waterY, impulse, worldPos);
@@ -493,7 +494,7 @@ export class AnimeShipView extends Container {
     flash.position.set(len + 14, 0);
     b.addChild(flash);
     gsap.to(flash.scale, { x: 1.4, y: 1.4, duration: 0.1 });
-    gsap.to(flash, { alpha: 0, duration: 0.12, delay: 0.06, onComplete: () => flash.destroy() });
+    gsap.to(flash, { alpha: 0, duration: 0.12, delay: 0.06, onComplete: () => void (!flash.destroyed && flash.destroy()) });
     const mp = this.moduleLayer.toLocal(b.toGlobal({ x: len + 6, y: 0 }));
     for (let i = 0; i < 4; i++) this.spawnPuff(mp.x, mp.y, { tint: 0xd8d2dc, scale: 0.35 + Math.random() * 0.3, vx: (this.flip ? -1 : 1) * (40 + Math.random() * 60), vy: -20 - Math.random() * 30, life: 0.8 + Math.random() * 0.5 });
   }
@@ -508,6 +509,7 @@ export class AnimeShipView extends Container {
   override destroy(options?: Parameters<Container['destroy']>[0]) {
     const a = this.artTex;
     const b = this.interiorTex;
+    killTweensDeep(this);
     super.destroy(options ?? { children: true });
     // debris may still be flying with our texture
     const c = this.flashTex;
@@ -1000,7 +1002,7 @@ export class AnimeShipView extends Container {
     const f = this.makeMesh(this.flashTex, p.ring);
     f.alpha = 0.9;
     p.root.addChild(f);
-    gsap.to(f, { alpha: 0, duration: 0.16, delay: 0.05, onComplete: () => f.destroy() });
+    gsap.to(f, { alpha: 0, duration: 0.16, delay: 0.05, onComplete: () => void (!f.destroyed && f.destroy()) });
     const ang = Math.random() * Math.PI * 2;
     const a = 3 + strength * 3;
     gsap.fromTo(p.root, { x: p.cx + Math.cos(ang) * a, y: p.cy + Math.sin(ang) * a }, { x: p.cx, y: p.cy, duration: 0.3, ease: 'elastic.out(1.2,0.3)', overwrite: true });
@@ -1302,7 +1304,7 @@ export class AnimeShipView extends Container {
           const fall = this.waterLocalY - gp.y;
           gsap.to(scrap, { y: gp.y + fall, duration: 1.8, ease: 'power1.in' });
           gsap.to(scrap, { x: gp.x + (this.flip ? 60 : -60), rotation: 2.5, duration: 1.8, ease: 'sine.inOut' });
-          gsap.to(scrap, { alpha: 0, duration: 0.4, delay: 1.6, onComplete: () => scrap.destroy() });
+          gsap.to(scrap, { alpha: 0, duration: 0.4, delay: 1.6, onComplete: () => void (!scrap.destroyed && scrap.destroy()) });
         }
         if (d.flag) {
           d.flag.limp = true;
@@ -1367,7 +1369,7 @@ export class AnimeShipView extends Container {
       const a = Math.random() * Math.PI * 2;
       const r = 30 + Math.random() * 60;
       gsap.to(s, { x: x + Math.cos(a) * r, y: y + Math.sin(a) * r - 20, rotation: 3, duration: 0.5 + Math.random() * 0.3, ease: 'power2.out' });
-      gsap.to(s, { alpha: 0, duration: 0.25, delay: 0.4, onComplete: () => s.destroy() });
+      gsap.to(s, { alpha: 0, duration: 0.25, delay: 0.4, onComplete: () => void (!s.destroyed && s.destroy()) });
     }
   }
 
@@ -1414,8 +1416,19 @@ export class AnimeShipView extends Container {
     ring.ellipse(0, 0, 16 * size, 4 * size).stroke({ width: 3, color: 0xffffff });
     ring.position.set(x, waterY);
     layer.addChild(ring);
-    gsap.to(ring.scale, { x: 2.2, y: 1.6, duration: 0.5, ease: 'power2.out' });
-    gsap.to(ring, { alpha: 0, duration: 0.5, onComplete: () => ring.destroy() });
+    // proxy tween: the debris layer may be destroyed by the scene before it ends
+    const k = { t: 0 };
+    gsap.to(k, {
+      t: 1,
+      duration: 0.5,
+      ease: 'power2.out',
+      onUpdate: () => {
+        if (ring.destroyed) return;
+        ring.scale.set(1 + 1.2 * k.t, 1 + 0.6 * k.t);
+        ring.alpha = 1 - k.t;
+      },
+      onComplete: () => void (!ring.destroyed && ring.destroy()),
+    });
   }
 
   // ================================================================ stepped animation (12 fps)
