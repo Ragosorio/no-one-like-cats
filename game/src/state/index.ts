@@ -7,6 +7,7 @@ import { setCrew } from './sys/ship';
 import { checkMissions } from './sys/missions';
 import './sys/resonance';
 import './sys/campaign';
+import './sys/secrets';
 
 export function newGame() {
   G.reset();

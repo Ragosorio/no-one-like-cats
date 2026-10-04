@@ -18,6 +18,8 @@ import { F } from './ui/theme';
 import { G } from './state/game';
 import { bootGame, newGame } from './state';
 import { goIsland, goMap, goTitle } from './app/flow';
+import { mountMicroOverlay } from './ui/micro/MicroOverlay';
+import './state/sys/micro';
 
 async function loadFonts() {
   const fams = Object.values(F);
@@ -72,6 +74,7 @@ async function boot() {
   await loadFonts();
   await game.init(document.getElementById('app')!);
   scenes.init();
+  mountMicroOverlay();
   window.addEventListener('pointerdown', () => audio.unlock());
   // the economy clock runs whenever a save is loaded (island, map, battles…)
   Ticker.shared.add((t) => {
