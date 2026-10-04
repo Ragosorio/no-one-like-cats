@@ -1,20 +1,22 @@
 /**
- * Astillero (GDD 2.8 / 6.9 — plano técnico azul sobre editorial suizo):
- * fleet (buy / set active), blueprint of the active ship with callouts, Mk families (cost, green time,
- * why-not, upgrade + Ronronear on the running job), crew cabins, big Ship Power with "+X%" per upgrade.
+ * Astillero (GDD 2.8 / 6.9 — plano técnico azul sobre editorial suizo).
+ *  - left: FLOTA (buy / switch the ship that sails; role + "recomendado para")
+ *  - center: Poder de Barco + plano técnico (callouts, armas por ranura, Escudo Burbuja, punto débil,
+ *    obra con chispas) + EDITAR PLANO / PROBAR + tripulación del barco
+ *  - right: tabs MEJORAS (familias Mk I–VII con requisitos de jefe) · ARMAS (tipo por ranura) ·
+ *    EQUIPO (reliquias de flota + artefactos por barco + escudos)
  */
 import { Container, Graphics, Text, Ticker } from 'pixi.js';
 import gsap from 'gsap';
 import { Modal, toast } from '../ui/modal';
 import { C, F } from '../ui/theme';
-import { txt, Button, Bar } from '../ui/widgets';
-import { icon } from '../ui/icons';
-import { fmt, fmtDuration, fmtTime } from '../core/format';
+import { txt } from '../ui/widgets';
+import { icon, IconKind } from '../ui/icons';
+import { fmt } from '../core/format';
 import { sfx } from '../core/audio';
-import { sparkles } from '../fx/juice';
+import { sparkles, flash } from '../fx/juice';
 import { G } from '../state/game';
-import { BAL, FamilyId, modulePower } from '../state/econ';
-import { SHIP_BY_ID } from '../data/content';
+import { BAL, FamilyId, mkCap } from '../state/econ';
 import {
   FAMILY_NAME,
   HULL_BY_MK,
@@ -23,63 +25,109 @@ import {
   canUpgrade,
   crew,
   crewSize,
+  layoutOf,
+  layoutSig,
   mk,
-  mkUnlocked,
-  playerBlueprint,
   roman,
+  setActiveShip,
+  shipName,
   shipPower,
   shipUnlocked,
+  slotPower,
+  totalCrystals,
   upgrade,
-  upgradeCost,
+  weaponsOf,
   yardBusy,
   yardQueues,
 } from '../state/sys/ship';
-import { cat as getCat } from '../state/sys/cats';
-import { CELL } from '../battle/ship';
-import { P, ensureCats, label, resChip, stamp, clearChildren } from './campaign/common';
-import { shipPreview } from './campaign/shipArt';
+import { equippedArtifacts, newGearCount, syncGear, gear } from '../state/sys/gear';
+import { P, ensureCats, label, stamp, clearChildren } from './campaign/common';
 import { CrewPicker } from './campaign/CrewPicker';
+import { banner } from './shipyard/art';
+import { buildFleet } from './shipyard/Fleet';
+import { PlanView } from './shipyard/Plan';
+import { MkTab, MK_ROWS } from './shipyard/MkTab';
+import { WeaponsTab } from './shipyard/WeaponsTab';
+import { GearTab } from './shipyard/GearTab';
+import type { TrialReport } from './shipyard/trial';
 
-const ROWS: FamilyId[] = ['hull', 'weapon', 'engine', 'shield'];
-const FAMILY_BLURB: Record<FamilyId, string> = {
-  hull: 'Material y vida de cada celda del casco',
-  weapon: 'Daño de los cañones en cada andanada',
-  engine: 'Combustible de maniobra por turno',
-  shield: 'Escudo Burbuja: anula 1 impacto por turno',
-  core: 'Medidor de ultimate para la tripulación',
-};
-const MAT_ES: Record<string, string> = { wood: 'MADERA', iron: 'HIERRO', crystal: 'CORAL' };
+type TabId = 'mk' | 'weapons' | 'gear';
+export interface ShipyardOpts {
+  tab?: TabId;
+  /** cannon slot to preselect in ARMAS */
+  slot?: number;
+  /** highlight a ship in the fleet (e.g. an Encargo asks for it) */
+  ship?: string;
+  /** shown after a PROBAR battle */
+  report?: TrialReport;
+  /** a new layout was just saved: sweep the plan */
+  wiped?: boolean;
+}
+
+const FLEET_W = 372;
+const CX = 394;
+const CW = 816;
+const RX = 1230;
+const RW = 554;
+const PLAN_Y = 96;
+const PLAN_H = 472;
 
 let current: ShipyardPanel | null = null;
 
-export function openShipyard(..._args: unknown[]) {
-  if (current && !current.m.closed) return;
-  current = new ShipyardPanel();
+export function openShipyard(arg?: unknown) {
+  const opts: ShipyardOpts = arg && typeof arg === 'object' ? (arg as ShipyardOpts) : {};
+  if (current && !current.m.closed) {
+    current.apply(opts);
+    return;
+  }
+  current = new ShipyardPanel(opts);
 }
 
 class ShipyardPanel {
   m: Modal;
   private fleet = new Container();
-  private center = new Container();
-  private right = new Container();
+  private power = new Container();
+  private plan: PlanView;
   private picker: CrewPicker;
+  private tabsBar = new Container();
+  private tabBody = new Container();
+  private fx = new Container();
+  private tab: TabId = 'mk';
+  private slot = 0;
+  private mkTab: MkTab | null = null;
+  private weaponsTab: WeaponsTab | null = null;
+  private resTexts: Text[] = [];
   private sig = '';
   private acc = 0;
-  private progress: { f: FamilyId; bar: Bar; t: Text; purr: Button }[] = [];
   private unsub: (() => void)[] = [];
-  private previewKey = '';
 
-  constructor() {
-    this.m = new Modal('ASTILLERO', 1840, 1000, { color: 0xe9e4d8, subtitle: 'PLANO TÉCNICO · FAMILIAS MK · TRIPULACIÓN' });
+  constructor(opts: ShipyardOpts) {
+    syncGear();
+    this.m = new Modal('ASTILLERO', 1840, 1000, { color: 0xe9e4d8, subtitle: 'PLANO TÉCNICO · FLOTA · MK · ARMAS · EQUIPO' });
     this.m.open();
     const b = this.m.body;
-    this.picker = new CrewPicker(G.s.ship.active, { width: 840, slotH: 138, rosterSize: 58, rosterRows: 1, onChange: () => this.refreshPower() });
-    this.picker.position.set(350, 604);
-    b.addChild(this.fleet, this.center, this.right, this.picker);
+    this.fleet.position.set(0, 0);
+    this.power.position.set(CX, 0);
+    this.plan = new PlanView({
+      w: CW,
+      h: PLAN_H,
+      onEdit: () => this.openEditor(),
+      onTest: () => this.test(),
+      onCannon: (slot) => this.showTab('weapons', slot),
+    });
+    this.plan.position.set(CX, PLAN_Y);
+    this.picker = new CrewPicker(G.s.ship.active, { width: CW, slotH: 128, rosterSize: 56, rosterRows: 1, onChange: () => this.onCrew() });
+    this.picker.position.set(CX, PLAN_Y + PLAN_H + 34);
+    this.tabsBar.position.set(RX, 0);
+    this.tabBody.position.set(RX, 64);
+    b.addChild(this.fleet, this.power, this.plan, this.picker, this.tabsBar, this.tabBody, this.fx);
+    this.buildResources();
     void ensureCats(G.s.cats.map((c) => c.species)).then(() => {
       if (this.m.closed) return;
       this.picker.rebuild();
     });
+    this.tab = opts.tab ?? 'mk';
+    this.slot = opts.slot ?? 0;
     this.buildAll();
     Ticker.shared.add(this.tick, this);
     this.unsub.push(
@@ -93,444 +141,375 @@ class ShipyardPanel {
       this.unsub.forEach((u) => u());
       current = null;
     };
+    if (opts.report) gsap.delayedCall(0.35, () => this.showReport(opts.report!));
+    if (opts.wiped) gsap.delayedCall(0.25, () => !this.m.closed && this.plan.wipe());
+    if (opts.ship) gsap.delayedCall(0.3, () => this.focusShip(opts.ship!));
+  }
+
+  apply(opts: ShipyardOpts) {
+    if (opts.tab) this.showTab(opts.tab, opts.slot);
+    if (opts.ship) this.focusShip(opts.ship);
+    if (opts.report) this.showReport(opts.report);
   }
 
   private buildAll() {
     this.buildFleet();
-    this.buildCenter();
-    this.buildRight();
+    this.plan.refresh();
+    this.buildPower();
+    this.buildTabs();
+    this.sig = this.signature();
+  }
+
+  // ------------------------------------------------------------------ band: resources
+  private buildResources() {
+    const kinds: IconKind[] = ['gold', 'scrap', 'blueprint', 'crystal', 'clock'];
+    const widths = [168, 150, 112, 118, 128];
+    let x = 1748 - widths.reduce((a, b) => a + b, 0);
+    kinds.forEach((k, i) => {
+      const c = new Container();
+      const ic = icon(k, 30);
+      ic.position.set(15, 15);
+      const t = txt('0', { fontFamily: F.heavy, fontSize: 22, fill: C.paper });
+      t.position.set(36, 15 - t.height / 2);
+      c.addChild(ic, t);
+      this.resTexts.push(t);
+      c.position.set(x, 28);
+      x += widths[i];
+      this.m.panel.addChild(c);
+    });
+    this.updateRes();
+  }
+  private updateRes() {
+    const t = this.resTexts;
+    if (t.length < 5 || t[0].destroyed) return;
+    t[0].text = fmt(G.s.gold);
+    t[1].text = fmt(G.s.scrap);
+    t[2].text = fmt(G.s.blueprint);
+    t[3].text = fmt(totalCrystals());
+    t[4].text = `${G.s.purr.toFixed(1)}m`;
   }
 
   // ------------------------------------------------------------------ fleet
   private buildFleet() {
-    const f = this.fleet;
-    clearChildren(f);
-    const t = label('FLOTA', 14, P.blue, { letterSpacing: 3 });
-    f.addChild(t);
-    const ships = BAL.ship.ships;
-    const cardH = 150;
-    ships.forEach((bs, i) => {
-      const def = SHIP_BY_ID.get(bs.id);
-      const owned = G.s.ship.owned.includes(bs.id);
-      const active = G.s.ship.active === bs.id;
-      const unlocked = shipUnlocked(bs.id);
-      const c = new Container();
-      c.position.set(0, 24 + i * (cardH + 12));
-      const fill = active ? C.ink : owned ? C.paper : unlocked ? 0xf3e7c8 : 0xcfc8b8;
-      const fg = active ? C.paper : C.ink;
-      const g = new Graphics().rect(5, 5, 330, cardH).fill(C.ink).rect(0, 0, 330, cardH).fill(fill).stroke({ width: 3, color: C.ink });
-      c.addChild(g);
-      const nm = txt((def?.name ?? bs.name).toUpperCase(), { fontFamily: F.poster, fontSize: 30, fill: fg });
-      nm.position.set(14, 6);
-      const st = label(`Tripulación ${bs.crew} · Poder ×${bs.mult.toFixed(2)}`, 14, active ? C.mint : P.blue);
-      st.position.set(14, 46);
-      const sl = bs.slots as Record<string, number>;
-      const slots = label(`Armas ${sl.weapon} · Escudo ${sl.shield} · Motor ${sl.engine} · Núcleo ${sl.core}`, 13, fg);
-      slots.position.set(14, 68);
-      const perk = label(bs.perk === 'ninguno' ? 'Sin perk: puro corazón.' : bs.perk, 12, fg, { wordWrap: true, wordWrapWidth: 300, fontWeight: '400' });
-      perk.position.set(14, 88);
-      c.addChild(nm, st, slots, perk);
-      if (active) {
-        const a = stamp('ACTIVO', C.pink, 20, -0.08);
-        a.position.set(270, 26);
-        c.addChild(a);
-      } else if (owned) {
-        const btn = new Button('ACTIVAR', () => this.setActive(bs.id), { w: 130, h: 40, size: 22, color: C.mint });
-        btn.position.set(186, cardH - 52);
-        c.addChild(btn);
-      } else if (unlocked) {
-        const can = G.s.gold >= bs.cost;
-        const btn = new Button(`COMPRAR ${fmt(bs.cost)}`, () => this.buy(bs.id), { w: 200, h: 42, size: 22, color: C.yellow, disabled: !can });
-        btn.position.set(116, cardH - 54);
-        const gi = icon('gold', 26);
-        gi.position.set(96, cardH - 33);
-        c.addChild(btn, gi);
-      } else {
-        const [k, v] = (bs.unlock ?? '').split(':');
-        const why = k === 'kl' ? `REINO ${v}` : k === 'boss' ? `JEFE ${v}` : '???';
-        const lk = icon('lock', 26);
-        lk.position.set(220, cardH - 32);
-        const lt = label(why, 18, C.ink);
-        lt.position.set(240, cardH - 44);
-        c.addChild(lk, lt);
-        c.alpha = 0.75;
-      }
-      f.addChild(c);
+    buildFleet(this.fleet, {
+      w: FLEET_W - 8,
+      cardH: 156,
+      onActivate: (id) => this.switchTo(id),
+      onBuy: (id) => this.buy(id),
     });
   }
 
-  private setActive(id: string) {
-    G.s.ship.active = id;
-    G.recalc();
-    sfx('pop');
-    this.buildAll();
+  private focusShip(id: string) {
+    const idx = BAL.ship.ships.findIndex((s) => s.id === id);
+    if (idx < 0 || this.m.closed) return;
+    const y = 26 + idx * 166;
+    const g = new Graphics().rect(-8, y - 8, FLEET_W + 8, 172).stroke({ width: 5, color: C.pinkHot });
+    this.fx.addChild(g);
+    gsap.fromTo(g, { alpha: 1 }, { alpha: 0.2, duration: 0.35, yoyo: true, repeat: 5, onComplete: () => g.destroy() });
+    const note = txt(G.s.ship.owned.includes(id) ? '¡usa este!' : 'te lo piden', { fontFamily: F.brush, fontSize: 24, fill: C.pinkHot });
+    note.rotation = -0.08;
+    note.position.set(FLEET_W - 150, y - 30);
+    this.fx.addChild(note);
+    gsap.to(note, { alpha: 0, delay: 3, duration: 0.4, onComplete: () => note.destroy() });
+  }
+
+  private switchTo(id: string) {
+    if (!setActiveShip(id)) return;
+    G.save();
+    sfx('whoosh');
     this.picker.setShip(id);
+    this.buildAll();
+    this.plan.wipe();
+    const st = banner(`¡ZARPA EL ${shipName(id).toUpperCase()}!`, C.pinkHot, 38, -0.05);
+    st.position.set(CX + CW / 2, PLAN_Y + 70);
+    this.fx.addChild(st);
+    gsap.from(st.scale, { x: 2.2, y: 2.2, duration: 0.18, ease: 'power3.in', onComplete: () => sfx('hit', 1.2) });
+    gsap.to(st, { alpha: 0, delay: 1.1, duration: 0.3, onComplete: () => st.destroy({ children: true }) });
+    toast(`Barco activo: ${shipName(id)}`, { icon: 'paw', sub: `${crew(id).length}/${crewSize(id)} gatos a bordo · este es el que pelea` });
   }
 
   private buy(id: string) {
     if (!buyShip(id)) {
       sfx('error');
-      toast('Faltan Doblones', { color: C.pink });
+      toast(shipUnlocked(id) ? 'Faltan Doblones' : 'Todavía no se puede comprar', { color: C.pink });
       return;
     }
-    G.s.ship.active = id;
-    G.recalc();
+    setActiveShip(id);
     G.save();
     sfx('fanfare');
-    this.buildAll();
     this.picker.setShip(id);
-    const st = stamp(`¡${(SHIP_BY_ID.get(id)?.name ?? id).toUpperCase()} ES TUYO!`, C.pinkHot, 54, -0.08);
-    st.position.set(350 + 420, 300);
-    this.m.body.addChild(st);
-    gsap.from(st.scale, { x: 2.6, y: 2.6, duration: 0.2, ease: 'power3.in' });
-    gsap.to(st, { alpha: 0, delay: 1.8, duration: 0.4, onComplete: () => st.destroy({ children: true }) });
-    sparkles(this.m.body, 770, 300, C.yellow, 24, 320);
-    toast('¡Barco nuevo! Asígnale tripulación', { icon: 'paw', sub: `${crewSize(id)} camarotes esperando gatos` });
+    this.buildAll();
+    this.plan.emerge();
+    // T3: the ship rises from the sea + stamp + ink burst
+    flash(this.fx, 0xffffff, 0.35, 0.3);
+    gsap.fromTo(this.m.panel, { x: this.m.panel.x - 8 }, { x: this.m.panel.x, duration: 0.5, ease: 'elastic.out(1,0.3)' });
+    const st = banner(`¡${shipName(id).toUpperCase()} ES TUYO!`, C.pinkHot, 56, -0.06, 'Un barco para cada pleito: este ya zarpa con tripulación sugerida');
+    st.position.set(CX + CW / 2, PLAN_Y + PLAN_H / 2 - 40);
+    st.visible = false;
+    this.fx.addChild(st);
+    gsap.delayedCall(0.6, () => {
+      if (st.destroyed) return;
+      st.visible = true;
+      gsap.from(st.scale, { x: 2.6, y: 2.6, duration: 0.22, ease: 'power3.in', onComplete: () => sfx('hit', 1) });
+    });
+    gsap.to(st, { alpha: 0, delay: 2.8, duration: 0.4, onComplete: () => st.destroy({ children: true }) });
+    gsap.delayedCall(0.55, () => !this.m.closed && sparkles(this.fx, CX + CW / 2, PLAN_Y + PLAN_H / 2 - 40, C.yellow, 30, 380));
+    toast('¡Barco nuevo! Ya zarpa con tripulación sugerida', { icon: 'paw', sub: `${crewSize(id)} camarotes · edita su plano y pruébalo` });
   }
 
-  // ------------------------------------------------------------------ center: power + blueprint
-  private buildCenter() {
-    const c = this.center;
-    const key = `${G.s.ship.active}|${mk('hull')}`;
-    if (key === this.previewKey && c.children.length) {
-      this.refreshPower();
-      return;
-    }
-    this.previewKey = key;
-    clearChildren(c);
-    const x0 = 350;
-    const bw = 840;
-    const bh = 470;
-    const by = 110;
-    const shipId = G.s.ship.active;
-    const def = SHIP_BY_ID.get(shipId);
-    // blueprint sheet
-    const sheet = new Container();
-    sheet.position.set(x0, by);
-    const bg = new Graphics().rect(6, 6, bw, bh).fill(C.ink).rect(0, 0, bw, bh).fill(P.bp);
-    const grid = new Graphics();
-    for (let x = 0; x <= bw; x += 20) grid.moveTo(x, 0).lineTo(x, bh);
-    for (let y = 0; y <= bh; y += 20) grid.moveTo(0, y).lineTo(bw, y);
-    grid.stroke({ width: 1, color: P.bpLine, alpha: 0.13 });
-    const grid2 = new Graphics();
-    for (let x = 0; x <= bw; x += 100) grid2.moveTo(x, 0).lineTo(x, bh);
-    for (let y = 0; y <= bh; y += 100) grid2.moveTo(0, y).lineTo(bw, y);
-    grid2.stroke({ width: 1.5, color: P.bpLine, alpha: 0.3 });
-    const border = new Graphics().rect(10, 10, bw - 20, bh - 20).stroke({ width: 2, color: 0xffffff, alpha: 0.8 }).rect(0, 0, bw, bh).stroke({ width: 4, color: C.ink });
-    sheet.addChild(bg, grid, grid2, border);
-    // ship
-    const { bp } = playerBlueprint(shipId);
-    const pv = shipPreview(bp, { maxW: 560, maxH: 330, style: 'pirate' });
-    const pw = (bp.cols * CELL + 60) * pv.k;
-    pv.position.set((bw - pw) / 2 - 10, 50);
-    sheet.addChild(pv);
-    const toSheet = (gx: number, gy: number) => ({ x: pv.x + pv.ox + gx * CELL * pv.k, y: pv.y + pv.oy + gy * CELL * pv.k });
-    // dimension lines
-    const dim = new Graphics();
-    const a = toSheet(0, bp.rows);
-    const b = toSheet(bp.cols, bp.rows);
-    const yy = a.y + 26;
-    dim.moveTo(a.x, yy).lineTo(b.x, yy).moveTo(a.x, yy - 8).lineTo(a.x, yy + 8).moveTo(b.x, yy - 8).lineTo(b.x, yy + 8);
-    dim.stroke({ width: 2, color: 0xffffff, alpha: 0.85 });
-    const dl = txt(`${bp.cols} × ${bp.rows} CELDAS`, { fontFamily: F.bebas, fontSize: 20, fill: 0xffffff, letterSpacing: 2 });
-    dl.anchor.set(0.5, 0);
-    dl.position.set((a.x + b.x) / 2, yy + 4);
-    sheet.addChild(dim, dl);
-    // callouts
-    const crewU = crew(shipId);
-    const callouts: { x: number; y: number; text: string }[] = [];
-    const hc = HULL_BY_MK[Math.max(0, Math.min(6, mk('hull') - 1))];
-    let cannonN = 0;
-    for (const m of bp.modules) {
-      const p = toSheet(m.x + m.w / 2, m.y + m.h / 2);
-      let text = '';
-      if (m.kind === 'cannon') text = `CAÑÓN ${++cannonN} · ARMAS MK ${roman(mk('weapon'))}`;
-      else if (m.kind === 'core') text = 'NÚCLEO (CORAZÓN)';
-      else if (m.kind === 'catroom') {
-        const u = crewU[m.slot ?? 0];
-        const cc = u ? getCat(u) : undefined;
-        text = `CAMAROTE ${(m.slot ?? 0) + 1} · ${cc ? cc.name.toUpperCase() : 'VACÍO'}`;
-      } else if (m.kind === 'mast') text = 'MÁSTIL / COFA';
-      else if (m.kind === 'engine') text = `MOTOR MK ${roman(mk('engine'))}`;
-      else if (m.kind === 'powder') text = 'SANTABÁRBARA';
-      else if (m.kind === 'shield') text = 'ESCUDO';
-      else if (m.kind === 'arcane') text = 'SALA DE INVOCACIÓN';
-      if (text) callouts.push({ x: p.x, y: p.y, text });
-    }
-    const cxMid = pv.x + pv.ox + (bp.cols * CELL * pv.k) / 2;
-    const leftC = callouts.filter((q) => q.x < cxMid).sort((p1, p2) => p1.y - p2.y);
-    const rightC = callouts.filter((q) => q.x >= cxMid).sort((p1, p2) => p1.y - p2.y);
-    const lines = new Graphics();
-    const place = (list: typeof callouts, side: -1 | 1) => {
-      let lastY = -999;
-      for (const q of list) {
-        const ly = Math.max(lastY + 30, Math.min(bh - 40, q.y - 10));
-        lastY = ly;
-        const lx = side < 0 ? 24 : bw - 24;
-        const t = txt(q.text, { fontFamily: F.bebas, fontSize: 19, fill: 0xffffff, letterSpacing: 1 });
-        t.anchor.set(side < 0 ? 0 : 1, 0.5);
-        t.position.set(lx, ly);
-        const ex = side < 0 ? lx + t.width + 8 : lx - t.width - 8;
-        lines.moveTo(ex, ly).lineTo(ex + side * 18, ly).lineTo(q.x, q.y);
-        lines.circle(q.x, q.y, 4);
-        sheet.addChild(t);
-      }
-    };
-    place(leftC, -1);
-    place(rightC, 1);
-    lines.stroke({ width: 1.5, color: 0xffffff, alpha: 0.9 });
-    sheet.addChild(lines);
-    // title block
-    const tb = new Container();
-    const tbw = 330;
-    const tbh = 76;
-    tb.position.set(bw - tbw - 18, bh - tbh - 18);
-    const tbg = new Graphics().rect(0, 0, tbw, tbh).fill({ color: P.bpDark, alpha: 0.9 }).stroke({ width: 2, color: 0xffffff }).moveTo(0, 30).lineTo(tbw, 30).stroke({ width: 1, color: 0xffffff });
-    const tn = txt((def?.name ?? shipId).toUpperCase(), { fontFamily: F.poster, fontSize: 22, fill: 0xffffff });
-    tn.position.set(10, 2);
-    const ti = txt(`CASCO MK ${roman(mk('hull'))} · ${hc.name.toUpperCase()} · ${MAT_ES[hc.mat] ?? hc.mat} ${hc.cellHp}/CELDA`, { fontFamily: F.bebas, fontSize: 17, fill: 0xffffff, letterSpacing: 1 });
-    ti.position.set(10, 34);
-    const ts = txt(`PLANO Nº ${String(G.s.ship.owned.indexOf(shipId) + 1).padStart(3, '0')} · ESC. 1:40 · NO ONE LIKE CATS`, { fontFamily: F.bebas, fontSize: 14, fill: P.bpLine });
-    ts.position.set(10, 54);
-    tb.addChild(tbg, tn, ti, ts);
-    sheet.addChild(tb);
-    c.addChild(sheet);
-    // power header
-    const ph = new Container();
-    ph.position.set(x0, 0);
-    ph.label = 'power';
-    c.addChild(ph);
-    this.refreshPower();
-  }
-
-  private refreshPower() {
-    const ph = this.center.children.find((x) => x.label === 'power') as Container | undefined;
-    if (!ph) return;
+  // ------------------------------------------------------------------ power header
+  private buildPower() {
+    const ph = this.power;
     clearChildren(ph);
     const shipId = G.s.ship.active;
     const bs = balanceShip(shipId);
     const sp = shipPower();
-    const l = label('PODER DE BARCO', 14, P.blue, { letterSpacing: 3 });
-    const v = txt(fmt(sp), { fontFamily: F.poster, fontSize: 86, fill: C.ink });
-    v.position.set(0, 10);
-    const crewPow = sp / bs.mult - this.slotPower(shipId);
-    const det = label(`= ×${bs.mult.toFixed(2)} · (módulos ${fmt(this.slotPower(shipId))} + tripulación ${fmt(Math.max(0, crewPow))})`, 16, C.ink);
-    det.position.set(v.width + 22, 58);
-    const q = label(`Astillero: ${yardBusy()}/${yardQueues()} obras · Tope Mk ${roman(Math.min(BAL.ship.mk.max, G.s.campaign.bossesDefeated + 2))}`, 16, P.blue);
-    q.position.set(v.width + 22, 30);
-    ph.addChild(l, v, det, q);
-  }
-
-  private slotPower(shipId: string) {
-    const b = balanceShip(shipId);
-    let s = 0;
-    for (const f of ['hull', 'weapon', 'shield', 'engine', 'core'] as FamilyId[]) {
-      const n = (b.slots as Record<string, number>)[f] ?? 0;
-      if (n > 0 && mk(f) > 0) s += n * modulePower(f, mk(f));
+    const l = label('PODER DE BARCO', 13, P.blue, { letterSpacing: 3 });
+    const v = txt(fmt(sp), { fontFamily: F.poster, fontSize: 80, fill: C.ink });
+    v.position.set(0, 8);
+    const crewPow = sp / bs.mult - slotPower(shipId);
+    const x = v.width + 22;
+    const cap = mkCap(G.s.campaign.bossesDefeated);
+    const capNext = cap < BAL.ship.mk.max ? ` · Mk ${roman(cap + 1)} con el Jefe ${cap - 1}` : '';
+    const q = label(`Obras ${yardBusy()}/${yardQueues()} · Tope Mk ${roman(cap)}${capNext}`, 15, P.blue);
+    q.position.set(x, 24);
+    const det = label(`= ×${bs.mult.toFixed(2)} · (módulos ${fmt(slotPower(shipId))} + tripulación ${fmt(Math.max(0, crewPow))})`, 15, C.ink);
+    det.position.set(x, 48);
+    ph.addChild(l, v, q, det);
+    // ship name, right-aligned, as a poster word
+    const nm = txt(shipName(shipId).toUpperCase(), { fontFamily: F.poster, fontSize: 34, fill: C.ink });
+    nm.anchor.set(1, 0);
+    nm.position.set(CW, 6);
+    const hl = new Graphics().rect(CW - nm.width - 8, 30, nm.width + 12, 16).fill(C.yellow);
+    hl.rotation = -0.01;
+    ph.addChild(hl, nm);
+    if (nm.x - nm.width < x + Math.max(q.width, det.width) + 12) {
+      nm.visible = false;
+      hl.visible = false;
     }
-    return s;
   }
 
-  /** "+X%" Ship Power a family upgrade would give on the active ship */
-  private deltaPct(f: FamilyId) {
-    const b = balanceShip(G.s.ship.active);
-    const n = (b.slots as Record<string, number>)[f] ?? 0;
-    if (!n) return 0;
-    const d = b.mult * n * (modulePower(f, mk(f) + 1) - modulePower(f, mk(f)));
-    return (d / Math.max(1e-9, shipPower())) * 100;
+  private onCrew() {
+    this.buildPower();
+    this.plan.refresh();
+    this.buildFleet();
+    if (this.tab === 'mk') this.mkTab?.build();
   }
 
-  // ------------------------------------------------------------------ right: Mk families
-  private buildRight() {
-    const r = this.right;
-    clearChildren(r);
-    this.progress = [];
-    const x0 = 1210;
-    const w = 574;
-    // resources
-    const crystals = Object.values(G.s.crystals).reduce((a, b) => a + b, 0);
-    const res = [resChip('gold', fmt(G.s.gold), true, 28), resChip('scrap', fmt(G.s.scrap), true, 28), resChip('blueprint', fmt(G.s.blueprint), true, 28), resChip('crystal', fmt(crystals), true, 28), resChip('clock', `${G.s.purr.toFixed(1)}m`, true, 28)];
-    this.resTexts = res.map((c) => c.children[1] as Text);
-    const slotW = [130, 90, 80, 80, 110];
-    let rx = x0;
-    res.forEach((c, i) => {
-      c.position.set(rx, 0);
-      r.addChild(c);
-      rx += slotW[i] + 18;
+  // ------------------------------------------------------------------ tabs
+  private buildTabs() {
+    clearChildren(this.tabsBar);
+    const tabs: [TabId, string][] = [
+      ['mk', 'MEJORAS'],
+      ['weapons', 'ARMAS'],
+      ['gear', 'EQUIPO'],
+    ];
+    const tw = (RW - 16) / 3;
+    tabs.forEach(([id, name], i) => {
+      const c = new Container();
+      c.position.set(i * (tw + 8), 0);
+      const on = id === this.tab;
+      c.addChild(new Graphics().rect(5, 5, tw, 50).fill(C.ink).rect(0, on ? -4 : 0, tw, on ? 54 : 50).fill(on ? C.ink : C.paper).stroke({ width: 3, color: C.ink }));
+      const t = txt(name, { fontFamily: F.poster, fontSize: 26, fill: on ? C.paper : C.ink });
+      t.anchor.set(0.5);
+      t.position.set(tw / 2, 24);
+      c.addChild(t);
+      const badge = id === 'gear' ? newGearCount() : id === 'mk' ? MK_ROWS.filter((f) => canUpgrade(f).ok).length : 0;
+      if (badge > 0) {
+        const bg = new Graphics().circle(tw - 12, 4, 13).fill(id === 'gear' ? C.pinkHot : C.green).stroke({ width: 2.5, color: C.ink });
+        const bt = txt(String(badge), { fontFamily: F.poster, fontSize: 16, fill: C.paper });
+        bt.anchor.set(0.5);
+        bt.position.set(tw - 12, 4);
+        c.addChild(bg, bt);
+      }
+      c.eventMode = 'static';
+      c.cursor = 'pointer';
+      c.on('pointertap', () => {
+        if (this.tab === id) return;
+        sfx('paper');
+        this.showTab(id);
+      });
+      this.tabsBar.addChild(c);
     });
-    ROWS.forEach((f, i) => {
-      const row = new Container();
-      row.position.set(x0, 48 + i * 204);
-      r.addChild(row);
-      this.buildFamilyRow(row, f, w);
-    });
-    this.sig = this.signature();
+    this.buildTabBody();
   }
 
-  private buildFamilyRow(row: Container, f: FamilyId, w: number) {
-    const h = 192;
-    const unlocked = mkUnlocked(f);
-    const cur = mk(f);
-    const job = G.timerFor('yard', f);
-    const bg = new Graphics().rect(5, 5, w, h).fill(C.ink).rect(0, 0, w, h).fill(unlocked ? C.paper : 0xd2ccbe).stroke({ width: 3, color: C.ink });
-    row.addChild(bg);
-    // Mk badge
-    const badge = new Graphics().circle(w - 52, 52, 40).fill(job ? C.green : C.ink).stroke({ width: 3, color: C.ink });
-    const bt = txt(cur > 0 ? roman(cur) : '—', { fontFamily: F.poster, fontSize: 40, fill: C.paper });
-    bt.anchor.set(0.5);
-    bt.position.set(w - 52, 50);
-    const bm = label('MK', 12, C.paper);
-    bm.anchor.set(0.5);
-    bm.position.set(w - 52, 80);
-    row.addChild(badge, bt, bm);
-    const nm = txt(FAMILY_NAME[f].toUpperCase(), { fontFamily: F.poster, fontSize: 40, fill: C.ink });
-    nm.position.set(16, 4);
-    row.addChild(nm);
-    const c = upgradeCost(f);
-    let sub = FAMILY_BLURB[f];
-    if (f === 'hull') {
-      const a = HULL_BY_MK[Math.max(0, cur - 1)];
-      const b = HULL_BY_MK[Math.min(6, cur)];
-      sub = cur >= BAL.ship.mk.max ? a.name : `${a.name} → ${b.name} (${MAT_ES[b.mat] ?? b.mat} ${b.cellHp}/celda)`;
-    }
-    const sb = label(sub, 15, P.blue, { wordWrap: true, wordWrapWidth: w - 120 });
-    sb.position.set(16, 52);
-    row.addChild(sb);
-    if (!unlocked) {
-      const lk = icon('lock', 40);
-      lk.position.set(40, 130);
-      const why = label(canUpgrade(f).why, 20, C.ink);
-      why.position.set(70, 118);
-      row.addChild(lk, why);
-      row.alpha = 0.8;
-      return;
-    }
-    if (job) {
-      const bar = new Bar(w - 32, 26, C.green, 0xcfe8d6);
-      bar.position.set(16, 92);
-      bar.set(1 - job.leftMs / job.totalMs, false);
-      const t = label(`EN OBRA → MK ${roman(cur + 1)} · faltan ${fmtTime(job.leftMs)}`, 17, C.ink);
-      t.position.set(16, 124);
-      const purr = new Button(`RONRONEAR  ${G.s.purr.toFixed(1)} min`, () => {
-        const used = G.spendPurrOn(job);
-        if (used > 0) {
-          sfx('purr');
-          sparkles(row, w / 2, 110, C.mint, 12, 120);
-        } else {
-          sfx('error');
-          toast('Tu reserva de Ronroneo está vacía', { color: C.pink, sub: 'Gana batallas para ronronear más' });
-        }
-      }, { w: 290, h: 44, size: 22, color: C.mint, disabled: G.s.purr <= 0.01 });
-      purr.position.set(w - 306, 140);
-      row.addChild(bar, t, purr);
-      this.progress.push({ f, bar, t, purr });
-      return;
-    }
-    if (cur >= BAL.ship.mk.max) {
-      const mx = stamp('MK MÁXIMO', C.gold, 30, -0.05);
-      mx.position.set(w / 2, 130);
-      row.addChild(mx);
-      return;
-    }
-    // cost chips
-    const crystalsTotal = Object.values(G.s.crystals).reduce((a, b) => a + b, 0);
-    const chips: Container[] = [resChip('gold', fmt(c.gold), G.s.gold >= c.gold, 26)];
-    if (c.scrap) chips.push(resChip('scrap', fmt(c.scrap), G.s.scrap >= c.scrap, 26));
-    if (c.blueprint) chips.push(resChip('blueprint', fmt(c.blueprint), G.s.blueprint >= c.blueprint, 26));
-    if (c.crystals) chips.push(resChip('crystal', fmt(c.crystals), crystalsTotal >= c.crystals, 26));
-    chips.push(resChip('clock', fmtDuration(c.timeMs), true, 26));
-    let cx = 16;
-    for (const ch of chips) {
-      ch.position.set(cx, 92);
-      row.addChild(ch);
-      cx += ch.width + 16;
-    }
-    const pct = this.deltaPct(f);
-    const pl = label(pct > 0 ? `+${pct < 10 ? pct.toFixed(1) : Math.round(pct)}% PODER` : `+0% en este barco (sirve a toda la flota)`, pct > 0 ? 22 : 15, pct > 0 ? 0x2e8a52 : P.blue);
-    pl.position.set(16, pct > 0 ? 148 : 156);
-    row.addChild(pl);
-    const can = canUpgrade(f);
-    const btn = new Button(`MEJORAR → MK ${roman(c.next)}`, () => this.doUpgrade(f, row), { w: 250, h: 52, size: 24, color: C.pink, disabled: !can.ok });
-    btn.position.set(w - 266, 128);
-    row.addChild(btn);
-    if (!can.ok) {
-      const why = label(`✖ ${can.why}`, 14, C.red);
-      why.position.set(16, 124);
-      row.addChild(why);
-    }
+  private showTab(id: TabId, slot?: number) {
+    this.tab = id;
+    if (slot !== undefined) this.slot = slot;
+    this.buildTabs();
+    if (id === 'weapons' && slot !== undefined) this.plan.highlightCannon(slot);
   }
 
-  private doUpgrade(f: FamilyId, row: Container) {
+  private buildTabBody() {
+    clearChildren(this.tabBody);
+    this.mkTab = null;
+    this.weaponsTab = null;
+    if (this.tab === 'mk') {
+      this.mkTab = new MkTab(RW, 150, (f, at) => this.doUpgrade(f, at));
+      this.tabBody.addChild(this.mkTab);
+    } else if (this.tab === 'weapons') {
+      this.weaponsTab = new WeaponsTab({
+        w: RW,
+        h: 800,
+        slot: this.slot,
+        onHover: (s) => this.plan.highlightCannon(s),
+        onChange: () => {
+          this.plan.refresh();
+          this.slot = this.weaponsTab?.slot ?? this.slot;
+        },
+      });
+      this.tabBody.addChild(this.weaponsTab);
+    } else {
+      this.tabBody.addChild(
+        new GearTab(RW, () => {
+          this.plan.refresh();
+          this.buildPower();
+          this.buildFleet();
+        }),
+      );
+    }
+    for (const ch of this.tabBody.children) gsap.from(ch, { alpha: 0, x: 14, duration: 0.18, ease: 'power2.out' });
+  }
+
+  // ------------------------------------------------------------------ actions
+  private doUpgrade(f: FamilyId, at: { x: number; y: number }) {
     if (!upgrade(f)) {
       sfx('error');
       return;
     }
     sfx('levelup');
     G.save();
+    const p = this.m.body.toLocal(at);
     const st = stamp('¡EN OBRA!', C.green, 34, -0.1);
-    st.position.set(row.x + 280, row.y + 100);
-    this.right.addChild(st);
+    st.position.set(p.x - 60, p.y);
+    this.fx.addChild(st);
     gsap.from(st.scale, { x: 2.2, y: 2.2, duration: 0.16, ease: 'power3.in', onComplete: () => sfx('hit', 1.2) });
     gsap.to(st, { alpha: 0, delay: 1.0, duration: 0.3, onComplete: () => st.destroy({ children: true }) });
-    this.buildRight();
-    this.refreshPower();
+    this.buildTabs();
+    this.buildPower();
+    this.plan.refresh();
   }
 
   private celebrateMk(f: FamilyId, n: number) {
     if (this.m.closed) return;
+    G.save();
     sfx('fanfare');
     this.buildAll();
-    const st = stamp(`¡${FAMILY_NAME[f].toUpperCase()} MK ${roman(n)}!`, C.pinkHot, 60, -0.08);
-    st.position.set(350 + 420, 340);
-    this.m.body.addChild(st);
-    gsap.from(st.scale, { x: 2.8, y: 2.8, duration: 0.2, ease: 'power3.in' });
-    gsap.to(st, { alpha: 0, delay: 1.6, duration: 0.4, onComplete: () => st.destroy({ children: true }) });
-    sparkles(this.m.body, 770, 340, C.yellow, 26, 360);
-    if (f === 'hull') toast(`Nuevo casco: ${HULL_BY_MK[Math.max(0, n - 1)].name}`, { icon: 'star' });
+    if (f === 'hull') {
+      this.plan.refresh(true);
+      this.plan.wipe();
+    }
+    this.plan.celebrate(f);
+    const cx = CX + CW / 2;
+    const cy = PLAN_Y + PLAN_H / 2 - 30;
+    const sub = f === 'hull' ? `Nuevo casco: ${HULL_BY_MK[Math.max(0, n - 1)].name} (todos tus barcos)` : f === 'weapon' ? 'Todas tus andanadas pegan más fuerte' : f === 'shield' ? 'Escudo Burbuja en línea: anula 1 impacto por turno' : f === 'engine' ? 'Más combustible para maniobrar' : 'Más ultimate para toda la tripulación';
+    const st = banner(`¡${FAMILY_NAME[f].toUpperCase()} MK ${roman(n)}!`, C.pinkHot, 60, -0.06, sub);
+    st.position.set(cx, cy);
+    this.fx.addChild(st);
+    gsap.from(st.scale, { x: 2.8, y: 2.8, duration: 0.2, ease: 'power3.in', onComplete: () => sfx('hit', 1) });
+    gsap.to(st, { alpha: 0, delay: 2.0, duration: 0.4, onComplete: () => st.destroy({ children: true }) });
+    sparkles(this.fx, cx, cy, C.yellow, 28, 380);
   }
 
-  /** what the UI depends on (affordability, jobs, ownership) — NOT raw amounts, those update in place */
+  /** the editor is its own full-screen modal: the Astillero steps aside (one Esc = one modal) and comes back after */
+  private async openEditor() {
+    const { openLayoutEditor } = await import('./shipyard/LayoutEditor');
+    const shipId = G.s.ship.active;
+    const tab = this.tab;
+    this.m.close();
+    openLayoutEditor(shipId, (r) => {
+      if (r.test) {
+        void import('./shipyard/trial').then((t) => t.startTrial());
+        return;
+      }
+      openShipyard({ tab, wiped: r.saved });
+    });
+  }
+
+  private async test() {
+    if (!crew().length) {
+      toast('Asigna al menos un gato antes de probar', { color: C.pink, icon: 'paw' });
+      sfx('error');
+      return;
+    }
+    const { startTrial } = await import('./shipyard/trial');
+    this.m.close();
+    void startTrial();
+  }
+
+  private showReport(r: TrialReport) {
+    if (this.m.closed) return;
+    const c = new Container();
+    const w = 470;
+    const h = 210;
+    c.position.set(CX + CW / 2 - w / 2, PLAN_Y + 120);
+    c.addChild(new Graphics().rect(8, 8, w, h).fill(C.ink).rect(0, 0, w, h).fill(C.paper).stroke({ width: 4, color: C.ink }));
+    const t = txt('REPORTE DE PRUEBA', { fontFamily: F.poster, fontSize: 36, fill: C.ink });
+    t.position.set(20, 8);
+    const lines = [`Barco: ${shipName(r.ship)}`, `Turnos: ${r.turns}`, `Daño total: ${fmt(r.damage)}`, `Módulos rotos al Costal: ${r.modules}`];
+    lines.forEach((s, i) => {
+      const l = label(s, 18, C.ink);
+      l.position.set(22, 60 + i * 28);
+      c.addChild(l);
+    });
+    const st = stamp(r.won ? '¡HUNDIDO!' : 'EL COSTAL AGUANTÓ', r.won ? C.red : C.inkBlue, 26, -0.12);
+    st.position.set(w - 110, h - 46);
+    const hint = label('clic para cerrar · sin botín ni Ronroneo', 12, P.blue);
+    hint.position.set(22, h - 24);
+    c.addChild(t, st, hint);
+    this.fx.addChild(c);
+    sfx('paper');
+    gsap.from(c, { y: c.y + 40, alpha: 0, duration: 0.3, ease: 'back.out(1.6)' });
+    c.eventMode = 'static';
+    c.cursor = 'pointer';
+    const close = () => {
+      if (c.destroyed) return;
+      gsap.to(c, { alpha: 0, y: c.y - 20, duration: 0.2, onComplete: () => c.destroy({ children: true }) });
+    };
+    c.on('pointertap', close);
+    gsap.delayedCall(7, close);
+  }
+
+  // ------------------------------------------------------------------ live refresh
+  /** what the UI depends on (affordability, jobs, ownership, gear, layout) — NOT raw amounts */
   private signature() {
     const jobs = G.s.timers.filter((t) => t.kind === 'yard').map((t) => t.ref).join(',');
-    const fam = ROWS.map((f) => {
-      const c = canUpgrade(f);
-      return `${f}:${c.ok ? 1 : 0}:${c.why}`;
-    }).join(',');
+    const fam = MK_ROWS.map((f) => `${f}:${canUpgrade(f).ok ? 1 : 0}:${canUpgrade(f).why}`).join(',');
     const ships = BAL.ship.ships.map((b) => `${b.id}:${shipUnlocked(b.id) ? 1 : 0}:${G.s.gold >= b.cost ? 1 : 0}`).join(',');
-    return `${fam}|${ships}|${jobs}|${G.s.purr > 0.01 ? 1 : 0}|${G.s.ship.owned.join(',')}|${G.s.ship.active}|${JSON.stringify(G.s.ship.mk)}`;
-  }
-
-  private resTexts: Text[] = [];
-  private updateResTexts() {
-    const t = this.resTexts;
-    if (t.length < 5 || t[0].destroyed) return;
-    const crystals = Object.values(G.s.crystals).reduce((a, b) => a + b, 0);
-    t[0].text = fmt(G.s.gold);
-    t[1].text = fmt(G.s.scrap);
-    t[2].text = fmt(G.s.blueprint);
-    t[3].text = fmt(crystals);
-    t[4].text = `${G.s.purr.toFixed(1)}m`;
+    const g = gear();
+    return [
+      fam,
+      ships,
+      jobs,
+      G.s.purr > 0.01 ? 1 : 0,
+      G.s.ship.owned.join(','),
+      G.s.ship.active,
+      JSON.stringify(G.s.ship.mk),
+      weaponsOf().join(','),
+      g.relics.length,
+      g.artifacts.length,
+      equippedArtifacts(G.s.ship.active).join(','),
+      layoutSig(layoutOf()),
+      G.s.campaign.bossesDefeated,
+    ].join('|');
   }
 
   private tick(t: Ticker) {
     if (this.m.closed) return;
-    for (const p of this.progress) {
-      const job = G.timerFor('yard', p.f);
-      if (!job) continue;
-      p.bar.set(1 - job.leftMs / job.totalMs, false);
-      p.t.text = `EN OBRA → MK ${roman(mk(p.f) + 1)} · faltan ${fmtTime(job.leftMs)}`;
-    }
+    this.mkTab?.tick(t.deltaMS);
     this.acc += t.deltaMS;
     if (this.acc < 300) return;
     this.acc = 0;
-    this.updateResTexts();
-    for (const p of this.progress) if (!p.purr.destroyed) p.purr.setText(`RONRONEAR  ${G.s.purr.toFixed(1)} min`);
+    this.updateRes();
+    this.mkTab?.slowTick();
     const s = this.signature();
     if (s !== this.sig) {
-      this.buildRight();
+      this.sig = s;
       this.buildFleet();
-      this.buildCenter();
+      this.buildPower();
+      this.buildTabs();
+      this.plan.refresh();
     }
   }
 }
-
