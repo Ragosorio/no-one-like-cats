@@ -719,6 +719,16 @@ export class BattleScene extends Scene {
       case 'spread':
         this.ships[e.side].refreshCell(e.cell);
         break;
+      case 'flood': {
+        const v = this.ships[e.side];
+        // the ship settles lower as it floods
+        gsap.to(v, { baseY: this.sim.sides[e.side].setup.origin.y + e.flood * 70, duration: 0.8, ease: 'power2.out' });
+        const p = this.wfx.toLocal(v.getGlobalPosition());
+        floatText(this.wfx, p.x + v.width / 2, WATER_Y - 40, `INUNDACIÓN ${Math.round(e.flood * 100)}%`, { color: C.cyan, size: 36, font: F.poster, rise: 30, dur: 1.4 });
+        sfx('splash', 0.7);
+        this.fxp.burst(p.x + v.width / 2, WATER_Y, { count: 16, tint: [C.paper, C.megaBlue], angle: [-Math.PI * 0.9, -Math.PI * 0.1], speed: [100, 300] });
+        break;
+      }
       case 'impact': {
         const [word, col] = ONO[e.element] ?? ONO.neutral;
         const fx = elementFx(e.element === 'neutral' ? 'fire' : e.element);

@@ -29,7 +29,8 @@ export type BattleEvent =
   | { k: 'splash'; x: number; y: number; path: number; at: number }
   | { k: 'shieldHit'; side: number; absorbed: number; broken: boolean; path: number; at: number }
   | { k: 'tick'; side: number; cell: Cell; dmg: number; status: StatusId; destroyed: boolean }
-  | { k: 'spread'; side: number; cell: Cell; status: StatusId };
+  | { k: 'spread'; side: number; cell: Cell; status: StatusId }
+  | { k: 'flood'; side: number; flood: number; breaches: number };
 
 export interface SideSetup {
   blueprint: ShipBlueprint;
@@ -56,6 +57,9 @@ export interface SideState {
   shieldHp: number;
   shieldMax: number;
   windNext: number;
+  /** flooding 0..1 (1 = sunk). Breaches = hull cells destroyed below the waterline by water/earth */
+  flood: number;
+  breaches: number;
 }
 
 export type VictoryReason = 'core' | 'crew' | 'sunk';
@@ -127,7 +131,7 @@ export class Battle {
     }));
     const hasShield = ship.modules.some((m) => m.kind === 'shield');
     const shieldMax = hasShield ? s.shieldHp ?? Math.round(120 * s.hpMul) : 0;
-    return { setup: s, ship, cats, shieldHp: shieldMax, shieldMax, windNext: 0 };
+    return { setup: s, ship, cats, shieldHp: shieldMax, shieldMax, windNext: 0, flood: 0, breaches: 0 };
   }
 
   // ---------- geometry
@@ -216,6 +220,10 @@ export class Battle {
     const s = this.sides[side];
     const ship = s.ship;
     for (const m of ship.modules) if (m.disabled > 0) m.disabled--;
+    if (s.breaches > 0) {
+      s.flood = Math.min(1, s.flood + 0.09 * Math.min(4, s.breaches));
+      ev.push({ k: 'flood', side, flood: s.flood, breaches: s.breaches });
+    }
     for (const c of s.cats) {
       if (c.cooldown > 0) c.cooldown--;
       if (c.stunned > 0) c.stunned--;
@@ -527,6 +535,13 @@ export class Battle {
         }
       }
       ev.push({ k: 'cell', side: a.side, cell: a.c, dmg, destroyed, path, at });
+      if (destroyed && (shot.element === 'water' || shot.element === 'earth') && this.cellCenter(a.side, a.c.x, a.c.y).y > this.waterY - CELL * 0.3) {
+        this.sides[a.side].breaches++;
+        if (!reactionDone) {
+          ev.push({ k: 'reaction', name: 'BRECHA', x, y, mult: 1, path, at });
+          reactionDone = true;
+        }
+      }
       if (a.d < radius) this.damageCatsInCell(a.side, a.c, Math.round(base * fall * (shot.catMul ?? 0.5) * CAT_K), ev, path, at, shot.element);
     }
     // conduction chain (wet + electric)
@@ -574,7 +589,12 @@ export class Battle {
       delete st.frozen;
       name = 'ESTALLIDO';
       mult = 2;
-    } else if (el === 'wind' && st.burning) {
+    } else if (shot.trajectory === 'gust' && st.wet) {
+      delete st.wet;
+      st.frozen = 2;
+      name = 'VENTISCA';
+      mult = 1.1;
+    } else if ((el === 'wind' || shot.trajectory === 'gust') && st.burning) {
       st.burning = (st.burning ?? 0) + 2;
       name = 'AVIVAR';
       mult = 1.5;
@@ -772,7 +792,7 @@ export class Battle {
       let lost: VictoryReason | null = null;
       if (core && !core.alive) lost = 'core';
       else if (s.cats.length && s.cats.every((c) => c.ko)) lost = 'crew';
-      else if (s.ship.integrity() < 0.28) lost = 'sunk';
+      else if (s.ship.integrity() < 0.28 || s.flood >= 1) lost = 'sunk';
       if (lost) {
         this.winner = (1 - side) as 0 | 1;
         this.reason = lost;
