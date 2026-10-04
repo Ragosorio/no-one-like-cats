@@ -10,6 +10,8 @@ import { Button, poster, txt } from '../ui/widgets';
 import { settings, saveSettings } from '../core/settings';
 import { audio, sfx } from '../core/audio';
 import { clean } from '../ui/story/text';
+import { G } from '../state/game';
+import { gtxt } from '../ui/gender';
 
 // The HUD imports this module on every island/map screen, so this also guarantees the story layer
 // (beats, Luzterna tips, mission panels) is listening on dev routes like ?scene=island&new=1.
@@ -142,7 +144,7 @@ let open_: Modal | null = null;
 export function openSettings(..._args: unknown[]) {
   if (open_ && !open_.closed) return open_;
   applyAudioSettings();
-  const m = new Modal('AJUSTES', 1240, 780, { subtitle: 'tinta, papel y gatos' });
+  const m = new Modal('AJUSTES', 1240, 880, { subtitle: 'tinta, papel y gatos' });
   open_ = m;
   const b = m.body;
   const colW = 540;
@@ -203,6 +205,39 @@ export function openSettings(..._args: unknown[]) {
   });
   tFl.position.set(colW - 140, y);
   b.addChild(lFl, tFl);
+  y += 100;
+
+  // ---------------- player profile (name + gender)
+  const sp = section('TU PERFIL', colW);
+  sp.position.set(0, y);
+  b.addChild(sp);
+  y += 54;
+  const prof = new Container();
+  prof.position.set(0, y);
+  b.addChild(prof);
+  const drawProfile = () => {
+    prof.removeChildren().forEach((c) => c.destroy({ children: true }));
+    const p = G.s.player;
+    const gName = p?.gender === 'm' ? 'CHICO' : p?.gender === 'f' ? 'CHICA' : 'MISTERIO TOTAL';
+    const card = new Container();
+    const nm = poster((p?.name ?? 'SIN NOMBRE').toUpperCase(), 40, C.ink);
+    nm.position.set(16, 6);
+    const gt = txt(p ? `${gName} · Luzterna te dice «${gtxt('{g:capitán|capitana|capi}')}»` : 'Luzterna todavía no sabe cómo te llamas', { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: C.ink });
+    gt.position.set(18, 56);
+    const cw = colW - 200;
+    card.addChild(new Graphics().rect(5, 5, cw, 86).fill(C.ink).rect(0, 0, cw, 86).fill(C.yellow).stroke({ width: 3, color: C.ink, alignment: 1 }), nm, gt);
+    if (nm.width > cw - 30) nm.scale.set((cw - 30) / nm.width);
+    const edit = new Button('CAMBIAR', async () => {
+      m.close();
+      const story = await import('../ui/dialog');
+      const { askPlayerProfile } = await import('../ui/story/profile');
+      await askPlayerProfile(story.storyLayer(), { fromSettings: true });
+      G.emit('changed', undefined);
+    }, { w: 180, h: 64, size: 28, color: C.paper });
+    edit.position.set(colW - 180, 12);
+    prof.addChild(card, edit);
+  };
+  drawProfile();
 
   // ---------------- tone
   const X2 = colW + 64;

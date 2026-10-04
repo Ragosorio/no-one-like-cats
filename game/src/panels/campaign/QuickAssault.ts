@@ -13,7 +13,8 @@ import { fmt } from '../../core/format';
 import { onomatopoeia, sparkles, speedLines } from '../../fx/juice';
 import { resolveBattle } from '../../state/ext/campaign';
 import { stageInfo } from '../../state/sys/campaign';
-import { P, elIcon, killTree, resChip, tickUp } from './common';
+import { P, elKey, killTree, resChip, tickUp } from './common';
+import { elementFx } from '../../art/catArt';
 import { boat } from './chartArt';
 import type { IconKind } from '../../ui/icons';
 import type { BattleResult } from '../../scenes/BattleScene';
@@ -77,7 +78,7 @@ export function playQuickAssault(zone: number, stage: number): Promise<void> {
     lootRow.position.set(40, 450);
     panel.addChild(lootRow);
     const items: { kind: IconKind; value: number; label?: string; tint?: number }[] = [{ kind: 'gold', value: loot.gold }, { kind: 'scrap', value: loot.scrap }];
-    if (loot.crystals) items.push({ kind: 'crystal', value: loot.crystals.n, label: elIcon(loot.crystals.el) });
+    if (loot.crystals) items.push({ kind: 'crystal', value: loot.crystals.n, tint: elementFx(elKey(loot.crystals.el)).main });
     if (loot.blueprint) items.push({ kind: 'blueprint', value: loot.blueprint });
     if (loot.orbs) items.push({ kind: 'orb', value: loot.orbs.n });
     if (loot.gems) items.push({ kind: 'gem', value: loot.gems });

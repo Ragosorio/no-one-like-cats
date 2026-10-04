@@ -30,12 +30,22 @@ import { activeMissions, evalGoal } from '../state/sys/missions';
 import { VictoryNews, NewsLootRow } from '../fx/sequences/victoryNews';
 import { playElementDiscovery } from '../fx/sequences/elementDiscovery';
 import { playCatReveal } from '../fx/sequences/catReveal';
-import { P, catPortrait, clipping, doubleRule, elIcon, elKey, ensureCats, label, stamp, tickUp, wait, clearChildren, killTree } from '../panels/campaign/common';
+import { P, catPortrait, clipping, doubleRule, elKey, elNameCap, elTok, ensureCats, label, stamp, tickUp, wait, clearChildren, killTree } from '../panels/campaign/common';
+import { iconText } from '../ui/elementIcon';
 import { openShipyard } from '../panels/Shipyard';
+import { koRank, KO_RANKS } from '../state/sys/ranks';
+import { BOSS_NEWS, HEADLINES, reactionKey } from '../ui/story/script';
+import { sparkles } from '../fx/juice';
 
 const QUIPS = ['Testigos: «fue precioso».', 'Un pescado que pasaba lo grabó todo.', 'Se reportan sardinas voladoras en la zona.', 'El capitán enemigo pidió a su mamá.', 'Nadie esperaba tanta violencia de tan poquito gato.'];
 const CAPTIONS = ['FOTO: un pescado que pasaba por ahí.', 'FOTO: archivo del Diario. El fotógrafo sigue mojado.', 'FOTO: cortesía de una gaviota con cámara.'];
 const BIOME: Record<string, string> = { cliff: 'ACANTILADO', volcano: 'VOLCÁN', reef: 'ARRECIFE', storm: 'TORMENTA', library: 'BIBLIOTECA', crater: 'CRÁTER' };
+
+/** caption of the T4 element poster per element */
+const DISCOVERY_CAPTION: Record<string, string> = {
+  earth: 'Un fósil VIVO en la bodega de un pirata. Él no sabía lo que tenía. Tú sí.',
+  storm: 'La tormenta ya no es de la Gárgola. Ahora ronronea para ti. Y hace ruido.',
+};
 
 function pick<T>(a: T[]): T {
   return a[Math.floor(Math.random() * a.length)];
@@ -128,32 +138,67 @@ export class ResultsScene extends Scene {
     this.world.addChild(bg, dots, circle, dg, cr);
     gsap.from(circle.scale, { x: 0, y: 0, duration: 0.5, ease: 'back.out(1.6)' });
 
-    // headline
+    // headline: boss front page > errand > elite > a reaction of this battle > by victory reason.
+    // Never repeats the previous edition's headline.
     const first = !G.s.counters.wins || G.s.counters.wins <= 1;
+    const E = enemy.toUpperCase();
+    const fill = (t: string, extra: Record<string, string> = {}) => {
+      let out = t.replace(/\{M\}/g, mvpName).replace(/\{E\}/g, E);
+      for (const [k, v] of Object.entries(extra)) out = out.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+      // Spanish contractions: "A EL MURO" → "AL MURO", "DE EL" → "DEL"
+      return out.replace(/\bA EL\b/g, 'AL').replace(/\bDE EL\b/g, 'DEL');
+    };
+    const fresh = (opts: string[]) => {
+      const f = opts.filter((o) => o !== lastHeadline);
+      return pick(f.length ? f : opts);
+    };
+    const rankUps = this.rankUps();
     let headline: string;
-    if (boss) headline = z === 1 ? `${mvpName} LE ROMPE LOS BIGOTES AL CAPITÁN` : `${mvpName} HUNDE A ${boss.name.toUpperCase()}`;
-    else if (first) headline = `${mvpName} PARTE BARCO EN TRES`;
-    else {
-      const E = enemy.toUpperCase();
-      const opts = [`${mvpName} PARTE BARCO EN TRES`, `${mvpName} DEJA A ${E} COMO COLADERA`, `${mvpName} 1 — ${E} 0`, `«NO VIMOS VENIR AL GATO», DICE ${E}`, `${mvpName} ATACA DE NUEVO: CUNDE EL PÁNICO`];
-      if (L.result.reason === 'core') opts.push(`${mvpName} LE REVIENTA EL NÚCLEO A ${E}`, `NÚCLEO DE ${E}: «FUE UN GATO»`);
-      if (L.result.reason === 'sunk') opts.push(`${mvpName} MANDA A ${E} A DORMIR CON LOS PECES`);
-      if (L.result.reason === 'crew') opts.push(`${mvpName} NOQUEA A TODA LA TRIPULACIÓN ENEMIGA`, `${E} SE QUEDA SIN GATOS (Y SIN DIGNIDAD)`);
-      const fresh = opts.filter((o) => o !== lastHeadline);
-      headline = pick(fresh.length ? fresh : opts);
+    let kicker: string | undefined;
+    let teaser: { head: string; text: string } | undefined;
+    if (boss) {
+      headline = z === 1 ? `${mvpName} LE ROMPE LOS BIGOTES AL CAPITÁN` : z === 2 ? `${mvpName} DESPIERTA (Y HUNDE) A LA GÁRGOLA` : z === 3 ? `${mvpName} LE SUELTA EL ABRAZO AL KRAKEN` : `${mvpName} HUNDE A ${boss.name.toUpperCase()}`;
+      const bn = BOSS_NEWS[z];
+      if (bn && L.firstClear) {
+        kicker = bn.kicker;
+        teaser = { head: bn.teaserHead, text: bn.teaser };
+      }
+    } else if (first) headline = `${mvpName} PARTE BARCO EN TRES`;
+    else if (L.errand) headline = fill(fresh([...HEADLINES.errand]));
+    else if (kind === 'elite') {
+      headline = fill(fresh([...HEADLINES.elite]));
+      kicker = '¡CAE UNA ÉLITE!';
+    } else {
+      const rk = L.reactions.map((r) => reactionKey(r)).find((k): k is string => !!k);
+      if (rk) {
+        headline = fill(fresh([...(HEADLINES.reaction[rk] ?? HEADLINES.reaction.any)]));
+        kicker = '¡SINERGIA!';
+      } else if (rankUps.length && Math.random() < 0.6) {
+        const r0 = rankUps[0];
+        headline = fresh(HEADLINES.rank.map((t) => t.replace(/\{M\}/g, r0.name.toUpperCase()).replace(/\{R\}/g, r0.rank.toUpperCase())));
+      } else {
+        const opts = [`${mvpName} PARTE BARCO EN TRES`, `${mvpName} DEJA A ${E} COMO COLADERA`, `${mvpName} 1 — ${E} 0`, `«NO VIMOS VENIR AL GATO», DICE ${E}`, `${mvpName} ATACA DE NUEVO: CUNDE EL PÁNICO`];
+        if (L.result.reason === 'core') opts.push(`${mvpName} LE REVIENTA EL NÚCLEO A ${E}`, `NÚCLEO DE ${E}: «FUE UN GATO»`);
+        if (L.result.reason === 'sunk') opts.push(`${mvpName} MANDA A ${E} A DORMIR CON LOS PECES`);
+        if (L.result.reason === 'crew') opts.push(`${mvpName} NOQUEA A TODA LA TRIPULACIÓN ENEMIGA`, `${E} SE QUEDA SIN GATOS (Y SIN DIGNIDAD)`);
+        headline = fresh(opts);
+      }
     }
     lastHeadline = headline;
     const turns = Math.max(1, L.result.turns || 1);
+    const sd2 = stageInfo(z, s);
     const sub = boss
       ? `«${boss.lines.defeat}» — ${boss.name}, minutos antes de hundirse. La tripulación de la ${shipName} celebra con pescado.`
-      : `La tripulación de la ${shipName} hunde a «${enemyFull}» en ${turns} ${turns === 1 ? 'turno' : 'turnos'}. ${pick(QUIPS)}`;
+      : kind === 'elite' && sd2?.eliteLine
+        ? `«${sd2.eliteLine}» — declaró ${enemyFull.split('—')[0].trim()} antes de hundirse en ${turns} ${turns === 1 ? 'turno' : 'turnos'}. ${pick(QUIPS)}`
+        : `La tripulación de la ${shipName} hunde a «${enemyFull}» en ${turns} ${turns === 1 ? 'turno' : 'turnos'}. ${pick(QUIPS)}`;
     const date = new Date().toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
 
     // loot rows
     const loot = L.loot;
     const rows: NewsLootRow[] = [{ kind: 'gold', label: 'Doblones', value: loot.gold }, { kind: 'scrap', label: 'Chatarra', value: loot.scrap }];
     if (loot.blueprint) rows.push({ kind: 'blueprint', label: 'Planos', value: loot.blueprint });
-    if (loot.crystals) rows.push({ kind: 'crystal', label: `Cristales ${elIcon(loot.crystals.el)}`, value: loot.crystals.n, tint: elementFx(elKey(loot.crystals.el)).main });
+    if (loot.crystals) rows.push({ kind: 'crystal', label: `Cristales de ${elNameCap(loot.crystals.el)}`, value: loot.crystals.n, tint: elementFx(elKey(loot.crystals.el)).main });
     if (loot.orbs) {
       const nm = CAT_BY_ID.get(loot.orbs.species)?.name ?? 'gato';
       rows.push({ kind: 'orb', label: `Orbes de ${nm}`, value: loot.orbs.n, tint: elementFx(elKey(CAT_BY_ID.get(loot.orbs.species)?.elements[0] ?? 'fire')).main });
@@ -162,6 +207,8 @@ export class ResultsScene extends Scene {
 
     const news = new VictoryNews({
       headline,
+      kicker,
+      teaser,
       sub,
       caption: pick(CAPTIONS),
       edition: `AÑO I · Nº ${String(G.s.stats.victories).padStart(4, '0')}`,
@@ -196,7 +243,7 @@ export class ResultsScene extends Scene {
       nm.position.set(212, 48);
       const cry = txt(`«${def.battleForm.cry}»`, { fontFamily: F.comic, fontSize: 32, fill: C.yellow, stroke: { color: C.ink, width: 5 }, wordWrap: true, wordWrapWidth: 400, letterSpacing: 1 });
       cry.position.set(214, 128);
-      const info = label(`Nv ${mvp.level} · ${'★'.repeat(mvp.stars)} · ${def.elements.map((e) => elIcon(e)).join(' ')}`, 20, C.paper);
+      const info = iconText(`Nv ${mvp.level} · ${'★'.repeat(mvp.stars)} · ${def.elements.map((e) => elTok(e)).join(' ')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 20, fill: C.paper });
       info.position.set(214, 128 + cry.height + 6);
       mv.addChild(p, nm, cry, info);
       tl.from(p.scale, { x: 0, y: 0, duration: 0.35, ease: 'back.out(2.5)' }, 1.5);
@@ -204,6 +251,22 @@ export class ResultsScene extends Scene {
       tl.call(() => sfx('meow'), [], 1.6);
     }
     col.addChild(mv);
+    // ¡RANGO! stamps: a crew cat climbed a K.O. rank this battle
+    rankUps.slice(0, 2).forEach((ru, i) => {
+      const st = stamp(`¡RANGO! ${ru.name.toUpperCase()} → ${ru.rank.toUpperCase()}`, ru.color === 0xb8862a ? C.yellow : C.paper, 24, 0.07 - i * 0.05);
+      st.position.set(x0 + 420 - i * 20, i === 0 ? 30 : 268);
+      this.ui.addChild(st);
+      st.alpha = 0;
+      tl.call(
+        () => {
+          st.alpha = 1;
+          gsap.from(st.scale, { x: 2.4, y: 2.4, duration: 0.18, ease: 'power3.in', onComplete: () => sfx('hit', 1.2 + i * 0.1) });
+          sparkles(this.ui, st.x, st.y, ru.color, 12, 140);
+        },
+        [],
+        2.0 + i * 0.35,
+      );
+    });
 
     // Ronroneo stamps → clocks
     const pr = new Container();
@@ -299,6 +362,20 @@ export class ResultsScene extends Scene {
     tl.call(() => this.afterCascade(), [], tEnd);
   }
 
+  /** crew cats whose K.O. rank went up in this battle (snapshot taken when sailing) */
+  private rankUps(): { uid: string; name: string; rank: string; color: number }[] {
+    const out: { uid: string; name: string; rank: string; color: number }[] = [];
+    for (const [uid, before] of Object.entries(this.last.koBefore ?? {})) {
+      const c = getCat(uid);
+      if (!c) continue;
+      const now = c.kos ?? 0;
+      const a = koRank(before);
+      const b = koRank(now);
+      if (b.tier > a.tier) out.push({ uid, name: c.name, rank: b.name, color: KO_RANKS[b.tier]?.metal === 'gold' ? 0xb8862a : KO_RANKS[b.tier]?.metal === 'silver' ? 0x6f7f8f : 0xa8582a });
+    }
+    return out;
+  }
+
   private flyStamp(text: string, row: { bar: Bar; val: Text; target: number; from: number; done: boolean } | undefined, targetY: number) {
     if (!row || !this.news) return;
     const st = stamp(text, C.mint, 26, -0.1);
@@ -330,6 +407,10 @@ export class ResultsScene extends Scene {
       await wait(500);
       await this.elementSequence();
       this.busy = false;
+    } else if (L.loot.unlocks.length && !this.busy) {
+      this.busy = true;
+      await this.unlockStamps();
+      this.busy = false;
     }
     gsap.to(this.buttons, { alpha: 1, duration: 0.3 });
     gsap.from(this.buttons, { y: this.buttons.y + 40, duration: 0.35, ease: 'back.out(2)' });
@@ -341,7 +422,8 @@ export class ResultsScene extends Scene {
     const def = ELEMENT_BY_ID.get(el) as (ReturnType<typeof ELEMENT_BY_ID.get> & { habitatBiome?: string }) | undefined;
     const stamps: string[] = [];
     const biome = def?.habitatBiome;
-    stamps.push(`NUEVO HÁBITAT: ${biome ? BIOME[biome] ?? biome.toUpperCase() : (def?.name ?? el).toUpperCase()}`);
+    // storm shares the cliff biome with earth: name its habitat after the element instead
+    stamps.push(el === 'storm' ? 'NUEVO HÁBITAT: TORMENTA' : `NUEVO HÁBITAT: ${biome ? BIOME[biome] ?? biome.toUpperCase() : (def?.name ?? el).toUpperCase()}`);
     const zu = L.loot.unlocks.find((u) => u.startsWith('zone:'));
     if (zu) {
       const zn = Number(zu.split(':')[1]);
@@ -354,6 +436,7 @@ export class ResultsScene extends Scene {
       known: G.s.elements,
       resonances: resonancesWith(el),
       stamps,
+      caption: DISCOVERY_CAPTION[el],
     });
     if (L.loot.newCat) {
       const sp = L.loot.newCat;
@@ -371,6 +454,33 @@ export class ResultsScene extends Scene {
       });
       G.save();
     } else music.play('island');
+  }
+
+  /** boss unlocks without a new element (Kraken → Bastión + Escudos): rubber stamps slam onto the page */
+  private async unlockStamps() {
+    const L = this.last;
+    const labels: string[] = [];
+    for (const u of L.loot.unlocks) {
+      const [k, v] = u.split(':');
+      if (k === 'ship') labels.push(`NUEVO BARCO: ${(CONTENT.ships.find((x) => x.id === v)?.name ?? v).toUpperCase()}`);
+      else if (k === 'family') labels.push(v === 'shield' ? 'NUEVA MECÁNICA: ESCUDOS' : `NUEVA FAMILIA: ${v.toUpperCase()}`);
+      else if (k === 'zone') labels.push(`NUEVA ZONA: ${ZONES[Number(v) - 1]?.name.toUpperCase() ?? '???'}`);
+    }
+    if (!labels.length) return;
+    await wait(400);
+    const layer = new Container();
+    this.ui.addChild(layer);
+    for (let i = 0; i < labels.length; i++) {
+      const st = stamp(labels[i], i === 0 ? C.red : C.inkBlue, 34, i % 2 ? 0.06 : -0.07);
+      st.position.set(400 + (i % 2 ? 40 : -20), 740 + i * 66);
+      layer.addChild(st);
+      gsap.from(st.scale, { x: 2.6, y: 2.6, duration: 0.18, ease: 'power3.in' });
+      sfx('hit', 0.8 + i * 0.15);
+      this.shaker.add(0.25);
+      await wait(380);
+    }
+    sfx('fanfare');
+    await wait(500);
   }
 
   private buildButtons(won: boolean) {
@@ -543,7 +653,7 @@ export class ResultsScene extends Scene {
       ];
       tiers.forEach(([th, txtT], i) => {
         const ok = L.analysisAfter >= th - 1e-6;
-        const row = label(`${ok ? '✔' : '○'}  ${Math.round(th * 100)}% · ${txtT}`, 20, ok ? C.mint : 0x8a95a3);
+        const row = label(`${ok ? '✓' : '○'}  ${Math.round(th * 100)}% · ${txtT}`, 20, ok ? C.mint : 0x8a95a3);
         row.position.set(0, 110 + i * 32);
         an.addChild(row);
       });

@@ -226,22 +226,48 @@ export interface LastBattle {
   analysisAfter: number;
   mvp: string | null;
   quick?: boolean;
+  /** K.O. count per crew cat before the battle (Results stamps "¡RANGO!" on rank-ups) */
+  koBefore: Record<string, number>;
+  /** reactions first discovered in this battle (or reported by BattleScene as result.reactions) */
+  reactions: string[];
+  /** errand id when this battle was an Encargo (combat passes it to resolveBattle) */
+  errand?: string;
+}
+
+export interface BattleSnapshot {
+  at: number;
+  kos: Record<string, number>;
+  reactionFlags: string[];
 }
 
 export const campaignMemo: {
   last: LastBattle | null;
+  /** state right before sailing (PreBattle / Quick Assault); resolveBattle falls back to "now" */
+  before: BattleSnapshot | null;
   /** stage key that was just unlocked (map animates the route to it) */
   justUnlocked: string | null;
   /** stage key that was just cleared */
   justCleared: string | null;
-} = { last: null, justUnlocked: null, justCleared: null };
+} = { last: null, before: null, justUnlocked: null, justCleared: null };
+
+/** remember K.O. counts and discovered reactions right before a battle (call when sailing) */
+export function snapshotBeforeBattle(): BattleSnapshot {
+  const kos: Record<string, number> = {};
+  for (const c of G.s.cats) kos[c.uid] = c.kos ?? 0;
+  const snap = { at: Date.now(), kos, reactionFlags: Object.keys(G.s.flags).filter((k) => k.startsWith('reaction_') && G.s.flags[k]) };
+  campaignMemo.before = snap;
+  return snap;
+}
 
 /**
  * applyResult + capture of everything the Results screen wants to show
  * (Ronroneo stamps per timer, Momentum before/after, boss Analysis, route unlocks).
  */
-export function resolveBattle(zone: number, stage: number, r: BattleResult, o: { mvp?: string | null; quick?: boolean } = {}): LastBattle {
+export function resolveBattle(zone: number, stage: number, r: BattleResult, o: { mvp?: string | null; quick?: boolean; errand?: string } = {}): LastBattle {
   const key = stageKey(zone, stage);
+  // a snapshot older than ~1 h belongs to another battle (or none was taken: dev routes) → use "now"
+  const before = campaignMemo.before && Date.now() - campaignMemo.before.at < 3_600_000 ? campaignMemo.before : snapshotBeforeBattle();
+  campaignMemo.before = null;
   const wasCleared = isCleared(key);
   const momentumBefore = G.s.momentum;
   const analysisBefore = G.s.campaign.analysis[key] ?? 0;
@@ -266,6 +292,8 @@ export function resolveBattle(zone: number, stage: number, r: BattleResult, o: {
   } finally {
     off();
   }
+  // C18 "Destruye 30 módulos con el Merodeador": modules destroyed per active ship (real battles only)
+  if (!o.quick && r.modulesDestroyed > 0) G.count(`modules_with_${G.s.ship.active}`, r.modulesDestroyed);
   const firstClear = !wasCleared && isCleared(key);
   campaignMemo.justCleared = firstClear ? key : null;
   campaignMemo.justUnlocked = null;
@@ -288,9 +316,21 @@ export function resolveBattle(zone: number, stage: number, r: BattleResult, o: {
     analysisAfter: G.s.campaign.analysis[key] ?? 0,
     mvp: o.mvp ?? null,
     quick: o.quick,
+    koBefore: before.kos,
+    reactions: battleReactions(r, before),
+    errand: o.errand,
   };
   campaignMemo.last = last;
   return last;
+}
+
+/** reactions of this battle: BattleScene may report `result.reactions`; otherwise the ones discovered now */
+function battleReactions(r: BattleResult, before: BattleSnapshot): string[] {
+  const rep = (r as BattleResult & { reactions?: string[] }).reactions;
+  if (Array.isArray(rep) && rep.length) return [...new Set(rep)];
+  return Object.keys(G.s.flags)
+    .filter((k) => k.startsWith('reaction_') && G.s.flags[k] && !before.reactionFlags.includes(k))
+    .map((k) => k.slice('reaction_'.length));
 }
 
 /**

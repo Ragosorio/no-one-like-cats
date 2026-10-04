@@ -125,7 +125,7 @@ export class TitleScene extends Scene {
       nw.position.set(470, 836);
       this.addChild(nw);
     }
-    const gear = new Button('⚙ AJUSTES', async () => (await import('../panels/Settings')).openSettings(), { w: 220, h: 60, size: 26, color: C.paper });
+    const gear = new Button('AJUSTES', async () => (await import('../panels/Settings')).openSettings(), { w: 220, h: 60, size: 26, color: C.paper });
     gear.position.set(W - 260, H - 90);
     this.addChild(gear);
     const foot = txt('sin anuncios · sin tarjetazo · sin energía · “espera o sigue jugando”', { fontFamily: F.ui, fontSize: 18, fill: C.ink });

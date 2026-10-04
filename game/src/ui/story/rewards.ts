@@ -21,6 +21,7 @@ import { clean, doneQuip } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
 import { onomatopoeia, sparkles } from '../../fx/juice';
 import { destroyDeep, settle } from './tweens';
+import { onTapInside } from '../dialog';
 
 const CHAIN: Record<MissionDef['chain'], { name: string; color: number; text: number }> = {
   historia: { name: 'HISTORIA', color: C.pinkHot, text: C.ink },
@@ -210,12 +211,10 @@ export async function missionPanel(layer: Container, items: DoneItem[], short: b
         },
       });
     };
-    panel.eventMode = 'static';
-    panel.cursor = 'pointer';
-    panel.on('pointertap', (e) => {
-      e.stopPropagation();
-      close();
-    });
+    // click-through (never eats a click meant for the map/island); tapping it still dismisses it early
+    c.eventMode = 'none';
+    const off = onTapInside([panel], close);
+    c.on('destroyed', off);
     gsap.delayedCall(stay, close);
   }, (stay + 3) * 1000);
   destroyDeep(c);
@@ -264,8 +263,10 @@ export function kingdomBanner(layer: Container, kl: number, lines: string[]) {
     .fromTo(num.scale, { x: 2.2, y: 2.2 }, { x: 1, y: 1, duration: 0.25, ease: 'power4.in' }, 0.25)
     .call(() => sparkles(layer, W / 2 - bw / 2 + 105, 26 + bh / 2, C.yellow, 12, 160), [], 0.5)
     .to(c, { y: -bh - 40, duration: 0.3, ease: 'power2.in' }, 3.1);
-  c.eventMode = 'static';
-  c.on('pointertap', () => tl.seek(3.1));
+  // click-through: tapping the banner skips it, the click still reaches the HUD/map below
+  c.eventMode = 'none';
+  const off = onTapInside([c], () => tl.time() < 3.1 && tl.seek(3.1));
+  c.on('destroyed', off);
 }
 
 const RULE_QUIPS: [RegExp, string][] = [

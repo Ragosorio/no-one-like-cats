@@ -100,6 +100,8 @@ const SPEAKERS: Record<string, Speaker> = {
   BIGOTES: { id: 'bigotes', name: 'CAPITÁN BIGOTES ROTOS', kind: 'cat', slug: 'arce_autumn_cat', band: C.red, bandText: C.paper, box: 0xf6d7c8, pitch: 0.65, treat: 'enemy' },
   NOCTIS: { id: 'noctis', name: 'VELO NOCTIS', kind: 'cat', slug: 'masquerade_phantom_cat', band: C.plumInk, bandText: C.mint, box: C.lilac, pitch: 1.15, treat: 'rival' },
   GÁRGOLA: { id: 'gargola', name: 'LA GÁRGOLA RONRONEANTE', kind: 'cat', slug: 'fossilstone_guardian_cat', band: C.olive, bandText: C.paper, box: 0xd9d4c4, pitch: 0.55, treat: 'boss' },
+  KRAKEN: { id: 'kraken', name: 'CAPITÁN DEL KRAKEN', kind: 'cat', slug: 'mecha_neon_cat', band: C.cyan, bandText: C.ink, box: 0xd6f6ff, pitch: 1.8, treat: 'boss' },
+  TRONADOR: { id: 'tronador', name: 'TRONADOR', kind: 'cat', slug: 'stormcloud_elemental_cat', band: C.yellow, bandText: C.ink, box: 0xfff6a8, pitch: 0.7, treat: 'ally' },
   RAIJIN: { id: 'raijin', name: 'RAIJIN', kind: 'cat', slug: 'stormcloud_elemental_cat', band: C.yellow, bandText: C.ink, box: 0xfff6a8, pitch: 1.2, treat: 'ally' },
   HERALDO: { id: 'heraldo', name: 'EL HERALDO', kind: 'cat', slug: 'storybook_ink_cat', band: C.plum, bandText: C.gold, box: C.lilac, pitch: 0.9, treat: 'enemy' },
   ARCANISTA: { id: 'arcanista', name: 'EL ARCANISTA', kind: 'cat', slug: 'candy_alchemist_cat', band: C.plum, bandText: C.gold, box: C.lilac, pitch: 0.8, treat: 'boss' },

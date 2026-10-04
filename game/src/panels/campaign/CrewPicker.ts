@@ -2,7 +2,7 @@
  * Crew editor shared by Pre-batalla and the Shipyard: cabin slots + roster of your cats.
  * Tap a cabin then a cat (or tap a cat to add/remove). "Sugerir" = strongest cats.
  */
-import { Container, Graphics } from 'pixi.js';
+import { ColorMatrixFilter, Container, Graphics } from 'pixi.js';
 import gsap from 'gsap';
 import { C, F, RARITY } from '../../ui/theme';
 import { txt, Button } from '../../ui/widgets';
@@ -11,8 +11,10 @@ import { G } from '../../state/game';
 import { catDef } from '../../data/content';
 import { autoCrew, crew, crewSize, setCrew } from '../../state/sys/ship';
 import { cat as getCat, catPow } from '../../state/sys/cats';
-import { P, catPortrait, clickable, elIcon, label, clearChildren } from './common';
+import { P, catPortrait, clickable, elTok, label, clearChildren } from './common';
+import { iconText } from '../../ui/elementIcon';
 import { toast } from '../../ui/modal';
+import { catBusy } from '../../state/sys/workforce';
 
 export interface CrewPickerOpts {
   width: number;
@@ -83,9 +85,8 @@ export class CrewPicker extends Container {
         nm.anchor.set(0.5, 0);
         nm.position.set(slotW / 2, 30 + ps + 2);
         if (nm.width > slotW - 10) nm.scale.set((slotW - 10) / nm.width);
-        const info = label(`Nv ${c.level} · ${'★'.repeat(c.stars)} ${elIcon(d0.elements[0])}`, 13, C.ink);
-        info.anchor.set(0.5, 0);
-        info.position.set(slotW / 2, nm.y + 26);
+        const info = iconText(`Nv ${c.level} · ${'★'.repeat(c.stars)} ${d0.elements.map((e) => elTok(e)).join('')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink });
+        info.position.set(slotW / 2 - info.width / 2, nm.y + 24);
         const rc = new Graphics().rect(0, slotH - 7, slotW, 7).fill(RARITY[d0.rarity]?.color ?? C.ink);
         slot.addChild(p, nm, info, rc);
       } else {
@@ -118,14 +119,22 @@ export class CrewPicker extends Container {
     const size = this.o.rosterSize ?? 70;
     const per = Math.max(1, Math.floor((W0 + 16) / (size + 16)));
     const rows = this.o.rosterRows ?? 2;
-    const cats = [...G.s.cats].sort((a, b) => catPow(b) - catPow(a));
+    // cats working an oficio or away on an expedition can't sail: greyed out and sorted last
+    const cats = [...G.s.cats].sort((a, b) => Number(!!catBusy(a.uid)) - Number(!!catBusy(b.uid)) || catPow(b) - catPow(a));
     const busyElsewhere = new Set<string>();
     for (const [sid, list] of Object.entries(G.s.ship.crew)) if (sid !== shipId) for (const u of list) busyElsewhere.add(u);
     cats.slice(0, per * rows).forEach((c, i) => {
       const cc = new Container();
       const inCrew = cur.includes(c.uid);
+      const busy = catBusy(c.uid);
       const p = catPortrait(c.species, size, { ring: inCrew ? C.pinkHot : C.ink });
       p.position.set(size / 2, size / 2);
+      if (busy) {
+        const gray = new ColorMatrixFilter();
+        gray.desaturate();
+        p.filters = [gray];
+        p.alpha = 0.55;
+      }
       cc.addChild(p);
       const lv = label(`Nv${c.level}`, 12, C.paper);
       const lb = new Graphics().roundRect(-4, -2, lv.width + 8, lv.height + 4, 4).fill(C.ink);
@@ -137,6 +146,13 @@ export class CrewPicker extends Container {
         const ck = new Graphics().circle(size - 8, 8, 12).fill(C.pinkHot).stroke({ width: 3, color: C.ink });
         ck.moveTo(size - 14, 8).lineTo(size - 9, 13).lineTo(size - 2, 3).stroke({ width: 3, color: C.ink });
         cc.addChild(ck);
+      } else if (busy) {
+        const b = label(busy === 'expedition' ? 'EXPEDICIÓN' : 'OFICIO', 10, C.paper);
+        const bb = new Graphics().rect(-3, -1, b.width + 6, b.height + 2).fill(C.red);
+        const bc = new Container();
+        bc.addChild(bb, b);
+        bc.position.set(size - b.width - 2, 2);
+        cc.addChild(bc);
       } else if (busyElsewhere.has(c.uid)) {
         const b = label('OTRO BARCO', 10, C.paper);
         const bb = new Graphics().rect(-3, -1, b.width + 6, b.height + 2).fill(P.blue);
@@ -146,7 +162,15 @@ export class CrewPicker extends Container {
         cc.addChild(bc);
       }
       cc.position.set((i % per) * (size + 16), ry + Math.floor(i / per) * (size + 12));
-      clickable(cc, () => this.pick(c.uid));
+      clickable(cc, () => {
+        if (busy) {
+          sfx('error');
+          toast(busy === 'expedition' ? `${c.name} anda de expedición` : `${c.name} está trabajando`, { color: C.paper, sub: busy === 'expedition' ? 'Vuelve cuando termine el viaje' : 'Quítale el oficio en el panel de Oficios para que zarpe' });
+          gsap.fromTo(cc, { x: cc.x - 5 }, { x: cc.x, duration: 0.3, ease: 'elastic.out(1,0.3)' });
+          return;
+        }
+        this.pick(c.uid);
+      });
       cc.on('pointerover', () => gsap.to(cc.scale, { x: 1.08, y: 1.08, duration: 0.12 }));
       cc.on('pointerout', () => gsap.to(cc.scale, { x: 1, y: 1, duration: 0.12 }));
       this.addChild(cc);
@@ -159,6 +183,7 @@ export class CrewPicker extends Container {
   }
 
   private pick(uid: string) {
+    if (catBusy(uid)) return;
     const shipId = this.shipId;
     const cur = [...crew(shipId)];
     const n = crewSize(shipId);

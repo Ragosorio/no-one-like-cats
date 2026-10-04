@@ -144,10 +144,19 @@ function missionCard(mi: MissionDef, w: number, rerender: () => void) {
   // pin toggle
   const pinB = new Container();
   const pg = new Graphics().rect(0, 0, 64, 40).fill(pinned ? C.yellow : C.paper).stroke({ width: 3, color: C.ink });
-  const ptx = txt(pinned ? '📌 SÍ' : '📌', { fontFamily: F.bebas, fontSize: 20, fill: C.ink });
-  ptx.anchor.set(0.5);
-  ptx.position.set(32, 20);
-  pinB.addChild(pg, ptx);
+  // drawn push-pin (no emojis)
+  const pp = new Graphics();
+  const px = pinned ? 18 : 32;
+  pp.moveTo(px, 22).lineTo(px - 6, 34).stroke({ width: 3, color: C.ink, cap: 'round' });
+  pp.circle(px + 1, 15, 8).fill(pinned ? C.red : C.paperDark).stroke({ width: 2.5, color: C.ink });
+  pp.circle(px - 2, 12, 2.4).fill({ color: 0xffffff, alpha: 0.8 });
+  pinB.addChild(pg, pp);
+  if (pinned) {
+    const ptx = txt('SÍ', { fontFamily: F.bebas, fontSize: 22, fill: C.ink });
+    ptx.anchor.set(0.5);
+    ptx.position.set(44, 21);
+    pinB.addChild(ptx);
+  }
   pinB.position.set(w - 76, 12);
   pinB.eventMode = 'static';
   pinB.cursor = 'pointer';

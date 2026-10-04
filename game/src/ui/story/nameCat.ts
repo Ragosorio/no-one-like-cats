@@ -19,8 +19,41 @@ import { destroyDeep } from './tweens';
 
 const SUGGEST = ['Michi', 'Don Gato', 'Pelusa', 'Tostada', 'Sr. Bigotes', 'Nacho'];
 
+export interface NamePromptOpts {
+  current: string;
+  /** cat art on the left (default) or Luzterna */
+  slug?: string | null;
+  title1: string;
+  title2: string;
+  sub: string;
+  tag: string;
+  suggestions: string[];
+  ok: string;
+  keep: string;
+  /** shout when it's settled (default ¡NAME!) */
+  shout?: (name: string) => string;
+}
+
+/** H02: rename the first cat */
 export async function promptCatName(layer: Container, current: string, slug = 'canelo_cozy_cat'): Promise<string> {
-  await Promise.all([preloadCats([slug]), preloadStoryArt()]);
+  return promptName(layer, {
+    current,
+    slug,
+    title1: '¿CÓMO SE',
+    title2: 'LLAMA?',
+    sub: "Tu primer gato. Tu primer error de nombre. Si le pones 'Michi' no te juzgo. Mucho.",
+    tag: 'MISIÓN H02 · ACTO DE BAUTIZO OFICIAL',
+    suggestions: SUGGEST,
+    ok: 'ASÍ SE LLAMA',
+    keep: `DEJAR "${current.toUpperCase()}"`,
+  });
+}
+
+/** Poster name entry (cats, the player…). Resolves with the trimmed name (or `current`). */
+export async function promptName(layer: Container, o: NamePromptOpts): Promise<string> {
+  const current = o.current;
+  const slug = o.slug ?? null;
+  await Promise.all([slug ? preloadCats([slug]) : Promise.resolve(), preloadStoryArt()]);
   return new Promise((resolve) => {
     const root = new Container();
     layer.addChild(root);
@@ -46,25 +79,33 @@ export async function promptCatName(layer: Container, current: string, slug = 'c
     const dg = dotGrid(3, 6, 18, 3);
     dg.position.set(PW - 90, 40);
     panel.addChild(block, circle, dots, dg);
-    const v = txt('MISIÓN H02 · ACTO DE BAUTIZO OFICIAL', { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.paper, letterSpacing: 3 });
+    const v = txt(o.tag, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.paper, letterSpacing: 3 });
     v.rotation = -Math.PI / 2;
     v.position.set(24, PH - 30);
     panel.addChild(v);
-    // cat
-    const cat = new Sprite(catTexture(slug));
-    cat.anchor.set(0.5, 0.92);
-    cat.scale.set(420 / cat.texture.height);
-    cat.position.set(300, 640);
-    cat.filters = [new OutlineFilter({ thickness: 5, color: C.ink, quality: 0.25 })];
+    // cat (or Luzterna, big)
+    let cat: Container;
+    if (slug) {
+      const sp = new Sprite(catTexture(slug));
+      sp.anchor.set(0.5, 0.92);
+      sp.scale.set(420 / sp.texture.height);
+      sp.position.set(300, 640);
+      sp.filters = [new OutlineFilter({ thickness: 5, color: C.ink, quality: 0.25 })];
+      cat = sp;
+    } else {
+      const lzBig = new LuzternaPortrait(560, 0.95);
+      lzBig.position.set(300, 700);
+      cat = lzBig;
+    }
     panel.addChild(cat);
     gsap.to(cat.scale, { y: cat.scale.y * 0.985, x: cat.scale.x * 1.01, duration: 0.9, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     // title
-    const t = poster('¿CÓMO SE', 120, C.ink, { letterSpacing: -3 });
-    const t2 = poster('LLAMA?', 120, C.pinkHot, { letterSpacing: -3 });
+    const t = poster(o.title1, 120, C.ink, { letterSpacing: -3 });
+    const t2 = poster(o.title2, 120, C.pinkHot, { letterSpacing: -3 });
     t.position.set(560, 26);
     t2.position.set(560, 134);
     panel.addChild(t, t2);
-    const sub = txt(clean("Tu primer gato. Tu primer error de nombre. Si le pones 'Michi' no te juzgo. Mucho."), {
+    const sub = txt(clean(o.sub), {
       fontFamily: F.ui,
       fontWeight: '700',
       fontSize: 22,
@@ -95,7 +136,7 @@ export async function promptCatName(layer: Container, current: string, slug = 'c
     const chips = new Container();
     let cx = 0;
     let cy = 0;
-    for (const s of SUGGEST) {
+    for (const s of o.suggestions) {
       const chip = new Container();
       const ct = txt(s, { fontFamily: F.ui, fontWeight: '700', fontSize: 20, fill: C.ink });
       ct.position.set(14, 7);
@@ -121,16 +162,18 @@ export async function promptCatName(layer: Container, current: string, slug = 'c
     chips.position.set(566, 476);
     panel.addChild(chips);
     // buttons
-    const ok = new Button('ASÍ SE LLAMA', () => finish(input.value), { w: 320, h: 84, size: 40, color: C.yellow });
+    const ok = new Button(o.ok, () => finish(input.value), { w: 320, h: 84, size: 40, color: C.yellow });
     ok.position.set(566, PH - 124);
-    const keep = new Button(`DEJAR "${current.toUpperCase()}"`, () => finish(current), { w: 250, h: 70, size: 26, color: C.paper });
+    const keep = new Button(o.keep, () => finish(current), { w: 250, h: 70, size: o.keep.length > 14 ? 22 : 26, color: C.paper });
     keep.position.set(906, PH - 110);
     panel.addChild(ok, keep);
-    // tiny Luzterna peeking
-    const lz = new LuzternaPortrait(260, 0.9);
-    lz.position.set(PW + 60, 300);
-    lz.scale.x = -1;
-    panel.addChild(lz);
+    // tiny Luzterna peeking (when the big art is a cat)
+    if (slug) {
+      const lz = new LuzternaPortrait(260, 0.9);
+      lz.position.set(PW + 60, 300);
+      lz.scale.x = -1;
+      panel.addChild(lz);
+    }
 
     // DOM input
     const input = document.createElement('input');
@@ -212,7 +255,7 @@ export async function promptCatName(layer: Container, current: string, slug = 'c
       caret.visible = false;
       sfx('levelup');
       sparkles(root, panel.x + plate.x + pw / 2, panel.y + plate.y + ph / 2, C.yellow, 16, 220);
-      onomatopoeia(root, panel.x + 300, panel.y + 220, final.length <= 8 ? `¡${final.toUpperCase()}!` : '¡BAUTIZADO!', { size: 110, color: C.yellow, dur: 1.1 });
+      onomatopoeia(root, panel.x + 300, panel.y + 220, o.shout ? o.shout(final) : final.length <= 8 ? `¡${final.toUpperCase()}!` : '¡BAUTIZADO!', { size: 110, color: C.yellow, dur: 1.1 });
       gsap.to(panel, {
         y: panel.y - 40,
         alpha: 0,

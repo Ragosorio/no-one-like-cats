@@ -22,13 +22,18 @@ import { Modal } from '../ui/modal';
 import { missionPanel, kingdomBanner, milestonePoster, DoneItem } from '../ui/story/rewards';
 import { promptCatName } from '../ui/story/nameCat';
 import { offlineReport } from '../ui/story/offline';
+import { askPlayerProfile } from '../ui/story/profile';
+import { zoneCard } from '../ui/story/zoneCard';
+import { BOSS_INTRO, BOSS_OUTRO, ELITE_WARN, ZONE_INTRO } from '../ui/story/script';
+import { gtxt } from '../ui/gender';
+import { isCleared, zoneUnlocked } from '../state/sys/campaign';
 import { darkSky } from '../ui/story/effects';
 import { preloadStoryArt } from '../ui/story/portrait';
 import { applyAudioSettings, openSettings } from '../panels/Settings';
 import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
 import { goIsland, goTitle } from './flow';
 
-// ------------------------------------------------------------------ beat plan (M1: b01–b11)
+// ------------------------------------------------------------------ beat plan (M1: b01–b11 · M2: zones 2–3)
 interface BeatRef {
   beat: string;
   /** subset of the beat's lines (indexes); default all */
@@ -37,15 +42,27 @@ interface BeatRef {
   effect?: 'darkSky';
   /** seconds to wait (calm) before playing */
   delay?: number;
+  /** lines written in ui/story/script.ts instead of content.story */
+  custom?: Line[];
+  /** non-dialog beat: the player profile prompt (name + gender) */
+  special?: 'profile';
+  /** zone arrival card before the lines (and the map pans to that zone) */
+  card?: number;
+  /** only plays on this screen */
+  onlyOn?: 'map' | 'island';
 }
 /** beats that open when a mission APPEARS */
 const ON_NEW: Record<string, BeatRef[]> = {
-  H01: [{ beat: 'b01_despertar' }],
+  // Luzterna wakes you up → asks your name and gender → points at Canelo
+  H01: [{ beat: 'b01_despertar', part: 'a', lines: [0, 1] }, { beat: 'profile', special: 'profile', onlyOn: 'island' }, { beat: 'b01_despertar', part: 'b', lines: [2] }],
   H03: [{ beat: 'b04_pescado' }],
   H05: [{ beat: 'b06_patito', part: 'a', lines: [0, 1, 2, 3] }],
   H06: [{ beat: 'b07_resonancia', part: 'a', lines: [0] }],
   H08: [{ beat: 'b10_bigotes', part: 'a', lines: [0, 1] }],
   H09: [{ beat: 'b11_noctis', delay: 30 }],
+  // boss presentations (the boss node just became the frontier)
+  H10: [{ beat: 'b12_gargola', part: 'a', custom: BOSS_INTRO[2], onlyOn: 'map' }],
+  H13: [{ beat: 'b15_kraken', part: 'a', custom: BOSS_INTRO[3], onlyOn: 'map' }],
 };
 /** beats that play when a mission is COMPLETED */
 const ON_DONE: Record<string, BeatRef[]> = {
@@ -55,9 +72,20 @@ const ON_DONE: Record<string, BeatRef[]> = {
   H07: [{ beat: 'b09_nube', effect: 'darkSky' }],
   K07: [{ beat: 'b08_pimenton' }],
   H08: [{ beat: 'b10_bigotes', part: 'b', lines: [2, 3, 4] }],
+  // boss farewells (the T4 element discovery already played in Results)
+  H10: [{ beat: 'b12_gargola', part: 'b', custom: BOSS_OUTRO[2] }],
+  H13: [{ beat: 'b15_kraken', part: 'b', custom: BOSS_OUTRO[3] }],
 };
+
+/** beats that fire when a condition becomes true (checked while calm on island/map) */
+const WHEN: { key: string; cond: () => boolean; ref: BeatRef }[] = [
+  { key: 'z2_intro', cond: () => zoneUnlocked(2) && !zoneUnlocked(3), ref: { beat: 'z2_intro', custom: ZONE_INTRO[2], card: 2, onlyOn: 'map', delay: 2.6 } },
+  { key: 'z2_elite', cond: () => isCleared('2-4') && !isCleared('2-5'), ref: { beat: 'z2_elite', custom: ELITE_WARN[2], delay: 1.2 } },
+  { key: 'z3_intro', cond: () => zoneUnlocked(3) && !zoneUnlocked(4), ref: { beat: 'z3_intro', custom: ZONE_INTRO[3], card: 3, onlyOn: 'map', delay: 2.6 } },
+  { key: 'z3_elite', cond: () => isCleared('3-4') && !isCleared('3-5'), ref: { beat: 'z3_elite', custom: ELITE_WARN[3], delay: 1.2 } },
+];
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
-const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07']);
+const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H13']);
 
 interface QueuedBeat {
   key: string;
@@ -109,6 +137,10 @@ function overlayBlocked() {
   }
   return false;
 }
+/** a poster panel (Modal) is open on top of the scene */
+function modalOpen() {
+  return scenes.overlayLayer.children.some((ch) => ch instanceof Modal && ch.visible && !ch.destroyed && !ch.closed);
+}
 function canTip() {
   const w = where();
   return (w === 'island' || w === 'map') && !transitioning() && !dialogActive() && !introRunning;
@@ -123,7 +155,7 @@ function canBeat() {
 
 /** Luzterna calls you "grumete" until Boss 1, "Capi" afterwards; Canelo keeps the name you gave him. */
 function personalize(sp: string, text: string) {
-  let t = text;
+  let t = gtxt(text);
   const c = firstCat();
   if (c && c.species === 'c_canelo' && c.name && c.name !== 'Canelo') t = t.replace(/\bCanelo\b/g, c.name);
   if (sp.toUpperCase() === 'LUZTERNA' && G.s.campaign.bossesDefeated >= 1) t = t.replace(/\bgrumete\b/g, 'Capi');
@@ -140,6 +172,7 @@ function resonanceNames(text: string) {
 }
 
 function beatLines(ref: BeatRef): Line[] {
+  if (ref.custom) return ref.custom.map(([sp, t]) => [sp, personalize(sp, t)] as Line);
   const b = BEAT_BY_ID.get(ref.beat);
   if (!b) return [];
   const idx = ref.lines ?? b.lines.map((_, i) => i);
@@ -232,9 +265,22 @@ async function pump() {
     });
     return;
   }
+  // condition beats (zone arrivals, elite warnings) join the queue when they become true
+  if (canBeat()) {
+    // a save without a player profile (old saves, dev fixtures): Luzterna asks before anything else
+    // (only on the island, never over a battle / results / casino / an open panel)
+    if (!G.s.player && G.s.cats.length && where() === 'island' && !G.s.missions.active.includes('H01') && !beats.some((q) => q.ref.special === 'profile'))
+      beats.unshift({ key: 'profile', ref: { beat: 'profile', special: 'profile', custom: OLD_SAVE_PROFILE_INTRO, onlyOn: 'island' }, notBefore: now + 900 });
+    for (const w of WHEN) {
+      if (beatSeen(w.key) || beats.some((q) => q.key === w.key)) continue;
+      if (w.ref.onlyOn && w.ref.onlyOn !== where()) continue;
+      if (w.cond()) queueBeat(w.ref);
+    }
+  }
   // blocking beats
   if (beats.length && canBeat()) {
-    const i = beats.findIndex((q) => now >= q.notBefore);
+    const here = where();
+    const i = beats.findIndex((q) => now >= q.notBefore && (!q.ref.onlyOn || q.ref.onlyOn === here));
     if (i >= 0) {
       const q = beats.splice(i, 1)[0];
       await playBeat(q);
@@ -265,6 +311,37 @@ async function pump() {
 }
 
 async function playBeat(q: QueuedBeat) {
+  if (beatSeen(q.key)) return; // seen meanwhile (another path played it)
+  if (q.ref.special === 'profile') {
+    if (G.s.player) return markBeat(q.key);
+    // island only and with no panel open (e.g. the Shipyard, whose PROBAR starts a battle): else retry later
+    if (where() !== 'island' || modalOpen()) {
+      beats.push({ ...q, notBefore: performance.now() + 2000 });
+      return;
+    }
+    busy = true;
+    try {
+      const res = await askPlayerProfile(storyLayer(), { intro: q.ref.custom ?? [], guard: () => where() === 'island' && !transitioning() });
+      if (res) {
+        markBeat(q.key);
+        G.save();
+      }
+    } finally {
+      busy = false;
+    }
+    return;
+  }
+  if (q.ref.card) {
+    busy = true;
+    try {
+      const sc = scenes.current as unknown as { focusZone?: (z: number, animate?: boolean) => void };
+      sc.focusZone?.(q.ref.card, true);
+      await wait(0.5);
+      await zoneCard(storyLayer(), q.ref.card);
+    } finally {
+      busy = false;
+    }
+  }
   const lines = beatLines(q.ref);
   if (!lines.length) {
     markBeat(q.key);
@@ -310,9 +387,11 @@ export function initStory() {
       if (l) tip(l[1]);
     }
   });
-  // Earth arrives with Boss 1 (b10 part b carries "NUEVO ELEMENTO DESCUBIERTO: TIERRA"); dedupes with H08 done
+  // Earth arrives with Boss 1 (b10 part b carries "NUEVO ELEMENTO DESCUBIERTO: TIERRA"); dedupes with H08 done.
+  // Storm arrives with Boss 2 → the Gárgola's farewell + Luzterna explains TORMENTA (dedupes with H10 done).
   G.on('element', (p) => {
     if (p.id === 'earth') for (const r of ON_DONE.H08 ?? []) queueBeat(r);
+    if (p.id === 'storm') for (const r of ON_DONE.H10 ?? []) queueBeat(r);
   });
   catchUp();
   pumpTimer = window.setInterval(() => {
@@ -327,8 +406,17 @@ let pumping = false;
 
 /** queue the intro beats of missions that are already active (dev routes / old saves) */
 function catchUp() {
+  // old saves (or a skipped prompt) without a player profile: Luzterna asks first
+  // (a brand-new game asks inside b01 instead: see ON_NEW.H01)
+  if (!G.s.player && G.s.cats.length && !G.s.missions.active.includes('H01') && !beats.some((q) => q.ref.special === 'profile'))
+    beats.unshift({ key: 'profile', ref: { beat: 'profile', special: 'profile', custom: OLD_SAVE_PROFILE_INTRO }, notBefore: performance.now() + 1500 });
   for (const id of G.s.missions.active) for (const r of ON_NEW[id] ?? []) queueBeat(r);
 }
+
+const OLD_SAVE_PROFILE_INTRO: Line[] = [
+  ['LUZTERNA', 'Oye, oye. Llevamos un buen rato juntos y nunca te pregunté cómo te llamas. Qué grosera soy.'],
+  ['LUZTERNA', 'En mi defensa: estoy muerta. Se me olvidan los modales. Y las llaves. Y el cuerpo.'],
+];
 
 /** reset in-memory queues (new game / wipe) */
 function resetQueues() {

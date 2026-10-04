@@ -11,7 +11,7 @@
  */
 import { CanvasTextMetrics, Container, Graphics, Sprite, Text, TextStyle, Texture, TilingSprite } from 'pixi.js';
 import gsap from 'gsap';
-import { W, H } from '../core/App';
+import { W, H, game } from '../core/App';
 import { scenes } from '../core/scenes';
 import { sfx } from '../core/audio';
 import { settings } from '../core/settings';
@@ -509,8 +509,9 @@ async function nextTip() {
     c.addChild(port);
   }
   c.position.set(TIP_POS.x, TIP_POS.y);
-  c.eventMode = 'static';
-  c.cursor = 'pointer';
+  // click-through: a tip must never eat the click meant for the world under it (map stages, buildings…).
+  // Tapping the bubble/portrait still finishes the line or dismisses it — the click also reaches the game.
+  c.eventMode = 'none';
   sfx('pop', 1.2);
   gsap.from(c, { x: c.x - 260, duration: 0.32, ease: 'back.out(1.6)' });
   gsap.from(bubble.scale, { x: 0.6, y: 0.6, duration: 0.3, ease: 'back.out(2.5)' });
@@ -541,12 +542,35 @@ async function nextTip() {
       },
     });
   };
-  c.on('pointertap', (e) => {
-    e.stopPropagation();
+  const offDown = onTapInside([bubble, port], () => {
     if (!typer.done) typer.finish();
     else close();
   });
+  c.on('destroyed', offDown);
   gsap.delayedCall(dur, close);
+}
+
+/**
+ * Window-level tap detector for click-through overlays: calls `fn` when a pointerdown lands inside any
+ * of `targets` (global bounds). Returns the remover. The event is NOT consumed.
+ */
+export function onTapInside(targets: (Container | null | undefined)[], fn: () => void): () => void {
+  const handler = (ev: PointerEvent) => {
+    const live = targets.filter((t): t is Container => !!t && !t.destroyed);
+    if (!live.length) return;
+    const rect = game.pixi.canvas.getBoundingClientRect();
+    const gx = ev.clientX - rect.left;
+    const gy = ev.clientY - rect.top;
+    for (const t of live) {
+      const b = t.getBounds();
+      if (gx >= b.x && gx <= b.x + b.width && gy >= b.y && gy <= b.y + b.height) {
+        fn();
+        return;
+      }
+    }
+  };
+  window.addEventListener('pointerdown', handler, true);
+  return () => window.removeEventListener('pointerdown', handler, true);
 }
 
 // ------------------------------------------------------------------ newspaper()

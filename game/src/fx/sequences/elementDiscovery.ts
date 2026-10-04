@@ -1,7 +1,7 @@
 /**
  * Storyboard (f) — new element discovered (T4, ~7.5 s, tap after 2 s = fast-forward):
  * sky darkens → a crack opens onto the element's dimension → "ELEMENTO DESCONOCIDO DETECTADO" →
- * impact frame and the world is reprinted in the element palette → giant poster "TIERRA 🪨" →
+ * impact frame and the world is reprinted in the element palette → giant poster "TIERRA" + badge →
  * resonance web with a "NUEVAS RESONANCIAS 0→N" counter → stamps → back to the world.
  */
 import { ColorMatrixFilter, Container, Graphics, Sprite, Text, TilingSprite } from 'pixi.js';
@@ -18,7 +18,8 @@ import { music } from '../../core/music';
 import { settings } from '../../core/settings';
 import { Shaker, flash, sparkles } from '../juice';
 import { ELEMENT_BY_ID, ELEMENTS } from '../../data/content';
-import { ELEMENT_ICON, ELEMENT_NAME } from '../../data/elementsMeta';
+import { ELEMENT_NAME } from '../../data/elementsMeta';
+import { elementIcon } from '../../ui/elementIcon';
 import { killTree } from '../../panels/campaign/common';
 
 export interface ElementDiscoveryOpts {
@@ -72,7 +73,6 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
     const main = hexToNum(pal[2], fx.main);
     const accent = hexToNum(pal[3], fx.accent);
     const name = ELEMENT_NAME[el] ?? el.toUpperCase();
-    const emoji = ELEMENT_ICON[el] ?? '✦';
     const reduce = settings.reduceMotion;
 
     const root = new Container();
@@ -172,10 +172,9 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
     big.position.set(W / 2, H / 2 + 30);
     const circle = new Graphics().circle(0, 0, 170).fill(main).stroke({ width: 10, color: dark });
     circle.position.set(W - 330, 250);
-    const emo = txt(emoji, { fontSize: 190 });
-    emo.anchor.set(0.5);
+    const emo = elementIcon(el, 300);
     emo.position.copyFrom(circle.position);
-    const tag = txt(`${emoji} PRIMORDIAL DE ${name}`, { fontFamily: F.bebas, fontSize: 54, fill: light, letterSpacing: 4, stroke: { color: dark, width: 6 } });
+    const tag = txt(`PRIMORDIAL DE ${name}`, { fontFamily: F.bebas, fontSize: 54, fill: light, letterSpacing: 4, stroke: { color: dark, width: 6 } });
     tag.anchor.set(0.5);
     tag.position.set(W / 2, 120);
     const cap = txt(o.caption ?? 'Has descubierto un elemento que no debería existir en este mundo.', { fontFamily: F.serif, fontWeight: '700', fontSize: 36, fill: dark, wordWrap: true, wordWrapWidth: 1200, align: 'center' });
@@ -210,7 +209,7 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
       const n = new Container();
       const kf = elementFx(k === 'storm' ? 'electric' : k);
       const g = new Graphics().circle(0, 0, 60).fill(isKnown ? kf.main : 0xcfc6b4).stroke({ width: 6, color: dark });
-      const e = txt(isKnown ? ELEMENT_ICON[k === 'storm' ? 'electric' : k] ?? '?' : '?', isKnown ? { fontSize: 60 } : { fontFamily: F.poster, fontSize: 60, fill: dark });
+      const e = isKnown ? elementIcon(k, 104) : txt('?', { fontFamily: F.poster, fontSize: 60, fill: dark });
       e.anchor.set(0.5);
       const l = txt(isKnown ? ELEMENT_NAME[k === 'storm' ? 'electric' : k] ?? k : '???', { fontFamily: F.poster, fontSize: 28, fill: dark });
       l.anchor.set(0.5, 0);
@@ -236,8 +235,7 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
     web.addChild(counterBg);
     const hub = new Container();
     const hg = new Graphics().circle(0, 0, 96).fill(main).stroke({ width: 8, color: dark });
-    const he = txt(emoji, { fontSize: 100 });
-    he.anchor.set(0.5);
+    const he = elementIcon(el, 176);
     hub.addChild(hg, he);
     hub.position.set(center.x, center.y);
     hub.scale.set(0);

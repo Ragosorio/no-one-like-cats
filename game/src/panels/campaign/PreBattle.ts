@@ -26,14 +26,17 @@ import {
   stageCaptain,
   stageElements,
   stageKind,
+  stageState,
+  snapshotBeforeBattle,
 } from '../../state/ext/campaign';
-import { P, catPortrait, elIcon, elKey, elName, elementBadge, ensureCats, label, resChip, stamp, clearChildren } from './common';
+import { P, catPortrait, elKey, elName, elNameCap, elementBadge, ensureCats, label, resChip, stamp, clearChildren } from './common';
 import { shipPreview } from './shipArt';
 import { CrewPicker } from './CrewPicker';
 import { SilhouetteFilter } from '../../fx/filters';
 import { catTexture, elementFx, preloadCats } from '../../art/catArt';
 import type { ShipBlueprint } from '../../battle/ship';
 import type { BattleSpec } from '../../scenes/BattleScene';
+import type { ShipStyleId } from '../../battle/anime';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI'];
 
@@ -58,7 +61,7 @@ export async function openPreBattle(zone: number, stage: number) {
   const boss = zoneBoss(zone);
   if (kind === 'boss' && boss) await preloadCats([boss.captainArt.slug]).catch(() => undefined);
   if (m.closed) return;
-  new PreBattleView(m, zone, stage, spec?.enemy.blueprint ?? null, enemySpecies);
+  new PreBattleView(m, zone, stage, spec?.enemy.blueprint ?? null, enemySpecies, (spec as (BattleSpec & { enemyStyle?: ShipStyleId }) | null)?.enemyStyle);
 }
 
 class PreBattleView {
@@ -72,6 +75,7 @@ class PreBattleView {
     private stage: number,
     private enemyBp: ShipBlueprint | null,
     private enemySpecies: string[],
+    private enemyStyle?: ShipStyleId,
   ) {
     if (!crew().length) autoCrew();
     this.buildEnemy();
@@ -106,6 +110,7 @@ class PreBattleView {
     // moon / spotlight
     const moon = new Graphics().circle(690, 90, 56).fill({ color: 0xede4d6, alpha: 0.9 });
     sea.addChild(g, moon, dots);
+    const lateStamps: Container[] = [];
     if (this.enemyBp) {
       const glow = new Sprite(glowTexture(256));
       glow.anchor.set(0.5);
@@ -114,9 +119,25 @@ class PreBattleView {
       glow.scale.set(5.2, 2.6);
       glow.position.set(w / 2 + 40, 250);
       sea.addChild(glow);
-      const ship = shipPreview(this.enemyBp, { maxW: 600, maxH: 330, flip: true, style: z === 5 ? 'cosmic' : 'rat', silhouette: C.chaos });
+      // the REAL enemy ship (same blueprint + anime style the battle uses): a moonlit noir silhouette with a
+      // hot rim until you beat it once; afterwards it shows in full color (you know that face)
+      const known = stageState(z, s) === 'cleared';
+      const ship = shipPreview(this.enemyBp, { maxW: 600, maxH: 330, flip: true, style: this.enemyStyle ?? (z === 5 ? 'cosmic' : 'rat') });
+      const view = ship.children[0] as Container | undefined;
+      if (view && !known) {
+        const noir = new ColorMatrixFilter();
+        noir.brightness(0.5, false);
+        const tone = new ColorMatrixFilter();
+        tone.tint(0x3569a3, true);
+        view.filters = [noir, tone, new OutlineFilter({ thickness: 3, color: stageKind(z, s) === 'boss' ? C.red : C.pinkHot, quality: 0.2 })];
+      }
       ship.position.set((w - ship.width) / 2 + (stageKind(z, s) === 'boss' ? -70 : 40), 300 - ship.height + 50);
       sea.addChild(ship);
+      if (!known) {
+        const q = stamp('SIN AVISTAR', C.yellow, 22, -0.06);
+        q.position.set(110, 392);
+        lateStamps.push(q);
+      }
       // red eyes of the windows: a pulsing glow in front of the silhouette
       const eye = new Graphics().circle(0, 0, 7).fill(C.pinkHot);
       eye.position.set(ship.x + ship.width * 0.45, ship.y + ship.height * 0.55);
@@ -125,7 +146,7 @@ class PreBattleView {
       sea.addChild(eye);
     }
     const frontWater = new Graphics().rect(0, 340, w, 90).fill({ color: 0x172b35, alpha: 0.75 });
-    sea.addChild(frontWater);
+    sea.addChild(frontWater, ...lateStamps);
     const mask = new Graphics().rect(0, 0, w, 430).fill(0xffffff);
     sea.mask = mask;
     const border = new Graphics().rect(0, 0, w, 430).stroke({ width: 4, color: C.ink });
@@ -203,9 +224,9 @@ class PreBattleView {
     const els = stageElements(z, s);
     els.forEach((el, i) => {
       const eb = elementBadge(el, 54);
-      eb.position.set(30 + i * 130, y + 52);
+      eb.position.set(30 + i * 170, y + 52);
       const en = label(elName(el), 15, C.ink);
-      en.position.set(62 + i * 130, y + 44);
+      en.position.set(62 + i * 170, y + 44);
       b.addChild(eb, en);
     });
     const crL = label('TRIPULACIÓN ENEMIGA', 14, P.blue, { letterSpacing: 3 });
@@ -217,8 +238,7 @@ class PreBattleView {
       spr.filters = [new SilhouetteFilter(C.chaos, 0.92)];
       p.position.set(480 + i * 90, y + 62);
       const def = CAT_BY_ID.get(sp);
-      const q = txt(def ? elIcon(def.elements[0]) : '?', { fontSize: 22 });
-      q.anchor.set(0.5);
+      const q = elementBadge(def ? def.elements[0] : 'unknown', 26);
       q.position.set(p.x + 26, p.y + 28);
       b.addChild(p, q);
     });
@@ -302,7 +322,7 @@ class PreBattleView {
     const chips = [
       resChip('gold', `≈${fmt(lp.gold)}`, true, 30),
       resChip('scrap', `${lp.scrap}`, true, 30),
-      resChip('crystal', `${lp.crystals.n} ${elIcon(lp.crystals.el)}`, true, 30, elementFx(elKey(lp.crystals.el)).main),
+      resChip('crystal', `${lp.crystals.n} ${elNameCap(lp.crystals.el)}`, true, 30, elementFx(elKey(lp.crystals.el)).main),
     ];
     if (lp.blueprintChance > 0) chips.push(resChip('blueprint', lp.blueprintChance >= 1 ? `×${lp.blueprints}` : `${Math.round(lp.blueprintChance * 100)}%`, true, 30));
     if (lp.gems) chips.push(resChip('gem', `${lp.gems}`, true, 30));
@@ -333,6 +353,7 @@ class PreBattleView {
       return;
     }
     sfx('whoosh');
+    snapshotBeforeBattle(); // K.O. ranks / reactions for the Results front page
     G.save();
     this.m.close();
     void goBattle(this.zone, this.stage);

@@ -39,6 +39,8 @@ export interface VictoryNewsOpts {
   golden: boolean;
   perfect: boolean;
   momentum: [number, number];
+  /** boss front pages: "EN LA PRÓXIMA EDICIÓN" cliffhanger box */
+  teaser?: { head: string; text: string };
 }
 
 export class VictoryNews extends Container {
@@ -54,6 +56,7 @@ export class VictoryNews extends Container {
   private rows: { c: Container; value: Text; row: NewsLootRow; tw?: gsap.core.Tween }[] = [];
   private bolsa!: Text;
   private goldStamp: Container | null = null;
+  private teaserBox: Container | null = null;
   /** global-ish anchor where Ronroneo stamps start */
   stampOrigin = { x: 0, y: 0 };
 
@@ -126,9 +129,10 @@ export class VictoryNews extends Container {
     const top = Math.max(600, this.sub.y + this.sub.height + 18);
     this.stampOrigin = { x: m + iw / 2, y: 330 };
 
-    // photo
+    // photo (boss pages reserve a full-width cliffhanger strip at the bottom)
+    const teaserH = o.teaser ? 104 : 0;
     const phW = 620;
-    const phH = ph - top - 90;
+    const phH = ph - top - 90 - teaserH;
     const pb = this.photoBox;
     pb.position.set(m, top);
     const frame = new Graphics().rect(-6, -6, phW + 12, phH + 12).fill(C.ink);
@@ -167,7 +171,7 @@ export class VictoryNews extends Container {
     const cap = txt(o.caption, { fontFamily: F.serif, fontStyle: 'italic', fontSize: 16, fill: C.ink, wordWrap: true, wordWrapWidth: phW });
     cap.position.set(0, phH + 12);
     pb.addChild(cap);
-    const ct = columnText(phW, Math.max(0, Math.floor((ph - top - phH - 50) / 13) - 1), C.ink, 13, 7);
+    const ct = columnText(phW, Math.max(0, Math.floor((ph - top - phH - 50 - teaserH) / 13) - 1), C.ink, 13, 7);
     ct.position.set(0, phH + 40);
     pb.addChild(ct);
     pg.addChild(pb);
@@ -182,8 +186,8 @@ export class VictoryNews extends Container {
     lbT.position.set(14, 2);
     lb.addChild(lbBg, lbT);
     let y = 58;
-    const avail = ph - 40 - top - y - 34;
-    const rowH = Math.max(34, Math.min(48, Math.floor(avail / Math.max(1, o.rows.length))));
+    const avail = ph - 40 - top - y - 34 - teaserH;
+    const rowH = Math.max(o.teaser ? 25 : 34, Math.min(48, Math.floor(avail / Math.max(1, o.rows.length))));
     const k = rowH / 48;
     for (const row of o.rows) {
       const c = new Container();
@@ -206,8 +210,32 @@ export class VictoryNews extends Container {
     this.bolsa = txt(`BOLSA · MOMENTUM ${m1 >= m0 ? '▲' : '▼'} ×${m0.toFixed(2)} → ×${m1.toFixed(2)}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: m1 >= m0 ? 0x2e8a52 : C.red, wordWrap: true, wordWrapWidth: lw });
     this.bolsa.position.set(0, y + 8);
     this.bolsa.alpha = 0;
+    // boss pages: the cliffhanger strip needs that room (Momentum is in the right column anyway)
+    if (o.teaser) this.bolsa.visible = false;
     lb.addChild(this.bolsa);
-    const rest = ph - top - y - 70;
+    const rest = ph - top - y - 70 - teaserH;
+    if (o.teaser) {
+      // cliffhanger strip: "EN LA PRÓXIMA EDICIÓN" across the bottom of the front page
+      const tb = new Container();
+      const th = teaserH - 12;
+      const frame = new Graphics().rect(0, 0, iw, th).fill({ color: C.red, alpha: 0.07 }).stroke({ width: 3, color: C.red }).rect(5, 5, iw - 10, th - 10).stroke({ width: 1, color: C.red });
+      const kb = new Graphics().rect(0, 0, 150, th).fill(C.red);
+      const kt = txt('EN LA\nPRÓXIMA\nEDICIÓN', { fontFamily: F.bebas, fontSize: 25, fill: P.aged, letterSpacing: 2, lineHeight: 26, align: 'center' });
+      kt.anchor.set(0.5);
+      kt.position.set(75, th / 2);
+      const hd = txt(o.teaser.head, { fontFamily: F.poster, fontSize: 30, fill: C.ink });
+      if (hd.width > iw - 330) hd.scale.set((iw - 330) / hd.width);
+      hd.position.set(168, 8);
+      const bd = txt(o.teaser.text, { fontFamily: F.serif, fontStyle: 'italic', fontSize: 16, fill: C.ink, wordWrap: true, wordWrapWidth: iw - 340, lineHeight: 19 });
+      bd.position.set(170, 12 + hd.height);
+      const cont = stamp('CONTINUARÁ', C.red, 24, -0.08);
+      cont.position.set(iw - 92, th / 2);
+      tb.addChild(frame, kb, kt, hd, bd, cont);
+      tb.position.set(m, ph - 34 - th);
+      tb.alpha = 0;
+      pg.addChild(tb);
+      this.teaserBox = tb;
+    }
     if (rest > 40) {
       const ct2 = columnText(lw, Math.floor(rest / 13), C.ink, 13, 3);
       ct2.position.set(0, y + 44);
@@ -310,12 +338,27 @@ export class VictoryNews extends Container {
       );
       t += 0.4;
     }
+    if (this.teaserBox) {
+      const tb = this.teaserBox;
+      tl.call(
+        () => {
+          tb.alpha = 1;
+          gsap.from(tb, { x: 30, duration: 0.25, ease: 'back.out(2)' });
+          sfx('paper');
+          sfx('sting', 1.3);
+        },
+        [],
+        t + 0.25,
+      );
+      t += 0.5;
+    }
     tl.addLabel('done', t + 0.2);
     return tl;
   }
 
   /** finish all tick-ups instantly (tap = completar) */
   complete() {
+    if (this.teaserBox) this.teaserBox.alpha = 1;
     for (const r of this.rows) {
       r.c.alpha = 1;
       gsap.killTweensOf(r.c);

@@ -7,7 +7,8 @@ import { icon, IconKind } from '../../ui/icons';
 import { paperTexture, halftoneTexture } from '../../art/textures';
 import { catTexture, elementFx, preloadCats } from '../../art/catArt';
 import { applyCatTint, slugOf } from '../../art/tint';
-import { ELEMENT_ICON, ELEMENT_NAME } from '../../data/elementsMeta';
+import { ELEMENT_NAME } from '../../data/elementsMeta';
+import { elementIcon } from '../../ui/elementIcon';
 import { CAT_BY_ID } from '../../data/content';
 import { fmt } from '../../core/format';
 
@@ -30,22 +31,29 @@ export const P = {
 export function elKey(el: string) {
   return el === 'storm' ? 'electric' : el;
 }
-export function elIcon(el: string) {
-  return ELEMENT_ICON[elKey(el)] ?? '❔';
+/** iconText token for an element badge: `iconText(\`Cristales ${elTok('earth')}\`)` (never emojis) */
+export function elTok(el: string) {
+  return `{${el === 'electric' ? 'storm' : el}}`;
+}
+/** @deprecated emojis are gone from the UI — kept so old call sites compile; returns '' */
+export function elIcon(_el: string) {
+  return '';
 }
 export function elName(el: string) {
   return ELEMENT_NAME[elKey(el)] ?? el.toUpperCase();
 }
+/** "Tierra" (capitalized element name) */
+export function elNameCap(el: string) {
+  const n = elName(el);
+  return n.charAt(0) + n.slice(1).toLowerCase();
+}
 
-/** round element seal: colored disc + emoji */
+/** round element seal (SVG badge from ui/elementIcon), centered at 0,0 */
 export function elementBadge(el: string, size = 44): Container {
   const c = new Container();
-  const fx = elementFx(elKey(el));
-  const g = new Graphics().circle(2, 3, size / 2).fill(C.ink).circle(0, 0, size / 2).fill(fx.main).stroke({ width: 3, color: C.ink });
-  const t = txt(elIcon(el), { fontSize: size * 0.56 });
-  t.anchor.set(0.5);
-  t.y = 1;
-  c.addChild(g, t);
+  const sh = new Graphics().circle(2, 3, size / 2).fill({ color: C.ink, alpha: 0.85 });
+  const s = elementIcon(elKey(el) === 'electric' ? 'storm' : el, size);
+  c.addChild(sh, s);
   return c;
 }
 

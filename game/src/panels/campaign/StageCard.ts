@@ -24,7 +24,7 @@ import {
   stageKind,
   stageState,
 } from '../../state/ext/campaign';
-import { P, killTree, clipping, elIcon, elName, elementBadge, resChip, stamp, label, doubleRule } from './common';
+import { P, killTree, clipping, elName, elNameCap, elementBadge, resChip, stamp, label, doubleRule } from './common';
 import { elementFx } from '../../art/catArt';
 import { elKey } from './common';
 
@@ -156,7 +156,7 @@ export class StageCard extends Container {
     if (kind === 'boss') {
       const an = G.s.campaign.analysis[stageKey(z, s)] ?? 0;
       const kl = BAL.bosses[z - 1]?.kl ?? 1;
-      const at = label(`ANÁLISIS DEL JEFE ${Math.round(an * 100)}% · Reino recomendado ${kl}${G.s.kl >= kl ? ' ✓' : ` (tienes ${G.s.kl})`}`, 14, an > 0 ? C.red : P.blue);
+      const at = label(`ANÁLISIS DEL JEFE ${Math.round(an * 100)}% · Reino recomendado ${kl}${G.s.kl >= kl ? ' (listo)' : ` (tienes ${G.s.kl})`}`, 14, an > 0 ? C.red : P.blue);
       at.position.set(pad, y);
       content.addChild(at);
       y += 26;
@@ -171,7 +171,7 @@ export class StageCard extends Container {
     const chips: Container[] = [
       resChip('gold', `≈${fmt(lp.gold)}`),
       resChip('scrap', `${lp.scrap}`),
-      resChip('crystal', `${lp.crystals.n} ${elIcon(lp.crystals.el)}`, true, 26, elementFx(elKey(lp.crystals.el)).main),
+      resChip('crystal', `${lp.crystals.n} ${elNameCap(lp.crystals.el)}`, true, 26, elementFx(elKey(lp.crystals.el)).main),
     ];
     if (lp.blueprintChance > 0) chips.push(resChip('blueprint', lp.blueprintChance >= 1 ? `×${lp.blueprints}` : `${Math.round(lp.blueprintChance * 100)}%`));
     if (lp.gems) chips.push(resChip('gem', `${lp.gems}`));

@@ -12,7 +12,7 @@ import { txt, Button } from '../ui/widgets';
 import { paperTexture } from '../art/textures';
 import { sfx } from '../core/audio';
 import { Hud } from '../ui/hud/Hud';
-import { ZONES, catName } from '../data/content';
+import { ZONES, catName, zoneBoss } from '../data/content';
 import { toast } from '../ui/modal';
 import { frontier } from '../state/sys/campaign';
 import { G } from '../state/game';
@@ -44,13 +44,19 @@ import {
   ribs,
   rocks,
   seaSerpent,
-  shield,
-  skull,
   star,
   tower,
   vignetteTexture,
   waves,
   whirl,
+  bossEmblem,
+  eliteEmblem,
+  cliffFace,
+  gargoyle,
+  waterfall,
+  stormCloud,
+  tentacle,
+  errandPin,
 } from '../panels/campaign/chartArt';
 import { StageCard } from '../panels/campaign/StageCard';
 import { sparkles } from '../fx/juice';
@@ -131,12 +137,11 @@ class StageNode extends Container {
     if (this.kind === 'boss') {
       g.circle(3, 4, r).fill({ color: C.ink, alpha: 0.85 });
       g.circle(0, 0, r).fill(st === 'cleared' ? P.blue : this.isFrontier ? C.red : P.aged).stroke({ width: 4, color: ink });
-      skull(g, r * 0.78, st === 'cleared' ? P.aged : st === 'locked' ? P.agedDark : 0xfff6e0, C.ink);
+      bossEmblem(g, this.zone, r * 0.78, st === 'cleared' ? P.aged : st === 'locked' ? P.agedDark : 0xfff6e0, C.ink);
       this.num.text = '';
     } else if (this.kind === 'elite') {
       g.poly([-r * 0.85 + 3, -r * 0.8 + 4, r * 0.85 + 3, -r * 0.8 + 4, r * 0.85 + 3, -r * 0.05 + 4, 3, r + 4, -r * 0.85 + 3, -r * 0.05 + 4]).fill({ color: C.ink, alpha: 0.85 });
-      shield(g, r, fill, ink);
-      g.star(0, -r * 0.18, 5, r * 0.36, r * 0.16).fill(st === 'cleared' ? C.yellow : this.isFrontier ? C.ink : P.blue);
+      eliteEmblem(g, this.zone, r, fill, ink, st === 'cleared' ? C.yellow : this.isFrontier ? C.ink : P.blue);
       this.num.text = '';
     } else {
       if (st === 'locked') {
@@ -193,6 +198,7 @@ export class MapScene extends Scene {
     this.buildChart();
     this.chart.addChild(this.routeG, this.routeAnim, this.nodesLayer, this.fogLayer);
     this.buildNodes();
+    this.buildErrandPins();
     this.buildFog();
     this.drawRoutes();
     // vignette on top of the chart
@@ -379,8 +385,8 @@ export class MapScene extends Scene {
     const [icx, icy] = zonePt(z, ISLAND_C);
     const seed = z * 11;
     const land = [0xe1cfa5, 0xcfc4ad, 0xd6cdb6, 0xd8c8b0, 0xc9bfd0, 0xd9d4de][z - 1];
-    const main = islandPoly(icx, icy, 84, 60, seed);
-    drawIsland(g, main, icx, icy, { land });
+    const main = z === 3 ? islandPoly(icx + 10, icy + 6, 64, 44, seed) : islandPoly(icx, icy, 84, 60, seed);
+    drawIsland(g, main, z === 3 ? icx + 10 : icx, z === 3 ? icy + 6 : icy, { land });
     const islets: [Pt, number, number][] = [
       [zonePt(z, [118, 232]), 30, 20],
       [zonePt(z, [470, 352]), 36, 20],
@@ -397,18 +403,38 @@ export class MapScene extends Scene {
         palm(d, icx + 38, icy + 14, 0.9);
         seaSerpent(d, b.x + (b.mirror ? 70 : 300), b.y + 372, 0.8);
         break;
-      case 2:
-        rocks(d, icx - 30, icy + 10, 1.2);
-        rocks(d, icx + 20, icy + 4, 1.5);
-        tower(d, icx + 4, icy - 12, 1);
-        rocks(d, fx, fy + 6, 0.8);
+      case 2: {
+        // the Acantilados: stratified cliff faces on the island's south shore, a stone fort on top,
+        // a waterfall and — on its own crag by the boss — the sleeping Gárgola
+        cliffFace(d, icx - 78, icy + 48, 66, 50, 3);
+        cliffFace(d, icx - 10, icy + 54, 82, 70, 5);
+        waterfall(d, icx + 46, icy + 2, 50);
+        tower(d, icx - 36, icy + 2, 1.1);
+        // the Gárgola sleeps on the island's crag
+        cliffFace(d, icx - 4, icy + 4, 44, 52, 11, P.blue, 0xbfb291);
+        gargoyle(d, icx + 16, icy - 46, 0.9);
+        rocks(d, icx + 52, icy + 16, 0.9);
+        rocks(d, fx - 4, fy + 2, 0.8);
+        const [cx2, cy2] = zonePt(z, [150, 250]);
+        rocks(d, cx2, cy2, 0.9);
         break;
-      case 3:
-        cloud(d, icx - 4, icy - 52, 1.1);
-        bolt(d, icx - 10, icy - 40, 0.9);
+      }
+      case 3: {
+        // Mar de Tormentas: permanent storm over a small island, tentacles around the boss, whirlpool
+        palm(d, icx + 20, icy + 16, 0.9);
+        palm(d, icx + 44, icy + 20, 0.7);
+        stormCloud(d, icx - 10, icy - 66, 1.25, P.blue, C.yellow, 60);
+        stormCloud(d, b.x + 470, b.y + 92, 0.9, P.blue, -1, 50);
+        const [tx, ty] = zonePt(z, [586, 380]);
+        tentacle(d, tx, ty, 1.05, -1);
+        const [tx2, ty2] = zonePt(z, [452, 384]);
+        tentacle(d, tx2, ty2, 0.8, 1);
+        const [tx3, ty3] = zonePt(z, [380, 392]);
+        tentacle(d, tx3, ty3, 0.55, -1);
         whirl(d, b.x + (b.mirror ? 120 : 330), b.y + 380, 1.2);
-        palm(d, icx + 30, icy + 14, 0.8);
+        bolt(d, b.x + 120, b.y + 120, 0.7);
         break;
+      }
       case 4:
         column(d, icx - 30, icy + 18, 42, false);
         column(d, icx - 6, icy + 14, 52, true);
@@ -426,22 +452,47 @@ export class MapScene extends Scene {
         break;
     }
     layer.addChild(g, d);
-    // zone label (top-left of the box)
+    // zone label (top-left of the box): the roman numeral lives in its own round seal (fixed width, so
+    // the Fraktur glyph can never run into the name, whatever the font metrics say)
     const lab = new Container();
-    const rn = txt(`${ROMAN[z]}`, { fontFamily: F.news, fontSize: 46, fill: P.blue });
+    const seal = new Graphics().circle(26, 27, 25).fill(P.aged).stroke({ width: 3, color: P.blue }).circle(26, 27, 20).stroke({ width: 1, color: P.blue });
+    const rn = txt(`${ROMAN[z]}`, { fontFamily: F.news, fontSize: 30, fill: P.blue });
+    rn.anchor.set(0.5);
+    rn.position.set(26, 28);
+    if (rn.width > 34) rn.scale.set(34 / rn.width);
     const nm = txt(unlocked ? ZONES[z - 1].name.toUpperCase() : '???', { fontFamily: F.poster, fontSize: 30, fill: P.blue, letterSpacing: 1 });
-    nm.position.set(rn.width + 10, 2);
+    nm.position.set(62, 2);
     const fac = txt(unlocked ? FACTION[z].name : 'Aguas sin cartografiar', { fontFamily: F.serif, fontStyle: 'italic', fontSize: 16, fill: P.blue });
-    fac.position.set(rn.width + 12, 38);
-    lab.addChild(rn, nm, fac);
+    fac.position.set(64, 38);
+    lab.addChild(seal, rn, nm, fac);
     if (unlocked) {
       ZONES[z - 1].elements.forEach((el, i) => {
         const eb = elementBadge(el, 26);
-        eb.position.set(rn.width + 12 + fac.width + 22 + i * 30, 48);
+        eb.position.set(Math.max(64 + fac.width, 62 + nm.width) + 26 + i * 30, 30);
         lab.addChild(eb);
       });
+      // the boss's name under its node, engraved
+      const boss = zoneBoss(z);
+      if (boss) {
+        const [bx, by] = nodePos(z, STAGES_PER_ZONE);
+        // engraved name ribbon (legible over the vignette art)
+        const beaten = stageState(z, STAGES_PER_ZONE) === 'cleared';
+        const rib = new Container();
+        const bn = txt(boss.name, { fontFamily: F.brush, fontSize: 16, fill: beaten ? P.blueSoft : C.red });
+        bn.anchor.set(0.5);
+        const rw = bn.width + 30;
+        const rg = new Graphics()
+          .poly([-rw / 2 - 12, -2, -rw / 2, -13, rw / 2, -13, rw / 2 + 12, -2, rw / 2, 13, -rw / 2, 13])
+          .fill(P.aged)
+          .stroke({ width: 2, color: P.blue, join: 'round' });
+        rib.addChild(rg, bn);
+        if (beaten) rib.addChild(new Graphics().moveTo(-rw / 2 + 6, 1).lineTo(rw / 2 - 6, 0).stroke({ width: 2.5, color: C.red }));
+        rib.position.set(bx, by + 54);
+        rib.rotation = -0.03;
+        layer.addChild(rib);
+      }
     }
-    lab.position.set(b.x + 16, b.y + 6);
+    lab.position.set(b.x + 12, b.y + 6);
     layer.addChild(lab);
     this.chart.addChild(layer);
   }
@@ -473,6 +524,15 @@ export class MapScene extends Scene {
             [100, 340],
           ];
       cl.forEach(([x, y], i) => cloud(ink, b.x + (b.mirror ? BOX_W - x : x), b.y + y, 1.15 - i * 0.08, 0xf6efe0, P.blueSoft));
+      // what hides in the fog (anticipation): a faint landmark silhouette
+      const ghost = new Graphics();
+      if (z === 2) gargoyle(ghost, b.x + 470, b.y + 300, 1.6, P.blueSoft, P.blueSoft);
+      else if (z === 3) {
+        tentacle(ghost, b.x + 470, b.y + 330, 1.3, -1, P.blueSoft, 0xe6dccb);
+        tentacle(ghost, b.x + 120, b.y + 330, 1, 1, P.blueSoft, 0xe6dccb);
+      }
+      ghost.alpha = 0.45;
+      f.addChildAt(ghost, 1);
       const q = txt('???', { fontFamily: F.news, fontSize: 120, fill: P.blue });
       q.anchor.set(0.5);
       q.position.set(b.x + BOX_W / 2, b.y + BOX_H / 2 - 18);
@@ -509,9 +569,103 @@ export class MapScene extends Scene {
     band.eventMode = 'static'; // the header doesn't pan the chart
     this.addChild(band);
     // zoom toggle (bottom-right, clear of the HUD action bar)
-    const zoom = new Button('◎ CARTA', () => this.toggleZoom(), { w: 190, h: 64, size: 30, color: P.aged });
+    const zoom = new Button('CARTA', () => this.toggleZoom(), { w: 190, h: 64, size: 30, color: P.aged });
     zoom.position.set(W - 24 - 196, H - 24 - 70);
+    const rose = compassRose(14, C.ink);
+    rose.position.set(30, 33);
+    zoom.face.addChild(rose);
+    zoom.caption.x += 14;
     this.addChild(zoom);
+    // ENCARGOS (errand board, owned by combat: dynamic import keeps the map independent of it)
+    const err = new Button('ENCARGOS', () => void this.openErrandBoard(), { w: 190, h: 64, size: 30, color: C.yellow });
+    err.position.set(W - 24 - 196, H - 24 - 70 - 84);
+    const pin = new Graphics();
+    errandPin(pin, 0.62, P.aged);
+    pin.position.set(26, 34);
+    err.face.addChild(pin);
+    err.caption.x += 14;
+    const open = this.errandsOpen();
+    if (open > 0) {
+      const badge = new Container();
+      const bg2 = new Graphics().circle(0, 0, 17).fill(C.red).stroke({ width: 3, color: C.ink });
+      const bt = txt(String(open), { fontFamily: F.poster, fontSize: 22, fill: C.paper });
+      bt.anchor.set(0.5);
+      badge.addChild(bg2, bt);
+      badge.position.set(186, 2);
+      err.face.addChild(badge);
+      gsap.to(badge.scale, { x: 1.18, y: 1.18, yoyo: true, repeat: -1, duration: 0.5, ease: 'sine.inOut' });
+    }
+    this.addChild(err);
+  }
+
+  // ------------------------------------------------------------------ errands (Encargos)
+  private errandList() {
+    const out: { id: string; zone: number; after: number; name: string; state: 'locked' | 'open' | 'done' }[] = [];
+    for (let z = 1; z <= ZONES.length; z++) {
+      if (!zoneUnlocked(z)) continue;
+      const list = (ZONES[z - 1] as unknown as { errands?: { id: string; afterStage: number; name: string }[] }).errands ?? [];
+      for (const e of list) {
+        const done = !!G.s.errands?.done.includes(e.id) || G.has(`errand_done_${e.id}`);
+        const open = stageState(z, e.afterStage) === 'cleared';
+        out.push({ id: e.id, zone: z, after: e.afterStage, name: e.name, state: done ? 'done' : open ? 'open' : 'locked' });
+      }
+    }
+    return out;
+  }
+  private errandsOpen() {
+    return this.errandList().filter((e) => e.state === 'open').length;
+  }
+  private async openErrandBoard() {
+    this.closeCard();
+    try {
+      const m = await import('../panels/Errands');
+      m.openErrands();
+    } catch (e) {
+      console.warn('[map] errands board unavailable', e);
+      toast('Tablero de Encargos: próximamente', { color: C.yellow });
+    }
+  }
+  private buildErrandPins() {
+    for (const e of this.errandList()) {
+      const [nx, ny] = nodePos(e.zone, e.after);
+      const pinC = new Container();
+      const g = new Graphics();
+      errandPin(g, 1, e.state === 'locked' ? P.agedDark : P.aged, e.state === 'locked' ? P.blueSoft : C.ink, e.state === 'done' ? P.blue : C.red);
+      pinC.addChild(g);
+      if (e.state === 'done') {
+        const ck = new Graphics().moveTo(-8, 6).lineTo(-2, 13).lineTo(11, -4).stroke({ width: 5, color: C.red, cap: 'round', join: 'round' });
+        pinC.addChild(ck);
+      } else if (e.state === 'open') {
+        const ex = txt('!', { fontFamily: F.poster, fontSize: 26, fill: C.red });
+        ex.anchor.set(0.5);
+        ex.position.set(16, -22);
+        pinC.addChild(ex);
+        gsap.to(pinC, { rotation: 0.12, yoyo: true, repeat: -1, duration: 0.45, ease: 'sine.inOut' });
+      }
+      const lb = txt(e.name, { fontFamily: F.serif, fontStyle: 'italic', fontSize: 13, fill: e.state === 'locked' ? P.blueSoft : C.ink });
+      lb.anchor.set(0.5, 0);
+      lb.position.set(0, 22);
+      pinC.addChild(lb);
+      pinC.alpha = e.state === 'locked' ? 0.6 : 1;
+      // tuck the poster inside the route loop (towards the island), clear of the neighbouring nodes
+      const [icx, icy] = zonePt(e.zone, ISLAND_C);
+      const dl = Math.hypot(icx - nx, icy - ny) || 1;
+      pinC.position.set(nx + ((icx - nx) / dl) * 54, ny + ((icy - ny) / dl) * 54);
+      pinC.eventMode = 'static';
+      pinC.cursor = 'pointer';
+      pinC.hitArea = { contains: (x: number, y: number) => x > -22 && x < 22 && y > -26 && y < 34 };
+      pinC.on('pointertap', (ev) => {
+        ev.stopPropagation();
+        sfx('paper');
+        if (e.state === 'locked') {
+          toast(`Encargo «${e.name}»`, { color: P.aged, sub: `Gana la etapa ${e.zone}-${e.after} para abrirlo` });
+          gsap.fromTo(pinC, { x: pinC.x - 6 }, { x: pinC.x, duration: 0.35, ease: 'elastic.out(1,0.3)' });
+          return;
+        }
+        void this.openErrandBoard();
+      });
+      this.nodesLayer.addChild(pinC);
+    }
   }
 
   // ------------------------------------------------------------------ nodes & routes
@@ -621,10 +775,11 @@ export class MapScene extends Scene {
     campaignMemo.justUnlocked = null;
     // nodes pop in with a stagger
     let i = 0;
+    // (never from scale 0: a node must stay clickable even while it pops in)
     for (const n of this.nodes.values()) {
       const s = n.scale.x;
-      n.scale.set(0);
-      gsap.to(n.scale, { x: s, y: s, duration: 0.3, delay: 0.15 + i++ * 0.012, ease: 'back.out(2.5)' });
+      gsap.fromTo(n.scale, { x: s * 0.45, y: s * 0.45 }, { x: s, y: s, duration: 0.3, delay: 0.15 + i * 0.012, ease: 'back.out(2.5)' });
+      gsap.from(n, { alpha: 0, duration: 0.2, delay: 0.15 + i++ * 0.012 });
     }
     if (!jc || !ju) return;
     const a = this.nodes.get(jc);

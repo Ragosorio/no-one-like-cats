@@ -372,3 +372,188 @@ export function fogTexture(seed: number, w = 640, h = 440): Texture {
   fogCache.set(seed, t);
   return t;
 }
+
+// ====================================================================== Zones 2–3 vignettes (Hito 2)
+
+/** stratified sea cliff (zone 2): jagged top, horizontal strata, vertical shading, foam at the base */
+export function cliffFace(g: Graphics, x: number, y: number, w: number, h: number, seed = 1, ink: number = P.blue, fill = 0xcdbf9f) {
+  const top: number[] = [];
+  const n = Math.max(5, Math.round(w / 12));
+  const peak = 0.3 + hash1(seed * 13) * 0.4;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const px = x + t * w;
+    // a crag: tallest near `peak`, ragged teeth, shoulders lower at the ends
+    const ridge = 1 - Math.min(1, Math.abs(t - peak) * 1.6);
+    const tooth = i % 2 ? 0.12 * hash1(seed * 7 + i) : 0;
+    const py = y - h * (0.42 + 0.58 * ridge - tooth);
+    top.push(px, py);
+  }
+  const poly = [...top, x + w, y, x, y];
+  g.poly(poly).fill(fill).stroke({ width: 2.6, color: ink, join: 'round' });
+  // strata
+  for (let k = 1; k <= 3; k++) {
+    const sy = y - (h * k) / 4.2;
+    g.moveTo(x + 4, sy + hash1(seed + k) * 4);
+    for (let i = 1; i <= 6; i++) g.lineTo(x + (i / 6) * w - 2, sy + (hash1(seed * 3 + k * 11 + i) - 0.5) * 6);
+  }
+  g.stroke({ width: 1.3, color: ink, alpha: 0.55 });
+  // vertical shading on the right third + crevices
+  for (let sx = x + w * (0.55 + peak * 0.2); sx < x + w - 3; sx += 4.5) g.moveTo(sx, y - 3).lineTo(sx + 1, y - h * (0.3 + hash1(sx) * 0.25));
+  g.stroke({ width: 1, color: ink, alpha: 0.45 });
+  for (let k = 0; k < 3; k++) {
+    const cx = x + w * (0.2 + hash1(seed * 5 + k) * 0.6);
+    g.moveTo(cx, y - h * 0.38).lineTo(cx + 3, y - h * 0.22).lineTo(cx - 2, y - h * 0.08);
+  }
+  g.stroke({ width: 1.4, color: ink, alpha: 0.6 });
+  // foam
+  waves(g, x - 8, y + 5, w + 16, ink, 0.55);
+}
+
+/** perched gargoyle silhouette with bat wings (zone 2 landmark) */
+export function gargoyle(g: Graphics, x: number, y: number, s = 1, ink: number = P.blue, eye: number = C.red) {
+  // wings
+  const wing = (dir: number) => {
+    g.poly([
+      x + 6 * dir * s, y - 22 * s,
+      x + 34 * dir * s, y - 44 * s,
+      x + 40 * dir * s, y - 30 * s,
+      x + 33 * dir * s, y - 28 * s,
+      x + 34 * dir * s, y - 18 * s,
+      x + 26 * dir * s, y - 20 * s,
+      x + 24 * dir * s, y - 10 * s,
+      x + 8 * dir * s, y - 12 * s,
+    ]).fill(ink);
+  };
+  wing(-1);
+  wing(1);
+  // body (hunched) + head with horns
+  g.ellipse(x, y - 12 * s, 11 * s, 14 * s).fill(ink);
+  g.circle(x, y - 30 * s, 8 * s).fill(ink);
+  g.poly([x - 7 * s, y - 34 * s, x - 11 * s, y - 46 * s, x - 3 * s, y - 37 * s]).fill(ink);
+  g.poly([x + 7 * s, y - 34 * s, x + 11 * s, y - 46 * s, x + 3 * s, y - 37 * s]).fill(ink);
+  // ears (it's a cat, after all)
+  g.poly([x - 6 * s, y - 36 * s, x - 2 * s, y - 40 * s, x - 1 * s, y - 35 * s]).fill(ink);
+  // eyes
+  g.circle(x - 3 * s, y - 31 * s, 1.8 * s).circle(x + 3 * s, y - 31 * s, 1.8 * s).fill(eye);
+  // tail curling down the rock
+  g.moveTo(x + 8 * s, y - 2 * s).quadraticCurveTo(x + 22 * s, y + 2 * s, x + 18 * s, y + 12 * s).stroke({ width: 2.6 * s, color: ink, cap: 'round' });
+  // pedestal
+  g.rect(x - 14 * s, y - 2 * s, 28 * s, 6 * s).fill(P.aged).stroke({ width: 2, color: ink });
+}
+
+/** thin waterfall streaks down a cliff */
+export function waterfall(g: Graphics, x: number, y: number, h: number, ink: number = P.blue) {
+  for (let i = 0; i < 4; i++) g.moveTo(x + i * 3, y).lineTo(x + i * 3 + (i % 2), y + h);
+  g.stroke({ width: 1.4, color: ink, alpha: 0.7 });
+  g.ellipse(x + 5, y + h + 2, 10, 3).stroke({ width: 1.4, color: ink, alpha: 0.6 });
+}
+
+/** dark storm cloud with rain hatching and an optional bolt (zone 3) */
+export function stormCloud(g: Graphics, x: number, y: number, s = 1, ink: number = P.blue, boltColor: number = C.yellow, rain = 70) {
+  // rain first (behind)
+  for (let i = 0; i < 14; i++) {
+    const rx = x - 36 * s + i * 6 * s;
+    const ry = y + 14 * s + hash1(i * 3 + x) * 8 * s;
+    g.moveTo(rx, ry).lineTo(rx - 8 * s, ry + rain * s * (0.6 + hash1(i + y) * 0.4));
+  }
+  g.stroke({ width: 1.2, color: ink, alpha: 0.5 });
+  cloud(g, x, y, s * 1.1, 0x9aa6bf, ink);
+  if (boltColor >= 0) bolt(g, x - 6 * s, y + 10 * s, 0.9 * s, boltColor);
+}
+
+/** a kraken tentacle rising from the water, curling at the tip, with suckers */
+export function tentacle(g: Graphics, x: number, y: number, s = 1, dir = 1, ink: number = P.blue, fill = 0xc9a7c7) {
+  const pts: Pt[] = [];
+  for (let i = 0; i <= 24; i++) {
+    const t = i / 24;
+    const a = t * Math.PI * 1.35;
+    pts.push([x + dir * (Math.sin(a) * 26 * s + t * 10 * s), y - t * 70 * s + (t > 0.75 ? (t - 0.75) * 50 * s : 0)]);
+  }
+  const left: number[] = [];
+  const right: number[] = [];
+  pts.forEach(([px, py], i) => {
+    const wdt = (1 - i / pts.length) * 9 * s + 1.5 * s;
+    left.push(px - wdt, py);
+    right.unshift(px + wdt, py);
+  });
+  g.poly([...left, ...right]).fill(fill).stroke({ width: 2.4, color: ink, join: 'round' });
+  for (let i = 2; i < 16; i += 2) {
+    const [px, py] = pts[i];
+    g.circle(px + dir * 3 * s, py, (2.4 - i * 0.1) * s).fill(P.aged).stroke({ width: 1, color: ink });
+  }
+  waves(g, x - 24 * s, y + 3, 48 * s, ink, 0.6);
+}
+
+/** boss node emblem per zone (1 skull · 2 gargoyle · 3 kraken eye · else skull), centered at 0,0 */
+export function bossEmblem(g: Graphics, zone: number, r: number, fill: number, ink: number) {
+  if (zone === 2) {
+    // gargoyle head: wings behind, horned cat head, glowing eyes
+    const w = (dir: number) =>
+      g.poly([dir * r * 0.3, -r * 0.2, dir * r * 1.02, -r * 0.62, dir * r * 0.92, -r * 0.18, dir * r * 1.0, r * 0.05, dir * r * 0.62, r * 0.12, dir * r * 0.35, r * 0.3]).fill(ink);
+    w(-1);
+    w(1);
+    g.circle(0, 0, r * 0.5).fill(fill).stroke({ width: 3, color: ink });
+    g.poly([-r * 0.42, -r * 0.18, -r * 0.5, -r * 0.72, -r * 0.14, -r * 0.42]).fill(fill).stroke({ width: 2.5, color: ink, join: 'round' });
+    g.poly([r * 0.42, -r * 0.18, r * 0.5, -r * 0.72, r * 0.14, -r * 0.42]).fill(fill).stroke({ width: 2.5, color: ink, join: 'round' });
+    g.poly([-r * 0.3, -r * 0.08, -r * 0.08, -r * 0.02, -r * 0.3, r * 0.06]).fill(C.red);
+    g.poly([r * 0.3, -r * 0.08, r * 0.08, -r * 0.02, r * 0.3, r * 0.06]).fill(C.red);
+    g.moveTo(-r * 0.2, r * 0.26).lineTo(-r * 0.07, r * 0.18).lineTo(0, r * 0.28).lineTo(r * 0.07, r * 0.18).lineTo(r * 0.2, r * 0.26).stroke({ width: 2.5, color: ink, join: 'round' });
+    return;
+  }
+  if (zone === 3) {
+    // kraken: tentacles around a big eye
+    for (let i = 0; i < 6; i++) {
+      const a = -Math.PI * 0.9 + (i / 5) * Math.PI * 0.8 + (i > 2 ? Math.PI : 0) * 0;
+      const ang = (i / 6) * Math.PI * 2 + 0.3;
+      void a;
+      const x0 = Math.cos(ang) * r * 0.42;
+      const y0 = Math.sin(ang) * r * 0.42;
+      const x1 = Math.cos(ang + 0.5) * r * 0.98;
+      const y1 = Math.sin(ang + 0.5) * r * 0.98;
+      g.moveTo(x0, y0).quadraticCurveTo(Math.cos(ang) * r * 0.95, Math.sin(ang) * r * 0.95, x1, y1).stroke({ width: r * 0.16, color: ink, cap: 'round' });
+    }
+    g.circle(0, 0, r * 0.52).fill(fill).stroke({ width: 3, color: ink });
+    g.ellipse(0, 0, r * 0.4, r * 0.26).fill(0xffd400).stroke({ width: 2.5, color: ink });
+    g.ellipse(0, 0, r * 0.08, r * 0.22).fill(ink);
+    g.moveTo(-r * 0.46, -r * 0.18).quadraticCurveTo(0, -r * 0.5, r * 0.46, -r * 0.18).stroke({ width: 3, color: ink });
+    return;
+  }
+  skull(g, r, fill, ink);
+}
+
+/** elite node emblem: heraldic shield + zone mark (1 star · 2 bricks · 3 cauldron & bolt) */
+export function eliteEmblem(g: Graphics, zone: number, r: number, fill: number, ink: number, mark: number) {
+  shield(g, r, fill, ink);
+  if (zone === 2) {
+    // bricks
+    const bw = r * 0.42;
+    const bh = r * 0.22;
+    for (let row = 0; row < 3; row++) {
+      const off = row % 2 ? bw / 2 : 0;
+      for (let col = -1; col <= 1; col++) {
+        const bx = col * bw - bw / 2 + off;
+        if (Math.abs(bx + bw / 2) > r * 0.62) continue;
+        g.rect(bx, -r * 0.48 + row * bh, bw - 2, bh - 2).fill(mark).stroke({ width: 1.2, color: ink });
+      }
+    }
+    return;
+  }
+  if (zone === 3) {
+    // cauldron with a bolt
+    g.moveTo(-r * 0.42, -r * 0.18).quadraticCurveTo(0, r * 0.62, r * 0.42, -r * 0.18).closePath().fill(mark).stroke({ width: 2, color: ink });
+    g.rect(-r * 0.48, -r * 0.24, r * 0.96, r * 0.1).fill(ink);
+    g.poly([r * 0.05, -r * 0.62, -r * 0.14, -r * 0.34, -r * 0.02, -r * 0.34, -r * 0.1, -r * 0.12, r * 0.14, -r * 0.42, r * 0.02, -r * 0.42]).fill(C.yellow).stroke({ width: 1.5, color: ink });
+    return;
+  }
+  g.star(0, -r * 0.18, 5, r * 0.36, r * 0.16).fill(mark);
+}
+
+/** rolled "wanted" errand poster pin (map), centered at 0,0 */
+export function errandPin(g: Graphics, s: number, fill: number, ink: number = C.ink, accent: number = C.red) {
+  g.rect(-14 * s + 3, -18 * s + 4, 28 * s, 34 * s).fill({ color: ink, alpha: 0.85 });
+  g.rect(-14 * s, -18 * s, 28 * s, 34 * s).fill(fill).stroke({ width: 2.5, color: ink });
+  g.rect(-14 * s, -18 * s, 28 * s, 7 * s).fill(accent);
+  g.moveTo(-8 * s, -4 * s).lineTo(8 * s, -4 * s).moveTo(-8 * s, 2 * s).lineTo(8 * s, 2 * s).moveTo(-8 * s, 8 * s).lineTo(3 * s, 8 * s).stroke({ width: 1.4, color: ink, alpha: 0.7 });
+  g.circle(0, -18 * s, 3.2 * s).fill(accent).stroke({ width: 1.5, color: ink });
+}
