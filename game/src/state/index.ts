@@ -9,6 +9,7 @@ import './sys/resonance';
 import './sys/campaign';
 import './sys/secrets';
 import './sys/workforce';
+import './sys/decor';
 
 export function newGame() {
   G.reset();
