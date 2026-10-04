@@ -51,6 +51,8 @@ export interface OwnedCat {
   /** "Momentos" log */
   moments: string[];
   kos?: number;
+  /** gacha-exclusive foil variant ("Holo"): boosted stats + foil shader */
+  holo?: boolean;
 }
 
 export interface Habitat {
