@@ -85,6 +85,8 @@ export interface BattleCatDef {
   passive?: string;
   /** turns of reload after firing (0 = fires every turn) */
   reload?: number;
+  /** initial ultimate meter for this cat (traits: Dormilón) */
+  ultStart?: number;
 }
 
 export interface CatState {

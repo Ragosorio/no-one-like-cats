@@ -1,5 +1,5 @@
 import { Battle, ShotPath } from './sim';
-import { CELL } from './ship';
+import { CELL, Cell } from './ship';
 import { Rng } from '../core/rng';
 import { ShotDef } from './types';
 
@@ -22,6 +22,26 @@ export const DIFFICULTY: Record<'easy' | 'normal' | 'hard' | 'boss', AiProfile> 
   boss: { sigmaAngleDeg: 0.9, sigmaPower: 0.018, windError: 0.03, temperature: 0.1, personality: 'calculator', ultChance: 1 },
 };
 
+/** content personalities (GDD 2.9.10) → AI personality */
+export const PERSONALITY_ID: Record<string, Personality> = {
+  torpe: 'clumsy',
+  francotirador: 'sniper',
+  afinador: 'tuner',
+  calculador: 'calculator',
+  vengativo: 'avenger',
+  saqueador: 'looter',
+  demoledor: 'demolisher',
+  elementalista: 'elementalist',
+};
+
+/** difficulty profile with the stage's personality on top (keeps the difficulty's aim noise) */
+export function aiProfile(difficulty: keyof typeof DIFFICULTY, personality?: string): AiProfile {
+  const base = DIFFICULTY[difficulty];
+  const p = personality ? PERSONALITY_ID[personality] ?? (personality as Personality) : undefined;
+  if (!p) return base;
+  return { ...base, personality: p };
+}
+
 const MODULE_VALUE: Record<string, number> = { core: 10, catroom: 6, cannon: 4, shield: 5, arcane: 5, powder: 7, mast: 2, engine: 3 };
 
 function gauss(r: Rng) {
@@ -40,12 +60,19 @@ export interface AiDecision {
   target: { x: number; y: number };
 }
 
+interface Target {
+  x: number;
+  y: number;
+  v: number;
+  key: string;
+}
+
 /**
  * Samples angle/power pairs for each available shooter, scores the predicted landing point
  * by nearby module value, picks with softmax temperature and applies human-like error.
  * Uses a private RNG so the battle's RNG stream isn't disturbed by thinking.
  */
-export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<string, number>, seed: number): AiDecision | null {
+export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<string, number>, seed: number, hint?: { demolisher?: boolean; dmgBy?: Map<string, number> }): AiDecision | null {
   const r = new Rng(seed);
   const enemy = 1 - side;
   const options: { shooter: string; ult: boolean; shot: ShotDef; angle: number; power: number; score: number; tx: number; ty: number }[] = [];
@@ -55,9 +82,10 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
     shooters.push({ id: c.def.uid, shot: ult ? c.def.ultimate! : c.def.shot, ult });
   }
   if (!shooters.length) return null;
+  const pers = profile.personality;
 
   // targets: alive module centers with value
-  const targets: { x: number; y: number; v: number; key: string }[] = [];
+  const targets: Target[] = [];
   const es = b.sides[enemy];
   for (const m of es.ship.modules) {
     if (!m.alive) continue;
@@ -68,30 +96,62 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
       const cat = es.cats.find((c) => c.room === m.id);
       if (!cat || cat.ko) v = 1;
       else if (cat.charging > 0) v *= 5;
+      else if (pers === 'looter') v *= 1.6;
+      else if (pers === 'avenger' && hint?.dmgBy?.get(cat.def.uid)) v *= 1.8;
     }
-    if (profile.personality === 'demolisher' && m.kind !== 'core') v *= 0.7;
+    if (m.tag === 'throat') v = 9;
+    if (m.tag === 'static') v = es.bubbleKind === 'static' ? 9 : 5;
+    if (pers === 'sniper' && m.kind === 'core') v *= 1.5;
+    if (pers === 'demolisher' && m.kind !== 'core') v *= 0.7;
     const cc = cells[Math.floor(cells.length / 2)];
     const p = b.cellCenter(enemy, cc.x, cc.y);
     targets.push({ x: p.x, y: p.y, v, key: `m${m.id}` });
   }
   for (const c of es.cats) {
-    if (c.ko || !c.exposed) continue;
+    if (c.ko || !c.exposed || b.isFlying(c)) continue;
     const p = b.roomCenter(enemy, c.room);
     targets.push({ x: p.x, y: p.y, v: 8, key: `c${c.def.uid}` });
   }
+  // boss parts: tentacles that hold our modules, the open eye, the flying gargoyle
+  for (const p of es.parts) {
+    if (!p.alive || !p.active) continue;
+    const ctr = b.partCenter(p);
+    const v = p.kind === 'eye' ? 16 : p.kind === 'gargoyle' ? 14 : p.grab !== null ? 7 : 4;
+    targets.push({ x: ctr.x, y: ctr.y, v, key: `p${p.id}` });
+  }
+  // demolisher (Barón Ladrillo): the keel cells under modules — collapses are the goal
+  if (pers === 'demolisher' || hint?.demolisher) {
+    const keel = es.ship.rows - 1;
+    for (const m of es.ship.modules) {
+      if (!m.alive || (m.kind !== 'catroom' && m.kind !== 'cannon' && m.kind !== 'core')) continue;
+      for (let y = m.y + m.h; y <= keel; y++) {
+        const c = es.ship.get(m.x, y);
+        if (c && c.module === undefined && (y === keel || !es.ship.get(m.x, y + 1))) {
+          const p = b.cellCenter(enemy, c.x, c.y);
+          targets.push({ x: p.x, y: p.y, v: (MODULE_VALUE[m.kind] ?? 2) * 0.9, key: `k${m.id}` });
+          break;
+        }
+      }
+    }
+  }
   if (!targets.length) return null;
+  const bubbleUp = es.bubble > 0 && !!es.bubbleKind;
 
   const windGuess = b.wind * (1 + (r.next() * 2 - 1) * profile.windError);
   for (const s of shooters) {
     const o = b.muzzle(side, s.id === 'cannon' ? undefined : s.id);
     const dir = enemy === 1 ? 1 : -1;
+    let shotMul = 1;
+    if (bubbleUp && !(s.shot.element === 'electric' && s.shot.trajectory !== 'gust') && !((s.shot.projectiles ?? 1) > 1)) shotMul *= s.ult ? 0.2 : 0.55;
+    if (b.boss?.submerged && b.cfg.boss?.side === enemy && !(s.shot.element === 'electric' || s.shot.trajectory === 'torpedo')) shotMul *= 0.1;
     for (let ai = 0; ai < 22; ai++) {
       const elev = (8 + ai * 3.4) * (Math.PI / 180);
       const angle = dir > 0 ? -elev : Math.PI + elev;
       for (let pi = 0; pi < 9; pi++) {
         const power = 520 + pi * 95;
         const paths = b.buildPaths(s.shot, o, angle, power, windGuess, side);
-        const score = scorePaths(b, paths, targets, enemy, s.shot);
+        let score = scorePaths(b, paths, targets, enemy, s.shot) * shotMul;
+        if (score > 0 && (pers === 'elementalist' || pers === 'calculator')) score *= reactionBonus(b, paths, enemy, s.shot);
         if (score > 0) {
           const end = paths[0].points[paths[0].points.length - 1];
           options.push({ shooter: s.id, ult: s.ult, shot: s.shot, angle, power, score, tx: end.x, ty: end.y });
@@ -121,13 +181,13 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   const key = `${Math.round(pick.tx / CELL)}`;
   const tries = memory.get(key) ?? 0;
   memory.set(key, tries + 1);
-  const shrink = Math.pow(profile.personality === 'tuner' ? 0.6 : 0.8, tries);
+  const shrink = Math.pow(pers === 'tuner' ? 0.6 : 0.8, tries);
   const angle = pick.angle + gauss(r) * ((profile.sigmaAngleDeg * Math.PI) / 180) * shrink;
   const power = pick.power * (1 + gauss(r) * profile.sigmaPower * shrink);
   return { shooter: pick.shooter, ult: pick.ult, angle, power, target: { x: pick.tx, y: pick.ty } };
 }
 
-function scorePaths(b: Battle, paths: ShotPath[], targets: { x: number; y: number; v: number }[], enemy: number, shot: ShotDef) {
+function scorePaths(b: Battle, paths: ShotPath[], targets: Target[], enemy: number, shot: ShotDef) {
   let score = 0;
   for (const p of paths) {
     if (!p.impacts.length) continue;
@@ -144,6 +204,31 @@ function scorePaths(b: Battle, paths: ShotPath[], targets: { x: number; y: numbe
   return score;
 }
 
+/** elementalist: prefers shots that trigger reactions (wet + rayo, wet + nature, gust on fire…) */
+function reactionBonus(b: Battle, paths: ShotPath[], enemy: number, shot: ShotDef) {
+  const p = paths[0];
+  if (!p.impacts.length) return 1;
+  const ip = p.points[p.impacts[p.impacts.length - 1]];
+  const cells: Cell[] = [];
+  const ship = b.sides[enemy].ship;
+  for (const c of ship.cells()) {
+    const cc = b.cellCenter(enemy, c.x, c.y);
+    if (Math.hypot(cc.x - ip.x, cc.y - ip.y) <= shot.radius + CELL) cells.push(c);
+  }
+  if (!cells.length) return 1;
+  const wet = cells.filter((c) => c.status.wet).length / cells.length;
+  const burning = cells.filter((c) => c.status.burning).length / cells.length;
+  const frozen = cells.filter((c) => c.status.frozen).length / cells.length;
+  const el = shot.element;
+  if (el === 'electric' && shot.trajectory !== 'gust') return 1 + wet * 1.6;
+  if (shot.trajectory === 'gust') return 1 + wet * 1.0 + burning * 1.2;
+  if (el === 'water') return 1 + (1 - wet) * 0.5 + burning * 0.4;
+  if (el === 'nature') return 1 + wet * 0.8;
+  if (el === 'fire') return 1 - wet * 0.5;
+  if (el === 'earth') return 1 + frozen * 1.5;
+  return 1;
+}
+
 /**
  * Automatic ship cannons: they aim at the most valuable enemy module with modest accuracy.
  * `sigmaDeg` controls spread (upgrades/mast make it tighter).
@@ -154,14 +239,19 @@ export function aimCannon(b: Battle, side: 0 | 1, cannonId: number, seed: number
   const es = b.sides[enemy];
   const o = b.cannonMuzzle(side, cannonId);
   const shot: ShotDef = b.cannonShot(side, cannonId);
-  const targets: { x: number; y: number; v: number }[] = [];
+  const targets: Target[] = [];
   for (const m of es.ship.modules) {
     if (!m.alive) continue;
     const cells = es.ship.moduleCells(m.id);
     if (!cells.length) continue;
     const cc = cells[Math.floor(cells.length / 2)];
     const p = b.cellCenter(enemy, cc.x, cc.y);
-    targets.push({ x: p.x, y: p.y, v: MODULE_VALUE[m.kind] ?? 1 });
+    targets.push({ x: p.x, y: p.y, v: MODULE_VALUE[m.kind] ?? 1, key: `m${m.id}` });
+  }
+  for (const p of es.parts) {
+    if (!p.alive || !p.active) continue;
+    const ctr = b.partCenter(p);
+    targets.push({ x: ctr.x, y: ctr.y, v: p.kind === 'tentacle' ? 4 : 10, key: `p${p.id}` });
   }
   const dir = enemy === 1 ? 1 : -1;
   let best = { angle: dir > 0 ? -0.6 : Math.PI + 0.6, power: 800, score: -Infinity };
@@ -177,7 +267,7 @@ export function aimCannon(b: Battle, side: 0 | 1, cannonId: number, seed: number
         const p = paths[0];
         const end = p.impacts.length ? p.points[p.impacts[p.impacts.length - 1]] : p.points[p.points.length - 1];
         const hit = p.impacts.length ? b.cellAt(end.x, end.y) : null;
-        sc = hit && hit.side !== enemy ? -1e9 : -Math.hypot(end.x - target.x, end.y - target.y) + (hit ? 50 : 0);
+        sc = hit && hit.side !== enemy ? -1e9 : -Math.hypot(end.x - target.x, end.y - target.y) + (hit || b.partAt(end.x, end.y, enemy, 4) ? 50 : 0);
       } else sc = scorePaths(b, paths, targets, enemy, shot) + r.next() * 0.3;
       if (sc > best.score) best = { angle, power, score: sc };
     }

@@ -15,6 +15,8 @@ export interface ShipGenSpec {
   mast: boolean;
   extras?: ('powder' | 'pantry' | 'wall' | 'shield' | 'arcane' | 'barrels')[];
   seed?: number;
+  /** Torre-Barco: a tall stone tower with snipers on top (bring the base down!) */
+  tower?: boolean;
 }
 
 const MAT_LETTER: Record<string, string> = { madera: 'W', hierro: 'I', piedra: 'S', cristal: 'C', hueso: 'B' };
@@ -49,6 +51,11 @@ export function generateShip(spec: ShipGenSpec): ShipBlueprint {
   }
   // bow rises one cell (prow) at the right
   if (deck - 1 >= 0) grid[deck - 1][W - 1] = M;
+  const towerX = Math.floor(W / 2) - 2;
+  if (spec.tower) {
+    // 4-wide tower from row 2 to the deck
+    for (let y = 2; y < deck; y++) for (let x = towerX; x < towerX + 4; x++) grid[y][x] = M;
+  }
   const occupied = new Set<string>();
   const take = (x: number, y: number, w: number, h: number) => {
     for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) occupied.add(`${xx},${yy}`);
@@ -83,13 +90,19 @@ export function generateShip(spec: ShipGenSpec): ShipBlueprint {
       placedC++;
     }
   }
+  if (spec.tower) {
+    // snipers: one room on the tower top, one inside the tower
+    add('catroom', towerX + 1, 0, 2, 2, 0);
+    add('catroom', towerX + 1, Math.max(3, deck - 4), 2, 2, 1);
+    if (spec.mast && deck - 4 >= 0 && free(1, deck - 4, 1, 4)) add('mast', 1, deck - 4, 1, 4);
+  }
   // mast near center top
-  if (spec.mast && deck - 4 >= 0) {
+  if (spec.mast && !spec.tower && deck - 4 >= 0) {
     const mx = Math.floor(W / 2) + (W % 2 ? 0 : 0);
     if (free(mx, deck - 4, 1, 4)) add('mast', mx, deck - 4, 1, 4);
   }
   // catrooms: on deck (above) from stern, then inside hull
-  let slot = 0;
+  let slot = spec.tower ? 2 : 0;
   const roomSpots: [number, number][] = [
     [1, deck - 2],
     [Math.floor(W / 2) + 2, deck - 2],
@@ -153,6 +166,67 @@ export function generateShip(spec: ShipGenSpec): ShipBlueprint {
 
 /** Hand-made ships for story moments. */
 export const STORY_SHIPS: Record<string, ShipBlueprint> = {
+  /** Jefe 2 — El Risco Flotante: stone fortress, the gargoyle perched on the tower, La Garganta (2x2) in the middle */
+  risco_flotante: {
+    cols: 18,
+    rows: 12,
+    hull: [
+      '..................',
+      '..................',
+      '..................',
+      '......SSSSSS......',
+      '......SSSSSS......',
+      '......SSSSSS......',
+      '......SSSSSS......',
+      '......SSSSSS.....S',
+      'SSSSSSSSSSSSSSSSSS',
+      'SSSSSSSSSSSSSSSSSS',
+      '.SSSSSSSSSSSSSSSS.',
+      '...SSSSSSSSSSSS...',
+    ],
+    modules: [
+      { kind: 'catroom', x: 7, y: 1, w: 2, h: 2, slot: 0 },
+      { kind: 'arcane', x: 8, y: 5, w: 2, h: 2, tag: 'throat' },
+      { kind: 'mast', x: 4, y: 4, w: 1, h: 4 },
+      { kind: 'catroom', x: 1, y: 6, w: 2, h: 2, slot: 1 },
+      { kind: 'catroom', x: 3, y: 9, w: 2, h: 2, slot: 2 },
+      { kind: 'catroom', x: 13, y: 9, w: 2, h: 2, slot: 3 },
+      { kind: 'core', x: 8, y: 9, w: 2, h: 2 },
+      { kind: 'cannon', x: 12, y: 7, w: 2, h: 1 },
+      { kind: 'cannon', x: 15, y: 7, w: 2, h: 1 },
+    ],
+  },
+  /** Jefe 3 — Barco atrapado por el Kraken: wet iron, the static generator, 4 cabins (the tentacles are boss parts) */
+  kraken: {
+    cols: 20,
+    rows: 12,
+    hull: [
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '....................',
+      '.IIIIIIIIIIIIIIIIII.',
+      'IIIIIIIIIIIIIIIIIIII',
+      'IIIIIIIIIIIIIIIIIIII',
+      '.IIIIIIIIIIIIIIIIII.',
+      '...IIIIIIIIIIIIII...',
+    ],
+    modules: [
+      { kind: 'catroom', x: 16, y: 5, w: 2, h: 2, slot: 0 },
+      { kind: 'mast', x: 10, y: 3, w: 1, h: 4 },
+      { kind: 'catroom', x: 3, y: 6, w: 2, h: 2, slot: 1 },
+      { kind: 'shield', x: 7, y: 6, w: 2, h: 1, tag: 'static' },
+      { kind: 'catroom', x: 5, y: 9, w: 2, h: 2, slot: 2 },
+      { kind: 'catroom', x: 13, y: 9, w: 2, h: 2, slot: 3 },
+      { kind: 'core', x: 9, y: 9, w: 2, h: 2 },
+      { kind: 'cannon', x: 14, y: 6, w: 2, h: 1 },
+      { kind: 'cannon', x: 18, y: 7, w: 2, h: 1 },
+      { kind: 'cannon', x: 18, y: 9, w: 2, h: 1 },
+    ],
+  },
   /** duel platform: a wooden raft for 1–2 cats, no core */
   duel_raft: {
     cols: 7,

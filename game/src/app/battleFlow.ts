@@ -1,6 +1,7 @@
 /**
- * Campaign battle flow: (pre-battle panel →) BattleScene → applyResult → ResultsScene.
- * Owned by the CAMPAÑA module. Scenes never import each other: flow glues them.
+ * Campaign battle flow: (pre-battle panel →) repair gate → BattleScene → applyResult → ResultsScene.
+ * Errands: board → BattleScene → applyErrandResult → errand results poster → map.
+ * Owned by the COMBATE module. Scenes never import each other: flow glues them.
  */
 import { Container, Rectangle, Texture } from 'pixi.js';
 import gsap from 'gsap';
@@ -9,7 +10,7 @@ import { W, H, game } from '../core/App';
 import { music } from '../core/music';
 import { BattleScene } from '../scenes/BattleScene';
 import type { BattleResult, BattleSpec } from '../scenes/BattleScene';
-import { buildBattle } from '../state/sys/campaign';
+import { buildBattle, buildErrand, applyErrandResult, isRepairing } from '../state/sys/campaign';
 import { crew } from '../state/sys/ship';
 import { cat as getCat, catPow } from '../state/sys/cats';
 import { resolveBattle, stageKind, LastBattle } from '../state/ext/campaign';
@@ -35,8 +36,16 @@ function installTweenJanitor() {
   }, 250);
 }
 
+/** the active ship is being repaired: offer Ronroneo / another ship / wait. Resolves true to sail. */
+async function repairGate(): Promise<boolean> {
+  if (!isRepairing()) return true;
+  const { openRepairGate } = await import('../battle/ui/repairGate');
+  return openRepairGate();
+}
+
 export async function startCampaignBattle(zone: number, stage: number) {
   installTweenJanitor();
+  if (!(await repairGate())) return;
   music.play(stageKind(zone, stage) === 'boss' ? 'boss' : 'battle');
   let scene: BattleScene | null = null;
   let ended = false;
@@ -53,6 +62,26 @@ export async function startCampaignBattle(zone: number, stage: number) {
   await scenes.go(scene, 'blocks');
 }
 
+/** Encargo (errand) battle: restrictions are applied by buildErrand (ship/crew/rules) */
+export async function startErrandBattle(id: string) {
+  installTweenJanitor();
+  if (!(await repairGate())) return;
+  music.play('battle');
+  let ended = false;
+  const spec: BattleSpec = buildErrand(id, (r) => {
+    if (ended) return;
+    ended = true;
+    const loot = applyErrandResult(id, { ...r, mvp: r.mvp ?? pickMvp() ?? undefined });
+    void (async () => {
+      const { goMap } = await import('./flow');
+      await goMap();
+      const { showErrandResults } = await import('../panels/errands/results');
+      showErrandResults(id, r, loot);
+    })();
+  });
+  await scenes.go(new BattleScene(spec), 'blocks');
+}
+
 export async function showResults(last: LastBattle, photo: Texture | null) {
   const { ResultsScene } = await import('../scenes/ResultsScene');
   music.play(last.result.won ? 'island' : 'tension');
@@ -63,7 +92,7 @@ export async function showResults(last: LastBattle, photo: Texture | null) {
 function capturePhoto(scene: BattleScene | null): Texture | null {
   if (!scene || scene.destroyed) return null;
   try {
-    const target = (scene as unknown as { camRoot?: import('pixi.js').Container }).camRoot ?? scene;
+    const target = scene.camRoot ?? scene;
     return game.pixi.renderer.generateTexture({ target, frame: new Rectangle(0, 0, W, H), resolution: 0.5 });
   } catch (e) {
     console.warn('[battleFlow] photo capture failed', e);

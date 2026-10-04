@@ -43,6 +43,8 @@ export interface ModuleInst {
   level: number;
   /** turns disabled (overload) */
   disabled: number;
+  /** special role for boss/stage rules (e.g. 'throat', 'static'); tagged modules skip generic rules */
+  tag?: string;
 }
 
 export interface ShipBlueprint {
@@ -50,7 +52,7 @@ export interface ShipBlueprint {
   rows: number;
   /** rows of chars, top to bottom. '.' empty, 'W' wood, 'I' iron, 'C' crystal, 'B' bone */
   hull: string[];
-  modules: { kind: ModuleKind; x: number; y: number; w: number; h: number; slot?: number; level?: number }[];
+  modules: { kind: ModuleKind; x: number; y: number; w: number; h: number; slot?: number; level?: number; tag?: string }[];
 }
 
 export const MATERIAL_HP: Record<Material, number> = { wood: 60, iron: 140, crystal: 90, bone: 110, void: 200, stone: 120, canvas: 30 };
@@ -81,7 +83,7 @@ export class ShipModel {
       this.grid.push(row);
     }
     bp.modules.forEach((m, i) => {
-      const inst: ModuleInst = { id: i, kind: m.kind, x: m.x, y: m.y, w: m.w, h: m.h, alive: true, slot: m.slot, level: m.level ?? 1, disabled: 0 };
+      const inst: ModuleInst = { id: i, kind: m.kind, x: m.x, y: m.y, w: m.w, h: m.h, alive: true, slot: m.slot, level: m.level ?? 1, disabled: 0, tag: m.tag };
       this.modules.push(inst);
       for (let yy = m.y; yy < m.y + m.h; yy++)
         for (let xx = m.x; xx < m.x + m.w; xx++) {

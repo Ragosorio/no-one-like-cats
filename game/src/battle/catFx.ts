@@ -17,14 +17,19 @@ export class CatStatusView extends Container {
   fx: CatFx = { burning: 0, shocked: 0, wet: 0, frozen: 0 };
   private flames = new Container();
   private ice = new Graphics();
+  private stun = new Container();
+  private stunOn = false;
+  private stunA = 0;
   private acc = 0;
   private flick = 0;
   private baseTint: number;
   constructor(public cat: BattleCat) {
     super();
     this.baseTint = Number(cat.sprite.tint);
-    this.addChild(this.flames, this.ice);
+    this.addChild(this.flames, this.ice, this.stun);
     this.ice.visible = false;
+    for (let i = 0; i < 3; i++) this.stun.addChild(new Graphics().star(0, 0, 5, 11, 5).fill(C.yellow).stroke({ width: 3, color: C.ink }));
+    this.stun.visible = false;
     cat.addChild(this);
     Ticker.shared.add(this.tick, this);
   }
@@ -43,6 +48,14 @@ export class CatStatusView extends Container {
     if (this.fx.frozen > 0) s.tint = 0xbfefff;
     else if (this.fx.wet > 0) s.tint = 0xc4dcff;
     else s.tint = this.baseTint;
+  }
+
+  /** dizzy stars while the cat is stunned (Aturdido / agarrado por un tentáculo) */
+  setStun(on: boolean) {
+    if (on === this.stunOn) return;
+    this.stunOn = on;
+    this.stun.visible = on;
+    if (on) gsap.fromTo(this.stun.scale, { x: 0.2, y: 0.2 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
   }
 
   /** x-ray electrocution: flicker between ink-inverted and normal, with arcs */
@@ -106,6 +119,13 @@ export class CatStatusView extends Container {
     const dt = t.deltaMS / 1000;
     this.acc += dt;
     const size = this.cat.size;
+    if (this.stunOn) {
+      this.stunA += dt * 5;
+      this.stun.children.forEach((s, i) => {
+        const a = this.stunA + (i * Math.PI * 2) / 3;
+        s.position.set(Math.cos(a) * size * 0.3, -size * 0.98 + Math.sin(a) * size * 0.08);
+      });
+    }
     if (this.fx.burning > 0 && this.acc > 0.05) {
       this.acc = 0;
       const p = new Sprite(dotTexture());
