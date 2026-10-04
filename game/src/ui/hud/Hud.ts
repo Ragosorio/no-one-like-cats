@@ -25,6 +25,29 @@ import { openShipyard } from '../../panels/Shipyard';
 import { openMissions } from '../../panels/Missions';
 import { openSettings } from '../../panels/Settings';
 import { hudUnlocks, setUiSeen } from '../../state/ext/island';
+import { islandNotices } from '../../state/ext/islandM2';
+import { workersUnlocked } from '../../state/sys/workforce';
+import { autoHarvestOn, bankUnlocked, fishBuffer } from '../../state/sys/island';
+import { toast } from '../modal';
+
+/** panels owned by agents that may not exist yet: resolved lazily with import.meta.glob (never a hard import) */
+const LAZY = import.meta.glob<Record<string, unknown>>(['../../panels/shop/Shop.ts', '../../panels/casino/open.ts']);
+function lazyOpen(path: string, fn: string, label: string) {
+  const loader = LAZY[path];
+  if (!loader) {
+    sfx('error');
+    toast(`${label}: ¡muy pronto!`, { sub: 'Los gatos están pintando el letrero.', color: C.paper });
+    return;
+  }
+  void loader().then((m) => {
+    const f = m[fn] as (() => void) | undefined;
+    if (typeof f === 'function') f();
+    else toast(`${label}: ¡muy pronto!`, { color: C.paper });
+  });
+}
+export function lazyPanelExists(path: string) {
+  return !!LAZY[path];
+}
 import { card, coinPitch, heatColor, pressable } from './parts';
 import { glyph } from './glyphs';
 import { TimerColumn } from './TimerColumn';
@@ -90,6 +113,9 @@ export class Hud extends Container {
   pins: MissionPins;
   actions: ActionBar;
   collectBtn = new Container();
+  /** island notices (sin casa / expedición de vuelta) at the top center */
+  notices = new Container();
+  private noticeSig = '';
   private collectAmt: Text;
   fx = new Container();
   private unsub: (() => void)[] = [];
@@ -119,6 +145,10 @@ export class Hud extends Container {
     medalC.addChild(medal, this.kLevel, crown);
     this.kBadge.addChild(medalC, kTitle, this.kBar, this.kPct);
     this.kBadge.position.set(76, 72);
+    // the Reino shield opens the Kingdom panel (hitos + automatizaciones)
+    const kHit = new Graphics().rect(-56, -60, 420, 112).fill({ color: 0xffffff, alpha: 0.001 });
+    this.kBadge.addChildAt(kHit, 0);
+    pressable(this.kBadge, () => void import('../../panels/Kingdom').then((m) => m.openKingdom()), { face: medalC });
     // momentum
     const mb = card(330, 40, C.ink, 5, 3);
     this.momFlame = icon('flame', 28);
@@ -165,6 +195,9 @@ export class Hud extends Container {
         ? { id: 'sail', label: '¡ZARPAR!', glyph: 'ship', onTap: () => goMap(), visible: () => u().sail, big: true, color: C.pinkHot }
         : { id: 'island', label: 'ISLA', glyph: 'palm', onTap: () => goIsland(), visible: () => true, big: true, color: C.megaBlue },
       { id: 'missions', label: 'MISIONES', glyph: 'scroll', onTap: () => openMissions(), visible: () => true, badge: () => (G.s.missions.active.length ? String(G.s.missions.active.length) : null) },
+      { id: 'workers', label: 'OFICIOS', glyph: 'tools', onTap: () => void import('../../panels/island/WorkersPanel').then((m) => m.openWorkers()), visible: () => island && workersUnlocked() },
+      { id: 'shop', label: 'TIENDA', glyph: 'shop', onTap: () => lazyOpen('../../panels/shop/Shop.ts', 'openShop', 'TIENDA'), visible: () => island && u().sail },
+      { id: 'casino', label: 'CASINO', glyph: 'capsule', onTap: () => lazyOpen('../../panels/casino/open.ts', 'openCasino', 'CASINO'), visible: () => island && u().mesa },
       { id: 'settings', label: 'AJUSTES', glyph: 'gear', onTap: () => openSettings(), visible: () => true },
     ]);
     this.actions.position.set(W / 2, H - 120);
@@ -187,6 +220,8 @@ export class Hud extends Container {
     pressable(this.collectBtn, () => this.opts.onCollectAll?.(), { face: cbg, sound: false });
     this.collectBtn.visible = false;
     if (island) this.addChild(this.collectBtn);
+    if (island) this.addChild(this.notices);
+    this.notices.position.set(W / 2 - 110, 20);
     this.addChild(this.fx);
 
     // ---------------------------------------------------------------- events
@@ -344,15 +379,60 @@ export class Hud extends Container {
     const island = (this.opts.mode ?? 'island') === 'island';
     if (island) {
       const total = G.s.habitats.reduce((a, h) => a + Math.floor(h.buffer), 0);
-      const vis = u.collectAll;
+      const fish = G.s.habitats.reduce((a, h) => a + Math.floor(fishBuffer(h)), 0);
+      // Banco (KL15) + Mar de Pescados Automático (KL21) retire the button: nothing left to collect by hand
+      const vis = u.collectAll && !(bankUnlocked() && autoHarvestOn());
       if (vis !== this.collectBtn.visible) {
         this.collectBtn.visible = vis;
         if (vis) gsap.fromTo(this.collectBtn.scale, { x: 0, y: 0 }, { x: 1, y: 1, duration: 0.5, ease: 'back.out(2.5)' });
       }
-      this.collectAmt.text = total > 0 ? `+${fmt(total)}` : 'vacío';
-      this.collectBtn.alpha = total > 0 ? 1 : 0.6;
+      this.collectAmt.text = total > 0 && fish > 0 ? `+${fmt(total)} · +${fmt(fish)} pesca` : total > 0 ? `+${fmt(total)}` : fish > 0 ? `+${fmt(fish)} pesca` : 'vacío';
+      this.collectBtn.alpha = total > 0 || fish > 0 ? 1 : 0.6;
+      this.collectAmt.scale.set(1);
+      if (this.collectAmt.width > 152) this.collectAmt.scale.set(152 / this.collectAmt.width);
     }
     if (this.dropdown) this.fillDropdown();
+    if (island) this.syncNotices();
+  }
+
+  private syncNotices() {
+    const list = islandNotices();
+    const sig = list.map((n) => n.id + n.text).join('|');
+    if (sig === this.noticeSig) return;
+    this.noticeSig = sig;
+    for (const c of this.notices.children) {
+      const face = c.children[0];
+      if (face) {
+        gsap.killTweensOf(face);
+        gsap.killTweensOf(face.scale);
+      }
+    }
+    this.notices.removeChildren().forEach((c) => c.destroy({ children: true }));
+    let x = 0;
+    const items: Container[] = [];
+    for (const n of list) {
+      const c = new Container();
+      const face = new Container();
+      const t = txt(n.text, { fontFamily: F.poster, fontSize: 24, fill: n.color === C.red ? C.paper : C.ink });
+      const go = txt(n.id === 'homeless' ? 'ARREGLAR ›' : 'RECLAMAR ›', { fontFamily: F.bebas, fontSize: 22, fill: n.color === C.red ? C.yellow : C.ink, letterSpacing: 1 });
+      const ic = n.id === 'homeless' ? icon('paw', 26, n.color === C.red ? C.paper : C.ink) : icon('scrap', 28);
+      ic.position.set(22, 22);
+      t.position.set(42, 4);
+      go.position.set(t.x + t.width + 14, 9);
+      const w = go.x + go.width + 16;
+      face.addChild(card(w, 44, n.color, 5, 3), ic, t, go);
+      c.addChild(face);
+      pressable(c, () => {
+        if (n.id === 'homeless') void import('../../panels/island/HomelessPanel').then((m) => m.openHomeless());
+        else void import('../../panels/island/PortPanel').then((m) => m.openPort());
+      }, { face });
+      c.position.set(-w / 2, items.length * 54);
+      x = Math.max(x, w);
+      items.push(c);
+      this.notices.addChild(c);
+      gsap.fromTo(face.scale, { x: 0.3, y: 0.3 }, { x: 1, y: 1, duration: 0.35, ease: 'back.out(2.5)' });
+      if (n.id === 'homeless') this.bag.to(face, { rotation: 0.025, duration: 0.18, yoyo: true, repeat: 5, ease: 'sine.inOut' });
+    }
   }
 
   private syncCounters(animate: boolean) {
@@ -443,7 +523,8 @@ export class Hud extends Container {
     let i = 0;
     for (const a of p.applied) {
       if (a.minutes < 0.05) continue;
-      const row = a.timer ? this.timers.rowFor(a.timer.id) : null;
+      const r0 = a.timer ? this.timers.rowFor(a.timer.id) : null;
+      const row = r0 && !r0.destroyed ? r0 : null;
       const target = row ?? this.timers.reserveChip;
       const tg = this.fx.toLocal(target.getGlobalPosition());
       const tx = tg.x + 40;
@@ -470,7 +551,8 @@ export class Hud extends Container {
         .to(st.scale, { x: 0.5, y: 0.5, duration: 0.55, ease: 'power2.in' }, '<')
         .call(() => {
           sfx('purr');
-          if (row) gsap.fromTo(row.scale, { x: 1.08, y: 1.08 }, { x: 1, y: 1, duration: 0.35, ease: 'back.out(3)' });
+          // the timer may have finished (row destroyed) while the stamp was flying
+          if (row && !row.destroyed && row.scale) gsap.fromTo(row.scale, { x: 1.08, y: 1.08 }, { x: 1, y: 1, duration: 0.35, ease: 'back.out(3)' });
         });
       i++;
     }

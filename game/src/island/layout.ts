@@ -43,6 +43,10 @@ export interface RegionPlan {
   habitats: Spot[];
   farms: Spot[];
   decor: Decor[];
+  /** 2×2 landmark that hides the expansion's secret (expansions only) */
+  secret?: Spot;
+  /** Puerto de las Mareas: expedition pier (2×2 land, sea in front) */
+  pier?: Spot;
 }
 export interface HomePlan {
   sanctuary: Spot;
@@ -51,6 +55,8 @@ export interface HomePlan {
   mesa: Spot;
   lighthouse: Spot;
   boat: Spot;
+  /** Banco del Reino (2×2, opens at KL15) */
+  bank: Spot;
 }
 export interface IslandPlan {
   tiles: Map<string, Tile>;
@@ -262,6 +268,34 @@ export function islandPlan(): IslandPlan {
     placeFarms(p, p.center.gx + 3, p.center.gy + 3);
   }
 
+  // ------------------------------------------------------------ M2 landmarks (placed last so plots never move)
+  const bank =
+    best(hd, 2, 2, (s) => landFits(HOME_ID, s, true), (s) => dist(s, hc.x, hc.y) + (ctr(s).y - ctr(s).x) * 0.15) ??
+    best(hd, 2, 2, (s) => landFits(HOME_ID, s, false), (s) => dist(s, hc.x, hc.y)) ?? { gx: Math.round(hc.x) - 3, gy: Math.round(hc.y) - 6, w: 2, h: 2 };
+  mark(bank);
+  for (const p of plans.values()) {
+    if (p.def.id === HOME_ID) continue;
+    const id = p.def.id;
+    const pc = { x: p.center.gx + 0.5, y: p.center.gy + 0.5 };
+    if (id === 'puerto_mareas') {
+      // pier: land 2×2 with open water right in front (towards the camera)
+      const front = (s: Spot) => {
+        let fy = true;
+        for (let x = s.gx; x < s.gx + s.w; x++) if (!isWater(x, s.gy + s.h) || !isWater(x, s.gy + s.h + 1)) fy = false;
+        let fx = true;
+        for (let y = s.gy; y < s.gy + s.h; y++) if (!isWater(s.gx + s.w, y) || !isWater(s.gx + s.w + 1, y)) fx = false;
+        return fy || fx;
+      };
+      p.pier = best(p.def, 2, 2, (s) => landFits(id, s, false) && front(s), (s) => dist(s, pc.x, pc.y)) ?? best(p.def, 2, 2, (s) => landFits(id, s, false), (s) => -dist(s, pc.x, pc.y)) ?? undefined;
+      if (p.pier) mark(p.pier);
+    }
+    p.secret =
+      best(p.def, 2, 2, (s) => landFits(id, s, true), (s) => Math.abs(dist(s, pc.x, pc.y) - 2.2) + hash2(s.gx, s.gy, 41) * 0.3) ??
+      best(p.def, 2, 2, (s) => landFits(id, s, false), (s) => dist(s, pc.x, pc.y)) ??
+      undefined;
+    if (p.secret) mark(p.secret);
+  }
+
   // ------------------------------------------------------------ decoration on free land
   for (const p of plans.values()) {
     const kinds = DECOR_BY_BIOME[p.def.biome] ?? DECOR_BY_BIOME.home;
@@ -279,7 +313,7 @@ export function islandPlan(): IslandPlan {
     }
   }
 
-  cached = { tiles, regions, plans, home: { sanctuary, port: port!, altar, mesa, lighthouse, boat } };
+  cached = { tiles, regions, plans, home: { sanctuary, port: port!, altar, mesa, lighthouse, boat, bank } };
   return cached;
 }
 
@@ -306,6 +340,11 @@ export function planAscii(p: IslandPlan) {
   put(p.home.mesa, 'M');
   put(p.home.lighthouse, 'L');
   put(p.home.boat, 'B');
+  put(p.home.bank, '$');
+  for (const r of p.plans.values()) {
+    if (r.secret) put(r.secret, '?');
+    if (r.pier) put(r.pier, 'X');
+  }
   const letters: Record<string, string> = {};
   p.regions.forEach((r, i) => (letters[r.id] = 'hbcvpgrae'[i] ?? '?'));
   for (let y = 0; y < GRID; y++) {

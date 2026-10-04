@@ -8,6 +8,7 @@ import { G } from '../../state/game';
 import { EXPANSIONS } from '../../data/content';
 import { builders, buildersBusy, buyExpansion, expansionState } from '../../state/sys/island';
 import { checkMissions } from '../../state/sys/missions';
+import { secretInfo } from '../../state/sys/secrets';
 import { fmt, fmtDuration } from '../../core/format';
 import { sfx } from '../../core/audio';
 import { BIOMES } from '../../island/terrain';
@@ -117,9 +118,30 @@ export function openExpansionPanel(n: number, onBought?: () => void) {
   y += 50 + plots.height + 14;
   const h3 = heading('Secreto', 24);
   h3.position.set(x0, y);
-  const sec = txt(st === 'cleared' ? e.secret.name : '??? — algo se esconde debajo de las rocas.', { fontFamily: F.ui, fontSize: 18, fill: C.ink, fontStyle: 'italic' });
+  const si = secretInfo(n);
+  const secText = st !== 'cleared' ? '??? — algo se esconde debajo de las rocas.' : si.done ? `${e.secret.name} · ¡ENCONTRADO!` : si.sealed ? `${e.secret.name} · ${si.sealedReason}` : `${e.secret.name} · ${si.hint}`;
+  const sec = wrapText(secText, m.innerW - x0, 18, F.ui, si.done ? C.green : C.ink, { fontStyle: 'italic', fontWeight: si.done ? '700' : '400' });
   sec.position.set(x0, y + 38);
   m.body.addChild(h3, sec);
+  // clearing: the green clock can be sped up with Ronroneo (never paid)
+  const tmr = st === 'clearing' ? G.timerFor('expansion', String(n)) : null;
+  if (tmr) {
+    const purr = new Button('RONRONEAR', () => {
+      const used = G.spendPurrOn(tmr);
+      if (used > 0) {
+        sfx('purr');
+        toast(`−${used.toFixed(1)} min de limpieza`, { icon: 'clock', color: C.lilac });
+        m.close();
+      } else {
+        sfx('error');
+        toast('Sin Ronroneo en la reserva', { sub: 'Se gana jugando: batallas, misiones, especies nuevas…', color: C.paper });
+      }
+    }, { w: 240, h: 60, size: 28, color: C.lilac });
+    purr.position.set(x0, m.innerH - 180);
+    const left = txt(`Faltan ${fmtDuration(tmr.leftMs)}`, { fontFamily: F.heavy, fontSize: 24, fill: C.green });
+    left.position.set(x0 + 260, m.innerH - 166);
+    m.body.addChild(purr, left);
+  }
   // ---- action
   let reason: string | null = null;
   if (st === 'cleared') reason = '¡Ya es tuya!';

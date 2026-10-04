@@ -3,10 +3,10 @@ import { Container, Graphics } from 'pixi.js';
 import { G, Habitat } from '../../state/game';
 import { habitatTier } from '../../state/econ';
 import { ctaVisible, habitatFill, habitatFull } from '../../state/ext/island';
-import { nextHabitatCost } from '../../state/sys/island';
+import { fishBuffer, fishCap, habitatFishRate, nextHabitatCost } from '../../state/sys/island';
 import { isoToScreen } from '../iso';
 import { habitatParts, emptyPlotArt, scaffoldArt, plate, P, centerOf } from '../buildingArt';
-import { ClockBubble, CoinPile } from '../worldUi';
+import { ClockBubble, YieldPile } from '../worldUi';
 import type { Spot } from '../layout';
 import type { Area } from '../catActor';
 import type { IslandCtx } from './ctx';
@@ -19,7 +19,7 @@ export class PlotView {
   back = new Container();
   front = new Container();
   bubble = new Container();
-  coins = new CoinPile();
+  coins = new YieldPile();
   clock = new ClockBubble(26);
   private priceTag: Container | null = null;
   private sig = '';
@@ -28,6 +28,7 @@ export class PlotView {
   habitat: Habitat | null = null;
   /** visible = region unlocked & plot exists */
   active = false;
+  private onTap: (v: PlotView) => void;
   constructor(
     public region: string,
     public plot: number,
@@ -35,6 +36,7 @@ export class PlotView {
     private ctx: IslandCtx,
     onTap: (v: PlotView) => void,
   ) {
+    this.onTap = onTap;
     const p = isoToScreen(spot.gx, spot.gy);
     for (const c of [this.ground, this.back, this.front, this.bubble]) c.position.set(p.x, p.y);
     this.back.zIndex = spot.gx + spot.gy + 0.5;
@@ -43,10 +45,10 @@ export class PlotView {
     ctx.objects.addChild(this.back, this.front);
     ctx.bubbles.addChild(this.bubble);
     this.bubble.addChild(this.clock);
-    // the coin pile sits on the yard floor (depth-sorted with the cats)
-    const cc = centerOf(spot.w, spot.h);
-    this.coins.position.set(p.x + cc.x + 30, p.y + cc.y + 6);
-    this.coins.zIndex = spot.gx + spot.gy + spot.w / 2 + spot.h / 2 - 0.4;
+    // coin + fish piles on the doorstep (in front of the gate: drawn over the yard, easy to tap)
+    const gate = P(1.05, spot.h - 0.15);
+    this.coins.position.set(p.x + gate.x, p.y + gate.y);
+    this.coins.zIndex = spot.gx + spot.gy + spot.w + spot.h - 0.6;
     ctx.objects.addChild(this.coins);
     // hit area: the whole footprint diamond + house volume
     const a = P(-0.5, -0.5);
@@ -142,10 +144,12 @@ export class PlotView {
       this.clock.position.set(r.x, r.y - 30);
       this.clock.set(t.leftMs, t.totalMs);
     }
-    const showCoins = !t && h.cats.length > 0;
+    const fish = fishBuffer(h);
+    const showCoins = !t && h.cats.length > 0 && (h.buffer >= 1 || fish >= 1);
     this.coins.visible = showCoins;
     if (showCoins) {
-      this.coins.set(h.buffer, habitatFill(h), habitatFull(h));
+      const fc = fishCap(h);
+      this.coins.set(h.buffer, habitatFill(h), habitatFull(h), fish, fc > 0 ? fish / fc : 0, fc > 0 && habitatFishRate(h) > 0 && fish >= fc - 0.01);
       this.coins.tick(dt);
     }
   }
@@ -167,7 +171,16 @@ export class PlotView {
     row.addChild(pt, ic);
     row.position.set(-row.width / 2, 34);
     tag.addChild(pl, row);
-    tag.position.set(this.roof.x, this.roof.y - 105);
+    tag.position.set(this.roof.x, this.roof.y - 44);
+    // the sign itself is a button (it used to be decoration only)
+    if (!tag.eventMode || tag.eventMode === 'passive') {
+      tag.eventMode = 'static';
+      tag.cursor = 'pointer';
+      tag.hitArea = { contains: (x: number, y: number) => x > -110 && x < 110 && y > -30 && y < 60 };
+      tag.on('pointertap', () => {
+        if (this.ctx.tapOk()) this.onTap(this);
+      });
+    }
   }
   refreshPrice() {
     if (this.priceTag) {

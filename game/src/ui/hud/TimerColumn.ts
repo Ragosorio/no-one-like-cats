@@ -1,4 +1,4 @@
-/** Right column: green clocks (📌 to pin for auto-Ronroneo, "Ronronear" spends the reserve) + reserve chip. */
+/** Right column: green clocks (pin for auto-Ronroneo, "Ronronear" spends the reserve) + reserve chip. */
 import { Container, Graphics, Text } from 'pixi.js';
 import gsap from 'gsap';
 import { C, F } from '../theme';
@@ -24,6 +24,7 @@ const KIND_GLYPH: Record<string, GlyphKind> = {
   yard: 'anchor',
   expansion: 'shovel',
   repair: 'wrench',
+  expedition: 'ship',
 };
 
 export function timerLabel(t: Timer) {

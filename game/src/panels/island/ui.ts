@@ -8,7 +8,8 @@ import { fmt } from '../../core/format';
 import { catTexture } from '../../art/catArt';
 import { applyCatTint, slugOf } from '../../art/tint';
 import { catDef } from '../../data/content';
-import { ELEMENT_ICON, ELEMENT_NAME } from '../../data/elementsMeta';
+import { ELEMENT_NAME } from '../../data/elementsMeta';
+import { elementIcon } from '../../ui/elementIcon';
 import { elementFx } from '../../art/catArt';
 import { OwnedCat } from '../../state/game';
 import { sfx } from '../../core/audio';
@@ -33,7 +34,16 @@ export function chip(text: string, bg: number, fg: number = C.ink, size = 18): C
 export function elementChip(el: string, size = 18) {
   const fx = elementFx(el);
   const light = [0xffe14a, 0xa7e8d7, 0xc6f0e4, 0xfff3b0, 0xffffff, 0xb7a4c7, 0xff7ab8, 0xd4f27a, 0x00e5ff].includes(fx.main);
-  return chip(`${ELEMENT_ICON[el] ?? ''} ${ELEMENT_NAME[el] ?? el}`, fx.main, light ? C.ink : C.paper, size);
+  const c = new Container();
+  const t = txt(ELEMENT_NAME[el] ?? el, { fontFamily: F.bebas, fontSize: size, fill: light ? C.ink : C.paper, letterSpacing: 1 });
+  const isz = size * 1.25;
+  t.position.set(10 + isz + 6, 3);
+  const h = t.height + 6;
+  const g = new Graphics().rect(0, 0, t.x + t.width + 10, h).fill(fx.main).stroke({ width: 2.5, color: C.ink });
+  const ic = elementIcon(el, isz);
+  ic.position.set(10 + isz / 2, h / 2);
+  c.addChild(g, ic, t);
+  return c;
 }
 
 export function rarityChip(r: keyof typeof RARITY, size = 18) {

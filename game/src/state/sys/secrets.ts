@@ -1,6 +1,7 @@
 /**
  * Expansion secrets (GDD 2.16): each cleared expansion hides something.
- * Interactive ones are resolved here; battle ones (1: guardian duel, 6: silent orchestra) flag a pending battle.
+ * Interactive ones are resolved here; battle ones (1: guardian duel, 6: silent orchestra) launch a
+ * special battle (campaign.SPECIALS / buildDuel) and resolve when it's won.
  */
 import { G } from '../game';
 import { EXPANSIONS, catDef } from '../../data/content';
@@ -13,19 +14,24 @@ export interface SecretInfo {
   kind: SecretKind;
   clicksNeeded?: number;
   minLevel?: number;
+  /** special battle id (campaign.SPECIALS) for 'battle' secrets */
+  battle?: string;
   /** what the player must do, short */
   hint: string;
+  /** cleared but gated (e.g. Reino 5 for the sealed sanctuary) */
+  sealed: boolean;
+  sealedReason?: string;
   available: boolean;
   done: boolean;
 }
 
-const KIND: Record<number, { kind: SecretKind; clicks?: number; minLevel?: number; hint: string; klGate?: number }> = {
-  1: { kind: 'battle', hint: 'Abre el santuario (Reino 5) y vence al Guardián Musgoso.', klGate: 5 },
+const KIND: Record<number, { kind: SecretKind; clicks?: number; minLevel?: number; hint: string; klGate?: number; battle?: string }> = {
+  1: { kind: 'battle', battle: 'duel_guardian_bosque', hint: 'Abre el santuario (Reino 5) y vence al Guardián Musgoso en un Duelo de Gatos.', klGate: 5 },
   2: { kind: 'clicks', clicks: 10, hint: 'Saca el fósil a golpes: 10 clics.' },
-  3: { kind: 'needs_fire_cat', minLevel: 10, hint: 'Enciende la forja con un gato 🔥 de nivel 10+.' },
-  4: { kind: 'open', hint: 'Abre la botella del faro.' },
-  5: { kind: 'needs_fire_cat', minLevel: 1, hint: 'Descongela al gato con un gato 🔥.' },
-  6: { kind: 'battle', hint: 'Entra al Santuario Gatuno Antiguo: La Orquesta Muda.' },
+  3: { kind: 'needs_fire_cat', minLevel: 10, hint: 'Enciende la forja con un gato de Fuego de nivel 10+.' },
+  4: { kind: 'open', hint: 'Abre la botella que llegó al faro.' },
+  5: { kind: 'needs_fire_cat', minLevel: 1, hint: 'Descongela al gato con un gato de Fuego.' },
+  6: { kind: 'battle', battle: 'secret_orquesta', hint: 'Entra al Santuario Gatuno Antiguo: La Orquesta Muda.' },
   7: { kind: 'open', hint: 'Asómate a la concha gigante.' },
   8: { kind: 'open', hint: 'Enciende el faro del atolón.' },
 };
@@ -34,36 +40,54 @@ export function secretInfo(n: number): SecretInfo {
   const e = EXPANSIONS[n - 1];
   const k = KIND[n];
   const cleared = G.s.expansions.cleared.includes(n);
+  const done = G.s.expansions.secrets.includes(n);
+  const gateOk = G.s.kl >= (k.klGate ?? 0);
   return {
     n,
     name: e.secret.name,
     kind: k.kind,
     clicksNeeded: k.clicks,
     minLevel: k.minLevel,
+    battle: k.battle,
     hint: k.hint,
-    available: cleared && G.s.kl >= (k.klGate ?? 0) && !G.s.expansions.secrets.includes(n),
-    done: G.s.expansions.secrets.includes(n),
+    sealed: cleared && !done && !gateOk,
+    sealedReason: !gateOk ? `Sellado hasta Reino ${k.klGate}` : undefined,
+    available: cleared && gateOk && !done,
+    done,
   };
 }
 
-/** progress for click secrets */
-export function clickSecret(n: number): { progress: number; done: boolean } {
+/** progress 0..1 for click secrets (without clicking) */
+export function clickProgress(n: number) {
   const info = secretInfo(n);
-  if (!info.available || info.kind !== 'clicks') return { progress: 0, done: info.done };
+  if (info.done) return 1;
+  return Math.min(1, (G.s.counters[`secret_clicks_${n}`] ?? 0) / (info.clicksNeeded ?? 10));
+}
+
+/** progress for click secrets */
+export function clickSecret(n: number): { progress: number; done: boolean; reward?: SecretReward | null } {
+  const info = secretInfo(n);
+  if (!info.available || info.kind !== 'clicks') return { progress: info.done ? 1 : 0, done: info.done };
   const key = `secret_clicks_${n}`;
   G.count(key);
   const p = G.s.counters[key] ?? 0;
   if (p >= (info.clicksNeeded ?? 10)) {
-    resolveSecret(n);
-    return { progress: 1, done: true };
+    const reward = resolveSecret(n);
+    return { progress: 1, done: true, reward };
   }
   return { progress: p / (info.clicksNeeded ?? 10), done: false };
 }
 
-/** fire-cat secrets: true if a qualifying cat exists */
+/** fire-cat secrets: the best qualifying cat (highest level), or undefined */
 export function fireCatFor(n: number) {
   const info = secretInfo(n);
-  return G.s.cats.find((c) => catDef(c.species).elements.includes('fire') && c.level >= (info.minLevel ?? 1));
+  return G.s.cats
+    .filter((c) => catDef(c.species).elements.includes('fire') && c.level >= (info.minLevel ?? 1))
+    .sort((a, b) => b.level - a.level)[0];
+}
+/** strongest fire cat even if under-levelled (for "needs Nv10" hints) */
+export function bestFireCat() {
+  return G.s.cats.filter((c) => catDef(c.species).elements.includes('fire')).sort((a, b) => b.level - a.level)[0];
 }
 
 export interface SecretReward {
@@ -83,6 +107,9 @@ const REWARDS: Record<number, SecretReward> = {
   7: { gems: 2, text: 'La concha refleja tu barco… y te regala el Escudo Espejo.', unlock: 'shield:espejo' },
   8: { gems: 4, text: 'El faro se enciende y apunta al horizonte: ahí espera el Leviatán.', unlock: 'story:faro' },
 };
+export function secretReward(n: number) {
+  return REWARDS[n];
+}
 
 export function resolveSecret(n: number): SecretReward | null {
   if (G.s.expansions.secrets.includes(n)) return null;
@@ -93,9 +120,11 @@ export function resolveSecret(n: number): SecretReward | null {
   if (r.unlock) {
     const [k, v] = r.unlock.split(':');
     if (k === 'rumor' && !G.s.catdex[v]) G.s.catdex[v] = 'rumor';
+    if (k === 'rumor') G.count('secret_rumors');
     G.flag(r.unlock);
   }
   G.count(`secret_${n}`);
+  G.count('secrets_found');
   G.xp('expansion', undefined, 0.3);
   return r;
 }
@@ -106,5 +135,11 @@ export function trySecret(n: number): SecretReward | null {
   if (!info.available) return null;
   if (info.kind === 'open') return resolveSecret(n);
   if (info.kind === 'needs_fire_cat') return fireCatFor(n) ? resolveSecret(n) : null;
+  return null;
+}
+
+/** a won special battle resolves its secret (called by the island duel flow) */
+export function resolveBattleSecret(battleId: string): SecretReward | null {
+  for (const [n, k] of Object.entries(KIND)) if (k.battle === battleId && G.s.expansions.cleared.includes(Number(n))) return resolveSecret(Number(n));
   return null;
 }

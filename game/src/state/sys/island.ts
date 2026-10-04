@@ -1,5 +1,6 @@
 /** Island economy: habitats (gold + buffer), fishing dock (crops), expansions, offline production. */
 import { G, Habitat, FarmPlot } from '../game';
+import { Emitter } from '../../core/events';
 import { EXPANSIONS, catDef } from '../../data/content';
 import {
   BAL,
@@ -15,6 +16,14 @@ import {
 import { catGold, cat as getCat, speciesCount } from './cats';
 
 export const HOME = 'home';
+
+/** island-only notifications the scene turns into juice (auto-harvest, bank deposits, new cat moved in) */
+export const islandBus = new Emitter<{ autoHarvest: { farm: string; food: number }; housed: { cat: string; habitat: string } }>();
+
+/** worker config straight from balance (cats.workers) */
+function wcfg(role: 'banker' | 'farmer' | 'builder' | 'voyager') {
+  return (BAL.cats.workers as unknown as Record<string, { value: number; max: number }>)[role];
+}
 
 // ---------------------------------------------------------------- plots
 export function regionsUnlocked(): string[] {
@@ -62,8 +71,8 @@ export function habitatRate(h: Habitat) {
     const c = getCat(uid);
     if (c) sum += catGold(c);
   }
-  const bankers = h.cats.filter((u) => G.s.workers[u] === 'banker').length;
-  return sum * t.mult * (1 + 0.25 * bankers) * globalGoldMult();
+  const bankers = Math.min(wcfg('banker').max, h.cats.filter((u) => G.s.workers[u] === 'banker').length);
+  return sum * t.mult * (1 + wcfg('banker').value * bankers) * globalGoldMult();
 }
 export function habitatCap(h: Habitat) {
   return habitatRate(h) * habitatTier(h.tier).buffer_min * 60;
@@ -128,9 +137,13 @@ export function autoHouse() {
   for (const c of G.s.cats) {
     if (c.habitat) continue;
     const h = G.s.habitats.find((x) => !x.busy && canHouse(x, c.species));
-    if (h) house(c.uid, h);
+    if (h && house(c.uid, h)) islandBus.emit('housed', { cat: c.uid, habitat: h.id });
   }
 }
+// a brand-new cat (Resonance, boss, secret…) moves into a matching habitat with room by itself
+G.on('catAdded', (p) => {
+  if (p.isNew && p.cat && !p.cat.habitat) autoHouse();
+});
 export function collect(h: Habitat) {
   const n = Math.floor(h.buffer);
   if (n <= 0) return 0;
@@ -139,11 +152,71 @@ export function collect(h: Habitat) {
   G.count('collect_gold');
   return n;
 }
+/** gold + fish of one habitat (what a tap on the island collects) */
+export function collectHabitat(h: Habitat) {
+  return { gold: collect(h), food: collectFish(h) };
+}
+/** "Recolectar todo": gold AND fish of every habitat */
+export function collectAllBoth() {
+  let gold = 0;
+  let food = 0;
+  for (const h of G.s.habitats) {
+    gold += collect(h);
+    food += collectFish(h);
+  }
+  if (gold > 0 || food > 0) G.count('collect_all');
+  return { gold, food };
+}
 export function collectAll() {
-  let total = 0;
-  for (const h of G.s.habitats) total += collect(h);
-  if (total > 0) G.count('collect_all');
-  return total;
+  return collectAllBoth().gold;
+}
+
+// ---------------------------------------------------------------- fishing cats ("pescadores")
+/**
+ * Like Dragon City's food dragons: species that know the Granjero trade (catdex worker 'farmer':
+ * Gelatino, Brote, Nenúfar…) ALSO fish at home — a pile of Pescaditos grows on their habitat next to
+ * the coins. Not simulated (GDD §9 #24): indexed to the cat's own production and small
+ * (a bonus next to the dock: ~10–30% early, a few % late).
+ */
+export const FISH_PER_GOLD = 0.2;
+export function isFisher(species: string) {
+  return catDef(species).worker === 'farmer';
+}
+export function catFish(uid: string) {
+  const c = getCat(uid);
+  return c && isFisher(c.species) ? catGold(c) * FISH_PER_GOLD : 0;
+}
+export function habitatFishRate(h: Habitat) {
+  if (h.busy && h.tier === 0) return 0;
+  let sum = 0;
+  for (const uid of h.cats) sum += catFish(uid);
+  if (sum <= 0) return 0;
+  // better homes help a little (√ of the tier multiplier) — gold keeps the full multiplier
+  return sum * Math.sqrt(habitatTier(h.tier).mult) * (1 + foodBonus());
+}
+function fishMap(): Record<string, number> {
+  G.s.ext ??= {};
+  return (G.s.ext.fish ??= {}) as Record<string, number>;
+}
+export function fishBuffer(h: Habitat) {
+  return fishMap()[h.id] ?? 0;
+}
+export function fishCap(h: Habitat) {
+  return habitatFishRate(h) * habitatTier(h.tier).buffer_min * 60;
+}
+function addFish(h: Habitat, n: number) {
+  const m = fishMap();
+  m[h.id] = Math.min(fishCap(h), (m[h.id] ?? 0) + n);
+}
+export function collectFish(h: Habitat) {
+  const m = fishMap();
+  const n = Math.floor(m[h.id] ?? 0);
+  if (n <= 0) return 0;
+  m[h.id] = (m[h.id] ?? 0) - n;
+  G.add('food', n, 'habitat_fish');
+  G.count('collect_fish');
+  G.count('collect_fish_food', n);
+  return n;
 }
 
 // ---------------------------------------------------------------- farms
@@ -164,11 +237,11 @@ export function plant(f: FarmPlot, cropId: string) {
   G.count('plant');
   return true;
 }
-export function harvest(f: FarmPlot) {
+export function harvest(f: FarmPlot, source: 'harvest' | 'auto_harvest' = 'harvest') {
   if (!f.crop || !f.ready) return 0;
   const id = f.crop;
   const food = farmYield(id, f.level, foodBonus()) * (G.has('migration_x15') ? 15 : 1);
-  G.add('food', food, 'harvest');
+  G.add('food', food, source);
   G.count(`harvest_${id}`);
   G.count('harvests');
   G.count('harvest_food', food);
@@ -180,12 +253,12 @@ export function harvest(f: FarmPlot) {
 }
 export function foodBonus() {
   const farmers = G.s.cats.filter((c) => G.s.workers[c.uid] === 'farmer').length;
-  return expansionBonus('food') + 0.2 * Math.min(3, farmers);
+  return expansionBonus('food') + wcfg('farmer').value * Math.min(wcfg('farmer').max, farmers);
 }
-/** build-time multiplier from Constructor workers (−20% each, max 2) */
+/** build-time multiplier from Constructor workers (balance: −20% each, max 2) */
 export function buildTimeMul() {
   const n = G.s.cats.filter((c) => G.s.workers[c.uid] === 'builder').length;
-  return 1 - 0.2 * Math.min(2, n);
+  return Math.max(0.2, 1 - wcfg('builder').value * Math.min(wcfg('builder').max, n));
 }
 export function canUpgradeFarm(f: FarmPlot) {
   return f.level < BAL.farms.upgrade.max_level && !f.busy && G.s.gold >= farmUpgradeCost(f.level + 1);
@@ -246,8 +319,22 @@ G.onTimer('crop', (t) => {
   const f = farm(t.ref);
   if (!f) return;
   f.ready = true;
-  if (G.s.kl >= 21 && !G.has('auto_harvest_off')) harvest(f);
+  // KL21 "Mar de Pescados Automático": ready catches go straight to the Silo
+  if (autoHarvestOn()) {
+    const food = harvest(f, 'auto_harvest');
+    if (food > 0) {
+      G.count('feature_auto_harvest');
+      G.count('auto_harvests');
+      islandBus.emit('autoHarvest', { farm: f.id, food });
+    }
+  }
 });
+export function autoHarvestKl() {
+  return BAL.automation.find((a) => a.id === 'auto_harvest')?.kl ?? 21;
+}
+export function autoHarvestOn() {
+  return G.s.kl >= autoHarvestKl() && !G.has('auto_harvest_off');
+}
 G.onTimer('farm_upgrade', (t) => {
   const f = farm(t.ref);
   if (!f) return;
@@ -271,6 +358,7 @@ function recomputeRates() {
   for (const h of G.s.habitats) g += habitatRate(h);
   G.goldPerSec = g;
   let f = 0;
+  for (const h of G.s.habitats) f += habitatFishRate(h);
   for (const p of G.s.farms) {
     const id = p.lastCrop ?? 'sardinas';
     const c = crop(id);
@@ -280,6 +368,42 @@ function recomputeRates() {
 }
 G.recompute.push(recomputeRates);
 
+// ---------------------------------------------------------------- Banco del Reino (KL15)
+export interface BankState {
+  /** lifetime deposits */
+  total: number;
+  /** deposits since the island was last opened (for the "+X" flow) */
+  pending: number;
+  /** last offline deposit + its duration */
+  lastOfflineGold: number;
+  lastOfflineMs: number;
+  /** first time the building opened (reveal) */
+  opened: boolean;
+}
+export function bankKl() {
+  return BAL.automation.find((a) => a.id === 'kingdom_bank')?.kl ?? 15;
+}
+export function bankUnlocked() {
+  return G.s.kl >= bankKl();
+}
+export function bankState(): BankState {
+  G.s.ext ??= {};
+  const b = (G.s.ext.bank ??= { total: 0, pending: 0, lastOfflineGold: 0, lastOfflineMs: 0, opened: false }) as BankState;
+  return b;
+}
+/** offline auto-deposit window: 2 h base (+2 h with the Puerto de las Mareas) */
+export function bankOfflineHours() {
+  return 2 + expansionBonus('offline_bank_h');
+}
+function deposit(n: number) {
+  if (n <= 0) return;
+  G.s.gold += n;
+  G.s.stats.goldEarned += n;
+  const b = bankState();
+  b.total += n;
+  b.pending += n;
+}
+
 let rateAcc = 0;
 G.tickers.push((dt) => {
   rateAcc += dt;
@@ -287,24 +411,59 @@ G.tickers.push((dt) => {
     rateAcc = 0;
     recomputeRates();
   }
-  const bank = G.s.kl >= 15;
+  const bank = bankUnlocked();
+  let dep = 0;
   for (const h of G.s.habitats) {
     const r = habitatRate(h);
     if (r <= 0) continue;
     if (bank) {
-      G.s.gold += r * (dt / 1000);
-      G.s.stats.goldEarned += r * (dt / 1000);
+      dep += r * (dt / 1000);
+      // whatever was sitting in the buffer goes in too ("ignores LLENO")
+      if (h.buffer > 0) {
+        dep += h.buffer;
+        h.buffer = 0;
+      }
     } else h.buffer = Math.min(habitatCap(h), h.buffer + r * (dt / 1000));
   }
+  deposit(dep);
+  // fish piles (KL21 "Mar de Pescados Automático": they go straight to the Silo too)
+  const silo = autoHarvestOn();
+  for (const h of G.s.habitats) {
+    const fr = habitatFishRate(h);
+    if (fr <= 0) continue;
+    if (silo) {
+      siloAcc += fr * (dt / 1000) + fishBuffer(h);
+      fishMap()[h.id] = 0;
+    } else addFish(h, fr * (dt / 1000));
+  }
+  if (siloAcc >= 1) {
+    const n = Math.floor(siloAcc);
+    siloAcc -= n;
+    G.add('food', n, 'auto_fish');
+  }
 });
+let siloAcc = 0;
 G.offliners.push((ms) => {
   recomputeRates();
-  const bank = G.s.kl >= 15;
-  const bankMs = (2 + expansionBonus('offline_bank_h')) * 3600 * 1000;
+  const bank = bankUnlocked();
+  const bankMs = bankOfflineHours() * 3600 * 1000;
+  let dep = 0;
   for (const h of G.s.habitats) {
     const r = habitatRate(h);
-    if (bank) G.s.gold += r * (Math.min(ms, bankMs) / 1000);
+    if (bank) dep += r * (Math.min(ms, bankMs) / 1000);
     else h.buffer = Math.min(habitatCap(h), h.buffer + r * (ms / 1000));
+  }
+  for (const h of G.s.habitats) {
+    const fr = habitatFishRate(h);
+    if (fr <= 0) continue;
+    if (autoHarvestOn()) G.add('food', Math.floor(fr * Math.min(ms, bankMs) / 1000), 'auto_fish');
+    else addFish(h, fr * (ms / 1000));
+  }
+  if (bank) {
+    deposit(dep);
+    const b = bankState();
+    b.lastOfflineGold = dep;
+    b.lastOfflineMs = ms;
   }
 });
 

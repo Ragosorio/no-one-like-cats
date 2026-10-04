@@ -7,7 +7,7 @@ import { Button, txt } from '../../ui/widgets';
 import { icon } from '../../ui/icons';
 import { G, FarmPlot } from '../../state/game';
 import { BAL, crop, cropTimeMs, farmUpgradeCost, farmUpgradeTimeMs, farmYield } from '../../state/econ';
-import { canUpgradeFarm, cropsAvailable, farm, foodBonus, harvest, plant, regionsUnlocked, upgradeFarm } from '../../state/sys/island';
+import { canUpgradeFarm, cropsAvailable, farm, foodBonus, harvest, plant, regionsUnlocked, upgradeFarm, autoHarvestKl, autoHarvestOn } from '../../state/sys/island';
 import { checkMissions } from '../../state/sys/missions';
 import { featureKl, featureUnlocked } from '../../state/ext/island';
 import { EXPANSIONS } from '../../data/content';
@@ -40,11 +40,51 @@ export function openDock(focusId?: string) {
     if (G.s.momentum > 1.005) {
       const b = new Container();
       const g = new Graphics().rect(0, 0, m.innerW, 46).fill(C.orange).stroke({ width: 3, color: C.ink });
-      const t = txt(`🔥 BONUS DE COSECHA  ·  cultivos x${(1 + 0.5 * (G.s.momentum - 1)).toFixed(2)} más rápido (Momentum x${G.s.momentum.toFixed(2)})`, { fontFamily: F.bebas, fontSize: 26, fill: C.ink, letterSpacing: 1 });
-      t.position.set(16, 8);
-      b.addChild(g, t);
+      const t = txt(`BONUS DE COSECHA  ·  cultivos x${(1 + 0.5 * (G.s.momentum - 1)).toFixed(2)} más rápido (Momentum x${G.s.momentum.toFixed(2)})`, { fontFamily: F.bebas, fontSize: 26, fill: C.ink, letterSpacing: 1 });
+      t.position.set(52, 8);
+      const fl = icon('flame', 30);
+      fl.position.set(28, 23);
+      b.addChild(g, fl, t);
       content.addChild(b);
       y = 60;
+    }
+    // KL21 · Mar de Pescados Automático (auto-cosecha al Silo)
+    {
+      const kl = autoHarvestKl();
+      const unlocked = G.s.kl >= kl;
+      const on = autoHarvestOn();
+      const b = new Container();
+      const g = new Graphics().rect(5, 5, m.innerW, 50).fill(C.ink).rect(0, 0, m.innerW, 50).fill(on ? 0x7fd8ff : unlocked ? C.paper : C.paperDark).stroke({ width: 3, color: C.ink });
+      const t = txt(unlocked ? 'MAR DE PESCADOS AUTOMÁTICO' : `MAR DE PESCADOS AUTOMÁTICO · REINO ${kl}`, { fontFamily: F.poster, fontSize: 26, fill: C.ink });
+      t.position.set(16, 8);
+      const sub = txt(unlocked ? (on ? 'Las cosechas listas (y la pesca de tus gatos) van solas al Silo.' : 'Apagado: cosechas a mano (¿nostalgia?).') : 'Ya aprendiste a pescar. Pronto lo hará la máquina.', { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: C.ink });
+      sub.position.set(t.x + t.width + 18, 17);
+      const tb = new Graphics().roundRect(0, 0, 70, 34, 17).fill(on ? C.green : C.paperDark).stroke({ width: 3, color: C.ink });
+      tb.circle(on ? 53 : 17, 17, 12).fill(C.paper).stroke({ width: 2.5, color: C.ink });
+      tb.position.set(m.innerW - 86, 8);
+      b.addChild(g, t, sub, tb);
+      b.alpha = unlocked ? 1 : 0.6;
+      b.position.set(0, y);
+      b.eventMode = 'static';
+      b.cursor = unlocked ? 'pointer' : 'not-allowed';
+      b.on('pointertap', () => {
+        if (!unlocked) {
+          sfx('error');
+          toast(`Se desbloquea en Reino ${kl}`, { color: C.paper });
+          return;
+        }
+        G.flag('auto_harvest_off', on);
+        if (!on) {
+          G.count('feature_auto_harvest');
+          checkMissions();
+          // ready pens empty themselves right away
+          for (const f of G.s.farms) if (f.ready && !f.busy) harvest(f, 'auto_harvest');
+        }
+        sfx('pop', on ? 0.9 : 1.3);
+        render();
+      });
+      content.addChild(b);
+      y += 64;
     }
     const perRow = Math.min(cols, farms.length);
     const x0 = (m.innerW - (perRow * (cardW + 22) - 22)) / 2;
@@ -58,6 +98,11 @@ export function openDock(focusId?: string) {
         gsap.to(ring, { alpha: 0, duration: 0.5, yoyo: true, repeat: 3 });
       }
     });
+    // many pens (expansions): shrink to fit instead of spilling out of the panel
+    content.scale.set(1);
+    const k = Math.min(1, (m.innerH + 10) / Math.max(1, content.height));
+    content.scale.set(k);
+    content.x = (m.innerW * (1 - k)) / 2;
   };
   render();
   let acc = 0;

@@ -8,6 +8,7 @@ import { ClockBubble, TagBubble } from '../worldUi';
 import type { Spot } from '../layout';
 import type { IslandCtx } from './ctx';
 import { ctaVisible } from '../../state/ext/island';
+import { autoHarvestOn } from '../../state/sys/island';
 import { C } from '../../ui/theme';
 
 interface Fish {
@@ -16,6 +17,43 @@ interface Fish {
   y: number;
   a: number;
   sp: number;
+}
+
+/** the catch that leaps out of a ready pen looks like its crop (sardine → … → glazed octopus) */
+export function catchArt(crop: string): Graphics {
+  const g = new Graphics();
+  const ink = { width: 2.5, color: C.ink };
+  switch (crop) {
+    case 'anchoas':
+      g.ellipse(0, 0, 11, 4).fill(0xc9d6de).stroke(ink);
+      g.poly([9, 0, 16, -5, 16, 5]).fill(0xc9d6de).stroke(ink);
+      g.moveTo(-8, 0).lineTo(7, 0).stroke({ width: 1.5, color: 0x5a6b74 });
+      break;
+    case 'caballa':
+      g.ellipse(0, 0, 16, 7).fill(0x3e7fb8).stroke(ink);
+      for (let k = -2; k <= 2; k++) g.moveTo(k * 5, -6).quadraticCurveTo(k * 5 + 3, -2, k * 5, 1).stroke({ width: 1.5, color: C.ink });
+      g.poly([13, 0, 22, -8, 22, 8]).fill(0x3e7fb8).stroke(ink);
+      g.ellipse(-2, 3, 10, 3).fill({ color: 0xffffff, alpha: 0.5 });
+      break;
+    case 'salmon':
+      g.ellipse(0, 0, 19, 8).fill(0xff8f6b).stroke(ink);
+      g.poly([16, 0, 26, -9, 26, 9]).fill(0xff8f6b).stroke(ink);
+      g.ellipse(-2, 3, 12, 3).fill(0xffd2c2);
+      for (const x of [-6, 0, 6]) g.circle(x, -3, 1.4).fill(C.ink);
+      break;
+    case 'pulpo':
+      g.ellipse(0, -4, 12, 10).fill(0xb06fd8).stroke(ink);
+      for (let k = -3; k <= 3; k++) g.moveTo(k * 3.5, 4).quadraticCurveTo(k * 6, 10, k * 4.5 + 2, 14).stroke({ width: 3.5, color: 0xb06fd8, cap: 'round' });
+      g.circle(-4, -5, 2).fill(C.ink);
+      g.circle(4, -5, 2).fill(C.ink);
+      g.ellipse(0, -10, 8, 3).fill({ color: 0xffffff, alpha: 0.55 });
+      break;
+    default:
+      g.ellipse(0, 0, 14, 7).fill(0x7fd8ff).stroke(ink);
+      g.poly([11, 0, 20, -7, 20, 7]).fill(0x7fd8ff).stroke(ink);
+  }
+  g.circle(-7, -2, 2).fill(C.ink);
+  return g;
 }
 
 export class FarmView {
@@ -77,11 +115,12 @@ export class FarmView {
     this.farm = f;
     this.root.visible = this.bubble.visible = this.active;
     if (!this.active || !f) return;
-    const sig = `${f.level}`;
+    const auto = autoHarvestOn();
+    const sig = `${f.level}|${auto}`;
     if (sig !== this.sig) {
       this.sig = sig;
       this.art.removeChildren().forEach((c) => c.destroy({ children: true }));
-      this.art.addChild(penArt(f.level, this.spot.w, this.spot.h));
+      this.art.addChild(penArt(f.level, this.spot.w, this.spot.h, auto));
     }
     const want = f.crop ? (f.ready ? 6 : 4) : 1;
     while (this.fish.length < want) this.addFish();
@@ -139,10 +178,7 @@ export class FarmView {
 
   /** a fish leaps out (ready state) */
   private jump() {
-    const g = new Graphics();
-    g.ellipse(0, 0, 14, 7).fill(0x7fd8ff).stroke({ width: 2.5, color: C.ink });
-    g.poly([11, 0, 20, -7, 20, 7]).fill(0x7fd8ff).stroke({ width: 2.5, color: C.ink });
-    g.circle(-7, -2, 2).fill(C.ink);
+    const g = catchArt(this.farm?.crop ?? 'sardinas');
     const x0 = this.root.x + this.ctr.x + (Math.random() - 0.5) * 70;
     const y0 = this.root.y + this.ctr.y + (Math.random() - 0.5) * 20;
     g.position.set(x0, y0);

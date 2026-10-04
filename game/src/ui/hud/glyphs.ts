@@ -21,7 +21,11 @@ export type GlyphKind =
   | 'pin'
   | 'purr'
   | 'chevron'
-  | 'cards';
+  | 'cards'
+  | 'shop'
+  | 'capsule'
+  | 'tools'
+  | 'vault';
 
 export function glyph(kind: GlyphKind, s = 48, color: number = C.ink, accent: number = C.pink): Container {
   const c = new Container();
@@ -121,6 +125,36 @@ export function glyph(kind: GlyphKind, s = 48, color: number = C.ink, accent: nu
       break;
     case 'chevron':
       g.moveTo(-10, -6).lineTo(0, 6).lineTo(10, -6).stroke({ width: 5, color, cap: 'round', join: 'round' });
+      break;
+    case 'shop':
+      // little market stall with a striped awning
+      g.rect(-18, -2, 36, 20).fill(C.paper).stroke(INK);
+      g.rect(-6, 6, 12, 12).fill(0x8a5a2e).stroke({ width: 2, color: C.ink });
+      for (let i = 0; i < 4; i++) g.poly([-22 + i * 11, -14, -11 + i * 11, -14, -11 + i * 11, -4, -22 + i * 11, -4]).fill(i % 2 ? C.paper : accent);
+      g.poly([-22, -14, 22, -14, 22, -4, -22, -4]).stroke(INK);
+      g.moveTo(-22, -14).lineTo(-16, -22).lineTo(16, -22).lineTo(22, -14).fill(color);
+      for (let i = 0; i < 4; i++) g.arc(-16.5 + i * 11, -4, 5.5, 0, Math.PI).fill(i % 2 ? C.paper : accent).stroke({ width: 2, color: C.ink });
+      break;
+    case 'capsule':
+      // gacha capsule: two halves + paw
+      g.circle(0, 0, 19).fill(C.paper).stroke(INK);
+      g.arc(0, 0, 19, Math.PI, 0).fill(accent).stroke(INK);
+      g.moveTo(-19, 0).lineTo(19, 0).stroke({ width: 3, color: C.ink });
+      g.circle(0, 0, 6).fill(C.yellow).stroke({ width: 2, color: C.ink });
+      g.circle(-8, -10, 3).fill({ color: 0xffffff, alpha: 0.7 });
+      break;
+    case 'tools':
+      // crossed hammer + fish (the trades)
+      g.moveTo(-14, 16).lineTo(10, -10).stroke({ width: 5, color: 0x8a5a2e, cap: 'round' });
+      g.rect(4, -20, 18, 10).fill(color).stroke({ width: 2, color: C.ink });
+      g.ellipse(-2, 4, 12, 6).fill(0x7fd8ff).stroke({ width: 2.5, color: C.ink });
+      g.poly([8, 4, 16, -2, 16, 10]).fill(0x7fd8ff).stroke({ width: 2.5, color: C.ink });
+      break;
+    case 'vault':
+      g.circle(0, 0, 19).fill(0x9aa3a8).stroke(INK);
+      g.circle(0, 0, 12).fill(0xb9c2c7).stroke({ width: 2, color: C.ink });
+      g.moveTo(-10, 0).lineTo(10, 0).moveTo(0, -10).lineTo(0, 10).stroke({ width: 3, color: C.ink });
+      g.circle(0, 0, 4).fill(C.yellow).stroke({ width: 2, color: C.ink });
       break;
     case 'cards':
       g.roundRect(-18, -14, 22, 30, 3).fill(C.paper).stroke(INK);

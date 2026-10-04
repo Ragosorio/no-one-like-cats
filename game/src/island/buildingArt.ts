@@ -8,7 +8,7 @@ import { C, F } from '../ui/theme';
 import { txt } from '../ui/widgets';
 import { elementFx } from '../art/catArt';
 import { glowTexture } from '../art/textures';
-import { ELEMENT_ICON } from '../data/elementsMeta';
+import { elementIcon } from '../ui/elementIcon';
 import { DROP, shade, mixColor } from './terrain';
 
 const INK = { width: 3, color: C.ink, join: 'round' as const, cap: 'round' as const };
@@ -168,8 +168,7 @@ export function habitatParts(element: string, tier: number, fw = 3, fh = 3, buil
   const sign = new Container();
   const sg = new Graphics().rect(-17, -40, 34, 30).fill(C.ink).rect(-19, -43, 34, 30).fill(C.paper).stroke(THIN);
   sg.rect(-2, -14, 4, 14).fill(0x8a5a2e).stroke(THIN);
-  const em: Text = txt(ELEMENT_ICON[element] ?? '?', { fontSize: 20 });
-  em.anchor.set(0.5);
+  const em = elementIcon(element, 24);
   em.position.set(-2, -28);
   sign.addChild(sg, em);
   sign.position.set(sp.x + 4, sp.y);
@@ -227,6 +226,60 @@ function elementProp(el: string): Container {
         g.circle(x, -18, 2.5).fill(C.orange);
       }
       break;
+    case 'earth': {
+      // rock cairn + a fossil bone sticking out (Gea approves)
+      g.poly([-16, 0, -14, -10, -4, -14, 6, -12, 14, -4, 12, 2]).fill(0x9a8f80).stroke(THIN);
+      g.poly([-10, -12, -8, -22, 0, -26, 8, -20, 6, -12]).fill(0xb7a99a).stroke(THIN);
+      g.poly([-4, -24, -2, -32, 4, -32, 4, -24]).fill(0x8d8676).stroke(THIN);
+      g.moveTo(8, -6).lineTo(22, -14).stroke({ width: 5, color: C.ink, cap: 'round' });
+      g.moveTo(8, -6).lineTo(22, -14).stroke({ width: 2.5, color: 0xf2e6cf, cap: 'round' });
+      g.circle(23, -16, 3).fill(0xf2e6cf).stroke({ width: 1.5, color: C.ink });
+      g.circle(21, -12, 3).fill(0xf2e6cf).stroke({ width: 1.5, color: C.ink });
+      const cr = new Graphics();
+      cr.poly([-18, -2, -22, -12, -16, -20, -13, -8]).fill(fx.accent).stroke(THIN);
+      c.addChild(cr);
+      break;
+    }
+    case 'storm': {
+      // tesla coil with a tiny grumpy cloud
+      g.rect(-5, -30, 10, 30).fill(0x6b6b6b).stroke(THIN);
+      for (let y = -26; y < 0; y += 6) g.moveTo(-7, y).lineTo(7, y + 2).stroke({ width: 2, color: 0xb87333 });
+      g.circle(0, -36, 8).fill(0xd9d9d9).stroke(THIN);
+      const cloud = new Graphics();
+      for (const [x, y, r] of [
+        [-12, -58, 9],
+        [0, -62, 11],
+        [12, -58, 9],
+      ])
+        cloud.circle(x, y, r).fill(0x5a6476).stroke(THIN);
+      cloud.rect(-12, -58, 24, 8).fill(0x5a6476);
+      cloud.poly([2, -50, -4, -42, 1, -42, -3, -34, 6, -44, 1, -44, 5, -50]).fill(C.yellow).stroke({ width: 1.5, color: C.ink });
+      const gl = new Sprite(glowTexture());
+      gl.anchor.set(0.5);
+      gl.tint = fx.accent;
+      gl.alpha = 0.45;
+      gl.scale.set(0.5);
+      gl.y = -38;
+      c.addChildAt(gl, 0);
+      c.addChild(cloud);
+      break;
+    }
+    case 'magic': {
+      g.rect(-8, -14, 16, 14).fill(0x5c3d5b).stroke(THIN);
+      const book = new Graphics();
+      book.poly([-16, -34, 0, -30, 16, -34, 16, -24, 0, -20, -16, -24]).fill(C.paper).stroke(THIN);
+      book.moveTo(0, -30).lineTo(0, -20).stroke({ width: 2, color: C.ink });
+      book.star(0, -46, 4, 6, 2.5).fill(fx.accent).stroke({ width: 1.5, color: C.ink });
+      c.addChild(book);
+      break;
+    }
+    case 'cosmic': {
+      g.circle(0, -20, 12).fill(0x372347).stroke(THIN);
+      g.ellipse(0, -20, 22, 6).stroke({ width: 3, color: fx.accent });
+      g.circle(-4, -24, 3).fill({ color: 0xffffff, alpha: 0.6 });
+      g.star(14, -38, 4, 5, 2).fill(C.yellow).stroke({ width: 1.5, color: C.ink });
+      break;
+    }
     default: {
       g.poly([-8, 0, -11, -18, -4, -30, 0, -14]).fill(fx.main).stroke(THIN);
       g.poly([0, 0, 3, -34, 9, -40, 12, -18, 8, 0]).fill(fx.accent).stroke(THIN);
@@ -317,21 +370,15 @@ export function habitatHouse(element: string, tier: number): { c: Container; top
       break;
     }
     case 4: {
-      // Casita de Coral
-      g.ellipse(0, 6, 56, 22).fill(0xffb8c8).stroke(INK);
-      g.moveTo(-50, 4).bezierCurveTo(-56, -80, 56, -80, 50, 4).closePath().fill(0xff9fb4).stroke(INK);
-      for (const [x, y, r] of [
-        [-24, -30, 7],
-        [18, -46, 6],
-        [26, -18, 5],
-        [-8, -58, 5],
-      ])
-        g.circle(x, y, r).fill(0xffd2dc).stroke({ width: 1.5, color: C.ink });
-      g.moveTo(-12, 4).bezierCurveTo(-12, -24, 12, -24, 12, 4).closePath().fill(C.ink);
-      g.rect(28, -84, 16, 40).fill(0xff7a95).stroke(INK);
-      g.poly([24, -84, 36, -104, 48, -84]).fill(fx.main).stroke(INK);
-      g.circle(-30, -6, 6).fill(fx.main).stroke(THIN);
-      top = -104;
+      top = casitaCoral(g, c, element);
+      break;
+    }
+    case 5: {
+      top = palacioCojines(g, c, element);
+      break;
+    }
+    case 6: {
+      top = temploRonroneo(g, c, element);
       break;
     }
     default: {
@@ -378,6 +425,213 @@ export function habitatHouse(element: string, tier: number): { c: Container; top
     }
   }
   return { c, top };
+}
+
+// ------------------------------------------------------------------ tiers 4–6 (M2): each tier its own silhouette, each element its own trims
+/** element trims used by tiers 4–6 */
+function trims(el: string) {
+  const fx = elementFx(el);
+  const map: Record<string, { roof: number; glass: number; stone: number; banner: number }> = {
+    fire: { roof: 0xc8102e, glass: C.yellow, stone: 0xd9b07a, banner: C.orange },
+    water: { roof: 0x3569a3, glass: 0x7fd8ff, stone: 0xcfe3ea, banner: 0x7fd8ff },
+    nature: { roof: 0x3f8a3f, glass: 0xd4f27a, stone: 0xd9cdb8, banner: 0x5fbf4a },
+    earth: { roof: 0x8a5a2e, glass: 0xe0b77a, stone: 0xb7a99a, banner: 0xa8743f },
+    storm: { roof: 0x1f2b4a, glass: C.cyan, stone: 0xc9ccd6, banner: C.yellow },
+    magic: { roof: 0x5c3d5b, glass: 0xff7ab8, stone: 0xb7a4c7, banner: 0x8a5cff },
+    cosmic: { roof: 0x231626, glass: C.cyan, stone: 0x6d5a80, banner: 0x8a5cff },
+  };
+  return { fx, ...(map[el] ?? map.fire) };
+}
+
+/** little element "topper" on finials (flame, drop, leaf, rock, bolt, star, planet) */
+function topper(g: Graphics, x: number, y: number, el: string, s = 1) {
+  const fx = elementFx(el);
+  switch (el) {
+    case 'fire':
+      g.moveTo(x, y - 18 * s).bezierCurveTo(x + 10 * s, y - 8 * s, x + 8 * s, y, x, y).bezierCurveTo(x - 8 * s, y, x - 10 * s, y - 8 * s, x, y - 18 * s).fill(C.orange).stroke(THIN);
+      g.ellipse(x, y - 5 * s, 3.5 * s, 5 * s).fill(C.yellow);
+      break;
+    case 'water':
+      g.moveTo(x, y - 18 * s).quadraticCurveTo(x + 9 * s, y - 4 * s, x, y).quadraticCurveTo(x - 9 * s, y - 4 * s, x, y - 18 * s).fill(0x7fd8ff).stroke(THIN);
+      g.circle(x - 2 * s, y - 6 * s, 2 * s).fill({ color: 0xffffff, alpha: 0.7 });
+      break;
+    case 'nature':
+      g.moveTo(x, y).quadraticCurveTo(x - 12 * s, y - 10 * s, x, y - 20 * s).quadraticCurveTo(x + 12 * s, y - 10 * s, x, y).fill(0x5fbf4a).stroke(THIN);
+      g.moveTo(x, y).lineTo(x, y - 16 * s).stroke({ width: 1.5, color: C.ink });
+      break;
+    case 'earth':
+      g.poly([x - 8 * s, y, x - 6 * s, y - 12 * s, x + 2 * s, y - 18 * s, x + 8 * s, y - 8 * s, x + 6 * s, y]).fill(fx.accent).stroke(THIN);
+      break;
+    case 'storm':
+      g.poly([x + 2 * s, y - 20 * s, x - 7 * s, y - 6 * s, x, y - 7 * s, x - 4 * s, y + 2 * s, x + 8 * s, y - 11 * s, x + 1 * s, y - 10 * s]).fill(C.yellow).stroke(THIN);
+      break;
+    case 'cosmic':
+      g.circle(x, y - 9 * s, 7 * s).fill(0x8a5cff).stroke(THIN);
+      g.ellipse(x, y - 9 * s, 13 * s, 3.5 * s).stroke({ width: 2, color: C.cyan });
+      break;
+    default:
+      g.star(x, y - 9 * s, 5, 9 * s, 4 * s).fill(fx.accent).stroke(THIN);
+  }
+}
+
+function glowAt(c: Container, x: number, y: number, tint: number, alpha = 0.4, scale = 0.6) {
+  const gl = new Sprite(glowTexture());
+  gl.anchor.set(0.5);
+  gl.tint = tint;
+  gl.alpha = alpha;
+  gl.scale.set(scale);
+  gl.position.set(x, y);
+  c.addChildAt(gl, 0);
+  return gl;
+}
+
+/** Tier 4 · Casita de Coral: bulbous coral dome + side bulb + turret, sea-weed, element turret/topper */
+function casitaCoral(g: Graphics, c: Container, el: string) {
+  const t = trims(el);
+  const coral = el === 'earth' ? 0xf2b48a : el === 'storm' ? 0xc9b6e8 : 0xff9fb4;
+  const coralD = shade(coral, 0.82);
+  g.ellipse(0, 8, 62, 22).fill(0xf2dca8).stroke(INK);
+  // seaweed
+  for (const [x, h, col] of [
+    [-54, 30, 0x3f8a3f],
+    [-44, 22, 0x5fbf4a],
+    [50, 26, 0x3f8a3f],
+  ] as const)
+    g.moveTo(x, 6).bezierCurveTo(x - 8, -h * 0.4, x + 8, -h * 0.7, x, -h).stroke({ width: 4, color: col, cap: 'round' });
+  // side bulb
+  g.moveTo(14, 6).bezierCurveTo(14, -40, 66, -40, 62, 6).closePath().fill(coralD).stroke(INK);
+  // main dome
+  g.moveTo(-50, 6).bezierCurveTo(-58, -92, 46, -92, 40, 6).closePath().fill(coral).stroke(INK);
+  for (const [x, y, r] of [
+    [-28, -36, 7],
+    [-6, -62, 5],
+    [16, -40, 6],
+    [-36, -12, 5],
+    [46, -14, 4],
+    [30, -20, 3],
+  ])
+    g.circle(x, y, r).fill(shade(coral, 1.12)).stroke({ width: 1.5, color: C.ink });
+  // door with element frame + porthole
+  g.moveTo(-18, 6).bezierCurveTo(-18, -32, 8, -32, 8, 6).closePath().fill(t.roof).stroke(INK);
+  g.moveTo(-12, 6).bezierCurveTo(-12, -24, 2, -24, 2, 6).closePath().fill(C.ink);
+  g.circle(24, -58, 10).fill(t.glass).stroke(INK);
+  g.circle(21, -61, 3).fill({ color: 0xffffff, alpha: 0.7 });
+  // turret
+  g.rect(-44, -96, 18, 44).fill(coralD).stroke(INK);
+  g.poly([-50, -96, -35, -122, -20, -96]).fill(t.roof).stroke(INK);
+  topper(g, -35, -122, el, 0.9);
+  // shells
+  g.moveTo(-58, 2).quadraticCurveTo(-52, -10, -46, 2).closePath().fill(0xfff1e0).stroke(THIN);
+  glowAt(c, 24, -58, t.glass, 0.35, 0.4);
+  return -140;
+}
+
+/** Tier 5 · Palacio de Cojines: tower of fat cushions with tassels, onion dome, element banners */
+function palacioCojines(g: Graphics, c: Container, el: string) {
+  const t = trims(el);
+  const fx = t.fx;
+  const box = isoBoxAt(g, -0.62, -0.62, 1.34, 1.34, 14, t.stone, 0.04);
+  void box;
+  const cushion = (y: number, rx: number, col: number) => {
+    const ry = rx * 0.42;
+    g.ellipse(0, y + 12, rx, ry).fill(shade(col, 0.7)).stroke(INK);
+    g.rect(-rx, y, rx * 2, 12).fill(shade(col, 0.7));
+    g.moveTo(-rx, y).lineTo(-rx, y + 12).moveTo(rx, y).lineTo(rx, y + 12).stroke(INK);
+    g.ellipse(0, y, rx, ry).fill(col).stroke(INK);
+    // button + stitch
+    g.circle(0, y, 4).fill(shade(col, 0.6)).stroke({ width: 1.5, color: C.ink });
+    g.moveTo(-rx * 0.55, y - ry * 0.3).quadraticCurveTo(0, y + ry * 0.35, rx * 0.55, y - ry * 0.3).stroke({ width: 1.5, color: shade(col, 0.6) });
+    // tassels at the 2 visible corners
+    for (const sx of [-1, 1]) {
+      const tx = sx * rx * 0.96;
+      g.moveTo(tx, y + 6).lineTo(tx, y + 20).stroke({ width: 2, color: C.ink });
+      g.poly([tx - 4, y + 18, tx + 4, y + 18, tx + 2, y + 28, tx - 2, y + 28]).fill(C.gold).stroke({ width: 1.5, color: C.ink });
+    }
+  };
+  const cols = [fx.main, 0xff9fb4, t.banner === fx.main ? 0xffd77a : t.banner];
+  cushion(-34, 60, cols[0]);
+  cushion(-66, 48, cols[1]);
+  cushion(-94, 36, cols[2]);
+  // arched door in the bottom cushion
+  g.moveTo(-14, -16).bezierCurveTo(-14, -42, 14, -42, 14, -16).closePath().fill(C.ink).stroke(INK);
+  g.rect(-16, -18, 32, 4).fill(C.gold).stroke({ width: 1.5, color: C.ink });
+  // onion dome
+  const dy = -112;
+  g.moveTo(-20, dy).bezierCurveTo(-30, dy - 26, -6, dy - 36, 0, dy - 52).bezierCurveTo(6, dy - 36, 30, dy - 26, 20, dy).closePath().fill(t.roof).stroke(INK);
+  g.moveTo(-8, dy - 8).quadraticCurveTo(-12, dy - 26, -2, dy - 40).stroke({ width: 2, color: 0xffffff, alpha: 0.4 });
+  g.rect(-22, dy - 2, 44, 6).fill(C.gold).stroke(THIN);
+  g.moveTo(0, dy - 52).lineTo(0, dy - 64).stroke({ width: 3, color: C.ink });
+  topper(g, 0, dy - 62, el, 0.8);
+  // hanging banners
+  for (const sx of [-1, 1]) {
+    const bx = sx * 44;
+    g.moveTo(bx, -60).lineTo(bx, -30).lineTo(bx + sx * 8, -24).lineTo(bx + sx * 16, -30).lineTo(bx + sx * 16, -62).closePath().fill(t.banner).stroke(THIN);
+    g.circle(bx + sx * 8, -46, 3.5).fill(C.paper).stroke({ width: 1, color: C.ink });
+  }
+  glowAt(c, 0, -80, fx.accent, 0.25, 1.4);
+  return dy - 80;
+}
+
+/** Tier 6 · Templo del Ronroneo: stepped plinth, three upturned eaves, golden bell + paw emblem, element lanterns */
+function temploRonroneo(g: Graphics, c: Container, el: string) {
+  const t = trims(el);
+  const fx = t.fx;
+  isoBoxAt(g, -0.7, -0.7, 1.5, 1.5, 10, 0xb7a99a, 0.02);
+  isoBoxAt(g, -0.6, -0.6, 1.3, 1.3, 10, t.stone, 0.04, 10);
+  const body = isoBoxAt(g, -0.42, -0.42, 0.96, 0.96, 46, 0xede4d6, 0.04, 20);
+  // red pillars on the two visible faces
+  for (const f of [0.15, 0.85]) {
+    const a = { x: body.left.x + (body.bottom.x - body.left.x) * f, y: body.left.y + (body.bottom.y - body.left.y) * f };
+    const b = { x: body.bottom.x + (body.right.x - body.bottom.x) * f, y: body.bottom.y + (body.right.y - body.bottom.y) * f };
+    for (const p of [a, b]) g.rect(p.x - 3.5, p.y - 46, 7, 46).fill(C.red).stroke(THIN);
+  }
+  // door (left face) + paw emblem (right face)
+  const dl = { x: (body.left.x + body.bottom.x) / 2, y: (body.left.y + body.bottom.y) / 2 };
+  g.poly([dl.x - 10, dl.y, dl.x - 10, dl.y - 26, dl.x + 10, dl.y - 32, dl.x + 10, dl.y - 6]).fill(C.ink);
+  const dr = { x: (body.bottom.x + body.right.x) / 2, y: (body.bottom.y + body.right.y) / 2 - 24 };
+  g.circle(dr.x, dr.y, 11).fill(C.gold).stroke(THIN);
+  g.ellipse(dr.x, dr.y + 3, 4.5, 3.5).fill(C.ink);
+  for (const [dx, dy] of [
+    [-5, -3],
+    [-2, -6],
+    [2, -6],
+    [5, -3],
+  ])
+    g.circle(dr.x + dx, dr.y + dy, 1.8).fill(C.ink);
+  glowAt(c, dr.x, dr.y, C.yellow, 0.4, 0.45);
+  // three eaves with upturned tips
+  const roof = t.roof === 0x231626 ? 0x5c3d5b : el === 'fire' || el === 'nature' ? 0xc8102e : t.roof;
+  const eave = (y: number, half: number, depth: number) => {
+    const L = { x: -half, y }, R = { x: half, y }, T = { x: 0, y: y - depth }, B = { x: 0, y: y + depth };
+    g.poly([L.x, L.y, T.x, T.y, R.x, R.y, B.x, B.y]).fill(shade(roof, 0.75)).stroke(INK);
+    g.poly([L.x - 8, L.y - 8, L.x, L.y, B.x, B.y + 4, R.x, R.y, R.x + 8, R.y - 8, R.x - 4, R.y + 6, B.x, B.y + 12, L.x + 4, L.y + 6]).fill(roof).stroke(INK);
+    g.moveTo(L.x + 4, L.y + 6).lineTo(B.x, B.y + 12).lineTo(R.x - 4, R.y + 6).stroke({ width: 2.5, color: C.gold });
+  };
+  eave(-62, 66, 26);
+  g.rect(-24, -96, 48, 26).fill(0xede4d6).stroke(INK);
+  for (const x of [-18, 12]) g.rect(x, -96, 6, 26).fill(C.red).stroke({ width: 1.5, color: C.ink });
+  eave(-98, 48, 19);
+  g.rect(-14, -124, 28, 20).fill(0xede4d6).stroke(INK);
+  eave(-126, 32, 13);
+  // bell under the first eave
+  g.moveTo(-40, -50).lineTo(-40, -42).stroke({ width: 2, color: C.ink });
+  g.moveTo(-47, -30).bezierCurveTo(-47, -46, -33, -46, -33, -30).closePath().fill(C.gold).stroke(THIN);
+  g.circle(-40, -29, 2.5).fill(C.ink);
+  // finial
+  g.rect(-2, -160, 4, 26).fill(C.gold).stroke({ width: 1.5, color: C.ink });
+  for (const y of [-146, -138]) g.circle(0, y, 5).fill(C.gold).stroke({ width: 1.5, color: C.ink });
+  topper(g, 0, -160, el, 0.9);
+  // element lanterns on poles
+  for (const sx of [-1, 1]) {
+    const lx = sx * 60;
+    const ly = 18;
+    g.rect(lx - 2, ly - 46, 4, 46).fill(0x6a4325).stroke({ width: 1.5, color: C.ink });
+    g.roundRect(lx - 8, ly - 62, 16, 18, 4).fill(fx.accent).stroke(THIN);
+    g.poly([lx - 10, ly - 62, lx, ly - 70, lx + 10, ly - 62]).fill(roof).stroke({ width: 1.5, color: C.ink });
+    glowAt(c, lx, ly - 54, fx.accent, 0.5, 0.35);
+  }
+  glowAt(c, 0, -90, fx.main, 0.18, 1.6);
+  return -186;
 }
 
 /** scaffolding drawn over a plot while it's being built/upgraded */
@@ -686,7 +940,7 @@ export function lighthouseArt(): { c: Container; lamp: { x: number; y: number } 
 }
 
 /** Fishing pen at sea level (origin = anchor tile center at LAND level; drawn DROP lower) */
-export function penArt(level: number, fw = 2, fh = 2): Container {
+export function penArt(level: number, fw = 2, fh = 2, auto = false): Container {
   const c = new Container();
   const g = new Graphics();
   c.y = DROP;
@@ -733,6 +987,26 @@ export function penArt(level: number, fw = 2, fh = 2): Container {
     hut.rect(hp.x - 14, hp.y - 26, 28, 22).fill(0xede4d6).stroke(THIN);
     hut.poly([hp.x - 18, hp.y - 26, hp.x, hp.y - 40, hp.x + 18, hp.y - 26]).fill(C.megaBlue).stroke(THIN);
     c.addChild(hut);
+  }
+  // KL21 · Mar de Pescados Automático: a little silo + conveyor arm on the back corner
+  if (auto) {
+    const rig = new Graphics();
+    const sp = { x: d.x + 14, y: d.y - 4 };
+    rig.ellipse(sp.x, sp.y + 2, 16, 6).fill({ color: C.ink, alpha: 0.25 });
+    rig.rect(sp.x - 13, sp.y - 46, 26, 46).fill(0xd9dde2).stroke(THIN);
+    rig.ellipse(sp.x, sp.y - 46, 13, 5).fill(0xeef1f4).stroke(THIN);
+    rig.poly([sp.x - 15, sp.y - 46, sp.x, sp.y - 60, sp.x + 15, sp.y - 46]).fill(C.megaBlue).stroke(THIN);
+    for (const y of [-14, -28]) rig.moveTo(sp.x - 13, sp.y + y).lineTo(sp.x + 13, sp.y + y).stroke({ width: 1.5, color: C.ink, alpha: 0.5 });
+    const cx = (a.x + b.x) / 2;
+    const cy = (a.y + b.y) / 2;
+    rig.moveTo(sp.x + 10, sp.y - 30).lineTo(cx, cy - 34).stroke({ width: 5, color: C.ink, cap: 'round' });
+    rig.moveTo(sp.x + 10, sp.y - 30).lineTo(cx, cy - 34).stroke({ width: 2.5, color: C.yellow, cap: 'round' });
+    rig.moveTo(cx, cy - 34).lineTo(cx, cy - 6).stroke({ width: 2, color: C.ink });
+    rig.poly([cx - 8, cy - 8, cx + 8, cy - 8, cx + 5, cy, cx - 5, cy]).fill(0x8a95a3).stroke({ width: 1.5, color: C.ink });
+    // AUTO pennant
+    rig.moveTo(sp.x, sp.y - 60).lineTo(sp.x, sp.y - 78).stroke({ width: 2, color: C.ink });
+    rig.poly([sp.x, sp.y - 78, sp.x + 18, sp.y - 74, sp.x, sp.y - 70]).fill(C.green).stroke({ width: 1.5, color: C.ink });
+    c.addChild(rig);
   }
   c.addChildAt(g, 0);
   return c;

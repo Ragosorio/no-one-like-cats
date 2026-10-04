@@ -5,7 +5,7 @@ import { scenes } from '../../core/scenes';
 import { W, H } from '../../core/App';
 import { C, F } from '../theme';
 import { txt, poster } from '../widgets';
-import { icon } from '../icons';
+import { icon, IconKind } from '../icons';
 import { sfx } from '../../core/audio';
 import { onomatopoeia, sparkles, floatText } from '../../fx/juice';
 import { ActiveMicro, currentMicro, onMicro, setMicroAllowed, winMicro, MicroReward } from '../../state/sys/micro';
@@ -19,6 +19,12 @@ let banner: Container | null = null;
 let clockTxt: ReturnType<typeof txt> | null = null;
 let actor: Container | null = null;
 let caught = 0;
+/** actor path tweens (killed when the microevent ends so they never touch destroyed sprites) */
+let tweens: gsap.core.Tween[] = [];
+function track(t: gsap.core.Tween) {
+  tweens.push(t);
+  return t;
+}
 let t = 0;
 
 export function mountMicroOverlay() {
@@ -78,8 +84,11 @@ function hide(ended?: 'won' | 'expired') {
   }
   banner = null;
   clockTxt = null;
+  for (const t of tweens) t.kill();
+  tweens = [];
   if (actor) {
     const a = actor;
+    gsap.killTweensOf(a.children);
     gsap.to(a, { alpha: 0, duration: 0.3, onComplete: () => a.destroy({ children: true }) });
   }
   actor = null;
@@ -89,13 +98,36 @@ function hide(ended?: 'won' | 'expired') {
 function reward(r: MicroReward, x: number, y: number) {
   sfx('fanfare');
   sparkles(root, x, y, C.yellow, 18, 220);
-  const parts: string[] = [];
-  if (r.food) parts.push(`+${fmt(r.food)} 🐟`);
-  if (r.gold) parts.push(`+${fmt(r.gold)} 🪙`);
-  if (r.scrap) parts.push(`+${r.scrap} ⚙️`);
-  if (r.orbs) parts.push(`+${r.orbs.n} orbes`);
-  if (r.purr) parts.push(`+${r.purr} min ⏳`);
-  floatText(root, x, y - 60, parts.join('  ') || '¡LISTO!', { color: C.yellow, size: 46, rise: 80, dur: 1.6 });
+  // icon + number chips (no emojis): they pop, rise and fade
+  const parts: { k: IconKind; v: string; tint?: number }[] = [];
+  if (r.food) parts.push({ k: 'food', v: `+${fmt(r.food)}` });
+  if (r.gold) parts.push({ k: 'gold', v: `+${fmt(r.gold)}` });
+  if (r.scrap) parts.push({ k: 'scrap', v: `+${r.scrap}` });
+  if (r.orbs) parts.push({ k: 'orb', v: `+${r.orbs.n}` });
+  if (r.purr) parts.push({ k: 'clock', v: `+${r.purr} min` });
+  if (!parts.length) {
+    floatText(root, x, y - 60, '¡LISTO!', { color: C.yellow, size: 46, rise: 80, dur: 1.6 });
+    return;
+  }
+  const row = new Container();
+  let rx = 0;
+  for (const p of parts) {
+    const ic = icon(p.k, 48, p.tint);
+    ic.position.set(rx + 24, 26);
+    const t = txt(p.v, { fontFamily: F.comic, fontSize: 46, fill: C.yellow, stroke: { color: C.ink, width: 7, join: 'round' } });
+    t.position.set(rx + 54, 0);
+    row.addChild(ic, t);
+    rx += 54 + t.width + 26;
+  }
+  row.pivot.set(rx / 2, 26);
+  row.position.set(x, y - 60);
+  row.scale.set(0.2);
+  root.addChild(row);
+  gsap
+    .timeline({ onComplete: () => row.destroy({ children: true }) })
+    .to(row.scale, { x: 1, y: 1, duration: 0.2, ease: 'back.out(3)' })
+    .to(row, { y: y - 150, duration: 1.4, ease: 'power1.out' }, 0)
+    .to(row, { alpha: 0, duration: 0.35 }, 1.3);
 }
 
 function clickable(c: Container, onTap: () => void) {
@@ -119,7 +151,7 @@ function spawnActor(m: ActiveMicro) {
     actor.addChild(fish);
     let hits = 0;
     const path = { x: -100 };
-    gsap.to(path, { x: W + 120, duration: m.def.durationMs / 1000, ease: 'none', onUpdate: () => fish.position.set(path.x, H - 210 + Math.sin(path.x / 90) * 40) });
+    track(gsap.to(path, { x: W + 120, duration: m.def.durationMs / 1000, ease: 'none', onUpdate: () => !fish.destroyed && fish.position.set(path.x, H - 210 + Math.sin(path.x / 90) * 40) }));
     clickable(fish, () => {
       hits++;
       sfx('splash', 1 + hits * 0.1);
@@ -143,7 +175,7 @@ function spawnActor(m: ActiveMicro) {
     actor.addChild(crab);
     let hits = 0;
     const p = { x: 140 };
-    gsap.to(p, { x: W - 140, duration: m.def.durationMs / 1000, ease: 'none', onUpdate: () => crab.position.set(p.x, H - 150 + (Math.floor(p.x / 20) % 2) * 4) });
+    track(gsap.to(p, { x: W - 140, duration: m.def.durationMs / 1000, ease: 'none', onUpdate: () => !crab.destroyed && crab.position.set(p.x, H - 150 + (Math.floor(p.x / 20) % 2) * 4) }));
     clickable(crab, () => {
       hits++;
       sfx('hit', 1 + hits * 0.12);
@@ -164,7 +196,7 @@ function spawnActor(m: ActiveMicro) {
       c.addChild(s, q);
       c.position.set(300 + Math.random() * (W - 900), 420 + Math.random() * 360);
       actor.addChild(c);
-      gsap.to(q, { y: -190, duration: 0.5, yoyo: true, repeat: -1 });
+      track(gsap.to(q, { y: -190, duration: 0.5, yoyo: true, repeat: -1 }));
       clickable(c, () => {
         sfx('meow', 1.2);
         (s.filters![0] as SilhouetteFilter).mix = 0;
@@ -194,12 +226,14 @@ function spawnActor(m: ActiveMicro) {
   } else if (id === 'burbuja_resonancia') {
     const b = new Container();
     const g = new Graphics().circle(0, 0, 50).fill({ color: C.pink, alpha: 0.35 }).stroke({ width: 5, color: C.paper });
-    const heart = txt('💗', { fontSize: 44 });
-    heart.anchor.set(0.5);
+    const heart = new Graphics();
+    heart.moveTo(0, 16).bezierCurveTo(-30, -4, -18, -30, 0, -14).bezierCurveTo(18, -30, 30, -4, 0, 16).fill(C.pinkHot).stroke({ width: 3, color: C.ink });
+    heart.ellipse(-8, -12, 4, 3).fill({ color: 0xffffff, alpha: 0.7 });
+    g.circle(-18, -22, 8).fill({ color: 0xffffff, alpha: 0.5 });
     b.addChild(g, heart);
     actor.addChild(b);
     const p = { t: 0 };
-    gsap.to(p, { t: 1, duration: m.def.durationMs / 1000, ease: 'none', onUpdate: () => b.position.set(400 + Math.sin(p.t * 9) * 260 + p.t * 900, H - 200 - p.t * 600) });
+    track(gsap.to(p, { t: 1, duration: m.def.durationMs / 1000, ease: 'none', onUpdate: () => !b.destroyed && b.position.set(400 + Math.sin(p.t * 9) * 260 + p.t * 900, H - 200 - p.t * 600) }));
     clickable(b, () => {
       sfx('pop');
       onomatopoeia(root, b.x, b.y, '¡POP!', { color: C.pink, size: 70 });

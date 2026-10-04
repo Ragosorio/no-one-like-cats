@@ -7,7 +7,7 @@ import { Button, dotGrid, txt } from '../../ui/widgets';
 import { icon } from '../../ui/icons';
 import { G, Habitat } from '../../state/game';
 import { BAL, habitatTier } from '../../state/econ';
-import { builders, buildersBusy, canUpgradeHabitat, collect, habitat, habitatCap, habitatCapacity, habitatRate, house, upgradeHabitat } from '../../state/sys/island';
+import { builders, buildersBusy, canUpgradeHabitat, collectHabitat, habitat, habitatCap, habitatCapacity, habitatRate, house, upgradeHabitat, habitatFishRate, fishBuffer, fishCap, catFish, isFisher, bankUnlocked } from '../../state/sys/island';
 import { checkMissions } from '../../state/sys/missions';
 import { habitatFull, movableCats } from '../../state/ext/island';
 import { catGold } from '../../state/sys/cats';
@@ -61,7 +61,21 @@ export function openHabitatPanel(hid: string) {
     const rv = txt(`+${fmt(habitatRate(h))}/s`, { fontFamily: F.heavy, fontSize: 40, fill: C.ink });
     rv.position.set(62, 416);
     left.addChild(rateL, ri, rv);
-    const bufL = txt('BÚFER', { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 2 });
+    const fr = habitatFishRate(h);
+    if (fr > 0) {
+      const fi = icon('food', 34);
+      fi.position.set(rv.x + rv.width + 40, 440);
+      const fv = txt(`+${fmt(fr)}/s`, { fontFamily: F.heavy, fontSize: 30, fill: 0x2c6f9f });
+      fv.position.set(rv.x + rv.width + 62, 422);
+      left.addChild(fi, fv);
+      if (fv.x + fv.width > 410) {
+        const k = (410 - rv.x) / (fv.x + fv.width - rv.x);
+        for (const n of [rv, fi, fv]) n.scale.set(k);
+        fi.x = rv.x + rv.width + 26;
+        fv.x = fi.x + 18;
+      }
+    }
+    const bufL = txt(bankUnlocked() ? 'BÚFER · el Banco del Reino deposita el oro solo' : 'BÚFER', { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 2 });
     bufL.position.set(14, 480);
     left.addChild(bufL);
     const barC = new Container();
@@ -73,11 +87,15 @@ export function openHabitatPanel(hid: string) {
     const col = new Button('RECOLECTAR', () => {
       const hh = habitat(hid);
       if (!hh) return;
-      const n = collect(hh);
-      if (n > 0) {
+      const got = collectHabitat(hh);
+      if (got.gold > 0 || got.food > 0) {
         checkMissions();
         sfx('coin', 1.2);
-        floatText(m.panel, 14 + 196 + 28, 108 + 600, `+${fmt(n)}`, { color: C.yellow, size: 44 });
+        if (got.gold > 0) floatText(m.panel, 14 + 120 + 28, 108 + 600, `+${fmt(got.gold)}`, { color: C.yellow, size: 44 });
+        if (got.food > 0) {
+          sfx('splash', 1.3);
+          floatText(m.panel, 14 + 300 + 28, 108 + 590, `+${fmt(got.food)}`, { color: 0x7fd8ff, size: 40 });
+        }
       } else sfx('error');
       refreshLive();
     }, { w: 392, h: 66, color: C.yellow, size: 32 });
@@ -90,8 +108,16 @@ export function openHabitatPanel(hid: string) {
       const cap = habitatCap(hh);
       const full = habitatFull(hh);
       barC.removeChildren().forEach((c) => c.destroy());
-      barC.addChild(bar(392, 26, cap > 0 ? hh.buffer / cap : 0, full ? C.red : C.yellow));
-      bufT.text = full ? `¡LLENO! ${fmt(hh.buffer)} / ${fmt(cap)} — recolecta o se desperdicia` : `${fmt(hh.buffer)} / ${fmt(cap)}`;
+      const fc = fishCap(hh);
+      const fish = fc > 0;
+      barC.addChild(bar(fish ? 190 : 392, 26, cap > 0 ? hh.buffer / cap : 0, full ? C.red : C.yellow));
+      if (fish) {
+        const fb = bar(190, 26, fishBuffer(hh) / fc, fishBuffer(hh) >= fc - 0.01 ? C.red : 0x7fd8ff);
+        fb.x = 202;
+        barC.addChild(fb);
+      }
+      const goldTxt = full ? `¡LLENO! ${fmt(hh.buffer)} / ${fmt(cap)}` : `${fmt(hh.buffer)} / ${fmt(cap)}`;
+      bufT.text = fish ? `${goldTxt}   ·   pesca ${fmt(fishBuffer(hh))} / ${fmt(fc)}` : full ? `${goldTxt} — recolecta o se desperdicia` : goldTxt;
       bufT.style.fill = full ? C.red : C.ink;
     };
     refreshLive();
@@ -118,10 +144,19 @@ export function openHabitatPanel(hid: string) {
       if (c) {
         const p = catPortrait(c, 150);
         slot.addChild(p);
-        const g = txt(`+${fmt(catGold(c))}/s`, { fontFamily: F.ui, fontWeight: '700', fontSize: 14, fill: C.green });
+        const fishy = isFisher(c.species);
+        const g = txt(`+${fmt(catGold(c))}/s${fishy ? `  ·  +${fmt(catFish(c.uid))} pesca/s` : ''}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.green });
         g.anchor.set(0.5, 0);
         g.position.set(75, 186);
+        if (g.width > 166) g.scale.set(166 / g.width);
         slot.addChild(g);
+        if (fishy) {
+          const tag = new Graphics().rect(0, 0, 96, 24).fill(0x7fd8ff).stroke({ width: 2.5, color: C.ink });
+          tag.position.set(52, 4);
+          const tt = txt('PESCADOR', { fontFamily: F.bebas, fontSize: 18, fill: C.ink, letterSpacing: 1 });
+          tt.position.set(60, 6);
+          slot.addChild(tag, tt);
+        }
         slot.eventMode = 'static';
         slot.cursor = 'pointer';
         slot.on('pointertap', () => {
