@@ -1358,7 +1358,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre 🔥 (Común).",
+    "how": "Resonancia con al menos un padre de Fuego (Común).",
     "balanceSource": "resonance"
    },
    "hint": "Dicen que nace de una chispa con demasiada confianza.",
@@ -1525,7 +1525,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre 💧 (Común).",
+    "how": "Resonancia con al menos un padre de Agua (Común).",
     "balanceSource": "resonance"
    },
    "hint": "Aparece donde alguien se baña. Nadie sabe por qué.",
@@ -1679,7 +1679,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre 🌿 (Común).",
+    "how": "Resonancia con al menos un padre de Naturaleza (Común).",
     "balanceSource": "resonance"
    },
    "hint": "Crece donde nadie barre.",
@@ -1756,7 +1756,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre 🪨 (Común). Requiere Tierra descubierta.",
+    "how": "Resonancia con al menos un padre de Tierra (Común). Requiere Tierra descubierta.",
     "balanceSource": "resonance"
    },
    "hint": "Lo que se rompe y se repara con oro vale más. Dicen.",
@@ -1846,7 +1846,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre 🪨 (Común).",
+    "how": "Resonancia con al menos un padre de Tierra (Común).",
     "balanceSource": "resonance"
    },
    "hint": "Las crías de Gea se esconden en los acantilados.",
@@ -1936,7 +1936,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre ⚡ (Común). Requiere Tormenta descubierta.",
+    "how": "Resonancia con al menos un padre de Tormenta (Común). Requiere Tormenta descubierta.",
     "balanceSource": "resonance"
    },
    "hint": "Siempre anda cerca de los charcos. Mala idea.",
@@ -2013,7 +2013,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre ⚡ (Común).",
+    "how": "Resonancia con al menos un padre de Tormenta (Común).",
     "balanceSource": "resonance"
    },
    "hint": "Aparece cuando el cielo tiene sueño.",
@@ -2090,7 +2090,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre ✨ (Común). Requiere Magia descubierta.",
+    "how": "Resonancia con al menos un padre de Magia (Común). Requiere Magia descubierta.",
     "balanceSource": "resonance"
    },
    "hint": "Brilla donde se esconden los errores.",
@@ -2167,7 +2167,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre ✨ (Común).",
+    "how": "Resonancia con al menos un padre de Magia (Común).",
     "balanceSource": "resonance"
    },
    "hint": "Huele a algodón de azúcar y a química ilegal.",
@@ -2257,7 +2257,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre 🌌 (Común). Requiere Cósmico descubierto.",
+    "how": "Resonancia con al menos un padre de Cósmico (Común). Requiere Cósmico descubierto.",
     "balanceSource": "resonance"
    },
    "hint": "Llegó en un cometa del tamaño de una pelota.",
@@ -2347,7 +2347,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia con al menos un padre 🌌 (Común).",
+    "how": "Resonancia con al menos un padre de Cósmico (Común).",
     "balanceSource": "resonance"
    },
    "hint": "Solo sale cuando nadie la ve.",
@@ -2438,7 +2438,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión de elementos incluya 🔥 y 💧 (p. ej. Canelo + Gelatino).",
+    "how": "Resonancia cuya unión de elementos incluya Fuego y Agua (p. ej. Canelo + Gelatino).",
     "balanceSource": "resonance"
    },
    "hint": "Sale cuando el fuego y el agua se ponen de acuerdo.",
@@ -2516,7 +2516,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión de elementos incluya 🔥 y 🌿. Primera Resonancia del tutorial (Canelo + Brote): resultado garantizado en 90 s.",
+    "how": "Resonancia cuya unión de elementos incluya Fuego y Naturaleza. Primera Resonancia del tutorial (Canelo + Brote): resultado garantizado en 90 s.",
     "balanceSource": "resonance"
    },
    "hint": "Huele a otoño y a parrillada.",
@@ -2594,7 +2594,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 💧 y 🌿.",
+    "how": "Resonancia cuya unión incluya Agua y Naturaleza.",
     "balanceSource": "resonance"
    },
    "hint": "Florece donde el agua está quieta.",
@@ -2685,7 +2685,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🔥 y 🪨.",
+    "how": "Resonancia cuya unión incluya Fuego y Tierra.",
     "balanceSource": "resonance"
    },
    "hint": "Cuentan que Ignis tuvo hijos. Este salió con mal genio.",
@@ -2776,7 +2776,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 💧 y 🪨.",
+    "how": "Resonancia cuya unión incluya Agua y Tierra.",
     "balanceSource": "resonance"
    },
    "hint": "Aparece después de la lluvia en los acantilados.",
@@ -2867,7 +2867,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🌿 y 🪨.",
+    "how": "Resonancia cuya unión incluya Naturaleza y Tierra.",
     "balanceSource": "resonance"
    },
    "hint": "La raíz más vieja del bosque costero ronca de noche.",
@@ -2961,7 +2961,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🔥 y ⚡.",
+    "how": "Resonancia cuya unión incluya Fuego y Tormenta.",
     "balanceSource": "resonance"
    },
    "hint": "Nace cuando un rayo cae en una fogata.",
@@ -3039,7 +3039,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 💧 y ⚡.",
+    "how": "Resonancia cuya unión incluya Agua y Tormenta.",
     "balanceSource": "resonance"
    },
    "hint": "La marea sube cuando la luna se enoja.",
@@ -3117,7 +3117,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🌿 y ⚡.",
+    "how": "Resonancia cuya unión incluya Naturaleza y Tormenta.",
     "balanceSource": "resonance"
    },
    "hint": "Florece cuando detecta una secuencia rota.",
@@ -3195,7 +3195,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🪨 y ⚡.",
+    "how": "Resonancia cuya unión incluya Tierra y Tormenta.",
     "balanceSource": "resonance"
    },
    "hint": "Hace tic-tac. Si deja de hacerlo, corre.",
@@ -3286,7 +3286,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🔥 y ✨.",
+    "how": "Resonancia cuya unión incluya Fuego y Magia.",
     "balanceSource": "resonance"
    },
    "hint": "Una linterna que se enojó.",
@@ -3377,7 +3377,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 💧 y ✨.",
+    "how": "Resonancia cuya unión incluya Agua y Magia.",
     "balanceSource": "resonance"
    },
    "hint": "Canta en la biblioteca hundida. Prohibido hacer ruido.",
@@ -3455,7 +3455,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🌿 y ✨.",
+    "how": "Resonancia cuya unión incluya Naturaleza y Magia.",
     "balanceSource": "resonance"
    },
    "hint": "Pliega lo complicado hasta volverlo filoso.",
@@ -3533,7 +3533,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya ⚡ y ✨.",
+    "how": "Resonancia cuya unión incluya Tormenta y Magia.",
     "balanceSource": "resonance"
    },
    "hint": "Compila pistas. Detecta bugs. Ejecuta permisos que no debería tener.",
@@ -3611,7 +3611,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🔥 y 🌌.",
+    "how": "Resonancia cuya unión incluya Fuego y Cósmico.",
     "balanceSource": "resonance"
    },
    "hint": "Corre más rápido que la pereza de la tarde.",
@@ -3702,7 +3702,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya ✨ y 🌌.",
+    "how": "Resonancia cuya unión incluya Magia y Cósmico.",
     "balanceSource": "resonance"
    },
    "hint": "Lee tu futuro. Sale que te hunden. Te sigue cayendo bien.",
@@ -3796,7 +3796,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🔥 y 💧, ambos padres Nv15+. Mutación estrella: Conductividad.",
+    "how": "Resonancia cuya unión incluya Fuego y Agua, ambos padres Nv15+. Mutación estrella: Conductividad.",
     "balanceSource": "resonance",
     "minParentLevel": 15
    },
@@ -3891,7 +3891,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🔥 y 🪨, ambos padres Nv15+. Tip: Canelo + un gato de Tierra.",
+    "how": "Resonancia cuya unión incluya Fuego y Tierra, ambos padres Nv15+. Tip: Canelo + un gato de Tierra.",
     "balanceSource": "resonance",
     "minParentLevel": 15
    },
@@ -3986,7 +3986,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🌿 y 🪨, ambos padres Nv15+.",
+    "how": "Resonancia cuya unión incluya Naturaleza y Tierra, ambos padres Nv15+.",
     "balanceSource": "resonance",
     "minParentLevel": 15
    },
@@ -4081,7 +4081,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🔥 y ⚡, ambos padres Nv15+.",
+    "how": "Resonancia cuya unión incluya Fuego y Tormenta, ambos padres Nv15+.",
     "balanceSource": "resonance",
     "minParentLevel": 15
    },
@@ -4163,7 +4163,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🪨 y ✨, ambos padres Nv15+.",
+    "how": "Resonancia cuya unión incluya Tierra y Magia, ambos padres Nv15+.",
     "balanceSource": "resonance",
     "minParentLevel": 15
    },
@@ -4258,7 +4258,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 💧 y 🌌, ambos padres Nv15+.",
+    "how": "Resonancia cuya unión incluya Agua y Cósmico, ambos padres Nv15+.",
     "balanceSource": "resonance",
     "minParentLevel": 15
    },
@@ -4353,7 +4353,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🪨 y 🌌, ambos padres Nv15+. Sus orbes salen del evento Estrella Fugaz.",
+    "how": "Resonancia cuya unión incluya Tierra y Cósmico, ambos padres Nv15+. Sus orbes salen del evento Estrella Fugaz.",
     "balanceSource": "resonance",
     "minParentLevel": 15
    },
@@ -4448,7 +4448,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya ⚡ y 🌌, ambos padres Nv15+.",
+    "how": "Resonancia cuya unión incluya Tormenta y Cósmico, ambos padres Nv15+.",
     "balanceSource": "resonance",
     "minParentLevel": 15
    },
@@ -4530,7 +4530,7 @@
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia cuya unión incluya 🌿 y 🌌, ambos padres Nv15+.",
+    "how": "Resonancia cuya unión incluya Naturaleza y Cósmico, ambos padres Nv15+.",
     "balanceSource": "resonance",
     "minParentLevel": 15
    },
@@ -4605,13 +4605,13 @@
      "id": "selfdamage",
      "text": "IGNITION: cada disparo normal le cuesta 5% de su vida."
     },
-    "passive": "Origen del Fuego: todos tus gatos 🔥 hacen +10% de daño.",
+    "passive": "Origen del Fuego: todos tus gatos Fuego hacen +10% de daño.",
     "star3": "★3: los charcos duran +1 turno.",
     "star5": "★5: Ignition ya no le cuesta vida si el disparo destruye un módulo."
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia de dos padres que COMPARTAN 🔥, ambos Nv20+ (bucket Legendario). También puede salir en '???'.",
+    "how": "Resonancia de dos padres que COMPARTAN Fuego, ambos Nv20+ (bucket Legendario). También puede salir en '???'.",
     "balanceSource": "resonance",
     "minParentLevel": 20
    },
@@ -4686,13 +4686,13 @@
      "id": "taunt",
      "text": "CEBO: su luz atrae el 50% de los disparos enemigos hacia su camarote (la IA prioriza su camarote)."
     },
-    "passive": "Origen del Agua: tus gatos 💧 +10% daño; las brechas inundan +25% más rápido.",
+    "passive": "Origen del Agua: tus gatos Agua +10% daño; las brechas inundan +25% más rápido.",
     "star3": "★3: la hipnosis dura 3 turnos.",
     "star5": "★5: Luz Abisal atraviesa 1 mamparo."
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia de dos padres que compartan 💧, ambos Nv20+.",
+    "how": "Resonancia de dos padres que compartan Agua, ambos Nv20+.",
     "balanceSource": "resonance",
     "minParentLevel": 20
    },
@@ -4767,13 +4767,13 @@
      "id": "persistent",
      "text": "PERSISTENTE: sus hongos no hacen nada el turno en que se plantan y el fuego enemigo los destruye."
     },
-    "passive": "Origen de la Naturaleza: tus gatos 🌿 +10%; tus enredaderas curan 3% a tus módulos adyacentes.",
+    "passive": "Origen de la Naturaleza: tus gatos Naturaleza +10%; tus enredaderas curan 3% a tus módulos adyacentes.",
     "star3": "★3: 3 hongos por disparo.",
     "star5": "★5: sus hongos sobreviven al fuego una vez."
    },
    "obtain": {
     "source": "resonance",
-    "how": "Resonancia de dos padres que compartan 🌿, ambos Nv20+.",
+    "how": "Resonancia de dos padres que compartan Naturaleza, ambos Nv20+.",
     "balanceSource": "resonance",
     "minParentLevel": 20
    },
@@ -4848,13 +4848,13 @@
      "id": "colossus",
      "text": "COLOSO: ocupa 2 espacios de tripulación (camarote doble)."
     },
-    "passive": "Origen de la Tierra: tus gatos 🪨 +10%; tu quilla tiene +50% de vida.",
+    "passive": "Origen de la Tierra: tus gatos Tierra +10%; tu quilla tiene +50% de vida.",
     "star3": "★3: la onda sísmica hace 30.",
     "star5": "★5: Heart of Stone dura 3 turnos."
    },
    "obtain": {
     "source": "boss:1",
-    "how": "Jefe 1 (Capitán Bigotes Rotos): era el 'fósil vivo' de su bodega. Duplicados: Resonancia de dos padres que compartan 🪨, Nv20+.",
+    "how": "Jefe 1 (Capitán Bigotes Rotos): era el 'fósil vivo' de su bodega. Duplicados: Resonancia de dos padres que compartan Tierra, Nv20+.",
     "balanceSource": "boss:1",
     "minParentLevel": 20
    },
@@ -4929,13 +4929,13 @@
      "id": "weather",
      "text": "TORMENTOSO: su lluvia también Moja 1 celda alrededor de TU camarote (vulnerable a Conducción enemiga)."
     },
-    "passive": "Origen de la Tormenta: tus gatos ⚡ +10%; Conducción salta +2 celdas.",
+    "passive": "Origen de la Tormenta: tus gatos Tormenta +10%; Conducción salta +2 celdas.",
     "star3": "★3: 4 rayos en la ultimate.",
     "star5": "★5: la lluvia ya no moja tu barco."
    },
    "obtain": {
     "source": "boss:2",
-    "how": "Jefe 2 (La Gárgola Ronroneante): la tormenta permanente toma forma de gato. Duplicados: dos padres que compartan ⚡, Nv20+.",
+    "how": "Jefe 2 (La Gárgola Ronroneante): la tormenta permanente toma forma de gato. Duplicados: dos padres que compartan Tormenta, Nv20+.",
     "balanceSource": "boss:2",
     "minParentLevel": 20
    },
@@ -5010,13 +5010,13 @@
      "id": "delayed",
      "text": "RETARDO: el daño llega 2 turnos después; el rival puede reparar el módulo para borrar la palabra."
     },
-    "passive": "Origen de la Magia: tus gatos ✨ +10%; Maldito revela también camarotes ocultos.",
+    "passive": "Origen de la Magia: tus gatos Magia +10%; Maldito revela también camarotes ocultos.",
     "star3": "★3: 'FIN' estalla en 1 turno si el módulo está Maldito.",
     "star5": "★5: el gato de tinta dispara 2 veces."
    },
    "obtain": {
     "source": "boss:4",
-    "how": "Jefe 4 (El Arcanista): estaba atrapada en su grimorio. Duplicados: dos padres que compartan ✨, Nv20+.",
+    "how": "Jefe 4 (El Arcanista): estaba atrapada en su grimorio. Duplicados: dos padres que compartan Magia, Nv20+.",
     "balanceSource": "boss:4",
     "minParentLevel": 20
    },
@@ -5091,13 +5091,13 @@
      "id": "majesty",
      "text": "MAJESTAD: sin Sala de Invocación viva no puede usar su ultimate."
     },
-    "passive": "Origen del Cosmos: tus gatos 🌌 +10%; tus pozos de gravedad duran +1 turno.",
+    "passive": "Origen del Cosmos: tus gatos Cósmico +10%; tus pozos de gravedad duran +1 turno.",
     "star3": "★3: la carga de la ultimate no se interrumpe.",
     "star5": "★5: el Decreto también Revela."
    },
    "obtain": {
     "source": "boss:5",
-    "how": "Jefe 5 (Estrella Errante): cae al mar con la estrella. Duplicados: dos padres que compartan 🌌, Nv20+.",
+    "how": "Jefe 5 (Estrella Errante): cae al mar con la estrella. Duplicados: dos padres que compartan Cósmico, Nv20+.",
     "balanceSource": "boss:5",
     "minParentLevel": 20
    },
@@ -5172,7 +5172,7 @@
      "id": "overload",
      "text": "SOBRECARGA: después de su ultimate queda Aturdido 2 turnos (las placas se le abren y humea)."
     },
-    "passive": "Heredero: con 2+ gatos ⚡ en el barco, sus Conducciones saltan una vez extra (sinergia con Bobina Tesla).",
+    "passive": "Heredero: con 2+ gatos Tormenta en el barco, sus Conducciones saltan una vez extra (sinergia con Bobina Tesla).",
     "star3": "★3: el railgun perfora 3.",
     "star5": "★5: Sobrecarga dura 1 turno menos."
    },
@@ -5414,7 +5414,7 @@
    },
    "obtain": {
     "source": "secret",
-    "how": "Ruta A: Resonancia cuya unión incluya ⚡ y 🌌 mientras hay un Evento Flash activo → bucket '???'. Ruta B: microevento 'Error 404' (tras descubrir Cósmico): atrapa 5 glitches en 60 s → duelo → se une."
+    "how": "Ruta A: Resonancia cuya unión incluya Tormenta y Cósmico mientras hay un Evento Flash activo → bucket '???'. Ruta B: microevento 'Error 404' (tras descubrir Cósmico): atrapa 5 glitches en 60 s → duelo → se une."
    },
    "hint": "Algo se mueve entre píxeles cuando el cielo se rompe.",
    "lore": "Apareció dentro de un error de interfaz y decidió quedarse. No reportes el bug."
@@ -5567,7 +5567,7 @@
    },
    "obtain": {
     "source": "secret",
-    "how": "Ruta A: Resonancia cuya unión cubra ✨, 🌌 y ⚡ con ambos padres Nv30+ → bucket '???'. Ruta B: Santuario Gatuno Antiguo (secreto de las Ruinas Arcanas): vence a 'La Orquesta Muda'."
+    "how": "Ruta A: Resonancia cuya unión cubra Magia, Cósmico y Tormenta con ambos padres Nv30+ → bucket '???'. Ruta B: Santuario Gatuno Antiguo (secreto de las Ruinas Arcanas): vence a 'La Orquesta Muda'."
    },
    "hint": "En las ruinas, una partitura espera a quien conozca la magia, las estrellas y el trueno.",
    "lore": "Nació del primer acorde que ordenó el caos del Archivo Vivo. Tres elementos. Cero explicaciones. '¿QUÉ PUTAS TUVE QUE CRUZAR PARA SACAR ESO?'"
@@ -5644,7 +5644,7 @@
    },
    "obtain": {
     "source": "secret",
-    "how": "Ruta A: Resonancia cuya unión cubra 🔥, 💧 y 🌿 con ambos padres ★3+ → bucket '???'. Ruta B: registra 40 especies en el Catdex y llega sola ('vine a tomarle foto a tu colección')."
+    "how": "Ruta A: Resonancia cuya unión cubra Fuego, Agua y Naturaleza con ambos padres ★3+ → bucket '???'. Ruta B: registra 40 especies en el Catdex y llega sola ('vine a tomarle foto a tu colección')."
    },
    "hint": "Llega cuando tu colección vale la pena retratarse.",
    "lore": "Captura recuerdos antes de que Distraxia los borre. Guarda la luz de los tres primeros elementos."
@@ -5733,7 +5733,7 @@
    },
    "obtain": {
     "source": "secret",
-    "how": "Ruta A (CHARLA): Resonancia con Solar + cualquier padre 🌌, uno de ellos Nv20+ → bucket '???'. Ruta B: gana una batalla con Solar y Lunita en la tripulación durante el evento Estrella Fugaz."
+    "how": "Ruta A (CHARLA): Resonancia con Solar + cualquier padre de Cósmico, uno de ellos Nv20+ → bucket '???'. Ruta B: gana una batalla con Solar y Lunita en la tripulación durante el evento Estrella Fugaz."
    },
    "hint": "Dicen que aparece cuando un gato de sol y uno de luna pelean del mismo lado.",
    "lore": "La luna se puso enfrente del sol y se quedó ahí. A propósito."
@@ -8279,7 +8279,7 @@
     "c_canelo",
     "c_gelatino"
    ],
-   "scenario": "ejemplo: ambos Nv1, suma de rangos de rareza 0 (al inicio del juego: solo 🔥💧🌿 descubiertos)",
+   "scenario": "ejemplo: ambos Nv1, suma de rangos de rareza 0 (al inicio del juego: solo FuegoAguaNaturaleza descubiertos)",
    "assumptions": "Unión de elementos de ambos padres; tabla tal cual la vería el jugador.",
    "results": [
     {
@@ -8322,7 +8322,7 @@
     "c_canelo",
     "c_brote"
    ],
-   "scenario": "ejemplo: ambos Nv1, suma de rangos de rareza 0 (al inicio del juego: solo 🔥💧🌿 descubiertos)",
+   "scenario": "ejemplo: ambos Nv1, suma de rangos de rareza 0 (al inicio del juego: solo FuegoAguaNaturaleza descubiertos)",
    "assumptions": "Unión de elementos de ambos padres; tabla tal cual la vería el jugador.",
    "results": [
     {
@@ -8369,25 +8369,25 @@
   },
   {
    "cat": "s_caos",
-   "condition": "Unión de padres incluye ⚡ y 🌌, con un Evento Flash activo.",
+   "condition": "Unión de padres incluye Tormenta y Cósmico, con un Evento Flash activo.",
    "bucket": "secret",
    "altRoute": "Microevento Error 404."
   },
   {
    "cat": "s_sonata",
-   "condition": "Unión de padres cubre ✨, 🌌 y ⚡; ambos Nv30+.",
+   "condition": "Unión de padres cubre Magia, Cósmico y Tormenta; ambos Nv30+.",
    "bucket": "secret",
    "altRoute": "Santuario Gatuno Antiguo (Ruinas Arcanas)."
   },
   {
    "cat": "s_lumen",
-   "condition": "Unión de padres cubre 🔥, 💧 y 🌿; ambos ★3+.",
+   "condition": "Unión de padres cubre Fuego, Agua y Naturaleza; ambos ★3+.",
    "bucket": "secret",
    "altRoute": "Registrar 40 especies."
   },
   {
    "cat": "s_eclipse",
-   "condition": "Uno de los padres es Solar (r_solar) y el otro tiene 🌌; uno de los dos Nv20+ (CHARLA).",
+   "condition": "Uno de los padres es Solar (r_solar) y el otro tiene Cósmico; uno de los dos Nv20+ (CHARLA).",
    "bucket": "secret",
    "altRoute": "Ganar con Solar y Lunita a bordo durante Estrella Fugaz."
   },
@@ -9159,14 +9159,14 @@
       "name": "Mortero de Magma",
       "unlock": "secret:expansion_3",
       "shot": "Tiro muy bombeado (gravedad x1.3) que cae sobre el objetivo desde arriba (ignora muros frontales), perfora 1, 45 de daño, radio 1.5, Ardiendo.",
-      "synergy": "+15% si hay un gato 🔥 a bordo."
+      "synergy": "+15% si hay un gato Fuego a bordo."
      },
      {
       "id": "tesla",
       "name": "Bobina Tesla",
       "unlock": "boss:2",
       "shot": "Rayo recto 30 de daño, Cargado; provoca Conducción si el objetivo está Mojado.",
-      "synergy": "CHARLA: 1 gato ⚡ a bordo: +15% alcance de cadena. 2 gatos ⚡: los saltos +1. 1 gato 💧: enemigos Mojados reciben x1.5 eléctrico."
+      "synergy": "CHARLA: 1 gato Tormenta a bordo: +15% alcance de cadena. 2 gatos Tormenta: los saltos +1. 1 gato Agua: enemigos Mojados reciben x1.5 eléctrico."
      },
      {
       "id": "escarcha",
@@ -9187,7 +9187,7 @@
       "name": "Riel Arcano",
       "unlock": "boss:4",
       "shot": "Runa recta perforante (3 capas), 30 de daño, Maldito.",
-      "synergy": "+25% si hay un gato ✨ a bordo."
+      "synergy": "+25% si hay un gato Magia a bordo."
      },
      {
       "id": "starbreaker",
@@ -9201,7 +9201,7 @@
    "shield": {
     "name": "Escudo",
     "balance": "ship.families.shield (unlock boss:3)",
-    "effect": "Cada ranura de escudo es un módulo 'shield' (generador). Si el generador muere, ese escudo cae el resto de la batalla. Débiles a Sobrecarga ⚡ y Magia.",
+    "effect": "Cada ranura de escudo es un módulo 'shield' (generador). Si el generador muere, ese escudo cae el resto de la batalla. Débiles a Sobrecarga Tormenta y Magia.",
     "types": [
      {
       "id": "burbuja",
@@ -9231,7 +9231,7 @@
       "id": "vacio",
       "name": "Escudo del Vacío",
       "unlock": "chapter:2",
-      "rule": "TEASER bloqueado: no bloquea daño; teletransporta un proyectil al azar. 'Requiere 🕳️'."
+      "rule": "TEASER bloqueado: no bloquea daño; teletransporta un proyectil al azar. 'Requiere Vacío'."
      }
     ]
    },
@@ -9347,7 +9347,7 @@
      2
     ],
     "material": "iron",
-    "alive": "Elige elemento al instalar: +15% daño de ese elemento; versión ⚡ = Torre Tesla: +1 salto de Conducción.",
+    "alive": "Elige elemento al instalar: +15% daño de ese elemento; versión Tormenta = Torre Tesla: +1 salto de Conducción.",
     "destroyed": "Pierdes la sinergia.",
     "unlock": "expansion:5"
    },
@@ -9467,13 +9467,13 @@
   {
    "id": "ardiendo",
    "name": "En llamas",
-   "rule": "DoT: 8% de su vida máxima al inicio de cada turno de su bando, 2 turnos. El Mojado lo apaga. Gatos 🔥 son inmunes.",
+   "rule": "DoT: 8% de su vida máxima al inicio de cada turno de su bando, 2 turnos. El Mojado lo apaga. Gatos Fuego son inmunes.",
    "visual": "Llamitas en 2s pegadas al contorno del sprite (flipbook de 3 frames, color del fuego), humo encima, el gato hace 'saltitos' de dolor cómicos. Número de DoT naranja."
   },
   {
    "id": "electrocutado",
    "name": "Electrocutado",
-   "rule": "Al recibir un rayo ⚡: pierde 10 de medidor de ultimate. Si además está MOJADO: queda Aturdido (pierde su próximo turno). Gatos ⚡ son inmunes al aturdimiento.",
+   "rule": "Al recibir un rayo Tormenta: pierde 10 de medidor de ultimate. Si además está MOJADO: queda Aturdido (pierde su próximo turno). Gatos Tormenta son inmunes al aturdimiento.",
    "visual": "Parpadeo de RAYOS X: 3 flashes alternando el sprite normal con una silueta azul eléctrico + esqueleto de gato dibujado en código (huesitos blancos) a ~8 fps durante 0.5 s; chispas Kirby krackle; pelo erizado (escala Y 1.06)."
   },
   {
@@ -9485,7 +9485,7 @@
   {
    "id": "congelado",
    "name": "Congelado",
-   "rule": "Pierde su próximo turno. El siguiente impacto de Tierra o andanada sobre su camarote le hace x1.5 (Estallido) y rompe el hielo. Gatos 💧 resisten: solo 50% de probabilidad (PRNG).",
+   "rule": "Pierde su próximo turno. El siguiente impacto de Tierra o andanada sobre su camarote le hace x1.5 (Estallido) y rompe el hielo. Gatos Agua resisten: solo 50% de probabilidad (PRNG).",
    "visual": "BLOQUE DE HIELO: rectángulo de cristal translúcido con bordes facetados encima del sprite (sprite desaturado y quieto), escarcha alrededor; al romperse, esquirlas + '¡KRASH!'."
   },
   {
@@ -9881,7 +9881,7 @@
    "cannons": 2,
    "catrooms": 3,
    "mast": true,
-   "special": "Gatos ✨ que Maldicen; estantes (madera) inflamables."
+   "special": "Gatos Magia que Maldicen; estantes (madera) inflamables."
   },
   "galeon_runas": {
    "size": "16x10",
@@ -10128,7 +10128,7 @@
      "el Ojo"
     ]
    },
-   "rule": "TENTÁCULOS + PRIMER ESCUDO DEL JUEGO: los tentáculos agarran tus módulos (los desactivan) y tiran gatos al agua. Desde la F2, BURBUJA DE ESTÁTICA: anula 1 impacto por turno (¡CLANK!) salvo multi-impacto o ⚡ (Sobrecarga la rompe).",
+   "rule": "TENTÁCULOS + PRIMER ESCUDO DEL JUEGO: los tentáculos agarran tus módulos (los desactivan) y tiran gatos al agua. Desde la F2, BURBUJA DE ESTÁTICA: anula 1 impacto por turno (¡CLANK!) salvo multi-impacto o Tormenta (Sobrecarga la rompe).",
    "weakPoint": "El Ojo: solo es golpeable cuando abre el pico (cada 3 turnos, telegrafiado).",
    "phases": [
     {
@@ -10153,7 +10153,7 @@
       0.0
      ],
      "name": "Inmersión",
-     "behavior": "Se sumerge cada 2 turnos: bajo el agua solo le afectan ⚡ (conduce) y torpedos 💧."
+     "behavior": "Se sumerge cada 2 turnos: bajo el agua solo le afectan Tormenta (conduce) y torpedos Agua."
     }
    ],
    "enrageTurn": 14,
@@ -10207,7 +10207,7 @@
      "Espejo"
     ]
    },
-   "rule": "ESCUDOS ARCANOS EN CAPAS (3): absorben daño elemental, reciben x1.5 físico; 20% de reflejar runas (espejo). Sobrecarga ⚡ rompe una capa y aturde al gato que la sostiene.",
+   "rule": "ESCUDOS ARCANOS EN CAPAS (3): absorben daño elemental, reciben x1.5 físico; 20% de reflejar runas (espejo). Sobrecarga Tormenta rompe una capa y aturde al gato que la sostiene.",
    "weakPoint": "Su Grimorio (núcleo): se abre (vulnerable x1.5) el turno después de invocar.",
    "phases": [
     {
@@ -10378,7 +10378,7 @@
       0.66
      ],
      "name": "Escamas arcanas",
-     "behavior": "Escudos arcanos en capas (exige Sobrecarga ⚡ + Maldito ✨)."
+     "behavior": "Escudos arcanos en capas (exige Sobrecarga Tormenta + Maldito Magia)."
     },
     {
      "range": [
@@ -10386,7 +10386,7 @@
       0.33
      ],
      "name": "Casco de agua viva",
-     "behavior": "Se sumerge; para sacarlo hay que Mojar y luego Ventisca (congelar el mar alrededor) y romper con Estallido 🪨; la Conducción por el mar mojado le pega aunque esté sumergido."
+     "behavior": "Se sumerge; para sacarlo hay que Mojar y luego Ventisca (congelar el mar alrededor) y romper con Estallido Tierra; la Conducción por el mar mojado le pega aunque esté sumergido."
     },
     {
      "range": [
@@ -10529,7 +10529,7 @@
      "pararrayos que absorbe tus rayos"
     ]
    },
-   "rule": "Su pararrayos absorbe tus disparos ⚡ y le carga la ultimate: usa fuego, tierra o agua.",
+   "rule": "Su pararrayos absorbe tus disparos Tormenta y le carga la ultimate: usa fuego, tierra o agua.",
    "weakPoint": "El pararrayos (destrúyelo y sus rayos se vuelven contra él).",
    "phases": [],
    "ai": {
@@ -11126,10 +11126,10 @@
      "zone": 3,
      "afterStage": 5,
      "name": "Diluvio Perpetuo",
-     "restriction": "Todo está Mojado siempre: prohibido llevar gatos 🔥.",
+     "restriction": "Todo está Mojado siempre: prohibido llevar gatos Fuego.",
      "archetype": "balandra_electrica",
      "powerAsStage": 6,
-     "reward": "Cristales ⚡ x10 + Planos x2"
+     "reward": "Cristales Tormenta x10 + Planos x2"
     }
    ]
   },
@@ -11474,7 +11474,7 @@
      "restriction": "Los escudos no-arcanos no funcionan (Bajel Arcano recomendado).",
      "archetype": "observatorio",
      "powerAsStage": 5,
-     "reward": "Cristales ✨ x15 + Orbe Prisma x5"
+     "reward": "Cristales Magia x15 + Orbe Prisma x5"
     },
     {
      "id": "enc_saqueo",
@@ -13398,7 +13398,7 @@
    "goal": {
     "type": "expansion_secret",
     "n": 3,
-    "text": "Enciende la forja apagada con un gato 🔥 de nivel 10+."
+    "text": "Enciende la forja apagada con un gato Fuego de nivel 10+."
    },
    "trigger": "mission:E09",
    "purpose": "open",
@@ -13536,7 +13536,7 @@
    "goal": {
     "type": "expansion_secret",
     "n": 5,
-    "text": "Descongela al gato del glaciar con un gato 🔥."
+    "text": "Descongela al gato del glaciar con un gato Fuego."
    },
    "trigger": "mission:E16",
    "purpose": "open",
@@ -13839,7 +13839,7 @@
     "trigger": "element:cosmic",
     "weight": 2,
     "task": "Cae una piedrita brillante en una expansión: encuéntrala.",
-    "reward": "Cristales 🌌 x3."
+    "reward": "Cristales Cósmico x3."
    },
    {
     "id": "error_404",
@@ -13863,7 +13863,7 @@
     "id": "tormenta_horizonte",
     "name": "Tormenta en el Horizonte",
     "presage": "Truena… pero no hay nubes.",
-    "twist": "Los enemigos traen chispas: cada victoria suelta 1 Fragmento de Tormenta '???' (lore antes de descubrir Tormenta; si ya la tienes: cristales ⚡).",
+    "twist": "Los enemigos traen chispas: cada victoria suelta 1 Fragmento de Tormenta '???' (lore antes de descubrir Tormenta; si ya la tienes: cristales Tormenta).",
     "bonus": "3 Fragmentos → la ficha de Tronador pasa a 'Rumor'."
    },
    {
@@ -13884,15 +13884,15 @@
     "id": "sobrecarga_volcanica",
     "name": "Sobrecarga Volcánica",
     "presage": "La Isla Volcánica tose humo.",
-    "twist": "Durante 8 min: gatos 🔥 hacen x3 de daño, pero tus granjas producen −50% comida (decisión horrible y deliciosa: 'A LA MIERDA LAS GRANJAS').",
-    "bonus": "Cristales 🔥 x10."
+    "twist": "Durante 8 min: gatos Fuego hacen x3 de daño, pero tus granjas producen −50% comida (decisión horrible y deliciosa: 'A LA MIERDA LAS GRANJAS').",
+    "bonus": "Cristales Fuego x10."
    },
    {
     "id": "mar_de_cristal",
     "name": "Mar de Cristal",
     "presage": "El agua se puso dura. Y brillante.",
     "twist": "Todos los barcos enemigos están hechos de cristal (x1.5 contra Tierra, quebradizos).",
-    "bonus": "Cristales 🪨 x10."
+    "bonus": "Cristales Tierra x10."
    },
    {
     "id": "marea_fantasma",
@@ -13906,7 +13906,7 @@
     "name": "Diluvio",
     "presage": "Va a llover. Mucho. Sobre todo.",
     "twist": "Ambos barcos están Mojados siempre: la Conducción es una fiesta (para los dos).",
-    "bonus": "Cristales ⚡ x10."
+    "bonus": "Cristales Tormenta x10."
    },
    {
     "id": "luna_resonancia",
@@ -13919,7 +13919,7 @@
     "id": "lluvia_polvo_estelar",
     "name": "Lluvia de Polvo Estelar",
     "presage": "Brillitos caen del cielo. Pican.",
-    "twist": "Cada victoria suelta Polvo Cósmico '???'; con 3 victorias tu Catdex muestra la silueta de Astra Prima (Rumor). Si ya tienes Cósmico: cristales 🌌.",
+    "twist": "Cada victoria suelta Polvo Cósmico '???'; con 3 victorias tu Catdex muestra la silueta de Astra Prima (Rumor). Si ya tienes Cósmico: cristales Cósmico.",
     "bonus": "Cristales del elemento más alto que tengas x10."
    },
    {
@@ -14042,10 +14042,10 @@
      },
      {
       "n": 2,
-      "task": "Gana 2 batallas con al menos un gato ⚡ en la tripulación.",
+      "task": "Gana 2 batallas con al menos un gato Tormenta en la tripulación.",
       "system": "combate",
       "victories": 2,
-      "reward": "Cristales ⚡ x6"
+      "reward": "Cristales Tormenta x6"
      },
      {
       "n": 3,
@@ -14090,7 +14090,7 @@
     "name": "Grieta Cósmica",
     "trigger": "Reino ≥ balance.events.heroic[1].kl (37) (Cósmico ya descubierto por el jefe 5).",
     "duration": "1500 s (25:00), ROJO sagrado",
-    "track": "🚩━━●━━●━━●━━●━━●━━●━━🕳️",
+    "track": "🚩━━●━━●━━●━━●━━●━━●━━Vacío",
     "nodes": [
      {
       "n": 1,
@@ -14100,16 +14100,16 @@
      },
      {
       "n": 2,
-      "task": "Termina 1 Resonancia con al menos un padre 🌌 (se acelera con Ronroneo).",
+      "task": "Termina 1 Resonancia con al menos un padre de Cósmico (se acelera con Ronroneo).",
       "system": "resonancia",
       "reward": "Orbe Prisma x5"
      },
      {
       "n": 3,
-      "task": "Gana 2 batallas con al menos un gato 🌌.",
+      "task": "Gana 2 batallas con al menos un gato Cósmico.",
       "system": "combate",
       "victories": 2,
-      "reward": "Cristales 🌌 x8"
+      "reward": "Cristales Cósmico x8"
      },
      {
       "n": 4,
@@ -14267,7 +14267,7 @@
    "secret": {
     "name": "Forja Dormida",
     "condition": "Al terminar de limpiar",
-    "content": "Una forja apagada: enciéndela con un gato 🔥 de nivel 10+.",
+    "content": "Una forja apagada: enciéndela con un gato Fuego de nivel 10+.",
     "reward": "2 gemas + tipo de arma Mortero de Magma"
    },
    "visual": "Lava, obsidiana, géiseres; los gatos de fuego se ven felices aquí."
@@ -14329,7 +14329,7 @@
    "secret": {
     "name": "Gato en el Hielo",
     "condition": "Al terminar de limpiar",
-    "content": "Un gato congelado (Fanguito pirata) sostiene un cañón raro. Descongélalo con un gato 🔥.",
+    "content": "Un gato congelado (Fanguito pirata) sostiene un cañón raro. Descongélalo con un gato Fuego.",
     "reward": "2 gemas + tipo de arma Lanzaescarcha"
    },
    "visual": "Hielo, focas-gato de nieve, auroras."
@@ -15513,7 +15513,7 @@
      ],
      [
       "SISTEMA",
-      "NUEVO ELEMENTO DESCUBIERTO: TIERRA 🪨 · Gea, Corazón de Piedra se une."
+      "NUEVO ELEMENTO DESCUBIERTO: TIERRA Tierra · Gea, Corazón de Piedra se une."
      ]
     ]
    },
@@ -15555,7 +15555,7 @@
      ],
      [
       "SISTEMA",
-      "NUEVO ELEMENTO DESCUBIERTO: TORMENTA ⚡ · Tronador se une."
+      "NUEVO ELEMENTO DESCUBIERTO: TORMENTA Tormenta · Tronador se une."
      ]
     ]
    },
@@ -15643,7 +15643,7 @@
      ],
      [
       "SISTEMA",
-      "Has descubierto un elemento que no debería existir en este mundo: MAGIA ✨"
+      "Has descubierto un elemento que no debería existir en este mundo: MAGIA Magia"
      ]
     ]
    },
@@ -15714,7 +15714,7 @@
      ],
      [
       "SISTEMA",
-      "NUEVO ELEMENTO DESCUBIERTO: CÓSMICO 🌌 · Astra Prima se une."
+      "NUEVO ELEMENTO DESCUBIERTO: CÓSMICO Cósmico · Astra Prima se une."
      ]
     ]
    },

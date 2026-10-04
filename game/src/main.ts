@@ -28,6 +28,7 @@ import { goBattle, goIsland, goMap, goTitle } from './app/flow';
 import { mountMicroOverlay } from './ui/micro/MicroOverlay';
 import { initStory } from './app/story';
 import { applyAudioSettings } from './panels/Settings';
+import { preloadElementIcons } from './ui/elementIcon';
 import './state/sys/micro';
 
 async function loadFonts() {
@@ -82,6 +83,7 @@ async function boot() {
   loadSettings();
   await loadFonts();
   await game.init(document.getElementById('app')!);
+  await preloadElementIcons();
   scenes.init();
   mountMicroOverlay();
   applyAudioSettings();
