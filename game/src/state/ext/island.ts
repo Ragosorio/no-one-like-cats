@@ -141,6 +141,12 @@ export function setUiSeen(key: string) {
   G.s.flags[`ui_${key}`] = true;
 }
 
+/** onboarding: hide calls-to-action until the story gets there (GDD: ≤3 new concepts at once) */
+export function ctaVisible(key: 'sow' | 'build') {
+  if (key === 'sow') return missionSeen('H03') || (G.s.counters.plant ?? 0) > 0 || G.s.kl >= 3;
+  return missionSeen('K03') || G.s.habitats.length > BAL.start.habitats.length || G.s.kl >= 3;
+}
+
 /** which HUD buttons exist yet (GDD: never more than ~3 new concepts on screen) */
 export function hudUnlocks() {
   return {

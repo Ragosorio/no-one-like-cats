@@ -9,6 +9,7 @@ import '@fontsource/playfair-display/700.css';
 import '@fontsource/rubik-glitch';
 import '@fontsource/space-grotesk';
 import '@fontsource/space-grotesk/700.css';
+import './island/safety';
 import { Ticker } from 'pixi.js';
 import { game } from './core/App';
 import { scenes } from './core/scenes';

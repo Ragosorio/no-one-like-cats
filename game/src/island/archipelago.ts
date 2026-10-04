@@ -12,7 +12,7 @@ export interface RegionDef {
   cy: number;
   r: number;
   /** expansion number (0 = home) */
-  n: number;
+  n?: number;
 }
 
 export interface Tile {
@@ -21,13 +21,26 @@ export interface Tile {
   region: string;
 }
 
-export const GRID = 44;
+export const GRID = 52;
+/** content regions are spread around home so every expansion is its own island (sea channels between) */
+export const SPREAD = 1.65;
 export const HOME_ID = 'home';
 
-export const HOME_REGION: RegionDef = { id: HOME_ID, biome: 'home', cx: 22, cy: 22, r: 6.4, n: 0 };
+export const HOME_REGION: RegionDef = { id: HOME_ID, biome: 'home', cx: 24, cy: 24, r: 7.6, n: 0 };
 
 export function islandRegions(): RegionDef[] {
-  return [HOME_REGION, ...EXPANSIONS.map((e) => ({ id: e.id, biome: e.biome, cx: e.region.cx, cy: e.region.cy, r: e.region.r, n: e.n }))];
+  const H = HOME_REGION;
+  return [
+    H,
+    ...EXPANSIONS.map((e) => ({
+      id: e.id,
+      biome: e.biome,
+      cx: H.cx + (e.region.cx - 22) * SPREAD,
+      cy: H.cy + (e.region.cy - 22) * SPREAD,
+      r: e.region.r,
+      n: e.n,
+    })),
+  ];
 }
 
 export const key = (gx: number, gy: number) => `${gx},${gy}`;

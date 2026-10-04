@@ -37,6 +37,8 @@ export interface BattleResult {
   damageDealt: number;
   catsLost: number;
   perfect: boolean;
+  /** uid of the player cat that dealt the most damage */
+  mvp?: string;
 }
 
 export interface BattleSpec {
@@ -109,6 +111,7 @@ export class BattleScene extends Scene {
   aim = { angle: -0.7, power: 850 };
   aiMemory = new Map<string, number>();
   stats = { modulesDestroyed: 0, damageDealt: 0, catsLost: 0 };
+  dmgBy = new Map<string, number>();
   burnAcc = 0;
   fast = false;
 
@@ -612,6 +615,11 @@ export class BattleScene extends Scene {
   }
 
   animateShot(side: number, shooter: string, paths: ShotPath[], events: BattleEvent[], shot: ShotDef, quick = false): Promise<void> {
+    if (side === 0 && shooter !== 'cannon') {
+      let d = 0;
+      for (const e of events) if (e.k === 'impact' && e.side === 1) d += e.total;
+      this.dmgBy.set(shooter, (this.dmgBy.get(shooter) ?? 0) + d);
+    }
     return new Promise((resolve) => {
       const fx = elementFx(shot.element === 'neutral' ? 'fire' : shot.element);
       const bc = this.catViews.get(shooter);
@@ -937,6 +945,7 @@ export class BattleScene extends Scene {
         damageDealt: this.stats.damageDealt,
         catsLost: this.stats.catsLost,
         perfect: won && this.stats.catsLost === 0,
+        mvp: [...this.dmgBy.entries()].sort((a, b) => b[1] - a[1])[0]?.[0],
       };
       this.spec.onEnd(result);
     });

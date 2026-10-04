@@ -19,6 +19,8 @@ import {
   Loot,
 } from '../sys/campaign';
 import { shipPower } from '../sys/ship';
+import { ownsSpecies } from '../sys/cats';
+import { claimBossCat } from '../sys/campaign';
 import type { BattleResult } from '../../scenes/BattleScene';
 
 export type StageKind = 'normal' | 'elite' | 'boss';
@@ -99,8 +101,19 @@ export function stageCaptain(zone: number, stage: number): { name: string; line:
     const name = (sd?.name ?? 'Élite').split('—')[0].trim();
     return { name, line: sd?.eliteLine ?? null, personality: pers };
   }
-  return { name: 'Capitán sin nombre', line: null, personality: pers };
+  const names = CAPTAINS[zone] ?? CAPTAINS[1];
+  return { name: names[(zone * 7 + stage * 3) % names.length], line: null, personality: pers };
 }
+
+/** flavor names for unnamed captains, per faction */
+const CAPTAINS: Record<number, string[]> = {
+  1: ['Capitán Sardino', 'Cabo Pulgas', 'La Tía Anchoa', 'Contramaestre Escamas', 'Pirata Boquerón', 'Grumete Mojado'],
+  2: ['Sargento Pedrusco', 'Cabo Musgo', 'Doña Almena', 'Teniente Grava', 'Guardia Adoquín'],
+  3: ['Capitán Chispazo', 'Bruma Voltio', 'Contramaestre Pararrayos', 'Cabo Nimbo', 'La Señora Trueno'],
+  4: ['Bibliotecario Polilla', 'Escribana Runa', 'Fray Pergamino', 'Archivista Tinta', 'Hermano Índice'],
+  5: ['Navegante Cometa', 'Astróloga Lira', 'Cadete Órbita', 'Piloto Nebulosa', 'Capitán Perihelio'],
+  6: ['El Ahogado', 'Doña Niebla', 'Capitán Costilla', 'El Que No Parpadea', 'Marinero Sin Nombre'],
+};
 
 /** the enemy crew element used for crystal drops (mirrors applyResult) */
 export function dropElement(zone: number, stage: number) {
@@ -278,4 +291,22 @@ export function resolveBattle(zone: number, stage: number, r: BattleResult, o: {
   };
   campaignMemo.last = last;
   return last;
+}
+
+/**
+ * Safety net: a boss primordial whose reveal never played (game closed mid-results) still joins.
+ * Returns the species that were claimed now.
+ */
+export function claimPendingBossCats(): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < G.s.campaign.bossesDefeated; i++) {
+    for (const u of BAL.bosses[i]?.unlocks ?? []) {
+      const [k, v] = u.split(':');
+      if (k === 'cat' && G.has(u) && !ownsSpecies(v)) {
+        claimBossCat(v);
+        out.push(v);
+      }
+    }
+  }
+  return out;
 }

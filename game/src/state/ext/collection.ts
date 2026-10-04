@@ -6,7 +6,7 @@ import { G, OwnedCat, ResonanceJob } from '../game';
 import { CATS, CONTENT, ELEMENTS, ELEMENT_BY_ID, ROLE_BY_ID, catDef, CatDef, ElementDef } from '../../data/content';
 import { BAL, RarityId, catGoldPerSec, catPower, starMinLevel, starMult } from '../econ';
 import { cat as getCat, starNeed, canStarUp, speciesCount } from '../sys/cats';
-import { busyCats } from '../sys/resonance';
+import { busyCats, revealCopy } from '../sys/resonance';
 
 export type PrintRarity = RarityId | 'primordial';
 
@@ -214,16 +214,16 @@ export function revealInfo(species: string, isNew: boolean, orbs: number, mutati
     const owned = ownedOf(species);
     const after = G.s.orbs[species] ?? 0;
     const before = Math.max(0, after - orbs);
-    const need = owned ? starNeed(owned) : 0;
+    const maxed = !owned || owned.stars >= BAL.cats.stars.max;
+    const need = maxed ? 0 : starNeed(owned);
     const missingBefore = Math.max(0, need - before);
-    dup = { before, after, need, star: (owned?.stars ?? 1) + 1, missing: missingBefore, ready: owned ? canStarUp(owned) : false, minLevel: owned ? starMinLevel(owned.stars) : 0 };
+    if (!maxed) dup = { before, after, need, star: (owned?.stars ?? 1) + 1, missing: missingBefore, ready: owned ? canStarUp(owned) : false, minLevel: owned ? starMinLevel(owned.stars) : 0 };
     caption = pickCopy('duplicate')
       .replace('{orbs}', String(orbs))
       .replace('{name}', def.name)
       .replace('{missing}', String(Math.min(orbs, missingBefore) || orbs));
   } else {
-    const key = def.secret ? 'secret' : def.rarity;
-    caption = pickCopy(key).replace('{name}', def.name);
+    caption = def.secret ? pickCopy('secret').replace('{name}', def.name) : revealCopy(def.rarity, def.name);
   }
   const chips = [roleName(def).toUpperCase(), (traitInfo(def.trait)?.name ?? def.trait).toUpperCase(), def.combat.shot.name.toUpperCase()];
   return {

@@ -10,6 +10,7 @@ import { catTexture, preloadCats } from '../../art/catArt';
 import { C } from '../theme';
 import { Speaker } from './text';
 import { settings } from '../../core/settings';
+import { killTweensDeep } from './tweens';
 
 export const LUZTERNA_URL = 'story/luzterna.webp';
 
@@ -107,7 +108,7 @@ export class LuzternaPortrait extends Container {
   }
   override destroy() {
     Ticker.shared.remove(this.tick, this);
-    gsap.killTweensOf(this.wisps.children);
+    killTweensDeep(this);
     super.destroy({ children: true });
   }
 }
@@ -145,14 +146,14 @@ export class CatPortrait extends Container {
   private paperHat(tex: Texture) {
     // folded newspaper pirate hat on the head (~31% x, 10% y of the painting)
     const g = new Graphics();
-    const w = this.size * 0.42;
+    const w = this.size * 0.36;
     g.poly([-w / 2, 0, 0, -w * 0.48, w / 2, 0]).fill(0xf4eee3).stroke({ width: 4, color: C.ink, join: 'round' });
     g.rect(-w / 2 - 6, -4, w + 12, w * 0.14).fill(0xe9dfc8).stroke({ width: 4, color: C.ink });
     for (let i = 0; i < 4; i++) g.moveTo(-w * 0.22 + i * 4, -w * 0.12 - i * 9).lineTo(w * 0.18 - i * 4, -w * 0.12 - i * 9);
     g.stroke({ width: 2, color: C.ink, alpha: 0.5 });
     g.circle(0, -w * 0.22, w * 0.07).fill(C.ink);
-    g.position.set((0.31 - 0.5) * tex.width * this.baseScale, -this.size * (1 - 0.1));
-    g.rotation = -0.18;
+    g.position.set((0.335 - 0.5) * tex.width * this.baseScale, -this.size * (1 - 0.2));
+    g.rotation = -0.12;
     return g;
   }
   private eyePatch(tex: Texture) {
@@ -178,6 +179,7 @@ export class CatPortrait extends Container {
   }
   override destroy() {
     Ticker.shared.remove(this.tick, this);
+    killTweensDeep(this);
     super.destroy({ children: true });
   }
 }
