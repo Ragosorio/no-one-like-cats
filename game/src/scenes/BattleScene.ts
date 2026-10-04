@@ -4,7 +4,12 @@ import { Scene, scenes } from '../core/scenes';
 import { W, H } from '../core/App';
 import { Sea } from '../battle/sea';
 import { CELL } from '../battle/ship';
-import { ShipView } from '../battle/shipView';
+import { AnimeShipView } from '../battle/anime';
+import type { ShipStyleId } from '../battle/anime';
+import { playTransform } from '../battle/fx/transform';
+import { applyCatTint } from '../art/tint';
+import { CAT_BY_ID, BOSSES } from '../data/content';
+import { ColorMatrixFilter } from 'pixi.js';
 import { Battle, BattleEvent, SideSetup, ShotPath, VictoryReason } from '../battle/sim';
 import { decide, DIFFICULTY, aimCannon } from '../battle/ai';
 import { CatStatusView, playKO, playOverboard } from '../battle/catFx';
@@ -46,7 +51,9 @@ export interface BattleSpec {
   seed?: number;
   /** shown numbers = internal × displayMul (numbers grow with progress; TTK stays) */
   displayMul?: number;
-  meta?: { zone: number; stage: number; key: string; boss: boolean; ep: number; sp: number };
+  playerStyle?: ShipStyleId;
+  enemyStyle?: ShipStyleId;
+  meta?: { zone: number; stage: number; key: string; boss: boolean; ep: number; sp: number; weaponMk?: number };
   onEnd: (r: BattleResult) => void;
 }
 
@@ -76,10 +83,15 @@ export class BattleScene extends Scene {
   cam = { x: W / 2, y: H / 2, z: 1, tx: W / 2, ty: H / 2, tz: 1 };
   follow: Container | null = null;
   sinking = new Set<Container>();
+  shownExposed = new Set<string>();
+  bossPhase = 1;
+  enemyDoubleShot = false;
+  /** where this turn's cat shot landed (volley target) */
+  volleyTarget: { x: number; y: number } | null = null;
   /** elevation (rad) of the last player shot, for the 'lobbed shot' mission */
   lastElevation = 0;
   sea!: Sea;
-  ships: ShipView[] = [];
+  ships: AnimeShipView[] = [];
   catViews = new Map<string, BattleCat>();
   debris = new Container();
   fxp = new Particles();
@@ -135,14 +147,22 @@ export class BattleScene extends Scene {
     this.world.addChild(this.sea, this.sky, shipsLayer, this.debris, this.sea.frontLayer(), this.fxp, this.aimG, this.wfx);
     for (let side = 0; side < 2; side++) {
       const s = this.sim.sides[side];
-      const v = new ShipView(s.ship, s.setup.flip);
+      const style: ShipStyleId = side === 0 ? sp.playerStyle ?? 'pirate' : sp.enemyStyle ?? 'rat';
+      const v = new AnimeShipView(s.ship, s.setup.flip, style, { waterLocalY: WATER_Y - s.setup.origin.y });
+      v.autoReact = false;
       v.position.set(s.setup.origin.x, s.setup.origin.y);
       v.baseY = v.y;
       shipsLayer.addChild(v);
       this.ships.push(v);
       for (const c of s.cats) {
         const bc = new BattleCat(c.def.slug, c.def.elements[0] ?? 'fire', CELL * 3.1, s.setup.flip);
-        if (c.def.tint !== undefined) bc.sprite.tint = c.def.tint;
+        if (CAT_BY_ID.has(c.def.catId)) applyCatTint(bc.sprite, c.def.catId);
+        if (side === 1) {
+          // pirate treatment: desaturated enemies
+          const cm = new ColorMatrixFilter();
+          cm.saturate(-0.35, true);
+          bc.sprite.filters = [cm, ...(bc.sprite.filters ?? [])];
+        }
         const m = s.ship.modules[c.room];
         const p = v.cellPos(s.setup.flip ? m.x + m.w - 1 : m.x, m.y);
         bc.position.set(p.x + CELL, p.y + m.h * CELL + 2);
@@ -213,6 +233,21 @@ export class BattleScene extends Scene {
   }
 
   refreshCards() {
+    if (this.sim) {
+      for (let side = 0; side < 2; side++)
+        for (const c of this.sim.sides[side].cats) {
+          if (!c.exposed || c.ko || c.overboard || this.shownExposed.has(c.def.uid)) continue;
+          this.shownExposed.add(c.def.uid);
+          const bc = this.catViews.get(c.def.uid);
+          if (!bc || bc.destroyed) continue;
+          const y0 = bc.y;
+          gsap.timeline().to(bc, { y: y0 - 90, duration: 0.25, ease: 'power2.out' }).to(bc, { y: y0, duration: 0.3, ease: 'bounce.out' });
+          gsap.to(bc, { rotation: side === 0 ? -0.4 : 0.4, duration: 0.25, yoyo: true, repeat: 1 });
+          const gp = this.wfx.toLocal(bc.getGlobalPosition());
+          floatText(this.wfx, gp.x, gp.y - 170, '¡GATO SUELTO!', { color: C.red, size: 44, font: F.poster, rise: 50, dur: 1.4 });
+          sfx('meow', 1.4);
+        }
+    }
     if (!G.s.flags.first_meter_full && this.sim?.sides[0].cats.some((c) => c.ultCharge >= 1)) G.flag('first_meter_full');
     for (let side = 0; side < 2; side++)
       for (const c of this.sim.sides[side].cats) if (!c.ko) this.statusViews.get(c.def.uid)?.set(c.fx);
@@ -262,6 +297,18 @@ export class BattleScene extends Scene {
 
   // ---------------------------------------------------------------- intro
   async intro() {
+    const cap = this.sim.sides[0].cats[0];
+    const capDef = cap ? CAT_BY_ID.get(cap.def.catId) : undefined;
+    if (cap && capDef) {
+      await playTransform(this.overlay, {
+        slug: cap.def.slug,
+        species: capDef.id,
+        name: cap.def.name,
+        element: capDef.elements[0],
+        formName: capDef.battleForm.name,
+        cry: capDef.battleForm.cry,
+      });
+    }
     const banner = new Container();
     const band = new Graphics().rect(-200, -90, W + 400, 180).fill(C.ink);
     band.rotation = -0.06;
@@ -288,7 +335,7 @@ export class BattleScene extends Scene {
     gsap.to(banner, { alpha: 0, y: banner.y - 40, duration: 0.3, onComplete: () => banner.destroy({ children: true }) });
   }
 
-  speech(ship: ShipView, who: string, line: string, dur = 2) {
+  speech(ship: Container, who: string, line: string, dur = 2) {
     const c = new Container();
     const t = txt(line, { fontFamily: F.comic, fontSize: 26, fill: C.ink, wordWrap: true, wordWrapWidth: 380 });
     const n = txt(who.toUpperCase(), { fontFamily: F.poster, fontSize: 18, fill: C.pinkHot });
@@ -364,7 +411,16 @@ export class BattleScene extends Scene {
       }
       if (d.ult && cat) await this.ultCutIn(cat);
       const res = this.sim.fire(1, d.shooter, d.angle, d.power, d.ult);
+      this.volleyTarget = this.firstImpact(res.events, 0);
       await this.animateShot(1, d.shooter, res.paths, res.events, res.shot);
+      // boss phase 3: fires twice per turn
+      if (this.enemyDoubleShot && this.sim.winner === null) {
+        const d2 = decide(this.sim, 1, DIFFICULTY[this.spec.difficulty], this.aiMemory, Math.floor(Math.random() * 1e9));
+        if (d2) {
+          const r2 = this.sim.fire(1, d2.shooter, d2.angle, d2.power, false);
+          await this.animateShot(1, d2.shooter, r2.paths, r2.events, r2.shot);
+        }
+      }
     }
     if (this.sim.winner === null) await this.autoVolley(1);
     this.sim.endTurn();
@@ -435,8 +491,11 @@ export class BattleScene extends Scene {
     this.lastElevation = -this.aim.angle;
     const res = this.sim.fire(0, this.selected, this.aim.angle, this.aim.power, ult);
     this.refreshCards();
+    this.volleyTarget = this.firstImpact(res.events, 1);
     await this.animateShot(0, this.selected, res.paths, res.events, res.shot);
+    await this.checkBossPhase();
     if (this.sim.winner === null) await this.autoVolley(0);
+    await this.checkBossPhase();
     this.sim.endTurn();
     this.refreshCards();
     if (this.sim.winner !== null) return this.finish();
@@ -479,6 +538,44 @@ export class BattleScene extends Scene {
     gsap.to(layer, { alpha: 0, duration: 0.2, onComplete: () => layer.destroy({ children: true }) });
   }
 
+  firstImpact(events: BattleEvent[], targetSide: number) {
+    for (const e of events) if (e.k === 'impact' && e.side === targetSide) return { x: e.x, y: e.y };
+    return null;
+  }
+
+  /** zone bosses: phase changes at 1/3 and 2/3 of the damage needed to win */
+  async checkBossPhase() {
+    if (!this.spec.meta?.boss || this.sim.winner !== null) return;
+    const boss = BOSSES.find((b) => b.zone === this.spec.meta!.zone && (b.type === 'zone_boss' || b.type === 'final_boss'));
+    if (!boss) return;
+    const dmgFrac = (1 - this.sim.hullPct(1)) / (1 - 0.28);
+    const core = this.sim.sides[1].ship.modules.find((m) => m.kind === 'core');
+    const coreFrac = core ? 1 - this.sim.sides[1].ship.moduleCells(core.id).length / (core.w * core.h) : 0;
+    const f = Math.max(dmgFrac, coreFrac * 1.5);
+    const target = f >= 0.67 ? 3 : f >= 0.34 ? 2 : 1;
+    if (target <= this.bossPhase) return;
+    this.bossPhase = target;
+    const ph = boss.phases[target - 1];
+    const line = target === 2 ? boss.lines.phase2 : boss.lines.phase3;
+    if (target === 3) this.enemyDoubleShot = /2 veces|dos veces|2 acciones/i.test(ph?.behavior ?? '') || boss.n === 1;
+    sfx('sting');
+    this.shaker.add(0.5);
+    const band = new Container();
+    const g = new Graphics().rect(-300, -80, W + 600, 160).fill(C.red).stroke({ width: 8, color: C.ink });
+    g.rotation = -0.05;
+    const t = poster(`FASE ${target}: ${(ph?.name ?? '').toUpperCase()}`, 92, C.paper, { stroke: { color: C.ink, width: 10 } });
+    t.anchor.set(0.5);
+    t.rotation = -0.05;
+    band.addChild(g, t);
+    band.position.set(W / 2, H / 2 - 120);
+    this.overlay.addChild(band);
+    gsap.from(g.scale, { x: 0, duration: 0.2, ease: 'power3.out' });
+    gsap.from(t.scale, { x: 2, y: 2, duration: 0.25, ease: 'back.out(2)' });
+    if (line) this.speech(this.ships[1], boss.name, line, 2.6);
+    await wait(this.fast ? 400 : 1400);
+    gsap.to(band, { alpha: 0, duration: 0.3, onComplete: () => band.destroy({ children: true }) });
+  }
+
   // ---------------------------------------------------------------- automatic cannons
   async autoVolley(side: 0 | 1) {
     const cannons = this.sim.cannons(side);
@@ -495,11 +592,12 @@ export class BattleScene extends Scene {
     for (const m of cannons) {
       if (this.sim.winner !== null) break;
       if (!m.alive) continue;
-      const a = aimCannon(this.sim, side, m.id, Math.floor(Math.random() * 1e9), side === 0 ? 2.2 : 2.8);
+      const sigma = side === 0 ? Math.max(0.8, 5 - 0.6 * (this.spec.meta?.weaponMk ?? 1)) : 3;
+      const a = aimCannon(this.sim, side, m.id, Math.floor(Math.random() * 1e9), sigma, this.volleyTarget ?? undefined);
       const res = this.sim.fire(side, 'cannon', a.angle, a.power, false, m.id);
       const mz = this.sim.cannonMuzzle(side, m.id);
       this.fxp.burst(mz.x, mz.y, { count: 18, tint: [C.yellow, C.orange, C.paper, 0x8a95a3], speed: [100, 420], gravity: -60, life: [0.2, 0.6], angle: side === 0 ? [-0.6, 0.6] : [Math.PI - 0.6, Math.PI + 0.6] });
-      v.hitReact?.(side === 0 ? 0 : 9999, 0.12);
+      v.fireCannon(m.id);
       await this.animateShot(side, 'cannon', res.paths, res.events, res.shot, true);
       this.refreshCards();
     }
@@ -625,7 +723,7 @@ export class BattleScene extends Scene {
         this.fxp.burst(e.x, e.y, { count: big ? 48 : 28, tint: [fx.main, fx.accent, C.ink, C.paper], speed: [200, 850], life: [0.4, 1], scale: [0.4, 1.3], stepped: true });
         onomatopoeia(this.wfx, e.x, e.y - 90, word, { color: col, size: big ? 130 : 96 });
         const sv = this.ships[e.side];
-        sv.hitReact?.(e.x - sv.x, Math.min(1, 0.2 + e.total / 900));
+        sv.hitReact(e.x, e.y, Math.min(1.6, 0.35 + e.total / 500));
         this.cam.z += Math.min(0.08, 0.02 + e.total / 8000);
         if (e.total > 0) floatText(this.wfx, e.x + 70, e.y - 30, `-${this.show(e.total)}`, { color: e.crit ? C.pinkHot : C.paper, size: e.crit ? 64 : 46, font: F.heavy });
         if (e.crit) floatText(this.wfx, e.x - 60, e.y - 170, '¡CRÍTICO!', { color: C.pinkHot, size: 54, rot: -0.2 });
@@ -771,7 +869,7 @@ export class BattleScene extends Scene {
         sfx(i === n - 1 ? 'bigboom' : 'boom', 1 + i * 0.06);
         this.fxp.burst(p.x, p.y, { count: 26, tint: [C.orange, C.yellow, C.red, C.ink], speed: [150, 700], life: [0.4, 0.9], scale: [0.5, 1.3], stepped: true });
         this.shaker.add(0.25);
-        v.hitReact?.(p.x - v.x, 0.35);
+        v.hitReact(p.x, p.y, 0.6);
         if (i % 3 === 0) onomatopoeia(this.wfx, p.x, p.y - 60, ['¡BOOM!', '¡KABOOM!', '¡KRAK!', '¡PUM!'][i % 4], { color: C.yellow, size: 90 });
       }, delay * i);
       delay = Math.max(60, delay - 8);
@@ -864,18 +962,6 @@ export class BattleScene extends Scene {
     this.camRoot.scale.set(z);
     this.camRoot.position.set(W / 2 - cx * z, H / 2 - cy * z);
     if (this.sky) this.sky.wind = this.sim?.wind ?? 0;
-    // burning cells emit flames
-    this.burnAcc += dt;
-    if (this.burnAcc > 0.12 && this.sim) {
-      this.burnAcc = 0;
-      for (let side = 0; side < 2; side++) {
-        for (const c of this.sim.sides[side].ship.cells()) {
-          if (!c.status.burning) continue;
-          const p = this.sim.cellCenter(side, c.x, c.y);
-          this.fxp.burst(p.x + (Math.random() - 0.5) * 20, p.y - 10, { count: 1, tint: [C.orange, C.yellow, C.red], speed: [20, 60], angle: [-Math.PI * 0.7, -Math.PI * 0.3], gravity: -260, life: [0.4, 0.7], scale: [0.5, 0.9] });
-        }
-      }
-    }
   }
 }
 

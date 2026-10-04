@@ -148,7 +148,7 @@ function scorePaths(b: Battle, paths: ShotPath[], targets: { x: number; y: numbe
  * Automatic ship cannons: they aim at the most valuable enemy module with modest accuracy.
  * `sigmaDeg` controls spread (upgrades/mast make it tighter).
  */
-export function aimCannon(b: Battle, side: 0 | 1, cannonId: number, seed: number, sigmaDeg = 2.6): { angle: number; power: number } {
+export function aimCannon(b: Battle, side: 0 | 1, cannonId: number, seed: number, sigmaDeg = 2.6, target?: { x: number; y: number }): { angle: number; power: number } {
   const r = new Rng(seed);
   const enemy = 1 - side;
   const es = b.sides[enemy];
@@ -164,14 +164,21 @@ export function aimCannon(b: Battle, side: 0 | 1, cannonId: number, seed: number
     targets.push({ x: p.x, y: p.y, v: MODULE_VALUE[m.kind] ?? 1 });
   }
   const dir = enemy === 1 ? 1 : -1;
-  let best = { angle: dir > 0 ? -0.6 : Math.PI + 0.6, power: 800, score: -1 };
+  let best = { angle: dir > 0 ? -0.6 : Math.PI + 0.6, power: 800, score: -Infinity };
   for (let ai = 0; ai < 16; ai++) {
     const elev = (10 + ai * 3.5) * (Math.PI / 180);
     const angle = dir > 0 ? -elev : Math.PI + elev;
     for (let pi = 0; pi < 8; pi++) {
       const power = 560 + pi * 90;
       const paths = b.buildPaths(shot, o, angle, power, b.wind, side);
-      const sc = scorePaths(b, paths, targets, enemy, shot) + r.next() * 0.3;
+      let sc: number;
+      if (target) {
+        // concentrated fire: land as close as possible to where the cat hit
+        const p = paths[0];
+        const end = p.impacts.length ? p.points[p.impacts[p.impacts.length - 1]] : p.points[p.points.length - 1];
+        const hit = p.impacts.length ? b.cellAt(end.x, end.y) : null;
+        sc = hit && hit.side !== enemy ? -1e9 : -Math.hypot(end.x - target.x, end.y - target.y) + (hit ? 50 : 0);
+      } else sc = scorePaths(b, paths, targets, enemy, shot) + r.next() * 0.3;
       if (sc > best.score) best = { angle, power, score: sc };
     }
   }

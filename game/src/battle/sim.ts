@@ -302,11 +302,11 @@ export class Battle {
     });
     // post: shooter bookkeeping
     if (cat) {
-      cat.cooldown = ult ? 2 : 1;
+      cat.cooldown = (cat.def.reload ?? 1) + 1;
       if (ult) {
         cat.ultUsed++;
         cat.ultCharge = 0;
-      } else cat.ultCharge = Math.min(1, cat.ultCharge + 0.34);
+      } else cat.ultCharge = Math.min(1, cat.ultCharge + 0.25 * this.meterMul(side));
     }
     if (shot.trajectory === 'gust') this.sides[1 - side].windNext = side === 0 ? 90 : -90;
     for (let i = 0; i < 2; i++) events.push(...this.updateExposure(i));
@@ -709,9 +709,15 @@ export class Battle {
     }
     const real = Math.round(dmg * (c.exposed ? 1.5 : 1) * (c.def.limitation === 'glass' ? 3 : 1));
     c.hp -= real;
-    c.ultCharge = Math.min(1, c.ultCharge + 0.12);
+    c.ultCharge = Math.min(1, c.ultCharge + 0.15 * this.meterMul(c.side));
     const revived = c.hp <= 0 ? this.koOrRevive(c) : false;
     ev.push({ k: 'cat', side: c.side, uid: c.def.uid, dmg: real, ko: c.ko, shield: false, revived, element: el, fx: { ...c.fx }, path, at });
+  }
+
+  /** ultimate meter gain multiplier: without a Summoning Room ults effectively cost 125 */
+  meterMul(side: number) {
+    const arc = this.sides[side].ship.modules.find((m) => m.kind === 'arcane');
+    return arc && arc.alive ? 1 : 0.8;
   }
 
   /** returns true if the cat used a second life */
@@ -724,7 +730,11 @@ export class Battle {
     c.hp = 0;
     c.ko = true;
     c.fx = { burning: 0, shocked: 0, wet: 0, frozen: 0 };
-    for (const ally of this.sides[c.side].cats) if (!ally.ko && ally.def.limitation === 'berserk') ally.rage++;
+    for (const ally of this.sides[c.side].cats) {
+      if (ally.ko) continue;
+      if (ally.def.limitation === 'berserk') ally.rage++;
+      ally.ultCharge = Math.min(1, ally.ultCharge + 0.1);
+    }
     return false;
   }
 

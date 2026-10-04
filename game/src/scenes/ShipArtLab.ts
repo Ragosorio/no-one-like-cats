@@ -37,7 +37,7 @@ export class ShipArtLab extends Scene {
   debris = new Container();
   fx = new Container();
   ui = new Container();
-  sea!: Sea;
+  sea: Sea | null = null;
   slots: Slot[] = [];
   useAnime = true;
   auto = false;
@@ -49,10 +49,23 @@ export class ShipArtLab extends Scene {
   catsReady = false;
   info = txt('', { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink });
 
+  noir = false;
+
+  /** sunny Yo-Ho sky or the battle's default noir palette */
+  private makeSea() {
+    if (this.sea) {
+      this.sea.frontLayer().destroy();
+      this.sea.destroy();
+    }
+    this.sea = this.noir ? new Sea(WATER_Y) : new Sea(WATER_Y, { skyTop: 0x1f8fe0, skyBottom: 0x9ee3ff, sea: 0x1a8bd0, seaDark: 0x0e5d9c });
+    this.world.addChildAt(this.sea, 0);
+    this.world.addChildAt(this.sea.frontLayer(), this.world.getChildIndex(this.debris) + 1);
+  }
+
   override enter() {
-    this.sea = new Sea(WATER_Y, { skyTop: 0x1f8fe0, skyBottom: 0x9ee3ff, sea: 0x1a8bd0, seaDark: 0x0e5d9c });
     this.addChild(this.world, this.ui);
-    this.world.addChild(this.sea, this.shipsLayer, this.debris, this.sea.frontLayer(), this.fx);
+    this.world.addChild(this.shipsLayer, this.debris, this.fx);
+    this.makeSea();
     this.buildShips();
     this.buildUi();
     preloadCats([...new Set(CREWS.flat().map((c) => c[0]))])
@@ -144,12 +157,13 @@ export class ShipArtLab extends Scene {
       ['RESET', () => this.buildShips(), C.paper],
       ['FOCO', () => this.cycleFocus(), C.yellow],
       ['GATOS', () => this.toggleCats(), C.paper],
+      ['CIELO', () => ((this.noir = !this.noir), this.makeSea()), C.theatre],
     ];
-    const bw = 100;
+    const bw = 96;
     const bh = 44;
     acts.forEach(([label, fn, color], i) => {
       const b = new Button(label, fn, { w: bw, h: bh, size: 19, color: color ?? C.pink, sound: false });
-      b.position.set(36 + i * (bw + 6), H - 70);
+      b.position.set(30 + i * (bw + 5), H - 70);
       this.ui.addChild(b);
     });
     this.info.position.set(40, H - 104);
@@ -217,7 +231,7 @@ export class ShipArtLab extends Scene {
       const c = cells.splice(Math.floor(Math.random() * cells.length), 1)[0];
       const w = this.worldOfCell(s, c);
       this.destroy1(s, c, { x: w.x + (Math.random() - 0.5) * 60, y: w.y + 30 });
-      s.view.hitReact(this.toGlobal(w).x, this.toGlobal(w).y, 0.6);
+      s.view.hitReact(w.x, w.y, 0.6);
     }
     this.settle(s);
   }
@@ -225,8 +239,7 @@ export class ShipArtLab extends Scene {
   private explodeAt(s: Slot, cx: number, cy: number, radius = 62, dmg = 90) {
     const center = this.worldOfCell(s, s.model.get(cx, cy) ?? { x: cx, y: cy, hp: 0, maxHp: 1, material: 'wood', status: {} });
     this.boom(center.x, center.y, radius * 0.9);
-    const g = this.toGlobal(center);
-    s.view.hitReact(g.x, g.y, 1);
+    s.view.hitReact(center.x, center.y, 1);
     for (const c of s.model.cells()) {
       const w = this.worldOfCell(s, c);
       const d = Math.hypot(w.x - center.x, w.y - center.y) / s.scale;
@@ -281,7 +294,7 @@ export class ShipArtLab extends Scene {
     const c = cells[cells.length - 1];
     const w = this.worldOfCell(s, c);
     this.boom(w.x, w.y, 40);
-    s.view.hitReact(this.toGlobal(w).x, this.toGlobal(w).y, 0.8);
+    s.view.hitReact(w.x, w.y, 0.8);
     s.view.updateModuleDecor();
     this.info.text = `módulo roto: ${m.kind}`;
   }
@@ -340,7 +353,8 @@ export class ShipArtLab extends Scene {
       if (e.shiftKey) {
         c.hp = Math.max(1, c.hp - c.maxHp * 0.3);
         s.view.refreshCell(c);
-        s.view.hitReact(e.global.x, e.global.y, 0.4);
+        const wp = this.world.toLocal(e.global);
+        s.view.hitReact(wp.x, wp.y, 0.4);
       } else this.explodeAt(s, c.x, c.y, 50, 75);
       this.info.text = `celda ${c.x},${c.y} · ${c.material} · hp ${Math.max(0, Math.round(c.hp))}/${c.maxHp}`;
       return;

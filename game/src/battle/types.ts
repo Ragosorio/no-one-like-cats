@@ -83,6 +83,8 @@ export interface BattleCatDef {
   shields?: number;
   /** free-text passive id interpreted by the sim */
   passive?: string;
+  /** turns of reload after firing (0 = fires every turn) */
+  reload?: number;
 }
 
 export interface CatState {

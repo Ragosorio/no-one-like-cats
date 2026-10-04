@@ -115,7 +115,9 @@ export function buildBattle(zone: number, stage: number, onEnd: (r: BattleResult
     player: { blueprint: pbp, hpMul, cats: playerCats, cannonAtk: Math.round(40 * pf * 1.6 * (1 + 0.1 * (mk('weapon') - 1))) },
     enemy: { blueprint: bp, hpMul: 1, cats: enemyCats, cannonAtk: Math.round(40 * ef * 1.6) },
     displayMul: Math.max(1, EP / 2) / 10,
-    meta: { zone, stage, key, boss: isBoss, ep: EP, sp: SP },
+    meta: { zone, stage, key, boss: isBoss, ep: EP, sp: SP, weaponMk: mk('weapon') },
+    playerStyle: mk('hull') >= 7 ? 'cosmic' : 'pirate',
+    enemyStyle: zone === 5 ? 'cosmic' : 'rat',
     onEnd,
   } as BattleSpec;
 }

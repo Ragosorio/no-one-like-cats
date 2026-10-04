@@ -143,5 +143,6 @@ export function battleCatFrom(i: CatBattleInput, roleHp: number): BattleCatDef {
     limitation: lim,
     shields: lim === 'shields' ? 3 : undefined,
     passive: def.combat.passive,
+    reload: def.combat.recarga ?? 0,
   };
 }

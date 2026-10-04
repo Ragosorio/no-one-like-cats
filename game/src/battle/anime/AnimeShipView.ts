@@ -103,6 +103,12 @@ interface Emitter {
 
 const DMG_LEVELS = [0.18, 0.45, 0.72];
 
+function countStatus(st: Cell['status']) {
+  let n = 0;
+  for (const k in st) if (st[k as keyof typeof st]) n++;
+  return n;
+}
+
 export class AnimeShipView extends Container {
   readonly style: ShipStyle;
   readonly layout: ShipLayout;
@@ -240,7 +246,12 @@ export class AnimeShipView extends Container {
       p.dmgLevel++;
       this.paintDamage(p, p.dmgLevel);
     }
-    // statuses
+    this.syncStatus(p);
+  }
+
+  /** statuses → fx + tint (also polled, because the sim expires statuses without events) */
+  private syncStatus(p: Piece) {
+    const c = p.cell;
     if (c.status.burning && !p.charred) {
       p.charred = true;
       this.paintChar(p);
@@ -355,7 +366,7 @@ export class AnimeShipView extends Container {
     // dust & splinters where it tore off
     const cw = debrisLayer.toLocal(this.hullLayer.toGlobal({ x: cx, y: maxY }));
     this.burstSplinters(debrisLayer, cw.x, cw.y, waterY, 0.8, { x: cw.x, y: cw.y + 40 });
-    this.hitReact(this.toGlobal({ x: cx, y: cy }).x, this.toGlobal({ x: cx, y: cy }).y, 0.5, true);
+    this.reactLocal(cx, cy, 0.5, true);
   }
 
   /** Swap decor of dead modules to their broken versions (bent cannon, torn sails, dead core…). */
@@ -412,9 +423,12 @@ export class AnimeShipView extends Container {
 
   // ================================================================ extra API
 
-  /** Impact reaction: the hull rolls/pushes away from the hit with a spring, nearby pieces jolt. */
-  hitReact(worldX: number, worldY: number, strength = 1, quiet = false) {
-    const lp = this.body.toLocal({ x: worldX, y: worldY });
+  /** Impact reaction: the hull rolls/pushes away from the hit with a spring, nearby pieces jolt. */  /**
+   * Impact reaction. (x, y) are in the ship's PARENT space — the same space as `ship.position`
+   * (BattleScene: world coordinates, e.g. an `impact` event's x/y).
+   */
+  hitReact(x: number, y: number, strength = 1, quiet = false) {
+    const lp = this.parent ? this.body.toLocal({ x, y }, this.parent) : { x, y };
     this.reactLocal(lp.x, lp.y, strength, quiet);
   }
 
@@ -1453,6 +1467,7 @@ export class AnimeShipView extends Container {
       if (d.sparks && hash(f, d.m.id) < 0.3) this.sparkBurst(d.smokePt[0] + (Math.random() - 0.5) * 20, d.smokePt[1] + 10, this.style.core.base, 2);
     }
     // statuses
+    if (f % 6 === 0) for (const p of this.pieces.values()) if (!!p.fx !== hasAnyStatus(p.cell.status) || (p.fx && p.fx.kinds.size !== countStatus(p.cell.status))) this.syncStatus(p);
     for (const p of this.pieces.values()) {
       if (!p.fx) continue;
       p.fx.step(f, t);
