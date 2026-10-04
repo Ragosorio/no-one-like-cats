@@ -11,6 +11,7 @@ import { CATS, CAT_BY_ID, TintSpec } from '../../data/content';
 import { SilhouetteFilter } from '../../fx/filters';
 import { glowTexture } from '../../art/textures';
 import { ensureFonts } from './fonts';
+import { mutationLook } from '../../state/ext/collection';
 
 let artPromise: Promise<void> | null = null;
 /** load every painting once (32 webp) */
@@ -149,6 +150,60 @@ export function drawDecal(g: Graphics, decal: string, seed: string) {
         g.circle(x - s * 0.35, y - s * 0.35, s * 0.2).fill({ color: 0xffffff, alpha: 0.9 });
       }
       break;
+    // ---- mutation decals
+    case 'escarcha': {
+      const flakes: [number, number, number, number][] = [];
+      for (let i = 0; i < 14; i++) {
+        const [x, y] = pt(-280, 300);
+        flakes.push([x, y, 16 + r() * 22, r() * 0.3]);
+      }
+      const draw = () => {
+        for (const [x, y, s, rot] of flakes)
+          for (let k = 0; k < 3; k++) {
+            const a = (k / 3) * Math.PI + rot;
+            g.moveTo(x - Math.cos(a) * s, y - Math.sin(a) * s).lineTo(x + Math.cos(a) * s, y + Math.sin(a) * s);
+          }
+      };
+      draw();
+      g.stroke({ width: 11, color: 0x1f2b4a, alpha: 0.55, cap: 'round' });
+      draw();
+      g.stroke({ width: 6, color: 0xf2fdff, alpha: 1, cap: 'round' });
+      for (let i = 0; i < 20; i++) {
+        const [x, y] = pt(-280, 300);
+        g.circle(x, y, 3 + r() * 5).fill({ color: 0xffffff, alpha: 0.8 });
+      }
+      break;
+    }
+    case 'grietas':
+      for (let i = 0; i < 7; i++) {
+        let [x, y] = pt(-240, 280);
+        g.moveTo(x, y);
+        for (let k = 0; k < 4; k++) {
+          x += (r() - 0.5) * 60;
+          y += 16 + r() * 26;
+          g.lineTo(x, y);
+          if (r() < 0.4) g.moveTo(x, y).lineTo(x + (r() - 0.5) * 40, y + 20).moveTo(x, y);
+        }
+      }
+      g.stroke({ width: 7, color: 0x3a2a1c, alpha: 0.8, join: 'round', cap: 'round' });
+      break;
+    case 'doble_cola':
+      for (const sx of [1, -1]) {
+        g.moveTo(170 * sx, 260)
+          .bezierCurveTo(300 * sx, 200, 330 * sx, 40, 250 * sx, -40)
+          .stroke({ width: 26, color: 0xff2e88, alpha: 0.55, cap: 'round' });
+      }
+      break;
+    case 'eco':
+      for (let i = 0; i < 3; i++) g.circle(0, 40, 200 + i * 60).stroke({ width: 6, color: 0x00e5ff, alpha: 0.5 - i * 0.12 });
+      break;
+    case 'oro':
+      for (let i = 0; i < 22; i++) {
+        const [x, y] = pt(-280, 300);
+        const s = 6 + r() * 12;
+        g.star(x, y, 4, s, s * 0.3, r()).fill({ color: r() < 0.5 ? 0xfff4c8 : 0xffd77a, alpha: 0.95 });
+      }
+      break;
     default:
       break;
   }
@@ -163,14 +218,15 @@ export interface Variant {
  * The painting as this species looks (tint + overlay + decal). `size` = on-screen width of
  * the 700px painting. Anchored at its center.
  */
-export function variantSprite(species: string, size: number, o: { decals?: boolean; slug?: string; tint?: TintSpec | null } = {}): Variant {
+export function variantSprite(species: string, size: number, o: { decals?: boolean; slug?: string; tint?: TintSpec | null; mutation?: string | null } = {}): Variant {
   const def = CAT_BY_ID.get(species);
   const slug = o.slug ?? slugOf(species);
   const t: TintSpec | null | undefined = o.tint !== undefined ? o.tint : def?.art.tint;
+  const mut = mutationLook(o.mutation);
   const root = new Container();
   const inner = new Container();
   const tex = catTexture(slug);
-  const k = (size / Math.max(1, tex.width || 700)) * (t?.scale ?? 1);
+  const k = (size / Math.max(1, tex.width || 700)) * (t?.scale ?? 1) * (mut?.scale ?? 1);
   inner.scale.set(k);
   // "corona" decal = solar corona glow behind the painting
   if (t?.decal === 'corona') {
@@ -184,15 +240,34 @@ export function variantSprite(species: string, size: number, o: { decals?: boole
     const ring = new Graphics().circle(0, -60, 300).stroke({ width: 10, color: 0xffd974, alpha: 0.8 });
     inner.addChild(ring);
   }
+  // mutation: an outer glow ring + (for Doble Cola / Eco) art behind the painting
+  if (mut && o.decals !== false) {
+    const halo = new Sprite(glowTexture());
+    halo.anchor.set(0.5);
+    halo.tint = mut.color;
+    halo.scale.set(5.2);
+    halo.alpha = 0.45;
+    inner.addChild(halo);
+    if (mut.decal === 'doble_cola' || mut.decal === 'eco') {
+      const back = new Graphics();
+      drawDecal(back, mut.decal, species || slug);
+      inner.addChild(back);
+    }
+  }
   const sprite = new Sprite(tex);
   sprite.anchor.set(0.5);
   const f = tintFilter(t);
-  if (f) sprite.filters = [f];
-  sprite.tint = overlayTint(t);
+  const mf = mut?.tint ? tintFilter(mut.tint as TintSpec) : null;
+  const fl = [f, mf].filter((x): x is NonNullable<typeof x> => !!x);
+  if (fl.length) sprite.filters = fl;
+  sprite.tint = mut?.tint?.overlay ? overlayTint(mut.tint as TintSpec) : overlayTint(t);
   inner.addChild(sprite);
-  if (o.decals !== false && t?.decal && t.decal !== 'corona') {
+  const decals = [o.decals !== false && t?.decal && t.decal !== 'corona' ? t.decal : null, o.decals !== false && mut?.decal && mut.decal !== 'doble_cola' && mut.decal !== 'eco' ? mut.decal : null].filter(
+    (d): d is string => !!d,
+  );
+  for (const d of decals) {
     const dec = new Graphics();
-    drawDecal(dec, t.decal, species || slug);
+    drawDecal(dec, d, species || slug);
     const mask = new Sprite(tex);
     mask.anchor.set(0.5);
     inner.addChild(dec, mask);
@@ -200,6 +275,42 @@ export function variantSprite(species: string, size: number, o: { decals?: boole
   }
   root.addChild(inner);
   return { root, sprite };
+}
+
+/**
+ * Mutation look over a LIVE sprite (e.g. the island cat in the CatPanel): returns a container
+ * with the decal masked to the painting; call syncMutationOverlay every frame (the sprite
+ * breathes) — sprites can't own children in Pixi v8, so the overlay lives next to it.
+ */
+export function mutationOverlay(sprite: Sprite, species: string, mutation: string | null): Container | null {
+  const look = mutationLook(mutation);
+  if (!look) return null;
+  if (look.tint) {
+    const f = tintFilter(look.tint as TintSpec);
+    if (f) sprite.filters = [...(sprite.filters ?? []), f];
+  }
+  const wrap = new Container();
+  if (look.decal) {
+    const dec = new Graphics();
+    drawDecal(dec, look.decal, species);
+    if (look.decal !== 'doble_cola' && look.decal !== 'eco') drawDecal(dec, look.decal, species + '#2');
+    if (look.decal === 'doble_cola' || look.decal === 'eco') {
+      wrap.addChild(dec);
+      wrap.alpha = 0.9;
+    } else {
+      const mask = new Sprite(sprite.texture);
+      mask.anchor.set(0.5);
+      wrap.addChild(dec, mask);
+      dec.mask = mask;
+    }
+  }
+  return wrap;
+}
+export function syncMutationOverlay(wrap: Container, sprite: Sprite) {
+  if (wrap.destroyed || sprite.destroyed) return;
+  const th = sprite.texture.height || 700;
+  wrap.scale.set(sprite.scale.x, sprite.scale.y);
+  wrap.position.set(sprite.x, sprite.y - (sprite.anchor.y - 0.5) * th * sprite.scale.y);
 }
 
 const portraitCache = new Map<string, Texture>();

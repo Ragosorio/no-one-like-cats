@@ -14,18 +14,21 @@ import { scenes } from '../core/scenes';
 import { CATS, CONTENT, catDef } from '../data/content';
 import { G } from '../state/game';
 import { BAL } from '../state/econ';
-import { dexStatus, setsCompleted, starNeed } from '../state/sys/cats';
+import { canStarUp, checkSets, collState, dexStatus, setsCompleted, starNeed, takeSetCelebrations } from '../state/sys/cats';
+import { playPendingSets } from './collection/setPoster';
 import {
   dexCount,
   dexElements,
   dexTotal,
   elColor,
-  elEmoji,
   elName,
   hintFor,
   isElementKnown,
   limitationText,
+  mutationLook,
+  mutationShort,
   ownedOf,
+  obtainText,
   possibleParents,
   printRarity,
   PrintRarity,
@@ -37,7 +40,8 @@ import {
 } from '../state/ext/collection';
 import { CatCard, rarityColor, rarityName, fitText } from './collection/CatCard';
 import { ensureCatArt, portrait } from './collection/art';
-import { ScrollBox, chip, elBadge, GlitchText, Tab, clickable, clearChildren, guardModal, destroyTree, killTree } from './collection/ui';
+import { ScrollBox, chip, elBadge, GlitchText, Tab, clickable, clearChildren, guardModal, destroyTree, killTree, iconChip, prismaGem } from './collection/ui';
+import { elementIcon, iconText } from '../ui/elementIcon';
 import { playCatReveal } from '../fx/sequences/catReveal';
 import { slugOf } from '../art/tint';
 
@@ -54,7 +58,10 @@ let current: CatdexView | null = null;
 export async function openCatdex(species?: string, tab: TabId = 'cats') {
   await ensureCatArt();
   if (current && !current.modal.closed) current.modal.close();
-  current = new CatdexView(tab);
+  checkSets();
+  const sets = takeSetCelebrations();
+  if (sets.length) await playPendingSets(scenes.overlayLayer, sets);
+  current = new CatdexView(sets.length && !species ? 'sets' : tab);
   if (species) current.showDetail(species, false);
   return current;
 }
@@ -68,6 +75,7 @@ class CatdexView {
   private tab: TabId;
   private elFilter: string | null = null;
   private rarFilter: PrintRarity | 'secret' | null = null;
+  private stFilter: 'registered' | 'rumor' | 'unknown' | null = null;
   private grid?: ScrollBox;
   private list: string[] = [];
 
@@ -179,8 +187,10 @@ class CatdexView {
     const filters = new Container();
     filters.y = 186;
     p.addChild(filters);
-    const mk = (label: string, active: boolean, onTap: () => void, color?: number) => {
-      const c = chip(label, { bg: active ? (color ?? C.ink) : C.paper, fg: active ? C.paper : C.ink, size: 16, pad: 10 });
+    const mk = (label: string, active: boolean, onTap: () => void, color?: number, el?: string) => {
+      const c = el
+        ? iconChip(elementIcon(el, 22), label, { bg: active ? (color ?? C.ink) : C.paper, fg: active ? C.paper : C.ink, size: 16 })
+        : chip(label, { bg: active ? (color ?? C.ink) : C.paper, fg: active ? C.paper : C.ink, size: 16, pad: 10 });
       clickable(c, onTap, { lift: 2 });
       return c;
     };
@@ -197,23 +207,47 @@ class CatdexView {
     add(mk('TODOS', this.elFilter === null, () => this.filter(null, this.rarFilter)));
     for (const e of dexElements()) {
       if (!isElementKnown(e.id)) continue;
-      add(mk(`${e.emoji} ${e.name.toUpperCase()}`, this.elFilter === e.id, () => this.filter(e.id, this.rarFilter), elColor(e.id) === 0xffd400 ? C.ink : elColor(e.id)));
+      add(mk(e.name.toUpperCase(), this.elFilter === e.id, () => this.filter(e.id, this.rarFilter), elColor(e.id) === 0xffd400 ? C.ink : elColor(e.id), e.id));
     }
     x += 26;
-    const lab2 = txt('RAREZA', { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink, letterSpacing: 3 });
-    lab2.position.set(x, 6);
-    filters.addChild(lab2);
+    const lab3 = txt('ESTADO', { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink, letterSpacing: 3 });
+    lab3.position.set(x, 6);
+    filters.addChild(lab3);
     x += 78;
-    add(mk('TODAS', this.rarFilter === null, () => this.filter(this.elFilter, null)));
-    const rars: (PrintRarity | 'secret')[] = ['common', 'rare', 'epic', 'primordial', 'legendary', 'mythic', 'secret'];
+    const sts: [typeof this.stFilter, string, number][] = [
+      [null, 'TODOS', C.ink],
+      ['registered', 'REGISTRADOS', C.green],
+      ['rumor', 'RUMOR', C.red],
+      ['unknown', '???', C.violet],
+    ];
+    for (const [k, label, col] of sts) add(mk(label, this.stFilter === k, () => this.filterSt(k), col));
+    // second row: rarity
+    x = 0;
+    const row2 = 40;
+    const lab2 = txt('RAREZA', { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink, letterSpacing: 3 });
+    lab2.position.set(0, row2 + 6);
+    filters.addChild(lab2);
+    x = 96;
+    const add2 = (c: Container) => {
+      c.x = x;
+      c.y = row2;
+      filters.addChild(c);
+      x += c.width + 8;
+    };
+    add2(mk('TODAS', this.rarFilter === null, () => this.filter(this.elFilter, null)));
+    const rars: (PrintRarity | 'secret')[] = ['common', 'rare', 'epic', 'legendary', 'primordial', 'mythic', 'secret'];
     for (const r of rars) {
       const name = r === 'secret' ? 'SECRETO' : rarityName(r);
       const col = r === 'secret' ? C.violet : r === 'common' ? 0x6d6356 : rarityColor(r);
-      add(mk(name, this.rarFilter === r, () => this.filter(this.elFilter, r), col));
+      add2(mk(name, this.rarFilter === r, () => this.filter(this.elFilter, r), col));
     }
+    const shown = CATS.filter((c) => this.passes(c.id)).length;
+    const cnt = txt(`${shown} CARTAS`, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.pinkHot, letterSpacing: 2 });
+    cnt.position.set(x + 14, row2 + 6);
+    filters.addChild(cnt);
 
     // grid
-    const top = 236;
+    const top = 280;
     const grid = new ScrollBox(IW, IH - top, C.ink);
     grid.y = top;
     p.addChild(grid);
@@ -225,7 +259,7 @@ class CatdexView {
     this.list = CATS.filter((c) => this.passes(c.id)).map((c) => c.id);
     this.list.forEach((id, i) => {
       const owned = ownedOf(id);
-      const card = new CatCard(id, { w: cw, h: ch, stars: owned?.stars, level: owned?.level });
+      const card = new CatCard(id, { w: cw, h: ch, stars: owned?.stars, level: owned?.level, mutation: owned?.mutation, holo: !!owned?.holo });
       const holder = new Container();
       holder.addChild(card);
       const col = i % cols;
@@ -263,6 +297,9 @@ class CatdexView {
     const d = catDef(id);
     const st = dexStatus(id);
     if (this.elFilter && !d.elements.includes(this.elFilter)) return false;
+    if (this.stFilter === 'registered' && st !== 'registered') return false;
+    if (this.stFilter === 'rumor' && st !== 'rumor') return false;
+    if (this.stFilter === 'unknown' && st !== 'unknown' && st !== 'silhouette') return false;
     if (this.rarFilter) {
       if (this.rarFilter === 'secret') return d.secret;
       // rarity filter only matches what the player can know
@@ -270,6 +307,10 @@ class CatdexView {
       if (printRarity(id) !== this.rarFilter) return false;
     }
     return true;
+  }
+  private filterSt(st: 'registered' | 'rumor' | 'unknown' | null) {
+    this.stFilter = st;
+    this.setTab('cats');
   }
   private filter(el: string | null, r: PrintRarity | 'secret' | null) {
     this.elFilter = el;
@@ -330,63 +371,88 @@ class CatdexView {
   // ------------------------------------------------------------ sets
   private buildSets() {
     const p = this.page;
-    const head = txt('COMPLETAR UN SET  →  +10 PRISMA · RONRONEO · UNA REGLA NUEVA PARA SIEMPRE', { fontFamily: F.poster, fontSize: 26, fill: C.ink });
-    head.position.set(0, 186);
-    p.addChild(head);
+    checkSets();
     const done = new Set(setsCompleted().map((s) => s.id));
+    const head = txt(`COMPLETA UN SET  →  +${BAL.orbs.prisma_from_catdex_set} PRISMA · +${BAL.ronroneo.base_min.catdex_set} MIN DE RONRONEO · UNA REGLA DE COMBATE PARA SIEMPRE`, { fontFamily: F.poster, fontSize: 24, fill: C.ink });
+    head.position.set(0, 186);
+    fitText(head, IW - 220);
+    const act = chip(`${done.size}/${CONTENT.catdexSets.length} REGLAS ACTIVAS`, { bg: done.size ? C.pinkHot : C.ink, fg: C.paper, size: 16, font: F.poster });
+    act.position.set(IW - act.width, 188);
+    p.addChild(head, act);
     const colW = (IW - 20) / 2;
-    const sh = 100;
+    const sh = 104;
     CONTENT.catdexSets.forEach((set, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const c = new Container();
-      c.position.set(col * (colW + 20), 236 + row * (sh + 10));
+      c.position.set(col * (colW + 20), 230 + row * (sh + 8));
       const complete = done.has(set.id);
       const reg = set.cats.filter((id) => G.s.catdex[id] === 'registered').length;
+      const tone = elColor(catDef(set.cats[0]).elements[0]);
       const bg = new Graphics()
         .rect(5, 5, colW, sh)
         .fill(C.ink)
         .rect(0, 0, colW, sh)
         .fill(complete ? C.yellow : C.paper)
         .stroke({ width: 3, color: C.ink });
+      bg.rect(0, 0, 12, sh).fill(tone);
       c.addChild(bg);
       const n = Math.min(7, set.cats.length);
-      const sz = n > 5 ? 48 : n > 3 ? 56 : 64;
-      const membersW = n * (sz + 6);
-      const mx = colW - 112 - membersW;
-      const nm = poster(set.name.toUpperCase(), 30, C.ink);
-      nm.position.set(16, 4);
-      fitText(nm, mx - 30);
-      const rule = txt(set.rule, { fontFamily: F.ui, fontSize: 15, fill: C.ink, wordWrap: true, wordWrapWidth: mx - 36, lineHeight: 18 });
-      rule.position.set(16, 50);
+      const sz = n > 5 ? 44 : n > 3 ? 52 : 60;
+      const membersW = n * (sz + 5);
+      const mx = colW - 128 - membersW;
+      const nm = poster(set.name.toUpperCase(), 28, C.ink);
+      nm.position.set(26, 2);
+      fitText(nm, mx - 40);
+      const rule = txt(set.rule, { fontFamily: F.ui, fontWeight: complete ? '700' : '400', fontSize: 14, fill: C.ink, wordWrap: true, wordWrapWidth: mx - 46, lineHeight: 17 });
+      rule.position.set(26, 42);
+      if (rule.height > sh - 48) rule.scale.set((sh - 48) / rule.height);
       c.addChild(nm, rule);
-      // members
       set.cats.slice(0, 7).forEach((id, k) => {
         const st = dexStatus(id);
-        const x = mx + k * (sz + 6);
-        const frame = new Graphics().rect(x, (sh - sz) / 2, sz, sz).fill(st === 'registered' ? 0xffffff : C.paperDark).stroke({ width: 2, color: C.ink });
+        const x = mx + k * (sz + 5);
+        const y0 = 12;
+        const frame = new Graphics().rect(x, y0, sz, sz).fill(st === 'registered' ? 0xffffff : C.paperDark).stroke({ width: 2, color: C.ink });
         c.addChild(frame);
         if (st !== 'unknown') {
           const s = portrait(id, sz * 1.1, st === 'registered' ? 'color' : 'sil');
-          s.position.set(x + sz / 2, sh / 2 + 2);
-          const mask = new Graphics().rect(x, (sh - sz) / 2, sz, sz).fill(0xffffff);
+          s.position.set(x + sz / 2, y0 + sz / 2 + 2);
+          const mask = new Graphics().rect(x, y0, sz, sz).fill(0xffffff);
           s.mask = mask;
           c.addChild(s, mask);
         } else {
           const q = poster('?', sz * 0.6, C.ink);
           q.anchor.set(0.5);
-          q.position.set(x + sz / 2, sh / 2);
+          q.position.set(x + sz / 2, y0 + sz / 2);
           c.addChild(q);
         }
+        if (st === 'registered') {
+          const tick = new Graphics().circle(x + sz - 6, y0 + 6, 8).fill(C.green).stroke({ width: 2, color: C.ink });
+          tick.moveTo(x + sz - 10, y0 + 6).lineTo(x + sz - 7, y0 + 9).lineTo(x + sz - 2, y0 + 3).stroke({ width: 2, color: C.paper, cap: 'round' });
+          c.addChild(tick);
+        }
       });
-      const prog = poster(`${reg}/${set.cats.length}`, 44, complete ? C.ink : reg ? C.pinkHot : 0x9a8f80);
-      prog.anchor.set(1, 0.5);
-      prog.position.set(colW - 14, sh / 2);
+      // progress bar under the members
+      const bw = membersW - 5;
+      const pb = new Graphics().rect(mx, 12 + sz + 10, bw, 12).fill(C.paperDark).rect(mx, 12 + sz + 10, (bw * reg) / set.cats.length, 12).fill(complete ? C.pinkHot : tone).rect(mx, 12 + sz + 10, bw, 12).stroke({ width: 2, color: C.ink });
+      c.addChild(pb);
+      const prog = poster(`${reg}/${set.cats.length}`, 40, complete ? C.ink : reg ? C.pinkHot : 0x9a8f80);
+      prog.anchor.set(1, 0);
+      prog.position.set(colW - 14, 4);
       c.addChild(prog);
+      // reward line
+      const rw = new Container();
+      const gem = prismaGem(18);
+      gem.position.set(9, 10);
+      const rt = txt(complete ? 'COBRADO' : `+${BAL.orbs.prisma_from_catdex_set}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 14, fill: complete ? C.green : C.ink });
+      rt.position.set(22, 2);
+      rw.addChild(gem, rt);
+      rw.position.set(colW - 14 - rw.width, 60);
+      c.addChild(rw);
       if (complete) {
-        const st = chip('COMPLETO', { bg: C.pinkHot, fg: C.paper, size: 18, font: F.poster });
-        st.rotation = -0.12;
-        st.position.set(colW - 150, -12);
+        const st = chip('REGLA ACTIVA', { bg: C.pinkHot, fg: C.paper, size: 16, font: F.poster });
+        st.rotation = -0.08;
+        st.position.set(colW - 250, -12);
         c.addChild(st);
       }
       p.addChild(c);
@@ -499,7 +565,7 @@ class DetailSheet extends Container {
     this.addChild(back, prev, next);
 
     // big card
-    const card = new CatCard(species, { w: 400, h: 540, hires: true, stars: owned?.stars, level: owned?.level });
+    const card = new CatCard(species, { w: 400, h: 540, hires: true, stars: owned?.stars, level: owned?.level, mutation: owned?.mutation, holo: !!owned?.holo });
     card.position.set(40, 90);
     card.rotation = -0.025;
     this.addChild(card);
@@ -531,11 +597,13 @@ class DetailSheet extends Container {
       cx += c.width + 10;
     };
     if (known) addChip(chip(rarityName(rar), { bg: rar === 'common' ? 0x6d6356 : rarityColor(rar), fg: rar === 'legendary' ? C.ink : C.paper, size: 18, font: F.poster }));
-    for (const e of def.elements) addChip(chip(`${elEmoji(e)} ${elName(e)}`, { bg: elColor(e), fg: e === 'storm' ? C.ink : C.paper, size: 18, font: F.poster }));
+    for (const e of def.elements) addChip(iconChip(elementIcon(e, 26), elName(e), { bg: elColor(e), fg: e === 'storm' ? C.ink : C.paper, size: 18, font: F.poster }));
     if (st === 'registered') {
       addChip(chip(roleName(def).toUpperCase(), { bg: C.paper, fg: C.ink, size: 18, font: F.poster }));
-      const tr = traitInfo(def.trait);
-      if (tr) addChip(chip(`RASGO: ${tr.name.toUpperCase()}`, { bg: C.paper, fg: C.ink, size: 18, font: F.poster }));
+      const tr = traitInfo(owned?.trait ?? def.trait);
+      if (tr) addChip(chip(`RASGO: ${tr.name.toUpperCase()}`, { bg: C.lilac, fg: C.ink, size: 18, font: F.poster }));
+      const mu = owned?.mutation ? mutationShort(owned.mutation) : null;
+      if (mu) addChip(chip(`MUTACIÓN: ${mu.toUpperCase()}`, { bg: mutationLook(owned!.mutation)?.color ?? C.pinkHot, fg: C.ink, size: 18, font: F.poster }));
       const wk = workerName(def.worker);
       if (wk) addChip(chip(`OFICIO: ${wk.toUpperCase()}`, { bg: C.mint, fg: C.ink, size: 18, font: F.poster }));
     }
@@ -549,6 +617,12 @@ class DetailSheet extends Container {
   private section(title: string, body: string, x: number, y: number, w: number, o: { color?: number; italic?: boolean; size?: number } = {}) {
     const t = txt(title, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: o.color ?? C.pinkHot, letterSpacing: 3 });
     t.position.set(x, y);
+    if (/\{(fire|water|nature|earth|storm|magic|cosmic|void)\}/.test(body)) {
+      const ib = iconText(body, { fontFamily: F.ui, fontSize: o.size ?? 20, fill: C.ink }, { wrap: w });
+      ib.position.set(x, y + 20);
+      this.addChild(t, ib);
+      return y + 20 + ib.height + 18;
+    }
     const b = txt(body, {
       fontFamily: o.italic ? F.serif : F.ui,
       fontStyle: o.italic ? 'italic' : 'normal',
@@ -607,7 +681,7 @@ class DetailSheet extends Container {
     yB = this.section('PASIVA', def.combat.passive, XB, yB, colW);
     yB = this.section('★3', def.combat.star3.replace(/^★3:\s*/, ''), XB, yB, colW, { color: 0xb8862a });
     yB = this.section('★5', def.combat.star5.replace(/^★5:\s*/, ''), XB, yB, colW, { color: 0xb8862a });
-    yB = this.section('CÓMO SE OBTIENE', def.obtain.how, XB, yB, colW, { color: C.ink, size: 18 });
+    yB = this.section('CÓMO SE OBTIENE', obtainText(def), XB, yB, colW, { color: C.ink, size: 18 });
     yB = this.section('LORE', def.lore, XB, yB, colW, { italic: true, color: C.ink, size: 22 });
 
     // owner strip
@@ -623,7 +697,8 @@ class DetailSheet extends Container {
       const t2 = txt(`${stars}   ORBES ${have}/${need}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.yellow, letterSpacing: 1 });
       t2.position.set(X + 14, yo + 50);
       this.addChild(strip, t1, t2);
-      const alt = new Button('ALTAR', () => hooks.onAltar(owned.uid), { w: 170, h: 60, size: 28, color: C.yellow });
+      const can = canStarUp(owned, collState().usePrisma !== false);
+      const alt = new Button(can ? '¡ALTAR!' : 'ALTAR', () => hooks.onAltar(owned.uid), { w: 170, h: 60, size: 28, color: can ? C.pinkHot : C.paper, textColor: can ? C.paper : C.ink });
       alt.position.set(XB, yo + 12);
       this.addChild(alt);
     }
@@ -669,7 +744,7 @@ class DetailSheet extends Container {
       const missing = def.elements.filter((e) => !isElementKnown(e));
       y = this.section(
         'SIN DESCUBRIR',
-        `Necesitas descubrir ${missing.map((e) => `${elEmoji(e)} ${elName(e)}`).join(' y ')} para ver siquiera su silueta.`,
+        `Necesitas descubrir ${missing.map((e) => `{${e}} ${elName(e)}`).join(' y ')} para ver siquiera su silueta.`,
         X,
         y,
         RW - 200,

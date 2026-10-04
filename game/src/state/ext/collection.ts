@@ -4,9 +4,10 @@
  */
 import { G, OwnedCat, ResonanceJob } from '../game';
 import { CATS, CONTENT, ELEMENTS, ELEMENT_BY_ID, ROLE_BY_ID, catDef, CatDef, ElementDef } from '../../data/content';
-import { BAL, RarityId, catGoldPerSec, catPower, starMinLevel, starMult } from '../econ';
-import { cat as getCat, starNeed, canStarUp, speciesCount } from '../sys/cats';
-import { busyCats, revealCopy } from '../sys/resonance';
+import { BAL, RarityId, catGoldPerSec, catLevelCap, catPower, starMinLevel, starMult } from '../econ';
+import { cat as getCat, starNeed, canStarUp, speciesCount, mutationDef, traitInfoById } from '../sys/cats';
+import { busyCats, freeSlots, queuedCats, queueUnlocked, revealCopy, startResonance } from '../sys/resonance';
+import { queueResonance, resonanceQueue } from '../sys/workforce';
 
 export type PrintRarity = RarityId | 'primordial';
 
@@ -25,8 +26,9 @@ export function rarityRank(r: PrintRarity) {
 export function elementDef(id: string): ElementDef | undefined {
   return ELEMENT_BY_ID.get(id);
 }
-export function elEmoji(id: string) {
-  return ELEMENT_BY_ID.get(id)?.emoji ?? '❔';
+/** plain element name for text (no emoji ever: draw badges with ui/elementIcon) */
+export function elLabel(id: string) {
+  return ELEMENT_BY_ID.get(id)?.name ?? id;
 }
 export function elName(id: string) {
   return (ELEMENT_BY_ID.get(id)?.name ?? id).toUpperCase();
@@ -67,7 +69,7 @@ export function roleName(def: CatDef) {
   return ROLE_BY_ID.get(def.role)?.name ?? def.role;
 }
 export function traitInfo(id: string) {
-  return CONTENT.traits.find((t) => t.id === id);
+  return traitInfoById(id) ?? undefined;
 }
 export function workerName(id: string | null) {
   if (!id) return null;
@@ -75,20 +77,70 @@ export function workerName(id: string | null) {
   return w?.name ?? id;
 }
 export function mutationInfo(id: string | null) {
-  if (!id) return null;
-  const list = (CONTENT as unknown as { mutations: { id: string; name: string; effect: string }[] }).mutations ?? [];
-  return list.find((m) => m.id === id) ?? null;
+  return mutationDef(id);
 }
+/** short display name ("Chamuscado (Scorched)" → "Chamuscado") */
+export function mutationShort(id: string | null) {
+  const m = mutationDef(id);
+  return m ? m.name.replace(/\s*\(.*\)\s*/g, '').trim() : null;
+}
+/**
+ * How a mutation LOOKS (reveal stamp, card decal, panel art): decal drawn over the painting,
+ * optional tint and scale. Pure presentation; the combat effect lives in content.mutations.
+ */
+export interface MutationLook {
+  decal: string | null;
+  color: number;
+  /** element whose badge represents it (null = DNA glyph) */
+  el: string | null;
+  tint?: { hue?: number; sat?: number; bright?: number; overlay?: string; overlayAlpha?: number };
+  scale?: number;
+  /** onomatopoeia for the reveal beat */
+  sfxWord: string;
+}
+const MUT_LOOK: Record<string, MutationLook> = {
+  conductividad: { decal: 'rayos', color: 0xffd400, el: 'storm', sfxWord: '¡BZZT!' },
+  chamuscado: { decal: 'brasas', color: 0xff6a1a, el: 'fire', tint: { overlay: '#4e0000', overlayAlpha: 0.22, sat: 1.1 }, sfxWord: '¡FSSSH!' },
+  escarchado: { decal: 'escarcha', color: 0x9fe8ff, el: 'water', tint: { overlay: '#bfefff', overlayAlpha: 0.3, sat: 0.8, bright: 1.05 }, sfxWord: '¡KRSHH!' },
+  musgoso: { decal: 'musgo', color: 0x5fbf4a, el: 'nature', sfxWord: '¡FWUMP!' },
+  fosilizado: { decal: 'grietas', color: 0xa8743f, el: 'earth', tint: { overlay: '#a8743f', overlayAlpha: 0.2, sat: 0.7 }, sfxWord: '¡KRAK!' },
+  runico: { decal: 'runas', color: 0xff7ab8, el: 'magic', sfxWord: '¡ZHING!' },
+  estelar: { decal: 'estrellas', color: 0x8a5cff, el: 'cosmic', tint: { overlay: '#2a1a5c', overlayAlpha: 0.18 }, sfxWord: '¡VWOOM!' },
+  doble_cola: { decal: 'doble_cola', color: 0xff2e88, el: null, sfxWord: '¡FLIP FLOP!' },
+  gigantismo: { decal: null, color: 0xffc94a, el: null, scale: 1.15, sfxWord: '¡BWOMP!' },
+  eco_paterno: { decal: 'eco', color: 0x00e5ff, el: null, sfxWord: '¡ECO!' },
+  bigote_dorado: { decal: 'oro', color: 0xffd77a, el: null, tint: { overlay: '#ffd77a', overlayAlpha: 0.32, sat: 1.15, bright: 1.08 }, sfxWord: '¡BLING!' },
+};
+export function mutationLook(id: string | null | undefined): MutationLook | null {
+  if (!id) return null;
+  return MUT_LOOK[id] ?? { decal: null, color: C_MUT, el: null, sfxWord: '¡MUTA!' };
+}
+const C_MUT = 0xff2e88;
 export function limitationText(def: CatDef): string | null {
   const l = def.combat.limitation as unknown;
   if (!l) return null;
   if (typeof l === 'string') return l;
   return (l as { text?: string }).text ?? null;
 }
+/** "cómo se obtiene", readable: strips design jargon (bucket, CHARLA, Ruta A/B…) */
+export function obtainText(def: CatDef): string {
+  let t = def.obtain.how;
+  t = t
+    .replace(/\s*\((?:bucket [^)]*|CHARLA|balance[^)]*|sim[^)]*)\)/gi, '')
+    .replace(/\s*→\s*bucket\s*'\?\?\?'/gi, ' (sale en la fila ??? de la tabla)')
+    .replace(/También puede salir en '\?\?\?'\.?/gi, 'También puede salir en la fila ??? de la tabla.')
+    .replace(/\s*Mutación estrella:\s*[^.]+\./gi, '')
+    .replace(/Ruta A:\s*/g, '• Con suerte: ')
+    .replace(/\s*Ruta B:\s*/g, '\n• A la segura: ')
+    .replace(/'Error 404'/g, '«Error 404»')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return t;
+}
 /** human "possible parents" line for rumors */
 export function possibleParents(def: CatDef): string {
   if (def.secret) return def.hint ?? 'Nadie sabe. Literalmente nadie.';
-  return def.obtain.how;
+  return obtainText(def);
 }
 export function hintFor(def: CatDef): string | null {
   return def.hint;
@@ -118,9 +170,15 @@ export function reactionKnown(r: { id: string; name: string }) {
 // ---------------------------------------------------------------- resonance
 export function pickerCats() {
   const busy = busyCats();
+  const queued = queuedCats();
   return [...G.s.cats]
-    .map((c) => ({ cat: c, def: catDef(c.species), busy: busy.has(c.uid) }))
-    .sort((a, b) => Number(a.busy) - Number(b.busy) || rarityRank(printRarity(b.cat.species)) - rarityRank(printRarity(a.cat.species)) || b.cat.level - a.cat.level);
+    .map((c) => ({ cat: c, def: catDef(c.species), busy: busy.has(c.uid), queued: queued.has(c.uid) }))
+    .sort(
+      (a, b) =>
+        Number(a.busy || a.queued) - Number(b.busy || b.queued) ||
+        rarityRank(printRarity(b.cat.species)) - rarityRank(printRarity(a.cat.species)) ||
+        b.cat.level - a.cat.level,
+    );
 }
 
 /** Canelo + Brote while the tutorial resonance (mission H06) is pending */
@@ -194,6 +252,7 @@ export interface RevealInfo {
   dex: [number, number, number];
   chips: string[];
   mutation: string | null;
+  mutationId: string | null;
   secret: boolean;
 }
 type RevealCopy = Record<string, string | string[]>;
@@ -203,7 +262,7 @@ function pickCopy(key: string) {
   const list = Array.isArray(v) ? v : [v];
   return list[Math.floor(Math.random() * list.length)];
 }
-export function revealInfo(species: string, isNew: boolean, orbs: number, mutation: string | null = null): RevealInfo {
+export function revealInfo(species: string, isNew: boolean, orbs: number, mutation: string | null = null, trait?: string): RevealInfo {
   const def = catDef(species);
   const rarity = printRarity(species);
   const reg = dexCount();
@@ -225,7 +284,8 @@ export function revealInfo(species: string, isNew: boolean, orbs: number, mutati
   } else {
     caption = def.secret ? pickCopy('secret').replace('{name}', def.name) : revealCopy(def.rarity, def.name);
   }
-  const chips = [roleName(def).toUpperCase(), (traitInfo(def.trait)?.name ?? def.trait).toUpperCase(), def.combat.shot.name.toUpperCase()];
+  const tid = trait ?? def.trait;
+  const chips = [roleName(def).toUpperCase(), `RASGO: ${(traitInfo(tid)?.name ?? tid).toUpperCase()}`, def.combat.shot.name.toUpperCase()];
   return {
     species,
     name: def.name,
@@ -238,7 +298,8 @@ export function revealInfo(species: string, isNew: boolean, orbs: number, mutati
     dup,
     dex,
     chips,
-    mutation: mutationInfo(mutation)?.name ?? null,
+    mutation: mutationShort(mutation),
+    mutationId: mutation,
     secret: def.secret,
   };
 }
@@ -246,6 +307,10 @@ export function revealInfo(species: string, isNew: boolean, orbs: number, mutati
 // ---------------------------------------------------------------- stars (Altar)
 export interface StarInfo {
   cat: OwnedCat;
+  usePrisma: boolean;
+  /** cat level cap right now (Reino + 5) and the Reino needed to reach minLevel */
+  levelCap: number;
+  needKl: number;
   max: boolean;
   next: number;
   need: number;
@@ -264,19 +329,23 @@ export interface StarInfo {
   goldNext: number;
   hpNow: number;
 }
-export function starInfo(c: OwnedCat): StarInfo {
+export function starInfo(c: OwnedCat, usePrisma = true): StarInfo {
   const def = catDef(c.species);
   const max = c.stars >= BAL.cats.stars.max;
   const next = Math.min(BAL.cats.stars.max, c.stars + 1);
   const need = max ? 0 : starNeed(c);
   const own = G.s.orbs[c.species] ?? 0;
   const prisma = G.s.prisma;
-  const prismaUse = Math.max(0, Math.min(prisma, need - own));
+  const prismaUse = usePrisma ? Math.max(0, Math.min(prisma, need - own)) : 0;
   const minLevel = max ? 0 : starMinLevel(c.stars);
   const gm = def.economy.goldMod ?? 1;
   const unlockKey = BAL.cats.stars.unlocks[next - 1] ?? '';
+  const cap = catLevelCap(G.s.kl);
   return {
     cat: c,
+    usePrisma,
+    levelCap: cap,
+    needKl: Math.max(1, minLevel - 5),
     max,
     next,
     need,
@@ -285,8 +354,8 @@ export function starInfo(c: OwnedCat): StarInfo {
     prismaUse,
     minLevel,
     levelOk: c.level >= minLevel,
-    orbsOk: own + prisma >= need,
-    can: canStarUp(c),
+    orbsOk: own + (usePrisma ? prisma : 0) >= need,
+    can: canStarUp(c, usePrisma),
     unlockKey,
     unlockText: starUnlockText(def, next),
     powerNow: catPower(def.rarity, c.level, c.stars),
@@ -295,6 +364,50 @@ export function starInfo(c: OwnedCat): StarInfo {
     goldNext: catGoldPerSec(def.rarity, c.level, next) * gm,
     hpNow: ROLE_BY_ID.get(def.role)?.hp ?? 100,
   };
+}
+/** what's missing to star up, in plain words ("" if nothing) */
+export function starMissing(si: StarInfo): string {
+  if (si.max) return '';
+  const parts: string[] = [];
+  if (!si.levelOk) {
+    parts.push(`Nv ${si.minLevel} (tiene ${si.cat.level})`);
+  }
+  if (!si.orbsOk) {
+    const miss = si.need - si.own - si.prismaUse;
+    parts.push(`${miss} orbe${miss === 1 ? '' : 's'}`);
+  }
+  return parts.length ? `Falta ${parts.join(' y ')}` : '';
+}
+/** the level cap blocks the next star until the Reino grows */
+export function starCapNote(si: StarInfo): string | null {
+  if (si.max || si.levelOk || si.minLevel <= si.levelCap) return null;
+  return `Tope actual Nv ${si.levelCap}: llega a Reino ${si.needKl} para alimentarlo hasta Nv ${si.minLevel}.`;
+}
+export interface StarStep {
+  star: number;
+  minLevel: number;
+  title: string;
+  text: string;
+  state: 'done' | 'next' | 'locked';
+}
+/** ★2…★max roadmap with what each star gives */
+export function starRoadmap(c: OwnedCat): StarStep[] {
+  const def = catDef(c.species);
+  const out: StarStep[] = [];
+  for (let s = 2; s <= BAL.cats.stars.max; s++) {
+    out.push({
+      star: s,
+      minLevel: starMinLevel(s - 1),
+      title: STAR_TITLE[s] ?? '',
+      text: starUnlockText(def, s),
+      state: c.stars >= s ? 'done' : c.stars + 1 === s ? 'next' : 'locked',
+    });
+  }
+  return out;
+}
+const STAR_TITLE: Record<number, string> = { 2: 'MÁS GATO', 3: 'EFECTO SECUNDARIO', 4: 'ATAQUE NUEVO', 5: 'MAESTRÍA', 6: 'FORMA ASCENDIDA' };
+export function starTitle(star: number) {
+  return STAR_TITLE[star] ?? '';
 }
 export function starUnlockText(def: CatDef, star: number): string {
   switch (star) {
@@ -313,4 +426,57 @@ export function starUnlockText(def: CatDef, star: number): string {
     default:
       return '';
   }
+}
+
+// ---------------------------------------------------------------- queue (KL18) + REPETIR CRUCE
+/** queue a pair through workforce.queueResonance (cats in a running job or already queued are refused) */
+export function enqueuePair(a: string, b: string): boolean {
+  if (!queueUnlocked() || a === b) return false;
+  const busy = busyCats();
+  const queued = queuedCats();
+  if (busy.has(a) || busy.has(b) || queued.has(a) || queued.has(b)) return false;
+  if (!queueResonance(a, b)) return false;
+  G.count('feature_resonance_queue');
+  return true;
+}
+export function dequeuePair(i: number) {
+  const q = resonanceQueue();
+  if (i < 0 || i >= q.length) return false;
+  q.splice(i, 1);
+  return true;
+}
+export function queueCap() {
+  return 3 * G.s.resonance.slots;
+}
+export type RepeatResult = 'started' | 'queued' | 'busy' | 'noslot' | 'queuefull' | 'missing';
+/** start the same pair again, or queue it when every slot is busy */
+export function repeatCross(a: string, b: string): { r: RepeatResult; job?: ResonanceJob } {
+  if (!getCat(a) || !getCat(b) || a === b) return { r: 'missing' };
+  const busy = busyCats();
+  const queued = queuedCats();
+  if (busy.has(a) || busy.has(b) || queued.has(a) || queued.has(b)) return { r: 'busy' };
+  if (freeSlots() > 0) {
+    const job = startResonance(a, b);
+    return job ? { r: 'started', job } : { r: 'busy' };
+  }
+  if (!queueUnlocked()) return { r: 'noslot' };
+  if (resonanceQueue().length >= queueCap()) return { r: 'queuefull' };
+  return enqueuePair(a, b) ? { r: 'queued' } : { r: 'busy' };
+}
+export function repeatExplain(r: RepeatResult): string {
+  switch (r) {
+    case 'busy':
+      return 'Uno de los dos está ocupado (resonando o en la cola).';
+    case 'noslot':
+      return 'No hay ranura libre. Revela o espera; la Cola llega en el Reino ' + queueKlText() + '.';
+    case 'queuefull':
+      return 'La Cola está llena (3 parejas por ranura).';
+    case 'missing':
+      return 'Esa pareja ya no existe.';
+    default:
+      return '';
+  }
+}
+function queueKlText() {
+  return String(BAL.automation.find((x) => x.id === 'resonance_queue')?.kl ?? 18);
 }

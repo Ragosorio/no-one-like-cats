@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { C, F } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { sfx } from '../../core/audio';
-import { elColor, elEmoji } from '../../state/ext/collection';
+import { elementIcon } from '../../ui/elementIcon';
 import type { Modal } from '../../ui/modal';
 
 /**
@@ -143,14 +143,95 @@ export function chip(text: string, o: { bg?: number; fg?: number; size?: number;
   return c;
 }
 
-/** element disc with emoji */
+/** element badge (SVG insignia, never emoji), centered */
 export function elBadge(el: string, r = 22) {
   const c = new Container();
-  const g = new Graphics().circle(0, 0, r).fill(elColor(el)).stroke({ width: Math.max(2, r * 0.14), color: C.ink });
-  const t = txt(elEmoji(el), { fontSize: r * 1.1 });
-  t.anchor.set(0.5);
-  t.y = 1;
-  c.addChild(g, t);
+  c.addChild(elementIcon(el, r * 2));
+  return c;
+}
+/** a row of element badges; origin = left edge, vertically centered */
+export function elIcons(els: string[], size = 24, gap = 4) {
+  const c = new Container();
+  els.forEach((e, i) => {
+    const s = elementIcon(e, size);
+    s.position.set(size / 2 + i * (size + gap), 0);
+    c.addChild(s);
+  });
+  return c;
+}
+
+// ---------------------------------------------------------------- drawn symbols (no emoji glyphs)
+/** green check / red cross in a disc */
+export function okMark(ok: boolean, r = 13) {
+  const g = new Graphics().circle(0, 0, r).fill(ok ? C.green : C.red).stroke({ width: 2, color: C.ink });
+  if (ok) g.moveTo(-r * 0.45, 0).lineTo(-r * 0.1, r * 0.38).lineTo(r * 0.5, -r * 0.4).stroke({ width: Math.max(2, r * 0.25), color: C.paper, cap: 'round', join: 'round' });
+  else g.moveTo(-r * 0.4, -r * 0.4).lineTo(r * 0.4, r * 0.4).moveTo(r * 0.4, -r * 0.4).lineTo(-r * 0.4, r * 0.4).stroke({ width: Math.max(2, r * 0.25), color: C.paper, cap: 'round' });
+  return g;
+}
+/** Prisma gem (cyan diamond) */
+export function prismaGem(s = 26) {
+  const g = new Graphics().poly([0, -s / 2, s * 0.45, 0, 0, s / 2, -s * 0.45, 0]).fill(C.cyan).stroke({ width: Math.max(2, s * 0.1), color: C.ink });
+  g.moveTo(-s * 0.18, -s * 0.12).lineTo(0, -s * 0.32).stroke({ width: Math.max(1.5, s * 0.07), color: 0xffffff, alpha: 0.8, cap: 'round' });
+  return g;
+}
+/** comic heart */
+export function heart(s = 34, color: number = C.pinkHot) {
+  const g = new Graphics();
+  const r = s * 0.28;
+  g.moveTo(0, s * 0.38)
+    .bezierCurveTo(-s * 0.6, 0, -s * 0.5, -s * 0.45, -r * 0.2, -s * 0.22)
+    .bezierCurveTo(-r * 0.05, -s * 0.15, r * 0.05, -s * 0.15, r * 0.2, -s * 0.22)
+    .bezierCurveTo(s * 0.5, -s * 0.45, s * 0.6, 0, 0, s * 0.38)
+    .closePath()
+    .fill(color)
+    .stroke({ width: Math.max(2, s * 0.1), color: C.ink, join: 'round' });
+  return g;
+}
+/** pencil glyph */
+export function pencil(s = 22, color: number = C.ink) {
+  const g = new Graphics();
+  g.rotation = -0.78;
+  g.rect(-s * 0.5, -s * 0.13, s * 0.75, s * 0.26).fill(C.yellow).stroke({ width: 2, color });
+  g.poly([s * 0.25, -s * 0.13, s * 0.5, 0, s * 0.25, s * 0.13]).fill(C.paper).stroke({ width: 2, color });
+  g.rect(-s * 0.62, -s * 0.13, s * 0.12, s * 0.26).fill(C.pink).stroke({ width: 2, color });
+  return g;
+}
+/** DNA helix (mutation glyph) */
+export function dnaIcon(s = 24, color: number = C.pinkHot) {
+  const g = new Graphics();
+  const h = s;
+  const w = s * 0.42;
+  for (let i = 0; i <= 4; i++) {
+    const y = -h / 2 + (i / 4) * h;
+    const k = Math.sin((i / 4) * Math.PI * 2);
+    g.moveTo(-w * k, y).lineTo(w * k, y);
+  }
+  g.stroke({ width: Math.max(1.5, s * 0.08), color: C.ink, alpha: 0.7 });
+  const pts = (sign: number) => {
+    for (let i = 0; i <= 16; i++) {
+      const t = i / 16;
+      const x = sign * w * Math.sin(t * Math.PI * 2);
+      const y = -h / 2 + t * h;
+      if (i === 0) g.moveTo(x, y);
+      else g.lineTo(x, y);
+    }
+  };
+  pts(1);
+  g.stroke({ width: Math.max(2, s * 0.14), color, cap: 'round' });
+  pts(-1);
+  g.stroke({ width: Math.max(2, s * 0.14), color: C.ink, cap: 'round' });
+  return g;
+}
+/** small "label + icon" chip: icon drawn at the left */
+export function iconChip(node: Container, text: string, o: { bg?: number; fg?: number; size?: number; font?: string } = {}) {
+  const c = new Container();
+  const size = o.size ?? 16;
+  const t = txt(text, { fontFamily: o.font ?? F.ui, fontWeight: '700', fontSize: size, fill: o.fg ?? C.paper, letterSpacing: 1 });
+  const iw = size * 1.25;
+  const g = new Graphics().rect(0, 0, t.width + iw + 22, t.height + 4).fill(o.bg ?? C.ink).stroke({ width: 2, color: C.ink });
+  node.position.set(8 + iw / 2, (t.height + 4) / 2);
+  t.position.set(14 + iw, 2);
+  c.addChild(g, node, t);
   return c;
 }
 

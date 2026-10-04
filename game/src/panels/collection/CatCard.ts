@@ -10,7 +10,9 @@ import { C, F, RARITY } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { catDef } from '../../data/content';
 import { dexStatus, DexStatus } from '../../state/sys/cats';
-import { elColor, elEmoji, printRarity, PrintRarity } from '../../state/ext/collection';
+import { elColor, mutationLook, mutationShort, printRarity, PrintRarity } from '../../state/ext/collection';
+import { elementIcon } from '../../ui/elementIcon';
+import { dnaIcon } from './ui';
 import { cardFace, cardLayout, CardLayout, noiseTile, rainbowTile, sheenTexture, PrintStyle } from './printTextures';
 import { portrait, variantSprite } from './art';
 
@@ -29,6 +31,10 @@ export interface CatCardOpts {
   /** show "RUMOR"/"NUEVO" style ribbon text */
   ribbon?: string;
   serial?: number;
+  /** owned cat's mutation: decal/tint on the hires painting + a DNA badge */
+  mutation?: string | null;
+  /** foil/holographic variant (OwnedCat.holo, gacha) */
+  holo?: boolean;
 }
 
 const live = new Set<CatCard>();
@@ -110,7 +116,7 @@ export class CatCard extends Container {
     let node: Container;
     if (this.status === 'registered') {
       if (o.hires) {
-        const v = variantSprite(species, size);
+        const v = variantSprite(species, size, { mutation: o.mutation ?? null });
         node = v.root;
       } else node = portrait(species, size, 'color');
     } else {
@@ -126,11 +132,9 @@ export class CatCard extends Container {
     def.elements.forEach((el, i) => {
       const bx = L.win.x + r + 4 + i * (r * 2 + 3);
       const by = L.win.y + r + 4;
-      const g = new Graphics().circle(bx, by, r).fill(elColor(el)).stroke({ width: Math.max(2, r * 0.18), color: C.ink });
-      const em = txt(elEmoji(el), { fontSize: r * 1.15 });
-      em.anchor.set(0.5);
-      em.position.set(bx, by + 1);
-      this.addChild(g, em);
+      const em = elementIcon(el, r * 2.1);
+      em.position.set(bx, by);
+      this.addChild(em);
     });
 
     // stars (top-right) — progress, never rarity
@@ -143,6 +147,20 @@ export class CatCard extends Container {
           .stroke({ width: Math.max(1.5, ss * 0.22), color: C.ink });
         this.addChild(g);
       }
+    }
+    const mlook = this.status === 'registered' ? mutationLook(o.mutation) : null;
+    if (mlook) {
+      const fs = Math.max(10, w * 0.06);
+      const mt = txt(mutationShort(o.mutation ?? null)?.toUpperCase() ?? 'MUTACIÓN', { fontFamily: F.ui, fontWeight: '700', fontSize: fs, fill: C.ink });
+      fitText(mt, L.win.w * 0.55);
+      const dn = dnaIcon(fs * 1.2, C.ink);
+      const mb = new Graphics().rect(0, 0, mt.width + fs * 1.4 + 14, mt.height + 2).fill(mlook.color).stroke({ width: 2, color: C.ink });
+      const mc = new Container();
+      dn.position.set(5 + fs * 0.6, (mt.height + 2) / 2);
+      mt.position.set(10 + fs * 1.2, 1);
+      mc.addChild(mb, dn, mt);
+      mc.position.set(L.win.x + 3, L.win.y + L.win.h - mc.height - 3);
+      this.addChild(mc);
     }
     if (o.level && this.status === 'registered') {
       const lt = txt(`Nv ${o.level}`, { fontFamily: F.ui, fontWeight: '700', fontSize: Math.max(11, w * 0.075), fill: C.paper });
@@ -163,8 +181,7 @@ export class CatCard extends Container {
     fitText(nt, L.plate.w - 8);
     nt.position.set(w / 2, L.plate.y + L.plate.h * 0.1);
     this.addChild(nt);
-    const rl = known ? rarityName(this.rarity) : def.elements.map((e) => elEmoji(e)).join(' ') + '  ¿?';
-    const rt = txt(known ? rl : 'SIN REGISTRO', {
+    const rt = txt(known ? rarityName(this.rarity) : 'SIN REGISTRO', {
       fontFamily: F.ui,
       fontWeight: '700',
       fontSize: Math.max(10, Math.round(L.plate.h * 0.2)),
@@ -187,7 +204,41 @@ export class CatCard extends Container {
 
     this.addChild(this.fx);
     if (o.live !== false && known) this.buildLive(accent);
+    if (o.holo && this.status === 'registered') this.buildHolo();
   }
+
+  /** foil variant: rainbow sheen over the whole card + "HOLO" corner */
+  private buildHolo() {
+    const { cw: w, ch: h } = this;
+    const mask = new Graphics().rect(0, 0, w, h).fill(0xffffff);
+    const holo = new TilingSprite({ texture: rainbowTile(), width: w, height: h });
+    holo.alpha = 0.32;
+    holo.blendMode = 'add';
+    holo.tileScale.set(Math.max(1, w / 140), 1);
+    holo.mask = mask;
+    const s = new Sprite(sheenTexture());
+    s.anchor.set(0.5);
+    s.width = w * 0.5;
+    s.height = h * 2.2;
+    s.rotation = -0.5;
+    s.blendMode = 'add';
+    s.alpha = 0.6;
+    s.tint = 0xbff9ff;
+    s.mask = mask;
+    const tag = txt('HOLO', { fontFamily: F.poster, fontSize: Math.max(9, w * 0.07), fill: C.ink, letterSpacing: 1 });
+    const tb = new Graphics().rect(0, 0, tag.width + 8, tag.height).fill(C.cyan).stroke({ width: 2, color: C.ink });
+    const tc = new Container();
+    tag.position.set(4, 0);
+    tc.addChild(tb, tag);
+    tc.position.set(w - tc.width - this.L.b, this.L.plate.y - tc.height - 2);
+    this.addChild(mask, holo, s, tc);
+    this.holoFoil = holo;
+    this.holoSheen = s;
+    live.add(this);
+    ensureTicker();
+  }
+  private holoFoil?: TilingSprite;
+  private holoSheen?: Sprite;
 
   private buildBack(secret: boolean) {
     const { cw: w, ch: h } = this;
@@ -308,6 +359,14 @@ export class CatCard extends Container {
       this.sheen.y = h / 2;
     }
     if (this.holo) this.holo.tilePosition.x = tt * 60;
+    if (this.holoFoil) {
+      this.holoFoil.tilePosition.set(tt * 45, tt * 12);
+      if (this.holoSheen) {
+        const k = (tt % 2.6) / 2.6;
+        this.holoSheen.x = -w * 0.5 + k * w * 2;
+        this.holoSheen.y = h / 2;
+      }
+    }
     // on twos (12 fps) for the noisy stuff
     const step = Math.floor(tt * 12);
     if (step === this.lastStep) return;

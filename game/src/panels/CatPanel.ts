@@ -16,7 +16,12 @@ import { icon } from '../ui/icons';
 import { G, OwnedCat } from '../state/game';
 import { catDef, ROLE_BY_ID, CONTENT, ELEMENT_BY_ID } from '../data/content';
 import { ELEMENT_NAME } from '../data/elementsMeta';
-import { biteCost, cat as getCat, catGold, feed, levelCap, nextThreshold, starNeed } from '../state/sys/cats';
+import { biteCost, canStarUp, cat as getCat, catGold, feed, levelCap, mutationOf, nextThreshold, starNeed, starPerks, traitOf } from '../state/sys/cats';
+import { koRank, rankDef, rankProgress } from '../state/sys/ranks';
+import { limitationText, mutationLook, mutationShort, starCapNote, starInfo, starMissing, starRoadmap } from '../state/ext/collection';
+import { collState } from '../state/sys/cats';
+import { dnaIcon, heart, killTree, pencil } from './collection/ui';
+import { mutationOverlay, syncMutationOverlay } from './collection/art';
 import { globalGoldMult, habitat } from '../state/sys/island';
 import { habitatTier } from '../state/econ';
 import { checkMissions } from '../state/sys/missions';
@@ -32,7 +37,6 @@ import { openAltar } from './Altar';
 import { TweenBag } from '../ui/hud/tweenBag';
 
 const NYAMS = ['¡ÑAM!', '¡ÑOM!', '¡ÑAM ÑAM!', '¡GULP!', '¡MMM!'];
-const TRAIT = new Map(CONTENT.traits.map((t) => [t.id, t]));
 const WORKER_NAME: Record<string, string> = { banker: 'Banquero', farmer: 'Granjero', builder: 'Constructor', voyager: 'Viajero' };
 
 export function openCatPanel(uid: string) {
@@ -89,6 +93,11 @@ class CatPanel {
     this.build();
     (globalThis as unknown as { __catPanel: CatPanel }).__catPanel = this;
     Ticker.shared.add(this.tick);
+    const origClose = this.m.close.bind(this.m);
+    this.m.close = () => {
+      if (!this.m.closed) killTree(this.starsBox);
+      origClose();
+    };
     this.m.onClose = () => {
       Ticker.shared.remove(this.tick);
       this.stopHold();
@@ -114,9 +123,11 @@ class CatPanel {
     // rename button in the band
     const pen = new Container();
     const pb = new Graphics().rect(0, 0, 150, 44).fill(C.yellow).stroke({ width: 3, color: C.ink });
-    const pt = txt('✎ RENOMBRAR', { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 1 });
-    pt.position.set(12, 9);
-    pen.addChild(pb, pt);
+    const pi = pencil(22);
+    pi.position.set(20, 22);
+    const pt = txt('RENOMBRAR', { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 1 });
+    pt.position.set(36, 9);
+    pen.addChild(pb, pi, pt);
     pen.position.set(this.m.w - 250, 21);
     pen.eventMode = 'static';
     pen.cursor = 'pointer';
@@ -132,6 +143,7 @@ class CatPanel {
     this.stage.position.set(FW / 2, FH - 120);
     this.frame.addChild(this.stage);
     this.showIsland();
+    this.koBadge(FW);
     // toggle
     const tog = new Button('VER BATTLE FORM', () => this.toggleForm(tog), { w: 300, h: 56, size: 26, color: C.ink, textColor: C.paper });
     tog.position.set(FW / 2 - 150, FH - 76);
@@ -148,10 +160,8 @@ class CatPanel {
     const chips: Container[] = [...def.elements.map((e) => elementChip(e, 22)), rarityChip(def.rarity, 22)];
     const role = ROLE_BY_ID.get(def.role);
     if (role) chips.push(chip(role.name.toUpperCase(), C.paper, C.ink, 22));
-    const tr = TRAIT.get(c.trait);
-    if (tr) chips.push(chip(`RASGO: ${tr.name.toUpperCase()}`, C.lilac, C.ink, 22));
     if (def.worker) chips.push(chip(`OFICIO: ${(WORKER_NAME[def.worker] ?? def.worker).toUpperCase()}`, C.mint, C.ink, 22));
-    if (c.mutation) chips.push(chip(`MUTACIÓN: ${c.mutation.toUpperCase()}`, C.pinkHot, C.paper, 22));
+    if (c.holo) chips.push(chip('HOLO', C.cyan, C.ink, 22));
     let cx = x0;
     for (const ch of chips) {
       if (cx + ch.width > IW) {
@@ -162,13 +172,9 @@ class CatPanel {
       body.addChild(ch);
       cx += ch.width + 10;
     }
-    y += 44;
-    if (tr) {
-      const te = txt(`${tr.name}: ${tr.effect}`, { fontFamily: F.ui, fontSize: 15, fill: C.ink, fontStyle: 'italic', wordWrap: true, wordWrapWidth: RW });
-      te.position.set(x0, y);
-      body.addChild(te);
-      y += te.height + 10;
-    }
+    y += 46;
+    // rasgo + mutación (combat-only effects, readable)
+    y = this.traitCards(x0, y, RW);
     // H02 naming prompt
     if (missionActive('H02')) {
       const box = new Container();
@@ -262,10 +268,13 @@ class CatPanel {
       ftC.addChild(minus, this.feedToText, plus, go);
       this.feedTarget = Math.min(levelCap(), c.level + 5);
     } else {
-      const lk = txt(`🔒 Alimentar hasta Nv X · Reino ${featureKl('feed_bulk')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: C.ink });
+      const li = icon('lock', 20);
+      li.position.set(10, 20);
+      const lk = txt(`Alimentar hasta Nv X · Reino ${featureKl('feed_bulk')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: C.ink });
       lk.alpha = 0.55;
-      lk.position.set(0, 10);
-      ftC.addChild(lk);
+      li.alpha = 0.55;
+      lk.position.set(26, 10);
+      ftC.addChild(li, lk);
     }
     y += 244;
 
@@ -282,15 +291,15 @@ class CatPanel {
 
     // ------------------------------------------------ combat sheet
     const cb = def.combat;
-    const shotEl = ELEMENT_BY_ID.get(cb.shot.element);
+    const lim = limitationText(def);
     const cards: [string, string, string, number][] = [
-      ['DISPARO', `${cb.shot.name}${cb.shot.cry ? ` — ${cb.shot.cry}` : ''}`, `${(shotEl as unknown as { shotRule?: string })?.shotRule ?? ''} Daño ${cb.shot.dmg}${cb.shot.status ? ` · ${cb.shot.status} ${cb.shot.statusTurns}t` : ''}.${cb.shot.special ? ' ' + cb.shot.special : ''}`, fx.main],
+      ['DISPARO', `${cb.shot.name}${cb.shot.cry ? ` — ${cb.shot.cry}` : ''}`, shotDescription(c), fx.main],
       ['ULTIMATE', cb.ultimate.name, cb.ultimate.effect, C.pinkHot],
       ['PASIVA', 'Siempre activa', cb.passive, C.mint],
-      ['LIMITACIÓN', cb.limitation ? 'Ojo' : 'Ninguna', cb.limitation ?? 'Sin limitaciones. Disfrútalo.', C.paperDark],
+      ['LIMITACIÓN', lim ? lim.split(':')[0].slice(0, 28) : 'Ninguna', lim ? (lim.includes(':') ? lim.slice(lim.indexOf(':') + 1).trim() : lim) : 'Sin limitaciones. Disfrútalo.', C.paperDark],
     ];
     const cw = (RW - 16) / 2;
-    const chh = 128;
+    const chh = 112;
     cards.forEach(([k, t, d, col], i) => {
       const cc = new Container();
       const g = new Graphics().rect(5, 5, cw, chh).fill(C.ink).rect(0, 0, cw, chh).fill(C.paper).stroke({ width: 3, color: C.ink, alignment: 1 });
@@ -301,18 +310,14 @@ class CatPanel {
       tt.position.set(24, 28);
       if (tt.width > cw - 36) tt.scale.set((cw - 36) / tt.width);
       const dt = txt(d, { fontFamily: F.ui, fontSize: 13, fill: C.ink, wordWrap: true, wordWrapWidth: cw - 36, lineHeight: 16 });
-      dt.position.set(24, 58);
-      if (dt.height > chh - 64) dt.scale.set((chh - 64) / dt.height);
+      dt.position.set(24, 54);
+      if (dt.height > chh - 58) dt.scale.set((chh - 58) / dt.height);
       cc.addChild(g, kt, tt, dt);
       cc.position.set(x0 + (i % 2) * (cw + 16), y + Math.floor(i / 2) * (chh + 12));
       body.addChild(cc);
     });
     y += 2 * (chh + 12);
-    const stars = txt(`${c.stars >= 3 ? '★' : '☆'} ${cb.star3}    ${c.stars >= 5 ? '★' : '☆'} ${cb.star5}`, { fontFamily: F.ui, fontSize: 13, fill: C.ink, wordWrap: true, wordWrapWidth: RW });
-    stars.alpha = 0.75;
-    stars.position.set(x0, y);
-    body.addChild(stars);
-    y += stars.height + 8;
+    y = this.starPerkRow(x0, y, RW);
     const lore = wrapText(`“${def.lore}”`, RW, 17, F.serif, C.ink, { fontStyle: 'italic' });
     lore.position.set(x0, Math.min(y, this.m.innerH - lore.height - 4));
     body.addChild(lore);
@@ -392,10 +397,125 @@ class CatPanel {
     applyCatTint(ic.sprite, c.species);
     const ts = catDef(c.species).art.tint?.scale;
     if (ts) ic.baseScale *= ts;
-    ic.scale.set(catLevelScale(c.level));
+    ic.scale.set(catLevelScale(c.level) * (mutationLook(c.mutation)?.scale ?? 1));
     this.stage.addChild(ic);
     this.islandCat = ic;
     this.battleCat = null;
+    this.mutOverlay = mutationOverlay(ic.sprite, c.species, c.mutation);
+    if (this.mutOverlay) ic.addChild(this.mutOverlay);
+  }
+  private mutOverlay: Container | null = null;
+
+  /** K.O. rank medal (state/sys/ranks, combat counts OwnedCat.kos) */
+  private koBadge(FW: number) {
+    const kos = this.c.kos ?? 0;
+    const r = koRank(kos);
+    const d = rankDef(kos);
+    const b = new Container();
+    b.position.set(24, 22);
+    const metal = d.metal === 'none' ? 0xb8ae9e : d.color;
+    // ribbon tails
+    const rib = new Graphics()
+      .poly([-16, 18, -4, 18, -10, 62, -18, 54])
+      .fill(C.pinkHot)
+      .stroke({ width: 2, color: C.ink })
+      .poly([4, 18, 16, 18, 18, 54, 10, 62])
+      .fill(C.megaBlue)
+      .stroke({ width: 2, color: C.ink });
+    const disc = new Graphics().circle(0, 0, 30).fill(metal).stroke({ width: 4, color: C.ink }).circle(0, 0, 22).stroke({ width: 2, color: C.ink, alpha: 0.5 });
+    for (let i = 0; i < Math.min(3, ((r.tier - 1) % 3) + 1) && r.tier > 0; i++) disc.star(-12 + i * 12, 0, 5, 6, 2.6).fill(C.ink);
+    if (r.tier === 0) disc.moveTo(-8, 0).lineTo(8, 0).stroke({ width: 3, color: C.ink, alpha: 0.4 });
+    b.addChild(rib, disc);
+    const nm = txt(r.tier ? r.name.toUpperCase() : 'SIN RANGO', { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 1 });
+    const sub = txt(`${kos} K.O.${r.next !== null ? ` · siguiente a ${r.next}` : ' · TOPE'}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 12, fill: C.ink });
+    const w = Math.max(nm.width, sub.width) + 22;
+    const plate = new Graphics().rect(38, -24, w, 48).fill(C.paper).stroke({ width: 3, color: C.ink });
+    const pk = rankProgress(kos);
+    plate.rect(38, 20, w * pk, 4).fill(metal);
+    nm.position.set(48, -24);
+    sub.position.set(48, 1);
+    b.addChildAt(plate, 0);
+    b.addChild(nm, sub);
+    b.rotation = -0.04;
+    this.frame.addChild(b);
+    void FW;
+  }
+
+  /** RASGO + MUTACIÓN cards (combat-only, GDD 2.5) */
+  private traitCards(x0: number, y: number, RW: number) {
+    const c = this.c;
+    const tr = traitOf(c);
+    const mu = mutationOf(c);
+    const body = this.m.body;
+    const cards: { kind: string; name: string; eff: string; col: number; node: Container }[] = [];
+    if (tr) {
+      const ic = new Graphics().circle(0, 0, 16).fill(C.lilac).stroke({ width: 3, color: C.ink });
+      ic.circle(-5, -3, 3).fill(C.ink).circle(5, -3, 3).fill(C.ink).moveTo(-6, 6).quadraticCurveTo(0, 10, 6, 6).stroke({ width: 2.5, color: C.ink, cap: 'round' });
+      cards.push({ kind: 'RASGO', name: tr.name, eff: tr.effect, col: C.lilac, node: ic });
+    }
+    if (mu) cards.push({ kind: 'MUTACIÓN', name: mutationShort(mu.id) ?? mu.name, eff: mu.effect, col: mutationLook(mu.id)?.color ?? C.pinkHot, node: dnaIcon(30, C.ink) });
+    if (!cards.length) return y;
+    const gap = 14;
+    const cw = cards.length === 1 ? RW : (RW - gap) / 2;
+    let hMax = 0;
+    const built = cards.map((k, i) => {
+      const cc = new Container();
+      const kt = txt(`${k.kind} · ${k.name.toUpperCase()}`, { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 1 });
+      const et = txt(k.eff, { fontFamily: F.ui, fontWeight: '700', fontSize: 14, fill: C.ink, wordWrap: true, wordWrapWidth: cw - 74, lineHeight: 17 });
+      kt.position.set(60, 6);
+      et.position.set(60, 32);
+      const h = Math.max(64, et.height + 42);
+      hMax = Math.max(hMax, h);
+      cc.addChild(kt, et);
+      k.node.position.set(30, 32);
+      cc.addChild(k.node);
+      cc.position.set(x0 + i * (cw + gap), y);
+      return { cc, k };
+    });
+    for (const { cc, k } of built) {
+      const g = new Graphics().rect(5, 5, cw, hMax).fill(C.ink).rect(0, 0, cw, hMax).fill(C.paper).stroke({ width: 3, color: C.ink, alignment: 1 });
+      g.rect(0, 0, 10, hMax).fill(k.col);
+      cc.addChildAt(g, 0);
+      body.addChild(cc);
+    }
+    return y + hMax + 16;
+  }
+
+  /** ★2…★6: what each star gives, lit when active */
+  private starPerkRow(x0: number, y: number, RW: number) {
+    const c = this.c;
+    const road = starRoadmap(c);
+    const perks = starPerks(c);
+    const body = this.m.body;
+    const gap = 8;
+    const tw = (RW - gap * (road.length - 1)) / road.length;
+    const th = 50;
+    road.forEach((st, i) => {
+      const t = new Container();
+      t.position.set(x0 + i * (tw + gap), y);
+      const on = st.state === 'done';
+      const g = new Graphics().rect(0, 0, tw, th).fill(on ? C.yellow : st.state === 'next' ? C.paper : C.paperDark).stroke({ width: 2.5, color: C.ink });
+      const s1 = txt(`★${st.star}`, { fontFamily: F.poster, fontSize: 24, fill: on ? C.ink : 0x8a8070 });
+      s1.position.set(8, 4);
+      const tt = txt(st.title, { fontFamily: F.bebas, fontSize: 16, fill: C.ink, letterSpacing: 1 });
+      tt.position.set(46, 4);
+      if (tt.width > tw - 52) tt.scale.set((tw - 52) / tt.width);
+      const lv = txt(on ? 'ACTIVA' : `NV ${st.minLevel}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 12, fill: on ? C.green : C.ink });
+      lv.position.set(46, 27);
+      t.addChild(g, s1, tt, lv);
+      if (!on) t.alpha = 0.8;
+      body.addChild(t);
+    });
+    let yy = y + th + 8;
+    const active = [perks.star3 ? `★3 ${perks.star3}` : null, perks.star5 ? `★5 ${perks.star5}` : null].filter(Boolean).join('   ·   ');
+    const def = catDef(c.species);
+    const line = active || `Próximo efecto: ★3 ${def.combat.star3.replace(/^★3:\s*/, '')}`;
+    const lt = txt(line, { fontFamily: F.ui, fontSize: 13, fill: C.ink, wordWrap: true, wordWrapWidth: RW, fontStyle: active ? 'normal' : 'italic' });
+    lt.alpha = active ? 1 : 0.7;
+    lt.position.set(x0, yy);
+    body.addChild(lt);
+    yy += lt.height + 8;
+    return yy;
   }
   private toggleForm(btn: Button) {
     const c = this.c;
@@ -423,10 +543,15 @@ class CatPanel {
     }
   }
 
+  private starsKey = '';
   private drawStars() {
     const b = this.starsBox;
-    b.removeChildren().forEach((x) => x.destroy({ children: true }));
     const c = this.c;
+    const key = `${c.level}|${c.stars}|${G.s.orbs[c.species] ?? 0}|${G.s.prisma}`;
+    if (key === this.starsKey) return;
+    this.starsKey = key;
+    killTree(b);
+    b.removeChildren().forEach((x) => x.destroy({ children: true }));
     for (let i = 0; i < 6; i++) {
       const s = icon('star', 34, i < c.stars ? C.yellow : C.paperDark);
       s.position.set(20 + i * 38, 22);
@@ -440,7 +565,10 @@ class CatPanel {
     ot.position.set(288, 9);
     b.addChild(oi, ot);
     const altarOn = hudUnlocks().altar;
-    const ab = new Button(altarOn ? 'ALTAR' : 'ALTAR 🔒', () => {
+    const usePrisma = collState().usePrisma !== false;
+    const can = altarOn && canStarUp(c, usePrisma);
+    const si = starInfo(c, usePrisma);
+    const ab = new Button(altarOn ? (can ? '¡ALTAR!' : 'ALTAR') : 'ALTAR', () => {
       if (!altarOn) {
         sfx('error');
         toast('El Altar de Almas aún duerme', { sub: 'Junta 10 orbes de un mismo gato (misión «Primeros orbes»).' });
@@ -448,9 +576,24 @@ class CatPanel {
       }
       this.m.close();
       openAltar(this.uid);
-    }, { w: 130, h: 44, size: 22, color: altarOn ? C.lilac : C.paperDark });
+    }, { w: 130, h: 44, size: 22, color: can ? C.pinkHot : C.paper, textColor: can ? C.paper : C.ink });
     ab.position.set(410, 0);
     b.addChild(ab);
+    if (!altarOn) {
+      const lk = icon('lock', 22);
+      lk.position.set(410 + 112, 22);
+      b.addChild(lk);
+    } else if (can) {
+      gsap.to(ab.scale, { x: 1.06, y: 1.06, yoyo: true, repeat: -1, duration: 0.5, ease: 'sine.inOut' });
+      sparkles(b, 475, 4, C.yellow, 6, 50);
+    }
+    // what's missing, in plain words
+    if (altarOn && !si.max) {
+      const why = can ? `¡Ya puede subir a ★${si.next}!` : starCapNote(si) ?? `${starMissing(si)} para ★${si.next}.`;
+      const wt = txt(why, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: can ? C.pinkHot : C.ink, wordWrap: true, wordWrapWidth: 520 });
+      wt.position.set(16, 48);
+      b.addChild(wt);
+    }
   }
 
   // ================================================================== live refresh
@@ -468,7 +611,7 @@ class CatPanel {
       if (on) g.rect(6, 6, segW - 12, 10).fill({ color: 0xffffff, alpha: 0.35 });
     });
     const cost = biteCost(c);
-    this.costText.text = c.level >= cap ? 'TOPE' : `−${fmt(cost)} 🐟  (tienes ${fmt(G.s.food)})`;
+    this.costText.text = c.level >= cap ? 'TOPE' : `−${fmt(cost)} pescaditos (tienes ${fmt(G.s.food)})`;
     const th = nextThreshold(c);
     if (th && th.up) {
       const n = th.level - c.level;
@@ -480,6 +623,7 @@ class CatPanel {
     this.goldText.text = h ? `Produce +${fmt(gps)} oro/s · vive en el hábitat de ${(ELEMENT_NAME[h.element] ?? h.element).toLowerCase()}` : 'SIN CASA: no produce oro (constrúyele un hábitat)';
     this.goldText.style.fill = h ? C.ink : C.red;
     if (this.feedToText) this.setFeedTarget(this.feedTarget, false);
+    this.drawStars();
     void animate;
   }
 
@@ -596,8 +740,7 @@ class CatPanel {
       this.bag.to(g, { x: to.x + Math.cos(a) * d, y: to.y + 20 + Math.sin(a) * d + 30, alpha: 0, duration: 0.5, ease: 'power2.out', onComplete: () => g.destroy() });
     }
     if (Math.random() < 0.5) {
-      const h = txt('♥', { fontFamily: F.ui, fontSize: 34, fill: C.pinkHot, stroke: { color: C.ink, width: 4 } });
-      h.anchor.set(0.5);
+      const h = heart(34);
       h.position.set(to.x - 60, to.y);
       this.m.panel.addChild(h);
       this.bag.to(h, { y: to.y - 80, alpha: 0, duration: 0.9, ease: 'power1.out', onComplete: () => h.destroy() });
@@ -691,6 +834,7 @@ class CatPanel {
 
   private onTick(t: Ticker) {
     this.tt += t.deltaMS / 1000;
+    if (this.mutOverlay && this.islandCat && !this.islandCat.destroyed) syncMutationOverlay(this.mutOverlay, this.islandCat.sprite);
     if (this.sheen) this.sheen.x = ((this.tt * 260) % 1100) - 100;
     if (this.holo) this.holo.tint = [0xffffff, 0xffe0f0, 0xe0fff8, 0xfff6d0][Math.floor(this.tt * 6) % 4];
   }
@@ -759,4 +903,23 @@ function openInput(value: string, box: { x: number; y: number; w: number; h: num
   });
   el.addEventListener('blur', () => finish(el.value));
   void Sprite;
+}
+
+/** the cat's OWN shot description (never the generic element rule) */
+function shotDescription(c: OwnedCat) {
+  const def = catDef(c.species);
+  const sh = def.combat.shot;
+  const pk = starPerks(c);
+  const proj = sh.projectiles + pk.shot.projectiles;
+  const bnc = sh.bounces + pk.shot.bounces;
+  const prc = sh.pierce + pk.shot.pierce;
+  const bits = [
+    `Daño ${sh.dmg}`,
+    proj > 1 ? `${proj} proyectiles` : null,
+    bnc ? `${bnc} rebote${bnc > 1 ? 's' : ''}` : null,
+    prc ? `perfora ${prc}` : null,
+    sh.status ? `${sh.status.charAt(0).toUpperCase() + sh.status.slice(1)} ${sh.statusTurns} t` : null,
+    `radio ${sh.radius}`,
+  ].filter(Boolean);
+  return `${sh.special ? sh.special + ' ' : ''}${bits.join(' · ')}.`;
 }

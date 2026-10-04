@@ -4,8 +4,8 @@
  */
 import { G, ResonanceJob } from '../game';
 import { CATS, CONTENT, catDef, CatDef } from '../../data/content';
-import { BAL, RarityId } from '../econ';
-import { adopt, cat as getCat } from './cats';
+import { BAL, RarityId, duplicateOrbs } from '../econ';
+import { adopt, cat as getCat, collState, MUTATIONS, MutationDef, rollTrait } from './cats';
 import { Rng } from '../../core/rng';
 
 const RANK: Record<RarityId, number> = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4 };
@@ -115,8 +115,39 @@ export function resTimeMs(r: RarityId) {
 export function busyCats() {
   return new Set(G.s.resonance.jobs.filter((j) => !j.ready).flatMap((j) => [j.a, j.b]));
 }
+/** KL18 "Cola de Resonancia" (balance.automation.resonance_queue) */
+export function queueKl() {
+  return BAL.automation.find((a) => a.id === 'resonance_queue')?.kl ?? 18;
+}
+export function queueUnlocked() {
+  return G.s.kl >= queueKl();
+}
+/** cats reserved by a queued pair (they can't be used elsewhere or the queue would break) */
+export function queuedCats() {
+  return new Set(G.s.resQueue.flatMap((q) => [q.a, q.b]));
+}
+/**
+ * Free slots. With the queue unlocked a FINISHED job waits for its reveal without blocking
+ * its slot (the queue keeps running while you're away: "revelaciones en cola").
+ */
 export function freeSlots() {
-  return G.s.resonance.slots - G.s.resonance.jobs.length;
+  const jobs = G.s.resonance.jobs;
+  const used = queueUnlocked() ? jobs.filter((j) => !j.ready).length : jobs.length;
+  return G.s.resonance.slots - used;
+}
+/** gem sink: +1 resonance slot for balance.gems.sinks.resonance_slot.cost (max balance…max) */
+export function gemSlotInfo() {
+  const cfg = BAL.gems.sinks.resonance_slot;
+  const bought = collState().gemSlots ?? 0;
+  return { cost: cfg.cost, left: Math.max(0, cfg.max - bought), bought };
+}
+export function buyGemSlot() {
+  const g = gemSlotInfo();
+  if (g.left <= 0 || !G.spend({ gems: g.cost })) return false;
+  collState().gemSlots = g.bought + 1;
+  G.s.resonance.slots += 1;
+  G.count('resonance_slot_bought');
+  return true;
 }
 
 /** Start a resonance. Returns the job (result is rolled now but hidden until reveal). */
@@ -124,6 +155,8 @@ export function startResonance(aUid: string, bUid: string): ResonanceJob | null 
   if (aUid === bUid || freeSlots() <= 0) return null;
   const busy = busyCats();
   if (busy.has(aUid) || busy.has(bUid)) return null;
+  const queued = queuedCats();
+  if (queued.has(aUid) || queued.has(bUid)) return null;
   const a = getCat(aUid)!;
   const b = getCat(bUid)!;
   let result: string;
@@ -154,7 +187,7 @@ export function startResonance(aUid: string, bUid: string): ResonanceJob | null 
   if (RANK[rarity] >= 2) G.s.resonance.pity = 0;
   else G.s.resonance.pity = Math.min(BAL.resonance.pity.cap, G.s.resonance.pity + 1);
   G.s.resonance.total++;
-  const mutation = rollMutation(a.habitat !== null && a.habitat === b.habitat, a.habitat);
+  const mutation = rollMutation(aUid, bUid);
   const job: ResonanceJob = { id: G.uid('r'), a: aUid, b: bUid, result, rarity, timerId: '', mutation, ready: false };
   const t = G.startTimer('resonance', job.id, ms, `${a.name} + ${b.name}`, 'discovery');
   job.timerId = t.id;
@@ -163,16 +196,49 @@ export function startResonance(aUid: string, bUid: string): ResonanceJob | null 
   return job;
 }
 
-function rollMutation(sameHabitat: boolean, habitatId: string | null) {
-  if (G.s.kl < 20 && !G.has('luna_resonancia')) return null;
-  const chance = G.has('luna_resonancia') ? 1 : 0.08 * (sameHabitat ? 2 : 1);
-  if (Math.random() > chance) return null;
-  const muts = (CONTENT as unknown as { mutations: { id: string; habitatBias?: string | null; weight?: number }[] }).mutations ?? [];
-  if (!muts.length) return null;
-  const el = habitatId ? G.s.habitats.find((h) => h.id === habitatId)?.element : null;
-  const biased = muts.filter((m) => m.habitatBias && m.habitatBias === el);
-  const list = biased.length && Math.random() < 0.6 ? biased : muts;
-  return list[Math.floor(Math.random() * list.length)].id;
+// ---------------------------------------------------------------- mutations (GDD 2.5 / 2.6 rule 8; design, not simulated)
+/** KL20 "Mutaciones": 8% per resonance, x2 if both parents live in the same habitat; habitat element biases which one */
+export const MUTATION_RULES = { kl: 20, chance: 0.08, sameHabitatMult: 2, biasPerParent: 3 };
+export interface MutationOdds {
+  unlocked: boolean;
+  /** 0..1 */
+  chance: number;
+  sameHabitat: boolean;
+  /** habitat elements of the parents that bias the draw */
+  biasEls: string[];
+  /** each mutation's share of the draw (0..1), sorted desc */
+  table: { mut: MutationDef; p: number }[];
+}
+function habitatEl(uid: string) {
+  const c = getCat(uid);
+  return c?.habitat ? (G.s.habitats.find((h) => h.id === c.habitat)?.element ?? null) : null;
+}
+export function mutationOdds(aUid: string, bUid: string): MutationOdds {
+  const a = getCat(aUid);
+  const b = getCat(bUid);
+  const forced = G.has('luna_resonancia');
+  const unlocked = forced || G.s.kl >= MUTATION_RULES.kl;
+  const sameHabitat = !!a?.habitat && a.habitat === b?.habitat;
+  const chance = !unlocked ? 0 : forced ? 1 : Math.min(1, MUTATION_RULES.chance * (sameHabitat ? MUTATION_RULES.sameHabitatMult : 1));
+  const els = [habitatEl(aUid), habitatEl(bUid)];
+  const pool = MUTATIONS.filter((m) => (m.weight ?? 0) > 0);
+  const w = pool.map((m) => {
+    const hits = m.habitatBias ? els.filter((e) => e === m.habitatBias).length : 0;
+    return (m.weight ?? 0) * (1 + MUTATION_RULES.biasPerParent * hits);
+  });
+  const tot = w.reduce((x, y) => x + y, 0) || 1;
+  const table = pool.map((mut, i) => ({ mut, p: w[i] / tot })).sort((x, y) => y.p - x.p);
+  return { unlocked, chance, sameHabitat, biasEls: [...new Set(els.filter((e): e is string => !!e))], table };
+}
+function rollMutation(aUid: string, bUid: string) {
+  const o = mutationOdds(aUid, bUid);
+  if (!o.unlocked || Math.random() >= o.chance || !o.table.length) return null;
+  let r = Math.random();
+  for (const row of o.table) {
+    r -= row.p;
+    if (r <= 0) return row.mut.id;
+  }
+  return o.table[0].mut.id;
 }
 
 G.onTimer('resonance', (t) => {
@@ -180,15 +246,38 @@ G.onTimer('resonance', (t) => {
   if (job) job.ready = true;
 });
 
-/** Reveal a finished job: adopt or convert to orbs. */
-export function reveal(jobId: string) {
+export interface RevealOutcome {
+  cat: import('../game').OwnedCat | null;
+  isNew: boolean;
+  orbs: number;
+  job: ResonanceJob;
+  /** rolled trait of the newborn (70% species · 30% random · KL30 inheritance) */
+  trait: string;
+  inherited: boolean;
+  /** duplicate that brought a mutation: id of the pending choice (orbs vs transfer) */
+  mutChoice?: string;
+}
+/** Reveal a finished job: adopt, convert to orbs, or (duplicate + mutation) leave a choice pending. */
+export function reveal(jobId: string): RevealOutcome | null {
   const job = G.s.resonance.jobs.find((j) => j.id === jobId);
   if (!job || !job.ready) return null;
   G.s.resonance.jobs = G.s.resonance.jobs.filter((j) => j !== job);
-  const res = adopt(job.result, { mutation: job.mutation });
+  const isNew = G.s.catdex[job.result] !== 'registered';
+  const tr = rollTrait(job.result, [getCat(job.a), getCat(job.b)]);
+  const st = collState();
+  st.history = [{ a: job.a, b: job.b, result: job.result, isNew, at: G.s.playMs }, ...(st.history ?? []).filter((h) => !((h.a === job.a && h.b === job.b) || (h.a === job.b && h.b === job.a)))].slice(0, 6);
   G.xp('hatch', job.rarity);
   G.count('resonance_hatch');
-  return { ...res, job };
+  if (!isNew && job.mutation) {
+    const orbs = duplicateOrbs(catDef(job.result).rarity);
+    const id = G.uid('m');
+    collState().mutChoices.push({ id, species: job.result, mutation: job.mutation, orbs });
+    G.xp('hatch', job.rarity, 0.5);
+    return { cat: null, isNew: false, orbs, job, trait: tr.trait, inherited: false, mutChoice: id };
+  }
+  const res = adopt(job.result, { mutation: job.mutation, trait: tr.trait });
+  if (res.cat && tr.inherited) G.count('inherit_trait');
+  return { ...res, job, trait: tr.trait, inherited: !!res.cat && tr.inherited };
 }
 
 export function revealCopy(rarity: RarityId, name: string) {

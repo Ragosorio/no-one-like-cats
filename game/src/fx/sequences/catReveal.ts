@@ -13,9 +13,11 @@ import { settings } from '../../core/settings';
 import { TintSpec } from '../../data/content';
 import { variantSprite } from '../../panels/collection/art';
 import { printTile, noiseTile, sheenTexture } from '../../panels/collection/printTextures';
-import { elEmoji, elName } from '../../state/ext/collection';
+import { elName, mutationInfo, mutationLook, mutationShort } from '../../state/ext/collection';
 import { CatCard } from '../../panels/collection/CatCard';
-import { killTree } from '../../panels/collection/ui';
+import { dnaIcon, killTree } from '../../panels/collection/ui';
+import { elementIcon } from '../../ui/elementIcon';
+import { rainbowTile } from '../../panels/collection/printTextures';
 
 export interface RevealOpts {
   slug: string;
@@ -35,8 +37,16 @@ export interface RevealOpts {
   tintSpec?: TintSpec | null;
   /** role / trait / attack chips (4.2 s) */
   chips?: string[];
-  /** mutation name → extra red stamp */
+  /** mutation display name (legacy) → stamp. Prefer `mutationId`. */
   mutation?: string | null;
+  /** mutation id (content.mutations): special beat with decal/tint + effect */
+  mutationId?: string | null;
+  /** foil/holographic variant (OwnedCat.holo): rainbow frame + foil sweeps + HOLO stamp */
+  holo?: boolean;
+  /** show a "repeat" button at the end with this label; resolves 'repeat' if pressed */
+  offerRepeat?: string;
+  /** override the duplicate stamp text (default "DUPLICADO · +N ORBES") */
+  duplicateLabel?: string;
   /** catdex counter tick [before, after, total] */
   dex?: [number, number, number];
   /** duplicate star bar */
@@ -46,7 +56,7 @@ export interface RevealOpts {
   replay?: boolean;
 }
 
-export type RevealResult = 'continue' | 'catdex';
+export type RevealResult = 'continue' | 'catdex' | 'repeat';
 
 const RANK: Record<Rarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3, primordial: 4, mythic: 5 };
 
@@ -73,7 +83,13 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     const t4 = o.rarity === 'mythic' || o.rarity === 'primordial' || !!o.secret;
     const dup = o.duplicateOrbs !== undefined;
     const reduce = settings.reduceMotion;
+    const mutId = o.mutationId ?? null;
+    const mutLook = mutationLook(mutId);
+    const mutName = o.mutation ?? mutationShort(mutId);
+    const hasMut = !!(mutId || o.mutation);
     const extra = t4 && !dup ? 0.6 : 0;
+    /** the mutation beat adds time after the chips */
+    const mutExtra = hasMut ? (dup ? 0.9 : 1.1) : 0;
     /** legendary / mythic / primordial reprint the stage dark */
     const darkStage = o.rarity === 'legendary' || o.rarity === 'mythic' || o.rarity === 'primordial';
 
@@ -129,7 +145,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
 
     // --- Cat (real variant: tint + overlay + decal)
     const size = 520;
-    const variant = variantSprite(o.species ?? '', size, { slug: o.slug, tint: o.species ? undefined : (o.tintSpec ?? null) });
+    const variant = variantSprite(o.species ?? '', size, { slug: o.slug, tint: o.species ? undefined : (o.tintSpec ?? null), mutation: null });
     const catNode = variant.root;
     if (!o.species) {
       // legacy: plain painting + optional flat tint
@@ -292,9 +308,8 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
           gsap.to(bar, { x: -W * 0.2, duration: 0.25, ease: 'power3.out' });
           gsap.to(bar, { alpha: 0.18, duration: 0.6, delay: 0.3 });
           const stamp = new Container();
-          const g = new Graphics().circle(0, 0, 62).fill(f.main).stroke({ width: 6, color: C.ink });
-          const ic = txt(elEmoji(el), { fontSize: 60 });
-          ic.anchor.set(0.5);
+          const g = new Graphics().circle(0, 0, 66).fill(f.main).stroke({ width: 6, color: C.ink });
+          const ic = elementIcon(el, 118);
           const nm = txt(elName(el), { fontFamily: F.poster, fontSize: 26, fill: C.ink });
           nm.anchor.set(0.5);
           nm.y = 88;
@@ -541,26 +556,18 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
             nameLayer.addChild(ch);
             gsap.from(ch, { x: ch.x + 80, alpha: 0, duration: 0.18, delay: i * 0.06, ease: 'back.out(2)' });
           });
-          if (o.mutation) {
-            const m = poster(`MUTACIÓN · ${o.mutation.toUpperCase()}`, 54, C.paper, { stroke: { color: C.ink, width: 8 } });
-            const box = new Graphics().rect(-m.width / 2 - 16, -m.height / 2 - 4, m.width + 32, m.height + 8).fill(C.red).stroke({ width: 5, color: C.ink });
-            m.anchor.set(0.5);
-            const mc = new Container();
-            mc.addChild(box, m);
-            mc.position.set(W / 2 - 200, H / 2 + 260);
-            mc.rotation = -0.1;
-            nameLayer.addChild(mc);
-            gsap.fromTo(mc.scale, { x: 2.4, y: 2.4 }, { x: 1, y: 1, duration: 0.16, ease: 'back.out(3)' });
-            sfx('boom', 1.3);
-            shaker.add(0.3);
-          }
           if (o.dex && dexText && !o.replay) flyToDex();
         },
         [],
         tC,
       );
 
-    const tDone = (dup ? 1.4 : 4.6) + extra;
+    // mutation beat (after the chips): glitch in the mutation's color, DNA helix, the decal
+    // paints itself onto the cat, stamp + effect line
+    if (hasMut) tl.call(() => mutationBeat(), [], tC + (dup ? 0.15 : 0.45));
+    if (o.holo) tl.call(() => holoBeat(), [], tN + 0.35);
+
+    const tDone = (dup ? 1.4 : 4.6) + extra + mutExtra;
     const hint = txt('CLIC PARA CONTINUAR', { fontFamily: F.poster, fontSize: 28, fill: darkStage ? C.paper : C.ink });
     hint.anchor.set(0.5);
     hint.position.set(W / 2, H - 38);
@@ -591,13 +598,116 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
           uiLayer.addChild(btn);
           gsap.from(btn, { alpha: 0, y: btn.y + 30, duration: 0.25, ease: 'back.out(2)' });
         }
+        if (o.offerRepeat && !o.replay) {
+          const rb = new Container();
+          const t = txt(o.offerRepeat.toUpperCase(), { fontFamily: F.poster, fontSize: 28, fill: C.paper });
+          const ar = new Graphics();
+          const rr = 13;
+          ar.arc(0, 0, rr, -2.6, 2.0).stroke({ width: 5, color: C.paper, cap: 'round' });
+          ar.poly([Math.cos(2.0) * rr - 8, Math.sin(2.0) * rr - 2, Math.cos(2.0) * rr + 7, Math.sin(2.0) * rr - 6, Math.cos(2.0) * rr + 2, Math.sin(2.0) * rr + 9]).fill(C.paper);
+          const bwid = t.width + 76;
+          const g = new Graphics().rect(6, 6, bwid, t.height + 14).fill(C.ink).rect(0, 0, bwid, t.height + 14).fill(C.megaBlue).stroke({ width: 4, color: C.ink });
+          ar.position.set(28, (t.height + 14) / 2);
+          t.position.set(52, 7);
+          rb.addChild(g, ar, t);
+          rb.position.set(60, H - 100);
+          rb.eventMode = 'static';
+          rb.cursor = 'pointer';
+          rb.on('pointertap', (e) => {
+            e.stopPropagation();
+            result = 'repeat';
+            finish();
+          });
+          uiLayer.addChild(rb);
+          gsap.from(rb, { alpha: 0, y: rb.y + 30, duration: 0.25, ease: 'back.out(2)' });
+        }
       },
       [],
       tDone,
     );
 
+    function mutationBeat() {
+      if (root.destroyed) return;
+      const col = mutLook?.color ?? C.pinkHot;
+      sfx('glitch');
+      sfx('boom', 1.3);
+      shaker.add(0.4);
+      // the mutated painting crossfades over the plain one
+      if (o.species && mutId) {
+        const mv = variantSprite(o.species, size, { mutation: mutId }).root;
+        mv.position.copyFrom(catNode.position);
+        mv.alpha = 0;
+        root.addChildAt(mv, root.children.indexOf(catNode) + 1);
+        gsap.to(mv, { alpha: 1, duration: 0.25 });
+        gsap.to(catNode, { alpha: 0, duration: 0.25 });
+        gsap.fromTo(mv.scale, { x: mv.scale.x * 1.12, y: mv.scale.y * 0.9 }, { x: mv.scale.x, y: mv.scale.y, duration: 0.45, ease: 'elastic.out(1.1,0.4)' });
+      }
+      // glitch bars in the mutation color
+      if (!reduce) {
+        const bars = new Graphics();
+        for (let i = 0; i < 9; i++) bars.rect(Math.random() * W * 0.3, Math.random() * H, W * (0.3 + Math.random() * 0.6), 6 + Math.random() * 26).fill({ color: i % 2 ? col : C.ink, alpha: 0.55 });
+        root.addChild(bars);
+        gsap.to(bars, { alpha: 0, duration: 0.45, onComplete: () => bars.destroy() });
+      }
+      // spinning DNA behind the cat
+      const dna = dnaIcon(300, col);
+      dna.position.set(W / 2 - 300, CY - 40);
+      dna.alpha = 0.9;
+      root.addChildAt(dna, Math.max(0, root.children.indexOf(glow)));
+      gsap.fromTo(dna.scale, { x: 0.2, y: 0.2 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(2)' });
+      gsap.to(dna, { rotation: 0.6, duration: 1.6, ease: 'power1.out' });
+      onomatopoeia(nameLayer, W / 2 + 230, CY - 230, mutLook?.sfxWord ?? '¡MUTA!', { size: 96, color: col, dur: 1.3 });
+      // stamp
+      const mc = new Container();
+      const head = poster(`¡MUTACIÓN! · ${(mutName ?? '').toUpperCase()}`, 50, C.paper, { stroke: { color: C.ink, width: 8 } });
+      const icon = mutLook?.el ? elementIcon(mutLook.el, 58) : dnaIcon(52, C.paper);
+      const effTxt = mutationInfo(mutId)?.effect ?? '';
+      const eff = txt(effTxt, { fontFamily: F.ui, fontWeight: '700', fontSize: 20, fill: C.ink, wordWrap: true, wordWrapWidth: 620 });
+      const bw = Math.max(head.width + 96, eff.width + 40);
+      const box = new Graphics().rect(0, 0, bw, head.height + 10).fill(C.red).stroke({ width: 5, color: C.ink });
+      const eb = new Graphics().rect(10, head.height + 4, bw - 20, eff.height + 14).fill(C.paper).stroke({ width: 4, color: C.ink });
+      icon.position.set(38, (head.height + 10) / 2);
+      head.position.set(76, 5);
+      eff.position.set(22, head.height + 11);
+      mc.addChild(box, eb, icon, head, eff);
+      mc.pivot.set(bw / 2, 0);
+      mc.position.set(W / 2 - 150, H / 2 + 200);
+      mc.rotation = -0.06;
+      if (!effTxt) eb.visible = false;
+      nameLayer.addChild(mc);
+      gsap.fromTo(mc.scale, { x: 2.4, y: 2.4 }, { x: 1, y: 1, duration: 0.16, ease: 'back.out(3)' });
+      sparkles(nameLayer, W / 2, CY, col, 16, 260);
+    }
+
+    function holoBeat() {
+      if (root.destroyed) return;
+      sfx('gem');
+      foilSweep(root, 0xbff9ff);
+      window.setTimeout(() => !root.destroyed && foilSweep(root, 0xffd6f5), 260);
+      const ring = new TilingSprite({ texture: rainbowTile(), width: 640, height: 700 });
+      ring.position.set(W / 2 - 320, CY - 350);
+      ring.alpha = 0.7;
+      const m = new Graphics().rect(W / 2 - 320, CY - 350, 640, 700).fill(0xffffff).rect(W / 2 - 300, CY - 330, 600, 660).cut();
+      ring.mask = m;
+      root.addChildAt(ring, root.children.indexOf(frameG) + 1);
+      root.addChild(m);
+      const iv = window.setInterval(() => {
+        if (ring.destroyed) return window.clearInterval(iv);
+        ring.tilePosition.x += 6;
+      }, 1000 / 30);
+      const tag = poster('HOLO', 64, C.ink, { stroke: { color: C.paper, width: 8 } });
+      const tb = new Graphics().rect(-12, -2, tag.width + 24, tag.height + 4).fill(C.cyan).stroke({ width: 5, color: C.ink });
+      const tc = new Container();
+      tc.addChild(tb, tag);
+      tc.position.set(W / 2 + 160, CY - 360);
+      tc.rotation = 0.1;
+      nameLayer.addChild(tc);
+      gsap.fromTo(tc.scale, { x: 2.2, y: 2.2 }, { x: 1, y: 1, duration: 0.16, ease: 'back.out(3)' });
+    }
+
     function duplicateBits() {
-      const d = poster(`DUPLICADO · +${o.duplicateOrbs} ORBES`, 54, C.pinkHot, { stroke: { color: C.ink, width: 8 } });
+      const d = poster(o.duplicateLabel ?? `DUPLICADO · +${o.duplicateOrbs} ORBES`, 54, C.pinkHot, { stroke: { color: C.ink, width: 8 } });
+      if (d.width > 620) d.scale.set(620 / d.width);
       d.anchor.set(0.5);
       d.rotation = -0.12;
       d.position.set(W / 2 + 560, CY - 10);
