@@ -1,95 +1,71 @@
-import { Container, Graphics, Texture, TilingSprite } from 'pixi.js';
+/**
+ * The "void between dimensions" under the floating islands: a cozy anime sky seen from above,
+ * with two parallax cloud seas drifting far below (screen-space, 4 cheap tiling sprites).
+ */
+import { Container, Sprite, Texture, TilingSprite } from 'pixi.js';
 import { W, H } from '../core/App';
 import { halftoneTexture } from '../art/textures';
-import { SEA, SEA_DEEP } from './terrain';
+import { bake, cloudFieldTex, rgba } from './dimensions/bake';
 
-const cache = new Map<string, Texture>();
-
-/** scattered hand-drawn wave marks (white crests + ink-blue troughs), tileable */
-function waveTexture(variant: number): Texture {
-  const k = `waves-${variant}`;
-  const hit = cache.get(k);
-  if (hit) return hit;
-  const size = 512;
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  const g = c.getContext('2d')!;
-  let s = 1234 + variant * 99;
-  const rnd = () => {
-    s = (s * 16807) % 2147483647;
-    return s / 2147483647;
-  };
-  g.lineCap = 'round';
-  for (let i = 0; i < 26; i++) {
-    const x = rnd() * size;
-    const y = rnd() * size;
-    const w = 18 + rnd() * 26;
-    const dx = variant ? 3 : 0;
-    for (const [ox, oy] of [
-      [0, 0],
-      [-size, 0],
-      [0, -size],
-      [-size, -size],
-      [size, 0],
-      [0, size],
-    ]) {
-      const bx = x + ox + dx;
-      const by = y + oy;
-      g.strokeStyle = 'rgba(255,255,255,0.42)';
-      g.lineWidth = 3;
-      g.beginPath();
-      g.moveTo(bx - w, by);
-      g.quadraticCurveTo(bx - w / 2, by - 7, bx, by);
-      g.quadraticCurveTo(bx + w / 2, by - 7, bx + w, by);
-      g.stroke();
-      if (rnd() < 0.4) {
-        g.strokeStyle = 'rgba(23,43,80,0.18)';
-        g.lineWidth = 2;
-        g.beginPath();
-        g.moveTo(bx - w * 0.6, by + 8);
-        g.quadraticCurveTo(bx, by + 13, bx + w * 0.6, by + 8);
-        g.stroke();
-      }
-    }
-  }
-  const t = Texture.from(c);
-  t.source.addressMode = 'repeat';
-  cache.set(k, t);
-  return t;
+function skyGradient(): Texture {
+  return bake(
+    'void-grad',
+    8,
+    512,
+    (g, w, h) => {
+      const grd = g.createLinearGradient(0, 0, 0, h);
+      grd.addColorStop(0, rgba(0x4fa8e6, 1));
+      grd.addColorStop(0.55, rgba(0x82c8f0, 1));
+      grd.addColorStop(1, rgba(0xbfe6f8, 1));
+      g.fillStyle = grd;
+      g.fillRect(0, 0, w, h);
+    },
+    false,
+  );
 }
 
-/** Screen-space sea that scrolls with the camera (cheap: 3 tiling sprites). */
 export class SeaView extends Container {
   private dots: TilingSprite;
-  private wavesA: TilingSprite;
-  private wavesB: TilingSprite;
-  private t = 0;
+  private far: TilingSprite;
+  private near: TilingSprite;
+  private haze: TilingSprite;
   private drift = 0;
+  private cam = { x: 0, y: 0, z: 1 };
   constructor() {
     super();
-    const base = new Graphics().rect(0, 0, W, H).fill(SEA);
-    this.dots = new TilingSprite({ texture: halftoneTexture(SEA_DEEP, 16, 3.2), width: W, height: H });
-    this.dots.alpha = 0.55;
-    this.wavesA = new TilingSprite({ texture: waveTexture(0), width: W, height: H });
-    this.wavesB = new TilingSprite({ texture: waveTexture(1), width: W, height: H });
-    this.wavesB.visible = false;
-    this.addChild(base, this.dots, this.wavesA, this.wavesB);
+    const base = new Sprite(skyGradient());
+    base.width = W;
+    base.height = H;
+    this.dots = new TilingSprite({ texture: halftoneTexture(0x3f96d6, 18, 3), width: W, height: H });
+    this.dots.alpha = 0.32;
+    this.far = new TilingSprite({ texture: cloudFieldTex(1), width: W, height: H });
+    this.far.tint = 0xcfe2f6;
+    this.far.alpha = 0.55;
+    this.haze = new TilingSprite({ texture: halftoneTexture(0xffffff, 22, 2.4), width: W, height: H });
+    this.haze.alpha = 0.18;
+    this.near = new TilingSprite({ texture: cloudFieldTex(0), width: W, height: H });
+    this.near.alpha = 0.92;
+    this.addChild(base, this.dots, this.far, this.haze, this.near);
+    this.eventMode = 'none';
   }
+  /** world container offset + zoom (called by the camera) */
   follow(x: number, y: number, zoom: number) {
-    this.dots.tilePosition.set(x, y);
-    this.dots.tileScale.set(zoom);
-    for (const w of [this.wavesA, this.wavesB]) {
-      w.tilePosition.set(x + this.drift * zoom, y);
-      w.tileScale.set(zoom);
-    }
+    this.cam = { x, y, z: zoom };
+    this.place();
+  }
+  private place() {
+    const { x, y, z } = this.cam;
+    const lay = (s: TilingSprite, p: number, sc: number, dx: number) => {
+      s.tilePosition.set(x * p + dx, y * p);
+      s.tileScale.set(sc * (0.55 + z * 0.45 * p));
+    };
+    lay(this.dots, 0.2, 1, 0);
+    lay(this.far, 0.32, 0.7, this.drift * 0.5);
+    lay(this.haze, 0.45, 1, 0);
+    lay(this.near, 0.55, 1.15, this.drift);
   }
   tick(dt: number) {
-    this.t += dt;
-    this.drift += dt * 6;
-    if (this.t > 0.42) {
-      this.t = 0;
-      this.wavesA.visible = !this.wavesA.visible;
-      this.wavesB.visible = !this.wavesA.visible;
-    }
+    this.drift += dt * 9;
+    this.place();
   }
 }
