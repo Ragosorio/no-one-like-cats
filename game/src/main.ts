@@ -38,7 +38,7 @@ async function loadFonts() {
 }
 
 /**
- * Dev routes: ?scene=island|map|battle|title|art|shiplab|sandbox|islandlab
+ * Dev routes: ?scene=island|map|battle|title|art|catlive|shiplab|sandbox|islandlab
  * (&new=1 starts a fresh save). No param = the real game (title screen).
  */
 async function route(scene: string | null, fresh: boolean) {
@@ -61,6 +61,10 @@ async function route(scene: string | null, fresh: boolean) {
     case 'art': {
       const { ArtLab } = await import('./scenes/ArtLab');
       return scenes.go(new ArtLab(), 'none');
+    }
+    case 'catlive': {
+      const { CatLiveLab } = await import('./scenes/CatLiveLab');
+      return scenes.go(new CatLiveLab(), 'none');
     }
     case 'shiplab': {
       const { ShipArtLab } = await import('./scenes/ShipArtLab');

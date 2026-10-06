@@ -470,6 +470,7 @@ export class BattleScene extends Scene {
     if (bc) {
       gsap.fromTo(bc.scale, { x: 1.15, y: 0.85 }, { x: 1, y: 1, duration: 0.4, ease: 'elastic.out(1.2,0.4)' });
       gsap.fromTo(bc, { y: bc.y - 26 }, { y: bc.y, duration: 0.35, ease: 'bounce.out' });
+      bc.sprite.emote('happy');
       sfx('meow', 0.9 + Math.random() * 0.3);
     }
     this.refreshCards();
@@ -689,6 +690,7 @@ export class BattleScene extends Scene {
         this.cam.ty = wp.y - 80;
         this.cam.tz = 1.18;
         gsap.timeline().to(bc.scale, { x: 1.12, y: 0.9, duration: 0.25 }).to(bc.scale, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
+        bc.sprite.emote('attack', 0.7);
         sfx('meow', 0.8);
         await wait(650);
       }
@@ -723,11 +725,29 @@ export class BattleScene extends Scene {
     if (len < 10) return;
     this.aim.angle = Math.atan2(dy, dx);
     this.aim.power = 380 + len * 3.1;
+    // the shooter winds up: crouches with the pull and leans back against the shot
+    const bc = this.selected ? this.catViews.get(this.selected) : undefined;
+    if (bc && !bc.destroyed) {
+      const pull = len / 300;
+      bc.sprite.crouch = 0.25 + pull * 0.75;
+      bc.sprite.lean = -Math.sign(Math.cos(this.aim.angle) || 1) * (bc.flip ? -1 : 1) * pull * 0.6;
+    }
     this.drawAim();
   }
   up() {
     if (!this.dragging) return;
     this.dragging = false;
+    const bc = this.selected ? this.catViews.get(this.selected) : undefined;
+    if (bc && !bc.destroyed) {
+      // release: spring forward past neutral, then settle
+      bc.sprite.crouch = -0.3;
+      bc.sprite.lean = 0.5 * Math.sign(Math.cos(this.aim.angle) || 1) * (bc.flip ? -1 : 1);
+      window.setTimeout(() => {
+        if (bc.destroyed) return;
+        bc.sprite.crouch = 0;
+        bc.sprite.lean = 0;
+      }, 260);
+    }
     if (this.phase !== 'aim') return;
     this.aimG.clear();
     this.playerFire();
@@ -824,9 +844,30 @@ export class BattleScene extends Scene {
     gsap.from(band.scale, { x: 0, duration: 0.18, ease: 'power3.out' });
     gsap.from(cat, { x: c.side === 0 ? -300 : W + 300, duration: 0.25, ease: 'power3.out' });
     gsap.from(name.scale, { x: 3, y: 3, duration: 0.2, delay: 0.2, ease: 'back.out(2)' });
+    // the cat acts the shout: slides in leaning, gathers power (crouch + eyes shut), then ROARS
+    cat.sprite.lean = 0.6;
+    cat.sprite.crouch = 0.9;
+    cat.sprite.emote('sleepy', 0.9);
+    window.setTimeout(() => {
+      if (cat.destroyed) return;
+      cat.sprite.lean = -0.25;
+      cat.sprite.emote('sleepy', 0);
+    }, 240);
     window.setTimeout(() => {
       sfx('crit');
-      if (!cat.destroyed) cat.impactFrame(140);
+      if (!cat.destroyed) {
+        cat.sprite.crouch = -0.4;
+        cat.sprite.lean = 0.8;
+        cat.sprite.emote('surprise');
+        cat.sprite.emote('attack', 1.4);
+        cat.impactFrame(140);
+        gsap.fromTo(cat.scale, { x: 1.18, y: 0.86 }, { x: 1, y: 1, duration: 0.5, ease: 'elastic.out(1.2,0.35)' });
+        window.setTimeout(() => {
+          if (cat.destroyed) return;
+          cat.sprite.crouch = 0;
+          cat.sprite.lean = 0.2;
+        }, 300);
+      }
       this.shaker.add(0.4);
     }, 420);
     await wait(settings.reduceMotion ? 600 : 1250);
@@ -981,6 +1022,7 @@ export class BattleScene extends Scene {
       const bc = this.catViews.get(shooter);
       if (bc) {
         gsap.timeline().to(bc.scale, { x: 1.2, y: 0.8, duration: 0.08 }).to(bc.scale, { x: 0.9, y: 1.15, duration: 0.06 }).to(bc.scale, { x: 1, y: 1, duration: 0.3, ease: 'elastic.out(1,0.4)' });
+        bc.sprite.emote('attack');
       }
       sfx(shot.element === 'electric' ? 'zap' : shot.trajectory === 'gust' ? 'whoosh' : 'shoot', quick ? 1.25 : 1);
       this.shaker.add(quick ? 0.06 : 0.12);
@@ -1325,6 +1367,7 @@ export class BattleScene extends Scene {
     }
     if (!e.dot && !e.overboard) {
       gsap.fromTo(bc, { x: bc.x + (e.side === 0 ? -14 : 14) }, { x: bc.x, duration: 0.35, ease: 'elastic.out(1,0.3)' });
+      bc.sprite.emote('hurt');
       if (e.element === 'electric' && !e.ko) st?.electrocute();
       else bc.impactFrame(90, false);
       if (e.element === 'fire' && e.fx.burning > 0 && !e.ko) this.flt(gp.x, gp.y - 190, '¡AY AY AY!', { color: C.orange, size: 34, rot: 0.15 });
@@ -1333,7 +1376,10 @@ export class BattleScene extends Scene {
       for (const [uid, other] of this.catViews) {
         if (uid === e.uid || other.destroyed) continue;
         const oc = this.sim.sides[e.side].cats.find((k) => k.def.uid === uid);
-        if (oc && !oc.ko) gsap.fromTo(other.scale, { x: 1.08, y: 0.92 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
+        if (oc && !oc.ko) {
+          gsap.fromTo(other.scale, { x: 1.08, y: 0.92 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
+          other.sprite.emote('surprise', 0.7);
+        }
       }
     }
     if (e.revived) {
@@ -1593,6 +1639,7 @@ export class BattleScene extends Scene {
       if (line && boss) this.speech(this.ships[1], boss.name, line, 3.2);
     }
     this.rain?.setOn(false);
+    this.celebrate(won);
     await this.sinkSequence(won ? 1 : 0);
     const layer = new Container();
     this.overlay.addChild(layer);
@@ -1672,9 +1719,36 @@ export class BattleScene extends Scene {
     });
   }
 
+  /** end of the fight: the crew that's still standing reacts (party hops / ears down) */
+  private celebrate(won: boolean) {
+    let i = 0;
+    for (const [uid, bc] of this.catViews) {
+      const c = this.sim.sides[0].cats.find((k) => k.def.uid === uid);
+      if (!c || c.ko || bc.destroyed) continue;
+      const k = i++;
+      if (won) {
+        for (let n = 0; n < 4; n++)
+          window.setTimeout(() => {
+            if (bc.destroyed) return;
+            bc.sprite.emote('happy');
+            bc.sprite.crouch = 0.6;
+            window.setTimeout(() => !bc.destroyed && (bc.sprite.crouch = -0.3), 90);
+            gsap.fromTo(bc, { y: bc.y }, { y: bc.y - 40, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.out', onComplete: () => !bc.destroyed && (bc.sprite.crouch = 0) });
+          }, k * 140 + n * 520);
+      } else {
+        bc.sprite.emote('hurt', 0.6);
+        bc.sprite.crouch = 0.35;
+        bc.sprite.emote('sleepy', 0.8);
+      }
+    }
+  }
+
   override update(dt: number) {
     this.t += dt;
     for (const v of this.ships) if (!this.sinking.has(v)) v.bob(dt * time.scale);
+    // the sea breeze is part of the fight: fur, tails and ears drift with the battle wind
+    const wind = this.sim.wind / 70;
+    for (const bc of this.catViews.values()) if (!bc.destroyed) bc.sprite.wind = wind * (bc.flip ? -1 : 1);
     if (this.flyer && !this.flyer.cat.destroyed) this.flyer.cat.y = this.flyer.y + Math.sin(this.t * 3) * 12;
     // camera rig: follow the projectile but keep the target ship fully in frame (never cut a ship)
     if (this.follow && !this.follow.destroyed) {

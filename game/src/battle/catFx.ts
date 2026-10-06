@@ -177,6 +177,7 @@ export class CatStatusView extends Container {
 export function playKO(cat: BattleCat, overlay: Container, world: Container, waterY: number, side: number, onSplash: (x: number) => void) {
   const gp = overlay.toLocal(cat.getGlobalPosition());
   const size = cat.size;
+  cat.sprite.emote('hurt', 1.6);
   cat.impactFrame(160, true);
   sfx('crit');
   sfx('meow', 0.55);

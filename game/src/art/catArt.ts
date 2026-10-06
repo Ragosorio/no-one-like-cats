@@ -1,4 +1,5 @@
 import { Assets, Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
+import { ART, CatPuppet, PuppetOptions } from './livingCat';
 import { GlowFilter, OutlineFilter } from 'pixi-filters';
 import gsap from 'gsap';
 import { ComicFilter, InkFilter } from '../fx/filters';
@@ -30,36 +31,150 @@ export function elementFx(el: string) {
   return ELEMENT_FX[el] ?? ELEMENT_FX.fire;
 }
 
-export function catUrl(slug: string) {
-  return `cats/${slug}.webp`;
+/**
+ * Cat art = MAI pure vectors only (no raster files are served). Two tiers, same logical 700×700
+ * size so rigs/UVs/scales are identical:
+ * - lite: traced from a 256 px downscale (~130–220 KB gzip) → rasterized at 350 px. Everything
+ *   waits on this one (island, battle, shop, catdex grids).
+ * - full: the approved high-color-preserved trace (game-compact, pixel-identical) → rasterized at
+ *   1050 px. Loaded in the background only when a puppet is drawn big (or a scene asks for it).
+ */
+export function catLiteUrl(slug: string) {
+  return `cats-svg/lite/${slug}.svg`;
+}
+export function catSvgUrl(slug: string) {
+  return `cats-svg/${slug}.svg`;
+}
+const LITE_RES = 0.5;
+const FULL_RES = 1.5;
+
+const liteTex = new Map<string, Texture>();
+const litePending = new Map<string, Promise<Texture>>();
+function loadLite(slug: string): Promise<Texture> {
+  const hit = liteTex.get(slug);
+  if (hit) return Promise.resolve(hit);
+  let p = litePending.get(slug);
+  if (!p) {
+    const url = catLiteUrl(slug);
+    p = Assets.load<Texture>({ alias: url, src: url, data: { resolution: LITE_RES } }).then((t) => {
+      liteTex.set(slug, t);
+      litePending.delete(slug);
+      return t;
+    });
+    p.catch(() => litePending.delete(slug));
+    litePending.set(slug, p);
+  }
+  return p;
+}
+
+const svgTex = new Map<string, Texture>();
+const svgState = new Map<string, 'queued' | 'loading' | 'failed'>();
+const svgWaiters = new Map<string, Set<(t: Texture) => void>>();
+const svgQueue: string[] = [];
+let svgActive = 0;
+
+function pumpSvg() {
+  while (svgActive < 2 && svgQueue.length) {
+    const slug = svgQueue.shift()!;
+    svgActive++;
+    svgState.set(slug, 'loading');
+    const url = catSvgUrl(slug);
+    const go = () =>
+      Assets.load<Texture>({ alias: url, src: url, data: { resolution: FULL_RES } })
+        .then((tex) => {
+          svgTex.set(slug, tex);
+          svgState.delete(slug);
+          const ws = svgWaiters.get(slug);
+          svgWaiters.delete(slug);
+          ws?.forEach((cb) => cb(tex));
+        })
+        .catch(() => svgState.set(slug, 'failed'))
+        .finally(() => {
+          svgActive--;
+          pumpSvg();
+        });
+    // the SVG decode is main-thread work: start it when the frame has slack
+    const ric = (globalThis as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback;
+    if (ric) ric(go, { timeout: 600 });
+    else setTimeout(go, 16);
+  }
+}
+
+/** ask for the full-detail vector (background; no-op if loaded/loading) */
+export function requestCatSvg(slug: string) {
+  if (svgTex.has(slug) || svgState.has(slug)) return;
+  svgState.set(slug, 'queued');
+  svgQueue.push(slug);
+  pumpSvg();
+}
+
+/** `cb` gets the full-detail texture when it exists (now if loaded). Does NOT request it. Returns an unsubscribe. */
+export function onCatArt(slug: string, cb: (t: Texture) => void): () => void {
+  const ready = svgTex.get(slug);
+  if (ready) {
+    cb(ready);
+    return () => undefined;
+  }
+  let set = svgWaiters.get(slug);
+  if (!set) svgWaiters.set(slug, (set = new Set()));
+  set.add(cb);
+  return () => svgWaiters.get(slug)?.delete(cb);
 }
 
 export async function loadCatTexture(slug: string): Promise<Texture> {
-  return Assets.load(catUrl(slug));
+  await loadLite(slug).catch(() => undefined);
+  return catTexture(slug);
 }
 
+/** waits for the lite vectors (fast); full detail streams in later where it is needed */
 export async function preloadCats(slugs: string[]) {
-  await Assets.load(slugs.map(catUrl));
+  await Promise.all([...new Set(slugs)].map(loadLite));
 }
 
+/** best available painting: full vector if rasterized, else the lite vector, else WHITE (= not loaded) */
 export function catTexture(slug: string): Texture {
-  return Assets.get(catUrl(slug)) ?? Texture.WHITE;
+  return svgTex.get(slug) ?? liteTex.get(slug) ?? Texture.WHITE;
+}
+
+/**
+ * A living painting: CatPuppet mesh (MAI rig). Starts with whatever vector tier is loaded (hidden
+ * until one is), upgrades itself to the full-detail vector when it is drawn big.
+ * Drop-in for `new Sprite(catTexture(slug))` (same default anchor 0,0, `anchor.set`, tint, filters, texture).
+ */
+export function livingCat(slug: string, o: PuppetOptions & { detail?: boolean } = {}): CatPuppet {
+  const tex = catTexture(slug);
+  const p = new CatPuppet(tex === Texture.WHITE ? Texture.EMPTY : tex, slug, { anchorX: 0, anchorY: 0, ...o });
+  if (tex === Texture.WHITE) {
+    p.renderable = false;
+    void loadLite(slug).then((t) => {
+      if (p.destroyed || p.renderable) return;
+      p.texture = t;
+      p.renderable = true;
+    });
+  }
+  const off = onCatArt(slug, (t) => {
+    if (p.destroyed) return;
+    p.texture = t;
+    p.renderable = true;
+  });
+  p.once('destroyed', off);
+  p.onWantDetail = () => requestCatSvg(slug);
+  if (o.detail) requestCatSvg(slug);
+  return p;
 }
 
 /** The cute island form: painted sprite + soft shadow + breathing on twos. */
 export class IslandCat extends Container {
-  sprite: Sprite;
+  sprite: CatPuppet;
   shadow: Graphics;
   private t = Math.random() * 10;
   private acc = 0;
   baseScale: number;
   constructor(slug: string, public size = 120) {
     super();
-    const tex = catTexture(slug);
     this.shadow = new Graphics().ellipse(0, 0, size * 0.32, size * 0.08).fill({ color: C.ink, alpha: 0.22 });
-    this.sprite = new Sprite(tex);
-    this.sprite.anchor.set(0.5, 0.94);
-    this.baseScale = size / Math.max(1, tex.width);
+    this.sprite = livingCat(slug, { anchorX: 0.5, anchorY: 0.94, fps: 12, acts: 'all' });
+    this.baseScale = size / ART;
     this.sprite.scale.set(this.baseScale);
     this.addChild(this.shadow, this.sprite);
     Ticker.shared.add(this.tick, this);
@@ -69,13 +184,26 @@ export class IslandCat extends Container {
     if (this.acc < 1 / 12) return; // on twos
     this.t += this.acc;
     this.acc = 0;
-    const b = Math.sin(this.t * 2.2);
-    this.sprite.scale.set(this.baseScale * (1 + b * 0.012), this.baseScale * (1 - b * 0.018));
+    // breathing slows down asleep; the contact shadow follows the body off the ground
+    const b = Math.sin(this.t * (this.sleeping ? 1.1 : 2.2));
+    const sx = Math.sign(this.sprite.scale.x) || 1;
+    this.sprite.scale.set(sx * this.baseScale * (1 + b * 0.012), this.baseScale * (1 - b * (this.sleeping ? 0.026 : 0.018)));
+    const lift = Math.min(1, Math.max(0, -this.sprite.y / (this.size * 0.3)));
+    this.shadow.scale.set(1 - lift * 0.45, 1 - lift * 0.45);
+    this.shadow.alpha = 1 - lift * 0.5;
   }
+  sleeping = false;
   hop() {
+    this.sprite.emote('happy');
+    // anticipation squash → airborne stretch → landing squash (the puppet does the body, the tween the jump)
+    this.sprite.crouch = 0.8;
     gsap.timeline()
-      .to(this.sprite, { y: -this.size * 0.25, duration: 0.18, ease: 'power2.out' })
-      .to(this.sprite, { y: 0, duration: 0.22, ease: 'bounce.out' });
+      .call(() => (this.sprite.crouch = -0.35), [], 0.09)
+      .to(this.sprite, { y: -this.size * 0.25, duration: 0.18, ease: 'power2.out' }, 0.09)
+      .call(() => (this.sprite.crouch = 0), [], 0.2)
+      .to(this.sprite, { y: 0, duration: 0.22, ease: 'bounce.out' })
+      .call(() => (this.sprite.crouch = 0.55), [], '-=0.12')
+      .call(() => (this.sprite.crouch = 0), [], '+=0.08');
   }
   face(dir: 1 | -1) {
     this.sprite.scale.x = Math.abs(this.sprite.scale.x) * dir;
@@ -91,7 +219,7 @@ export class IslandCat extends Container {
  * thick ink outline, element rim glow, rotating energy spikes and an element aura.
  */
 export class BattleCat extends Container {
-  sprite: Sprite;
+  sprite: CatPuppet;
   aura = new Container();
   spikes: Graphics;
   comic: ComicFilter;
@@ -105,7 +233,6 @@ export class BattleCat extends Container {
   constructor(slug: string, public element: string, public size = 200, public flip = false) {
     super();
     this.fx = elementFx(element);
-    const tex = catTexture(slug);
     this.spikes = new Graphics();
     this.drawSpikes();
     const glowA = new Sprite(glowTexture());
@@ -115,9 +242,8 @@ export class BattleCat extends Container {
     glowA.scale.set((size / 128) * 1.7);
     glowA.y = -size * 0.42;
     this.aura.addChild(glowA, this.spikes);
-    this.sprite = new Sprite(tex);
-    this.sprite.anchor.set(0.5, 0.94);
-    this.baseScale = size / Math.max(1, tex.width);
+    this.sprite = livingCat(slug, { anchorX: 0.5, anchorY: 0.94, fps: 12, acts: 'battle' });
+    this.baseScale = size / ART;
     this.sprite.scale.set(this.baseScale * (flip ? -1 : 1), this.baseScale);
     this.comic = new ComicFilter({ levels: 6, dot: 4, sat: 1.3, strength: 0.85, shadow: this.fx.dark });
     this.ink = new InkFilter({ threshold: 0.4 });

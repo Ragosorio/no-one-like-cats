@@ -1,5 +1,6 @@
 /** A cat living on the island: wanders inside its area "on twos", hops, sleeps (Zzz), sulks when homeless. */
 import { Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
+import { game } from '../core/App';
 import gsap from 'gsap';
 import { IslandCat } from '../art/catArt';
 import { applyCatTint, slugOf } from '../art/tint';
@@ -285,7 +286,35 @@ export class CatActor extends Container {
   /** tiny "speaking" bounce (squash & stretch on the painting) */
   talk() {
     if (this.destroyed) return;
+    this.cat.sprite.emote('happy', 0.55);
     this.tweens.push(gsap.fromTo(this.cat.scale, { x: 1.08, y: 0.92 }, { x: 1, y: 1, duration: 0.45, ease: 'elastic.out(1.2,0.4)' }));
+  }
+
+  /** someone is talking over there: look at them for a while (beats following the cursor) */
+  gazeAt(global: { x: number; y: number } | null, secs = 3) {
+    this.gaze = global ? { x: global.x, y: global.y } : null;
+    this.gazeT = global ? secs : 0;
+  }
+  private gaze: { x: number; y: number } | null = null;
+  private gazeT = 0;
+  private moving = false;
+
+  /** posture every frame: walk cycle while moving, real sleep, slumped when homeless, eyes on the cursor */
+  private act(dt: number) {
+    const p = this.cat.sprite;
+    if (p.destroyed) return;
+    const asleep = this.mood === 'sleep' || this.mood === 'boxsleep';
+    p.sleeping = asleep;
+    this.cat.sleeping = asleep;
+    p.walk = this.moving && !asleep ? Math.min(1, 0.55 + this.speed * 0.5) : 0;
+    p.crouch = this.mood === 'sad' ? 0.3 : 0;
+    p.acts = asleep ? 'none' : this.mood === 'sad' ? 'calm' : 'all';
+    this.gazeT -= dt;
+    if (this.gazeT > 0 && this.gaze) p.lookAt(this.gaze);
+    else if (!asleep) {
+      const ptr = game.pixi.renderer.events?.pointer?.global;
+      p.lookAt(ptr && ptr.x > 0 ? ptr : null);
+    } else p.lookAt(null);
   }
 
   setLevel(level: number, scale: number) {
@@ -389,6 +418,7 @@ export class CatActor extends Container {
 
   update(dt: number) {
     this.tickLook(dt);
+    this.act(dt);
     this.acc += dt;
     if (this.acc < 1 / 12) return; // animate on twos
     const step = this.acc;
@@ -403,6 +433,7 @@ export class CatActor extends Container {
       return;
     }
     if (this.wait > 0) {
+      this.moving = false;
       this.wait -= step;
       this.hopT -= step;
       if (this.hopT <= 0 && this.mood === 'roam') {
@@ -411,7 +442,9 @@ export class CatActor extends Container {
       }
       return;
     }
+    this.moving = true;
     if (this.moveToward(step)) {
+      this.moving = false;
       this.travelling = false;
       this.wait = 1.2 + Math.random() * 3.5;
       const p = this.randomPoint();

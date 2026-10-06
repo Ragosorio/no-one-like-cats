@@ -7,7 +7,7 @@ import { icon } from '../../../ui/icons';
 import { G } from '../../../state/game';
 import { habitatHouse } from '../../../island/buildingArt';
 import { decorArt, DecorArt } from '../../../island/decor/decorArt';
-import { catTexture, preloadCats } from '../../../art/catArt';
+import { catTexture, preloadCats, livingCat } from '../../../art/catArt';
 import { applyCatTint, slugOf } from '../../../art/tint';
 import { glowTexture } from '../../../art/textures';
 import { catOffers } from '../../../state/sys/shop';
@@ -198,7 +198,7 @@ function vignette(id: ShopPage, v: Container, th: number): (t: number) => void {
       const slug = slugOf(offer?.def.id ?? 'c_canelo');
       const show = () => {
         if (holder.destroyed) return;
-        const sp = new Sprite(catTexture(slug));
+        const sp = livingCat(slug);
         sp.anchor.set(0.5, 0.95);
         sp.scale.set(190 / Math.max(1, sp.texture.width));
         applyCatTint(sp, offer?.def.id ?? 'c_canelo');

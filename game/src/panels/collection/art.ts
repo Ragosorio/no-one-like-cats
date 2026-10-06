@@ -5,7 +5,8 @@
  */
 import { Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
 import { game } from '../../core/App';
-import { catTexture, loadCatTexture, preloadCats } from '../../art/catArt';
+import { catTexture, livingCat, loadCatTexture, preloadCats } from '../../art/catArt';
+import type { CatView } from '../../art/livingCat';
 import { overlayTint, tintFilter, slugOf } from '../../art/tint';
 import { CATS, CAT_BY_ID, TintSpec } from '../../data/content';
 import { SilhouetteFilter } from '../../fx/filters';
@@ -211,14 +212,14 @@ export function drawDecal(g: Graphics, decal: string, seed: string) {
 
 export interface Variant {
   root: Container;
-  sprite: Sprite;
+  sprite: CatView;
 }
 
 /**
  * The painting as this species looks (tint + overlay + decal). `size` = on-screen width of
  * the 700px painting. Anchored at its center.
  */
-export function variantSprite(species: string, size: number, o: { decals?: boolean; slug?: string; tint?: TintSpec | null; mutation?: string | null } = {}): Variant {
+export function variantSprite(species: string, size: number, o: { decals?: boolean; slug?: string; tint?: TintSpec | null; mutation?: string | null; live?: boolean } = {}): Variant {
   const def = CAT_BY_ID.get(species);
   const slug = o.slug ?? slugOf(species);
   const t: TintSpec | null | undefined = o.tint !== undefined ? o.tint : def?.art.tint;
@@ -254,7 +255,8 @@ export function variantSprite(species: string, size: number, o: { decals?: boole
       inner.addChild(back);
     }
   }
-  const sprite = new Sprite(tex);
+  // live = MAI puppet (blinks, ears, tail); baked portraits stay a still sprite of the loaded art
+  const sprite: CatView = o.live === false ? new Sprite(tex) : livingCat(slug);
   sprite.anchor.set(0.5);
   const f = tintFilter(t);
   const mf = mut?.tint ? tintFilter(mut.tint as TintSpec) : null;
@@ -282,7 +284,7 @@ export function variantSprite(species: string, size: number, o: { decals?: boole
  * with the decal masked to the painting; call syncMutationOverlay every frame (the sprite
  * breathes) — sprites can't own children in Pixi v8, so the overlay lives next to it.
  */
-export function mutationOverlay(sprite: Sprite, species: string, mutation: string | null): Container | null {
+export function mutationOverlay(sprite: CatView, species: string, mutation: string | null): Container | null {
   const look = mutationLook(mutation);
   if (!look) return null;
   if (look.tint) {
@@ -306,7 +308,7 @@ export function mutationOverlay(sprite: Sprite, species: string, mutation: strin
   }
   return wrap;
 }
-export function syncMutationOverlay(wrap: Container, sprite: Sprite) {
+export function syncMutationOverlay(wrap: Container, sprite: CatView) {
   if (wrap.destroyed || sprite.destroyed) return;
   const th = sprite.texture.height || 700;
   wrap.scale.set(sprite.scale.x, sprite.scale.y);
@@ -328,7 +330,7 @@ export function portraitTex(species: string, mode: PortraitMode = 'color', px = 
   const base = catTexture(slug);
   if (base === Texture.WHITE) return Texture.EMPTY;
   const wrap = new Container();
-  const v = variantSprite(species, px * 0.98);
+  const v = variantSprite(species, px * 0.98, { live: false });
   v.root.position.set(px / 2, px / 2);
   if (mode !== 'color') v.root.filters = [new SilhouetteFilter(mode === 'sil' ? 0x171317 : 0xede4d6, 1)];
   wrap.addChild(v.root);

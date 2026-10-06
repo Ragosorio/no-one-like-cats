@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { F } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { icon } from '../../ui/icons';
-import { loadCatTexture, catTexture } from '../../art/catArt';
+import { loadCatTexture, catTexture, livingCat } from '../../art/catArt';
 import { applyCatTint, slugOf } from '../../art/tint';
 import { catDef } from '../../data/content';
 import { elementIcon } from '../../ui/elementIcon';
@@ -26,7 +26,7 @@ export function catArt(species: string, size: number): Container {
   const slug = slugOf(species);
   const put = () => {
     if (c.destroyed) return;
-    const s = new Sprite(catTexture(slug));
+    const s = livingCat(slug);
     s.anchor.set(0.5);
     s.scale.set(size / Math.max(1, s.texture.width || 700));
     applyCatTint(s, species);

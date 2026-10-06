@@ -1,0 +1,135 @@
+{
+  "profile": "game-compact/v1",
+  "source": "high-color-preserved",
+  "lossless": "collinear L merge + relative commands, 3-decimal numbers (input precision)",
+  "files": {
+    "alien_galaxy_cat": {
+      "bytesIn": 5624711,
+      "bytesOut": 4104639
+    },
+    "arce_autumn_cat": {
+      "bytesIn": 10007120,
+      "bytesOut": 7268064
+    },
+    "bytewhisker_cat": {
+      "bytesIn": 9356449,
+      "bytesOut": 6773798
+    },
+    "candy_alchemist_cat": {
+      "bytesIn": 8291480,
+      "bytesOut": 6035757
+    },
+    "canelo_cozy_cat": {
+      "bytesIn": 11840605,
+      "bytesOut": 8596776
+    },
+    "cyber_bloom_cat": {
+      "bytesIn": 8968996,
+      "bytesOut": 6487968
+    },
+    "deepsea_sprite_cat": {
+      "bytesIn": 9729873,
+      "bytesOut": 7056326
+    },
+    "fossilstone_guardian_cat": {
+      "bytesIn": 9465599,
+      "bytesOut": 6877238
+    },
+    "iridescent_origami_cat": {
+      "bytesIn": 4273344,
+      "bytesOut": 3121425
+    },
+    "jelly_aquatic_cat": {
+      "bytesIn": 7655299,
+      "bytesOut": 5540596
+    },
+    "kintsugi_tea_spirit_cat": {
+      "bytesIn": 7761853,
+      "bytesOut": 5659324
+    },
+    "lantern_spirit_cat": {
+      "bytesIn": 5667129,
+      "bytesOut": 4087971
+    },
+    "lumen_lens_cat": {
+      "bytesIn": 9799826,
+      "bytesOut": 7100681
+    },
+    "margarita_daisy_cat": {
+      "bytesIn": 10021958,
+      "bytesOut": 7230561
+    },
+    "masquerade_phantom_cat": {
+      "bytesIn": 6703144,
+      "bytesOut": 4836567
+    },
+    "mecha_neon_cat": {
+      "bytesIn": 6559575,
+      "bytesOut": 4819235
+    },
+    "menta_botanical_cat": {
+      "bytesIn": 9894482,
+      "bytesOut": 7126277
+    },
+    "mochi_bell_cat": {
+      "bytesIn": 7728220,
+      "bytesOut": 5559979
+    },
+    "molten_ember_cat": {
+      "bytesIn": 9045735,
+      "bytesOut": 6586854
+    },
+    "mushroom_druid_cat": {
+      "bytesIn": 9154233,
+      "bytesOut": 6652771
+    },
+    "neon_glitch_cat": {
+      "bytesIn": 5353385,
+      "bytesOut": 3858314
+    },
+    "nori_lunar_cat": {
+      "bytesIn": 11207068,
+      "bytesOut": 8099230
+    },
+    "nube_dream_cat": {
+      "bytesIn": 7673726,
+      "bytesOut": 5484920
+    },
+    "prism_crystal_cat": {
+      "bytesIn": 6199074,
+      "bytesOut": 4496906
+    },
+    "regal_cosmic_cat": {
+      "bytesIn": 9283616,
+      "bytesOut": 6760131
+    },
+    "sakura_whisper_cat": {
+      "bytesIn": 7983379,
+      "bytesOut": 5732281
+    },
+    "selene_moonlit_cat": {
+      "bytesIn": 11185746,
+      "bytesOut": 8090505
+    },
+    "sol_sunbeam_cat": {
+      "bytesIn": 8818656,
+      "bytesOut": 6367693
+    },
+    "sonata_prima_cat": {
+      "bytesIn": 11010967,
+      "bytesOut": 7991662
+    },
+    "steampunk_clockwork_cat": {
+      "bytesIn": 7137678,
+      "bytesOut": 5222420
+    },
+    "stormcloud_elemental_cat": {
+      "bytesIn": 11337943,
+      "bytesOut": 8257943
+    },
+    "storybook_ink_cat": {
+      "bytesIn": 10223978,
+      "bytesOut": 7388926
+    }
+  }
+}

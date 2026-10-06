@@ -7,7 +7,8 @@ import { sfx } from '../../../core/audio';
 import { G } from '../../../state/game';
 import { CatDef } from '../../../data/content';
 import { ELEMENT_NAME } from '../../../data/elementsMeta';
-import { catTexture, elementFx, preloadCats } from '../../../art/catArt';
+import { catTexture, elementFx, preloadCats, livingCat } from '../../../art/catArt';
+import type { CatPuppet } from '../../../art/livingCat';
 import { applyCatTint, slugOf } from '../../../art/tint';
 import { elementIcon } from '../../../ui/elementIcon';
 import { buyCat, catOffers, catPrice, isNew, markSeen } from '../../../state/sys/shop';
@@ -59,7 +60,7 @@ export function renderCats(ctx: ShopCtx) {
   const gap = 20;
   const cw = Math.floor((areaW - 14 - gap * (cols - 1)) / cols);
   const ch = 380;
-  const sprites: Sprite[] = [];
+  const sprites: CatPuppet[] = [];
   const slugs = [...new Set(offers.map((o) => slugOf(o.def.id)))];
   const holders: { h: Container; def: CatDef }[] = [];
   offers.forEach((o, i) => {
@@ -130,7 +131,7 @@ export function renderCats(ctx: ShopCtx) {
   void preloadCats(slugs).then(() => {
     for (const { h, def } of holders) {
       if (h.destroyed) continue;
-      const s = new Sprite(catTexture(slugOf(def.id)));
+      const s = livingCat(slugOf(def.id));
       s.anchor.set(0.5, 0.95);
       s.scale.set(Math.min(170 / Math.max(1, s.texture.height), (cw - 40) / Math.max(1, s.texture.width)));
       applyCatTint(s, def.id);

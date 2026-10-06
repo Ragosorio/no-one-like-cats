@@ -9,7 +9,7 @@ import { C, F } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { icon, IconKind } from '../../ui/icons';
 import { paperTexture, halftoneTexture } from '../../art/textures';
-import { catTexture } from '../../art/catArt';
+import { catTexture, livingCat } from '../../art/catArt';
 import { applyCatTint, slugOf } from '../../art/tint';
 import { ComicFilter } from '../filters';
 import { sfx } from '../../core/audio';
@@ -51,7 +51,7 @@ export class VictoryNews extends Container {
   private headline!: Text;
   private sub!: Text;
   private photoBox = new Container();
-  private mvp: Sprite | null = null;
+  private mvp: Container | null = null;
   private lootBox = new Container();
   private rows: { c: Container; value: Text; row: NewsLootRow; tw?: gsap.core.Tween }[] = [];
   private bolsa!: Text;
@@ -158,7 +158,8 @@ export class VictoryNews extends Container {
       inner.addChild(g);
     }
     if (o.mvpSpecies) {
-      const cat = new Sprite(catTexture(slugOf(o.mvpSpecies)));
+      const cat = livingCat(slugOf(o.mvpSpecies));
+      cat.emote('happy');
       cat.anchor.set(0.5, 1);
       const s = (phH * 1.05) / Math.max(1, cat.texture.height);
       cat.scale.set(s);

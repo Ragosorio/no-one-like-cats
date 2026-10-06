@@ -17,6 +17,7 @@ import { key } from '../archipelago';
 import { dimOf, DimId } from '../dimensions/defs';
 import { ChatBubble } from './bubble';
 import { chatterFor, REACTIONS } from './lines';
+import { POP_REACTIONS } from './popRefs';
 import type { ChatterLine } from '../../data/chatter';
 
 /** what the director needs from a CatActor */
@@ -30,6 +31,8 @@ export interface Talker extends Container {
   /** head height in local px (positive) */
   headH: number;
   talk(): void;
+  /** optional: turn the head toward a global point for a few seconds */
+  gazeAt?(global: { x: number; y: number } | null, secs?: number): void;
 }
 
 /** logical-screen rects the bubbles must avoid (HUD) */
@@ -158,7 +161,7 @@ class ChatterDirector {
       return;
     }
     const def = catDef(cat.species);
-    const line = chatterFor(def.elements, this.dimAt(cat));
+    const line = chatterFor(def.elements, this.dimAt(cat), def.art.slug);
     this.line = line;
     const text = (cat.mood === 'sleep' ? 'Zzz… ' : '') + this.render(line.a, cat);
     const b = this.spawn(cat, text, 'say');
@@ -171,6 +174,9 @@ class ChatterDirector {
     this.t = 0;
     this.hold = Math.min(4.2, 1.5 + text.length * 0.03);
     cat.talk();
+    // the neighbours turn their heads to listen (it's a conversation, not a sticker)
+    const head = cat.toGlobal({ x: 0, y: -cat.headH * 0.8 });
+    for (const o of cand) if (o !== cat && Math.hypot(o.x - cat.x, o.y - cat.y) < 900) o.gazeAt?.(head, this.hold + 2.5);
     this.sfxPop(cat, 1);
   }
 
@@ -192,12 +198,14 @@ class ChatterDirector {
   }
 
   private maybeReact() {
-    if (this.line?.tag !== 'polemica' || Math.random() > 0.5) return;
+    const pop = this.line?.tag === 'pop';
+    if ((this.line?.tag !== 'polemica' && !pop) || Math.random() > (pop ? 0.35 : 0.5)) return;
     const sp = this.speaker!;
     const others = this.visibleCats().filter((c) => c !== sp.cat && Math.hypot(c.x - sp.cat.x, c.y - sp.cat.y) < 900);
     if (!others.length) return;
     const cat = others[Math.floor(Math.random() * others.length)];
-    const b = this.spawn(cat, REACTIONS[Math.floor(Math.random() * REACTIONS.length)], 'shout');
+    const pool = pop ? POP_REACTIONS : REACTIONS;
+    const b = this.spawn(cat, pool[Math.floor(Math.random() * pool.length)], 'shout');
     if (!b) return;
     this.reactor = { cat, b };
     cat.talk();

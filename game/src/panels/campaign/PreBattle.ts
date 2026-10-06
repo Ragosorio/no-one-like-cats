@@ -33,7 +33,7 @@ import { P, catPortrait, elKey, elName, elNameCap, elementBadge, ensureCats, lab
 import { shipPreview } from './shipArt';
 import { CrewPicker } from './CrewPicker';
 import { SilhouetteFilter } from '../../fx/filters';
-import { catTexture, elementFx, preloadCats } from '../../art/catArt';
+import { catTexture, elementFx, preloadCats, livingCat } from '../../art/catArt';
 import type { ShipBlueprint } from '../../battle/ship';
 import type { BattleSpec } from '../../scenes/BattleScene';
 import type { ShipStyleId } from '../../battle/anime';
@@ -169,7 +169,7 @@ class PreBattleView {
     const cap = stageCaptain(z, s);
     const boss = kind === 'boss' ? zoneBoss(z) : undefined;
     if (boss) {
-      const art = new Sprite(catTexture(boss.captainArt.slug));
+      const art = livingCat(boss.captainArt.slug);
       art.anchor.set(0.5, 1);
       const k = 250 / Math.max(1, art.texture.height);
       art.scale.set(-k, k);

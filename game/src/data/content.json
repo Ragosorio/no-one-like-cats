@@ -15239,7 +15239,7 @@
     "id": "luzterna",
     "name": "Capitana Luzterna",
     "role": "Narradora y guía",
-    "art": "assets/cats-source/_extra/guides/luzterna.webp (bruja tuxedo con linterna); fallback: lantern_spirit_cat tintado violeta",
+    "art": "game/public/story/luzterna.svg (MAI vector, bruja tuxedo con linterna; títere animado); fallback: lantern_spirit_cat",
     "voice": "Sarcástica, protectora, groserías ligeras, rompe la cuarta pared."
    },
    {

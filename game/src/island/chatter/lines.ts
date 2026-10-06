@@ -5,6 +5,7 @@
  */
 import { CHATTER, ChatterLine, pickChatter } from '../../data/chatter';
 import type { DimId } from '../dimensions/defs';
+import { pickPopRef } from './popRefs';
 
 export const EXTRA: ChatterLine[] = [
   { tag: 'polemica', a: 'Los videojuegos de antes eran mejores.', b: '…menos los controles. Y las pantallas de carga. Y los gráficos. Ok, no.' },
@@ -103,8 +104,8 @@ function merge() {
 }
 
 const lastDim: string[] = [];
-/** a line for a cat with these elements standing in this dimension */
-export function chatterFor(els: string[], dim: DimId | null): ChatterLine {
+/** a line for a cat with these elements standing in this dimension (slug = its painting, for themed refs) */
+export function chatterFor(els: string[], dim: DimId | null, slug?: string): ChatterLine {
   merge();
   const pool = dim ? DIM_LINES[dim] : undefined;
   if (pool && pool.length && Math.random() < 0.32) {
@@ -114,5 +115,7 @@ export function chatterFor(els: string[], dim: DimId | null): ChatterLine {
     if (lastDim.length > 6) lastDim.shift();
     return l;
   }
+  // pop references are the main course: ~half of what the island says
+  if (Math.random() < 0.55) return pickPopRef(els, slug);
   return pickChatter(els);
 }

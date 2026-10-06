@@ -1,3 +1,4 @@
+import type { CatView } from './livingCat';
 import { ColorMatrixFilter, Filter, Sprite } from 'pixi.js';
 import { CAT_BY_ID, TintSpec } from '../data/content';
 
@@ -24,7 +25,7 @@ export function overlayTint(t: TintSpec | null | undefined): number {
 }
 
 /** apply a species' art tint to a sprite (keeps existing filters) */
-export function applyCatTint(sprite: Sprite, species: string) {
+export function applyCatTint(sprite: CatView, species: string) {
   const def = CAT_BY_ID.get(species);
   const t = def?.art.tint;
   if (!t) return;

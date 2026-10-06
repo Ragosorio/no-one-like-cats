@@ -11,6 +11,7 @@ import { Shaker, flash, onomatopoeia, floatText, time } from '../fx/juice';
 import { sfx } from '../core/audio';
 import { C } from '../ui/theme';
 import { glowTexture } from '../art/textures';
+import { loadCatTexture } from '../art/catArt';
 
 const WATER_Y = 760;
 
@@ -62,7 +63,7 @@ export class BattleSandbox extends Scene {
       if (m.kind !== 'catroom' || m.slot === undefined) continue;
       const slug = slugs[m.slot];
       if (!slug) continue;
-      const tex = await Assets.load(`cats/${slug}.webp`);
+      const tex = await loadCatTexture(slug);
       const s = new Sprite(tex);
       s.anchor.set(0.5, 1);
       const size = CELL * 2.6;

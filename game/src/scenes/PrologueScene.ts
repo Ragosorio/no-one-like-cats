@@ -15,7 +15,7 @@ import { music } from '../core/music';
 import { settings } from '../core/settings';
 import { C, F } from '../ui/theme';
 import { poster, txt } from '../ui/widgets';
-import { BattleCat, catTexture, preloadCats } from '../art/catArt';
+import { BattleCat, catTexture, livingCat, preloadCats } from '../art/catArt';
 import { glowTexture, halftoneTexture, paperTexture, sparkTexture } from '../art/textures';
 import { ComicFilter, InkFilter, SilhouetteFilter } from '../fx/filters';
 import { Shaker, flash, onomatopoeia, sparkles, speedLines } from '../fx/juice';
@@ -788,7 +788,7 @@ export class PrologueScene extends Scene {
     }
     const dots = new TilingSprite({ texture: halftoneTexture(C.ink, 14, 3.5), width: W, height: H });
     dots.alpha = 0.25;
-    const cat = new Sprite(catTexture('regal_cosmic_cat'));
+    const cat = livingCat('regal_cosmic_cat');
     cat.anchor.set(0.5, 0.42);
     cat.scale.set(1180 / cat.texture.height);
     cat.position.set(W * 0.27, H / 2 + 60);
@@ -1201,8 +1201,9 @@ export class PrologueScene extends Scene {
     g.rect(20, -96, 170, 96).fill(0xc9995e).stroke({ width: 5, color: C.ink });
     g.poly([20, -96, 50, -130, 160, -130, 190, -96]).fill(0xb38450).stroke({ width: 5, color: C.ink });
     raft.addChild(g);
-    const cat = new Sprite(catTexture('canelo_cozy_cat'));
+    const cat = livingCat('canelo_cozy_cat');
     cat.anchor.set(0.5, 0.9);
+    cat.emote('sleepy');
     cat.scale.set(150 / cat.texture.height);
     cat.position.set(105, -82);
     const lid = new Graphics().rect(20, -60, 170, 60).fill(0xc9995e).stroke({ width: 5, color: C.ink });

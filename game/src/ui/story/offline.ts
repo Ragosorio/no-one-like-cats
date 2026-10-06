@@ -10,7 +10,7 @@ import { C, F } from '../theme';
 import { Button, Counter, poster, txt } from '../widgets';
 import { icon } from '../icons';
 import { paperTexture, halftoneTexture } from '../../art/textures';
-import { catTexture, preloadCats } from '../../art/catArt';
+import { catTexture, livingCat, preloadCats } from '../../art/catArt';
 import { InkFilter } from '../../fx/filters';
 import { sparkles } from '../../fx/juice';
 import type { OfflineSummary } from '../../state/ext/story';
@@ -92,7 +92,7 @@ export async function offlineReport(layer: Container, s: OfflineSummary, opts: {
     const dots = new TilingSprite({ texture: halftoneTexture(C.ink, 9, 2.2), width: phW, height: phH });
     dots.alpha = 0.15;
     ph.addChild(dots);
-    const cat = new Sprite(catTexture('canelo_cozy_cat'));
+    const cat = livingCat('canelo_cozy_cat');
     cat.anchor.set(0.5);
     cat.scale.set(300 / cat.texture.height);
     cat.position.set(phW / 2, phH / 2 + 40);

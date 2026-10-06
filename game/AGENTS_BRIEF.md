@@ -1,6 +1,6 @@
 # NO ONE LIKE CATS — Brief para agentes de construcción (Hito 2)
 
-Juego web para PC: **TypeScript + PixiJS v8 + GSAP + pixi-filters v6**, Vite. Pantalla lógica **1920×1080** (todo se dibuja en esas coordenadas; `core/App.ts` escala a la ventana). Idioma: **español latino "sin filtro"** (groserías ligeras, humor irreverente, referencias pop; ataques gritados en inglés/japonés). Arte 100% en código + las 32 ilustraciones pintadas de gatos (`public/cats/<slug>.webp`).
+Juego web para PC: **TypeScript + PixiJS v8 + GSAP + pixi-filters v6**, Vite. Pantalla lógica **1920×1080** (todo se dibuja en esas coordenadas; `core/App.ts` escala a la ventana). Idioma: **español latino "sin filtro"** (groserías ligeras, humor irreverente, referencias pop; ataques gritados en inglés/japonés). Arte 100% en código + las 32 ilustraciones de gatos. **Gatos = SVG puro de MAI** (`public/cats-svg/<slug>.svg`, el webp de `public/cats/` es solo placeholder mientras carga) animados como títeres: usa `livingCat(slug)` (drop-in de `new Sprite(catTexture(slug))`) o `IslandCat`/`BattleCat`; `.sprite.emote('happy'|'hurt'|'surprise'|'attack'|'sleepy')`. Rigs: `src/data/catRigs.json` (fuente: `MAI SVG/exports/game-rigs`). Laboratorio: `?scene=catlive` (`&cat=<slug>&rig=1`).
 
 **El Hito 1 está terminado y verificado de punta a punta** (título → prólogo → tutorial H01–H09 → Zona 1 → Jefe 1 → Tierra + Gea). Ahora construimos el **Hito 2: hasta el Jefe 3** (GDD §8 "M2"). No rompas el Hito 1.
 

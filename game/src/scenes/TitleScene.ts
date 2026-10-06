@@ -6,7 +6,7 @@ import { W, H } from '../core/App';
 import { C, F } from '../ui/theme';
 import { Button, dotGrid, crosses, poster, txt } from '../ui/widgets';
 import { paperTexture, halftoneTexture } from '../art/textures';
-import { catTexture, preloadCats } from '../art/catArt';
+import { catTexture, livingCat, preloadCats } from '../art/catArt';
 import { ComicFilter, InkFilter } from '../fx/filters';
 import { sfx, audio } from '../core/audio';
 import { music } from '../core/music';
@@ -63,7 +63,7 @@ export class TitleScene extends Scene {
         dots.alpha = 0.2;
         p.addChild(dots);
       }
-      const s = new Sprite(catTexture(slug));
+      const s = livingCat(slug);
       s.anchor.set(0.5);
       s.scale.set((r.h * 0.95) / s.texture.height);
       s.position.set(r.w / 2, r.h / 2 + 10);

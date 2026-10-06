@@ -10,7 +10,7 @@ import { W, H, game } from '../../core/App';
 import { sfx } from '../../core/audio';
 import { C, F } from '../theme';
 import { Button, dotGrid, poster, txt } from '../widgets';
-import { catTexture, preloadCats } from '../../art/catArt';
+import { catTexture, livingCat, preloadCats } from '../../art/catArt';
 import { halftoneTexture, paperTexture } from '../../art/textures';
 import { onomatopoeia, sparkles } from '../../fx/juice';
 import { clean } from './text';
@@ -86,7 +86,7 @@ export async function promptName(layer: Container, o: NamePromptOpts): Promise<s
     // cat (or Luzterna, big)
     let cat: Container;
     if (slug) {
-      const sp = new Sprite(catTexture(slug));
+      const sp = livingCat(slug);
       sp.anchor.set(0.5, 0.92);
       sp.scale.set(420 / sp.texture.height);
       sp.position.set(300, 640);

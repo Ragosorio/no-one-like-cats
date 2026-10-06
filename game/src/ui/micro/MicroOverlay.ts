@@ -1,5 +1,5 @@
 /** Global microevent layer (COLLAGE GRUNGE + red sacred clock). Mounted once in main.ts. */
-import { Container, Graphics, Sprite, Ticker } from 'pixi.js';
+import { Circle, Container, Graphics, Sprite, Ticker } from 'pixi.js';
 import gsap from 'gsap';
 import { scenes } from '../../core/scenes';
 import { W, H } from '../../core/App';
@@ -130,10 +130,16 @@ function reward(r: MicroReward, x: number, y: number) {
     .to(row, { alpha: 0, duration: 0.35 }, 1.3);
 }
 
-function clickable(c: Container, onTap: () => void) {
+/**
+ * Catch on press, not on tap: every microevent target is MOVING (falling fish ~1000 px/s near the
+ * bottom), and `pointertap` needs down+up over the same object — by the time the button is released
+ * the fish is gone, so clicks silently did nothing.
+ */
+function clickable(c: Container, onTap: () => void, radius?: number) {
   c.eventMode = 'static';
   c.cursor = 'pointer';
-  c.on('pointertap', onTap);
+  if (radius) c.hitArea = new Circle(0, 0, radius);
+  c.on('pointerdown', onTap);
 }
 
 function spawnActor(m: ActiveMicro) {
@@ -153,6 +159,7 @@ function spawnActor(m: ActiveMicro) {
     const path = { x: -100 };
     track(gsap.to(path, { x: W + 120, duration: m.def.durationMs / 1000, ease: 'none', onUpdate: () => !fish.destroyed && fish.position.set(path.x, H - 210 + Math.sin(path.x / 90) * 40) }));
     clickable(fish, () => {
+      if (hits >= 3) return;
       hits++;
       sfx('splash', 1 + hits * 0.1);
       onomatopoeia(root, fish.x, fish.y - 60, hits >= 3 ? '¡ATRAPADO!' : '¡CHAP!', { color: C.yellow, size: 60 });
@@ -214,12 +221,22 @@ function spawnActor(m: ActiveMicro) {
       f.position.set(160 + Math.random() * (W - 320), -60);
       actor.addChild(f);
       gsap.to(f, { y: H + 80, rotation: Math.random() * 4, duration: 2.2 + Math.random(), ease: 'power1.in', onComplete: () => f.destroy({ children: true }) });
-      clickable(f, () => {
-        caught = Math.min(40, caught + 1);
-        counter.text = String(caught);
-        sfx('coin', 1 + caught * 0.03);
-        f.destroy({ children: true });
-      });
+      clickable(
+        f,
+        () => {
+          if (f.destroyed) return;
+          caught = Math.min(40, caught + 1);
+          counter.text = String(caught);
+          sfx('coin', 1 + caught * 0.03);
+          gsap.killTweensOf(f);
+          gsap.killTweensOf(counter.scale);
+          gsap.fromTo(counter.scale, { x: 1.35, y: 1.35 }, { x: 1, y: 1, duration: 0.25, ease: 'back.out(3)' });
+          sparkles(root, f.x, f.y, 0x7fd8ff, 6, 70);
+          floatText(root, f.x, f.y - 20, '+1', { color: C.yellow, size: 34, rise: 60, dur: 0.7 });
+          f.destroy({ children: true });
+        },
+        52,
+      );
       window.setTimeout(drop, 260 + Math.random() * 260);
     };
     drop();

@@ -121,6 +121,10 @@ export function playTransform(layer: Container, i: TransformInput): Promise<void
     );
     tl.from(block.scale, { x: 0, duration: 0.15, ease: 'power3.out' }, tFlash);
     tl.from(bc, { x: -900, duration: 0.2, ease: 'power3.out' }, tFlash);
+    // the transformation lands: crouch on arrival, then a full-body roar
+    tl.call(() => { bc.sprite.crouch = 0.9; bc.sprite.lean = 0.5; }, [], tFlash);
+    tl.call(() => { bc.sprite.crouch = -0.35; bc.sprite.lean = -0.2; bc.sprite.emote('attack', 1.4); bc.sprite.emote('surprise'); }, [], tFlash + 0.22);
+    tl.call(() => { bc.sprite.crouch = 0; bc.sprite.lean = 0; bc.sprite.emote('happy', 0.8); }, [], tFlash + 0.55);
     tl.call(() => (bc.sprite.filters = prev), [], tFlash + (short ? 0.12 : 0.3));
     tl.from(cartel, { y: -900, duration: 0.2, ease: 'back.out(1.6)' }, tFlash + 0.1);
     tl.from(bubble.scale, { x: 0, y: 0, duration: 0.2, ease: 'back.out(3)', onStart: () => sfx('meow', 0.8) }, tFlash + 0.2);

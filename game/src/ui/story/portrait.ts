@@ -6,17 +6,19 @@ import { Assets, ColorMatrixFilter, Container, Graphics, Sprite, Texture, Ticker
 import { GlowFilter, OutlineFilter } from 'pixi-filters';
 import gsap from 'gsap';
 import { glowTexture, sparkTexture } from '../../art/textures';
-import { catTexture, preloadCats } from '../../art/catArt';
+import { catTexture, livingCat, preloadCats } from '../../art/catArt';
+import { CatPuppet } from '../../art/livingCat';
 import { C } from '../theme';
 import { Speaker } from './text';
 import { settings } from '../../core/settings';
 import { killTweensDeep } from './tweens';
 
-export const LUZTERNA_URL = 'story/luzterna.webp';
+/** MAI pure-vector trace of the Luzterna painting (no raster served) */
+export const LUZTERNA_URL = 'story/luzterna.svg';
 
 let loading: Promise<unknown> | null = null;
 export function preloadStoryArt(extraSlugs: string[] = []) {
-  if (!loading) loading = Assets.load(LUZTERNA_URL).catch(() => undefined);
+  if (!loading) loading = Assets.load({ alias: LUZTERNA_URL, src: LUZTERNA_URL, data: { resolution: 1.5 } }).catch(() => undefined);
   return Promise.all([loading, extraSlugs.length ? preloadCats(extraSlugs).catch(() => undefined) : undefined]);
 }
 
@@ -26,7 +28,7 @@ export function luzternaTexture(): Texture {
 
 /** Ghost witch with lantern. `size` = target height in px. Anchored bottom-center. */
 export class LuzternaPortrait extends Container {
-  sprite: Sprite;
+  sprite: CatPuppet;
   lantern: Sprite;
   halo: Sprite;
   private wisps = new Container();
@@ -43,8 +45,8 @@ export class LuzternaPortrait extends Container {
     this.halo.alpha = 0.45;
     this.halo.scale.set((size / 128) * 1.25);
     this.halo.y = -size * 0.5;
-    this.sprite = new Sprite(tex);
-    this.sprite.anchor.set(0.5, 1);
+    // living MAI puppet: she blinks, twitches the ears, swings the tail and the lantern bobs
+    this.sprite = new CatPuppet(tex, 'luzterna', { anchorX: 0.5, anchorY: 1, fps: 12, acts: 'calm' });
     this.baseScale = size / Math.max(1, tex.height);
     this.sprite.scale.set(this.baseScale);
     this.sprite.alpha = ghostAlpha;
@@ -104,6 +106,7 @@ export class LuzternaPortrait extends Container {
   }
   /** little bounce when she starts talking */
   talk() {
+    this.sprite.emote('happy', 0.5);
     gsap.fromTo(this.sprite.scale, { x: this.baseScale * 1.04, y: this.baseScale * 0.96 }, { x: this.baseScale, y: this.baseScale, duration: 0.4, ease: 'elastic.out(1.2,0.4)' });
   }
   override destroy() {
@@ -115,15 +118,14 @@ export class LuzternaPortrait extends Container {
 
 /** Painted cat portrait with a story treatment. Anchored bottom-center. */
 export class CatPortrait extends Container {
-  sprite: Sprite;
+  sprite: CatPuppet;
   private t = Math.random() * 6;
   private acc = 0;
   private baseScale: number;
   constructor(sp: Speaker, public size = 380) {
     super();
     const tex = catTexture(sp.slug ?? 'canelo_cozy_cat');
-    this.sprite = new Sprite(tex);
-    this.sprite.anchor.set(0.5, 1);
+    this.sprite = livingCat(sp.slug ?? 'canelo_cozy_cat', { anchorX: 0.5, anchorY: 1, fps: 12 });
     this.baseScale = size / Math.max(1, tex.height);
     this.sprite.scale.set(this.baseScale * (sp.treat === 'enemy' || sp.treat === 'boss' ? -1 : 1), this.baseScale);
     const filters = [];
@@ -175,6 +177,7 @@ export class CatPortrait extends Container {
     this.sprite.scale.set(sx * this.baseScale * (1 + b * 0.012), this.baseScale * (1 - b * 0.016));
   }
   talk() {
+    this.sprite.emote('happy', 0.45);
     gsap.fromTo(this.sprite, { y: -14 }, { y: 0, duration: 0.35, ease: 'bounce.out' });
   }
   override destroy() {
