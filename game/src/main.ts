@@ -33,8 +33,12 @@ import './state/sys/micro';
 
 async function loadFonts() {
   const fams = Object.values(F);
-  await Promise.all(fams.map((f) => document.fonts.load(`40px "${f}"`).catch(() => undefined)));
-  await document.fonts.load('700 40px "Space Grotesk"').catch(() => undefined);
+  const all = Promise.all([
+    ...fams.map((f) => document.fonts.load(`40px "${f}"`).catch(() => undefined)),
+    document.fonts.load('700 40px "Space Grotesk"').catch(() => undefined),
+  ]);
+  // a slow CDN (seen: a 408 on GitHub Pages) must not hold the boot on a black screen
+  await Promise.race([all, new Promise((r) => setTimeout(r, 4000))]);
 }
 
 /**
