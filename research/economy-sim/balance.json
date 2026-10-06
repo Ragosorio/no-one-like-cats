@@ -1,0 +1,1903 @@
+{
+  "meta": {
+    "game": "NO ONE LIKE CATS",
+    "chapter": 1,
+    "chapter_name": "El Primer Mar",
+    "version": "1.0.0",
+    "units": "Tiempos en segundos salvo que la clave termine en _min o _h. Multiplicadores como factor (1.25 = +25%).",
+    "notes": "Fuente unica de verdad del balance. sim.py la lee tal cual. Para un update: agrega filas a las tablas (elements, catdex, crops, habitat tiers, ships, expansions, bosses) y sube kingdom.level_cap; las formulas no cambian.",
+    "validated": {
+      "normal_finish_median": "5h24 (P10 5h01, P90 5h47)",
+      "optimizer_finish_median": "3h32 (P10 3h10, P90 3h48)",
+      "casual_finish_median": "5 dias 6 h de calendario (6 sesiones de 6 min al dia, 2 combates por sesion)",
+      "idle_only": "no pasa el Jefe 1 en 3 dias (Reino 8-9)",
+      "seeds": 24,
+      "script": "sim.py --seeds 24"
+    },
+    "not_simulated": [
+      "bonus de afinidad del Ronroneo",
+      "reparacion",
+      "Gato Maneki / Gato del Caos",
+      "microeventos",
+      "cristales separados por elemento (sim los agrupa)",
+      "cosmeticos y secretos"
+    ]
+  },
+  "notation": {
+    "full_digits_below": 10000,
+    "significant_digits": 3,
+    "suffixes": [
+      "",
+      "K",
+      "M",
+      "B",
+      "T",
+      "Qa",
+      "Qi",
+      "Sx",
+      "Sp",
+      "Oc",
+      "No",
+      "Dc"
+    ],
+    "after_suffixes": "letras dobles: aa, ab, ac ... (estilo idle)",
+    "examples": {
+      "9999": "9,999",
+      "12345": "12.3K",
+      "4700000": "4.70M",
+      "48000000000": "48.0B"
+    }
+  },
+  "currencies": [
+    {
+      "id": "gold",
+      "name": "Doblones",
+      "icon": "moneda dorada con huella de gato",
+      "scope": "global",
+      "wallet_cap": null,
+      "kind": "big_number"
+    },
+    {
+      "id": "food",
+      "name": "Pescaditos",
+      "icon": "pez plateado",
+      "scope": "global",
+      "wallet_cap": null,
+      "kind": "big_number"
+    },
+    {
+      "id": "purr",
+      "name": "Ronroneo",
+      "icon": "reloj de arena con bigotes",
+      "scope": "global",
+      "wallet_cap": "ronroneo.pool_cap",
+      "kind": "time_seconds"
+    },
+    {
+      "id": "orbs",
+      "name": "Orbes de Alma",
+      "icon": "esfera con la silueta del gato",
+      "scope": "per_species",
+      "wallet_cap": null,
+      "kind": "small_number"
+    },
+    {
+      "id": "prisma",
+      "name": "Orbe Prisma",
+      "icon": "esfera arcoiris",
+      "scope": "global",
+      "wallet_cap": null,
+      "kind": "small_number",
+      "note": "comodin: 1 Prisma = 1 Orbe de Alma de cualquier especie"
+    },
+    {
+      "id": "scrap",
+      "name": "Chatarra",
+      "icon": "tuerca con cascabel",
+      "scope": "global",
+      "wallet_cap": null,
+      "kind": "small_number"
+    },
+    {
+      "id": "blueprint",
+      "name": "Planos",
+      "icon": "pergamino azul con pata",
+      "scope": "global",
+      "wallet_cap": null,
+      "kind": "small_number"
+    },
+    {
+      "id": "crystal",
+      "name": "Cristales de Elemento",
+      "icon": "cristal del color del elemento",
+      "scope": "per_element",
+      "wallet_cap": null,
+      "kind": "small_number"
+    },
+    {
+      "id": "gems",
+      "name": "Ojos de Gato",
+      "icon": "gema verde-dorada con pupila felina",
+      "scope": "global",
+      "wallet_cap": null,
+      "kind": "special"
+    }
+  ],
+  "elements": [
+    {
+      "id": "fire",
+      "name": "Fuego",
+      "unlock": "start"
+    },
+    {
+      "id": "water",
+      "name": "Agua",
+      "unlock": "start"
+    },
+    {
+      "id": "nature",
+      "name": "Naturaleza",
+      "unlock": "start"
+    },
+    {
+      "id": "earth",
+      "name": "Tierra",
+      "unlock": "boss:1",
+      "story": "El barco del Capitan Bigotes Rotos llevaba un fosil vivo."
+    },
+    {
+      "id": "storm",
+      "name": "Tormenta",
+      "unlock": "boss:2",
+      "story": "La Gargola despierta una tormenta permanente."
+    },
+    {
+      "id": "magic",
+      "name": "Magia",
+      "unlock": "kl:24",
+      "story": "Una grieta se abre sobre la isla: llega el barco del Arcanista (jefe 4)."
+    },
+    {
+      "id": "cosmic",
+      "name": "Cosmico",
+      "unlock": "boss:5",
+      "story": "La Estrella Errante cae al mar."
+    },
+    {
+      "id": "void",
+      "name": "Vacio",
+      "unlock": "chapter:2",
+      "teaser_only": true,
+      "story": "Al hundirse el Leviatan, el cielo se abre: UNKNOWN ELEMENT DETECTED. CONTINUARA."
+    }
+  ],
+  "rarities": {
+    "order": [
+      "common",
+      "rare",
+      "epic",
+      "legendary",
+      "mythic"
+    ],
+    "names": {
+      "common": "Comun",
+      "rare": "Raro",
+      "epic": "Epico",
+      "legendary": "Legendario",
+      "mythic": "Mitico"
+    },
+    "gold_base_per_s": {
+      "common": 0.5,
+      "rare": 0.8,
+      "epic": 1.3,
+      "legendary": 2.1,
+      "mythic": 3.2
+    },
+    "power_base": {
+      "common": 5.0,
+      "rare": 5.6,
+      "epic": 6.2,
+      "legendary": 6.8,
+      "mythic": 7.4
+    },
+    "food_mult": {
+      "common": 1.0,
+      "rare": 1.25,
+      "epic": 1.6,
+      "legendary": 2.0,
+      "mythic": 2.4
+    },
+    "duplicate_orbs": {
+      "common": 10,
+      "rare": 20,
+      "epic": 35,
+      "legendary": 60,
+      "mythic": 100
+    },
+    "star_orbs_base": {
+      "common": 10,
+      "rare": 15,
+      "epic": 25,
+      "legendary": 40,
+      "mythic": 60
+    },
+    "discovery_gems": {
+      "common": 1,
+      "rare": 1,
+      "epic": 2,
+      "legendary": 2,
+      "mythic": 3
+    },
+    "resonance_time_s": {
+      "common": 180,
+      "rare": 600,
+      "epic": 1800,
+      "legendary": 2700
+    }
+  },
+  "cats": {
+    "gold_per_level": 1.16,
+    "power_per_level": 1.07,
+    "feed_cost_base": 6,
+    "feed_cost_growth": 1.27,
+    "level_cap_formula": "min(kingdom.level_cap_cats, kingdom_level + 5)",
+    "stars": {
+      "max": 6,
+      "mult": [
+        1.0,
+        1.25,
+        1.55,
+        1.9,
+        2.3,
+        2.8
+      ],
+      "orb_steps": [
+        1,
+        2,
+        3,
+        5,
+        8
+      ],
+      "min_level": [
+        10,
+        20,
+        30,
+        40,
+        50
+      ],
+      "unlocks": [
+        "",
+        "+stats",
+        "efecto secundario",
+        "ataque cambia visualmente",
+        "pasiva",
+        "Forma Ascendida (anime)"
+      ]
+    },
+    "workers": {
+      "unlock_kl": 24,
+      "banker": {
+        "name": "Banquero",
+        "effect": "habitat_gold",
+        "value": 0.25,
+        "max": 4
+      },
+      "farmer": {
+        "name": "Granjero",
+        "effect": "food_global",
+        "value": 0.2,
+        "max": 3
+      },
+      "builder": {
+        "name": "Constructor",
+        "effect": "build_speed",
+        "value": 0.2,
+        "max": 2
+      },
+      "voyager": {
+        "name": "Viajero",
+        "effect": "expedition_loot",
+        "value": 0.5,
+        "max": 2
+      },
+      "rule": "Un gato trabajador sigue viviendo (y produciendo) en su habitat, pero NO puede subir al barco mientras trabaja."
+    }
+  },
+  "catdex": [
+    {
+      "id": "c_canelo",
+      "name": "Canelo",
+      "rarity": "common",
+      "el": [
+        "fire"
+      ],
+      "worker": null,
+      "source": "start",
+      "art": "canelo_cozy_cat"
+    },
+    {
+      "id": "c_chispa",
+      "name": "Chispa",
+      "rarity": "common",
+      "el": [
+        "fire"
+      ],
+      "worker": "banker",
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "c_gelatino",
+      "name": "Gelatino",
+      "rarity": "common",
+      "el": [
+        "water"
+      ],
+      "worker": "farmer",
+      "source": "start",
+      "art": "jelly_aquatic_cat"
+    },
+    {
+      "id": "c_burbujas",
+      "name": "Burbujas",
+      "rarity": "common",
+      "el": [
+        "water"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "c_brote",
+      "name": "Brote",
+      "rarity": "common",
+      "el": [
+        "nature"
+      ],
+      "worker": "farmer",
+      "source": "start",
+      "art": "margarita_daisy_cat"
+    },
+    {
+      "id": "c_musgo",
+      "name": "Musgo",
+      "rarity": "common",
+      "el": [
+        "nature"
+      ],
+      "worker": "builder",
+      "source": "resonance",
+      "art": "menta_botanical_cat"
+    },
+    {
+      "id": "c_terron",
+      "name": "Terron",
+      "rarity": "common",
+      "el": [
+        "earth"
+      ],
+      "worker": "builder",
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "c_guijarro",
+      "name": "Guijarro",
+      "rarity": "common",
+      "el": [
+        "earth"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "c_voltio",
+      "name": "Voltio",
+      "rarity": "common",
+      "el": [
+        "storm"
+      ],
+      "worker": "voyager",
+      "source": "resonance",
+      "art": "mecha_neon_cat"
+    },
+    {
+      "id": "c_nimbo",
+      "name": "Nimbo",
+      "rarity": "common",
+      "el": [
+        "storm"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "nube_dream_cat"
+    },
+    {
+      "id": "c_linterna",
+      "name": "Linterna Espiritu",
+      "rarity": "common",
+      "el": [
+        "magic"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "lantern_spirit_cat"
+    },
+    {
+      "id": "c_caramelo",
+      "name": "Caramelo Alquimista",
+      "rarity": "common",
+      "el": [
+        "magic"
+      ],
+      "worker": "banker",
+      "source": "resonance",
+      "art": "candy_alchemist_cat"
+    },
+    {
+      "id": "c_cometin",
+      "name": "Cometin",
+      "rarity": "common",
+      "el": [
+        "cosmic"
+      ],
+      "worker": "voyager",
+      "source": "resonance",
+      "art": "selene_moonlit_cat"
+    },
+    {
+      "id": "c_lunita",
+      "name": "Lunita",
+      "rarity": "common",
+      "el": [
+        "cosmic"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "nori_lunar_cat"
+    },
+    {
+      "id": "r_neblino",
+      "name": "Neblino",
+      "rarity": "rare",
+      "el": [
+        "fire",
+        "water"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "r_pimenton",
+      "name": "Pimenton",
+      "rarity": "rare",
+      "el": [
+        "fire",
+        "nature"
+      ],
+      "worker": "banker",
+      "source": "resonance",
+      "art": "arce_autumn_cat"
+    },
+    {
+      "id": "r_nenufar",
+      "name": "Nenufar",
+      "rarity": "rare",
+      "el": [
+        "water",
+        "nature"
+      ],
+      "worker": "farmer",
+      "source": "resonance",
+      "art": "sakura_whisper_cat"
+    },
+    {
+      "id": "r_magmito",
+      "name": "Magmito",
+      "rarity": "rare",
+      "el": [
+        "fire",
+        "earth"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "molten_ember_cat"
+    },
+    {
+      "id": "r_fanguito",
+      "name": "Fanguito",
+      "rarity": "rare",
+      "el": [
+        "water",
+        "earth"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "r_raizvieja",
+      "name": "Raiz Vieja",
+      "rarity": "rare",
+      "el": [
+        "nature",
+        "earth"
+      ],
+      "worker": "builder",
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "r_plasmin",
+      "name": "Plasmin",
+      "rarity": "rare",
+      "el": [
+        "fire",
+        "storm"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "r_marejada",
+      "name": "Marejada",
+      "rarity": "rare",
+      "el": [
+        "water",
+        "storm"
+      ],
+      "worker": "voyager",
+      "source": "resonance",
+      "art": "deepsea_sprite_cat (OJO: su raster abisal esta dentro de masquerade_phantom_cat.svg, ver 01)"
+    },
+    {
+      "id": "r_cyberbloom",
+      "name": "Cyber Bloom",
+      "rarity": "rare",
+      "el": [
+        "nature",
+        "storm"
+      ],
+      "worker": "farmer",
+      "source": "resonance",
+      "art": "cyber_bloom_cat"
+    },
+    {
+      "id": "r_iman",
+      "name": "Iman",
+      "rarity": "rare",
+      "el": [
+        "earth",
+        "storm"
+      ],
+      "worker": "banker",
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "r_arcanito",
+      "name": "Arcanito",
+      "rarity": "rare",
+      "el": [
+        "fire",
+        "magic"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "r_mareaenc",
+      "name": "Marea Encantada",
+      "rarity": "rare",
+      "el": [
+        "water",
+        "magic"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "r_origami",
+      "name": "Origami Iridiscente",
+      "rarity": "rare",
+      "el": [
+        "nature",
+        "magic"
+      ],
+      "worker": "builder",
+      "source": "resonance",
+      "art": "iridescent_origami_cat"
+    },
+    {
+      "id": "r_runachispa",
+      "name": "Runa Chispa",
+      "rarity": "rare",
+      "el": [
+        "storm",
+        "magic"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": null
+    },
+    {
+      "id": "r_solar",
+      "name": "Solar",
+      "rarity": "rare",
+      "el": [
+        "fire",
+        "cosmic"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "sol_sunbeam_cat"
+    },
+    {
+      "id": "r_astral",
+      "name": "Astral",
+      "rarity": "rare",
+      "el": [
+        "magic",
+        "cosmic"
+      ],
+      "worker": "voyager",
+      "source": "resonance",
+      "art": "prism_crystal_cat"
+    },
+    {
+      "id": "e_vaporronin",
+      "name": "Vapor Ronin",
+      "rarity": "epic",
+      "el": [
+        "fire",
+        "water"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "min_parent_level": 15,
+      "art": null
+    },
+    {
+      "id": "e_infernal",
+      "name": "Canelo Infernal",
+      "rarity": "epic",
+      "el": [
+        "fire",
+        "earth"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "min_parent_level": 15,
+      "art": null
+    },
+    {
+      "id": "e_golem",
+      "name": "Golem Musgoso",
+      "rarity": "epic",
+      "el": [
+        "nature",
+        "earth"
+      ],
+      "worker": "builder",
+      "source": "resonance",
+      "min_parent_level": 15,
+      "art": "mushroom_druid_cat"
+    },
+    {
+      "id": "e_rencor",
+      "name": "Rencor",
+      "rarity": "epic",
+      "el": [
+        "fire",
+        "storm"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "min_parent_level": 15,
+      "art": null
+    },
+    {
+      "id": "e_bastion",
+      "name": "Bastion",
+      "rarity": "epic",
+      "el": [
+        "earth",
+        "magic"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "min_parent_level": 15,
+      "art": "kintsugi_tea_spirit_cat"
+    },
+    {
+      "id": "e_galaxia",
+      "name": "Galaxia",
+      "rarity": "epic",
+      "el": [
+        "water",
+        "cosmic"
+      ],
+      "worker": "banker",
+      "source": "resonance",
+      "min_parent_level": 15,
+      "art": "alien_galaxy_cat"
+    },
+    {
+      "id": "e_meteoro",
+      "name": "Meteoro",
+      "rarity": "epic",
+      "el": [
+        "earth",
+        "cosmic"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "min_parent_level": 15,
+      "art": null
+    },
+    {
+      "id": "e_supernova",
+      "name": "Supernova",
+      "rarity": "epic",
+      "el": [
+        "storm",
+        "cosmic"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "min_parent_level": 15,
+      "art": null
+    },
+    {
+      "id": "e_nebulosa",
+      "name": "Nebulosa",
+      "rarity": "epic",
+      "el": [
+        "nature",
+        "cosmic"
+      ],
+      "worker": "farmer",
+      "source": "resonance",
+      "min_parent_level": 15,
+      "art": null
+    },
+    {
+      "id": "l_ignis",
+      "name": "Ignis, la Primera Llama",
+      "rarity": "legendary",
+      "el": [
+        "fire"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "min_parent_level": 20,
+      "primordial": true,
+      "art": null
+    },
+    {
+      "id": "l_abisa",
+      "name": "Abisa, Madre Marea",
+      "rarity": "legendary",
+      "el": [
+        "water"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "min_parent_level": 20,
+      "primordial": true,
+      "art": null
+    },
+    {
+      "id": "l_silvana",
+      "name": "Silvana, Raiz Primera",
+      "rarity": "legendary",
+      "el": [
+        "nature"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "min_parent_level": 20,
+      "primordial": true,
+      "art": null
+    },
+    {
+      "id": "l_gea",
+      "name": "Gea, Corazon de Piedra",
+      "rarity": "legendary",
+      "el": [
+        "earth"
+      ],
+      "worker": null,
+      "source": "boss:1",
+      "min_parent_level": 20,
+      "primordial": true,
+      "art": "fossilstone_guardian_cat"
+    },
+    {
+      "id": "l_tronador",
+      "name": "Tronador",
+      "rarity": "legendary",
+      "el": [
+        "storm"
+      ],
+      "worker": null,
+      "source": "boss:2",
+      "min_parent_level": 20,
+      "primordial": true,
+      "art": "stormcloud_elemental_cat"
+    },
+    {
+      "id": "l_merlina",
+      "name": "Merlina, la Arcana",
+      "rarity": "legendary",
+      "el": [
+        "magic"
+      ],
+      "worker": null,
+      "source": "boss:4",
+      "min_parent_level": 20,
+      "primordial": true,
+      "art": "storybook_ink_cat"
+    },
+    {
+      "id": "l_astraprima",
+      "name": "Astra Prima",
+      "rarity": "legendary",
+      "el": [
+        "cosmic"
+      ],
+      "worker": null,
+      "source": "boss:5",
+      "min_parent_level": 20,
+      "primordial": true,
+      "art": "regal_cosmic_cat"
+    },
+    {
+      "id": "m_raijin",
+      "name": "Raijin, Heredero del Trueno",
+      "rarity": "mythic",
+      "el": [
+        "storm"
+      ],
+      "worker": null,
+      "source": "heroic:1",
+      "art": null
+    },
+    {
+      "id": "m_singular",
+      "name": "Singularidad",
+      "rarity": "mythic",
+      "el": [
+        "cosmic"
+      ],
+      "worker": null,
+      "source": "heroic:2",
+      "art": null
+    }
+  ],
+  "resonance": {
+    "bucket_weights": {
+      "common": 55,
+      "rare": 30,
+      "epic": 11,
+      "legendary": 3.5,
+      "secret": 0.5
+    },
+    "parent_rarity_bonus": {
+      "epic_per_rank": 2.0,
+      "legendary_per_rank": 0.5
+    },
+    "pity": {
+      "epic_bonus_per_miss": 1.0,
+      "cap": 15
+    },
+    "hatch_share_of_time": 0.35,
+    "slots_start": 1,
+    "rules": [
+      "Candidatos: comunes de cualquier elemento de los padres; raros/epicos cuyo par de elementos este contenido en la union de elementos de los padres; legendario (Primordial) del elemento que ambos padres comparten.",
+      "Epico requiere ambos padres >= min_parent_level; Legendario requiere ambos padres >= 20.",
+      "Peso de cada bucket se reparte en partes iguales entre sus candidatos; buckets vacios se redistribuyen proporcionalmente.",
+      "La UI muestra la tabla exacta de probabilidades. Lo no descubierto aparece como ??? con su %.",
+      "Duplicado => Orbes de Alma de esa especie (rarities.duplicate_orbs)."
+    ]
+  },
+  "orbs": {
+    "victory_drop_chance": 0.35,
+    "victory_drop_amount": 3,
+    "boss_orbs": 25,
+    "mission_orbs": 5,
+    "expedition_orbs_per_h": 6,
+    "prisma_from_catdex_set": 10,
+    "prisma_gem_price": 2,
+    "prisma_gem_purchases_per_boss": 10
+  },
+  "habitats": {
+    "plots_start": 3,
+    "new_habitat_cost_base": 60,
+    "new_habitat_cost_growth": 4.2,
+    "element_rule": "Un gato solo puede vivir en un habitat de uno de sus elementos.",
+    "tiers": [
+      {
+        "tier": 1,
+        "name": "Caja de Carton",
+        "kl": 1,
+        "capacity": 2,
+        "mult": 1.0,
+        "buffer_min": 30,
+        "cost": 0,
+        "crystals": 0,
+        "build_s": 10
+      },
+      {
+        "tier": 2,
+        "name": "Cesta de Mimbre",
+        "kl": 4,
+        "capacity": 3,
+        "mult": 1.6,
+        "buffer_min": 40,
+        "cost": 700,
+        "crystals": 0,
+        "build_s": 30
+      },
+      {
+        "tier": 3,
+        "name": "Torre Rascadora",
+        "kl": 9,
+        "capacity": 3,
+        "mult": 2.6,
+        "buffer_min": 50,
+        "cost": 12000,
+        "crystals": 0,
+        "build_s": 90
+      },
+      {
+        "tier": 4,
+        "name": "Casita de Coral",
+        "kl": 15,
+        "capacity": 4,
+        "mult": 4.2,
+        "buffer_min": 60,
+        "cost": 220000,
+        "crystals": 0,
+        "build_s": 240
+      },
+      {
+        "tier": 5,
+        "name": "Palacio de Cojines",
+        "kl": 21,
+        "capacity": 4,
+        "mult": 7.0,
+        "buffer_min": 75,
+        "cost": 4000000.0,
+        "crystals": 3,
+        "build_s": 480
+      },
+      {
+        "tier": 6,
+        "name": "Templo del Ronroneo",
+        "kl": 27,
+        "capacity": 5,
+        "mult": 11.0,
+        "buffer_min": 90,
+        "cost": 70000000.0,
+        "crystals": 6,
+        "build_s": 900
+      },
+      {
+        "tier": 7,
+        "name": "Santuario Arcano",
+        "kl": 31,
+        "capacity": 5,
+        "mult": 18.0,
+        "buffer_min": 105,
+        "cost": 600000000.0,
+        "crystals": 10,
+        "build_s": 1800
+      },
+      {
+        "tier": 8,
+        "name": "Nucleo Celestial",
+        "kl": 36,
+        "capacity": 6,
+        "mult": 30.0,
+        "buffer_min": 120,
+        "cost": 4000000000.0,
+        "crystals": 15,
+        "build_s": 2700
+      }
+    ]
+  },
+  "farms": {
+    "plots_start": 2,
+    "upgrade": {
+      "max_level": 15,
+      "yield_growth": 1.3,
+      "cost_base": 150,
+      "cost_growth": 3.0,
+      "time_base_s": 20,
+      "time_growth": 1.45
+    },
+    "crops": [
+      {
+        "id": "sardinas",
+        "name": "Sardinas Diminutas",
+        "kl": 1,
+        "time_s": 30,
+        "cost": 5,
+        "food": 12
+      },
+      {
+        "id": "anchoas",
+        "name": "Anchoas Saltarinas",
+        "kl": 4,
+        "time_s": 120,
+        "cost": 70,
+        "food": 80
+      },
+      {
+        "id": "caballa",
+        "name": "Banco de Caballa",
+        "kl": 9,
+        "time_s": 300,
+        "cost": 900,
+        "food": 520
+      },
+      {
+        "id": "salmon",
+        "name": "Salmon Imperial",
+        "kl": 15,
+        "time_s": 720,
+        "cost": 13000,
+        "food": 3400
+      },
+      {
+        "id": "pulpo",
+        "name": "Pulpo Glaseado",
+        "kl": 21,
+        "time_s": 1500,
+        "cost": 200000.0,
+        "food": 22000
+      },
+      {
+        "id": "linterna",
+        "name": "Pez Linterna Abisal",
+        "kl": 28,
+        "time_s": 2700,
+        "cost": 3000000.0,
+        "food": 140000
+      },
+      {
+        "id": "leviatan",
+        "name": "Banquete del Leviatan",
+        "kl": 33,
+        "time_s": 21600,
+        "cost": 60000000.0,
+        "food": 2400000.0,
+        "note": "cultivo largo para dejar de noche"
+      },
+      {
+        "id": "nebulosa",
+        "name": "Atun de Nebulosa",
+        "kl": 36,
+        "time_s": 3600,
+        "cost": 600000000.0,
+        "food": 5500000.0
+      }
+    ]
+  },
+  "expansions": [
+    {
+      "n": 1,
+      "name": "Bosque Costero",
+      "kl": 3,
+      "cost": 400,
+      "clear_s": 30,
+      "hab_plots": 2,
+      "farm_plots": 1,
+      "bonus": {
+        "food": 0.1
+      },
+      "opens": "Habitats de Naturaleza +25%, misiones de Criador"
+    },
+    {
+      "n": 2,
+      "name": "Acantilado Rocoso",
+      "kl": 7,
+      "cost": 7000,
+      "clear_s": 60,
+      "hab_plots": 2,
+      "farm_plots": 0,
+      "bonus": {
+        "builders": 1
+      },
+      "opens": "2o Constructor, ruinas de Tierra (Zona 2)"
+    },
+    {
+      "n": 3,
+      "name": "Isla Volcanica",
+      "kl": 12,
+      "cost": 120000,
+      "clear_s": 120,
+      "hab_plots": 2,
+      "farm_plots": 1,
+      "bonus": {
+        "resonance_slots": 1,
+        "gold": 0.1
+      },
+      "opens": "2a ranura de Resonancia, Forja de canones (-20% chatarra Armas)"
+    },
+    {
+      "n": 4,
+      "name": "Puerto de las Mareas",
+      "kl": 17,
+      "cost": 2000000.0,
+      "clear_s": 240,
+      "hab_plots": 1,
+      "farm_plots": 1,
+      "bonus": {
+        "expedition_slots": 2,
+        "yard_queues": 1,
+        "offline_bank_h": 2
+      },
+      "opens": "Expediciones, 2o dique del Astillero, Banco del Reino offline +2 h"
+    },
+    {
+      "n": 5,
+      "name": "Glaciar Bigote",
+      "kl": 22,
+      "cost": 35000000.0,
+      "clear_s": 420,
+      "hab_plots": 2,
+      "farm_plots": 2,
+      "bonus": {
+        "food": 0.25
+      },
+      "opens": "Granjas +25%, Escudos -20% costo, parcelas de cultivo largas"
+    },
+    {
+      "n": 6,
+      "name": "Ruinas Arcanas",
+      "kl": 27,
+      "cost": 200000000.0,
+      "clear_s": 720,
+      "hab_plots": 2,
+      "farm_plots": 0,
+      "bonus": {
+        "resonance_slots": 1,
+        "gold": 0.15
+      },
+      "opens": "3a Resonancia, Bajel Arcano, secretos"
+    },
+    {
+      "n": 7,
+      "name": "Arrecife Prismatico",
+      "kl": 31,
+      "cost": 400000000.0,
+      "clear_s": 1200,
+      "hab_plots": 2,
+      "farm_plots": 1,
+      "bonus": {
+        "prisma_per_h": 6,
+        "catdex_bonus": 0.01
+      },
+      "opens": "Mina de Orbes Prisma (6/h), Catdex +1% extra por especie"
+    },
+    {
+      "n": 8,
+      "name": "Atolon Estelar",
+      "kl": 36,
+      "cost": 1500000000.0,
+      "clear_s": 1800,
+      "hab_plots": 2,
+      "farm_plots": 1,
+      "bonus": {
+        "gold": 0.25
+      },
+      "opens": "+25% oro, parcelas para Nucleo Celestial y Atun de Nebulosa, muelle hacia el Leviatan"
+    }
+  ],
+  "ship": {
+    "families": {
+      "hull": {
+        "name": "Casco",
+        "power": 15,
+        "cost_base": 80,
+        "cost_growth": 16.0
+      },
+      "weapon": {
+        "name": "Arma",
+        "power": 10,
+        "cost_base": 60,
+        "cost_growth": 16.0
+      },
+      "shield": {
+        "name": "Escudo",
+        "power": 9,
+        "cost_base": 100,
+        "cost_growth": 16.0,
+        "unlock": "boss:3"
+      },
+      "engine": {
+        "name": "Motor",
+        "power": 7,
+        "cost_base": 70,
+        "cost_growth": 16.0
+      },
+      "core": {
+        "name": "Nucleo",
+        "power": 14,
+        "cost_base": 120,
+        "cost_growth": 16.0
+      }
+    },
+    "mk": {
+      "max": 7,
+      "power_growth": 1.75,
+      "scrap": [
+        0,
+        8,
+        20,
+        45,
+        90,
+        150,
+        240
+      ],
+      "blueprints": [
+        0,
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "crystals_weapon_shield_core": [
+        0,
+        0,
+        0,
+        0,
+        8,
+        18,
+        35
+      ],
+      "time_s": [
+        0,
+        20,
+        50,
+        120,
+        280,
+        650,
+        1500
+      ],
+      "cap_rule": "Mk maximo = jefes_derrotados + 2 (Zona 1 => Mk II ... Zona 6 => Mk VII)"
+    },
+    "ships": [
+      {
+        "id": "balsa",
+        "name": "Balsa Bigotuda",
+        "crew": 3,
+        "slots": {
+          "hull": 1,
+          "weapon": 1,
+          "shield": 0,
+          "engine": 0,
+          "core": 0
+        },
+        "mult": 1.0,
+        "cost": 0,
+        "unlock": "start",
+        "perk": "ninguno",
+        "perk_data": {}
+      },
+      {
+        "id": "gorrion",
+        "name": "Gorrion",
+        "crew": 4,
+        "slots": {
+          "hull": 1,
+          "weapon": 2,
+          "shield": 0,
+          "engine": 1,
+          "core": 0
+        },
+        "mult": 1.1,
+        "cost": 1500,
+        "unlock": "kl:5",
+        "perk": "rapido: +1 disparo en el primer turno",
+        "perk_data": {}
+      },
+      {
+        "id": "merodeador",
+        "name": "Merodeador",
+        "crew": 5,
+        "slots": {
+          "hull": 1,
+          "weapon": 4,
+          "shield": 0,
+          "engine": 1,
+          "core": 1
+        },
+        "mult": 1.15,
+        "cost": 600000.0,
+        "unlock": "kl:15",
+        "event_free": "Bandera Negra",
+        "perk": "+40% chatarra, bonus por modulo destruido",
+        "perk_data": {
+          "scrap_mult": 1.4
+        }
+      },
+      {
+        "id": "bastion",
+        "name": "Bastion",
+        "crew": 7,
+        "slots": {
+          "hull": 1,
+          "weapon": 5,
+          "shield": 3,
+          "engine": 1,
+          "core": 1
+        },
+        "mult": 1.25,
+        "cost": 40000000.0,
+        "unlock": "boss:3",
+        "perk": "+10% poder contra jefes; lento",
+        "perk_data": {
+          "boss_bonus": 0.1
+        }
+      },
+      {
+        "id": "bajel",
+        "name": "Bajel Arcano",
+        "crew": 6,
+        "slots": {
+          "hull": 1,
+          "weapon": 3,
+          "shield": 2,
+          "engine": 1,
+          "core": 1
+        },
+        "mult": 1.4,
+        "cost": 800000000.0,
+        "unlock": "boss:4",
+        "perk": "+20% poder contra enemigos de Magia o Cosmico, 2 ranuras de artefacto, cristales x1.5",
+        "perk_data": {
+          "bonus_vs": [
+            "magic",
+            "cosmic"
+          ],
+          "value": 0.2
+        }
+      }
+    ],
+    "repair": {
+      "time_per_damage_pct_s": 0.6,
+      "gold_pct_of_last_upgrade": 0.02,
+      "note": "Perder no rompe el barco: solo agrega un timer corto de reparacion (acelerable)."
+    }
+  },
+  "combat": {
+    "stages_per_zone": 9,
+    "zones": [
+      {
+        "n": 1,
+        "name": "Bahia Sardina",
+        "stage1_power": 22,
+        "boss_power": 140,
+        "enemy_elements": [
+          "fire",
+          "water",
+          "nature"
+        ]
+      },
+      {
+        "n": 2,
+        "name": "Acantilados de Piedra",
+        "stage1_power": 110,
+        "boss_power": 450,
+        "enemy_elements": [
+          "earth",
+          "nature"
+        ]
+      },
+      {
+        "n": 3,
+        "name": "Mar de Tormentas",
+        "stage1_power": 360,
+        "boss_power": 900,
+        "enemy_elements": [
+          "storm",
+          "water"
+        ]
+      },
+      {
+        "n": 4,
+        "name": "Ruinas Sumergidas",
+        "stage1_power": 850,
+        "boss_power": 2600,
+        "enemy_elements": [
+          "magic",
+          "earth"
+        ]
+      },
+      {
+        "n": 5,
+        "name": "Abismo Estelar",
+        "stage1_power": 1900,
+        "boss_power": 4500,
+        "enemy_elements": [
+          "cosmic",
+          "storm"
+        ]
+      },
+      {
+        "n": 6,
+        "name": "La Marea Sin Nombre",
+        "stage1_power": 3300,
+        "boss_power": 7700,
+        "enemy_elements": [
+          "cosmic",
+          "magic",
+          "fire"
+        ]
+      }
+    ],
+    "win_curve_k": 1.6,
+    "win_formula": "p = clamp(0.5 + 0.5*tanh(k*ln(SP/EP)) + skill, 0.03, 0.97)",
+    "boss_analysis_per_defeat": 0.2,
+    "boss_analysis_power_bonus_max": 0.25,
+    "reward": {
+      "gold_base": 15,
+      "gold_growth": 1.3,
+      "perfect_mult": 1.5,
+      "defeat_mult": 0.3,
+      "scrap_base": 2,
+      "scrap_per_stage": 0.5,
+      "blueprint_chance": 0.35,
+      "blueprint_min_stage": 3,
+      "boss_blueprints": 8,
+      "crystal_base": 1,
+      "crystal_per_zone": 0.75,
+      "boss_crystals": 12,
+      "perfect_gem_chance": 0.05,
+      "modules_destroyed_avg": 8,
+      "scrap_note": "piezas por modulo destruido = (scrap_base + scrap_per_stage*stage)/modules_destroyed_avg",
+      "gold_income_seconds": 40,
+      "farm_stage_mult": 0.7,
+      "gold_rule": "oro = max(gold_base*gold_growth^(etapa-1), gold_income_seconds * oro_por_segundo_pasivo) * (1 si es la etapa frontera, farm_stage_mult si es una etapa ya ganada) * perfecta * Momentum",
+      "blueprint_amount_rule": "1 + floor((zona-1)/2)  -> Z1-2: 1, Z3-4: 2, Z5-6: 3"
+    },
+    "boss_over_last_stage": 1.3,
+    "enemy_power_rule": "Etapa k (1..8) de la zona z: EP = stage1 * (boss/boss_over_last_stage/stage1)^((k-1)/7). Etapa 9 = jefe = boss_power. El poder del jefe se fija contra el 'presupuesto de poder' alcanzable con el Mk maximo de esa zona."
+  },
+  "bosses": [
+    {
+      "n": 1,
+      "name": "Capitan Bigotes Rotos",
+      "zone": 1,
+      "kl": 5,
+      "gems": 6,
+      "unlocks": [
+        "element:earth",
+        "cat:l_gea",
+        "zone:2"
+      ]
+    },
+    {
+      "n": 2,
+      "name": "La Gargola Ronroneante",
+      "zone": 2,
+      "kl": 11,
+      "gems": 6,
+      "unlocks": [
+        "element:storm",
+        "cat:l_tronador",
+        "zone:3"
+      ]
+    },
+    {
+      "n": 3,
+      "name": "Kraken Voltaico",
+      "zone": 3,
+      "kl": 18,
+      "gems": 6,
+      "unlocks": [
+        "ship:bastion",
+        "family:shield",
+        "zone:4"
+      ]
+    },
+    {
+      "n": 4,
+      "name": "El Arcanista",
+      "zone": 4,
+      "kl": 25,
+      "gems": 6,
+      "unlocks": [
+        "cat:l_merlina",
+        "ship:bajel",
+        "zone:5"
+      ]
+    },
+    {
+      "n": 5,
+      "name": "Estrella Errante",
+      "zone": 5,
+      "kl": 32,
+      "gems": 6,
+      "unlocks": [
+        "element:cosmic",
+        "cat:l_astraprima",
+        "zone:6"
+      ]
+    },
+    {
+      "n": 6,
+      "name": "Leviatan Almirante",
+      "zone": 6,
+      "kl": 39,
+      "gems": 15,
+      "unlocks": [
+        "chapter_end",
+        "teaser:void"
+      ]
+    }
+  ],
+  "kingdom": {
+    "level_cap": 50,
+    "level_cap_cats": 50,
+    "xp_bar_base": 100,
+    "xp_bar_growth": 1.25,
+    "xp_drag_per_level": 0.03,
+    "xp_rewards_pct_of_bar": {
+      "build_done": 0.05,
+      "build_per_tier": 0.01,
+      "ship_upgrade": 0.08,
+      "cat_level_up": 0.008,
+      "star_up": 0.06,
+      "hatch": {
+        "common": 0.03,
+        "rare": 0.05,
+        "epic": 0.1,
+        "legendary": 0.18,
+        "mythic": 0.25
+      },
+      "new_species": 0.08,
+      "victory": 0.06,
+      "perfect_extra": 0.02,
+      "defeat": 0.02,
+      "boss": 0.6,
+      "expansion": 0.5,
+      "mission": 0.06
+    },
+    "missions_per_level_up": 2,
+    "mission_reward": {
+      "gold_seconds_of_income": 60,
+      "food_seconds_of_income": 60,
+      "gem_chance": 0.15,
+      "orbs": 5
+    },
+    "milestone_gems_every": 5,
+    "milestone_gems": 2,
+    "xp_early_boost": 1.0,
+    "xp_early_levels": 10,
+    "xp_multiplier_formula": "xp_ganada = pct_de_barra * (1 + early_boost*max(0, 1-(KL-1)/early_levels)) / (1 + drag*(KL-1))",
+    "xp_bar_note": "La barra visible es xp_bar_base*xp_bar_growth^(KL-1) XP; las recompensas se definen como % de la barra, asi el ritmo no depende de la escala."
+  },
+  "ronroneo": {
+    "kl_scale": 0.05,
+    "scale_formula": "minutos_efectivos = base_min * (1 + kl_scale*(KL-1)) * (1 + 0.5*(Momentum-1))",
+    "base_min": {
+      "victory": 1.0,
+      "perfect_extra": 0.75,
+      "core_destroyed": 0.25,
+      "defeat": 0.4,
+      "boss": 10,
+      "new_species": 2.5,
+      "mission": 0.75,
+      "level_up": 2.5,
+      "flash_event": 2,
+      "catdex_set": 5
+    },
+    "affinity_bonus": 0.5,
+    "affinity_rule": "Si la fuente es afin al timer (combate->astillero, cosecha->granjas, descubrimiento->resonancia, misiones->construccion) vale +50%.",
+    "pool_cap_min_base": 20,
+    "pool_cap_min_per_kl": 3,
+    "overflow_to_gold_seconds_per_min": 15,
+    "applies_to": [
+      "construccion",
+      "astillero",
+      "resonancia",
+      "eclosion",
+      "campo de cultivo completo",
+      "expedicion",
+      "reparacion"
+    ],
+    "never_applies_to": [
+      "eventos flash",
+      "carreras heroicas",
+      "microeventos"
+    ]
+  },
+  "momentum": {
+    "max": 3.0,
+    "half_life_s": 300,
+    "gain": {
+      "victory": 0.1,
+      "perfect_extra": 0.08,
+      "defeat": 0.03,
+      "boss": 0.6,
+      "new_species": 0.12,
+      "mission": 0.04,
+      "harvest": 0.01
+    },
+    "effects": {
+      "battle_loot": "x M",
+      "habitat_gold": "x (1 + 0.5*(M-1))",
+      "crop_speed": "x (1 + 0.5*(M-1))",
+      "purr_gain": "x (1 + 0.5*(M-1))"
+    },
+    "decay_rule": "M = 1 + (M-1) * 0.5^(dt/half_life). Nunca baja de 1; cerrar el juego solo lo deja enfriar."
+  },
+  "gems": {
+    "target_per_hour": {
+      "casual": "1-2 (calendario)",
+      "normal": "25-30",
+      "optimizer": "40-50 (mismo total en menos tiempo)"
+    },
+    "sources": [
+      "jefes (6; final 15)",
+      "Catdex: nueva especie (1/1/2/2/3 por rareza)",
+      "hitos de Reino cada 5 niveles (2)",
+      "misiones de progreso (15% c/u)",
+      "victoria perfecta (5%)",
+      "carreras heroicas (5)",
+      "eventos flash (1)",
+      "secretos de expansion",
+      "Gambit (max 3 por apuesta, 1 apuesta de gemas cada 2 niveles)"
+    ],
+    "sinks": {
+      "resonance_slot": {
+        "cost": 40,
+        "max": 1
+      },
+      "builder": {
+        "cost": 50,
+        "max": 1
+      },
+      "purr_cap_plus50": {
+        "cost": 30,
+        "max": 1
+      },
+      "prisma_orb": {
+        "cost": 2
+      },
+      "skip_productive_timer": {
+        "minutes_per_gem": 2,
+        "scaled_by": "ronroneo.kl_scale",
+        "never_for": "timers de desafio"
+      },
+      "cosmetics": {
+        "cost_range": [
+          20,
+          80
+        ]
+      }
+    },
+    "target_per_chapter": "140-170 (atadas a contenido, no a tiempo)"
+  },
+  "gambit": {
+    "name": "Cat's Gambit",
+    "tiers": [
+      {
+        "mult": 2,
+        "p": 0.6
+      },
+      {
+        "mult": 5,
+        "p": 0.22
+      },
+      {
+        "mult": 20,
+        "p": 0.06
+      }
+    ],
+    "charges_per_victories": 3,
+    "max_charges": 5,
+    "stake_cap_gold_seconds_of_income": 180,
+    "stake_cap_wallet_pct": 0.25,
+    "stake_cap_food_seconds_of_income": 180,
+    "gem_bet_max": 3,
+    "gem_bets_per_level_up": 0.5,
+    "cat_mods": {
+      "maneki": {
+        "name": "Gato Maneki (Suerte)",
+        "p_add": [
+          0.03,
+          0.02,
+          0.01
+        ]
+      },
+      "caos": {
+        "name": "Gato del Caos",
+        "replace": [
+          {
+            "mult": 50,
+            "p": 0.025
+          }
+        ],
+        "note": "todo o nada: EV 1.25"
+      }
+    },
+    "rules": [
+      "Solo se apuesta oro, comida o gemas ganadas jugando; nunca chatarra, planos, orbes ni Ronroneo.",
+      "El tope de apuesta escala con tu ingreso, no con tu cartera: la loteria no puede ser la estrategia optima."
+    ],
+    "max_payout_seconds_of_income": 600,
+    "stake_rule": "apuesta_max = min(stake_cap_gold_seconds_of_income * oro/s, stake_cap_wallet_pct * cartera, max_payout_seconds_of_income * oro/s / multiplicador)"
+  },
+  "expeditions": {
+    "unlock": "expansion:4",
+    "durations_s": [
+      900,
+      3600,
+      14400
+    ],
+    "scrap_per_h": 5,
+    "scrap_per_zone_per_h": 1.5,
+    "hour_exponent": 0.85,
+    "blueprint_per_h": 0.25,
+    "crystals_per_h": 2.0,
+    "orbs_per_h": 6
+  },
+  "events": {
+    "flash": {
+      "every_levels": 2,
+      "from_kl": 5,
+      "duration_s": 480,
+      "loot_mult": 1.5,
+      "battles_needed": 3,
+      "gems": 1,
+      "crystals": 6
+    },
+    "heroic": [
+      {
+        "n": 1,
+        "name": "El Heredero del Trueno",
+        "kl": 14,
+        "duration_s": 1500,
+        "victories_needed": 5,
+        "reward": "cat:m_raijin",
+        "gems": 5
+      },
+      {
+        "n": 2,
+        "name": "Grieta Cosmica",
+        "kl": 37,
+        "duration_s": 1500,
+        "victories_needed": 5,
+        "reward": "cat:m_singular",
+        "gems": 5
+      }
+    ],
+    "black_flag": {
+      "kl": 15,
+      "duration_s": 1200,
+      "victories_needed": 5,
+      "reward": "ship:merodeador"
+    },
+    "rule": "Los relojes de desafio son SAGRADOS: no se pausan, no se extienden, ni con gemas."
+  },
+  "automation": [
+    {
+      "kl": 3,
+      "id": "collect_all",
+      "name": "Recolectar todo"
+    },
+    {
+      "kl": 6,
+      "id": "feed_bulk",
+      "name": "Alimentar hasta nivel X"
+    },
+    {
+      "kl": 9,
+      "id": "crop_repeat",
+      "name": "Granjas repiten la ultima receta"
+    },
+    {
+      "kl": 15,
+      "id": "kingdom_bank",
+      "name": "Banco del Reino: auto-deposito de oro (offline hasta 2 h)"
+    },
+    {
+      "kl": 18,
+      "id": "resonance_queue",
+      "name": "Cola de Resonancia (3 parejas)"
+    },
+    {
+      "kl": 21,
+      "id": "auto_harvest",
+      "name": "Auto-cosecha al Silo"
+    },
+    {
+      "kl": 24,
+      "id": "workers",
+      "name": "Gatos trabajadores"
+    },
+    {
+      "kl": 28,
+      "id": "auto_feed",
+      "name": "Auto-alimentar (regla por habitat)"
+    },
+    {
+      "kl": 32,
+      "id": "auto_expedition",
+      "name": "Expediciones se repiten solas"
+    },
+    {
+      "kl": 36,
+      "id": "auto_star",
+      "name": "Auto-estrellas y auto-equipar modulos"
+    },
+    {
+      "kl": 40,
+      "id": "auto_battle",
+      "name": "Simulacro: auto-batalla en etapas ya ganadas (70% botin)"
+    },
+    {
+      "kl": 42,
+      "id": "fleet_orders",
+      "name": "Ordenes de flota: el barco libre farmea solo mientras juegas otra cosa"
+    }
+  ],
+  "start": {
+    "gold": 100,
+    "food": 30,
+    "gems": 0,
+    "cats": [
+      "c_canelo",
+      "c_gelatino",
+      "c_brote"
+    ],
+    "habitats": [
+      {
+        "element": "fire",
+        "tier": 1
+      },
+      {
+        "element": "water",
+        "tier": 1
+      }
+    ],
+    "farm_plots": 2,
+    "ship": "balsa",
+    "mk": {
+      "hull": 1,
+      "weapon": 1,
+      "shield": 0,
+      "engine": 1,
+      "core": 0
+    },
+    "builders": 1,
+    "yard_queues": 1
+  },
+  "art_reserved_for_future_elements": {
+    "masquerade_phantom_cat": "Vacio/Sombra (Cap. 2)",
+    "bytewhisker_cat": "Tech",
+    "neon_glitch_cat": "Tech",
+    "steampunk_clockwork_cat": "Chronos/Tiempo (Cap. 3)",
+    "lumen_lens_cat": "Luz/Tiempo",
+    "sonata_prima_cat": "Sonido",
+    "mochi_bell_cat": "Gato Maneki del Cat's Gambit (secreto) o Sonido"
+  },
+  "timer_rules": {
+    "max_nominal_productive_s": 2700,
+    "exception": "Banquete del Leviatan (6 h) es un cultivo opcional para dejar de noche",
+    "tutorial_first_resonance": "Canelo + Brote: resultado garantizado (Pimenton o Chispa) en 90 s"
+  }
+}

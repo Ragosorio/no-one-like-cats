@@ -1,0 +1,3 @@
+Activo normal                              Gambit neto/oro no-Gambit: media +2.3%  min -1.4%  max +10.7% | fin mediana 5.40 h | gemas netas Gambit media 0.0
+Optimizador                                Gambit neto/oro no-Gambit: media +3.0%  min -3.5%  max +12.2% | fin mediana 3.55 h | gemas netas Gambit media 7.8
+Optimizador ludopata (Gambit x20 siempre)  Gambit neto/oro no-Gambit: media +1.6%  min -3.2%  max +19.2% | fin mediana 3.63 h | gemas netas Gambit media 6.4

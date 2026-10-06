@@ -1,0 +1,19 @@
+# deps / builds
+node_modules/
+game/dist/
+*.log
+.vite/
+
+# local tooling
+.DS_Store
+.claude/
+__pycache__/
+
+# raster art never ships: the game uses MAI pure-vector SVGs only
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.avif
+*.bmp
