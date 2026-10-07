@@ -973,7 +973,7 @@
       ],
       "worker": "banker",
       "source": "resonance",
-      "art": "djbigotes_turntable_cat"
+      "art": "djbigotes_dj_cat"
     },
     {
       "id": "e_diva",
@@ -984,7 +984,7 @@
       ],
       "worker": null,
       "source": "resonance",
-      "art": "diva_microphone_cat"
+      "art": "diva_pop_cat"
     },
     {
       "id": "l_headliner",
@@ -995,7 +995,7 @@
       ],
       "worker": null,
       "source": "grieta:sound",
-      "art": "headliner_rockstar_cat"
+      "art": "headliner_rock_cat"
     },
     {
       "id": "c_sombrita",
@@ -1039,7 +1039,7 @@
       ],
       "worker": null,
       "source": "grieta:shadow",
-      "art": "medianoche_eyecrown_cat"
+      "art": "medianoche_king_cat"
     },
     {
       "id": "c_tic",
@@ -1061,7 +1061,7 @@
       ],
       "worker": null,
       "source": "resonance",
-      "art": "arenita_hourglass_cat"
+      "art": "arenita_sand_cat"
     },
     {
       "id": "e_pendulo",
@@ -1072,7 +1072,7 @@
       ],
       "worker": null,
       "source": "resonance",
-      "art": "pendulo_grandfather_cat"
+      "art": "pendulo_clock_cat"
     },
     {
       "id": "l_cronos",
@@ -1149,7 +1149,7 @@
       ],
       "worker": null,
       "source": "resonance",
-      "art": "ecomudo_outline_cat"
+      "art": "ecomudo_static_cat"
     },
     {
       "id": "e_devoradora",
@@ -1171,7 +1171,7 @@
       ],
       "worker": null,
       "source": "grieta:void",
-      "art": "nadie_tvstatic_cat"
+      "art": "nadie_static_cat"
     }
   ],
   "resonance": {

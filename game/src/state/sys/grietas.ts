@@ -174,7 +174,9 @@ for (const s of SPECS) {
     line: s.line,
     archetype: s.archetype,
     enemyCats: s.enemyCats,
-    powerMul: s.powerMul,
+    // a real fight: a post-story crew wins in ~5–8 turns instead of one volley (tuned with the headless sims)
+    powerMul: s.powerMul + 0.25,
+    hpMulX: 2.5,
     intro: s.intro,
     color: s.color,
     reward: { element: s.el, cat: s.cat, gems: 2, crystals: GRIETA_CRYSTALS },

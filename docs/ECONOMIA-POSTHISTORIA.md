@@ -109,3 +109,46 @@ cuenta Gambit, cofres ni eventos.
   cristales). Nunca cobra.
 - **Parche `2026-10-habitats-capacidad`**: con la capacidad nueva, los gatos sin casa que ya caben se
   mudan solos.
+
+## Parte 2: las Grietas del Multiverso (2026-10)
+
+Seis elementos nuevos (Hielo, Sonido, Sombra, Tiempo, Luz y Vacío) y 24 gatos (4 por elemento: Común,
+Raro, Épico y Legendario primordial) alargan la curva del post-historia sin pedir oro nuevo: cada grieta
+se abre con algo que el jugador ya está persiguiendo. Código: `game/src/state/sys/grietas.ts`.
+
+| Grieta | Elemento | Se abre con | Ritmo esperado (simulador de arriba) |
+|---|---|---|---|
+| Grieta Boreal | Hielo | Créditos del Capítulo 1 (H23) | min 0 |
+| Grieta del Escenario | Sonido | Campeón de una liga del Podio | cuando el jugador juegue el Podio |
+| Grieta de los Faroles | Sombra | Jardín Sakura limpio (exp. 9) | ~+1 h |
+| Grieta del Reloj de Arena | Tiempo | Oasis Dorado limpio (exp. 10) | ~+2 h |
+| Grieta del Faro | Luz | Reino 36 + Atolón Estelar limpio (exp. 8) | ~+3 h |
+| Grieta del Abismo | Vacío | Abismo del Ronroneo limpio (exp. 12) **o** 10 Fragmentos del Vacío | ~+6 h (o antes, si juntaste todos los fragmentos) |
+
+Todas menos la primera piden haber ganado la Grieta Boreal (ahí Luzterna explica qué son).
+
+**De dónde sale cada gato**
+
+- Legendario primordial (Bóreas, Headliner, Medianoche, Cronos, Áurea, Nadie): ganar su grieta (una vez).
+  Duplicados: Resonancia de dos padres que compartan el elemento, Nv20+ (regla de siempre).
+- Común / Raro / Épico: Resonancia con al menos un padre del elemento (`oddsFor` arma el pozo solo; el
+  épico pide ambos padres Nv15+). En cuanto descubres el elemento, también entran a la Tienda (comunes),
+  al Casino y al Portal (por rareza, con los pesos de siempre) y a los rivales del Podio.
+- Las grietas no se repiten. **Cristales del elemento** (los piden los tiers 5–10 del hábitat): +20 al
+  ganar la grieta, y las **expediciones con un gato de ese elemento** traen cristales de SU elemento
+  (en vez del de la zona).
+
+**Hábitats**: se compran en la Tienda en cuanto el elemento existe, con la fórmula de siempre
+(`60 · 3^(min(N,8)−1) · 1.6^max(0,N−8) · 1.3^M`). Como cada elemento nuevo empieza con M = 0, su primer
+hábitat cuesta lo mismo que cualquier hábitat N-ésimo (≈ 37 M con 20 hábitats). Producen igual que los
+demás (oro por rareza y nivel del gato × tier). El empujón económico real es la **Catdex**: 24 especies
+más = +48% de oro global (2% c/u, más el +1%/especie de las expansiones 7 y 12), repartido a lo largo
+de las ~6 h del post-historia.
+
+**Batallas de grieta**: enemigo = tu poder × 1.15–1.35 y casco ×2.5 (con la tripulación de la partida de
+prueba `post-story`, todas se ganan en 4–7 turnos; con una tripulación normal de fin de capítulo, la
+ESTIMACIÓN marca la dificultad real). Premio: elemento + primordial + 2–3 gemas + 20 cristales.
+
+**Partidas viejas**: parche `2026-10-grietas-multiverso` (avisa en NOVEDADES a quien ya terminó el
+capítulo). Las misiones H23–H28, K33–K39 y C29 se activan solas cuando su condición ya se cumple
+(por ejemplo: quien ya limpió el Jardín Sakura recibe la Grieta de los Faroles al ganar la Boreal).

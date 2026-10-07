@@ -382,3 +382,17 @@ export function p2ShotValue(b: Battle, side: number, shot: ShotDef, paths: ShotP
   }
   return 1;
 }
+
+// ------------------------------------------------------------------ honest estimate (state/sys/estimate.ts)
+const ENEMY_NOTE: Record<string, string> = {
+  ice: 'El rival trae Hielo: lo que congela no dispara su próximo turno. Fuego lo derrite.',
+  light: 'El rival trae Luz: si te ciega, tu próxima vista previa se encoge al 30%.',
+  shadow: 'El rival trae Sombra: sus tiros no se ven volar y apuñalan a tu gato más cercano.',
+  sound: 'El rival trae Sonido: su onda atraviesa paredes y aturde a los gatos que cruza.',
+  time: 'El rival trae Tiempo: repara su barco al pegarte y su ultimate te quita un turno.',
+  void: 'El rival trae Vacío: lo que borra no se repara y se come tus escudos.',
+};
+/** one line per multiverse element in the enemy crew (the sims already play it; this says WHY) */
+export function p2EnemyNotes(enemyElements: string[]): string[] {
+  return [...new Set(enemyElements)].filter((e) => ENEMY_NOTE[e]).map((e) => ENEMY_NOTE[e]);
+}

@@ -10,6 +10,7 @@ import { G } from '../game';
 import { crew, layoutOf, mk } from './ship';
 import { cat as getCat } from './cats';
 import type { BattleSpec } from '../../scenes/BattleScene';
+import { p2EnemyNotes } from '../../battle/multiverso';
 
 export interface Estimate {
   /** 0–1 win rate from the sims (null while the first sims run) */
@@ -68,6 +69,8 @@ function matchup(spec: BattleSpec): { reasons: string[]; tips: string[] } {
     .map(([e]) => e)
     .filter((e) => G.s.elements.includes(e) && !els.includes(e));
   if (weak.length && best.length) tips.push(`Prueba con ${best.slice(0, 2).map((e) => EL_NAME[e] ?? e).join(' o ')}: ×${mult[best[0]]} contra ${MAT_NAME[main]}.`);
+  // Parte 2: what the multiverse cats on the other side will do (the sims above already play it)
+  reasons.push(...p2EnemyNotes(spec.enemy.cats.flatMap((c) => c.elements)));
   return { reasons, tips };
 }
 
