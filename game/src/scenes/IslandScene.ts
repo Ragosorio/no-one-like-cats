@@ -863,7 +863,7 @@ export class IslandScene extends Scene {
       this.bag.add(
         gsap.delayedCall(0.9, () => {
           if (d.won && d.reward) this.secretFound(n, d.reward, sv ? { x: sv.top.x, y: sv.top.y + 80 } : null);
-          else if (!d.won) toast('El guardián sigue en pie', { sub: 'Sube de nivel a tu tripulación (o cambia de gatos) y vuelve a intentarlo. Sin castigo.', color: C.paper, dur: 3.2 });
+          else if (!d.won) toast(`${SPECIALS[d.battleId]?.captain ?? 'Tu rival'} sigue en pie`, { sub: 'Sube de nivel a tu tripulación (o cambia de gatos) y vuelve a intentarlo. Sin castigo.', color: C.paper, dur: 3.2 });
         }),
       );
     }
@@ -1014,6 +1014,8 @@ export class IslandScene extends Scene {
       gsap.delayedCall(0.45, () =>
         showSecretReveal(n, reward, () => {
           this.revealing = false;
+          const sp = reward.unlock?.startsWith('cat:') ? reward.unlock.slice(4) : null;
+          if (sp && !G.s.cats.some((c) => c.species === sp)) void import('../app/storyFlow').then((f) => f.revealCat(sp));
           const g = this.hud.target('gems');
           if (g && at) this.hud.flyTo('gems', this.wfx.toGlobal(at), reward.gems, { count: Math.min(6, reward.gems * 2) });
           this.syncAll();
@@ -1237,12 +1239,14 @@ export class IslandScene extends Scene {
           void startStoryBattle(g.battle);
           return;
         }
-        if (g.battle === 'duel_guardian_bosque') {
-          const sv = this.secrets.find((x) => x.n === 1);
+        // battle secrets live on their island: point at the shrine (Bosque Costero) or the ruins (Ruinas Arcanas)
+        const secretN = g.battle === 'duel_guardian_bosque' ? 1 : g.battle === 'secret_orquesta' ? 6 : 0;
+        if (secretN) {
+          const sv = this.secrets.find((x) => x.n === secretN);
           if (sv?.active) {
             this.cam.lookAt(sv.top.x, sv.top.y + 120, true, 0.95);
             this.pointAt(sv.top.x, sv.top.y + 20);
-          } else this.focusRegion(1);
+          } else this.focusRegion(secretN);
           return;
         }
         goMap();

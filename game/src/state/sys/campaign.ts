@@ -700,6 +700,8 @@ export interface SpecialDef {
   power: number | 'frontier';
   hpMul: number;
   zone: number;
+  /** your cats on the raft (default 2) */
+  crew?: number;
 }
 export const SPECIALS: Record<string, SpecialDef> = {
   duel_guardian_bosque: {
@@ -709,8 +711,20 @@ export const SPECIALS: Record<string, SpecialDef> = {
     line: 'Rrr… este santuario tiene dueño. Y raíces.',
     enemyCats: ['c_musgo'],
     power: 'frontier',
-    hpMul: 2.2,
+    hpMul: 1.7,
     zone: 1,
+  },
+  // Ruinas Arcanas (expansion 6) secret → H16 "Lo que guardan las ruinas"; prize: Sonata Prima
+  secret_orquesta: {
+    id: 'secret_orquesta',
+    name: 'La Orquesta Muda',
+    captain: 'La Directora',
+    line: '…shhh. La función empezó hace tres siglos. Llegas tarde. Siéntate y no toses.',
+    enemyCats: ['r_runachispa', 'r_astral', 's_maneki'],
+    power: 'frontier',
+    hpMul: 1,
+    zone: 4,
+    crew: 3,
   },
   duel_callejero: {
     id: 'duel_callejero',
@@ -728,9 +742,11 @@ export const SPECIALS: Record<string, SpecialDef> = {
 export function buildDuel(id: string, onEnd: (r: BattleResult) => void): BattleSpec {
   const sp = SPECIALS[id];
   const f = frontier();
-  const EP = sp.power === 'frontier' ? stagePower(Math.max(1, f.zone), Math.max(1, f.stage)) : sp.power;
-  const crewUids = crew().slice(0, 2);
   const SP = shipPower();
+  // duels are side quests: as hard as your campaign frontier, but never harder than your own ship
+  // (a late save with a lagging fleet used to face its zone-6 frontier and could never win: 0/16)
+  const EP = sp.power === 'frontier' ? Math.min(stagePower(Math.max(1, f.zone), Math.max(1, f.stage)), SP) : sp.power;
+  const crewUids = crew().slice(0, sp.crew ?? 2);
   const S = SP / EP;
   const pf = fS(S);
   const ef = fS(1 / S);
