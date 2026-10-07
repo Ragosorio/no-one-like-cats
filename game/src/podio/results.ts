@@ -6,7 +6,8 @@
 import { Container, Graphics, Text, TilingSprite } from 'pixi.js';
 import gsap from 'gsap';
 import { W, H } from '../core/App';
-import { C, F } from '../ui/theme';
+import { C, F, RARITY } from '../ui/theme';
+import { catDef } from '../data/content';
 import { txt, Button } from '../ui/widgets';
 import { icon, IconKind } from '../ui/icons';
 import { sfx } from '../core/audio';
@@ -147,6 +148,10 @@ export class PodioResults extends Container {
     for (const s of xp.powerUps) notes.push([`${SLOT_LABEL[s]} sube de nivel: ${pw[s].name}`, C.inkBlue]);
     if (xp.capped) notes.push([`TOPE: alimenta a ${cat.name} hasta NV ${nextCapLevel(cat)} (o súbelo de estrella) para que siga creciendo aquí.`, C.plum]);
     if (loot.leagueUp) notes.unshift([`¡ASCIENDES A ${league(loot.league + 1).name}!`, C.pinkHot]);
+    if (loot.prize) {
+      const pd = catDef(loot.prize.species);
+      notes.unshift([`PREMIO DEL CAMPEÓN: ${pd.name.toUpperCase()} (${RARITY[pd.rarity].name})${loot.prize.isNew ? ' SE UNE A TU ISLA' : ` · +${loot.prize.orbs} ORBES`}`, RARITY[pd.rarity].color]);
+    }
     notes.slice(0, 3).forEach(([s, col], i) => {
       const t = txt(s, { fontFamily: F.poster, fontSize: 24, fill: col });
       t.position.set(lx, xpY + 84 + i * 34);

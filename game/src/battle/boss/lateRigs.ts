@@ -262,7 +262,7 @@ export class InkCatFx extends Stepped {
 // ================================================================ Wells / black hole / lure
 export class WellFx extends Stepped {
   private g = new Graphics();
-  constructor(public wx: number, public wy: number, public r: number, public kind: 'well' | 'hole' | 'lure' | 'sun') {
+  constructor(public wx: number, public wy: number, public r: number, public kind: 'well' | 'hole' | 'lure' | 'sun' | 'horizon') {
     super();
     this.addChild(this.g);
     gsap.from(this.scale, { x: 0, y: 0, duration: 0.5, ease: 'back.out(2)' });
@@ -289,6 +289,51 @@ export class WellFx extends Stepped {
         const rr = 260 * (1 - ph);
         g.circle(x + Math.cos(a) * rr, y - 40 + Math.sin(a) * rr * 0.4, 3).fill({ color: 0xc8fbff, alpha: ph });
       }
+      return;
+    }
+    if (this.kind === 'horizon') {
+      // Horizonte de Eventos: a big hole over their deck, a pink/cyan accretion disk, light bending into it
+      const R = 92;
+      const sp = this.t * 1.6;
+      for (let k = 0; k < 7; k++) {
+        const a0 = sp + (k * Math.PI * 2) / 7;
+        g.moveTo(x + Math.cos(a0) * this.r * 0.8, y + Math.sin(a0) * this.r * 0.8 * 0.4);
+        for (let s = 1; s <= 18; s++) {
+          const u = 1 - s / 18;
+          const rr = R + u * (this.r * 0.8 - R);
+          const a = a0 + s * 0.3;
+          g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.4);
+        }
+        g.stroke({ width: 4, color: k % 2 ? 0x00e5ff : 0xff2e88, alpha: 0.55 });
+      }
+      // lensing ring + disk
+      g.ellipse(x, y, R * 2.3, R * 0.55).stroke({ width: 16, color: 0xff7ab8, alpha: 0.35 });
+      g.ellipse(x, y, R * 2.1, R * 0.48).stroke({ width: 6, color: 0xffe9b0, alpha: 0.9 });
+      g.circle(x, y, R + 10).stroke({ width: 10, color: 0xffffff, alpha: 0.25 + 0.15 * Math.sin(this.t * 5) });
+      g.circle(x, y, R).fill(0x000000).stroke({ width: 5, color: 0x00e5ff });
+      // the front of the disk passes in front of the hole
+      g.rect(x - R * 1.6, y - 4, R * 3.2, 8).fill({ color: 0xffe9b0, alpha: 0.85 });
+      // static (TV noise) specks falling in
+      for (let i = 0; i < 14; i++) {
+        const ph = (this.t * 0.6 + i / 14) % 1;
+        const a = (i / 14) * Math.PI * 2 + this.t * 0.8;
+        const rr = this.r * 0.9 * (1 - ph) + R;
+        g.rect(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.45, 5, 3).fill({ color: 0xffffff, alpha: ph });
+      }
+      return;
+    }
+    if (this.kind === 'sun') {
+      // Sol Caído: the sun sitting on their deck, still burning
+      const R = 110 + Math.sin(this.t * 3) * 6;
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * Math.PI * 2 + this.t * 0.4;
+        const len = R + 40 + 26 * Math.sin(this.t * 4 + i * 1.7);
+        g.poly([x + Math.cos(a - 0.09) * R * 0.9, y + Math.sin(a - 0.09) * R * 0.9, x + Math.cos(a) * len, y + Math.sin(a) * len, x + Math.cos(a + 0.09) * R * 0.9, y + Math.sin(a + 0.09) * R * 0.9]).fill({ color: i % 2 ? 0xff6a1a : 0xffd400, alpha: 0.85 });
+      }
+      g.circle(x, y, R * 1.25).fill({ color: 0xffb02e, alpha: 0.22 });
+      g.circle(x, y, R).fill(0xffd400).stroke({ width: 6, color: INK });
+      g.circle(x, y, R * 0.72).fill(0xfff2c0);
+      g.circle(x - R * 0.3, y - R * 0.3, R * 0.18).fill({ color: 0xffffff, alpha: 0.9 });
       return;
     }
     const hole = this.kind === 'hole';

@@ -23,11 +23,34 @@
  *   s_sonata     GRAN FINALE                 one chord hits EVERY enemy module
  *   s_lumen      ETERNAL EXPOSURE            repeats your crew's last shot, exactly
  *   s_eclipse    TOTAL ECLIPSE               enemy blinded 2 turns (no preview / no crits), your next shot ×2
+ *
+ * HEROICOS (El Podio's champions' prizes) — 35% cap, bosses 15%:
+ *   h_zarpa      BROADSIDE OF A HUNDRED BLADES  one flaming slash through EVERY enemy cat (burning) + a cut in
+ *                                               every cabin; ★3 they burn longer, ★5 the slash comes back (½)
+ *   h_granbigote YOKOZUNA EARTHQUAKE            his rock pierces +1 and the quake CRACKS the whole enemy keel (never
+ *                                               breaks it: Maldito ×1.5 for 2 turns); his own ship is stone until his next turn
+ *   h_valquiria  VALKYRIE'S JUDGMENT            a spear from the sky straight down a whole column (pierces 8), the
+ *                                               column soaked first so the lightning CONDUCTS; ★5 a 2nd spear on the core
+ *   h_nekomante  FORBIDDEN PAGE                 curses the 3 best modules (×1.5) and STEALS 40% of every enemy cat's
+ *                                               meter, shared among his own crew
+ * DIVINOS (the "broken" ones) — once per battle, their own caps:
+ *   d_horizonte  ZERO POINT                     a black hole opens ABOVE their ship and stays 3 turns: swallows the
+ *                                               nearest cells (25%), then more at each of your turns (8%) and drains
+ *                                               25% meter from their cats; THEIR shots that cross it vanish
+ *   d_solcaido   SUNDOWN                        the sun comes down on the ship center (huge blast, 42%), the whole ship
+ *                                               catches fire (wet → steam), cats burn and are blinded; the sun stays 2
+ *                                               turns burning what's under it (6% a turn)
+ *   d_milvidas   SENJIN                         seven shadow cuts to EVERY enemy cat (each eats a shield), never more
+ *                                               than 70% of a cat's life (bosses 25%), and a cut in every cabin
+ *   d_bigbang    BIG BANG                       HALF the enemy ship (the half the note lands on) blows up at once (45%,
+ *                                               the core holds at 1 hp); cats in that half stunned; breaches flood
+ * Per-turn effects of the divines that stay (horizon / sun) run in ultTicks() at the start of the owner's turn.
  */
 import type { Battle, BattleEvent, ShotPath, PathPoint } from './sim';
-import { CAT_K } from './sim';
+import { CAT_K, DMG_K } from './sim';
 import { CELL } from './ship';
-import type { CatState, ShotDef } from './types';
+import type { Cell } from './ship';
+import type { CatState, ElementId, ShotDef } from './types';
 
 export interface UltCtx {
   side: 0 | 1;
@@ -42,8 +65,58 @@ export interface UltCtx {
 }
 export type UltFn = (b: Battle, o: UltCtx) => ShotPath[];
 
-export function ultBudgetFrac(catId: string) {
-  return catId === 'm_singular' || catId === 'l_astraprima' ? 0.4 : 0.35;
+/** structure an ultimate may erase in one go (fraction of the victim's starting structure; bosses: 15% in sim.fire) */
+export function ultBudgetFrac(catId: string, stars = 1) {
+  switch (catId) {
+    case 'm_singular':
+    case 'l_astraprima':
+      return 0.4;
+    case 'd_bigbang':
+      return stars >= 5 ? 0.5 : 0.45;
+    case 'd_solcaido':
+      return 0.42;
+    case 'd_horizonte':
+    case 'd_milvidas':
+      return 0.25;
+    default:
+      return 0.35;
+  }
+}
+
+const FLAMMABLE = new Set(['wood', 'bone', 'canvas']);
+/** a capped structure hit on one cell (destroy + module report + view event); returns the damage dealt */
+function cut(b: Battle, side: number, c: Cell, raw: number, ev: BattleEvent[], path: number, at: number) {
+  const dmg = b.cap(side, Math.max(0, Math.round(raw)));
+  if (dmg <= 0) return 0;
+  b.hurtCell(side, c, dmg);
+  const destroyed = c.hp <= 0;
+  if (destroyed) {
+    const mid = c.module;
+    b.sides[side].ship.destroyCell(c.x, c.y);
+    if (mid !== undefined) b.reportModule(side, mid, ev, path, at);
+  }
+  ev.push({ k: 'cell', side, cell: c, dmg, destroyed, path, at });
+  return dmg;
+}
+function collapse(b: Battle, side: number, ev: BattleEvent[], path: number, at: number) {
+  for (const ch of b.sides[side].ship.collapse()) {
+    ev.push({ k: 'chunk', side, cells: ch, path, at });
+    for (const c of ch) if (c.module !== undefined) b.reportModule(side, c.module, ev, path, at);
+  }
+}
+/** the element a cat hits other cats with (its shot's element, as the sim knows it) */
+function catEl(c: CatState): ElementId {
+  return c.def.shot.element ?? c.def.elements[0] ?? 'neutral';
+}
+const isBossVs = (b: Battle, side: number) => b.cfg.boss?.side === side;
+/** shrink the running ultimate budget (a divine's own cast cap vs a boss) */
+function capBudget(b: Battle, side: number, frac: number) {
+  if (!b.budget || b.budget.side !== side) return;
+  b.budget.left = Math.min(b.budget.left, Math.round((b.sides[side].ship.initialMax?.[0] ?? 0) * frac));
+}
+/** top of a side's ship (world y) */
+function shipTop(b: Battle, side: number) {
+  return b.sides[side].setup.origin.y;
 }
 
 /** where the plain ult shot would land (x, y) */
@@ -306,4 +379,382 @@ export const ULTS: Record<string, UltFn> = {
     o.events.push({ k: 'ultfx', fx: 'eclipse', side: enemy, x: 960, y: 220, path: 0, at: 0 });
     return normal(b, o);
   },
+
+  // ================================================================== HEROICOS
+  // ------------------------------------------------------------------ one slash for every cat aboard
+  h_zarpa(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const alive = es.cats.filter((c) => !c.ko && !b.isFlying(c));
+    const ctr = b.shipCenter(enemy);
+    o.events.push({ k: 'ultfx', fx: 'cutlass', side: enemy, x: ctr.x, y: ctr.y, n: alive.length, path: 0, at: 0 });
+    const paths = normal(b, o, { ...o.shot, power: o.shot.power * 0.5 });
+    const { path, at } = endOf(paths[0]);
+    const t = Math.min(at, 6);
+    for (const k of stars >= 5 ? [1, 0.5] : [1]) {
+      for (const c of alive) {
+        if (!c.ko) {
+          b.hitCat(c, Math.round(o.atk * o.shot.power * 0.3 * k * CAT_K), o.events, path, t, 'fire', true);
+          if (stars >= 3 && !c.ko && c.fx.burning > 0) c.fx.burning += 1;
+        }
+        // the blade goes through its cabin too
+        for (const cell of es.ship.moduleCells(c.room)) cut(b, enemy, cell, o.atk * o.shot.power * 0.12 * k * DMG_K, o.events, path, t);
+      }
+    }
+    collapse(b, enemy, o.events, path, t);
+    return paths;
+  },
+
+  // ------------------------------------------------------------------ the earth bows
+  h_granbigote(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    o.events.push({ k: 'ultfx', fx: 'yokozuna', side: o.side, x: b.shipCenter(o.side).x, y: b.shipCenter(o.side).y, path: 0, at: 0 });
+    const paths = normal(b, o, { ...o.shot, power: o.shot.power * 0.5 });
+    const { path, at } = endOf(paths[0]);
+    // the lowest cell(s) of every column are the keel (ships are not rectangles)
+    const depth = stars >= 3 ? 2 : 1;
+    const byCol = new Map<number, Cell[]>();
+    for (const c of es.ship.cells()) {
+      const list = byCol.get(c.x) ?? [];
+      list.push(c);
+      byCol.set(c.x, list);
+    }
+    const quake: Cell[] = [];
+    for (const list of byCol.values()) {
+      list.sort((a, z) => z.y - a.y);
+      quake.push(...list.slice(0, depth));
+    }
+    o.events.push({ k: 'ultfx', fx: 'quake', side: enemy, x: b.shipCenter(enemy).x, y: b.waterY - CELL, n: quake.length, path, at });
+    // the quake CRACKS the keel (it never breaks it by itself): every keel cell is left Maldito (×1.5) for 2 turns,
+    // so the next hits down there bring the ship down
+    const cracked: Cell[] = [];
+    for (const c of quake) {
+      if (c.hp <= 0) continue;
+      cut(b, enemy, c, Math.min(o.atk * o.shot.power * 0.25 * DMG_K, c.hp - 1), o.events, path, at);
+      if (c.hp > 0) {
+        c.status.cursed = Math.max(c.status.cursed ?? 0, 2);
+        cracked.push(c);
+      }
+    }
+    if (cracked.length) o.events.push({ k: 'status', side: enemy, cells: cracked, status: 'cursed' });
+    collapse(b, enemy, o.events, path, at);
+    // his own ship holds like a sumo wrestler: its modules can't fall until his next turn
+    const own = b.sides[o.side];
+    own.buffs.stone = Math.max(own.buffs.stone, stars >= 5 ? 2 : 1);
+    return paths;
+  },
+
+  // ------------------------------------------------------------------ the spear from Valhalla
+  h_valquiria(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const span = shipSpan(b, enemy);
+    const tgt = landing(b, o);
+    // the spear picks the cabin / core column closest to where she aimed
+    const mods = es.ship.modules.filter((m) => m.alive && (m.kind === 'catroom' || m.kind === 'core') && es.ship.moduleCells(m.id).length);
+    const near = mods.map((m) => b.roomCenter(enemy, m.id).x).sort((a, z) => Math.abs(a - tgt.x) - Math.abs(z - tgt.x))[0];
+    const tx = Math.max(span.x0, Math.min(span.x1, near ?? tgt.x));
+    const spear: ShotDef = { ...o.shot, trajectory: 'beam', projectiles: 1, pierce: 8 + (stars >= 3 ? 2 : 0), radius: CELL * 1.1, power: o.shot.power * 0.45, gravityScale: 0.02, windScale: 0 };
+    const xs = [tx];
+    if (stars >= 5) {
+      const core = es.ship.modules.find((m) => m.kind === 'core' && m.alive);
+      if (core) xs.push(b.roomCenter(enemy, core.id).x);
+    }
+    // the storm soaks the column first: the lightning CONDUCTS through all of it
+    const soaked = es.ship.cells().filter((c) => xs.some((x) => Math.abs(b.cellCenter(enemy, c.x, c.y).x - x) <= CELL * 0.75));
+    b.wetCells(enemy, soaked, o.events);
+    o.events.push({ k: 'ultfx', fx: 'valkyrie', side: enemy, x: tx, y: 160, n: xs.length, path: 0, at: 0 });
+    const paths = xs.map((x) => b.integrate(spear, { x: x + (o.side === 0 ? -50 : 50), y: -320 }, Math.atan2(b.waterY + 320, o.side === 0 ? 50 : -50), 1400, 0, o.side));
+    b.resolvePaths(o.side, spear, o.atk, paths, o.events);
+    return paths;
+  },
+
+  // ------------------------------------------------------------------ the forbidden page
+  h_nekomante(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    o.events.push({ k: 'ultfx', fx: 'grimoire', side: enemy, x: b.shipCenter(enemy).x, y: b.shipCenter(enemy).y, path: 0, at: 0 });
+    const paths = normal(b, o, { ...o.shot, power: o.shot.power * 0.6 });
+    const { path, at } = endOf(paths[0]);
+    const value: Record<string, number> = { core: 9, catroom: 7, cannon: 6, shield: 6, arcane: 5, powder: 6, mast: 3, engine: 3 };
+    const marks = es.ship.modules
+      .filter((m) => m.alive && es.ship.moduleCells(m.id).length)
+      .sort((a, z) => (value[z.kind] ?? 1) - (value[a.kind] ?? 1))
+      .slice(0, stars >= 3 ? 4 : 3);
+    const cursed: Cell[] = [];
+    for (const m of marks)
+      for (const c of es.ship.moduleCells(m.id)) {
+        c.status.cursed = Math.max(c.status.cursed ?? 0, 2);
+        cursed.push(c);
+      }
+    if (cursed.length) o.events.push({ k: 'status', side: enemy, cells: cursed, status: 'cursed' });
+    // the grimoire steals their spells: meter out of every enemy cat, shared among his crew
+    const frac = stars >= 5 ? 0.6 : 0.4;
+    let stolen = 0;
+    for (const c of es.cats) {
+      if (c.ko) continue;
+      const take = Math.min(c.ultCharge, frac);
+      c.ultCharge -= take;
+      stolen += take;
+    }
+    const allies = b.sides[o.side].cats.filter((c) => !c.ko && c !== o.cat);
+    for (const a of allies) a.ultCharge = Math.min(1, a.ultCharge + stolen / allies.length);
+    o.events.push({ k: 'ultfx', fx: 'drain', side: enemy, x: b.shipCenter(enemy).x, y: shipTop(b, enemy) - 80, n: Math.round(frac * 100), w: allies.length ? 1 : 0, path, at });
+    return paths;
+  },
+
+  // ================================================================== DIVINOS
+  // ------------------------------------------------------------------ nothing escapes
+  d_horizonte(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const boss = isBossVs(b, enemy);
+    if (boss) capBudget(b, enemy, 0.06);
+    const span = shipSpan(b, enemy);
+    const tgt = landing(b, o);
+    // the hole opens ON their deck (half in, half out), over the spot the orb was going to land (never at the very tip)
+    const w = span.x1 - span.x0;
+    const hx = Math.max(span.x0 + w * 0.25, Math.min(span.x1 - w * 0.25, tgt.x));
+    const col = es.ship.cells().filter((c) => Math.abs(b.cellCenter(enemy, c.x, c.y).x - hx) <= CELL * 1.5);
+    const deck = col.length ? Math.min(...col.map((c) => b.cellCenter(enemy, c.x, c.y).y)) : shipTop(b, enemy);
+    const hy = Math.max(110, deck);
+    o.events.push({ k: 'ultfx', fx: 'horizon', side: enemy, x: hx, y: hy, path: 0, at: 0 });
+    const orb = b.integrate({ ...o.shot, trajectory: 'orb', power: o.shot.power * 0.3, statuses: [] }, o.origin, o.angle, o.power, o.wind, o.side);
+    // the orb doesn't land: it BECOMES the hole (its flight ends where the hole opens)
+    const near0 = orb.points.findIndex((pt) => Math.hypot(pt.x - hx, pt.y - hy) < CELL * 2);
+    if (near0 > 0) orb.points = orb.points.slice(0, near0 + 1);
+    orb.points.push({ x: hx, y: hy });
+    orb.impacts = [];
+    orb.owners = [];
+    const at = orb.points.length - 1;
+    o.events.push({ k: 'ultfx', fx: 'horizonOpen', side: enemy, x: hx, y: hy, path: 0, at });
+    const near = es.ship
+      .cells()
+      .map((c) => ({ c, d: Math.hypot(b.cellCenter(enemy, c.x, c.y).x - hx, b.cellCenter(enemy, c.x, c.y).y - hy) }))
+      .filter((k) => k.d <= CELL * 3.8)
+      .sort((a, z) => a.d - z.d)
+      .slice(0, 18);
+    for (const { c } of near) if (!cut(b, enemy, c, c.hp, o.events, 0, at)) break;
+    collapse(b, enemy, o.events, 0, at);
+    b.wells.push({
+      x: hx,
+      y: hy,
+      r: 360,
+      k: 2600,
+      turns: stars >= 3 ? 4 : 3,
+      owner: o.side,
+      kind: 'horizon',
+      hidden: true,
+      eat: CELL * 1.8,
+      tick: { frac: boss ? 0.03 : 0.08, cells: 6 + (stars >= 5 ? 2 : 0), atk: 0, drain: 0.25 },
+    });
+    return [orb];
+  },
+
+  // ------------------------------------------------------------------ the sun comes down
+  d_solcaido(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const ctr = b.shipCenter(enemy);
+    o.events.push({ k: 'ultfx', fx: 'sundown', side: enemy, x: ctr.x, y: ctr.y, path: 0, at: 0 });
+    const sun: ShotDef = { ...o.shot, trajectory: 'ballistic', projectiles: 1, radius: CELL * 4.2, pierce: 0, power: o.shot.power * 0.55, catMul: 0.1, gravityScale: 2.4, windScale: 0, statuses: [{ id: 'burning', turns: 2 }] };
+    const p = b.integrate(sun, { x: ctr.x + (o.side === 0 ? -30 : 30), y: -520 }, Math.PI / 2 + (o.side === 0 ? -0.03 : 0.03), 420, 0, o.side);
+    const { path, at } = endOf(p);
+    o.events.push({ k: 'ultfx', fx: 'sunImpact', side: enemy, x: ctr.x, y: ctr.y, path, at });
+    b.resolvePaths(o.side, sun, o.atk, [p], o.events);
+    // everything under the sun catches fire (6 cells around the center, not inside the cabins: the cats burn on
+    // their own); what was wet anywhere boils
+    const lit: Cell[] = [];
+    for (const c of es.ship.cells()) {
+      const p = b.cellCenter(enemy, c.x, c.y);
+      if (c.status.wet) {
+        delete c.status.wet;
+        c.status.steam = 2;
+      } else if (FLAMMABLE.has(c.material) && Math.hypot(p.x - ctr.x, p.y - ctr.y) <= CELL * 6 && (c.module === undefined || es.ship.modules[c.module]?.kind !== 'catroom')) {
+        c.status.burning = Math.max(c.status.burning ?? 0, 2);
+        lit.push(c);
+      }
+    }
+    if (lit.length) o.events.push({ k: 'status', side: enemy, cells: lit, status: 'burning' });
+    for (const c of es.cats) if (!c.ko && !b.isFlying(c)) b.hitCat(c, Math.round(o.atk * o.shot.power * 0.08 * CAT_K), o.events, path, at, 'fire', true);
+    // the glare: Luz already leaves them CEGADO (multiverso.ts, 3 turns for an ultimate); ★3 also ECLIPSADO
+    // (no criticals, the AI aims far worse) for their next turn
+    if (stars >= 3) es.buffs.blind = Math.max(es.buffs.blind, 1);
+    b.wells.push({
+      x: ctr.x,
+      y: shipTop(b, enemy) - CELL * 0.6,
+      r: 1,
+      k: 0,
+      turns: stars >= 5 ? 3 : 2,
+      owner: o.side,
+      kind: 'sun',
+      hidden: true,
+      tick: { frac: isBossVs(b, enemy) ? 0.03 : 0.06, cells: 4, atk: o.atk * o.shot.power * 0.15 },
+    });
+    return [p];
+  },
+
+  // ------------------------------------------------------------------ a thousand cuts
+  d_milvidas(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const alive = es.cats.filter((c) => !c.ko && !b.isFlying(c));
+    const cuts = stars >= 3 ? 9 : 7;
+    o.events.push({ k: 'ultfx', fx: 'senjin', side: enemy, x: b.shipCenter(enemy).x, y: b.shipCenter(enemy).y, n: cuts, path: 0, at: 0 });
+    const paths = normal(b, o, { ...o.shot, trajectory: 'homing', projectiles: 1, power: o.shot.power * 0.3 });
+    const { path, at } = endOf(paths[0]);
+    const t = Math.min(at, 6);
+    const el = catEl(o.cat);
+    const boss = isBossVs(b, enemy);
+    for (const c of alive) {
+      // never a K.O. on its own: at most 70% of a cat's life (★5 85%, the boss captain 25%)
+      const capHp = c.maxHp * (boss ? 0.25 : stars >= 5 ? 0.85 : 0.7);
+      const perCut = Math.round(o.atk * o.shot.power * 0.15 * CAT_K);
+      let lost = 0;
+      for (let k = 0; k < cuts && !c.ko && lost < capHp; k++) {
+        const before = c.hp;
+        const lives = c.lives;
+        b.hitCat(c, Math.max(1, Math.min(perCut, Math.round(capHp - lost))), o.events, path, t, el, true);
+        lost += c.lives < lives ? capHp : Math.max(0, before - c.hp);
+      }
+      for (const cell of es.ship.moduleCells(c.room)) cut(b, enemy, cell, o.atk * o.shot.power * 0.1 * DMG_K, o.events, path, t);
+    }
+    collapse(b, enemy, o.events, path, t);
+    return paths;
+  },
+
+  // ------------------------------------------------------------------ in the beginning there was a cat
+  d_bigbang(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const ctr = b.shipCenter(enemy);
+    const span = shipSpan(b, enemy);
+    o.events.push({ k: 'ultfx', fx: 'bigbang', side: enemy, x: ctr.x, y: ctr.y, path: 0, at: 0 });
+    const note = b.buildPaths({ ...o.shot, power: o.shot.power * 0.25, statuses: [] }, o.origin, o.angle, o.power, o.wind, o.side)[0];
+    const end = note.points[note.impacts.length ? note.impacts[note.impacts.length - 1] : note.points.length - 1];
+    // the half the note lands on (a miss: the half nearer to where it fell)
+    const left = end.x < ctr.x;
+    const { path, at } = endOf(note);
+    note.impacts = [];
+    note.owners = [];
+    o.events.push({ k: 'ultfx', fx: 'bigbangBoom', side: enemy, x: left ? (span.x0 + ctr.x) / 2 : (span.x1 + ctr.x) / 2, y: ctr.y, n: left ? 0 : 1, w: Math.round((span.x1 - span.x0) / 2), path, at });
+    const half = es.ship
+      .cells()
+      .filter((c) => b.cellCenter(enemy, c.x, c.y).x < ctr.x === left)
+      .map((c) => ({ c, d: Math.hypot(b.cellCenter(enemy, c.x, c.y).x - end.x, b.cellCenter(enemy, c.x, c.y).y - end.y) }))
+      .sort((a, z) => a.d - z.d);
+    const rooms = new Set<number>();
+    // the blast opens the hull below the waterline too, but it floods like 2 breaches at most (it's a bang, not a reef)
+    let holes = 0;
+    for (const { c } of half) {
+      if (c.module !== undefined) rooms.add(c.module);
+      // the core holds at 1 hp: the Big Bang never wins the fight on its own
+      const core = c.module !== undefined && es.ship.modules[c.module]?.kind === 'core';
+      const raw = core ? c.hp - 1 : c.hp;
+      if (raw <= 0) continue;
+      const below = b.cellCenter(enemy, c.x, c.y).y > b.waterY - CELL * 0.3;
+      const dealt = cut(b, enemy, c, raw, o.events, path, at);
+      if (!dealt && b.budget && b.budget.left <= 0) break;
+      if (c.hp <= 0 && below && holes < 2) {
+        holes++;
+        es.breaches++;
+      }
+    }
+    collapse(b, enemy, o.events, path, at);
+    if (holes) o.events.push({ k: 'flood', side: enemy, flood: es.flood, breaches: es.breaches });
+    // the sound: everyone in that half is deaf and dizzy
+    const el = catEl(o.cat);
+    for (const c of es.cats) {
+      if (c.ko || b.isFlying(c) || !rooms.has(c.room)) continue;
+      b.hitCat(c, Math.round(o.atk * o.shot.power * 0.2 * CAT_K), o.events, path, at, el, true);
+      if (!c.ko) c.stunned = Math.max(c.stunned, stars >= 3 ? 3 : 2);
+    }
+    return [note];
+  },
 };
+
+/**
+ * AI: is THIS the moment for that cat's ultimate? (the same answer for the player's auto-aim, the enemy
+ * and the honest estimate's simulations). Once-per-battle ultimates that hit cats wait for cats to hit;
+ * the meter thief waits for meters worth stealing.
+ */
+export function ultWorth(b: Battle, c: CatState): boolean {
+  const enemy = 1 - c.side;
+  const es = b.sides[enemy];
+  const alive = es.cats.filter((k) => !k.ko && !b.isFlying(k));
+  switch (c.def.catId) {
+    case 'd_milvidas':
+    case 'h_zarpa':
+    case 's_noctis':
+      // slashes through cats: worth it with two targets, or one that's still healthy
+      return alive.length >= 2 || (alive.length === 1 && alive[0].hp > alive[0].maxHp * 0.3);
+    case 'h_nekomante':
+      // steal when there's something to steal (or the fight is dragging on)
+      return es.cats.reduce((a, k) => a + (k.ko ? 0 : k.ultCharge), 0) >= 0.5 || b.turn >= 5;
+    case 'd_horizonte':
+      return !b.wells.some((w) => w.kind === 'horizon' && w.owner === c.side);
+    case 'd_bigbang':
+    case 'd_solcaido':
+      // the big ones: never on a ship that's already sinking by itself
+      return es.ship.integrity() > 0.45;
+    default:
+      return true;
+  }
+}
+
+/**
+ * Divines that stay on the field act at the start of their OWNER's turn (before the wells age):
+ *   horizon  swallows the nearest cells (whole) and drains every enemy cat's meter
+ *   sun      burns the cells under it (damage + fire) and the cats in them
+ * Each tick has its own structure cap (WellTick.frac).
+ */
+export function ultTicks(b: Battle, side: number, ev: BattleEvent[]) {
+  for (const w of b.wells) {
+    if (w.owner !== side || !w.tick) continue;
+    const enemy = 1 - side;
+    const es = b.sides[enemy];
+    const prev = b.budget;
+    b.budget = { side: enemy, left: Math.round((es.ship.initialMax?.[0] ?? 0) * w.tick.frac) };
+    const near = es.ship
+      .cells()
+      .map((c) => ({ c, d: Math.hypot(b.cellCenter(enemy, c.x, c.y).x - w.x, b.cellCenter(enemy, c.x, c.y).y - w.y) }))
+      .sort((a, z) => a.d - z.d)
+      .slice(0, w.tick.cells);
+    if (w.kind === 'horizon') {
+      ev.push({ k: 'ultfx', fx: 'horizonTick', side: enemy, x: w.x, y: w.y, n: near.length, path: -1, at: 0 });
+      for (const { c } of near) if (!cut(b, enemy, c, c.hp, ev, -1, 0)) break;
+      const drain = w.tick.drain ?? 0;
+      if (drain > 0) for (const c of es.cats) if (!c.ko) c.ultCharge = Math.max(0, c.ultCharge - drain);
+    } else if (w.kind === 'sun') {
+      ev.push({ k: 'ultfx', fx: 'sunTick', side: enemy, x: w.x, y: w.y, n: near.length, path: -1, at: 0 });
+      const burnt: Cell[] = [];
+      const scorched = new Set<CatState>();
+      for (const { c } of near) {
+        cut(b, enemy, c, w.tick.atk * DMG_K, ev, -1, 0);
+        if (c.hp > 0 && FLAMMABLE.has(c.material) && !c.status.wet) {
+          c.status.burning = Math.max(c.status.burning ?? 0, 2);
+          burnt.push(c);
+        }
+        if (c.module !== undefined) {
+          const cat = es.cats.find((k) => k.room === c.module && !k.ko && !b.isFlying(k));
+          if (cat && !scorched.has(cat)) {
+            scorched.add(cat);
+            b.hitCat(cat, Math.round(w.tick.atk * 0.25 * CAT_K), ev, -1, 0, 'fire');
+          }
+        }
+      }
+      if (burnt.length) ev.push({ k: 'status', side: enemy, cells: burnt, status: 'burning' });
+    }
+    collapse(b, enemy, ev, -1, 0);
+    b.budget = prev;
+  }
+}

@@ -48,6 +48,8 @@ export const RARITY = {
   epic: { name: 'ÉPICO', color: 0xff2e88, glow: 0xff7ab8 },
   legendary: { name: 'LEGENDARIO', color: 0xb89558, glow: 0xffd77a },
   mythic: { name: 'MÍTICO', color: 0x8a5cff, glow: 0x00e5ff },
+  heroic: { name: 'HEROICO', color: 0xb3122e, glow: 0xffc94a },
+  divine: { name: 'DIVINO', color: 0x2f9a96, glow: 0xfff3e6 },
   primordial: { name: 'PRIMORDIAL', color: 0x171317, glow: 0xff2e88 },
 } as const;
 export type Rarity = keyof typeof RARITY;

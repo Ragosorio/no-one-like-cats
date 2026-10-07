@@ -34,7 +34,7 @@ import { darkSky } from '../ui/story/effects';
 import { applyAudioSettings, openSettings } from '../panels/Settings';
 import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
 import { goIsland, goTitle } from './flow';
-import { PODIO_INTRO } from '../podio/lines';
+import { PODIO_INTRO, HEROICO_INTRO, DIVINO_INTRO } from '../podio/lines';
 import { CASINO_INTRO } from '../panels/casino/intro';
 import { GRIETAS_EXPLAIN, MULTI_INTRO, MULTI_OUTRO } from '../ui/story/grietasScript';
 
@@ -139,7 +139,14 @@ const WHEN: { key: string; cond: () => boolean; ref: BeatRef }[] = [
   { key: 'z6_elite', cond: () => isCleared('6-4') && !isCleared('6-5'), ref: { beat: 'z6_elite', custom: ELITE_WARN[6], delay: 1.2 } },
   // why there's a casino on a cat island (casino agent): once, on the island, after the first boss
   { key: 'casino_intro', cond: () => G.s.campaign.bossesDefeated >= 1, ref: { beat: 'casino_intro', custom: CASINO_INTRO, onlyOn: 'island', delay: 2.5 } },
+  // the Podio's prizes: normally explained right after the champion's reveal (PodioScene); this covers saves
+  // that got them from the update patch
+  { key: 'heroico_intro', cond: () => G.s.cats.some((c) => catRarity(c.species) === 'heroic'), ref: { beat: 'heroico_intro', custom: HEROICO_INTRO, onlyOn: 'island', delay: 2 } },
+  { key: 'divino_intro', cond: () => G.s.cats.some((c) => catRarity(c.species) === 'divine'), ref: { beat: 'divino_intro', custom: DIVINO_INTRO, onlyOn: 'island', delay: 2 } },
 ];
+function catRarity(species: string) {
+  return CONTENT.cats.find((c) => c.id === species)?.rarity;
+}
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
 const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28']);
 

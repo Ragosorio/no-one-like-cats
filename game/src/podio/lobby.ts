@@ -21,7 +21,7 @@ import { effMult } from './engine';
 import { elColor } from './fx';
 import { podioCatMods } from './mods';
 import { RivalDef } from './ladder';
-import { catPodioPower, isReplay, peekCat, peekLevel, league, levelCap, nextCapLevel, ps, rivalAt, suggestCats, xpNeed } from '../state/sys/podio';
+import { catPodioPower, championPrize, isReplay, nextPrize, peekCat, peekLevel, league, levelCap, nextCapLevel, ps, rivalAt, suggestCats, xpNeed } from '../state/sys/podio';
 
 export interface LobbyOpts {
   onFight: (uid: string, lg: number, bout: number) => void;
@@ -115,6 +115,18 @@ export class Lobby extends Container {
     lg.anchor.set(1, 0);
     lg.position.set(W - 34, 58);
     this.body.addChild(rec, lg);
+    // the next Heroico / Divino a VACÍO champion pays (the chase, always in sight)
+    const np = nextPrize();
+    if (np) {
+      const d = catDef(np.species);
+      const rr = RARITY[d.rarity];
+      const t = txt(`PRÓXIMO PREMIO: ${d.name.toUpperCase()} (${rr.name}) · CAMPEÓN DE ${league(np.league).name}`, { fontFamily: F.bebas, fontSize: 18, fill: C.paper, letterSpacing: 1 });
+      const bg = new Graphics().rect(-12, -3, t.width + 24, t.height + 6).fill(rr.color).stroke({ width: 3, color: C.ink });
+      const tag = new Container();
+      tag.addChild(bg, t);
+      tag.position.set(W - 34 - t.width - 12, 6);
+      this.body.addChild(tag);
+    }
   }
 
   // ------------------------------------------------------------------ ladder
@@ -154,6 +166,16 @@ export class Lobby extends Container {
       lab.anchor.set(0.5, 0);
       lab.y = size / 2 + 6;
       node.addChild(lab);
+      // a VACÍO champion pays a Heroico / Divino the first time
+      const prize = champ ? championPrize(this.lg) : null;
+      if (prize && !p.champions.includes(this.lg)) {
+        const rr = RARITY[catDef(prize).rarity];
+        const pt = txt(`PREMIO: ${rr.name}`, { fontFamily: F.bebas, fontSize: 18, fill: C.paper, letterSpacing: 1 });
+        pt.anchor.set(0.5, 0);
+        pt.y = size / 2 + 34;
+        const pb = new Graphics().rect(-pt.width / 2 - 8, size / 2 + 32, pt.width + 16, pt.height + 4).fill(rr.color).stroke({ width: 2, color: C.ink });
+        node.addChild(pb, pt);
+      }
       node.x = i * gap;
       if (beaten || current) {
         node.eventMode = 'static';
@@ -304,7 +326,8 @@ export class Lobby extends Container {
     this.powerRows(c, powersOf(r.species), powerLevels(r.podioLvl), 226, pw);
     // what you get
     const R = PB.rewards;
-    const prize = r.champion && !ps().champions.includes(this.lg) && !replay ? `PREMIO: Doblones x2, Pescaditos x2, ${R.champion_gems} Ojos de Gato, ${R.orbs_champion} orbes y Ronroneo extra. Ascenso de liga.` : replay ? `PREMIO DE REVANCHA: menos oro, ${R.orbs_replay} orbe y XP de Podio.` : `PREMIO: Doblones, Pescaditos, ${R.orbs_win} orbes de tu gato, Ronroneo y XP de Podio.`;
+    const catPrize = r.champion && !ps().champions.includes(this.lg) && !replay ? championPrize(this.lg) : null;
+    const prize = r.champion && !ps().champions.includes(this.lg) && !replay ? `PREMIO: ${catPrize ? `¡${catDef(catPrize).name.toUpperCase()} (${RARITY[catDef(catPrize).rarity].name}) SE UNE A TU ISLA! Y ` : ''}Doblones x2, Pescaditos x2, ${R.champion_gems} Ojos de Gato, ${R.orbs_champion} orbes y Ronroneo extra. Ascenso de liga.` : replay ? `PREMIO DE REVANCHA: menos oro, ${R.orbs_replay} orbe y XP de Podio.` : `PREMIO: Doblones, Pescaditos, ${R.orbs_win} orbes de tu gato, Ronroneo y XP de Podio.`;
     const pt = txt(prize, { fontFamily: F.ui, fontWeight: '700', fontSize: 17, fill: C.inkBlue, wordWrap: true, wordWrapWidth: pw - 36 });
     pt.position.set(18, 560);
     c.addChild(pt);

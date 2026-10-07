@@ -30,9 +30,63 @@ export interface UltCtx {
   /** world → overlay coords */
   toOverlay: (x: number, y: number) => { x: number; y: number };
   marks: UltMarks;
+  /** redraw the field state (wells…) right now */
+  sync?: () => void;
+}
+/** a divine that stays on the field becomes visible at its impact */
+function reveal(ctx: UltCtx, kind: 'sun' | 'horizon') {
+  for (const w of ctx.sim.wells) if (w.kind === kind) w.hidden = false;
+  ctx.sync?.();
 }
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/** set pieces that play BEFORE the projectiles fly (BattleScene.PRE_FX adds these) */
+export const ULT_PRE_FX = ['cutlass', 'yokozuna', 'valkyrie', 'grimoire', 'horizon', 'sundown', 'senjin', 'bigbang'] as const;
+/** a falling sun / the Big Bang's black screen waiting (from the pre set piece) for the impact event */
+let pendingSun: Container | null = null;
+let pendingVoid: Container | null = null;
+
+/** HEROICO / DIVINO title card: a heavier banner with the rarity under it */
+function bigBanner(ctx: UltCtx, text: string, color: number, sub: string, rarity: 'HEROICO' | 'DIVINO') {
+  const c = new Container();
+  const divine = rarity === 'DIVINO';
+  const band = new Graphics().rect(-300, -96, 2520, 192).fill(divine ? 0xfff6ea : 0x5a0a14);
+  band.rect(-300, -96, 2520, 10).fill(divine ? 0xe8c46a : 0xffc94a).rect(-300, 86, 2520, 10).fill(divine ? 0xe8c46a : 0xffc94a);
+  band.rotation = -0.04;
+  const t = poster(text, 104, color, { stroke: { color: INK, width: 12 } });
+  t.anchor.set(0.5);
+  t.rotation = -0.04;
+  t.y = -14;
+  const s = txt(sub, { fontFamily: F.ui, fontWeight: '700', fontSize: 26, fill: divine ? INK : C.paper });
+  s.anchor.set(0.5);
+  s.y = 62;
+  s.rotation = -0.04;
+  if (s.width > 1500) s.scale.set(1500 / s.width);
+  // the rarity badge, pinned to the band's top edge
+  const tag = new Container();
+  const tt = poster(rarity, 30, divine ? INK : 0xffe08a);
+  tt.anchor.set(0.5);
+  const tb = new Graphics().rect(-tt.width / 2 - 16, -tt.height / 2 - 4, tt.width + 32, tt.height + 8).fill(divine ? 0xe8c46a : C.red).stroke({ width: 5, color: INK });
+  tag.addChild(tb, tt);
+  tag.position.set(-t.width / 2 - 40, -96);
+  tag.rotation = -0.08;
+  c.addChild(band, t, s, tag);
+  c.position.set(960, 300);
+  ctx.overlay.addChild(c);
+  gsap.from(band.scale, { x: 0, duration: 0.22, ease: 'power3.out' });
+  gsap.from(t.scale, { x: 2.6, y: 2.6, duration: 0.26, ease: 'back.out(2)' });
+  gsap.to(c, { alpha: 0, delay: 1.6, duration: 0.35, onComplete: () => c.destroy({ children: true }) });
+}
+
+/** overlay-space rectangle covering the whole screen */
+function veil(ctx: UltCtx, color: number, alpha: number, dur = 0.3) {
+  const g = new Graphics().rect(-400, -300, 2720, 1680).fill(color);
+  g.alpha = 0;
+  ctx.overlay.addChildAt(g, 0);
+  gsap.to(g, { alpha, duration: dur });
+  return g;
+}
 
 /** banner across the screen for the big ones */
 function banner(ctx: UltCtx, text: string, color: number, sub?: string) {
@@ -165,6 +219,204 @@ export async function preUlt(ctx: UltCtx, e: UltEv) {
       await wait(fast ? 150 : 550);
       break;
     }
+    // ================================================================ HEROICOS
+    case 'cutlass': {
+      // one flaming cutlass stroke across the whole enemy deck, through every cat
+      bigBanner(ctx, '百刃斬り ¡ABORDAJE!', 0xff6a1a, 'UN ESPADAZO A TODOS SUS GATOS · ARDIENDO', 'HEROICO');
+      const s = ctx.sim.sides[e.side];
+      const cats = s.cats.filter((c) => !c.ko);
+      const ys = cats.map((c) => ctx.catViews.get(c.def.uid)).filter((v): v is BattleCat => !!v && !v.destroyed).map((v) => ctx.wfx.toLocal(v.getGlobalPosition()).y - 60);
+      const y = ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length : e.y;
+      const x0 = e.x - 520;
+      const x1 = e.x + 520;
+      const g = new Graphics();
+      g.moveTo(x0, y + 40).quadraticCurveTo(e.x, y - 50, x1, y + 30).stroke({ width: 40, color: INK, cap: 'round' });
+      g.moveTo(x0, y + 40).quadraticCurveTo(e.x, y - 50, x1, y + 30).stroke({ width: 22, color: 0xff6a1a, cap: 'round' });
+      g.moveTo(x0, y + 40).quadraticCurveTo(e.x, y - 50, x1, y + 30).stroke({ width: 8, color: 0xfff2c0, cap: 'round' });
+      // the cut "draws itself" left to right (a mask that grows from the bow)
+      const m = new Graphics().rect(0, -200, 1, 400).fill(0xffffff);
+      m.position.set(x0 - 60, y);
+      g.mask = m;
+      ctx.wfx.addChild(g, m);
+      sfx('whoosh');
+      gsap.to(m.scale, { x: x1 - x0 + 140, duration: fast ? 0.05 : 0.22, ease: 'power4.in' });
+      for (let i = 0; i < 8; i++) window.setTimeout(() => ctx.fxp.burst(x0 + (i / 7) * (x1 - x0), y + Math.sin(i) * 20, { count: 10, tint: [0xff6a1a, 0xffd400, INK], speed: [80, 320], gravity: 300 }), 40 + i * 22);
+      await wait(fast ? 60 : 230);
+      for (const c of cats) {
+        const bc = ctx.catViews.get(c.def.uid);
+        if (!bc || bc.destroyed) continue;
+        const gp = ctx.wfx.toLocal(bc.getGlobalPosition());
+        onomatopoeia(ctx.wfx, gp.x, gp.y - 170, '¡ZAS!', { color: 0xffc94a, size: 66 });
+        bc.impactFrame?.(90, false);
+      }
+      sfx('hit', 1.1);
+      ctx.shaker.add(0.6);
+      gsap.to(g, { alpha: 0, delay: 0.35, duration: 0.3, onComplete: () => (g.destroy(), m.destroy()) });
+      await wait(fast ? 80 : 300);
+      break;
+    }
+    case 'yokozuna': {
+      bigBanner(ctx, '横綱 ¡DOSUKOI!', 0xe0b77a, 'SU BARCO QUEDA DE PIEDRA · LA QUILLA ENEMIGA VA A TEMBLAR', 'HEROICO');
+      for (let i = 0; i < 2; i++)
+        window.setTimeout(() => {
+          sfx('bigboom', 0.5);
+          ctx.shaker.add(0.7);
+          ctx.fxp.burst(e.x + (i ? 160 : -160), e.y + 200, { count: 26, tint: [0xc4bdab, 0x8a7a62, INK], speed: [150, 500], angle: [-Math.PI * 0.95, -Math.PI * 0.05], gravity: 600, stepped: true });
+          onomatopoeia(ctx.wfx, e.x + (i ? 160 : -160), e.y - 160, i ? '¡KOI!' : '¡DOSU!', { color: 0xe0b77a, size: 90 });
+        }, i * 320);
+      await wait(fast ? 200 : 700);
+      break;
+    }
+    case 'valkyrie': {
+      bigBanner(ctx, '戦乙女 ¡AL VALHALLA!', 0xffe14a, 'UNA LANZA DESDE EL CIELO: TODA LA COLUMNA, EMPAPADA Y ELECTROCUTADA', 'HEROICO');
+      const dark = veil(ctx, 0x0d1020, 0.5, 0.2);
+      // wings over the sky (two fans of feathers)
+      const o = ctx.toOverlay(e.x, 160);
+      const wings = new Container();
+      for (const dir of [-1, 1]) {
+        const w = new Graphics();
+        for (let i = 0; i < 6; i++) {
+          const a = -0.25 - i * 0.2;
+          const len = 300 - i * 24;
+          w.poly([0, 0, Math.cos(a) * len * dir, Math.sin(a) * len, Math.cos(a - 0.16) * (len - 40) * dir, Math.sin(a - 0.16) * (len - 40)]).fill(i % 2 ? 0xffffff : 0xdff6ff).stroke({ width: 4, color: INK });
+        }
+        wings.addChild(w);
+      }
+      wings.position.set(Math.max(420, Math.min(1500, o.x)), 470);
+      ctx.overlay.addChild(wings);
+      gsap.from(wings.scale, { x: 0.1, y: 0.1, duration: 0.3, ease: 'back.out(2)' });
+      gsap.to(wings, { alpha: 0, delay: 0.9, duration: 0.3, onComplete: () => wings.destroy({ children: true }) });
+      for (let i = 0; i < 3; i++) window.setTimeout(() => !settings.reduceFlashes && flash(ctx.overlay, 0xfff6a8, 0.45, 0.08), 120 + i * 140);
+      sfx('zap');
+      await wait(fast ? 200 : 650);
+      gsap.to(dark, { alpha: 0, duration: 0.6, delay: 0.5, onComplete: () => dark.destroy() });
+      break;
+    }
+    case 'grimoire': {
+      bigBanner(ctx, '禁書 PÁGINA 666', 0xd8a8ee, 'MALDICE SUS MEJORES MÓDULOS Y LES ROBA LA BARRA DE ULTI', 'HEROICO');
+      const book = new Container();
+      const cover = new Graphics().roundRect(-230, -150, 460, 300, 16).fill(0x5c3d5b).stroke({ width: 8, color: INK });
+      const pageL = new Graphics().roundRect(-215, -135, 210, 270, 6).fill(0xf3e9d8).stroke({ width: 4, color: INK });
+      const pageR = new Graphics().roundRect(5, -135, 210, 270, 6).fill(0xf3e9d8).stroke({ width: 4, color: INK });
+      for (let i = 0; i < 6; i++) {
+        pageL.rect(-195, -110 + i * 36, 160 - (i % 3) * 20, 6).fill({ color: 0x8f6b93, alpha: 0.8 });
+        pageR.rect(25, -110 + i * 36, 170 - (i % 2) * 30, 6).fill({ color: 0x8f6b93, alpha: 0.8 });
+      }
+      const rune = txt('猫', { fontFamily: F.poster, fontSize: 120, fill: 0xff7ab8 });
+      rune.anchor.set(0.5);
+      rune.position.set(110, 0);
+      book.addChild(cover, pageL, pageR, rune);
+      book.position.set(960, 560);
+      ctx.overlay.addChild(book);
+      gsap.from(book.scale, { x: 0, y: 0.4, duration: 0.3, ease: 'back.out(2)' });
+      for (let i = 0; i < 4; i++) {
+        const flip = new Graphics().roundRect(0, -135, 210, 270, 6).fill(0xfffaf0).stroke({ width: 3, color: INK });
+        flip.position.set(5, 0);
+        book.addChild(flip);
+        gsap.to(flip.scale, { x: -1, duration: 0.18, delay: 0.15 + i * 0.1, ease: 'power1.in', onComplete: () => flip.destroy() });
+      }
+      sfx('reveal');
+      gsap.to(book, { alpha: 0, delay: 1, duration: 0.3, onComplete: () => book.destroy({ children: true }) });
+      await wait(fast ? 200 : 700);
+      break;
+    }
+    // ================================================================ DIVINOS
+    case 'horizon': {
+      bigBanner(ctx, '零点 NADA ESCAPA', 0xff2e88, 'UN AGUJERO NEGRO ENCIMA DE SU BARCO · 3 TURNOS · SUS TIROS DESAPARECEN', 'DIVINO');
+      const dark = veil(ctx, 0x000000, 0.72, 0.35);
+      sfx('glitch');
+      // static: TV noise for a beat
+      const noise = new Graphics();
+      ctx.overlay.addChild(noise);
+      let n = 0;
+      const iv = window.setInterval(() => {
+        if (noise.destroyed || ++n > 14) {
+          window.clearInterval(iv);
+          if (!noise.destroyed) noise.destroy();
+          return;
+        }
+        noise.clear();
+        for (let i = 0; i < 40; i++) noise.rect(Math.random() * 1920, Math.random() * 1080, 4 + Math.random() * 60, 2 + Math.random() * 4).fill({ color: i % 3 ? 0xffffff : 0xff2e88, alpha: 0.5 });
+      }, 50);
+      await wait(fast ? 200 : 750);
+      gsap.to(dark, { alpha: 0.35, duration: 0.4, onComplete: () => gsap.to(dark, { alpha: 0, delay: 1.2, duration: 0.6, onComplete: () => dark.destroy() }) });
+      break;
+    }
+    case 'sundown': {
+      bigBanner(ctx, '落日 ¡SE CAE EL SOL!', 0xffd400, 'EL SOL ENTERO SOBRE SU BARCO · TODO ARDE · CEGADOS', 'DIVINO');
+      const glow = veil(ctx, 0xffb02e, 0.3, 0.6);
+      const o = ctx.toOverlay(e.x, e.y);
+      const sun = new Container();
+      const rays = new Graphics();
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        rays.poly([Math.cos(a - 0.08) * 150, Math.sin(a - 0.08) * 150, Math.cos(a) * 260, Math.sin(a) * 260, Math.cos(a + 0.08) * 150, Math.sin(a + 0.08) * 150]).fill(i % 2 ? 0xff6a1a : 0xffd400);
+      }
+      const disc = new Graphics().circle(0, 0, 170).fill(0xffd400).stroke({ width: 10, color: INK }).circle(0, 0, 120).fill(0xfff2c0);
+      sun.addChild(rays, disc);
+      sun.position.set(o.x, -320);
+      ctx.overlay.addChild(sun);
+      gsap.to(rays, { rotation: Math.PI, duration: 4, ease: 'none' });
+      gsap.to(sun, { y: 120, duration: fast ? 0.2 : 0.9, ease: 'power1.in' });
+      gsap.to(sun.scale, { x: 1.35, y: 1.35, duration: 0.9 });
+      sfx('charge', 0.5);
+      pendingSun = sun;
+      await wait(fast ? 200 : 900);
+      gsap.to(glow, { alpha: 0.55, duration: 0.3, onComplete: () => gsap.to(glow, { alpha: 0, delay: 0.8, duration: 0.6, onComplete: () => glow.destroy() }) });
+      break;
+    }
+    case 'senjin': {
+      bigBanner(ctx, '千刃 MIL CORTES', 0xc8102e, `${e.n ?? 7} CORTES DE SOMBRA A CADA UNO DE SUS GATOS`, 'DIVINO');
+      const dark = veil(ctx, 0x0d110f, 0.62, 0.15);
+      const s = ctx.sim.sides[e.side];
+      const cats = s.cats.filter((c) => !c.ko);
+      sfx('whoosh');
+      const cuts = Math.min(9, e.n ?? 7);
+      for (let k = 0; k < cuts; k++) {
+        for (const c of cats) {
+          const bc = ctx.catViews.get(c.def.uid);
+          if (!bc || bc.destroyed) continue;
+          const gp = ctx.wfx.toLocal(bc.getGlobalPosition());
+          const a = Math.random() * Math.PI;
+          const len = 230;
+          const g = new Graphics();
+          const dx = Math.cos(a) * len * 0.5;
+          const dy = Math.sin(a) * len * 0.5;
+          g.moveTo(-dx, -dy).lineTo(dx, dy).stroke({ width: 12, color: 0xc8102e, cap: 'round' }).moveTo(-dx, -dy).lineTo(dx, dy).stroke({ width: 4, color: 0xffffff, cap: 'round' });
+          g.position.set(gp.x + (Math.random() - 0.5) * 40, gp.y - 70 + (Math.random() - 0.5) * 40);
+          g.scale.set(0, 1);
+          ctx.wfx.addChild(g);
+          gsap.to(g.scale, { x: 1, duration: 0.06, ease: 'power4.out' });
+          gsap.to(g, { alpha: 0, delay: 0.18, duration: 0.2, onComplete: () => g.destroy() });
+          if (k === cuts - 1) {
+            onomatopoeia(ctx.wfx, gp.x, gp.y - 180, '斬', { color: 0xc8102e, size: 110 });
+            bc.impactFrame?.(90, false);
+          }
+        }
+        sfx('hit', 1.2 + k * 0.08);
+        ctx.shaker.add(0.12);
+        await wait(fast ? 20 : 70);
+      }
+      gsap.to(dark, { alpha: 0, duration: 0.5, delay: 0.3, onComplete: () => dark.destroy() });
+      break;
+    }
+    case 'bigbang': {
+      // total silence: the screen goes black, one white dot where it will start
+      const dark = veil(ctx, 0x000000, 0.93, 0.35);
+      const o = ctx.toOverlay(e.x, e.y);
+      const dot = new Graphics().circle(0, 0, 6).fill(0xffffff);
+      dot.position.set(o.x, o.y);
+      const t = txt('. . .', { fontFamily: F.poster, fontSize: 80, fill: C.paper });
+      t.anchor.set(0.5);
+      t.position.set(960, 300);
+      const wrap = new Container();
+      wrap.addChild(dark, dot, t);
+      ctx.overlay.addChildAt(wrap, 0);
+      gsap.to(dot.scale, { x: 2.5, y: 2.5, duration: 0.25, yoyo: true, repeat: 5, ease: 'sine.inOut' });
+      pendingVoid = wrap;
+      await wait(fast ? 250 : 1100);
+      break;
+    }
   }
 }
 
@@ -213,6 +465,105 @@ export function atUlt(ctx: UltCtx, e: UltEv) {
       }
       onomatopoeia(ctx.wfx, e.x, e.y - 200, '大団円', { color: 0xff7ab8, size: 120 });
       ctx.shaker.add(0.6);
+      break;
+    }
+    // ================================================================ HEROICOS
+    case 'quake': {
+      sfx('bigboom', 0.7);
+      ctx.shaker.add(1.1);
+      const w = 520;
+      for (let i = 0; i < 9; i++) ctx.fxp.burst(e.x - w + (i / 8) * w * 2, e.y + 20, { count: 12, tint: [0xc4bdab, 0x8a7a62, INK], speed: [200, 600], angle: [-Math.PI * 0.9, -Math.PI * 0.1], gravity: 700, stepped: true });
+      onomatopoeia(ctx.wfx, e.x, e.y - 260, '¡TERREMOTO!', { color: 0xe0b77a, size: 100 });
+      ctx.flt(e.x, e.y - 330, 'LA QUILLA ENTERA TIEMBLA', { color: C.paper, size: 30, font: F.poster, dur: 1.6 });
+      break;
+    }
+    case 'drain': {
+      sfx('gem');
+      for (let i = 0; i < 14; i++) {
+        const g = new Graphics().circle(0, 0, 10).fill(0xd8a8ee).stroke({ width: 3, color: INK });
+        g.position.set(e.x + (Math.random() - 0.5) * 400, e.y + Math.random() * 200);
+        ctx.wfx.addChild(g);
+        gsap.to(g, { x: 1920 - e.x + (Math.random() - 0.5) * 300, y: e.y - 60 - Math.random() * 120, duration: 0.7, delay: i * 0.03, ease: 'power2.in', onComplete: () => g.destroy() });
+      }
+      ctx.flt(e.x, e.y, `ROBA ${e.n ?? 40}% DE BARRA A CADA GATO${e.w ? ' · SE LA DA A TU TRIPULACIÓN' : ''}`, { color: 0xd8a8ee, size: 30, font: F.poster, dur: 2 });
+      break;
+    }
+    // ================================================================ DIVINOS
+    case 'horizonOpen': {
+      reveal(ctx, 'horizon');
+      sfx('bigboom', 0.4);
+      sfx('glitch');
+      if (!settings.reduceFlashes) flash(ctx.overlay, 0x2a0030, 0.75, 0.5);
+      onomatopoeia(ctx.wfx, e.x, e.y - 170, 'ZWOOOOOM', { color: 0xff2e88, size: 130 });
+      ctx.flt(e.x, e.y - 260, 'HORIZONTE DE EVENTOS: SE TRAGA SU BARCO 3 TURNOS', { color: C.paper, size: 30, font: F.poster, dur: 2.2 });
+      speedLines(ctx.wfx, e.x, e.y, 0xff2e88, 60, 0.8);
+      ctx.shaker.add(1);
+      break;
+    }
+    case 'horizonTick': {
+      sfx('boom', 0.6);
+      onomatopoeia(ctx.wfx, e.x, e.y - 130, '¡GLUP!', { color: 0x00e5ff, size: 90 });
+      ctx.flt(e.x, e.y - 210, 'EL AGUJERO SE TRAGA MÁS · −25% DE BARRA A SUS GATOS', { color: C.paper, size: 26, font: F.poster, dur: 1.8 });
+      ctx.shaker.add(0.4);
+      break;
+    }
+    case 'eaten': {
+      sfx('pop', 0.6);
+      ctx.flt(e.x, e.y - 40, '¡TRAGADO!', { color: 0xff7ab8, size: 34, font: F.poster });
+      ctx.fxp.burst(e.x, e.y, { count: 10, tint: [0xff2e88, 0x00e5ff, 0xffffff], speed: [40, 160], life: [0.2, 0.5] });
+      break;
+    }
+    case 'sunImpact': {
+      reveal(ctx, 'sun');
+      const sun = pendingSun;
+      pendingSun = null;
+      if (sun && !sun.destroyed) {
+        const o = ctx.toOverlay(e.x, e.y);
+        gsap.killTweensOf(sun);
+        gsap.to(sun, { y: o.y, duration: 0.12, ease: 'power2.in', onComplete: () => gsap.to(sun, { alpha: 0, duration: 0.35, onComplete: () => sun.destroy({ children: true }) }) });
+        gsap.to(sun.scale, { x: 2.6, y: 2.6, duration: 0.45 });
+      }
+      if (!settings.reduceFlashes) flash(ctx.overlay, 0xfff6d8, 0.95, 0.7);
+      sfx('bigboom', 0.8);
+      sfx('boom', 0.5);
+      onomatopoeia(ctx.wfx, e.x, e.y - 220, '¡FWOOOOOM!', { color: 0xffd400, size: 150 });
+      for (let i = 0; i < 10; i++) window.setTimeout(() => ctx.fxp.burst(e.x + (Math.random() - 0.5) * 700, e.y + (Math.random() - 0.5) * 200, { count: 18, tint: [0xff6a1a, 0xffd400, 0xfff2c0, INK], speed: [150, 650], gravity: 250 }), i * 50);
+      ctx.shaker.add(1.4);
+      break;
+    }
+    case 'sunTick': {
+      sfx('boom', 0.8);
+      ctx.fxp.burst(e.x, e.y + 40, { count: 30, tint: [0xff6a1a, 0xffd400], speed: [100, 420], gravity: 200 });
+      ctx.flt(e.x, e.y - 170, 'EL SOL SIGUE QUEMANDO', { color: 0xffd400, size: 30, font: F.poster, dur: 1.6 });
+      ctx.shaker.add(0.3);
+      break;
+    }
+    case 'bigbangBoom': {
+      const v = pendingVoid;
+      pendingVoid = null;
+      if (v && !v.destroyed) gsap.to(v, { alpha: 0, duration: 0.5, onComplete: () => v.destroy({ children: true }) });
+      if (!settings.reduceFlashes) flash(ctx.overlay, 0xffffff, 1, 0.8);
+      sfx('bigboom', 1);
+      window.setTimeout(() => sfx('bigboom', 0.6), 160);
+      const halfW = Math.max(160, e.w ?? 300);
+      // rings of the first explosion, the colors of a concert poster
+      [0xff2e88, 0xffd400, 0x2ec4e6, 0xffffff].forEach((col, i) => {
+        const r = new Graphics().circle(0, 0, 60).stroke({ width: 26 - i * 4, color: col });
+        r.position.set(e.x, e.y);
+        ctx.wfx.addChild(r);
+        gsap.fromTo(r.scale, { x: 0.2, y: 0.2 }, { x: (halfW / 60) * (1.4 + i * 0.35), y: (halfW / 60) * (1 + i * 0.3), duration: 0.7 + i * 0.12, delay: i * 0.06, ease: 'power3.out' });
+        gsap.to(r, { alpha: 0, delay: 0.45 + i * 0.1, duration: 0.5, onComplete: () => r.destroy() });
+      });
+      const core = new Graphics().circle(0, 0, halfW * 0.9).fill({ color: 0xffffff, alpha: 0.85 });
+      core.position.set(e.x, e.y);
+      ctx.wfx.addChild(core);
+      gsap.fromTo(core.scale, { x: 0.05, y: 0.05 }, { x: 1, y: 0.8, duration: 0.25, ease: 'power4.out' });
+      gsap.to(core, { alpha: 0, delay: 0.2, duration: 0.5, onComplete: () => core.destroy() });
+      for (let i = 0; i < 12; i++) ctx.fxp.burst(e.x + (Math.random() - 0.5) * halfW * 1.6, e.y + (Math.random() - 0.5) * 220, { count: 16, tint: [0xff2e88, 0xffd400, 0x2ec4e6, INK], speed: [250, 900], gravity: 500, stepped: true });
+      onomatopoeia(ctx.wfx, e.x, e.y - 260, '¡BIG BANG!', { color: 0xffd400, size: 170 });
+      ctx.flt(e.x, e.y - 360, 'LA MITAD DEL BARCO, DE GOLPE', { color: C.paper, size: 34, font: F.poster, dur: 2.2 });
+      speedLines(ctx.wfx, e.x, e.y, 0xffffff, 70, 0.8);
+      ctx.shaker.add(2);
       break;
     }
   }

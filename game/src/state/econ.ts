@@ -4,7 +4,7 @@
  */
 import B from '../data/balance.json';
 
-export type RarityId = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
+export type RarityId = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic' | 'heroic' | 'divine';
 export type FamilyId = 'hull' | 'weapon' | 'shield' | 'engine' | 'core';
 export type PurrAction = keyof typeof B.ronroneo.base_min;
 export type MomentumEvent = keyof typeof B.momentum.gain;

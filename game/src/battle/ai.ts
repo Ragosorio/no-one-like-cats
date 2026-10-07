@@ -3,6 +3,7 @@ import { moduleImmune, lateCellMul } from './bossLate';
 import { CELL, Cell } from './ship';
 import { Rng } from '../core/rng';
 import { ShotDef } from './types';
+import { ultWorth } from './ults';
 import { p2AimNoise, p2ShotValue } from './multiverso';
 
 export type Personality = 'clumsy' | 'sniper' | 'tuner' | 'calculator' | 'avenger' | 'looter' | 'demolisher' | 'elementalist';
@@ -80,7 +81,7 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   const options: { shooter: string; ult: boolean; shot: ShotDef; angle: number; power: number; score: number; tx: number; ty: number }[] = [];
   const shooters: { id: string; shot: ShotDef; ult: boolean }[] = [];
   for (const c of b.shooters(side)) {
-    const ult = b.canUlt(c) && r.chance(profile.ultChance);
+    const ult = b.canUlt(c) && ultWorth(b, c) && r.chance(profile.ultChance);
     shooters.push({ id: c.def.uid, shot: ult ? c.def.ultimate! : c.def.shot, ult });
   }
   if (!shooters.length) return null;
@@ -161,10 +162,12 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
     if (b.boss?.submerged && b.cfg.boss?.side === enemy && !(s.shot.element === 'electric' || s.shot.trajectory === 'torpedo')) shotMul *= lev && chills ? 0.7 : 0.1;
     // arcane ward: rayo pops a layer, physical hits it ×1.5
     if (wardUp) shotMul *= isRayo(s.shot) ? 2.2 : s.shot.element === 'earth' || s.shot.element === 'neutral' ? 1.3 : 1;
-    // a Luz ray flies dead straight: it's aimed almost flat (even a bit downward), not lobbed
-    const flat = s.shot.trajectory === 'ray';
+    // a Luz ray flies dead straight: it's aimed almost flat (even a bit downward), not lobbed; rayos and ráfagas
+    // (beam / gust) barely fall either: low (even negative) elevations, never lobs
+    const ray = s.shot.trajectory === 'ray';
+    const flat = s.shot.trajectory === 'beam' || s.shot.trajectory === 'gust';
     for (let ai = 0; ai < 22; ai++) {
-      const elev = (flat ? -8 + ai * 1 : 8 + ai * 3.4) * (Math.PI / 180);
+      const elev = (ray ? -8 + ai * 1 : flat ? -14 + ai * 2.2 : 8 + ai * 3.4) * (Math.PI / 180);
       const angle = dir > 0 ? -elev : Math.PI + elev;
       for (let pi = 0; pi < 9; pi++) {
         const power = 520 + pi * 95;

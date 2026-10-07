@@ -29,8 +29,10 @@ export interface FighterInit {
   powers: PowerDef[];
   trait: string;
   mutation: string | null;
-  /** extra damage multiplier (champion buff, …) */
+  /** extra damage multiplier (champion buff, Salón de la Fama…) */
   dmgMul?: number;
+  /** ULTI meter at the start (Los Rotos del Cielo) */
+  meterStart?: number;
 }
 
 export interface Fighter extends FighterInit {
@@ -349,6 +351,7 @@ export class Duel {
       foe.hp = Math.min(foe.hp, foe.hpMax);
       ev.push({ t: 'note', side: foe.side, text: 'VIDA MÁX −8%', color: 0xff2e88 });
     }
+    if (p.ult) this.signature(me, foe, p, lv, ev);
     // status on hit (once per power)
     if (foe.hp > 0) {
       let st = p.status;
@@ -361,7 +364,7 @@ export class Duel {
           let turns = st.turns;
           if (st.id === 'burn' && me.trait === 'piromano') turns++;
           if (st.id === 'curse' && me.mutation === 'runico') turns++;
-          const dotDmg = st.id === 'burn' ? me.atk * 0.35 * lv : st.id === 'root' ? me.atk * 0.28 * lv : 0;
+          const dotDmg = (st.id === 'burn' ? me.atk * 0.35 * lv : st.id === 'root' ? me.atk * 0.28 * lv : 0) * (p.dotMul ?? 1);
           // stun (and freeze) can't chain: a cat that just lost a turn to it resists the next one
           if (st.id === 'freeze') turns = 1;
           if ((st.id === 'stun' || st.id === 'freeze') && (foe.stunImmune || this.hasStatus(foe, 'stun') || this.hasStatus(foe, 'freeze'))) {
@@ -374,6 +377,31 @@ export class Duel {
           }
         }
       }
+    }
+  }
+
+  /** the extras of a Heroico / Divino ULTI (powers.ts SIGNATURE): halve, drain, self shield / heal */
+  private signature(me: Fighter, foe: Fighter, p: PowerDef, lv: number, ev: DuelEv[]) {
+    if (p.halve && foe.hp > 0) {
+      // the rival loses half of what it has left: brutal, but never a K.O. on its own
+      const dealt = this.applyDamage(foe, foe.hp * 0.5, ev, true);
+      me.dmgDealt += dealt;
+      ev.push({ t: 'note', side: foe.side, text: '¡LA MITAD!', color: 0xffd400 });
+      ev.push({ t: 'hit', side: foe.side, from: me.side, dmg: dealt, crit: false, eff: 'normal', absorbed: 0, hit: 1, of: 2, kind: p.kind, element: p.element });
+    }
+    if (p.drain && foe.hp > 0 && foe.meter > 0) {
+      foe.meter = Math.max(0, foe.meter - 100 * p.drain);
+      ev.push({ t: 'note', side: foe.side, text: p.drain >= 1 ? '¡SIN BARRA!' : `−${Math.round(p.drain * 100)}% BARRA`, color: 0xff7ab8 });
+      ev.push({ t: 'meter', side: foe.side, v: foe.meter });
+    }
+    if (p.selfShield) {
+      me.shield = Math.max(me.shield, me.hpMax * p.selfShield * lv);
+      ev.push({ t: 'shield', side: me.side, amount: me.shield });
+    }
+    if (p.selfHeal && me.hp < me.hpMax) {
+      const amount = Math.min(me.hpMax - me.hp, me.hpMax * p.selfHeal * lv);
+      me.hp += amount;
+      ev.push({ t: 'heal', side: me.side, amount });
     }
   }
 
@@ -411,7 +439,7 @@ function mk(i: FighterInit): Fighter {
     ...i,
     hpMax: i.hp,
     atk: i.power,
-    meter: i.trait === 'dormilon' ? 50 : 0,
+    meter: Math.min(100, Math.max(i.trait === 'dormilon' ? 50 : 0, i.meterStart ?? 0)),
     levels,
     cds: [0, 0, 0, 0],
     shield: 0,

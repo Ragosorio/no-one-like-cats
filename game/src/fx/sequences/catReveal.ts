@@ -26,6 +26,8 @@ export interface RevealOpts {
   rarity: Rarity;
   caption?: string;
   serial?: number;
+  /** replaces "RESONANCIA Nº …" at the top (cats that didn't come from a Resonancia: Podio prizes…) */
+  kicker?: string;
   duplicateOrbs?: number;
   /** legacy flat sprite tint */
   tint?: number;
@@ -61,7 +63,7 @@ export interface RevealOpts {
 
 export type RevealResult = 'continue' | 'catdex' | 'repeat';
 
-const RANK: Record<Rarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3, primordial: 4, mythic: 5 };
+const RANK: Record<Rarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3, primordial: 4, mythic: 5, heroic: 5, divine: 6 };
 
 function fxOf(el: string) {
   return el === 'storm' ? ELEMENT_FX.electric : elementFx(el);
@@ -83,7 +85,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     const rar = RARITY[o.rarity];
     const rank = RANK[o.rarity];
     const high = rank >= 3;
-    const t4 = o.rarity === 'mythic' || o.rarity === 'primordial' || !!o.secret;
+    const t4 = o.rarity === 'mythic' || o.rarity === 'primordial' || o.rarity === 'heroic' || o.rarity === 'divine' || !!o.secret;
     const dup = o.duplicateOrbs !== undefined;
     const reduce = settings.reduceMotion;
     const mutId = o.mutationId ?? null;
@@ -94,7 +96,9 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     /** the mutation beat adds time after the chips */
     const mutExtra = hasMut ? (dup ? 0.9 : 1.1) : 0;
     /** legendary / mythic / primordial reprint the stage dark */
-    const darkStage = o.rarity === 'legendary' || o.rarity === 'mythic' || o.rarity === 'primordial';
+    const darkStage = o.rarity === 'legendary' || o.rarity === 'mythic' || o.rarity === 'primordial' || o.rarity === 'heroic';
+    /** heroic / divine: the reveal waits an extra beat (the laurels close / the sky goes white) */
+    const bigBeat = (o.rarity === 'heroic' || o.rarity === 'divine') && !dup ? 0.35 : 0;
 
     // --- Swiss poster stage
     const stage = new Container();
@@ -111,7 +115,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     blockA.position.set(-360, 0);
     const blockB = new Graphics().rect(0, 0, 300, H).fill(fxCol.main);
     blockB.position.set(W, 0);
-    const serial = txt(`RESONANCIA Nº ${String(o.serial ?? 1).padStart(3, '0')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 22, fill: C.ink });
+    const serial = txt(o.kicker ?? `RESONANCIA Nº ${String(o.serial ?? 1).padStart(3, '0')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 22, fill: C.ink });
     serial.position.set(390, 40);
     const coords = txt('47.4979° N · NO ONE LIKE CATS', { fontFamily: F.ui, fontSize: 18, fill: C.pinkHot });
     coords.position.set(390, 70);
@@ -343,11 +347,11 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     });
 
     // rarity reprint (2600–3300)
-    const tR = (dup ? 0.8 : 2.6) + (o.rarity === 'mythic' && !dup ? 0.25 : 0);
+    const tR = (dup ? 0.8 : 2.6) + (o.rarity === 'mythic' && !dup ? 0.25 : 0) + bigBeat;
     // (mythic: the extra 250 ms before tR are left in total silence)
     const FW = 600;
     const FH = 660;
-    const frameColor = o.rarity === 'common' ? C.ink : o.rarity === 'rare' ? C.megaBlue : o.rarity === 'epic' ? C.pinkHot : o.rarity === 'legendary' ? 0xd9b25e : o.rarity === 'primordial' ? fxCol.main : C.cyan;
+    const frameColor = o.rarity === 'common' ? C.ink : o.rarity === 'rare' ? C.megaBlue : o.rarity === 'epic' ? C.pinkHot : o.rarity === 'legendary' ? 0xd9b25e : o.rarity === 'primordial' ? fxCol.main : o.rarity === 'heroic' ? 0xffc94a : o.rarity === 'divine' ? 0xe8c46a : C.cyan;
     const drawFrame = (k: number) => {
       if (frameG.destroyed) return;
       const per = 2 * (FW + FH);
@@ -383,6 +387,12 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       if (o.rarity === 'mythic') {
         draw(-6, 0, C.pinkHot, 14, 0.9);
         draw(6, 0, C.yellow, 14, 0.9);
+      }
+      if (o.rarity === 'heroic') draw(0, 0, C.red, 26, 1);
+      if (o.rarity === 'divine') {
+        draw(0, 0, 0xffffff, 30, 0.9);
+        draw(-5, 4, 0xf2cfe0, 18, 0.8);
+        draw(5, -4, 0xcdeee6, 18, 0.8);
       }
       draw(0, 0, frameColor, o.rarity === 'common' ? 6 : 14);
     };
@@ -446,6 +456,14 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
             if (!reduce) shaker.add(0.5);
             break;
           }
+          case 'heroic': {
+            heroicBeat();
+            break;
+          }
+          case 'divine': {
+            divineBeat();
+            break;
+          }
           case 'primordial': {
             bg.tint = 0x0b0b0d;
             const n = new TilingSprite({ texture: noiseTile(), width: W, height: H });
@@ -480,7 +498,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     );
 
     // fill color (3300–4200): halftone-ish dissolve + name letter by letter
-    const tN = (dup ? 1.0 : 3.3) + extra;
+    const tN = (dup ? 1.0 : 3.3) + extra + bigBeat;
     if (!dup) tl.to(sil, { mix: 0, duration: 0.35, ease: 'power2.out' }, tN);
     tl.call(
       () => {
@@ -545,7 +563,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     );
 
     // chips + mutation + card flies to its catdex slot (4200–4600)
-    const tC = (dup ? 1.15 : 4.2) + extra;
+    const tC = (dup ? 1.15 : 4.2) + extra + bigBeat;
     if (!dup)
       tl.call(
         () => {
@@ -571,7 +589,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     if (hasMut) tl.call(() => mutationBeat(), [], tC + (dup ? 0.15 : 0.45));
     if (o.holo) tl.call(() => holoBeat(), [], tN + 0.35);
 
-    const tDone = (dup ? 1.4 : 4.6) + extra + mutExtra;
+    const tDone = (dup ? 1.4 : 4.6) + extra + mutExtra + bigBeat;
     const hint = txt('CLIC PARA CONTINUAR', { fontFamily: F.poster, fontSize: 28, fill: darkStage ? C.paper : C.ink });
     hint.anchor.set(0.5);
     hint.position.set(W / 2, H - 38);
@@ -682,6 +700,138 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       nameLayer.addChild(mc);
       gsap.fromTo(mc.scale, { x: 2.4, y: 2.4 }, { x: 1, y: 1, duration: 0.16, ease: 'back.out(3)' });
       sparkles(nameLayer, W / 2, CY, col, 16, 260);
+    }
+
+    /** HEROICO: crimson banner stage, two sword slashes cross, a gold laurel wreath closes around the card */
+    function heroicBeat() {
+      if (root.destroyed) return;
+      print.texture = printTile('heroic');
+      gsap.to(print, { alpha: 0.5, duration: 0.25 });
+      bg.tint = 0x5a0a14;
+      dots.alpha = 0.1;
+      circle.tint = 0xffc94a;
+      // crossed slashes ("¡CLANG!")
+      if (!reduce) {
+        for (const dir of [1, -1]) {
+          const sl = new Graphics();
+          sl.moveTo(-520 * dir, -380).lineTo(520 * dir, 380).stroke({ width: 34, color: C.ink, cap: 'round' });
+          sl.moveTo(-520 * dir, -380).lineTo(520 * dir, 380).stroke({ width: 12, color: 0xfff4c8, cap: 'round' });
+          sl.position.set(W / 2, CY);
+          sl.scale.set(0, 1);
+          root.addChildAt(sl, root.children.indexOf(glow));
+          gsap.to(sl.scale, { x: 1, duration: 0.1, delay: dir > 0 ? 0 : 0.12, ease: 'power4.out' });
+          gsap.to(sl, { alpha: 0, delay: 0.7, duration: 0.4, onComplete: () => sl.destroy() });
+        }
+        shaker.add(0.6);
+      }
+      window.setTimeout(() => !root.destroyed && sfx('hit', 0.7), 120);
+      onomatopoeia(nameLayer, W / 2 - 360, CY - 260, '¡CLANG!', { size: 110, color: 0xffc94a, dur: 1.2 });
+      // gold laurel wreath growing up both sides of the card, leaf by leaf
+      const wreath = new Graphics();
+      root.addChildAt(wreath, root.children.indexOf(frameG) + 1);
+      const R = 360;
+      const leaves = { n: 0 };
+      gsap.to(leaves, {
+        n: 14,
+        duration: reduce ? 0.1 : 0.7,
+        ease: 'power2.out',
+        onUpdate: () => {
+          if (wreath.destroyed) return;
+          wreath.clear();
+          for (const dir of [1, -1]) {
+            for (let i = 0; i < Math.floor(leaves.n); i++) {
+              const a = Math.PI / 2 + dir * (0.22 + (i / 13) * 1.9);
+              const x = W / 2 + Math.cos(a) * R;
+              const y = CY + 40 + Math.sin(a) * R;
+              const tg = a + (dir > 0 ? Math.PI / 2 : -Math.PI / 2);
+              for (const off of [0.75, -0.75]) {
+                // a leaf: pointed oval along angle (tg + off)
+                const la = tg + off;
+                const pts: number[] = [];
+                for (let k = 0; k <= 12; k++) {
+                  const u = (k / 12) * Math.PI * 2;
+                  const lx = Math.sin(u) * 10;
+                  const ly = -28 - Math.cos(u) * 26 * (0.85 + 0.15 * Math.abs(Math.cos(u)));
+                  pts.push(x + lx * Math.cos(la) - ly * Math.sin(la), y + lx * Math.sin(la) + ly * Math.cos(la));
+                }
+                wreath.poly(pts).fill(0xffc94a).stroke({ width: 3, color: C.ink });
+              }
+            }
+          }
+          wreath.circle(W / 2, CY + 40 + R, 22).fill(C.red).stroke({ width: 5, color: C.ink });
+        },
+      });
+      // champion ribbon over the bottom of the frame
+      const rib = new Container();
+      const rt = poster('CAMPEÓN DEL PODIO', 44, 0xffe08a, { stroke: { color: C.ink, width: 7 } });
+      rt.anchor.set(0.5);
+      const rb = new Graphics().rect(-rt.width / 2 - 34, -30, rt.width + 68, 60).fill(C.red).stroke({ width: 5, color: C.ink });
+      rb.poly([-rt.width / 2 - 34, -30, -rt.width / 2 - 74, 0, -rt.width / 2 - 34, 30]).fill(0x8a0c22).stroke({ width: 5, color: C.ink });
+      rb.poly([rt.width / 2 + 34, -30, rt.width / 2 + 74, 0, rt.width / 2 + 34, 30]).fill(0x8a0c22).stroke({ width: 5, color: C.ink });
+      rib.addChild(rb, rt);
+      rib.position.set(W / 2, CY + 300);
+      rib.rotation = -0.03;
+      root.addChildAt(rib, root.children.indexOf(frameG) + 1);
+      gsap.fromTo(rib.scale, { x: 0, y: 1.4 }, { x: 1, y: 1, duration: 0.3, delay: 0.25, ease: 'back.out(2)' });
+      foilSweep(root, 0xffd27a);
+      for (let i = 0; i < 26; i++) {
+        const cf = new Graphics().rect(-6, -10, 12, 20).fill(i % 3 ? 0xffc94a : C.red).stroke({ width: 2, color: C.ink });
+        cf.position.set(W / 2 + (Math.random() - 0.5) * 900, -40 - Math.random() * 200);
+        root.addChild(cf);
+        gsap.to(cf, { y: H + 60, x: cf.x + (Math.random() - 0.5) * 300, rotation: Math.random() * 12, duration: 1.6 + Math.random() * 1.2, delay: Math.random() * 0.4, ease: 'power1.in', onComplete: () => cf.destroy() });
+      }
+      sfx('fanfare');
+    }
+
+    /** DIVINO: the paper burns white, a halo opens over the cat, pearl light and slow motion */
+    function divineBeat() {
+      if (root.destroyed) return;
+      print.texture = printTile('divine');
+      gsap.to(print, { alpha: 0.45, duration: 0.6 });
+      bg.tint = 0xfff6ea;
+      circle.tint = 0xffffff;
+      blockA.tint = 0xe8c46a;
+      if (!settings.reduceFlashes) {
+        const white = new Graphics().rect(0, 0, W, H).fill(0xffffff);
+        root.addChild(white);
+        gsap.to(white, { alpha: 0, duration: 1.1, ease: 'power2.out', onComplete: () => white.destroy() });
+      }
+      if (!reduce) time.slowmo(0.4, 500);
+      // god rays, pastel
+      rays.clear();
+      for (let i = 0; i < 32; i++) {
+        const a = (i / 32) * Math.PI * 2;
+        rays.poly([0, 0, Math.cos(a - 0.04) * 1500, Math.sin(a - 0.04) * 1500, Math.cos(a + 0.04) * 1500, Math.sin(a + 0.04) * 1500]).fill({ color: i % 3 === 0 ? 0xf2cfe0 : i % 3 === 1 ? 0xcdeee6 : 0xffe9b0, alpha: 0.45 });
+      }
+      gsap.to(rays, { alpha: 1, duration: 0.6 });
+      gsap.to(rays, { rotation: -0.5, duration: 8, ease: 'none' });
+      // the halo
+      const halo = new Graphics();
+      halo.ellipse(0, 0, 170, 42).stroke({ width: 22, color: 0xffe08a, alpha: 0.35 });
+      halo.ellipse(0, 0, 170, 42).stroke({ width: 10, color: 0xffe9b0 });
+      halo.ellipse(0, 0, 170, 42).stroke({ width: 3, color: 0xffffff });
+      halo.position.set(W / 2, CY - 300);
+      root.addChildAt(halo, root.children.indexOf(catNode) + 1);
+      gsap.fromTo(halo.scale, { x: 0, y: 0 }, { x: 1, y: 1, duration: 0.8, ease: 'elastic.out(1,0.5)' });
+      gsap.to(halo, { y: CY - 316, duration: 1.4, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+      // pearl motes rising
+      for (let i = 0; i < 40; i++) {
+        const m = new Graphics().circle(0, 0, 3 + Math.random() * 6).fill([0xffffff, 0xf2cfe0, 0xcdeee6, 0xffe9b0][i % 4]);
+        m.position.set(W / 2 + (Math.random() - 0.5) * 1100, H + 20);
+        m.blendMode = 'add';
+        root.addChild(m);
+        gsap.to(m, { y: -40, x: m.x + (Math.random() - 0.5) * 200, alpha: 0, duration: 2.4 + Math.random() * 1.8, delay: Math.random() * 1.2, ease: 'sine.out', onComplete: () => m.destroy() });
+      }
+      // iridescent hue drift on the pastel layer
+      const cm = new ColorMatrixFilter();
+      print.filters = [cm];
+      const hue = { h: 0 };
+      gsap.to(hue, { h: 360, duration: 6, ease: 'none', onUpdate: () => !print.destroyed && cm.hue(hue.h, false) });
+      foilSweep(root, 0xfff3e6);
+      window.setTimeout(() => !root.destroyed && foilSweep(root, 0xcdeee6), 380);
+      onomatopoeia(nameLayer, W / 2 + 380, CY - 300, '¡AAAAH!', { size: 96, color: 0xe8c46a, dur: 1.6 });
+      sfx('fanfare', 0.75);
+      window.setTimeout(() => !root.destroyed && sfx('levelup', 0.6), 300);
     }
 
     function holoBeat() {
