@@ -1,21 +1,24 @@
 /**
- * Casino "El Gato Negro" (casino agent): Fichas, Boletos, honest slot machine + roulette, prize granting.
+ * Casino "El Gato Negro" (casino agent): Fichas, Boletos, slot machine + roulette, prize granting,
+ * stake memory, auto-play preferences and the "candy" rules (la casa siempre gana, pero te da dulces).
  *
- * Ethics (GDD 2.13 + 05 §7, user feedback):
- *  - only in-game currency; gems are earned playing; nothing is sold for real money.
- *  - every probability / payout is visible BEFORE betting; RTP is computed exactly from the reel strips.
- *  - reels are independent and uniform over their strips (no weighted "virtual reels", no fabricated near-misses);
- *    the symbols shown above/below the line are the real strip neighbours.
- *  - gold bets: EV < 1 (slot ≈ 95%, roulette 96%), stake capped by income (balance.gambit) so a single
- *    payout never exceeds `max_payout_seconds_of_income`.
- *  - special prizes (tickets, accessories, cats) only come from FICHAS, which are earned by playing (bounded).
- *  - no auto-spin; net balance history always visible; can be hidden (isCasinoHidden / setCasinoHidden).
+ * Rules (player feedback 2026-10 · "adictivo pero justo"):
+ *  - only in-game currency; gems are earned playing; nothing is sold for real money. Ever.
+ *  - every probability / payout is visible BEFORE betting; RTP is computed exactly from the reel strips,
+ *    per risk tier (BAJA / MEDIA / ALTA). Reels are independent and uniform over their public strips.
+ *  - RISK TIERS: a bigger stake changes the paytable — fewer lines pay (more spins with nothing) but what pays,
+ *    pays more (gold RTP 95.3% → 96.2% → 97.3%; chip prizes jump to tickets, gems and legendary cats).
+ *  - LA CASA TE DEBE: every losing bet fills a visible meter; when full the house pays a boleto + fichas.
+ *    You can never go a long streak without getting *something*.
+ *  - gold bets: EV < 1 always (the house wins), stake capped by income (balance.gambit).
+ *  - auto-play exists (with stop conditions); the casino can't be hidden (it's part of the story now).
  */
 import { G } from '../game';
 import { BAL, RarityId } from '../econ';
 import { CATS, CatDef, catDef } from '../../data/content';
 import { adopt } from './cats';
 import { ACC_BY_ID, AccRarity, addAccessory, rollAccessory } from './accessories';
+import { registerPatch } from '../patches';
 
 export type Cur = 'gold' | 'gems' | 'chips';
 export type GameId = 'slot' | 'roulette' | 'gacha' | 'caja';
@@ -41,6 +44,34 @@ export interface CasinoState {
   welcomed?: boolean;
   /** +n consecutive wins / -n consecutive losses */
   streak?: number;
+  /** LA CASA TE DEBE: losing bets since the last real win / candy payout */
+  owed?: number;
+  /** stake memory + auto-play settings (persist across sessions) */
+  prefs?: CasinoPrefs;
+}
+
+/** speed of the auto-play: x1 · x2 · x4 · TURBO (99 = skip straight to results) */
+export type AutoSpeed = 1 | 2 | 4 | 99;
+export interface AutoPrefs {
+  speed: AutoSpeed;
+  /** rounds per run (0 = until a stop condition) */
+  rounds: number;
+  /** stop on a big win (slot ×5+ / jackpot / pleno · gacha épico+ cat) */
+  stopBig: boolean;
+  /** stop on LEGENDARIO or better (gacha / cat prizes) */
+  stopLegend: boolean;
+  /** stop on a cat you didn't have */
+  stopNew: boolean;
+  /** stop if the balance drops below this % of what you had when you pressed AUTO (0 = never) */
+  floorPct: number;
+}
+export const AUTO_DEFAULT: AutoPrefs = { speed: 2, rounds: 25, stopBig: true, stopLegend: true, stopNew: false, floorPct: 50 };
+export interface CasinoPrefs {
+  tab?: string;
+  slot?: { cur?: Cur; tier?: Partial<Record<Cur, number>> };
+  roulette?: { cur?: Cur; bet?: RouletteBet; stake?: Partial<Record<Cur, number>> };
+  gacha?: { banner?: string; pay?: 'tickets' | 'gems'; mode?: string; n?: 1 | 10 };
+  auto?: AutoPrefs;
 }
 
 export function cs(): CasinoState {
@@ -53,7 +84,17 @@ export function cs(): CasinoState {
   c.hist ??= [];
   c.gemBets ??= 0;
   c.streak ??= 0;
+  c.owed ??= 0;
+  c.prefs ??= {};
   return c;
+}
+export function prefs(): CasinoPrefs {
+  return cs().prefs!;
+}
+export function autoPrefs(): AutoPrefs {
+  const p = prefs();
+  p.auto = { ...AUTO_DEFAULT, ...(p.auto ?? {}) };
+  return p.auto;
 }
 function stat(k: string, n = 1) {
   const s = cs().stats;
@@ -87,15 +128,23 @@ export function weighted<T>(items: readonly T[], w: (t: T) => number): T {
 }
 
 // ------------------------------------------------------------------ Fichas (chips) & Boletos (tickets)
-/** Not simulated (GDD §9 #24): chip income is tied to playing, never to the calendar. */
+/**
+ * Not simulated (GDD §9 #24): chip/ticket income is tied to playing, never to the calendar.
+ * 2026-10 rebalance: the old economy gave ~3 pulls per hour (14 pulls in 4.7 h → a legendary was impossible).
+ * Now an engaged player earns ~20 pulls per hour (boletos per victory / Reino level / boss + cheaper La Caja).
+ */
 export const CHIPS = {
-  welcome: 100,
-  welcomeTickets: 2,
-  perVictory: 5,
+  welcome: 150,
+  welcomeTickets: 10,
+  perVictory: 6,
   perPerfect: 3,
-  perKl: 20,
-  perBoss: 50,
-  cap: 999,
+  perKl: 25,
+  perBoss: 80,
+  cap: 1500,
+  /** 1 boleto every N victories */
+  victoriesPerTicket: 4,
+  ticketsPerKl: 1,
+  ticketsPerBoss: 5,
 } as const;
 
 export function chips() {
@@ -140,7 +189,12 @@ export function syncChips(): { gained: number; tickets: number; parts: string[] 
   }
   if (d.vic) {
     gained += d.vic * CHIPS.perVictory;
-    parts.push(`${d.vic} victorias: +${d.vic * CHIPS.perVictory}`);
+    // boletos: 1 every N victories (the remainder carries over in stats)
+    const carry = (c.stats.vic_carry ?? 0) + d.vic;
+    const t = Math.floor(carry / CHIPS.victoriesPerTicket);
+    c.stats.vic_carry = carry - t * CHIPS.victoriesPerTicket;
+    tk += t;
+    parts.push(`${d.vic} victorias: +${d.vic * CHIPS.perVictory}${t ? ` y ${t} ${t === 1 ? 'boleto' : 'boletos'}` : ''}`);
   }
   if (d.perf) {
     gained += d.perf * CHIPS.perPerfect;
@@ -148,11 +202,13 @@ export function syncChips(): { gained: number; tickets: number; parts: string[] 
   }
   if (d.kl) {
     gained += d.kl * CHIPS.perKl;
-    parts.push(`${d.kl} niveles de Reino: +${d.kl * CHIPS.perKl}`);
+    tk += d.kl * CHIPS.ticketsPerKl;
+    parts.push(`${d.kl} niveles de Reino: +${d.kl * CHIPS.perKl} y ${d.kl * CHIPS.ticketsPerKl} ${d.kl * CHIPS.ticketsPerKl === 1 ? 'boleto' : 'boletos'}`);
   }
   if (d.boss) {
     gained += d.boss * CHIPS.perBoss;
-    parts.push(`${d.boss} jefes: +${d.boss * CHIPS.perBoss}`);
+    tk += d.boss * CHIPS.ticketsPerBoss;
+    parts.push(`${d.boss} jefes: +${d.boss * CHIPS.perBoss} y ${d.boss * CHIPS.ticketsPerBoss} boletos`);
   }
   if (gained) addChips(gained, 'sync');
   if (tk) addTickets(tk, 'welcome');
@@ -167,26 +223,37 @@ export function ensureGambitOpen() {
   if (!G.has('gambit_open')) G.flag('gambit_open');
 }
 
-// ------------------------------------------------------------------ hide toggle (device-wide, like Ajustes)
-const HIDE_KEY = 'nolc-casino-hidden';
-export function isCasinoHidden(): boolean {
-  try {
-    return localStorage.getItem(HIDE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-export function setCasinoHidden(v: boolean) {
-  // GDD 2.13: hiding the table auto-completes its missions (E11 counts 'gambit')
-  if (v && !(G.s.counters.gambit > 0)) G.count('gambit');
-  try {
-    if (v) localStorage.setItem(HIDE_KEY, '1');
-    else localStorage.removeItem(HIDE_KEY);
-  } catch {
-    /* storage unavailable */
-  }
-  G.emit('changed', undefined);
-}
+// ------------------------------------------------------------------ the casino can't be hidden any more (2026-10)
+/** old device-wide hide flag (Ajustes › OCULTAR CASINO, removed): only read by the patch below to clean it up */
+const OLD_HIDE_KEY = 'nolc-casino-hidden';
+
+registerPatch({
+  id: '2026-10-casino-siempre-visible',
+  why: 'El casino ya no se puede ocultar (es parte de la historia y la vía rápida para alcanzar). Quien lo ocultó lo vuelve a ver.',
+  run() {
+    let hidden = false;
+    try {
+      hidden = localStorage.getItem(OLD_HIDE_KEY) === '1';
+      localStorage.removeItem(OLD_HIDE_KEY);
+    } catch {
+      /* storage unavailable */
+    }
+    if (hidden) return 'El casino El Gato Negro volvió al menú de tu isla. Ya no se puede ocultar: ahí viven los gatos que se pierden entre mundos.';
+  },
+});
+
+registerPatch({
+  id: '2026-10-casino-boletos-de-reapertura',
+  why: 'La economía de boletos se multiplicó (antes ~3 tiros por hora). Las partidas viejas reciben el regalo de bienvenida nuevo + boletos por las victorias que ya tenían.',
+  run() {
+    if ((G.s.campaign?.bossesDefeated ?? 0) < 1) return; // the casino isn't open yet: the welcome gift will do
+    const c = cs();
+    const extra = (c.welcomed ? CHIPS.welcomeTickets - 2 : 0) + Math.min(30, Math.floor((G.s.stats.victories ?? 0) / CHIPS.victoriesPerTicket));
+    if (extra <= 0) return;
+    addTickets(extra, 'patch');
+    return `El casino reabrió con más dulces: te regalamos ${extra} boletos de invocación. Además ahora el Portal garantiza tu PRIMER LEGENDARIO en 20 tiros.`;
+  },
+});
 
 // ------------------------------------------------------------------ stakes (balance.gambit)
 export function income() {
@@ -238,27 +305,61 @@ function credit(cur: Cur, n: number) {
   else addChips(n, 'win');
 }
 
-function record(g: GameId, cur: Cur, stake: number, win: number, r: string, isWin = win > stake) {
+// ------------------------------------------------------------------ LA CASA TE DEBE (candy meter)
+/** every losing bet fills the meter; when full the house pays you a boleto + fichas and it starts again */
+export const CANDY = { every: 15, tickets: 1, chips: 15 } as const;
+export function owed() {
+  return cs().owed ?? 0;
+}
+
+/** saves are throttled while auto-play runs at TURBO (never later than ~1.5 s after the bet) */
+let lastSave = 0;
+let saveTimer = 0;
+function persist() {
+  const now = Date.now();
+  if (now - lastSave > 1500) {
+    lastSave = now;
+    G.save();
+    return;
+  }
+  if (saveTimer) return;
+  saveTimer = window.setTimeout(() => {
+    saveTimer = 0;
+    lastSave = Date.now();
+    G.save();
+  }, 1500);
+}
+
+function record(g: GameId, cur: Cur, stake: number, win: number, r: string, isWin = win > stake): Granted[] {
   const c = cs();
   c.hist!.unshift({ g, cur, stake, win, r });
   if (c.hist!.length > 40) c.hist!.length = 40;
   stat(`bets_${cur}`);
   stat(`staked_${cur}`, stake);
   stat(`won_${cur}`, win);
+  const candy: Granted[] = [];
   if (isWin) {
     stat('wins');
     c.streak = Math.max(0, c.streak ?? 0) + 1;
+    c.owed = 0;
   } else {
     stat('losses');
     c.streak = Math.min(0, c.streak ?? 0) - 1;
+    c.owed = (c.owed ?? 0) + 1;
+    if (c.owed >= CANDY.every) {
+      c.owed = 0;
+      stat('candy');
+      candy.push(grantPrize({ kind: 'tickets', n: CANDY.tickets, tier: 'rare' }), grantPrize({ kind: 'chips', n: CANDY.chips, tier: 'common' }));
+    }
   }
   stat(`spins_${g}`);
   // mission E11 (goal gambit_play → counter 'gambit')
   G.count('gambit');
   G.count('gambit_hands');
   G.count('casino_bets');
-  // persist every bet right away (no reload-to-undo)
-  G.save();
+  // persist every bet (no reload-to-undo)
+  persist();
+  return candy;
 }
 
 /** "23 apuestas · 9 ganadas · −3%" (per currency) */
@@ -286,10 +387,25 @@ export const SYM_NAME: Record<Sym, string> = {
 };
 /** symbols per strip (24 stops, same counts on every reel) */
 export const SYM_COUNT: Record<Sym, number> = { neko: 2, wild: 2, gema: 2, doblon: 3, boleto: 2, pez: 4, ovillo: 4, pata: 5 };
-/** line pays as multiples of the LINE bet (stake / 5) for 3 in a line; COMODÍN substitutes for all but GATO NEGRO */
-export const PAY3: Record<Sym, number> = { neko: 75, wild: 45, gema: 30, doblon: 24, boleto: 20, pez: 12, ovillo: 10, pata: 5 };
-/** GATO NEGRO + GATO NEGRO on reels 1–2 (third reel anything else) */
-export const PAY2_NEKO = 4;
+
+/**
+ * RISK TIERS (bet size ↔ variance). Same public strips; the paytable changes:
+ *   BAJA  — every symbol pays (premio en 32% de las tiradas), gold RTP 95.3%, máx. x17.8
+ *   MEDIA — PATITA no paga, el resto paga ~20% más (premio en 23%), gold RTP 96.2%, máx. x20.4
+ *   ALTA  — PATITA y ESTAMBRE no pagan, el resto ~60% más (premio en 15%), gold RTP 97.3%, máx. x25.2
+ * Bigger stake = more spins that give nothing, but bigger prizes and a slightly better return. The house still wins.
+ */
+export type SlotTier = 0 | 1 | 2;
+export const SLOT_TIER_NAME = ['BAJA', 'MEDIA', 'ALTA'] as const;
+export const SLOT_TIER_BLURB = ['Premios chicos y seguidos.', 'Menos premios, más gordos.', 'Casi nunca paga. Cuando paga, PAGA.'] as const;
+export const PAYTABLES: { pay3: Record<Sym, number>; neko2: number }[] = [
+  { pay3: { neko: 75, wild: 45, gema: 30, doblon: 24, boleto: 20, pez: 12, ovillo: 10, pata: 5 }, neko2: 4 },
+  { pay3: { neko: 90, wild: 52, gema: 35, doblon: 28, boleto: 23, pez: 14, ovillo: 11, pata: 0 }, neko2: 5 },
+  { pay3: { neko: 120, wild: 68, gema: 45, doblon: 36, boleto: 30, pez: 17, ovillo: 0, pata: 0 }, neko2: 0 },
+];
+/** legacy names (tier BAJA) */
+export const PAY3 = PAYTABLES[0].pay3;
+export const PAY2_NEKO = PAYTABLES[0].neko2;
 /** row index on reels 1,2,3 for each payline */
 export const LINES: [number, number, number][] = [
   [1, 1, 1],
@@ -331,22 +447,23 @@ export function gridAt(stops: number[]): Sym[][] {
   return stops.map((s, ri) => [STRIPS[ri][(s - 1 + N) % N], STRIPS[ri][s], STRIPS[ri][(s + 1) % N]]);
 }
 
-function lineResult(a: Sym, b: Sym, c: Sym): { sym: Sym | 'neko2'; mult: number } | null {
+function lineResult(a: Sym, b: Sym, c: Sym, tier: SlotTier): { sym: Sym | 'neko2'; mult: number } | null {
+  const pt = PAYTABLES[tier];
   const syms = [a, b, c];
   const nonW = syms.filter((s) => s !== 'wild');
-  if (nonW.length === 0) return { sym: 'wild', mult: PAY3.wild };
+  if (nonW.length === 0) return { sym: 'wild', mult: pt.pay3.wild };
   const base = nonW[0];
   if (base === 'neko') {
-    if (syms.every((s) => s === 'neko')) return { sym: 'neko', mult: PAY3.neko };
-  } else if (syms.every((s) => s === base || s === 'wild')) return { sym: base, mult: PAY3[base] };
-  if (a === 'neko' && b === 'neko') return { sym: 'neko2', mult: PAY2_NEKO };
+    if (syms.every((s) => s === 'neko')) return { sym: 'neko', mult: pt.pay3.neko };
+  } else if (syms.every((s) => s === base || s === 'wild') && pt.pay3[base] > 0) return { sym: base, mult: pt.pay3[base] };
+  if (a === 'neko' && b === 'neko' && pt.neko2 > 0) return { sym: 'neko2', mult: pt.neko2 };
   return null;
 }
 
-export function evalGrid(grid: Sym[][]): LineWin[] {
+export function evalGrid(grid: Sym[][], tier: SlotTier = 0): LineWin[] {
   const out: LineWin[] = [];
   LINES.forEach((L, li) => {
-    const r = lineResult(grid[0][L[0]], grid[1][L[1]], grid[2][L[2]]);
+    const r = lineResult(grid[0][L[0]], grid[1][L[1]], grid[2][L[2]], tier);
     if (!r) return;
     const cells: [number, number][] = r.sym === 'neko2' ? [[0, L[0]], [1, L[1]]] : [[0, L[0]], [1, L[1]], [2, L[2]]];
     out.push({ line: li, sym: r.sym, mult: r.mult, cells });
@@ -354,8 +471,8 @@ export function evalGrid(grid: Sym[][]): LineWin[] {
   return out;
 }
 
-/** exact math by enumerating all 24³ stop combinations (≈14k, a few ms) */
-function slotMath() {
+/** exact math by enumerating all 24³ stop combinations (≈14k per tier, a few ms) */
+function slotMath(tier: SlotTier) {
   const N = STRIP_LEN;
   let tot = 0;
   let maxM = 0;
@@ -365,7 +482,7 @@ function slotMath() {
   for (let a = 0; a < N; a++)
     for (let b = 0; b < N; b++)
       for (let c = 0; c < N; c++) {
-        const w = evalGrid(gridAt([a, b, c]));
+        const w = evalGrid(gridAt([a, b, c]), tier);
         const m = w.reduce((s, x) => s + x.mult, 0) / LINES.length;
         for (const x of w) freq[x.sym] = (freq[x.sym] ?? 0) + 1;
         tot += m;
@@ -378,12 +495,16 @@ function slotMath() {
   for (const [k, v] of Object.entries(freq)) perSpin[k] = v / T;
   return { rtp: tot / T, maxM, hit: hits / T, win: wins / T, perSpin };
 }
-export const SLOT = slotMath();
+export const SLOT_MATH = [slotMath(0), slotMath(1), slotMath(2)];
+/** legacy (tier BAJA) */
+export const SLOT = SLOT_MATH[0];
 
-/** chip spins cost a fixed amount (no "min-bet farming" of special prizes) */
-export const SLOT_CHIP_STAKE = 10;
+/** chip spins cost a fixed amount per risk tier (no "min-bet farming" of special prizes) */
+export const SLOT_CHIP_STAKES = [10, 30, 100] as const;
+export const SLOT_CHIP_STAKE = SLOT_CHIP_STAKES[0];
 
 export type PrizeKind = 'gold' | 'food' | 'gems' | 'tickets' | 'chips' | 'orbs' | 'prisma' | 'scrap' | 'blueprint' | 'crystal' | 'accessory' | 'cat';
+export type PrizeTier = 'common' | 'rare' | 'epic' | 'legendary' | 'holo' | 'mythic';
 export interface Prize {
   kind: PrizeKind;
   n: number;
@@ -392,55 +513,121 @@ export interface Prize {
   /** cat prize: holo foil variant */
   holo?: boolean;
   /** tier for presentation */
-  tier?: 'common' | 'rare' | 'epic' | 'legendary' | 'holo';
+  tier?: PrizeTier;
 }
 
-/** what a winning line gives when playing with FICHAS (shown in the paytable) */
-export const CHIP_LINE_PRIZE: Record<Sym | 'neko2', { text: string; tier: Prize['tier'] }> = {
-  neko: { text: 'GATO ÉPICO+ (25% HOLO)', tier: 'legendary' },
-  wild: { text: '+100 FICHAS + ACCESORIO ÉPICO', tier: 'epic' },
-  gema: { text: '+2 OJOS DE GATO', tier: 'epic' },
-  doblon: { text: 'ORO (90 s de producción)', tier: 'rare' },
-  boleto: { text: '+1 BOLETO DE INVOCACIÓN', tier: 'rare' },
-  pez: { text: 'PESCADITOS (150 s)', tier: 'common' },
-  ovillo: { text: 'ACCESORIO SORPRESA', tier: 'common' },
-  pata: { text: '+10 FICHAS', tier: 'common' },
-  neko2: { text: '+5 ORBES DE ALMA (gato al azar)', tier: 'common' },
-};
+/** what a winning line gives when playing with FICHAS, per risk tier (shown in the paytable) */
+export const CHIP_LINE_PRIZE: Record<Sym | 'neko2', { text: string; tier: PrizeTier }>[] = [
+  {
+    neko: { text: 'GATO ÉPICO+ (25% HOLO)', tier: 'legendary' },
+    wild: { text: '+100 FICHAS + ACCESORIO ÉPICO', tier: 'epic' },
+    gema: { text: '+2 OJOS DE GATO', tier: 'epic' },
+    doblon: { text: 'ORO (90 s de producción)', tier: 'rare' },
+    boleto: { text: '+1 BOLETO DE INVOCACIÓN', tier: 'rare' },
+    pez: { text: 'PESCADITOS (150 s)', tier: 'common' },
+    ovillo: { text: 'ACCESORIO SORPRESA', tier: 'common' },
+    pata: { text: '+10 FICHAS', tier: 'common' },
+    neko2: { text: '+5 ORBES DE ALMA (gato al azar)', tier: 'common' },
+  },
+  {
+    neko: { text: 'GATO LEGENDARIO+ (mítico 5%, 30% HOLO)', tier: 'legendary' },
+    wild: { text: '+200 FICHAS + ACCESORIO ÉPICO', tier: 'epic' },
+    gema: { text: '+6 OJOS DE GATO', tier: 'epic' },
+    doblon: { text: 'ORO (5 min de producción)', tier: 'rare' },
+    boleto: { text: '+3 BOLETOS', tier: 'rare' },
+    pez: { text: '+1 BOLETO + PESCADITOS', tier: 'rare' },
+    ovillo: { text: 'ACCESORIO RARO O MEJOR', tier: 'rare' },
+    pata: { text: 'nada', tier: 'common' },
+    neko2: { text: '+1 BOLETO + 10 ORBES', tier: 'rare' },
+  },
+  {
+    neko: { text: 'GATO LEGENDARIO o MÍTICO (40% HOLO)', tier: 'mythic' },
+    wild: { text: '+6 BOLETOS + ACCESORIO LEGENDARIO', tier: 'legendary' },
+    gema: { text: '+20 OJOS DE GATO', tier: 'legendary' },
+    doblon: { text: 'ORO (15 min de producción)', tier: 'epic' },
+    boleto: { text: '+10 BOLETOS', tier: 'legendary' },
+    pez: { text: '+3 BOLETOS', tier: 'epic' },
+    ovillo: { text: 'nada', tier: 'common' },
+    pata: { text: 'nada', tier: 'common' },
+    neko2: { text: 'nada', tier: 'common' },
+  },
+];
 
-function chipLinePrizes(sym: Sym | 'neko2'): Prize[] {
+function chipLinePrizes(sym: Sym | 'neko2', tier: SlotTier): Prize[] {
+  if (tier === 0)
+    switch (sym) {
+      case 'neko':
+        return [rollCatPrize(['epic', 'legendary'], [0.72, 0.28], 0.25, null, 0.5, true)];
+      case 'wild':
+        return [{ kind: 'chips', n: 100, tier: 'epic' }, accPrize('epic')];
+      case 'gema':
+        return [{ kind: 'gems', n: 2, tier: 'epic' }];
+      case 'doblon':
+        return [{ kind: 'gold', n: Math.round(90 * income()), tier: 'rare' }];
+      case 'boleto':
+        return [{ kind: 'tickets', n: 1, tier: 'rare' }];
+      case 'pez':
+        return [{ kind: 'food', n: Math.max(30, Math.round(150 * foodIncome())), tier: 'common' }];
+      case 'ovillo':
+        return [accPrize(weighted<AccRarity>(['common', 'rare', 'epic'], (r) => ({ common: 70, rare: 25, epic: 5, legendary: 0 })[r]))];
+      case 'pata':
+        return [{ kind: 'chips', n: 10, tier: 'common' }];
+      case 'neko2':
+        return [{ kind: 'orbs', n: 5, tier: 'common' }];
+    }
+  if (tier === 1)
+    switch (sym) {
+      case 'neko':
+        return [rollCatPrize(['epic', 'legendary', 'mythic'], [0.35, 0.6, 0.05], 0.3, null, 0.5, true)];
+      case 'wild':
+        return [{ kind: 'chips', n: 200, tier: 'epic' }, accPrize('epic')];
+      case 'gema':
+        return [{ kind: 'gems', n: 6, tier: 'epic' }];
+      case 'doblon':
+        return [{ kind: 'gold', n: Math.round(300 * income()), tier: 'rare' }];
+      case 'boleto':
+        return [{ kind: 'tickets', n: 3, tier: 'rare' }];
+      case 'pez':
+        return [{ kind: 'tickets', n: 1, tier: 'rare' }, { kind: 'food', n: Math.max(60, Math.round(300 * foodIncome())), tier: 'common' }];
+      case 'ovillo':
+        return [accPrize(weighted<AccRarity>(['rare', 'epic', 'legendary'], (r) => ({ common: 0, rare: 70, epic: 25, legendary: 5 })[r]))];
+      case 'neko2':
+        return [{ kind: 'tickets', n: 1, tier: 'rare' }, { kind: 'orbs', n: 10, tier: 'common' }];
+      default:
+        return [];
+    }
   switch (sym) {
     case 'neko':
-      return [rollCatPrize(['epic', 'legendary'], [0.72, 0.28], 0.25)];
+      return [rollCatPrize(['legendary', 'mythic'], [0.8, 0.2], 0.4, null, 0.5, true)];
     case 'wild':
-      return [{ kind: 'chips', n: 100, tier: 'epic' }, accPrize('epic')];
+      return [{ kind: 'tickets', n: 6, tier: 'legendary' }, accPrize('legendary')];
     case 'gema':
-      return [{ kind: 'gems', n: 2, tier: 'epic' }];
+      return [{ kind: 'gems', n: 20, tier: 'legendary' }];
     case 'doblon':
-      return [{ kind: 'gold', n: Math.round(90 * income()), tier: 'rare' }];
+      return [{ kind: 'gold', n: Math.round(900 * income()), tier: 'epic' }];
     case 'boleto':
-      return [{ kind: 'tickets', n: 1, tier: 'rare' }];
+      return [{ kind: 'tickets', n: 10, tier: 'legendary' }];
     case 'pez':
-      return [{ kind: 'food', n: Math.max(30, Math.round(150 * foodIncome())), tier: 'common' }];
-    case 'ovillo':
-      return [accPrize(weighted<AccRarity>(['common', 'rare', 'epic'], (r) => ({ common: 70, rare: 25, epic: 5, legendary: 0 })[r]))];
-    case 'pata':
-      return [{ kind: 'chips', n: 10, tier: 'common' }];
-    case 'neko2':
-      return [{ kind: 'orbs', n: 5, tier: 'common' }];
+      return [{ kind: 'tickets', n: 3, tier: 'epic' }];
+    default:
+      return [];
   }
 }
 
+/** stakes per risk tier: chips = fixed 10/30/100 · gold = ¼ / ½ / all of the tier's cap */
 export function slotStakes(cur: Cur): number[] {
-  if (cur === 'chips') return [SLOT_CHIP_STAKE];
+  if (cur === 'chips') return [...SLOT_CHIP_STAKES];
   if (cur === 'gems') return [];
-  const cap = goldStakeCap(SLOT.maxM);
-  return [...new Set([nice(Math.max(MIN_GOLD_STAKE, cap / 4)), nice(Math.max(MIN_GOLD_STAKE, cap / 2)), cap])];
+  return SLOT_MATH.map((m, i) => {
+    const cap = goldStakeCap(m.maxM);
+    return nice(Math.max(MIN_GOLD_STAKE, i === 0 ? cap / 4 : i === 1 ? cap / 2 : cap));
+  });
 }
 
 export interface SlotResult {
   cur: Cur;
   stake: number;
+  tier: SlotTier;
   stops: number[];
   grid: Sym[][];
   wins: LineWin[];
@@ -448,19 +635,21 @@ export interface SlotResult {
   payout: number;
   prizes: Prize[];
   granted: Granted[];
+  /** LA CASA TE DEBE paid out on this spin */
+  candy: Granted[];
   /** total multiplier of the stake (gold) */
   mult: number;
   jackpot: boolean;
 }
 
-export function spinSlot(cur: Cur, stake: number): SlotResult | null {
+export function spinSlot(cur: Cur, tier: SlotTier): SlotResult | null {
   if (cur === 'gems') return null;
-  if (cur === 'chips') stake = SLOT_CHIP_STAKE;
+  const stake = slotStakes(cur)[tier] ?? 0;
   if (!canPay(cur, stake)) return null;
   pay(cur, stake);
   const stops = [randInt(STRIP_LEN), randInt(STRIP_LEN), randInt(STRIP_LEN)];
   const grid = gridAt(stops);
-  const wins = evalGrid(grid);
+  const wins = evalGrid(grid, tier);
   const lineBet = stake / LINES.length;
   let payout = 0;
   const prizes: Prize[] = [];
@@ -469,7 +658,7 @@ export function spinSlot(cur: Cur, stake: number): SlotResult | null {
     payout = Math.round(wins.reduce((s, w) => s + w.mult * lineBet, 0));
     credit('gold', payout);
   } else {
-    for (const w of wins) prizes.push(...chipLinePrizes(w.sym));
+    for (const w of wins) prizes.push(...chipLinePrizes(w.sym, tier));
   }
   const granted = prizes.map(grantPrize);
   const jackpot = wins.some((w) => w.sym === 'neko');
@@ -478,13 +667,14 @@ export function spinSlot(cur: Cur, stake: number): SlotResult | null {
   const won = cur === 'gold' ? payout : chipWon;
   const label = wins.length ? wins.map((w) => (w.sym === 'neko2' ? '2x GATO' : `3x ${SYM_NAME[w.sym as Sym]}`)).join(' + ') : 'NADA';
   const realPrize = granted.some((g) => g.kind !== 'chips') || won > stake;
-  record('slot', cur, stake, won, label, cur === 'gold' ? won > stake : realPrize);
+  const candy = record('slot', cur, stake, won, label, cur === 'gold' ? won > stake : realPrize);
+  stat(`slot_tier${tier}`);
   if (jackpot) {
     stat('jackpots');
     G.count('casino_jackpots');
   }
   if (mult > (cs().stats.best_mult ?? 0)) cs().stats.best_mult = mult;
-  return { cur, stake, stops, grid, wins, payout: won, prizes, granted, mult, jackpot };
+  return { cur, stake, tier, stops, grid, wins, payout: won, prizes, granted, candy, mult, jackpot };
 }
 
 // ------------------------------------------------------------------ ROULETTE: "Ruleta del Multiverso" (25 pockets)
@@ -514,7 +704,11 @@ export function betLabel(b: RouletteBet): string {
   if (b.kind === 'third') return ['1–8', '9–16', '17–24'][b.v];
   return b.v === 0 ? 'GATO NEGRO (0)' : `NÚMERO ${b.v}`;
 }
-export const ROULETTE_CHIP_STAKES = [10, 25, 50];
+export const ROULETTE_CHIP_STAKES = [10, 25, 50, 100];
+/** BONO PLENO: a NUMBER hit with fichas also pays boletos (1 per 25 fichas staked, rounded up) */
+export function plenoTickets(cur: Cur, b: RouletteBet, stake: number) {
+  return cur === 'chips' && b.kind === 'num' ? Math.ceil(stake / 25) : 0;
+}
 export function rouletteStakes(cur: Cur, b: RouletteBet): number[] {
   const m = betMult(b);
   if (cur === 'chips') return ROULETTE_CHIP_STAKES;
@@ -523,7 +717,18 @@ export function rouletteStakes(cur: Cur, b: RouletteBet): number[] {
     return Array.from({ length: mx }, (_, i) => i + 1);
   }
   const cap = goldStakeCap(m);
-  return [...new Set([nice(Math.max(MIN_GOLD_STAKE, cap / 4)), nice(Math.max(MIN_GOLD_STAKE, cap / 2)), cap])];
+  return [...new Set([nice(Math.max(MIN_GOLD_STAKE, cap / 8)), nice(Math.max(MIN_GOLD_STAKE, cap / 4)), nice(Math.max(MIN_GOLD_STAKE, cap / 2)), cap])];
+}
+/**
+ * Stake memory: the option to use for a remembered stake. Never resets to the minimum when the list changes
+ * (ROJO ⇄ NEGRO, currency, a new cap): the largest option ≤ the remembered value, or the smallest one.
+ */
+export function stakeFor(options: readonly number[], remembered: number | undefined): number {
+  if (!options.length) return 0;
+  if (remembered === undefined) return options[0];
+  let best = options[0];
+  for (const o of options) if (o <= remembered + 1e-9) best = o;
+  return best;
 }
 
 export interface RouletteResult {
@@ -534,6 +739,8 @@ export interface RouletteResult {
   color: PocketColor;
   win: boolean;
   payout: number;
+  /** BONO PLENO + LA CASA TE DEBE */
+  bonus: Granted[];
 }
 export function spinRoulette(cur: Cur, bet: RouletteBet, stake: number): RouletteResult | null {
   if (cur === 'gems') stake = Math.min(stake, gemStakeMax(betMult(bet)));
@@ -544,12 +751,15 @@ export function spinRoulette(cur: Cur, bet: RouletteBet, stake: number): Roulett
   const payout = win ? stake * betMult(bet) : 0;
   credit(cur, payout);
   const color = pocketColor(pocket);
-  record('roulette', cur, stake, payout, `${pocket} ${color === 'red' ? 'ROJO' : color === 'black' ? 'NEGRO' : 'GATO'}`);
-  return { cur, stake, bet, pocket, color, win, payout };
+  const bonus: Granted[] = [];
+  const pt = win ? plenoTickets(cur, bet, stake) : 0;
+  if (pt) bonus.push(grantPrize({ kind: 'tickets', n: pt, tier: 'epic' }));
+  bonus.push(...record('roulette', cur, stake, payout, `${pocket} ${color === 'red' ? 'ROJO' : color === 'black' ? 'NEGRO' : 'GATO'}`));
+  return { cur, stake, bet, pocket, color, win, payout, bonus };
 }
 
 // ------------------------------------------------------------------ cat pool (shared with the gacha)
-/** cats the casino/gacha can give: no secrets, no heroic rewards, boss cats only after that boss, elements discovered */
+/** cats the casino can give: no secrets, no heroic rewards, boss cats only after that boss, elements discovered */
 export function eligibleCats(): CatDef[] {
   const bosses = G.s.campaign?.bossesDefeated ?? 0;
   return CATS.filter((c) => {
@@ -560,28 +770,43 @@ export function eligibleCats(): CatDef[] {
     return c.elements.every((e) => G.s.elements.includes(e));
   });
 }
-export function catsOfRarity(r: RarityId): CatDef[] {
-  return eligibleCats().filter((c) => c.rarity === r);
+/**
+ * Portal-only extras (2026-10): Lumen (la Fotógrafa) lives in the portal now, and the MÍTICO tier can give
+ * the mythics (heroic rewards and Sonata Prima) once you discovered their elements.
+ */
+export const GACHA_EXTRA = new Set(['s_lumen', 's_sonata', 'm_raijin', 'm_singular']);
+export function gachaCats(): CatDef[] {
+  const base = eligibleCats();
+  for (const id of GACHA_EXTRA) {
+    const c = CATS.find((x) => x.id === id);
+    if (c && c.elements.every((e) => G.s.elements.includes(e))) base.push(c);
+  }
+  return base;
 }
+export function catsOfRarity(r: RarityId, gacha = false): CatDef[] {
+  return (gacha ? gachaCats() : eligibleCats()).filter((c) => c.rarity === r);
+}
+/** cats you don't own weigh x3 (the casino wants your collection to grow) */
+export const UNOWNED_WEIGHT = 3;
 /** pick a cat of one of the rarities (falls back to the closest available rarity) */
-export function rollCatDef(rarities: RarityId[], weights?: number[], featured?: string | null, featuredShare = 0.5): CatDef {
+export function rollCatDef(rarities: RarityId[], weights?: number[], featured?: string | null, featuredShare = 0.5, gacha = false): CatDef {
   const order: RarityId[] = ['common', 'rare', 'epic', 'legendary', 'mythic'];
-  let r = weights ? weighted(rarities, (x) => weights[rarities.indexOf(x)]) : pick(rarities);
-  let list = catsOfRarity(r);
+  const r = weights ? weighted(rarities, (x) => weights[rarities.indexOf(x)]) : pick(rarities);
+  let list = catsOfRarity(r, gacha);
   let i = order.indexOf(r);
-  while (!list.length && i > 0) list = catsOfRarity(order[--i]);
-  if (!list.length) list = eligibleCats();
+  while (!list.length && i > 0) list = catsOfRarity(order[--i], gacha);
+  if (!list.length) list = gacha ? gachaCats() : eligibleCats();
   if (featured && rand() < featuredShare) {
-    const f = list.find((c) => c.id === featured) ?? eligibleCats().find((c) => c.id === featured && order.indexOf(c.rarity) >= order.indexOf(r) - 1);
+    const pool = gacha ? gachaCats() : eligibleCats();
+    const f = list.find((c) => c.id === featured) ?? pool.find((c) => c.id === featured && order.indexOf(c.rarity) >= order.indexOf(r) - 1);
     if (f) return f;
   }
-  r = list[0].rarity;
-  return pick(list);
+  return weighted(list, (c) => (G.s.catdex[c.id] === 'registered' ? 1 : UNOWNED_WEIGHT));
 }
-export function rollCatPrize(rarities: RarityId[], weights: number[] | undefined, holoChance: number, featured?: string | null): Prize {
-  const def = rollCatDef(rarities, weights, featured);
+export function rollCatPrize(rarities: RarityId[], weights: number[] | undefined, holoChance: number, featured?: string | null, featuredShare = 0.5, gacha = false): Prize {
+  const def = rollCatDef(rarities, weights, featured, featuredShare, gacha);
   const holo = rand() < holoChance;
-  return { kind: 'cat', n: 1, ref: def.id, holo, tier: holo ? 'holo' : (def.rarity as Prize['tier']) };
+  return { kind: 'cat', n: 1, ref: def.id, holo, tier: holo ? 'holo' : (def.rarity as PrizeTier) };
 }
 export function accPrize(r: AccRarity): Prize {
   return { kind: 'accessory', n: 1, ref: rollAccessory(r, rand).id, tier: r };
@@ -687,8 +912,9 @@ export const CAJA: CajaItem[] = [
   { id: 'orbs', name: 'Orbes de Alma x10', cost: 45, desc: 'Para el gato que elijas al azar de tu isla.', prize: () => ({ kind: 'orbs', n: 10, tier: 'common' }) },
   { id: 'prisma', name: 'Orbe Prisma', cost: 70, desc: 'Comodín: vale por un orbe de cualquier especie.', prize: () => ({ kind: 'prisma', n: 1, tier: 'rare' }) },
   { id: 'acc', name: 'Accesorio Sorpresa', cost: 110, desc: '60% común · 30% raro · 9% épico · 1% legendario.', prize: () => accPrize(weighted<AccRarity>(['common', 'rare', 'epic', 'legendary'], (r) => ({ common: 60, rare: 30, epic: 9, legendary: 1 })[r])) },
-  { id: 'ticket', name: 'Boleto de Invocación', cost: 150, desc: 'Un tiro en cualquier portal del gacha.', prize: () => ({ kind: 'tickets', n: 1, tier: 'rare' }) },
-  { id: 'cat', name: 'Gato Misterioso', cost: 800, desc: '70% raro · 25% épico · 5% legendario. 5% HOLO.', prize: () => rollCatPrize(['rare', 'epic', 'legendary'], [0.7, 0.25, 0.05], 0.05) },
+  { id: 'ticket', name: 'Boleto de Invocación', cost: 60, desc: 'Un tiro en cualquier portal del gacha.', prize: () => ({ kind: 'tickets', n: 1, tier: 'rare' }) },
+  { id: 'tickets5', name: 'Fajo de 5 Boletos', cost: 280, desc: 'Cinco tiros. Sale más barato que de uno en uno.', prize: () => ({ kind: 'tickets', n: 5, tier: 'epic' }) },
+  { id: 'cat', name: 'Gato Misterioso', cost: 500, desc: '60% raro · 30% épico · 10% legendario. 8% HOLO.', prize: () => rollCatPrize(['rare', 'epic', 'legendary'], [0.6, 0.3, 0.1], 0.08, null, 0.5, true) },
 ];
 export function buyCaja(id: string): Granted | null {
   const it = CAJA.find((x) => x.id === id);
@@ -703,5 +929,5 @@ export function buyCaja(id: string): Granted | null {
 
 // wake E11 when the Mesa unlocks (Jefe 1), not only on the first visit
 G.tickers.push(() => {
-  if (G.s.campaign.bossesDefeated >= 1 && !G.has('gambit_open') && !isCasinoHidden()) ensureGambitOpen();
+  if (G.s.campaign.bossesDefeated >= 1 && !G.has('gambit_open')) ensureGambitOpen();
 });

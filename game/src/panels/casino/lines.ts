@@ -34,7 +34,17 @@ export type Ev =
   | 'caja'
   | 'accessory'
   | 'roulette'
-  | 'exit';
+  | 'exit'
+  | 'autoStart'
+  | 'autoSpeed'
+  | 'autoTurbo'
+  | 'escape'
+  | 'hot'
+  | 'candy'
+  | 'firstLegend'
+  | 'gachaMythic'
+  | 'riskHigh'
+  | 'riskAll';
 
 interface L {
   t: string;
@@ -130,6 +140,28 @@ const H: Record<Ev, L[]> = {
   accessory: [{ t: '¡Qué elegancia, por favor! Ese gato ya no saluda.' }, { t: 'Bien vestido, bien pagado. Así funciona el multiverso.' }],
   roulette: [{ t: 'Hagan sus apuestas... ¡no va más!' }, { t: 'La bolita decide. La bolita no tiene sentimientos.' }],
   exit: [{ t: 'Vuelve pronto. O no. Somos gatos, nos da igual.' }, { t: '¡Hasta luego, {name}! Saluda al Capi de mi parte.' }],
+  autoStart: [
+    { t: 'Piloto automático. Tú relájate, yo jalo la cola.' },
+    { t: 'Modo automático. Si quieres parar, dale a PARAR. O al Espacio.' },
+    { t: 'Que la máquina trabaje. Tú pon cara de interesante.' },
+  ],
+  autoSpeed: [{ t: 'Más rápido. Como gato con zoomies.' }, { t: 'Acelerando. Agárrate los bigotes.' }],
+  autoTurbo: [{ t: 'TURBO. Ni yo veo lo que pasa. Solo los resultados.' }, { t: 'Modo turbo: el gato ya ni parpadea.', sf: 'TURBO, cabrón. Ni pestañees.' }],
+  escape: [
+    { t: '¡Uy! Se nos escapó un legendario. Dejó huellas: el portal ya lo está buscando.' },
+    { t: '¡Lo viste? ¡Era LEGENDARIO! Se fue... pero el portal se quedó caliente.' },
+    { t: 'Casi, {name}. CASI. El contador saltó y la racha está prendida.', sf: '¡Nooo, se peló el cabrón! Pero dejó el rastro.' },
+  ],
+  hot: [{ t: 'Racha caliente: los legendarios salen más. Aprovecha ahorita.' }, { t: 'El portal está tibio, tibio... ¡caliente!' }],
+  candy: [
+    { t: 'La casa te debía una. Toma un boleto, invita la casa.' },
+    { t: 'Tanta mala suerte me dio pena. Ahí va un boleto de cortesía.' },
+    { t: 'Política de la casa: nadie se va con las manos vacías. Boleto gratis.' },
+  ],
+  firstLegend: [{ t: '¡Tu PRIMER legendario! La suerte de principiante existe y está escrita en el cartel.' }, { t: 'Primer legendario. Esto se enmarca.' }],
+  gachaMythic: [{ t: '¡¿MÍTICO?! Cierren el casino. No, mejor no, pero... ¡MÍTICO!' }, { t: 'Un MÍTICO. El multiverso se acaba de quedar sin aliento.', sf: '¡MÍTICO, A HUEVO! ¡Que alguien grabe!' }],
+  riskHigh: [{ t: 'Alto riesgo. Me gusta tu estilo.' }, { t: 'Tres boletos de golpe. Ojalá traigas suerte de gato negro.' }],
+  riskAll: [{ t: 'TODO O NADA. El portal te mira con respeto.' }, { t: 'Diez boletos a una sola carta. Qué valor. Qué locura.' }],
 };
 
 const CHAT: Partial<Record<Ev, string[]>> = {
@@ -148,6 +180,15 @@ const CHAT: Partial<Record<Ev, string[]>> = {
   gachaX10: ['DIEZ!!', 'que salga algo bueno', 'suerte suerte suerte'],
   gachaEpic: ['ROSA ROSA', 'eso brilla', 'buenaaa'],
   gachaLegend: ['QUÉ SUERTE', 'DORADO!!!', 'CLIP'],
+  gachaMythic: ['MÍTICOOOO', 'NO PUEDE SER', 'CLIP CLIP CLIP', 'HISTÓRICO'],
+  firstLegend: ['EL PRIMERO!!', 'suerte de principiante', 'CLIP'],
+  escape: ['NOOO SE ESCAPÓ', 'lo vi lo vi', 'casi!!!', 'está cerca, chat'],
+  hot: ['racha caliente!!', 'ahora sí', 'dale dale'],
+  candy: ['la casa invita jaja', 'boleto gratis', 'eso sí es servicio'],
+  autoStart: ['modo auto', 'a ver cuánto dura', 'piloto automático'],
+  autoTurbo: ['TURBO', 'qué velocidad', 'no veo nada jaja'],
+  riskAll: ['TODO O NADA', 'está loc{g:o|a|e}', 'confía'],
+  riskHigh: ['valiente', 'vamos vamos'],
   gachaHolo: ['ESTÁ ROTÍSIMO', 'nerf ya', 'HOLO HOLO HOLO', 'CLIP'],
   gachaMeh: ['pescaditos otra vez jaja', 'F', 'el pity sube'],
   caja: ['buena compra', 'inteligente'],

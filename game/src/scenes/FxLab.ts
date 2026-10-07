@@ -181,7 +181,7 @@ export class FxLab extends Scene {
       const prize = last
         ? { kind: 'cat' as const, n: 1, ref: cd.id, tier }
         : { kind: (i % 2 ? 'gold' : 'food') as 'gold' | 'food', n: 1200 + i * 300, tier };
-      return { tier, prize, got: { ...prize, label: last ? cd.name.toUpperCase() : `${prize.n}`, isNew: true }, pity: null };
+      return { tier, prize, got: { ...prize, label: last ? cd.name.toUpperCase() : `${prize.n}`, isNew: true }, pity: null, mode: 'normal' as Pull['mode'] };
     });
     await playSummon(scenes.overlayLayer, pulls, BANNERS[0]);
   }
