@@ -1,4 +1,5 @@
 import '@fontsource/anton';
+import { initPwa } from './core/pwa';
 import '@fontsource/bebas-neue';
 import '@fontsource/bangers';
 import '@fontsource/dela-gothic-one';
@@ -93,6 +94,7 @@ async function boot() {
   await game.init(document.getElementById('app')!);
   await preloadElementIcons();
   scenes.init();
+  initPwa();
   mountMicroOverlay();
   applyAudioSettings();
   initStory();

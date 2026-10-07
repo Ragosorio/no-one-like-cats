@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- app icon (maskable: the cat stays inside the central 80% safe zone) -->
+  <rect width="512" height="512" fill="#FF3D8B"/>
+  <circle cx="256" cy="256" r="196" fill="#EDE4D6"/>
+  <g transform="translate(256 286)">
+    <path d="M-128 112V-74l62 54h132l62-54v186z" fill="#16120F"/>
+    <circle cx="-56" cy="18" r="22" fill="#FFC93C"/>
+    <circle cx="56" cy="18" r="22" fill="#FFC93C"/>
+    <circle cx="-50" cy="12" r="7" fill="#fff"/>
+    <circle cx="62" cy="12" r="7" fill="#fff"/>
+    <path d="M-18 58h36l-18 18z" fill="#FF3D8B"/>
+    <path d="M-110 70h-56M-110 86h-50M110 70h56M110 86h50" stroke="#16120F" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -1,6 +1,6 @@
 import { Container, Graphics } from 'pixi.js';
 import gsap from 'gsap';
-import { W, H } from '../core/App';
+import { W, H, game } from '../core/App';
 import { C, F } from './theme';
 import { Panel, txt, poster } from './widgets';
 import { sfx } from '../core/audio';
@@ -24,7 +24,8 @@ export class Modal extends Container {
     opts: { color?: number; band?: number; bandText?: number; subtitle?: string } = {},
   ) {
     super();
-    this.dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.6 });
+    const v = game.view;
+    this.dim = new Graphics().rect(v.x, v.y, v.w, v.h).fill({ color: C.ink, alpha: 0.6 });
     this.dim.eventMode = 'static';
     this.dim.on('pointertap', () => this.close());
     this.panel = new Panel(w, h, { color: opts.color ?? C.paper, offset: 14 });
@@ -55,8 +56,17 @@ export class Modal extends Container {
     this.addChild(this.dim, this.panel);
   }
 
+  /** phones: the poster grows to fill the screen (same layout, just bigger); centered in the real screen */
+  fitToView() {
+    const v = game.view;
+    const k = Math.max(1, Math.min(0.5 / Math.max(0.01, game.scale), (v.w * 0.97) / (this.w + 20), (v.h * 0.97) / (this.h + 20)));
+    this.panel.scale.set(k);
+    this.panel.position.set(v.x + (v.w - this.w * k) / 2, v.y + (v.h - this.h * k) / 2);
+  }
+
   open() {
     scenes.overlayLayer.addChild(this);
+    this.fitToView();
     sfx('paper');
     this.dim.alpha = 0;
     gsap.to(this.dim, { alpha: 1, duration: 0.2 });

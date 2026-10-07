@@ -1,4 +1,6 @@
 import { Container, Graphics, Sprite, TilingSprite } from 'pixi.js';
+import { installMode, isTouch, onInstallChange, promptInstall } from '../core/pwa';
+import { toast } from '../ui/modal';
 import { GlitchFilter, OutlineFilter, RGBSplitFilter } from 'pixi-filters';
 import gsap from 'gsap';
 import { Scene } from '../core/scenes';
@@ -128,6 +130,21 @@ export class TitleScene extends Scene {
     const gear = new Button('AJUSTES', async () => (await import('../panels/Settings')).openSettings(), { w: 220, h: 60, size: 26, color: C.paper });
     gear.position.set(W - 260, H - 90);
     this.addChild(gear);
+    // PWA: offer the installed version (fullscreen, its own icon, works offline)
+    const installSlot = new Container();
+    installSlot.position.set(W - 560, H - 90);
+    this.addChild(installSlot);
+    const drawInstall = () => {
+      installSlot.removeChildren().forEach((c) => c.destroy({ children: true }));
+      const mode = installMode();
+      if (!mode) return;
+      const b = new Button(isTouch() ? 'DESCARGAR' : 'INSTALAR', () => void install(mode), { w: 280, h: 60, size: 26, color: C.mint });
+      installSlot.addChild(b);
+      gsap.fromTo(b.scale, { x: 1, y: 1 }, { x: 1.05, y: 1.05, yoyo: true, repeat: 5, duration: 0.5, ease: 'sine.inOut' });
+    };
+    drawInstall();
+    const off = onInstallChange(drawInstall);
+    this.once('destroyed', () => off());
     const foot = txt('sin anuncios · sin tarjetazo · sin energía · “espera o sigue jugando”', { fontFamily: F.ui, fontSize: 18, fill: C.ink });
     foot.position.set(78, H - 60);
     this.addChild(foot);
@@ -146,4 +163,14 @@ export class TitleScene extends Scene {
   override exit() {
     music.play('island');
   }
+}
+
+/** INSTALAR: the browser prompt, or the iPhone recipe (Safari has no prompt) */
+async function install(mode: 'prompt' | 'ios') {
+  if (mode === 'prompt') {
+    const ok = await promptInstall();
+    if (ok) toast('¡Instalado!', { icon: 'star', sub: 'Ábrelo desde tu inicio: pantalla completa y funciona sin internet.' });
+    return;
+  }
+  toast('Agrégalo a tu inicio', { icon: 'star', sub: 'En Safari: botón Compartir (cuadrito con flecha) → «Agregar a inicio».', dur: 6 });
 }

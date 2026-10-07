@@ -1,7 +1,8 @@
 import { Container, FederatedPointerEvent, Graphics, Sprite, Ticker, TilingSprite, ColorMatrixFilter } from 'pixi.js';
+import { isTouch } from '../core/pwa';
 import gsap from 'gsap';
 import { Scene, scenes } from '../core/scenes';
-import { W, H } from '../core/App';
+import { W, H, game } from '../core/App';
 import { Sea } from '../battle/sea';
 import { CELL } from '../battle/ship';
 import { AnimeShipView } from '../battle/anime';
@@ -214,6 +215,7 @@ export class BattleScene extends Scene {
   }
 
   override async enter() {
+    this.bleed = null; // the sea extends past the design box (battle/sea.ts)
     const sp = this.spec;
     this.sim = makeBattle(sp, sp.seed ?? Math.floor(Math.random() * 1e9));
     this.prof = enemyProfile(sp);
@@ -388,6 +390,32 @@ export class BattleScene extends Scene {
     });
     hint.position.set(W - hint.width - 30, H - 34);
     this.ui.addChild(hint);
+    if (isTouch()) hint.text = 'ARRASTRA PARA APUNTAR · SUELTA PARA DISPARAR · TOCA UNA CARTA PARA ELEGIR GATO';
+    // phones / wide screens: the crew cards stick to the real bottom-left corner and grow; the top bar
+    // to the real top (never wider than the screen)
+    const bottom = new Container();
+    const top = new Container();
+    for (const c of [...this.cards, auto]) {
+      c.position.set(c.x, c.y - H);
+      bottom.addChild(c);
+    }
+    for (const c of [this.top, this.ruleE, this.ruleP]) {
+      c.position.set(c.x - W / 2, c.y);
+      top.addChild(c);
+    }
+    this.ui.addChild(bottom, top);
+    const lay = () => {
+      const v = game.view;
+      const k = Math.max(1, Math.min(1.5, 0.5 / Math.max(0.01, game.scale)));
+      bottom.scale.set(k);
+      bottom.position.set(v.x, v.y + v.h);
+      top.scale.set(Math.min(k, v.w / W));
+      top.position.set(v.x + v.w / 2, v.y);
+      hint.visible = k === 1;
+    };
+    lay();
+    const off = game.onView(lay);
+    this.once('destroyed', () => off());
   }
 
   refreshCards() {

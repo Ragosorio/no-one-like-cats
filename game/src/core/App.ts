@@ -4,11 +4,29 @@ import { Application, Container } from 'pixi.js';
 export const W = 1920;
 export const H = 1080;
 
+export interface ViewRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export class GameApp {
   readonly pixi = new Application();
   /** Root container in logical (1920x1080) coordinates. */
   readonly root = new Container();
   scale = 1;
+  /**
+   * The whole visible screen in logical coordinates. The 1920×1080 design box sits centered inside;
+   * on wider/taller screens the view is bigger than the box (x/y negative) — scenes paint their
+   * background (or simply show more world) out to here instead of black bars.
+   */
+  view: ViewRect = { x: 0, y: 0, w: W, h: H };
+  private viewListeners = new Set<(v: ViewRect) => void>();
+  onView(fn: (v: ViewRect) => void) {
+    this.viewListeners.add(fn);
+    return () => this.viewListeners.delete(fn);
+  }
 
   async init(parent: HTMLElement) {
     await this.pixi.init({
@@ -32,7 +50,11 @@ export class GameApp {
     const sh = this.pixi.screen.height;
     this.scale = Math.min(sw / W, sh / H);
     this.root.scale.set(this.scale);
-    this.root.position.set((sw - W * this.scale) / 2, (sh - H * this.scale) / 2);
+    const ox = (sw - W * this.scale) / 2;
+    const oy = (sh - H * this.scale) / 2;
+    this.root.position.set(ox, oy);
+    this.view = { x: -ox / this.scale, y: -oy / this.scale, w: sw / this.scale, h: sh / this.scale };
+    for (const f of this.viewListeners) f(this.view);
   }
 }
 

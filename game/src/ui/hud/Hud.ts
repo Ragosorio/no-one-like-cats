@@ -6,7 +6,7 @@
 import '../../island/safety';
 import { Container, Graphics, Text } from 'pixi.js';
 import gsap from 'gsap';
-import { W, H } from '../../core/App';
+import { W, H, game } from '../../core/App';
 import { C, F } from '../theme';
 import { Counter, txt } from '../widgets';
 import { icon, IconKind } from '../icons';
@@ -224,6 +224,7 @@ export class Hud extends Container {
     if (island) this.addChild(this.notices);
     this.notices.position.set(W / 2 - 110, 20);
     this.addChild(this.fx);
+    this.anchorGroups();
 
     // ---------------------------------------------------------------- events
     this.unsub.push(
@@ -320,6 +321,49 @@ export class Hud extends Container {
     }
     // momentum flame flicker on twos
     if (G.s.momentum > 2.2 && Math.floor(this.t * 12) % 2 === 0) this.momFlame.scale.set(1 + Math.random() * 0.2, 1 + Math.random() * 0.3);
+  }
+
+  // ------------------------------------------------------------------ screen anchoring (phones / wide screens)
+  /** corner groups: each keeps its 1920×1080 layout but sticks to the REAL screen edge and grows on phones */
+  private tl = new Container();
+  private tr = new Container();
+  private bc = new Container();
+  private bl = new Container();
+  private tc = new Container();
+  private anchorGroups() {
+    const move = (g: Container, kids: Container[], ox: number, oy: number) => {
+      for (const k of kids) {
+        if (!k.parent) continue;
+        k.position.set(k.x - ox, k.y - oy);
+        g.addChild(k);
+      }
+    };
+    move(this.tl, [this.kBadge, this.mom, this.pins], 0, 0);
+    move(this.tr, [this.pillRow, this.timers], W, 0);
+    move(this.bc, [this.actions], W / 2, H);
+    move(this.bl, [this.collectBtn], 0, H);
+    move(this.tc, [this.notices], W / 2, 0);
+    this.addChildAt(this.tc, 0);
+    this.addChildAt(this.bl, 0);
+    this.addChildAt(this.bc, 0);
+    this.addChildAt(this.tr, 0);
+    this.addChildAt(this.tl, 0);
+    this.layoutView();
+    this.unsub.push(game.onView(() => this.layoutView()));
+  }
+  /** phones: the 1920×1080 UI is tiny; corner groups scale up so 24 px text reads ≥ ~12 css px */
+  static uiScale() {
+    return Math.max(1, Math.min(1.5, 0.5 / Math.max(0.01, game.scale)));
+  }
+  private layoutView() {
+    const v = game.view;
+    const k = Hud.uiScale();
+    this.tl.position.set(v.x, v.y);
+    this.tr.position.set(v.x + v.w, v.y);
+    this.bc.position.set(v.x + v.w / 2, v.y + v.h);
+    this.bl.position.set(v.x, v.y + v.h);
+    this.tc.position.set(v.x + v.w / 2, v.y);
+    for (const g of [this.tl, this.tr, this.bc, this.bl, this.tc]) g.scale.set(k);
   }
 
   override destroy(o?: Parameters<Container['destroy']>[0]) {
@@ -466,9 +510,9 @@ export class Hud extends Container {
       return;
     }
     const d = new Container();
-    d.position.set(this.more.x + 58 - 300, 92);
+    d.position.set(this.pillRow.x + this.more.x + 58 - 300, 92);
     this.dropdown = d;
-    this.addChild(d);
+    this.tr.addChild(d);
     this.fillDropdown();
     gsap.from(d, { alpha: 0, y: d.y - 12, duration: 0.2, ease: 'back.out(2)' });
   }
@@ -506,10 +550,11 @@ export class Hud extends Container {
 
   private onKlUp(kl: number) {
     gsap.fromTo(this.kBadge.scale, { x: 1.25, y: 1.25 }, { x: 1, y: 1, duration: 0.6, ease: 'elastic.out(1.2,0.4)' });
-    sparkles(this.fx, this.kBadge.x, this.kBadge.y, C.pinkHot, 14, 120);
+    const kp = this.fx.toLocal(this.kBadge.getGlobalPosition());
+    sparkles(this.fx, kp.x, kp.y, C.pinkHot, 14, 120);
     const t = txt(`¡REINO ${kl}!`, { fontFamily: F.comic, fontSize: 54, fill: C.yellow, stroke: { color: C.ink, width: 9, join: 'round' } });
     t.anchor.set(0, 0.5);
-    t.position.set(this.kBadge.x + 60, this.kBadge.y + 40);
+    t.position.set(kp.x + 60, kp.y + 40);
     t.scale.set(0.2);
     this.fx.addChild(t);
     this.bag

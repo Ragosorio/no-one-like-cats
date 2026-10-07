@@ -2,17 +2,39 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>NO ONE LIKE CATS</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="Gatos lindos. Consecuencias terribles. Isla de gatos + batallas de barcos. Gratis, sin anuncios, de código abierto." />
+    <meta name="theme-color" content="#FF3D8B" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="No One Like Cats" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
     <style>
-      html, body { margin: 0; padding: 0; height: 100%; background: #0d110f; overflow: hidden; }
+      html, body { margin: 0; padding: 0; height: 100%; background: #0d110f; overflow: hidden; overscroll-behavior: none; }
+      body { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
       #app { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
-      canvas { display: block; }
+      canvas { display: block; touch-action: none; }
+      /* phones held upright: the game is landscape */
+      #rotate { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+        background: #ede4d6; color: #16120f; font: 700 20px/1.3 system-ui, sans-serif; text-align: center; padding: 24px; }
+      #rotate svg { width: 96px; height: 96px; animation: tilt 1.6s ease-in-out infinite; }
+      @keyframes tilt { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+      @media (orientation: portrait) and (max-width: 900px) { body.touch #rotate { display: flex; } }
     </style>
   </head>
   <body>
     <div id="app"></div>
+    <div id="rotate">
+      <svg viewBox="0 0 64 64"><rect x="18" y="6" width="28" height="52" rx="6" fill="none" stroke="#16120f" stroke-width="4"/><circle cx="32" cy="50" r="2.5" fill="#16120f"/></svg>
+      <div>Gira tu teléfono.<br />Los gatos no caben parados.</div>
+    </div>
+    <script>
+      if ('ontouchstart' in window || navigator.maxTouchPoints > 0) document.body.classList.add('touch');
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

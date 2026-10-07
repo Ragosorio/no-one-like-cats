@@ -3,6 +3,9 @@ import { W, H } from '../core/App';
 import { C } from '../ui/theme';
 
 /** Noir ocean: gradient sky, layered ink waves animated on twos. */
+/** how far past the design box the sea is drawn (ultrawide / tall screens) */
+const BLEED = 900;
+
 export class Sea extends Container {
   sky = new Graphics();
   back = new Graphics();
@@ -26,7 +29,12 @@ export class Sea extends Container {
       ],
       textureSpace: 'local',
     });
+    // bleed: wide / tall screens see past the 1920×1080 box (game.view), so the sky and the sea
+    // extend well beyond it (the gradient keeps its look inside the box; outside it's the end colors)
+    this.sky.rect(-BLEED, -BLEED, W + BLEED * 2, BLEED).fill(palette.skyTop);
     this.sky.rect(0, 0, W, waterY + 40).fill(grad);
+    this.sky.rect(-BLEED, 0, BLEED, waterY + 40).fill(grad);
+    this.sky.rect(W, 0, BLEED, waterY + 40).fill(grad);
     this.addChild(this.sky, this.back);
     Ticker.shared.add(this.tick, this);
     this.draw();
@@ -43,11 +51,11 @@ export class Sea extends Container {
     this.draw();
   }
   private wave(g: Graphics, y: number, amp: number, len: number, speed: number, color: number, alpha = 1) {
-    g.moveTo(0, H);
-    for (let x = 0; x <= W; x += 24) {
+    g.moveTo(-BLEED, H + BLEED);
+    for (let x = -BLEED; x <= W + BLEED; x += 24) {
       g.lineTo(x, y + Math.sin(x / len + this.t * speed) * amp + Math.sin(x / (len * 0.43) - this.t * speed * 1.3) * amp * 0.35);
     }
-    g.lineTo(W, H).closePath().fill({ color, alpha });
+    g.lineTo(W + BLEED, H + BLEED).closePath().fill({ color, alpha });
   }
   private draw() {
     const y = this.waterY;
