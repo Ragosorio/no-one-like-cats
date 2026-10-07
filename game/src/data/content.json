@@ -7404,7 +7404,7 @@
      "cry": null,
      "archetype": "haz",
      "element": "light",
-     "dmg": 110,
+     "dmg": 100,
      "radius": 1.6,
      "projectiles": 1,
      "spreadDeg": 0,

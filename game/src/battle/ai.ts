@@ -161,8 +161,10 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
     if (b.boss?.submerged && b.cfg.boss?.side === enemy && !(s.shot.element === 'electric' || s.shot.trajectory === 'torpedo')) shotMul *= lev && chills ? 0.7 : 0.1;
     // arcane ward: rayo pops a layer, physical hits it ×1.5
     if (wardUp) shotMul *= isRayo(s.shot) ? 2.2 : s.shot.element === 'earth' || s.shot.element === 'neutral' ? 1.3 : 1;
+    // a Luz ray flies dead straight: it's aimed almost flat (even a bit downward), not lobbed
+    const flat = s.shot.trajectory === 'ray';
     for (let ai = 0; ai < 22; ai++) {
-      const elev = (8 + ai * 3.4) * (Math.PI / 180);
+      const elev = (flat ? -8 + ai * 1 : 8 + ai * 3.4) * (Math.PI / 180);
       const angle = dir > 0 ? -elev : Math.PI + elev;
       for (let pi = 0; pi < 9; pi++) {
         const power = 520 + pi * 95;
