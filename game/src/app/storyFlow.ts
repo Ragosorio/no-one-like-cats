@@ -14,6 +14,8 @@ import { slugOf } from '../art/tint';
 import { isRepairing } from '../state/sys/campaign';
 import { resonancesWith } from '../state/ext/campaign';
 import { STORY_BATTLES, applyStoryResult, buildStoryBattle, claimStoryCat, voidFragments, StoryLoot } from '../state/sys/storyBattles';
+import { GRIETA_CAPTION } from '../ui/story/grietasScript';
+import { ELEMENT_NAME } from '../data/elementsMeta';
 
 let running = false;
 
@@ -60,12 +62,15 @@ async function afterStory(id: string, loot: StoryLoot) {
   const bits = [`+${fmt(loot.gold)} oro`];
   if (loot.gems) bits.push(`+${loot.gems} gemas`);
   if (loot.fragments) bits.push(`+${loot.fragments} Fragmento del Vacío (${voidFragments()}/10)`);
+  if (loot.crystals) bits.push(`+${loot.crystals.n} cristales de ${(ELEMENT_NAME[loot.crystals.el] ?? loot.crystals.el).toLowerCase()}`);
   toast(def.title, { icon: 'star', color: def.color, sub: bits.join(' · '), dur: 4 });
 }
 
 const CAPTION: Record<string, string> = {
   magic: 'Un barco que brilla, un escudo que hace ¡CLANK! y un elemento que no debería existir. Ahora es tuyo.',
   cosmic: 'Una estrella cayó al mar. No la empujaste tú. Pero ahora te sigue.',
+  // Parte 2: Grietas del Multiverso
+  ...GRIETA_CAPTION,
 };
 
 /** T4 element discovery (+ the primordial that came with it), outside the Results screen */

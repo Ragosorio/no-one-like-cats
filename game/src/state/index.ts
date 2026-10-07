@@ -12,6 +12,7 @@ import './sys/workforce';
 import './sys/decor';
 import './sys/casino';
 import './sys/podio';
+import './sys/grietas';
 import { markAllPatched } from './patches';
 import { UPDATE_IDS } from '../data/updates';
 

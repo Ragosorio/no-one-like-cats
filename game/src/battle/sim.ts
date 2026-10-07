@@ -919,6 +919,8 @@ export class Battle {
     if (this.boss?.enraged && this.cfg.boss?.side === side) atk *= ENRAGE_MUL;
     const origin = cannonId !== undefined ? this.cannonMuzzle(side, cannonId) : this.muzzle(side, cat?.def.uid);
     p2BeginFire(this);
+    // INESTABLE (limitation): the shot wobbles a little, for whoever owns the cat
+    if (cat?.def.limitation === 'unstable') angle += this.rng.range(-0.06, 0.06);
     const windNow = this.wind + this.sides[side].windNext;
     this.sides[side].windNext = 0;
     const paths = this.buildPaths(shot, origin, angle, power, windNow, side);

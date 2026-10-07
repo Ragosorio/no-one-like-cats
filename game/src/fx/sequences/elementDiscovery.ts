@@ -197,7 +197,10 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
     counter.position.set(W / 2, 96);
     const known = o.known.filter((k) => k !== el);
     // the whole chapter web: discovered elements in color, the rest as "???" ghosts
-    const all = ELEMENTS.filter((e) => e.id !== el && e.id !== 'void').sort((a, b) => a.order - b.order).map((e) => e.id);
+    // (the multiverse elements of Parte 2 only join the web once known: no spoilers)
+    const all = ELEMENTS.filter((e) => e.id !== el && (known.includes(e.id) || !/^(grieta|chapter)/.test(e.unlock)))
+      .sort((a, b) => a.order - b.order)
+      .map((e) => e.id);
     const center = { x: W / 2, y: H / 2 + 50 };
     const nodes: Container[] = [];
     const links = new Graphics();

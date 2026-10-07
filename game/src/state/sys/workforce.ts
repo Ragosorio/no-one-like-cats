@@ -121,6 +121,16 @@ export interface ExpeditionLoot {
   element: string;
 }
 /** loot formula (balance.expeditions): h^0.85 × (1 + 0.5·viajeros) × rates of the zone */
+/** Parte 2: a cat of a multiverse element brings back crystals of ITS element (their habitats need them for tiers 5+) */
+const MULTIVERSE = ['ice', 'sound', 'shadow', 'time', 'light', 'void'];
+export function expeditionCrystalElement(catUids: string[]): string | null {
+  for (const u of catUids) {
+    const c = getCat(u);
+    const el = c ? catDef(c.species).elements.find((e) => MULTIVERSE.includes(e)) : undefined;
+    if (el) return el;
+  }
+  return null;
+}
 export function expeditionLoot(zone: number, hours: number, catUids: string[]): ExpeditionLoot {
   const e = BAL.expeditions;
   const k = Math.pow(hours, e.hour_exponent);
@@ -131,7 +141,8 @@ export function expeditionLoot(zone: number, hours: number, catUids: string[]): 
     crystals: Math.round(e.crystals_per_h * m),
     orbs: Math.round(e.orbs_per_h * m),
     blueprints: e.blueprint_per_h * m,
-    element: ZONES[zone - 1]?.elements[0] ?? 'fire',
+    // a cat of a multiverse element brings back crystals of ITS element (state/sys/grietas.ts)
+    element: expeditionCrystalElement(catUids) ?? ZONES[zone - 1]?.elements[0] ?? 'fire',
   };
 }
 export function startExpedition(zone: number, hours: number, catUids: string[]) {
