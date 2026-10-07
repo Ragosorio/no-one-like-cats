@@ -179,6 +179,11 @@ estimación de victoria (`state/sys/estimate.ts`) juega la misma pelea sin panta
   los dos lados.
 - `Math.random` en la escena solo para cosas que no tocan el `Battle` (partículas, tono de sonidos).
 - Si agregas una regla, va en `sim.ts` (o un módulo que `sim.ts` llame), nunca en la escena.
+- Ejemplo de regla en su propio módulo: los **CATACLISMOS** de las zonas 4–6 (`battle/cataclysm.ts`:
+  lluvia de meteoritos, la luna, el sol, la marea negra). `Battle.startTurn` los avisa y los hace caer,
+  `integrate` marca el tiro que cruza su SELLO, y la escena solo los escenifica desde la cola `queued`
+  y los eventos `{ k: 'cata' }` (`battle/cataFx.ts`). Sus posiciones salen de una semilla propia
+  derivada de la del combate, así que no mueven los dados del resto de la pelea.
 
 Prueba de paridad (sin pantalla visible): crear la escena con `spec.seed = S`, jugar el lado del
 jugador con `decide(..., aiSeed.cat(sim, 0, k))` y comparar cada `startTurn`/`fire`/`endTurn` con

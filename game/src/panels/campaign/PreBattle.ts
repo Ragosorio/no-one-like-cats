@@ -15,7 +15,7 @@ import { G } from '../../state/game';
 import { CAT_BY_ID, SHIP_BY_ID, zoneBoss } from '../../data/content';
 import { OutlineFilter } from 'pixi-filters';
 import { buildBattle, stageInfo, stagePower, winChance } from '../../state/sys/campaign';
-import { autoCrew, crew, shipPower } from '../../state/sys/ship';
+import { autoCrew, crew, combatPower, combatWeight } from '../../state/sys/ship';
 import { playerBlueprint } from '../../state/sys/ship';
 import {
   FACTION,
@@ -288,7 +288,9 @@ class PreBattleView {
     const s = this.stage;
     const def = SHIP_BY_ID.get(G.s.ship.active);
     const ep = stagePower(z, s);
-    const sp = shipPower();
+    // the Poder the fight scales with (the Bastión: ×0.9, its hull fights on its own; ship.ts COMBAT_WEIGHT)
+    const sp = combatPower();
+    const cw = combatWeight();
     const pc = winChance(z, s);
     const pv = new Container();
     pv.position.set(x0, 90);
@@ -297,7 +299,7 @@ class PreBattleView {
     v1.y = 16;
     const vs = txt('vs', { fontFamily: F.news, fontSize: 48, fill: C.ink });
     vs.position.set(Math.max(150, v1.width + 24), 26);
-    const l2 = label(`TU PODER · ${(def?.name ?? '').toUpperCase()}`, 14, P.blue, { letterSpacing: 2 });
+    const l2 = label(`${cw !== 1 ? 'TU PODER DE COMBATE' : 'TU PODER'} · ${(def?.name ?? '').toUpperCase()}${cw !== 1 ? ` (x${cw})` : ''}`, 14, P.blue, { letterSpacing: 2 });
     l2.position.set(vs.x + vs.width + 24, 0);
     const v2 = txt(fmt(sp), { fontFamily: F.poster, fontSize: 64, fill: P.blue });
     v2.position.set(l2.x, 16);

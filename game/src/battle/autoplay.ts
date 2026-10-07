@@ -80,6 +80,8 @@ export interface AutoResult {
   /** boss phase reached (boss battles) and the turn each phase began */
   bossPhase?: number;
   phaseTurns?: number[];
+  /** CATACLISMOS (balance scripts): times it landed / was cancelled, and the share of your structure it took */
+  cata?: { casts: number; stops: number; dmg: number };
 }
 
 /** play a whole battle AI vs AI (player side uses `playerProfile`) */
@@ -103,6 +105,7 @@ export function* autoBattleSteps(spec: BattleSpec, playerProfile: AiProfile = DI
   let g = 0;
   const dmgBy = new Map<string, number>();
   const phaseTurns: number[] = [];
+  let cataDmg = 0;
   const notePhase = () => {
     const p = b.boss?.phase ?? 0;
     while (phaseTurns.length < p - 1) phaseTurns.push(b.turn);
@@ -111,6 +114,7 @@ export function* autoBattleSteps(spec: BattleSpec, playerProfile: AiProfile = DI
     for (const side of [0, 1] as const) {
       notePhase();
       b.startTurn(side);
+      for (const q of b.queued) if (q.cata) for (const e of q.events) if (e.k === 'cell' && e.side === 0) cataDmg += e.dmg;
       b.queued.length = 0; // boss volleys are already resolved; only the view animates them
       if (b.winner !== null) break;
       let target: { x: number; y: number } | null = null;
@@ -145,5 +149,6 @@ export function* autoBattleSteps(spec: BattleSpec, playerProfile: AiProfile = DI
     }
   }
   notePhase();
-  return { won: b.winner === 0, turns: b.turn, reason: b.reason, kos, hullLost: 1 - b.hullPct(0), bossPhase: b.boss?.phase, phaseTurns };
+  const cata = b.cata ? { casts: b.cata.casts, stops: b.cata.stops, dmg: cataDmg / Math.max(1, b.sides[0].ship.initialMax?.[0] ?? 1) } : undefined;
+  return { won: b.winner === 0, turns: b.turn, reason: b.reason, kos, hullLost: 1 - b.hullPct(0), bossPhase: b.boss?.phase, phaseTurns, cata };
 }

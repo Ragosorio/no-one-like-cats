@@ -195,6 +195,23 @@ export function shipPower(shipId = G.s.ship.active, crewUids = crew(shipId)) {
   return b.mult * (slotPower(shipId) + crewPow);
 }
 
+/**
+ * Combat weight: the share of a ship's Poder that its fights scale with (Poder ratio → damage / toughness,
+ * campaign.ts fS / fHp). Poder adds modules and crew; it never counted the hull itself. The Bastión's 208-cell
+ * hull, 5 cannons and 2 bubbles fight on their own in the sim, and it used to win zone 5–6 bosses at 45% of
+ * their Poder. Same ship, same modules: its fights scale with ×0.9 of its Poder (the pre-battle shows it as
+ * PODER DE COMBATE), and the rest of the balance comes from the zones' CATACLISMOS, which fall harder on big
+ * hulls (battle/cataclysm.ts). Exported for the balance scripts.
+ */
+export const COMBAT_WEIGHT: Record<string, number> = { bastion: 0.9 };
+export function combatWeight(shipId = G.s.ship.active) {
+  return COMBAT_WEIGHT[shipId] ?? 1;
+}
+/** the Poder its fights scale with (pre-battle "PODER DE COMBATE") */
+export function combatPower(shipId = G.s.ship.active, crewUids = crew(shipId)) {
+  return shipPower(shipId, crewUids) * combatWeight(shipId);
+}
+
 export function hullClass(m = mk('hull')) {
   return HULL_BY_MK[Math.max(0, Math.min(6, m - 1))];
 }

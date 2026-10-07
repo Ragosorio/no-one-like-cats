@@ -184,6 +184,14 @@ Todo es código. Si te dan ganas de "nomás poner un PNG", respira, toma agua, y
    barco tiene perk, ahí va.
 6. (Opcional) Describe su look en `shipArt.playerShips` para quien diseñe después. El arte del jugador
    hoy depende del **Mk de Casco**, no del id del barco (ver receta 2).
+7. **Tamaño y Poder.** El Poder (`shipPower`) suma módulos y gatos, pero no el casco. Un barco con
+   mucho casco, muchos cañones o burbujas pelea mejor de lo que dice su Poder: mídelo con el estimado
+   (las simulaciones de `state/sys/estimate.ts`) contra el Gorrión al mismo Poder. Si gana a cualquier
+   proporción, dale un **peso de combate** en `COMBAT_WEIGHT` (`state/sys/ship.ts`; el Bastión pelea con
+   x0.9 de su Poder y la pre-batalla lo muestra como PODER DE COMBATE). Y recuerda que en las zonas 4–6
+   los **CATACLISMOS** (`battle/cataclysm.ts`) le caen más fuerte a todo barco de más de 95 celdas
+   (contando módulos): un casco gigante es un blanco gigante. Si cambias el peso de un barco que ya
+   existe, deja un parche con nota (ejemplo: `2026-10-bastion-poder-de-combate` en `campaign.ts`).
 
 ## Receta 2: nuevo estilo de casco (skin)
 

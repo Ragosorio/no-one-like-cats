@@ -17,6 +17,8 @@ import { CONTENT } from '../data/content';
 import { p2BeginFire, p2Flight, p2Impact, p2PostHitCat, p2PreHitCat, p2PreviewMul, p2React, p2Shooters, p2StartTurn } from './multiverso';
 import { lateBossInit, lateBossStart, lateEnterPhase, wardIntercept, lateCellMul, lateAfterImpact, lateLoss, lateSplash, tickBuffs } from './bossLate';
 import { ULTS, ultBudgetFrac, ultTicks } from './ults';
+import { cataInit, cataStart, cataCrack, sealOpen } from './cataclysm';
+import type { CataCfg, CataId, CataState } from './cataclysm';
 
 export interface PathPoint {
   x: number;
@@ -34,6 +36,8 @@ export interface ShotPath {
   jumps?: number[];
   /** swallowed by an event horizon (Horizonte de Eventos): no impact, it just vanishes */
   eaten?: boolean;
+  /** point index where it flew through a cataclysm's SEAL (cataclysm.ts) */
+  seal?: number;
 }
 
 export type BossWhat =
@@ -134,7 +138,9 @@ export type BattleEvent =
   | { k: 'bubble'; side: number; what: 'block' | 'break' | 'up' | 'down'; x: number; y: number; path: number; at: number }
   | { k: 'heal'; side: number; cell: Cell; amount: number }
   | { k: 'status'; side: number; cells: Cell[]; status: StatusId }
-  | { k: 'info'; text: string; x: number; y: number; color: number; path: number; at: number };
+  | { k: 'info'; text: string; x: number; y: number; color: number; path: number; at: number }
+  /** CATACLISMOS (cataclysm.ts): the warning, the staged fall, the landing, a seal hit, the cancel; side = the ship it falls on */
+  | { k: 'cata'; what: 'tell' | 'fall' | 'land' | 'crack' | 'stop'; id: CataId; side: number; x: number; y: number; n?: number; path: number; at: number };
 
 export interface SideSetup {
   blueprint: ShipBlueprint;
@@ -185,6 +191,8 @@ export interface StageRules {
   demolisher?: number[];
   /** this side leaves at the end of `turn` (Barco del Vacío): the other side "wins" by surviving */
   retreat?: { side: 0 | 1; turn: number };
+  /** CATACLISMOS: the zone's / boss's power that falls on the other ship every few turns (cataclysm.ts) */
+  cataclysm?: CataCfg;
 }
 
 export interface BattleConfig {
@@ -305,6 +313,8 @@ export interface QueuedShot {
   paths: ShotPath[];
   events: BattleEvent[];
   shot: ShotDef;
+  /** a cataclysm: the view stages its set piece before the events */
+  cata?: CataId;
 }
 
 export interface SideState {
@@ -420,7 +430,9 @@ export class Battle {
   /** events produced outside fire()/startTurn() (phase changes) waiting for the view */
   pending: BattleEvent[] = [];
   /** field gravity (Estrella Errante / Primer Mar): global multiplier + an inverted column */
-  field: { gMul: number; anti: { x0: number; x1: number; y0: number; k: number } | null } = { gMul: 1, anti: null };
+  field: { gMul: number; anti: { x0: number; x1: number; y0: number; k: number } | null; tideMul: number } = { gMul: 1, anti: null, tideMul: 1 };
+  /** CATACLISMOS (cataclysm.ts): the zone's / boss's power, its countdown and its seal */
+  cata: CataState | null = null;
   /** temporary wells (ultimates: black hole, Abisa's lure); module wells are derived (wellList) */
   wells: Well[] = [];
   /** Arcanista F2 portals (now) and where they move next (telegraphed) */
@@ -441,6 +453,7 @@ export class Battle {
     this.wind = cfg.wind ?? Math.round(this.rng.range(-50, 50));
     this.sides = cfg.sides.map((s, i) => this.mkSide(s, i as 0 | 1)) as [SideState, SideState];
     if (cfg.boss) this.initBoss(cfg.boss);
+    if (cfg.rules?.cataclysm) cataInit(this, cfg.rules.cataclysm);
   }
 
   private mkSide(s: SideSetup, side: 0 | 1): SideState {
@@ -768,6 +781,8 @@ export class Battle {
     // ultimate after-effects (Gea, Eclipse, Merlina's FIN, wells) — same rules for both sides
     ultTicks(this, side, ev);
     tickBuffs(this, side, ev);
+    // the zone's / boss's cataclysm: lands (if it was warned) or counts down to its next warning
+    cataStart(this, side, ev);
     this.bossAtStart(side, ev);
     this.checkVictory();
     ev.push(...this.updatePhase());
@@ -1193,6 +1208,8 @@ export class Battle {
   resolvePaths(side: number, shot: ShotDef, atk: number, paths: ShotPath[], events: BattleEvent[], offset = 0) {
     paths.forEach((p, i) => {
       const pi = i + offset;
+      // a cat's shot flew through a cataclysm's SEAL on the way (it doesn't stop the shot; cannons don't count)
+      if (p.seal !== undefined && this.curShooter) cataCrack(this, side, events, pi, p.seal);
       p.impacts.forEach((idx, k) => {
         const pt = p.points[idx];
         const owner = p.owners?.[k] ?? side;
@@ -1229,6 +1246,7 @@ export class Battle {
       const vx = (ap.x - prev.x) / DT;
       base.points = base.points.slice(0, apex + 1);
       base.impacts = [];
+      if (base.seal !== undefined && base.seal > apex) base.seal = undefined;
       const k = shot.projectiles ?? 4;
       for (let i = 0; i < k; i++) {
         const sub = this.integrate({ ...shot, trajectory: 'ballistic' }, ap, Math.atan2(30 + i * 25, vx), Math.abs(vx) * (0.7 + i * 0.12), wind, side);
@@ -1270,14 +1288,17 @@ export class Battle {
     const field = this.field;
     const portals = this.portals;
     let portalCool = 0;
-    const done = (): ShotPath => ({ points: pts, element: shot.element, kind: traj, impacts, owners, jumps: jumps.length ? jumps : undefined });
+    // a cataclysm's SEAL: the suffering side's shots crack it by flying through (recorded once per path)
+    const seal = this.cata && sealOpen(this, side) ? this.cata.seal : null;
+    let sealAt: number | undefined;
+    const done = (): ShotPath => ({ points: pts, element: shot.element, kind: traj, impacts, owners, jumps: jumps.length ? jumps : undefined, seal: sealAt });
     for (let step = 0; step < 900; step++) {
       const sub = Math.max(1, Math.ceil((Math.hypot(vx, vy) * DT) / 8));
       const sdt = DT / sub;
       for (let k = 0; k < sub; k++) {
         if (!torpedo) {
           vx += wind * windK * sdt;
-          let gm = field.gMul;
+          let gm = field.gMul * field.tideMul;
           const an = field.anti;
           if (an && x >= an.x0 && x <= an.x1 && y >= an.y0) gm = an.k;
           vy += g * gm * sdt;
@@ -1312,6 +1333,10 @@ export class Battle {
         }
         x += vx * sdt;
         y += vy * sdt;
+        if (seal && sealAt === undefined && owner === side && Math.hypot(x - seal.x, y - seal.y) < seal.r) {
+          pts.push({ x, y });
+          sealAt = pts.length - 1;
+        }
         // portals: in through one ring, out of the other facing back — and the shot changes owner
         if (portals && portalCool <= 0) {
           const ina = Math.hypot(x - portals.a.x, y - portals.a.y) < portals.r;
