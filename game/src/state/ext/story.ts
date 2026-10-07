@@ -17,6 +17,15 @@ export function markBeat(id: string) {
   }
 }
 
+/** a feature's "what / why / how" was already told (first appearance or first use) */
+export function explained(id: string) {
+  return (G.s.explained ?? []).includes(id);
+}
+export function markExplained(id: string) {
+  G.s.explained ??= [];
+  if (!G.s.explained.includes(id)) G.s.explained.push(id);
+}
+
 export function lineSeen(id: string) {
   return G.s.missions.seenLines.includes(id);
 }

@@ -20,6 +20,7 @@ import { CONTENT } from '../../data/content';
 import { clearChildren, killTree, label, stamp } from '../campaign/common';
 import { sparkles } from '../../fx/juice';
 import { glyph, GlyphKind } from './glyphs';
+import { openGlossary, whatIsThisButton } from '../../ui/story/glossary';
 
 interface Milestone {
   kl: number;
@@ -99,6 +100,10 @@ function autoCopy(a: Automation) {
 
 export function openKingdomPanel() {
   const m = new Modal('REINO', 1840, 1010, { color: C.paper, band: C.ink, subtitle: '«Ya aprendiste esto; toma, ahora preocúpate por cosas más interesantes»' });
+  // ¿QUÉ ES ESTO?: the Reino + automations, in plain words (story glossary)
+  const help = whatIsThisButton(() => openGlossary('reino'));
+  help.position.set(m.w - 76 - help.width - 24, 28);
+  m.panel.addChild(help);
   m.open();
   new KingdomView(m);
 }

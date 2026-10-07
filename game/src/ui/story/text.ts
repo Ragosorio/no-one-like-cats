@@ -37,6 +37,7 @@ const SOFT: [RegExp, string][] = [
   [/cabrones/gi, 'traviesos'],
   [/cabrón/gi, 'compa'],
   [/mierda/gi, 'porquería'],
+  [/madreado/gi, 'apaleado'],
   [/carajo/gi, 'caramba'],
   [/pinche /gi, ''],
   [/putas/gi, 'rayos'],

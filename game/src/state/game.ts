@@ -133,6 +133,8 @@ export interface GameState {
   counters: Record<string, number>;
   flags: Record<string, boolean>;
   beatsSeen: string[];
+  /** features whose "what / why / how" Luzterna already explained (story › first appearance or first use) */
+  explained: string[];
   expeditions: { id: string; zone: number; hours: number; cats: string[]; timerId: string; ready: boolean }[];
   resQueue: { a: string; b: string }[];
   /** worker role by cat uid */
@@ -216,6 +218,7 @@ export function defaultState(): GameState {
     counters: {},
     flags: {},
     beatsSeen: [],
+    explained: [],
     expeditions: [],
     resQueue: [],
     workers: {},

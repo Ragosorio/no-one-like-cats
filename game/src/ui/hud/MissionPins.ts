@@ -8,6 +8,7 @@ import { MISSION_BY_ID, MissionDef } from '../../data/content';
 import { evalGoal } from '../../state/sys/missions';
 import { fmt } from '../../core/format';
 import { card, pressable } from './parts';
+import { openMissionHelp, whatIsThisButton } from '../story/glossary';
 
 export const CHAIN_META: Record<string, { name: string; color: number; text: number }> = {
   historia: { name: 'HISTORIA', color: C.pinkHot, text: C.paper },
@@ -38,8 +39,9 @@ class PinCard extends Container {
     chain.position.set(15, H / 2);
     const title = txt(m.title, { fontFamily: F.poster, fontSize: 24, fill: C.ink });
     title.position.set(42, 6);
-    if (title.width > W - 120) title.scale.set((W - 120) / title.width);
-    const goal = txt(m.goal.text, { fontFamily: F.ui, fontSize: 15, fill: C.ink, wordWrap: true, wordWrapWidth: W - 128, lineHeight: 17 });
+    if (title.width > W - 160) title.scale.set((W - 160) / title.width);
+    // the card is tiny: the parenthetical how-to lives in MISIONES and in «?»
+    const goal = txt(m.goal.text.replace(/\s*\([^)]*\)/g, ''), { fontFamily: F.ui, fontSize: 15, fill: C.ink, wordWrap: true, wordWrapWidth: W - 128, lineHeight: 17 });
     goal.position.set(42, 38);
     if (goal.height > 36) goal.scale.set(36 / goal.height);
     this.bar.position.set(42, H - 16);
@@ -56,7 +58,10 @@ class PinCard extends Container {
     gt.position.set(29, 6);
     go.addChild(gb, gt, arrow);
     go.position.set(W - 70, 11);
-    this.face.addChild(bg, strip, chain, title, goal, this.bar, this.prog, go);
+    // ¿QUÉ ES ESTO?: what this mission means and what it's for (glossary)
+    const help = whatIsThisButton(() => openMissionHelp(m), { compact: true });
+    help.position.set(W - 108, 6);
+    this.face.addChild(bg, strip, chain, title, goal, this.bar, this.prog, go, help);
     this.addChild(this.face);
     pressable(this, () => onGo(m), { face: this.face });
     this.refresh();
