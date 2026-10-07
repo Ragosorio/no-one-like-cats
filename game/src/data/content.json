@@ -11889,9 +11889,9 @@
     "type": "own_ship_or_event",
     "ship": "merodeador",
     "event": "bandera_negra",
-    "text": "Gana el evento Bandera Negra (o consigue el Merodeador)."
+    "text": "Consigue el Merodeador en el Astillero (se desbloquea en Reino 15): el barco pirata de 5 gatos."
    },
-   "trigger": "event_presage:bandera_negra",
+   "trigger": "boss:2",
    "purpose": "story",
    "reward": {
     "std": true
@@ -11899,8 +11899,8 @@
    "unlocks": [
     "C17"
    ],
-   "line": "Si pierdes, se queda con tu dignidad.",
-   "why": "Si ganas, te quedas con el Merodeador, un barco de 5 gatos.",
+   "line": "Un barco pirata con bandera negra y cinco camarotes. Lo quieres. Yo lo quiero. Hasta los gatos lo quieren.",
+   "why": "El Merodeador lleva 5 gatos y saca 40% más chatarra: más tripulación, más disparos por turno.",
    "estTime": "~0:55"
   },
   {

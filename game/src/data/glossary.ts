@@ -641,7 +641,7 @@ const EXTRA: Record<string, string[]> = {
   H05: ['elementos'],
   H07: ['reino'],
   H11: ['eventos'],
-  H12: ['eventos'],
+  H12: ['astillero'],
   K05: ['reino'],
   K12: ['estrellas'],
   K13: ['nivel'],
