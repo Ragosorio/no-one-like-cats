@@ -17,8 +17,32 @@ import { holoSheen } from '../../fx/sequences/gachaHolo';
 import { csfx } from './sfx';
 import type { CasinoCtx } from './ctx';
 
-export const TIER_COL: Record<string, number> = { common: 0xd9cdb8, rare: 0x6fa8ff, epic: 0xff2e88, legendary: 0xffc94a, holo: 0x00e5ff };
-export const TIER_LABEL: Record<string, string> = { common: 'COMÚN', rare: 'RARO', epic: 'ÉPICO', legendary: 'LEGENDARIO', holo: 'HOLO' };
+export const TIER_COL: Record<string, number> = { common: 0xd9cdb8, rare: 0x6fa8ff, epic: 0xff2e88, legendary: 0xffc94a, holo: 0x00e5ff, mythic: 0xff3b1f };
+export const TIER_LABEL: Record<string, string> = { common: 'COMÚN', rare: 'RARO', epic: 'ÉPICO', legendary: 'LEGENDARIO', holo: 'HOLO', mythic: 'MÍTICO' };
+
+/** how cat reveals play inside the casino (auto-play speeds) */
+export interface RevealPlan {
+  /** which granted cats get the full reveal (default: new cats, fresh foils, holo) */
+  only?: (g: Granted) => boolean;
+  timeScale?: number;
+  /** close by itself N s after it ends (auto-play) */
+  autoClose?: number;
+}
+const rankT: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3, holo: 4, mythic: 5 };
+export const tierRank = (t?: string) => rankT[t ?? 'common'] ?? 0;
+/** reveal plan for an auto-play speed: x1 = new or épico+ · x2 = new épico+ or any legendary+ · x4 / TURBO = only NEW legendary+ (faster, self-closing) */
+export function revealPlanFor(speed: number): RevealPlan {
+  if (speed >= 99) return { only: (g) => !!g.isNew && catRank(g) >= 3, timeScale: 2.6, autoClose: 0.8 };
+  if (speed >= 4) return { only: (g) => (!!g.isNew || !!g.upgraded) && catRank(g) >= 3, timeScale: 2.4, autoClose: 0.8 };
+  if (speed >= 2) return { only: (g) => ((!!g.isNew || !!g.upgraded) && catRank(g) >= 2) || catRank(g) >= 3, timeScale: 1.8, autoClose: 1.2 };
+  return { only: (g) => !!g.isNew || !!g.upgraded || !!g.holo || catRank(g) >= 2, autoClose: 2.5 };
+}
+/** rank of a granted cat by its species rarity (holo foil counts as one step up) */
+export function catRank(g: Granted): number {
+  if (g.kind !== 'cat' || !g.ref) return tierRank(g.tier);
+  const r = rankT[catDef(g.ref).rarity] ?? 0;
+  return g.holo ? Math.max(r, 3) : r;
+}
 
 /** cat illustration (async texture load; draws when ready) */
 export function catArt(species: string, size: number): Container {
@@ -79,7 +103,7 @@ export function prizeArt(p: Prize, size: number): Container {
 /** a printed prize card (w×h), anchor top-left */
 export function prizeCard(g: Granted, w = 200, h = 260): Container {
   const c = new Container();
-  const tier = g.holo ? 'holo' : (g.tier ?? 'common');
+  const tier = g.tier === 'mythic' ? 'mythic' : g.holo ? 'holo' : (g.tier ?? 'common');
   const col = TIER_COL[tier] ?? CP.paperDark;
   const bg = new Graphics();
   bg.rect(7, 7, w, h).fill(CP.ink);
@@ -149,7 +173,7 @@ function targetFor(g: Granted): 'gold' | 'gems' | 'chips' | 'tickets' | null {
 }
 
 /** fan of prize cards popping out of a point, then flying to the HUD; then cat reveals for new cats */
-export async function presentPrizes(ctx: CasinoCtx, granted: Granted[], from: { x: number; y: number }, o: { hold?: number } = {}) {
+export async function presentPrizes(ctx: CasinoCtx, granted: Granted[], from: { x: number; y: number }, o: { hold?: number; reveal?: RevealPlan } = {}) {
   if (!granted.length) return;
   const n = granted.length;
   const w = n > 4 ? 150 : 190;
@@ -172,7 +196,7 @@ export async function presentPrizes(ctx: CasinoCtx, granted: Granted[], from: { 
     gsap.to(card.scale, { x: 1, y: 1, duration: 0.45, delay: i * 0.08, ease: 'back.out(2)' });
     window.setTimeout(() => {
       if (card.destroyed) return;
-      csfx.flip(g.tier === 'legendary' || g.holo ? 3 : g.tier === 'epic' ? 2 : 0);
+      csfx.flip(Math.min(4, tierRank(g.holo ? 'holo' : g.tier)));
       sparkles(layer, card.x, card.y, TIER_COL[g.holo ? 'holo' : (g.tier ?? 'common')], 8, 120);
     }, 300 + i * 80);
   });
@@ -200,12 +224,12 @@ export async function presentPrizes(ctx: CasinoCtx, granted: Granted[], from: { 
     ),
   );
   layer.destroy({ children: true });
-  await revealCats(ctx.top, granted);
+  await revealCats(ctx.top, granted, o.reveal);
 }
 
 /** full cat reveal (collection's storyboard a) for new cats and fresh HOLO foils */
-export async function revealCats(layer: Container, granted: Granted[]) {
-  const cats = granted.filter((g) => g.kind === 'cat' && (g.isNew || g.upgraded || g.holo));
+export async function revealCats(layer: Container, granted: Granted[], plan: RevealPlan = {}) {
+  const cats = granted.filter((g) => g.kind === 'cat' && (plan.only ? plan.only(g) : g.isNew || g.upgraded || g.holo));
   if (!cats.length) return;
   try {
     const { playCatReveal } = await import('../../fx/sequences/catReveal');
@@ -226,6 +250,9 @@ export async function revealCats(layer: Container, granted: Granted[]) {
         serial: 777,
         dex: g.isNew ? info.dex : undefined,
         secret: def.secret,
+        holo: !!g.holo,
+        timeScale: plan.timeScale,
+        autoClose: plan.autoClose,
       });
     }
   } catch (e) {

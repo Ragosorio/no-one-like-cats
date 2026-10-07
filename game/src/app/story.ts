@@ -32,6 +32,7 @@ import { darkSky } from '../ui/story/effects';
 import { applyAudioSettings, openSettings } from '../panels/Settings';
 import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
 import { goIsland, goTitle } from './flow';
+import { CASINO_INTRO } from '../panels/casino/intro';
 
 // ------------------------------------------------------------------ beat plan (M1: b01–b11 · M2: zones 2–3)
 interface BeatRef {
@@ -116,6 +117,8 @@ const WHEN: { key: string; cond: () => boolean; ref: BeatRef }[] = [
   { key: 'z5_elite', cond: () => isCleared('5-4') && !isCleared('5-5'), ref: { beat: 'z5_elite', custom: ELITE_WARN[5], delay: 1.2 } },
   { key: 'z6_intro', cond: () => zoneUnlocked(6), ref: { beat: 'z6_intro', custom: ZONE_INTRO[6], card: 6, onlyOn: 'map', delay: 2.6 } },
   { key: 'z6_elite', cond: () => isCleared('6-4') && !isCleared('6-5'), ref: { beat: 'z6_elite', custom: ELITE_WARN[6], delay: 1.2 } },
+  // why there's a casino on a cat island (casino agent): once, on the island, after the first boss
+  { key: 'casino_intro', cond: () => G.s.campaign.bossesDefeated >= 1, ref: { beat: 'casino_intro', custom: CASINO_INTRO, onlyOn: 'island', delay: 2.5 } },
 ];
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
 const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22']);

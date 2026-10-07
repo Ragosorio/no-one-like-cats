@@ -1,6 +1,9 @@
 /**
  * RULETA DEL MULTIVERSO — 25 pockets (12 red, 12 black, 0 = GATO NEGRO). Every bet returns 96% on average.
  * The pocket is drawn first (state/sys/casino.spinRoulette); the ball physically lands in it (wheel-local coords).
+ * Stake memory: currency, bet and the stake per currency persist in the save; switching ROJO / NEGRO, bet type or
+ * currency never drops you back to the minimum (stakeFor picks the closest option <= what you chose).
+ * Auto-play: implements AutoHost (x1/x2/x4 spin faster; TURBO drops the ball straight into the pocket).
  */
 import { Container, Graphics, Text } from 'pixi.js';
 import gsap from 'gsap';
@@ -10,6 +13,7 @@ import { fmt } from '../../core/format';
 import { sfx } from '../../core/audio';
 import { onomatopoeia, sparkles, flash } from '../../fx/juice';
 import {
+  AutoSpeed,
   Cur,
   RouletteBet,
   RouletteResult,
@@ -17,16 +21,21 @@ import {
   betChance,
   betLabel,
   betMult,
+  balanceOf,
   canPay,
   cs,
   gemBetsLeft,
+  plenoTickets,
   pocketColor,
+  prefs,
   rouletteStakes,
   spinRoulette,
+  stakeFor,
   summary,
 } from '../../state/sys/casino';
+import type { AutoHost, AutoOutcome } from './auto';
 import { CP, CButton, Seg, block, chipIcon, clickable, curIcon, heading, label, neon } from './kit';
-import { coinFountain, flyLoot, winBanner } from './fx';
+import { coinFountain, flyLoot, stamp, winBanner } from './fx';
 import { csfx } from './sfx';
 import { openOdds } from './OddsPanel';
 import { lounge } from './lounge';
@@ -39,14 +48,16 @@ const N = WHEEL.length;
 const SEG = (Math.PI * 2) / N;
 const COL = { red: CP.red, black: 0x231a26, green: 0x1e9e5a } as const;
 
-export class RouletteView extends Container implements CasinoView {
+export class RouletteView extends Container implements CasinoView, AutoHost {
   private wheel = new Container();
   private ball = new Graphics();
   private ballAng = -Math.PI / 2;
   private ballR = R - 34;
   private cur: Cur = 'chips';
   private bet: RouletteBet = { kind: 'color', v: 'red' };
-  private stakeIdx = 0;
+  private stakeSeg: Seg<number> | null = null;
+  private stakeKey = '';
+  private hist: { c: Container; g: Graphics; t: Text }[] = [];
   private board = new Container();
   private betCells: { b: RouletteBet; g: Graphics; draw: (on: boolean, hit?: boolean) => void }[] = [];
   private info!: Text;
@@ -60,6 +71,9 @@ export class RouletteView extends Container implements CasinoView {
 
   constructor(private ctx: CasinoCtx) {
     super();
+    const rp = (prefs().roulette ??= {});
+    if (rp.cur === 'chips' || rp.cur === 'gold' || rp.cur === 'gems') this.cur = rp.cur;
+    if (rp.bet && (rp.bet.kind === 'color' || rp.bet.kind === 'third' || rp.bet.kind === 'num')) this.bet = { ...rp.bet } as RouletteBet;
     this.buildWheel();
     this.buildBoard();
     this.refresh();
@@ -184,8 +198,9 @@ export class RouletteView extends Container implements CasinoView {
         c,
         () => {
           if (this.spinning) return;
-          // keep the stake you chose: switching ROJO ⇄ NEGRO used to drop you back to the minimum
+          // keep the stake you chose: switching ROJO / NEGRO used to drop you back to the minimum
           this.bet = bet;
+          (prefs().roulette ??= {}).bet = { ...bet } as RouletteBet;
           this.refresh();
           if (bet.kind === 'num') this.ctx.say('betBig', 0.3);
         },
@@ -216,8 +231,9 @@ export class RouletteView extends Container implements CasinoView {
       ],
       this.cur,
       (v) => {
+        // each currency remembers its own stake; nothing resets
         this.cur = v;
-        this.stakeIdx = 0;
+        (prefs().roulette ??= {}).cur = v;
         this.refresh();
         if (v === 'gems') this.ctx.say('betVip');
       },
@@ -253,31 +269,37 @@ export class RouletteView extends Container implements CasinoView {
   }
 
   private stake(): number {
-    const st = rouletteStakes(this.cur, this.bet);
-    return st[Math.min(this.stakeIdx, st.length - 1)] ?? 0;
+    return stakeFor(rouletteStakes(this.cur, this.bet), prefs().roulette?.stake?.[this.cur]);
   }
 
   private refresh() {
     for (const c of this.betCells) c.draw(sameBet(c.b, this.bet));
-    this.stakeBox.removeChildren().forEach((c) => c.destroy({ children: true }));
     const st = rouletteStakes(this.cur, this.bet);
-    this.stakeIdx = Math.min(this.stakeIdx, st.length - 1);
-    const seg = new Seg<number>(
-      st.map((v, i) => ({ v: i, label: fmt(v) })),
-      this.stakeIdx,
-      (i) => {
-        this.stakeIdx = i;
-        this.refresh();
-        this.ctx.say(i === st.length - 1 && this.cur !== 'chips' ? 'betBig' : 'betSmall', 0.4);
-      },
-      { w: st.length > 2 ? 102 : 156, h: 44, size: 22, color: CP.pink, gap: 8 },
-    );
-    this.stakeBox.addChild(seg);
+    const stake = this.stake();
+    const key = `${this.cur}|${st.join(',')}`;
+    if (!this.stakeSeg || key !== this.stakeKey) {
+      this.stakeBox.removeChildren().forEach((c) => c.destroy({ children: true }));
+      const n = st.length;
+      const w = Math.floor((322 - (n - 1) * 6) / n);
+      this.stakeSeg = new Seg<number>(
+        st.map((v) => ({ v, label: fmt(v) })),
+        stake,
+        (v) => {
+          const rp = (prefs().roulette ??= {});
+          (rp.stake ??= {})[this.cur] = v;
+          this.refresh();
+          this.ctx.say(v === st[st.length - 1] && this.cur !== 'chips' ? 'betBig' : 'betSmall', 0.4);
+        },
+        { w, h: 44, size: n > 3 ? 18 : 22, color: CP.pink, gap: 6 },
+      );
+      this.stakeKey = key;
+      this.stakeBox.addChild(this.stakeSeg);
+    } else if (this.stakeSeg.value !== stake) this.stakeSeg.set(stake);
     const m = betMult(this.bet);
     const p = betChance(this.bet);
-    const stake = this.stake();
     const curName = this.cur === 'gold' ? 'oro' : this.cur === 'gems' ? 'gemas' : 'fichas';
-    this.info.text = `${betLabel(this.bet)} · probabilidad ${(p * 100).toFixed(0)}% · paga x${m} (${fmt(stake * m)} ${curName}) · retorno medio 96%`;
+    const pl = plenoTickets(this.cur, this.bet, stake);
+    this.info.text = `${betLabel(this.bet)} · probabilidad ${(p * 100).toFixed(0)}% · paga x${m} (${fmt(stake * m)} ${curName})${pl ? ` + ${pl} ${pl === 1 ? 'boleto' : 'boletos'}` : ''} · retorno medio 96%`;
     const ok = canPay(this.cur, stake) && !this.spinning;
     this.spinBtn.disabled = !ok;
     this.spinBtn.setText('¡GIRAR!', `${fmt(stake)} ${curName.toUpperCase()}`);
@@ -289,54 +311,90 @@ export class RouletteView extends Container implements CasinoView {
     this.ctx.refresh();
   }
 
+  /** last 9 pockets — a fixed pool of 9 chips, re-coloured (no allocation per spin) */
   private drawHistory() {
-    this.histBox.removeChildren().forEach((c) => c.destroy({ children: true }));
+    if (!this.hist.length) {
+      for (let i = 0; i < 9; i++) {
+        const c = new Container();
+        const g = new Graphics();
+        const t = txt('', { fontFamily: F.poster, fontSize: 18, fill: CP.paper });
+        t.anchor.set(0.5);
+        t.position.set(17, 17);
+        c.addChild(g, t);
+        c.x = i * 38;
+        c.alpha = i === 0 ? 1 : 0.75;
+        this.histBox.addChild(c);
+        this.hist.push({ c, g, t });
+      }
+    }
     const last = (cs().hist ?? []).filter((h) => h.g === 'roulette').slice(0, 9);
-    last.forEach((h, i) => {
-      const n = parseInt(h.r, 10);
-      const c = new Container();
-      const g = new Graphics().circle(17, 17, 17).fill(COL[pocketColor(n)]).stroke({ width: 2, color: CP.gold });
-      const t = txt(String(n), { fontFamily: F.poster, fontSize: 18, fill: CP.paper });
-      t.anchor.set(0.5);
-      t.position.set(17, 17);
-      c.addChild(g, t);
-      c.x = i * 38;
-      c.alpha = i === 0 ? 1 : 0.75;
-      this.histBox.addChild(c);
+    this.hist.forEach((h, i) => {
+      const e = last[i];
+      h.c.visible = !!e;
+      if (!e) return;
+      const n = parseInt(e.r, 10);
+      h.g.clear().circle(17, 17, 17).fill(COL[pocketColor(n)]).stroke({ width: 2, color: CP.gold });
+      h.t.text = String(n);
     });
   }
 
   primary() {
-    this.spin();
+    void this.play(1, false);
+  }
+  private spin() {
+    void this.play(1, false);
   }
 
-  private spin() {
-    if (this.spinning || this.ctx.busy) return;
+  // ---- AutoHost
+  autoStep(speed: AutoSpeed): Promise<AutoOutcome> {
+    return this.play(speed, true);
+  }
+  autoBalance() {
+    return balanceOf(this.cur);
+  }
+  autoName() {
+    return `RULETA · ${betLabel(this.bet)}`;
+  }
+
+  private play(speed: AutoSpeed, auto: boolean): Promise<AutoOutcome> {
+    if (this.spinning || (!auto && this.ctx.busy)) return Promise.resolve({ ok: true });
     const stake = this.stake();
     if (!canPay(this.cur, stake)) {
       sfx('error');
       this.ctx.say('poor');
-      return;
+      return Promise.resolve({ ok: false });
     }
     this.ctx.freeze({ [this.cur]: -stake });
     const res = spinRoulette(this.cur, this.bet, stake);
     if (!res) {
       this.ctx.unfreeze();
-      return;
+      return Promise.resolve({ ok: false });
     }
     this.spinning = true;
-    this.ctx.setBusy(true);
-    this.refresh();
+    if (!auto) this.ctx.setBusy(true);
+    this.spinBtn.disabled = true;
     for (const c of this.betCells) if (!sameBet(c.b, this.bet)) c.draw(false);
-    this.ctx.say('roulette', 0.7);
-    this.ctx.chat('roulette', 2);
-    lounge.hype(0.6);
-    sfx('whoosh');
     const idx = WHEEL.indexOf(res.pocket);
     const target = -Math.PI / 2 + (idx + 0.5) * SEG;
-    const T = 5.2;
+    const outcome = (): AutoOutcome => ({ ok: true, big: res.win && betMult(res.bet) >= 24 });
+    if (speed >= 99) {
+      // TURBO: the ball is simply in its pocket
+      gsap.killTweensOf(this.wheel);
+      this.ballAng = target;
+      this.ballR = R * 0.78;
+      this.placeBall();
+      csfx.wheelTick(1);
+      return this.result(res, speed, auto).then(outcome);
+    }
+    if (!auto || speed === 1) {
+      this.ctx.say('roulette', auto ? 0.2 : 0.7);
+      if (!auto) this.ctx.chat('roulette', 2);
+    }
+    lounge.hype(0.6);
+    sfx('whoosh');
+    const T = 5.2 / speed;
     const r0 = this.wheel.rotation;
-    const r1 = r0 + Math.PI * 2 * (4 + Math.random()) ;
+    const r1 = r0 + Math.PI * 2 * ((4 + Math.random()) / Math.sqrt(speed));
     gsap.to(this.wheel, {
       rotation: r1,
       duration: T,
@@ -345,12 +403,12 @@ export class RouletteView extends Container implements CasinoView {
     });
     // ball: local angle runs backwards many turns and ends exactly in the pocket
     const b = { a: this.ballAng, r: R - 34 };
-    const turns = 13;
+    const turns = Math.max(4, Math.round(13 / speed));
     let a1 = target - Math.PI * 2 * turns;
     while (a1 > b.a - Math.PI * 2 * (turns - 1)) a1 -= Math.PI * 2;
     gsap.to(b, {
       a: a1,
-      duration: T - 0.9,
+      duration: T - 0.9 / speed,
       ease: 'power2.out',
       onUpdate: () => {
         this.ballAng = b.a;
@@ -358,12 +416,14 @@ export class RouletteView extends Container implements CasinoView {
         this.placeBall();
       },
     });
-    gsap.to(b, { r: R * 0.78, duration: 1.1, delay: T - 2.2, ease: 'bounce.out', onStart: () => csfx.ballDrop() });
-    window.setTimeout(() => {
-      if (this.destroyed) return;
-      this.ballAng = target;
-      this.result(res);
-    }, T * 1000 + 150);
+    gsap.to(b, { r: R * 0.78, duration: 1.1 / speed, delay: T - 2.2 / speed, ease: 'bounce.out', onStart: () => csfx.ballDrop() });
+    return new Promise<AutoOutcome>((resolve) => {
+      window.setTimeout(() => {
+        if (this.destroyed) return resolve({ ok: true });
+        this.ballAng = target;
+        void this.result(res, speed, auto).then(() => resolve(outcome()));
+      }, T * 1000 + 150 / speed);
+    });
   }
 
   private tickSound() {
@@ -375,67 +435,94 @@ export class RouletteView extends Container implements CasinoView {
     }
   }
 
-  private async result(r: RouletteResult) {
+  private async result(r: RouletteResult, speed: AutoSpeed = 1, auto = false) {
     lounge.hype(0);
+    const turbo = speed >= 99;
+    const fast = speed >= 4;
     const col = r.color === 'red' ? 'ROJO' : r.color === 'black' ? 'NEGRO' : 'GATO NEGRO';
     for (const c of this.betCells) {
       const hit = c.b.kind === 'num' ? c.b.v === r.pocket : c.b.kind === 'color' ? c.b.v === r.color : r.pocket >= 1 + c.b.v * 8 && r.pocket <= 8 + c.b.v * 8;
       c.draw(sameBet(c.b, this.bet), hit);
     }
-    const plate = new Container();
-    const pcol = r.color === 'red' ? CP.red : r.color === 'green' ? CP.green : 0x231a26;
-    const pt = txt(`${r.pocket}  ${col}`, { fontFamily: F.poster, fontSize: 92, fill: CP.paper, letterSpacing: 0 });
-    pt.anchor.set(0.5);
-    const pw = pt.width + 70;
-    const pg = new Graphics().rect(-pw / 2 + 10, -64 + 10, pw, 128).fill(CP.ink).rect(-pw / 2, -64, pw, 128).fill(pcol).stroke({ width: 6, color: CP.paper });
-    plate.addChild(pg, pt);
-    plate.position.set(CX, CY);
-    plate.rotation = -0.06;
-    this.ctx.fx.addChild(plate);
-    gsap.from(plate.scale, { x: 2.2, y: 2.2, duration: 0.25, ease: 'back.out(2.2)' });
-    gsap.to(plate, { alpha: 0, delay: 2.0, duration: 0.4, onComplete: () => plate.destroy({ children: true }) });
-    csfx.reelStop(1);
-    this.ctx.shake(0.15);
+    if (!turbo) {
+      const plate = new Container();
+      const pcol = r.color === 'red' ? CP.red : r.color === 'green' ? CP.green : 0x231a26;
+      const pt = txt(`${r.pocket}  ${col}`, { fontFamily: F.poster, fontSize: 92, fill: CP.paper, letterSpacing: 0 });
+      pt.anchor.set(0.5);
+      const pw = pt.width + 70;
+      const pg = new Graphics().rect(-pw / 2 + 10, -64 + 10, pw, 128).fill(CP.ink).rect(-pw / 2, -64, pw, 128).fill(pcol).stroke({ width: 6, color: CP.paper });
+      plate.addChild(pg, pt);
+      plate.position.set(CX, CY);
+      plate.rotation = -0.06;
+      this.ctx.fx.addChild(plate);
+      gsap.from(plate.scale, { x: 2.2, y: 2.2, duration: 0.25, ease: 'back.out(2.2)' });
+      gsap.to(plate, { alpha: 0, delay: 2.0 / speed, duration: 0.4 / speed, onComplete: () => plate.destroy({ children: true }) });
+      csfx.reelStop(1);
+      this.ctx.shake(0.15);
+    }
+    const loot = r.cur === 'gold' ? 'gold' : r.cur === 'gems' ? 'gems' : 'chips';
     if (r.win) {
       const m = betMult(r.bet);
-      const loot = r.cur === 'gold' ? 'gold' : r.cur === 'gems' ? 'gems' : 'chips';
-      coinFountain(this.ctx.particles, CX, CY, loot, m >= 24 ? 60 : 22, m >= 24 ? 1.4 : 1);
-      flyLoot(this.ctx.fx, loot, { x: CX, y: CY }, this.ctx.pillPos(loot), m >= 24 ? 18 : 8, () => this.ctx.unfreeze());
-      if (m >= 24) {
-        this.ctx.marquee.burst(3000, 'rainbow');
-        flash(this.ctx.fx, CP.yellow, 0.5, 0.3);
-        csfx.winBig();
-        csfx.coinShower(24);
-        this.ctx.say('winBig');
-        this.ctx.chat('winBig', 4);
-        onomatopoeia(this.ctx.fx, CX, CY - 160, '¡PLENO!', { size: 150, color: CP.yellow });
-        await winBanner(this.ctx.top, '¡PLENO!', `x${m} · +${fmt(r.payout)} ${loot === 'gold' ? 'DOBLONES' : loot === 'gems' ? 'OJOS DE GATO' : 'FICHAS'}`, CP.yellow);
+      if (turbo) {
+        this.ctx.unfreeze();
+        if (m >= 24) {
+          csfx.winBig();
+          this.ctx.say('winBig', 0.6);
+        } else csfx.coin();
       } else {
-        this.ctx.marquee.burst(1400, 'flash');
-        csfx.winSmall();
-        csfx.coinShower(8);
-        sparkles(this.ctx.fx, CX, CY, CP.yellow, 14, 260);
-        onomatopoeia(this.ctx.fx, CX, CY - 150, pick(['¡TILÍN!', '¡ESO!', '¡MIAU!']), { size: 100, color: CP.yellow });
-        const streak = cs().streak ?? 0;
-        this.ctx.say(streak >= 3 ? 'winStreak' : 'winSmall', streak >= 3 ? 1 : 0.7);
-        this.ctx.chat(streak >= 3 ? 'winStreak' : 'winSmall', 2);
+        coinFountain(this.ctx.particles, CX, CY, loot, fast ? 8 : m >= 24 ? 60 : 22, m >= 24 ? 1.4 : 1);
+        flyLoot(this.ctx.fx, loot, { x: CX, y: CY }, this.ctx.pillPos(loot), fast ? 4 : m >= 24 ? 18 : 8, () => this.ctx.unfreeze());
+        if (m >= 24) {
+          this.ctx.marquee.burst(3000 / speed, 'rainbow');
+          flash(this.ctx.fx, CP.yellow, 0.5, 0.3);
+          csfx.winBig();
+          csfx.coinShower(fast ? 8 : 24);
+          this.ctx.say('winBig');
+          this.ctx.chat('winBig', 4);
+          onomatopoeia(this.ctx.fx, CX, CY - 160, '¡PLENO!', { size: 150, color: CP.yellow });
+          if (speed <= 2) await winBanner(this.ctx.top, '¡PLENO!', `x${m} · +${fmt(r.payout)} ${loot === 'gold' ? 'DOBLONES' : loot === 'gems' ? 'OJOS DE GATO' : 'FICHAS'}`, CP.yellow);
+        } else {
+          this.ctx.marquee.burst(1400 / speed, 'flash');
+          csfx.winSmall();
+          csfx.coinShower(fast ? 3 : 8);
+          if (!fast) {
+            sparkles(this.ctx.fx, CX, CY, CP.yellow, 14, 260);
+            onomatopoeia(this.ctx.fx, CX, CY - 150, pick(['¡TILÍN!', '¡ESO!', '¡MIAU!']), { size: 100, color: CP.yellow });
+          }
+          const streak = cs().streak ?? 0;
+          this.ctx.say(streak >= 3 ? 'winStreak' : 'winSmall', auto ? 0.2 : streak >= 3 ? 1 : 0.7);
+          if (!auto) this.ctx.chat(streak >= 3 ? 'winStreak' : 'winSmall', 2);
+        }
       }
     } else {
       this.ctx.unfreeze();
-      csfx.lose();
-      const streak = cs().streak ?? 0;
-      if (streak <= -4) {
-        this.ctx.say('loseStreak');
-        this.ctx.chat('loseStreak', 1);
-      } else {
-        this.ctx.say('lose', 0.55);
-        this.ctx.chat('lose', 1);
+      if (!turbo) csfx.lose();
+      if (!fast) {
+        const streak = cs().streak ?? 0;
+        if (streak <= -4) {
+          this.ctx.say('loseStreak', auto ? 0.3 : 1);
+          this.ctx.chat('loseStreak', 1);
+        } else {
+          this.ctx.say('lose', auto ? 0.1 : 0.55);
+          if (!auto) this.ctx.chat('lose', 1);
+        }
       }
     }
-    await new Promise((res) => window.setTimeout(res, 500));
+    // BONO PLENO / LA CASA TE DEBE
+    const tk = r.bonus.filter((g) => g.kind === 'tickets').reduce((s, g) => s + g.n, 0);
+    if (tk) {
+      const candy = !r.win;
+      this.ctx.say(candy ? 'candy' : 'winBig', candy ? 1 : 0.5);
+      if (!turbo) {
+        const t = stamp(this.ctx.fx, CX, CY + 120, candy ? 'LA CASA TE DEBÍA UNA' : `BONO PLENO +${tk} ${tk === 1 ? 'BOLETO' : 'BOLETOS'}`, CP.cyan, 50, -0.05);
+        flyLoot(this.ctx.fx, 'tickets', { x: CX, y: CY + 120 }, this.ctx.pillPos('tickets'), 4);
+        gsap.to(t, { alpha: 0, delay: 1.1 / speed, duration: 0.25, onComplete: () => t.destroy() });
+      }
+    }
+    if (!turbo) await new Promise((res) => window.setTimeout(res, 500 / speed));
     this.spinning = false;
-    this.ctx.setBusy(false);
-    this.refresh();
+    if (!auto) this.ctx.setBusy(false);
+    if (!this.destroyed) this.refresh();
   }
 
   dispose() {

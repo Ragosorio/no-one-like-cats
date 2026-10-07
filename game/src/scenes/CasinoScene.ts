@@ -2,6 +2,8 @@
  * CASINO "EL GATO NEGRO" — the neon-glitch dimension of the multiverse (casino agent).
  * Tabs: TRAGAMICHIS (slots) · RULETA · PORTAL (gacha) · LA CAJA (prize counter) · ACCESORIOS.
  * Entered via panels/casino/open.ts (openCasino / openGacha). Leaves to the island with goIsland().
+ * Owns the PILOTO AUTOMÁTICO (panels/casino/auto.ts, left column) and the LA CASA TE DEBE meter (top bar).
+ * Remembers the last tab you played (saved with the stakes in G.s.casino.prefs).
  */
 import { Container, Graphics, Text } from 'pixi.js';
 import gsap from 'gsap';
@@ -13,12 +15,13 @@ import { music } from '../core/music';
 import { speak, stopVoice, voice } from '../core/voice';
 import { settings } from '../core/settings';
 import { G } from '../state/game';
-import { chips, ensureGambitOpen, syncChips, tickets } from '../state/sys/casino';
+import { CANDY, chips, ensureGambitOpen, owed, prefs, syncChips, tickets } from '../state/sys/casino';
 import { CP, Bubble, ChatFeed, Host, Marquee, ResPill, block, clickable, halftone, heading, label, neon, ticketIcon, killDeep } from '../panels/casino/kit';
 import { chatLines, hostLine, Ev } from '../panels/casino/lines';
 import type { CasinoCtx, CasinoTab, CasinoView, PillKind } from '../panels/casino/ctx';
 import { lounge } from '../panels/casino/lounge';
 import { sfx } from '../core/audio';
+import { AutoHost, AutoPanel, STOP_TEXT } from '../panels/casino/auto';
 
 type TabDef = { id: CasinoTab; name: string; sub: string; color: number; draw: () => Container };
 
@@ -45,6 +48,9 @@ export class CasinoScene extends Scene {
   private lastSay = 0;
   private glitchT = 0;
   private bigCat!: Container;
+  private auto!: AutoPanel;
+  private owedG = new Graphics();
+  private owedT!: Text;
   ctx!: CasinoCtx;
 
   constructor(
@@ -61,6 +67,7 @@ export class CasinoScene extends Scene {
     this.buildBg();
     this.buildChrome();
     this.ctx = this.makeCtx();
+    this.buildAuto();
     music.play('silence');
     lounge.start();
     ensureGambitOpen();
@@ -86,13 +93,15 @@ export class CasinoScene extends Scene {
 
   /** switch tab (also used by openCasino/openGacha when already inside) */
   show(tab: 'floor' | 'gacha' | CasinoTab, banner?: string) {
-    const t: CasinoTab = tab === 'floor' ? 'slot' : tab;
+    const last = prefs().tab;
+    const t: CasinoTab = tab === 'floor' ? (last === 'roulette' || last === 'gacha' ? last : 'slot') : tab;
     this.go(t, banner);
   }
 
   private async go(tab: CasinoTab, arg?: string) {
     if (this.busyFlag) return;
     this.current = tab;
+    if (tab === 'slot' || tab === 'roulette' || tab === 'gacha') prefs().tab = tab;
     for (const [id, b] of this.tabBtns) this.drawTab(id, b, id === tab);
     if (this.view) {
       this.view.dispose?.();
@@ -135,6 +144,7 @@ export class CasinoScene extends Scene {
     }
     this.view = v;
     this.viewLayer.addChild(v);
+    this.auto?.setAvailable(!!this.autoHost());
     v.alpha = 0;
     gsap.to(v, { alpha: 1, duration: 0.2 });
     gsap.from(v, { x: 40, duration: 0.25, ease: 'power3.out' });
@@ -272,7 +282,7 @@ export class CasinoScene extends Scene {
     ex.position.set(24, H - 110);
     clickable(ex, () => this.leave());
     this.bg.addChild(ex);
-    const info = label('Reglas · ocultar casino', 15, CP.softPink, { letterSpacing: 1 });
+    const info = label('Reglas de la casa', 15, CP.softPink, { letterSpacing: 1 });
     info.position.set(28, H - 30);
     clickable(info, async () => (await import('../panels/casino/OddsPanel')).openOdds('rules'));
     this.bg.addChild(info);
@@ -292,6 +302,12 @@ export class CasinoScene extends Scene {
     const nm = label('ORO · OJOS DE GATO · FICHAS · BOLETOS', 12, CP.softPink, { letterSpacing: 2 });
     nm.position.set(366, 80);
     this.bg.addChild(nm);
+    // LA CASA TE DEBE: losing bets fill it; when full the house pays a boleto
+    this.owedT = label('', 12, CP.cyan, { letterSpacing: 2 });
+    this.owedT.position.set(760, 80);
+    this.owedG.position.set(940, 80);
+    this.bg.addChild(this.owedT, this.owedG);
+    clickable(this.owedT, async () => (await import('../panels/casino/OddsPanel')).openOdds('rules'));
     // voice toggle
     const vc = new Container();
     const vg = new Graphics();
@@ -461,9 +477,38 @@ export class CasinoScene extends Scene {
 
   private refresh() {
     for (const p of Object.values(this.pills)) p.refresh();
+    if (this.owedT && !this.owedT.destroyed) {
+      const n = owed();
+      this.owedT.text = 'LA CASA TE DEBE';
+      const g = this.owedG.clear();
+      for (let i = 0; i < CANDY.every; i++) g.rect(i * 13, 1, 10, 12).fill(i < n ? CP.cyan : 0x2a1a30).stroke({ width: 1.5, color: CP.cyan, alpha: 0.6 });
+    }
+  }
+
+  // ------------------------------------------------------------------ PILOTO AUTOMÁTICO
+  private autoHost(): AutoHost | null {
+    const v = this.view as (CasinoView & Partial<AutoHost>) | null;
+    return v && !v.destroyed && typeof v.autoStep === 'function' ? (v as unknown as AutoHost) : null;
+  }
+  private buildAuto() {
+    this.auto = new AutoPanel(
+      this.ctx,
+      () => this.autoHost(),
+      (reason, rounds) => {
+        if (this.destroyed) return;
+        const msg = `${STOP_TEXT[reason]}${rounds ? ` (${rounds} ${rounds === 1 ? 'tirada' : 'tiradas'})` : ''}`;
+        this.bubble.say(msg, 'PILOTO AUTOMÁTICO', reason === 'legend' || reason === 'new' || reason === 'big' ? CP.yellow : CP.cyan);
+        this.host.talk(1200);
+        this.refresh();
+      },
+    );
+    this.auto.position.set(24, 846);
+    this.bg.addChild(this.auto);
+    this.auto.setAvailable(false);
   }
 
   private leave() {
+    if (this.auto?.running) this.auto.stop('user');
     if (this.busyFlag) return;
     this.say('exit');
     G.save();
@@ -477,6 +522,12 @@ export class CasinoScene extends Scene {
     if (e.repeat) return;
     if (e.code === 'Space' || e.code === 'Enter') {
       if (document.activeElement && (document.activeElement as HTMLElement).tagName === 'INPUT') return;
+      // Space stops the auto-play (never starts a manual bet on top of it)
+      if (this.auto?.running) {
+        this.auto.stop('user');
+        e.preventDefault();
+        return;
+      }
       // a modal (odds, accessories…) or a full-screen sequence is on top: don't bet behind it
       if (scenes.overlayLayer.children.some((c) => c.visible && c.children.length > 0) || this.topLayer.children.length) return;
       this.view?.primary?.();
@@ -499,6 +550,7 @@ export class CasinoScene extends Scene {
   }
 
   override exit() {
+    if (this.auto?.running) this.auto.stop('gone');
     window.removeEventListener('keydown', this.onKey);
     for (const f of this.offs) f();
     this.offs = [];

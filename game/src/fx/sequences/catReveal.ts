@@ -54,6 +54,9 @@ export interface RevealOpts {
   secret?: boolean;
   /** replay from the Catdex (no counters, no buttons) */
   replay?: boolean;
+  /** casino auto-play: play faster (timeline time scale) and close by itself this many seconds after it ends */
+  timeScale?: number;
+  autoClose?: number;
 }
 
 export type RevealResult = 'continue' | 'catdex' | 'repeat';
@@ -195,6 +198,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     }
 
     const tl = gsap.timeline();
+    if (o.timeScale && o.timeScale > 0) tl.timeScale(o.timeScale);
 
     // pre: cut
     sfx('paper');
@@ -581,6 +585,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       () => {
         finished = true;
         skipBtn.visible = false;
+        if (o.autoClose !== undefined) window.setTimeout(() => finish(), o.autoClose * 1000);
         if (!o.replay && !dup) {
           const btn = new Container();
           const t = txt('VER EN CATDEX ›', { fontFamily: F.poster, fontSize: 30, fill: C.ink });

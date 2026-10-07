@@ -2,6 +2,9 @@
  * TRAGAMICHIS — 3 reels × 3 rows, 5 lines. The cabinet is a cat head (ears on top), the lever is a tail.
  * Honest presentation: the stops are drawn first (state/sys/casino.spinSlot), the reels just land on them;
  * the symbols above/below the line are the real strip neighbours. Anticipation only stretches time.
+ * RISK TIERS: BAJA / MEDIA / ALTA change the paytable (bigger stake = fewer prizes, bigger prizes).
+ * The chosen currency + tier are remembered in the save (never reset when you switch currency).
+ * Auto-play: implements AutoHost (x1 / x2 / x4 / TURBO — TURBO lands the reels instantly, no cards, no banners).
  */
 import { Container, Graphics, Sprite, Text, Ticker } from 'pixi.js';
 import gsap from 'gsap';
@@ -12,26 +15,32 @@ import { sfx } from '../../core/audio';
 import { onomatopoeia, sparkles, flash } from '../../fx/juice';
 import { G } from '../../state/game';
 import {
+  AutoSpeed,
   Cur,
   LINES,
-  SLOT,
-  SLOT_CHIP_STAKE,
+  SLOT_MATH,
+  SLOT_TIER_BLURB,
+  SLOT_TIER_NAME,
   STRIPS,
   STRIP_LEN,
   SlotResult,
+  SlotTier,
   Sym,
+  balanceOf,
   canPay,
   chips,
   cs,
+  prefs,
   slotStakes,
   spinSlot,
   summary,
 } from '../../state/sys/casino';
+import type { AutoHost, AutoOutcome } from './auto';
 import { CP, CButton, Marquee, Seg, block, chipIcon, clickable, curIcon, halftone, heading, label, neon, symbolSprite, symbolTexture } from './kit';
 import { coinFountain, flyLoot, jackpotTakeover, stamp, winBanner } from './fx';
 import { csfx } from './sfx';
 import type { CasinoCtx, CasinoView } from './ctx';
-import { presentPrizes } from './prizes';
+import { catRank, presentPrizes, revealCats, revealPlanFor } from './prizes';
 import { openOdds } from './OddsPanel';
 import { lounge } from './lounge';
 
@@ -95,10 +104,12 @@ class Reel extends Container {
   }
 }
 
-export class SlotView extends Container implements CasinoView {
+export class SlotView extends Container implements CasinoView, AutoHost {
   private reels: Reel[] = [];
   private cur: Cur = 'chips';
-  private stakeIdx = 2;
+  private tier: SlotTier = 0;
+  private stakeSeg: Seg<number> | null = null;
+  private stakeBlurb!: Text;
   private curSeg!: Seg<Cur>;
   private stakeBox = new Container();
   private spinBtn!: CButton;
@@ -120,7 +131,9 @@ export class SlotView extends Container implements CasinoView {
 
   constructor(private ctx: CasinoCtx) {
     super();
-    this.cur = chips() >= SLOT_CHIP_STAKE || G.s.gold < 100 ? 'chips' : 'gold';
+    const sp = (prefs().slot ??= {});
+    this.cur = sp.cur === 'gold' || sp.cur === 'chips' ? sp.cur : chips() >= 10 || G.s.gold < 100 ? 'chips' : 'gold';
+    this.tier = clampTier(sp.tier?.[this.cur]);
     this.build();
     this.refresh();
     Ticker.shared.add(this.tick, this);
@@ -211,16 +224,21 @@ export class SlotView extends Container implements CasinoView {
       ],
       this.cur,
       (v) => {
+        // stake memory: each currency keeps its own risk tier (switching never resets it)
         this.cur = v;
-        this.stakeIdx = 2;
-        this.refresh();
+        const sp = (prefs().slot ??= {});
+        sp.cur = v;
+        this.tier = clampTier(sp.tier?.[v] ?? this.tier);
+        this.refresh(true);
         this.ctx.say(v === 'chips' ? 'betChips' : 'betSmall', 0.5);
       },
       { w: 104, h: 50, size: 21, color: CP.yellow, gap: 6 },
     );
     this.curSeg.position.set(cx, cy);
     this.stakeBox.position.set(cx, cy + 66);
-    this.addChild(this.curSeg, this.stakeBox);
+    this.stakeBlurb = label('', 14, CP.yellow);
+    this.stakeBlurb.position.set(cx, cy + 120);
+    this.addChild(this.curSeg, this.stakeBox, this.stakeBlurb);
     // LCD
     const lx = cx + 338;
     const lcdBg = new Graphics().rect(lx, cy, 160, 104).fill(0x0b0f0c).stroke({ width: 4, color: CP.ink });
@@ -244,7 +262,7 @@ export class SlotView extends Container implements CasinoView {
     ptT.position.set(18, 6);
     pt.addChild(ptBg, ptT);
     pt.position.set(x0 + CW + 40, y0 + CH - 40);
-    clickable(pt, () => openOdds('slot', this.cur, this.stake()));
+    clickable(pt, () => openOdds('slot', this.cur, this.stake(), undefined, this.tier));
     this.addChild(this.info, this.net, pt);
     // ---- lever (cat tail)
     this.buildTail(x0 + CW + 8, y0 + 300);
@@ -321,42 +339,43 @@ export class SlotView extends Container implements CasinoView {
   }
 
   private stake(): number {
-    const st = slotStakes(this.cur);
-    return st[Math.min(this.stakeIdx, st.length - 1)] ?? 0;
+    return slotStakes(this.cur)[this.tier] ?? 0;
   }
 
-  private refresh() {
-    // stake selector
-    this.stakeBox.removeChildren().forEach((c) => c.destroy({ children: true }));
-    if (this.cur === 'chips') {
-      const t = heading(`${SLOT_CHIP_STAKE} FICHAS POR TIRADA`, 28, CP.paper);
-      const s = label('Con fichas salen boletos, gemas, accesorios y gatos.', 15, CP.yellow);
-      s.y = 34;
-      this.stakeBox.addChild(t, s);
-    } else {
-      const st = slotStakes('gold');
-      this.stakeIdx = Math.min(this.stakeIdx, st.length - 1);
+  /** full = rebuild the stake selector (currency changed); otherwise only texts/buttons update (cheap, auto-play safe) */
+  private refresh(full = false) {
+    const st = slotStakes(this.cur);
+    const labels = st.map((v, i) => `${SLOT_TIER_NAME[i]} ${fmt(v)}`);
+    const key = labels.join('|');
+    if (full || !this.stakeSeg || (this.stakeSeg as Seg<number> & { key?: string }).key !== key) {
+      this.stakeBox.removeChildren().forEach((c) => c.destroy({ children: true }));
       const seg = new Seg<number>(
-        st.map((v, i) => ({ v: i, label: fmt(v) })),
-        this.stakeIdx,
+        labels.map((l, i) => ({ v: i, label: l })),
+        this.tier,
         (i) => {
-          this.stakeIdx = i;
+          this.tier = i as SlotTier;
+          const sp = (prefs().slot ??= {});
+          (sp.tier ??= {})[this.cur] = i;
           this.refresh();
-          this.ctx.say(i === st.length - 1 ? 'betBig' : 'betSmall', 0.45);
+          this.ctx.say(i === 2 ? 'betBig' : 'betSmall', 0.45);
         },
-        { w: 98, h: 46, size: 24, color: CP.pink, gap: 6 },
+        { w: 104, h: 46, size: this.cur === 'gold' ? 17 : 19, color: CP.pink, gap: 6 },
       );
+      (seg as Seg<number> & { key?: string }).key = key;
+      this.stakeSeg = seg;
       this.stakeBox.addChild(seg);
-    }
+    } else if (this.stakeSeg.value !== this.tier) this.stakeSeg.set(this.tier);
     const stake = this.stake();
+    const m = SLOT_MATH[this.tier];
+    this.stakeBlurb.text = `${SLOT_TIER_NAME[this.tier]}: ${SLOT_TIER_BLURB[this.tier]} Premio en ${(m.hit * 100).toFixed(0)}% de las tiradas.`;
     const ok = canPay(this.cur, stake);
     this.spinBtn.disabled = !ok || this.spinning;
-    this.spinBtn.setText('¡JALA!', this.cur === 'chips' ? `${SLOT_CHIP_STAKE} FICHAS` : `${fmt(stake)} ORO`);
-    const rtp = (SLOT.rtp * 100).toFixed(1);
+    this.spinBtn.setText('¡JALA!', this.cur === 'chips' ? `${stake} FICHAS` : `${fmt(stake)} ORO`);
+    const rtp = (m.rtp * 100).toFixed(1);
     this.info.text =
       this.cur === 'gold'
-        ? `RETORNO MEDIO ${rtp}% · PREMIO MÁX. x${(SLOT.maxM).toFixed(1)} · APUESTA MÁX. ${fmt(slotStakes('gold').at(-1) ?? 0)} (con tope por producción)`
-        : `PROBABILIDAD DE PREMIO ${(SLOT.hit * 100).toFixed(0)}% POR TIRADA · JACKPOT (GATO): 1 EN ${Math.round(1 / (SLOT.perSpin.neko ?? 1e-9))}`;
+        ? `RIESGO ${SLOT_TIER_NAME[this.tier]} · RETORNO MEDIO ${rtp}% · PREMIO MÁX. x${m.maxM.toFixed(1)} (tope por producción)`
+        : `RIESGO ${SLOT_TIER_NAME[this.tier]} · PREMIO EN ${(m.hit * 100).toFixed(0)}% · GATO NEGRO x3: 1 EN ${Math.round(1 / (m.perSpin.neko ?? 1e-9))}`;
     const s = summary(this.cur);
     const pct = Math.round(s.pct * 100);
     this.net.text = s.bets ? `${s.bets} tiradas · neto ${pct >= 0 ? '+' : ''}${pct}%` : '';
@@ -379,52 +398,89 @@ export class SlotView extends Container implements CasinoView {
   }
 
   primary() {
-    this.spin();
+    void this.play(1, false);
+  }
+  private spin() {
+    void this.play(1, false);
   }
 
-  private async spin() {
-    if (this.spinning || this.ctx.busy) return;
+  // ---- AutoHost
+  autoStep(speed: AutoSpeed): Promise<AutoOutcome> {
+    return this.play(speed, true);
+  }
+  autoBalance() {
+    return balanceOf(this.cur);
+  }
+  autoName() {
+    return `TRAGAMICHIS · ${this.cur === 'chips' ? `${this.stake()} FICHAS` : `${fmt(this.stake())} ORO`}`;
+  }
+
+  /** one spin at a speed (manual = x1). Resolves when the machine can spin again. */
+  private async play(speed: AutoSpeed, auto: boolean): Promise<AutoOutcome> {
+    if (this.spinning || (!auto && this.ctx.busy)) return { ok: true };
     const stake = this.stake();
     if (!canPay(this.cur, stake)) {
       sfx('error');
       this.ctx.say('poor');
-      return;
+      return { ok: false };
     }
+    const turbo = speed >= 99;
     this.ctx.freeze({ [this.cur === 'gold' ? 'gold' : 'chips']: -stake });
-    const res = spinSlot(this.cur, stake);
+    const res = spinSlot(this.cur, this.tier);
     if (!res) {
       this.ctx.unfreeze();
-      return;
+      return { ok: false };
     }
     this.spinning = true;
-    this.ctx.setBusy(true);
+    if (!auto) this.ctx.setBusy(true);
     this.clearWins();
     this.lcd.text = '—';
     this.lcd.style.fill = CP.green;
+    this.spinBtn.disabled = true;
     this.ctx.refresh();
-    // banter by stake
-    const st = slotStakes(this.cur);
-    if (this.cur === 'gold') this.ctx.say(stake >= (st.at(-1) ?? 0) ? 'betBig' : 'betSmall', 0.35);
-    else this.ctx.say('spin', 0.25);
-    this.ctx.chat(this.cur === 'gold' && stake >= (st.at(-1) ?? 0) ? 'betBig' : 'betChips', 1);
-    // lever
-    csfx.lever();
-    (this.tail as Container & { bendTo: (b: number) => void }).bendTo(1);
-    window.setTimeout(() => (this.tail as Container & { bendTo: (b: number) => void }).bendTo(0), 220);
-    this.marquee.speed = 2.2;
-    lounge.hype(0.5);
-    await this.spinReels(res);
-    this.marquee.speed = 1;
-    lounge.hype(0);
-    await this.present(res);
+    if (!turbo) {
+      // banter by stake
+      if (this.cur === 'gold') this.ctx.say(this.tier === 2 ? 'betBig' : 'betSmall', auto ? 0.1 : 0.35);
+      else this.ctx.say('spin', auto ? 0.08 : 0.25);
+      if (!auto) this.ctx.chat(this.tier === 2 ? 'betBig' : 'betChips', 1);
+      csfx.lever();
+      (this.tail as Container & { bendTo: (b: number) => void }).bendTo(1);
+      window.setTimeout(() => !this.destroyed && (this.tail as Container & { bendTo: (b: number) => void }).bendTo(0), 220 / speed);
+      this.marquee.speed = 2.2;
+      lounge.hype(0.5);
+      await this.spinReels(res, speed);
+      this.marquee.speed = 1;
+      lounge.hype(0);
+    } else this.landNow(res);
+    if (this.destroyed) return { ok: true };
+    await this.present(res, speed, auto);
     this.spinning = false;
-    this.ctx.setBusy(false);
-    this.refresh();
+    if (!auto) this.ctx.setBusy(false);
+    if (!this.destroyed) this.refresh();
+    const catG = res.granted.filter((g) => g.kind === 'cat');
+    return {
+      ok: true,
+      big: res.jackpot || (res.cur === 'gold' ? res.mult >= 5 : catG.length > 0 || res.granted.some((g) => g.tier === 'legendary' || g.tier === 'mythic')),
+      legend: catG.some((g) => catRank(g) >= 3),
+      newCat: catG.some((g) => g.isNew),
+    };
   }
 
-  private spinReels(res: SlotResult): Promise<void> {
+  /** TURBO: put the reels on their stops instantly */
+  private landNow(res: SlotResult) {
+    this.reels.forEach((r, i) => {
+      gsap.killTweensOf(r);
+      r.spinning = false;
+      r.speed = 0;
+      r.pos = res.stops[i];
+      r.layout();
+    });
+    csfx.reelStop(1);
+  }
+
+  private spinReels(res: SlotResult, speed: number): Promise<void> {
     return new Promise((resolve) => {
-      const V = 26;
+      const V = 26 * Math.min(2, speed);
       for (const r of this.reels) {
         r.spinning = true;
         r.speed = 0;
@@ -433,7 +489,7 @@ export class SlotView extends Container implements CasinoView {
       // honest anticipation: reels 1–2 already show two GATO NEGRO on a line → reel 3 spins longer
       const g = res.grid;
       const antic = LINES.some((L) => g[0][L[0]] === 'neko' && g[1][L[1]] === 'neko');
-      const stopAt = [0.85, 1.3, antic ? 2.6 : 1.75];
+      const stopAt = [0.85, 1.3, antic ? 2.6 : 1.75].map((t) => t / speed);
       let done = 0;
       stopAt.forEach((t, i) => {
         window.setTimeout(() => {
@@ -451,7 +507,7 @@ export class SlotView extends Container implements CasinoView {
           gsap.to(r, {
             pos: final,
             speed: 0,
-            duration: 0.55,
+            duration: 0.55 / Math.sqrt(speed),
             ease: 'back.out(1.6)',
             onUpdate: () => r.layout(),
             onComplete: () => {
@@ -470,7 +526,7 @@ export class SlotView extends Container implements CasinoView {
           });
         }, t * 1000);
       });
-      if (antic) {
+      if (antic && speed < 4) {
         window.setTimeout(() => {
           if (this.destroyed) return;
           this.marquee.burst(1200, 'flash');
@@ -478,7 +534,7 @@ export class SlotView extends Container implements CasinoView {
           this.ctx.chat('betBig', 1);
           const t = stamp(this.ctx.fx, this.winX + COLW * 2.5 + GAP * 2, this.winY - 30, '¡¿EL GATO?!', CP.yellow, 52, 0.08);
           gsap.to(t, { alpha: 0, delay: 1.1, duration: 0.3, onComplete: () => t.destroy() });
-        }, 1450);
+        }, 1450 / speed);
       }
     });
   }
@@ -492,7 +548,7 @@ export class SlotView extends Container implements CasinoView {
     return { x: this.winX + reel * (COLW + GAP) + COLW / 2, y: this.winY + row * ROW + ROW / 2 };
   }
 
-  private drawLine(li: number, cells: [number, number][]) {
+  private drawLine(li: number, cells: [number, number][], quiet = false) {
     const L = LINES[li];
     const pts = [0, 1, 2].map((r) => this.cellCenter(r, L[r]));
     const col = LINE_COLORS[li];
@@ -508,32 +564,40 @@ export class SlotView extends Container implements CasinoView {
     for (const [r, row] of cells) {
       const c = this.cellCenter(r, row);
       g.rect(c.x - COLW / 2 + 6, c.y - ROW / 2 + 6, COLW - 12, ROW - 12).stroke({ width: 6, color: col });
+      if (quiet) continue;
       const cell = this.reels[r].cellAt(row);
       gsap.fromTo(cell.scale, { x: 1.25, y: 1.25 }, { x: 1, y: 1, duration: 0.5, ease: 'elastic.out(1.2,0.4)' });
     }
   }
 
-  private async present(res: SlotResult) {
+  private async present(res: SlotResult, speed: AutoSpeed = 1, auto = false) {
     const stake = res.stake;
+    const turbo = speed >= 99;
+    const fast = speed >= 4;
+    const plan = auto ? revealPlanFor(speed) : {};
     if (!res.wins.length) {
       this.ctx.unfreeze();
-      csfx.lose();
+      if (!turbo) csfx.lose();
       this.lcd.text = '0';
       this.lcd.style.fill = 0x4a6a55;
-      const streak = cs().streak ?? 0;
-      if (streak <= -4) {
-        this.ctx.say('loseStreak');
-        this.ctx.chat('loseStreak', 1);
-      } else {
-        this.ctx.say('lose', 0.4);
-        this.ctx.chat('lose', 1);
+      if (!fast) {
+        const streak = cs().streak ?? 0;
+        if (streak <= -4) {
+          this.ctx.say('loseStreak', auto ? 0.3 : 1);
+          this.ctx.chat('loseStreak', 1);
+        } else {
+          this.ctx.say('lose', auto ? 0.1 : 0.4);
+          if (!auto) this.ctx.chat('lose', 1);
+        }
       }
+      await this.candy(res, speed);
       return;
     }
-    // draw every winning line, one by one
+    // draw every winning line, one by one (TURBO: all at once)
     for (let i = 0; i < res.wins.length; i++) {
       const w = res.wins[i];
-      this.drawLine(w.line, w.cells);
+      this.drawLine(w.line, w.cells, turbo);
+      if (turbo) continue;
       const last = this.cellCenter(2, LINES[w.line][2]);
       const tag = new Container();
       const lbl = res.cur === 'gold' ? `x${w.mult}` : w.sym === 'neko' ? '¡GATO!' : `x${w.mult}`;
@@ -545,7 +609,7 @@ export class SlotView extends Container implements CasinoView {
       this.tagLayer.addChild(tag);
       gsap.from(tag.scale, { x: 0, y: 0, duration: 0.25, ease: 'back.out(3)' });
       csfx.winSmall();
-      await wait(res.wins.length > 1 ? 380 : 200);
+      await wait((res.wins.length > 1 ? 380 : 200) / speed);
     }
     const won = res.payout;
     const isGold = res.cur === 'gold';
@@ -554,31 +618,48 @@ export class SlotView extends Container implements CasinoView {
     // LCD roll (chips mode: number of prizes)
     if (!isGold) this.lcdLbl.text = 'PREMIOS';
     const shownVal = isGold || !realWin ? won : res.granted.length;
-    const o = { v: 0 };
-    gsap.to(o, {
-      v: shownVal,
-      duration: Math.min(1.6, 0.4 + Math.log10(1 + won) * 0.3),
-      ease: 'power2.out',
-      onUpdate: () => {
-        if (!this.lcd.destroyed) this.lcd.text = fmt(o.v);
-      },
-    });
+    if (turbo) this.lcd.text = fmt(shownVal);
+    else {
+      const o = { v: 0 };
+      gsap.to(o, {
+        v: shownVal,
+        duration: Math.min(1.6, 0.4 + Math.log10(1 + won) * 0.3) / speed,
+        ease: 'power2.out',
+        onUpdate: () => {
+          if (!this.lcd.destroyed) this.lcd.text = fmt(o.v);
+        },
+      });
+    }
     if (!realWin) {
       this.ctx.unfreeze();
       this.lcdLbl.text = 'RECUPERAS';
       this.lcd.style.fill = 0x9fb3a6;
-      this.ctx.say('refund', 0.6);
-      this.ctx.chat('refund', 1);
+      if (!fast) {
+        this.ctx.say('refund', auto ? 0.15 : 0.6);
+        if (!auto) this.ctx.chat('refund', 1);
+      }
       window.setTimeout(() => {
         if (!this.lcdLbl.destroyed) this.lcdLbl.text = this.cur === 'gold' ? 'GANANCIA' : 'PREMIOS';
-      }, 1600);
+      }, 1600 / speed);
+      await this.candy(res, speed);
       return;
     }
     this.lcdLbl.text = isGold ? 'GANANCIA' : 'PREMIOS';
     const trayX = this.x0 + 380;
     const trayY = this.winY + ROW * 3;
-    const big = res.jackpot || (isGold ? mult >= 5 : res.granted.some((g) => g.kind === 'cat' || g.tier === 'epic'));
-    if (res.jackpot) {
+    const big = res.jackpot || (isGold ? mult >= 5 : res.granted.some((g) => g.kind === 'cat' || g.tier === 'epic' || g.tier === 'legendary' || g.tier === 'mythic'));
+    if (turbo) {
+      // straight to the results: pills catch up, a short line in the host bubble for the big ones, reveal NEW legendary+ cats
+      this.ctx.unfreeze();
+      if (big) {
+        csfx.winBig();
+        this.marquee.burst(600, 'flash');
+        this.ctx.say(res.jackpot ? 'jackpot' : 'winBig', 0.5);
+      } else csfx.coin();
+      await revealCats(this.ctx.top, res.granted, plan);
+      return;
+    }
+    if (res.jackpot && !fast) {
       this.marquee.burst(4000, 'rainbow');
       this.ctx.shake(0.6);
       this.ctx.say('jackpot');
@@ -586,33 +667,50 @@ export class SlotView extends Container implements CasinoView {
       const catG = res.granted.find((g) => g.kind === 'cat');
       await jackpotTakeover(this.ctx.top, this.ctx.particles, { sub: isGold ? `+${fmt(won)} DOBLONES` : catG ? `TE LLEVAS A ${catG.label}` : '¡PREMIO MAYOR!', loot: isGold ? 'gold' : 'chips' });
     } else if (big) {
-      this.marquee.burst(2200, 'rainbow');
+      this.marquee.burst(2200 / speed, 'rainbow');
       this.ctx.shake(0.35);
       flash(this.ctx.fx, CP.yellow, 0.35, 0.3);
       csfx.winBig();
-      csfx.coinShower(18);
-      coinFountain(this.ctx.particles, trayX, trayY, isGold ? 'gold' : 'chips', 40, 1.2);
+      csfx.coinShower(fast ? 6 : 18);
+      coinFountain(this.ctx.particles, trayX, trayY, isGold ? 'gold' : 'chips', fast ? 14 : 40, 1.2);
       onomatopoeia(this.ctx.fx, this.x0 + 380, this.winY + 120, '¡CHA-CHING!', { size: 120, color: CP.yellow });
-      this.ctx.say('winBig');
+      this.ctx.say(res.jackpot ? 'jackpot' : 'winBig');
       this.ctx.chat('winBig', 3);
-      if (isGold && mult >= 5) await winBanner(this.ctx.top, '¡GRAN PREMIO!', `x${mult.toFixed(1)} · +${fmt(won)} DOBLONES`, CP.yellow);
+      if (isGold && mult >= 5 && speed <= 2) await winBanner(this.ctx.top, '¡GRAN PREMIO!', `x${mult.toFixed(1)} · +${fmt(won)} DOBLONES`, CP.yellow);
     } else {
-      this.marquee.burst(1000, 'flash');
-      csfx.coinShower(6);
-      coinFountain(this.ctx.particles, trayX, trayY, isGold ? 'gold' : 'chips', 14, 0.8);
-      onomatopoeia(this.ctx.fx, this.x0 + 380, this.winY + 140, pick(['¡TILÍN!', '¡ÑAM!', '¡MIAU!', '¡PLIN!']), { size: 90, color: CP.yellow });
-      sparkles(this.ctx.fx, trayX, this.winY + 250, CP.yellow, 12, 200);
+      this.marquee.burst(1000 / speed, 'flash');
+      csfx.coinShower(fast ? 3 : 6);
+      coinFountain(this.ctx.particles, trayX, trayY, isGold ? 'gold' : 'chips', fast ? 6 : 14, 0.8);
+      if (!fast) {
+        onomatopoeia(this.ctx.fx, this.x0 + 380, this.winY + 140, pick(['¡TILÍN!', '¡ÑAM!', '¡MIAU!', '¡PLIN!']), { size: 90, color: CP.yellow });
+        sparkles(this.ctx.fx, trayX, this.winY + 250, CP.yellow, 12, 200);
+      }
       const streak = cs().streak ?? 0;
       if (streak >= 3) {
-        this.ctx.say('winStreak');
-        this.ctx.chat('winStreak', 2);
+        this.ctx.say('winStreak', auto ? 0.4 : 1);
+        if (!auto) this.ctx.chat('winStreak', 2);
       } else {
-        this.ctx.say('winSmall', 0.6);
-        this.ctx.chat('winSmall', 1);
+        this.ctx.say('winSmall', auto ? 0.15 : 0.6);
+        if (!auto) this.ctx.chat('winSmall', 1);
       }
     }
-    if (isGold) flyLoot(this.ctx.fx, 'gold', { x: trayX, y: this.winY + ROW * 1.5 }, this.ctx.pillPos('gold'), Math.min(18, 5 + Math.round(mult * 2)), () => this.ctx.unfreeze());
-    if (!isGold && res.granted.length) await presentPrizes(this.ctx, res.granted, { x: trayX, y: this.winY + ROW * 1.5 });
+    if (isGold) flyLoot(this.ctx.fx, 'gold', { x: trayX, y: this.winY + ROW * 1.5 }, this.ctx.pillPos('gold'), fast ? 4 : Math.min(18, 5 + Math.round(mult * 2)), () => this.ctx.unfreeze());
+    if (!isGold && res.granted.length) await presentPrizes(this.ctx, res.granted, { x: trayX, y: this.winY + ROW * 1.5 }, { hold: 1500 / speed, reveal: auto ? plan : undefined });
+    else if (isGold && fast) this.ctx.unfreeze();
+  }
+
+  /** LA CASA TE DEBE: the meter filled on this spin → a boleto (+ fichas) flies to the pills */
+  private async candy(res: SlotResult, speed: number) {
+    if (!res.candy.length) return;
+    this.ctx.unfreeze();
+    this.ctx.say('candy');
+    this.ctx.chat('candy', 1);
+    csfx.winSmall();
+    if (speed >= 99) return;
+    const t = stamp(this.ctx.fx, this.x0 + 380, this.winY + 200, 'LA CASA TE DEBÍA UNA', CP.cyan, 54, -0.06);
+    flyLoot(this.ctx.fx, 'tickets', { x: this.x0 + 380, y: this.winY + 200 }, this.ctx.pillPos('tickets'), 4);
+    await wait(900 / speed);
+    gsap.to(t, { alpha: 0, duration: 0.25, onComplete: () => t.destroy() });
   }
 
   dispose() {
@@ -622,6 +720,10 @@ export class SlotView extends Container implements CasinoView {
   }
 }
 
+function clampTier(x: unknown): SlotTier {
+  const n = Math.floor(Number(x));
+  return (Number.isFinite(n) ? Math.max(0, Math.min(2, n)) : 0) as SlotTier;
+}
 function wait(ms: number) {
   return new Promise<void>((r) => window.setTimeout(r, ms));
 }

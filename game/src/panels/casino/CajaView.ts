@@ -15,6 +15,7 @@ const SAMPLE: Record<string, Parameters<typeof prizeArt>[0]> = {
   prisma: { kind: 'prisma', n: 1 },
   acc: { kind: 'accessory', n: 1, ref: 'chistera' },
   ticket: { kind: 'tickets', n: 1 },
+  tickets5: { kind: 'tickets', n: 5 },
   cat: { kind: 'cat', n: 1, ref: 'c_canelo' },
 };
 
@@ -28,7 +29,7 @@ export class CajaView extends Container implements CasinoView {
     const s = heading('CANJE DIRECTO · CERO SUSPENSO', 32, CP.paper);
     s.position.set(660, 132);
     const how = label(
-      `Las fichas se ganan jugando: +${CHIPS.perVictory} por victoria (+${CHIPS.perPerfect} si es perfecta), +${CHIPS.perKl} por nivel de Reino, +${CHIPS.perBoss} por jefe. No hace falta apostar: aquí las cambias directo.`,
+      `Las fichas se ganan jugando: +${CHIPS.perVictory} por victoria (+${CHIPS.perPerfect} si es perfecta), +${CHIPS.perKl} por nivel de Reino, +${CHIPS.perBoss} por jefe. Los boletos también: 1 cada ${CHIPS.victoriesPerTicket} victorias, ${CHIPS.ticketsPerKl} por nivel y ${CHIPS.ticketsPerBoss} por jefe. No hace falta apostar: aquí las cambias directo.`,
       17,
       CP.softPink,
       { wordWrap: true, wordWrapWidth: 1020, lineHeight: 23 },
@@ -40,20 +41,20 @@ export class CajaView extends Container implements CasinoView {
 
   private build() {
     for (const c of this.grid.removeChildren()) c.destroy({ children: true });
-    const cw = 330;
+    const cw = 248;
     const ch = 350;
     CAJA.forEach((it, i) => {
       const c = new Container();
-      const x = 372 + (i % 3) * (cw + 22);
-      const y = 296 + Math.floor(i / 3) * (ch + 22);
+      const x = 372 + (i % 4) * (cw + 14);
+      const y = 296 + Math.floor(i / 4) * (ch + 22);
       c.position.set(x, y);
       const afford = chips() >= it.cost;
       const bg = new Graphics();
       bg.rect(8, 8, cw, ch).fill(CP.ink);
       bg.rect(0, 0, cw, ch).fill(CP.paper).stroke({ width: 4, color: CP.ink, alignment: 1 });
-      bg.rect(0, 0, cw, 150).fill(it.id === 'cat' ? CP.pink : it.id === 'ticket' ? CP.violet : 0x24132a);
+      bg.rect(0, 0, cw, 150).fill(it.id === 'cat' ? CP.pink : it.id === 'ticket' || it.id === 'tickets5' ? CP.violet : 0x24132a);
       const ht = halftone(cw, 150, CP.paper, 0.12, 12, 2);
-      const art = prizeArt(SAMPLE[it.id], 130);
+      const art = prizeArt(SAMPLE[it.id] ?? { kind: 'tickets', n: 1 }, 120);
       art.position.set(cw / 2, 78);
       if (it.id === 'cat') {
         // mystery: ink silhouette with a question mark
@@ -63,10 +64,11 @@ export class CajaView extends Container implements CasinoView {
         q.position.set(cw / 2, 76);
         c.addChild(bg, ht, q);
       } else c.addChild(bg, ht, art);
-      const n = heading(it.name.toUpperCase(), 32, CP.ink);
+      const n = heading(it.name.toUpperCase(), 26, CP.ink);
+      if (n.width > cw - 30) n.scale.set((cw - 30) / n.width);
       n.position.set(18, 160);
       const d = label(it.desc, 16, CP.ink, { wordWrap: true, wordWrapWidth: cw - 36, lineHeight: 21 });
-      d.position.set(18, 204);
+      d.position.set(18, 198);
       const btn = new CButton(`${it.cost}`, () => this.buy(it.id, c), { w: cw - 36, h: 64, color: afford ? CP.yellow : CP.paperDark, size: 34, icon: chipIcon(30) });
       btn.position.set(18, ch - 84);
       btn.disabled = !afford;
