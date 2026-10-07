@@ -325,6 +325,7 @@ export function plant(f: FarmPlot, cropId: string) {
   f.lastCrop = cropId;
   G.startTimer('crop', f.id, cropTimeMs(cropId, G.s.momentum), c.name, 'harvest');
   G.count('plant');
+  G.count(`plant_${cropId}`); // per-crop missions (K29 Banquete del Leviatán)
   return true;
 }
 export function harvest(f: FarmPlot, source: 'harvest' | 'auto_harvest' = 'harvest') {
