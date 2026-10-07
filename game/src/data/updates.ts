@@ -20,6 +20,22 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-09-grietas-del-multiverso',
+    date: '2026-10-09',
+    title: 'Grietas del Multiverso',
+    luzterna: 'Terminaste el capítulo y el mar decidió que no era suficiente. Se abrieron seis grietas. Yo no fui. Esta vez de verdad.',
+    items: [
+      { tag: 'NUEVO', text: 'Al terminar el Capítulo 1 se abren seis GRIETAS con seis elementos nuevos: Hielo, Sonido, Sombra, Tiempo, Luz y Vacío. Gana cada grieta y su Primordial se queda en tu isla, con su hábitat.' },
+      { tag: 'NUEVO', text: '32 gatos nuevos con dibujo propio (la Catdex ahora tiene 86): 24 de los elementos nuevos y 8 de dos rarezas nuevas.' },
+      { tag: 'NUEVO', text: 'En batalla: el Hielo congela cañones, la Luz atraviesa y ciega, la Sombra dispara invisible y apuñala, el Sonido aturde a través de paredes, el Tiempo rebobina tu barco y detiene el tiempo, y el Vacío borra celdas para siempre. Mismas reglas para el enemigo.' },
+      { tag: 'NUEVO', text: 'HEROICO y DIVINO, arriba de Mítico. No se invocan: los campeones de las ligas del Vacío del Podio pelean con su premio y te lo dan la primera vez que les ganas.' },
+      { tag: 'NUEVO', text: 'Ultis divinas: la mitad del barco de un golpe, mil cortes a toda la tripulación, el sol cayendo y un agujero negro que se traga barco y tiros. Y ultis propias para Bóreas, Áurea, Medianoche, Headliner, Nadie y Cronos.' },
+      { tag: 'NUEVO', text: 'En el Podio cada elemento nuevo trae su técnica (FROST BITE, PRISM FLASH, SHADOW STITCH, SONIC BOOM, REWIND CLAW, NULL BITE) y hay sinergias nuevas: Choque térmico, Nota alta, Arcoíris y Acelerar.' },
+      { tag: 'BALANCE', text: 'Los gatos de rayo y ráfaga (Raijin, Valquiria…) ya apuntan casi plano: antes la puntería automática los tiraba al cielo. A ★5 los legendarios nuevos usan su ulti dos veces, como dice su ficha.' },
+      { tag: 'CAMBIO', text: 'Las expediciones con un gato de un elemento nuevo traen cristales de SU elemento, y el panel del hábitat te dice de dónde salen.' },
+    ],
+  },
+  {
     id: '2026-10-08-podio-casino-habitats',
     date: '2026-10-08',
     title: 'El Podio, hábitats libres y un casino sin vergüenza',
