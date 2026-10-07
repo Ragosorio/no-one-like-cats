@@ -1,7 +1,7 @@
 /**
  * Créditos (b25 + Ajustes › CRÉDITOS): a Diario del Mar special edition that rolls upward while your
  * crew walks along the bottom. Personal stats first, then the thanks, how the game was born, the
- * open-source invitation and where to follow ragosorio. Tap = faster; CERRAR (or the end) closes.
+ * open-source invitation (game + MAI SVG) and where to follow ragosorio. Tap = faster; CERRAR (or the end) closes.
  */
 import { Container, Graphics, Ticker } from 'pixi.js';
 import gsap from 'gsap';
@@ -19,6 +19,7 @@ import { habitatTier } from '../../state/econ';
 
 export const INSTAGRAM = 'https://www.instagram.com/ragosorio';
 export const REPO = 'https://github.com/Ragosorio/no-one-like-cats';
+export const MAI_REPO = 'https://github.com/Ragosorio/MAI-SVG';
 
 type Block = { kind: 'head' | 'title' | 'sub' | 'body' | 'small' | 'gap' | 'link'; text?: string; url?: string };
 
@@ -46,7 +47,7 @@ const ROLL: Block[] = [
   { kind: 'title', text: 'NO ONE LIKE CATS' },
   { kind: 'sub', text: 'CAPÍTULO 1 — EL PRIMER MAR' },
   { kind: 'gap' },
-  { kind: 'body', text: 'Hecho con todo el corazón por ragosorio.' },
+  { kind: 'body', text: 'Hecho con todo el corazón por ragosorio. Espero de verdad que te guste.' },
   { kind: 'gap' },
   { kind: 'sub', text: 'GRACIAS' },
   { kind: 'body', text: 'A mi familia, que inspiró este juego.' },
@@ -59,13 +60,17 @@ const ROLL: Block[] = [
   { kind: 'sub', text: 'CÓMO NACIÓ' },
   { kind: 'body', text: 'Quería hacer una herramienta para editar SVG: MAI SVG.' },
   { kind: 'body', text: 'Para probarla necesitaba un proyecto de verdad. ¿Y qué mejor que un videojuego?' },
+  { kind: 'body', text: 'La idea fue evolucionando con muchísimas referencias hasta volverse esto.' },
   { kind: 'body', text: 'Por eso aquí no hay imágenes: cada gato es un SVG vivo que respira, parpadea y mueve la cola.' },
+  { kind: 'small', text: 'SVG porque carga más rápido, se puede animar y no nos cuesta nada.' },
   { kind: 'gap' },
   { kind: 'sub', text: 'ES DE TODOS' },
   { kind: 'body', text: 'Este juego es gratis. Sin anuncios. Sin compras. Sin trampas.' },
-  { kind: 'body', text: 'El juego y la herramienta son de código abierto: cualquier colaboración es bienvenida.' },
-  { kind: 'body', text: 'Nuevos gatos, elementos, historias, barcos, arreglos… todo suma.' },
+  { kind: 'body', text: 'La misión: hacer el mejor juego posible, gratis. Uno distinto, con aire fresco, que no quiere cobrarte nada. Sobre todo, para divertirse.' },
+  { kind: 'body', text: 'El juego y MAI SVG son de código abierto y son para la comunidad.' },
+  { kind: 'body', text: 'Aceptamos colaboraciones: cualquier actualización es muy bienvenida. Nuevos gatos, elementos, historias, barcos, arreglos… todo suma.' },
   { kind: 'link', text: 'github.com/Ragosorio/no-one-like-cats', url: REPO },
+  { kind: 'link', text: 'MAI SVG: github.com/Ragosorio/MAI-SVG', url: MAI_REPO },
   { kind: 'gap' },
   { kind: 'sub', text: 'SIGUE A RAGOSORIO' },
   { kind: 'body', text: 'En todas sus redes. Ahí salen los gatos nuevos primero.' },
