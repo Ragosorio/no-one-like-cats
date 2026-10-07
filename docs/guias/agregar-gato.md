@@ -26,7 +26,7 @@ Guías hermanas: [agregar-elemento.md](agregar-elemento.md) · [agregar-historia
 
 ## 2. La ficha en `content.json`
 
-Los ids siguen una convención por rareza: `c_` común, `r_` raro, `e_` épico, `l_` legendario, `m_` mítico, `s_` secreto. **Un id es para siempre**: las partidas guardan gatos por `species` (el id), así que renombrar uno deja gatos huérfanos en partidas viejas.
+Los ids siguen una convención por rareza: `c_` común, `r_` raro, `e_` épico, `l_` legendario, `m_` mítico, `h_` heroico, `d_` divino, `s_` secreto. **Un id es para siempre**: las partidas guardan gatos por `species` (el id), así que renombrar uno deja gatos huérfanos en partidas viejas.
 
 Así se ve Canelo (recortado, es real):
 
@@ -80,7 +80,7 @@ Así se ve Canelo (recortado, es real):
 | `art.tint` | `null` para la pintura original, o un `TintSpec` para una variante teñida (ver abajo). |
 | `art.aura` | 3 colores hex del aura (marcos, brillos de revelación). |
 | `elements` | 1 o 2 ids de `elements[]` (`fire`, `water`, `nature`, `earth`, `storm`, `magic`, `cosmic`). Decide hábitat, Resonancia y afinidad en combate. |
-| `rarity` | `common`, `rare`, `epic`, `legendary` o `mythic`. De aquí salen oro/s, poder, orbes y tiempo de Resonancia (`balance.json` → `rarities`). |
+| `rarity` | `common`, `rare`, `epic`, `legendary`, `mythic`, `heroic` o `divine`. De aquí salen oro/s, poder, orbes y tiempo de Resonancia (`balance.json` → `rarities`). Heroicos y Divinos no salen de la Resonancia ni del casino (ver sección 6). |
 | `primordial` | `true` para el legendario "fundador" de un elemento (Ignis, Gea…). Solo los primordiales legendarios salen de Resonancia, y solo si los padres comparten su elemento. |
 | `secret` | `true` saca al gato de los pozos normales; necesita una condición propia (sección 6). |
 | `role` | Uno de `roles[]`: `artillero`, `demoledor`, `francotirador`, `asediador`, `soporte`, `tanque`, `controlador`, `invocador`. Define la vida base. |
@@ -88,10 +88,10 @@ Así se ve Canelo (recortado, es real):
 | `trait` | Uno de `traits[]` (`impaciente`, `gloton`, `dormilon`…). Es el rasgo por defecto al adoptarlo. |
 | `battleForm.name`, `battleForm.cry` | El título de la transformación y el grito (en inglés o japonés, es parte del chiste). |
 | `combat.shot` | El disparo. `archetype` decide la trayectoria (tabla abajo). `radius` va en celdas. `status` en español (`ardiendo`, `mojado`, `enraizado`, `cargado`, `maldito`, `congelado`). |
-| `combat.ultimate` | La ulti. `dmg` se convierte en multiplicador contra `shot.dmg`; `usesPerBattle` y `chargeTurns` son límites. Si el nombre contiene `STARFALL`, `METEOR` o `DECREE` (o el arquetipo es `objetivo`) se vuelve meteoro. |
+| `combat.ultimate` | La ulti. `dmg` se convierte en multiplicador contra `shot.dmg`; `usesPerBattle` y `chargeTurns` son límites. Si el nombre contiene `STARFALL`, `METEOR` o `DECREE` (o el arquetipo es `objetivo`) se vuelve meteoro. Los legendarios/míticos/secretos/heroicos/divinos llevan además una ulti con firma en `battle/ults.ts` (`ULTS`, `ultWorth` para la IA), su set piece en `battle/ultFx.ts`, una línea en `state/sys/estimate.ts` (`BIG_ULT`) y su ULTI del Podio en `podio/powers.ts` (`SIGNATURE`). |
 | `combat.limitation` | `null` o una de las limitaciones con nombre (`UNA BALA`, `SEGUNDA VIDA (Revenant)`, `VENGANZA`, `3 ESCUDOS`, `CAÑÓN DE CRISTAL`, `INESTABLE`, `CARGA`, `CARGA 2 TURNOS`). La tabla `LIMIT` está en `battle/catShots.ts`. |
-| `combat.passive`, `star3`, `star5` | Texto que se muestra (Altar, Catdex, subida de estrellas). |
-| `obtain.source` | Cómo se consigue: `start`, `resonance`, `boss:N`, `heroic:N`, `secret`. `obtain.how` es el texto que lee el jugador. |
+| `combat.passive`, `star3`, `star5` | Texto que se muestra (Altar, Catdex, subida de estrellas). Ojo: si `usesPerBattle` es 1 y `star5` dice «2 veces por batalla», a ★5 la ulti de verdad se puede usar dos veces (`battleCatFrom` en `battle/catShots.ts`). |
+| `obtain.source` | Cómo se consigue: `start`, `resonance`, `boss:N`, `heroic:N`, `podio:N`, `secret`. `obtain.how` es el texto que lee el jugador. |
 | `hint` | Pista para la Catdex mientras no lo tienes (sobre todo secretos). |
 | `lore` | Una o dos frases. Sale en la revelación. Que dé risa o ternura, mejor si las dos. |
 
@@ -219,6 +219,7 @@ Según `obtain.source`:
   O sea: si haces un raro de Fuego + Naturaleza, aparece solito al cruzar padres de esos elementos. `content.json` → `resonanceRecipes[]` es una tabla de probabilidades calculada para documentación y para las pistas de campaña (`state/ext/campaign.ts`); si tu gato cambia los pozos, actualízala para que las pistas no mientan.
 - **`boss:N`**: el jefe lo entrega con un `cat:<id>` en sus `unlocks` de `balance.json` → `bosses[]` (por ejemplo `"unlocks": ["element:earth", "cat:l_gea", "zone:2"]`). Ver [agregar-historia.md](agregar-historia.md).
 - **`heroic:N`** y eventos: los da una batalla de historia (`state/sys/storyBattles.ts`, `reward.cat`).
+- **`podio:N`** (rarezas HEROICO y DIVINO): el campeón de la liga N del Podio lo paga la PRIMERA vez que le ganas, y pelea CON ese gato. La tabla liga → gato está en `data/podio.json` → `champion_prizes` (hoy: Heroicos en las ligas 8–11, Divinos en 12–15); `state/sys/podio.ts` (`championPrize`, `applyDuel`) lo entrega y `PodioScene` hace la revelación. Su ulti de barco va en `battle/ults.ts` (con su propio tope en `ultBudgetFrac`) y su set piece en `battle/ultFx.ts`; su ULTI del Podio en `podio/powers.ts` (`SIGNATURE`).
 - **`secret`**: necesita código. Agrega un `case` con tu id en `secretConditionMet()` de `state/sys/resonance.ts`, y documenta la condición en `content.json` → `secretRecipes[]` y la pista en `hint`. Ejemplo real:
 
 ```ts

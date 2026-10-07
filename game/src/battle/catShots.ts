@@ -144,7 +144,9 @@ export function battleCatFrom(i: CatBattleInput, roleHp: number): BattleCatDef {
   const def = catDef(i.species);
   const shot = shotFromSpec(def.combat.shot, i.level);
   const ult = ultFromDef(def, i.level);
-  const lim = def.combat.limitation ? LIMIT[def.combat.limitation] ?? 'none' : 'none';
+  // ★5 of the multiverse legendaries (content star5): "se puede usar 2 veces por batalla"
+  if (i.stars >= 5 && ult.limits?.usesPerBattle === 1 && /2 veces por batalla/.test(def.combat.star5 ?? '')) ult.limits = { ...ult.limits, usesPerBattle: 2 };
+  const lim =def.combat.limitation ? LIMIT[def.combat.limitation] ?? 'none' : 'none';
   return {
     uid: i.uid,
     catId: def.id,

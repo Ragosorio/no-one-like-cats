@@ -33,6 +33,8 @@ interface ShotMemo {
   stop: boolean;
   /** cats already hit by this sound wave */
   heard: Set<CatState>;
+  /** cats whose cabin this wave already crossed (a deaf cat is hit once per wave, not once per cell) */
+  waved: Set<CatState>;
 }
 interface P2State {
   /** turns of CEGADO left per side (set to 2 on hit: active during that side's next turn) */
@@ -45,17 +47,20 @@ interface P2State {
   stopImmune: [number, number];
   /** SORDO: turns left (sound can't stun it again) */
   deaf: Map<CatState, number>;
+  /** MEDIANOCHE ETERNA (l_medianoche's ultimate): turns left, counted at that side's turn start. While > 0
+   * every shot of that side flies invisible and its last impact stabs the nearest enemy cat from behind */
+  night: [number, number];
   shot: ShotMemo;
   /** player-side feats (BattleScene adds them to the save as counters) */
   feats: Record<string, number>;
 }
 
-const memo = (): ShotMemo => ({ blind: false, rainbow: false, backstab: false, rewind: false, stop: false, heard: new Set() });
+const memo = (): ShotMemo => ({ blind: false, rainbow: false, backstab: false, rewind: false, stop: false, heard: new Set(), waved: new Set() });
 const STATE = new WeakMap<Battle, P2State>();
 function S(b: Battle): P2State {
   let s = STATE.get(b);
   if (!s) {
-    s = { blind: [0, 0], stop: [false, false], stopNow: [false, false], stopImmune: [0, 0], deaf: new Map(), shot: memo(), feats: {} };
+    s = { blind: [0, 0], stop: [false, false], stopNow: [false, false], stopImmune: [0, 0], deaf: new Map(), night: [0, 0], shot: memo(), feats: {} };
     STATE.set(b, s);
   }
   return s;
@@ -104,13 +109,17 @@ export function p2StartTurn(b: Battle, side: 0 | 1, ev: BattleEvent[]) {
     else st.deaf.delete(c);
   }
   if (st.stopImmune[side] > 0) st.stopImmune[side]--;
+  if (st.night[side] > 0) st.night[side]--;
   st.stopNow[side] = st.stop[side];
   st.stop[side] = false;
   const ctr = shipCenter(b, side);
   if (st.stopNow[side]) {
     st.stopImmune[side] = 2;
+    // the stopped crew's turn: the view freezes their ship in sepia (battle/ultFx.ts)
+    ev.push({ k: 'ultfx', fx: 'timestopTurn', side, x: ctr.x, y: ctr.y, path: -1, at: 0 });
     info(ev, '¡TIEMPO DETENIDO! SUS GATOS NO SE MUEVEN', ctr.x, ctr.y - 200, 0xe0b77a, -1, 0);
   }
+  if (st.night[side] > 0) info(ev, `MEDIANOCHE: SUS TIROS NO SE VEN (${st.night[side]})`, ctr.x, ctr.y - 250, 0xc8102e, -1, 0);
   if (st.blind[side] > 0) info(ev, '¡CEGADO! VISTA PREVIA 30%', ctr.x, ctr.y - 150, 0xffd77a, -1, 0);
 }
 
@@ -131,6 +140,29 @@ export function p2Blind(b: Battle, side: number) {
 /** AI aim error multiplier (the same CEGADO, for the side the computer plays) */
 export function p2AimNoise(b: Battle, side: number) {
   return S(b).blind[side] > 0 ? 2.2 : 1;
+}
+/** MEDIANOCHE ETERNA active for this side: its shots fly invisible (view) and stab from behind */
+export function p2Night(b: Battle, side: number) {
+  return S(b).night[side] > 0;
+}
+/** l_medianoche's ultimate: the night lasts `turns` (counted at the caster's turn starts, this one included) */
+export function p2SetNight(b: Battle, side: number, turns: number) {
+  const st = S(b);
+  st.night[side] = Math.max(st.night[side], turns);
+}
+/** a TIME STOP could land on `side` right now (not pending, not immune) */
+export function p2CanStop(b: Battle, side: number) {
+  const st = S(b);
+  return !st.stop[side] && !st.stopNow[side] && st.stopImmune[side] <= 0;
+}
+/** SORDO: sound can't stun this cat again for a while */
+export function p2Deaf(b: Battle, c: CatState) {
+  return S(b).deaf.has(c);
+}
+/** this cat already heard the current shot (its wave stunned / hit it) */
+export function p2Heard(b: Battle, c: CatState) {
+  const s = S(b).shot;
+  return s.heard.has(c) || s.waved.has(c);
 }
 /** a new shot begins (per-shot one-time effects) */
 export function p2BeginFire(b: Battle) {
@@ -220,6 +252,29 @@ export interface ImpactCtx {
   hitCat: (c: CatState, dmg: number, ev: BattleEvent[], path: number, at: number, el: ShotDef['element'], direct?: boolean, chained?: boolean) => void;
 }
 
+/** PUÑALADA: `victims` are stabbed from behind (their own cat shields don't see it coming) */
+function backstab(b: Battle, k: ImpactCtx, ev: BattleEvent[], victims: CatState[], mul: number) {
+  for (const c of victims) {
+    const p = b.roomCenter(k.targetSide, c.room);
+    const shields = c.shields;
+    c.shields = 0;
+    k.hitCat(c, Math.round(k.base * mul * k.catK), ev, k.path, k.at, 'shadow', true);
+    c.shields = shields;
+    info(ev, '¡PUÑALADA!', p.x, p.y - 90, 0xc8102e, k.path, k.at);
+    feat(b, k.attSide, 'p2_backstab');
+  }
+}
+/** the living enemy cat nearest to (x, y), within `range` */
+function nearestCat(b: Battle, side: number, x: number, y: number, range: number): CatState[] {
+  const alive = b.sides[side].cats.filter((c) => !c.ko && !b.isFlying(c));
+  const dist = (c: CatState) => {
+    const p = b.roomCenter(side, c.room);
+    return Math.hypot(p.x - x, p.y - y);
+  };
+  const best = alive.sort((a, c) => dist(a) - dist(c))[0];
+  return best && dist(best) <= range ? [best] : [];
+}
+
 /** element effects after an impact resolved its damage (runs for every impact of the shot) */
 export function p2Impact(b: Battle, k: ImpactCtx, ev: BattleEvent[]) {
   const { attSide, targetSide, shot, x, y } = k;
@@ -227,6 +282,12 @@ export function p2Impact(b: Battle, k: ImpactCtx, ev: BattleEvent[]) {
   const st = S(b);
   const ult = !!shot.shout;
   const T = b.sides[targetSide];
+  // MEDIANOCHE ETERNA: every CAT shot of the night side stabs the nearest cat where it lands (Sombra shots already
+  // do; the ship's cannons only fly invisible)
+  if (st.night[attSide] > 0 && b.curShooter && shot.element !== 'shadow' && k.final && !st.shot.backstab) {
+    st.shot.backstab = true;
+    backstab(b, k, ev, nearestCat(b, targetSide, x, y, CELL * 7), 0.25);
+  }
   switch (shot.element) {
     case 'ice': {
       if (!k.final) break;
@@ -246,22 +307,8 @@ export function p2Impact(b: Battle, k: ImpactCtx, ev: BattleEvent[]) {
     case 'shadow': {
       if (!k.final || st.shot.backstab) break;
       st.shot.backstab = true;
-      const alive = T.cats.filter((c) => !c.ko && !b.isFlying(c));
-      if (!alive.length) break;
-      const dist = (c: CatState) => {
-        const p = b.roomCenter(targetSide, c.room);
-        return Math.hypot(p.x - x, p.y - y);
-      };
-      const victims = ult ? alive : [alive.sort((a, c) => dist(a) - dist(c))[0]].filter((c) => dist(c) <= CELL * 7);
-      for (const c of victims) {
-        const p = b.roomCenter(targetSide, c.room);
-        const shields = c.shields;
-        c.shields = 0; // from behind: the cat's own shields don't see it coming
-        k.hitCat(c, Math.round(k.base * (ult ? 0.35 : 0.45) * k.catK), ev, k.path, k.at, 'shadow', true);
-        c.shields = shields;
-        info(ev, '¡PUÑALADA!', p.x, p.y - 90, 0xc8102e, k.path, k.at);
-        feat(b, attSide, 'p2_backstab');
-      }
+      const victims = ult ? T.cats.filter((c) => !c.ko && !b.isFlying(c)) : nearestCat(b, targetSide, x, y, CELL * 7);
+      backstab(b, k, ev, victims, ult ? 0.35 : 0.45);
       break;
     }
     case 'sound': {
@@ -269,12 +316,17 @@ export function p2Impact(b: Battle, k: ImpactCtx, ev: BattleEvent[]) {
       if (!k.final) {
         const g = b.toGrid(targetSide, x, y);
         const c = catInCabin(b, targetSide, g.x, g.y);
-        if (c && !st.shot.heard.has(c)) k.hitCat(c, Math.round(k.base * 1.2 * k.catK), ev, k.path, k.at, 'sound', true);
+        if (c && !st.shot.heard.has(c) && !st.shot.waved.has(c)) {
+          st.shot.waved.add(c);
+          k.hitCat(c, Math.round(k.base * 1.2 * k.catK), ev, k.path, k.at, 'sound', true);
+        }
       } else if (ult) {
         for (const c of T.cats) {
-          if (c.ko || b.isFlying(c) || st.shot.heard.has(c)) continue;
+          if (c.ko || b.isFlying(c) || st.shot.heard.has(c) || st.shot.waved.has(c)) continue;
           const p = b.roomCenter(targetSide, c.room);
-          if (Math.hypot(p.x - x, p.y - y) <= CELL * 4) k.hitCat(c, Math.round(k.base * 0.3 * k.catK), ev, k.path, k.at, 'sound', true);
+          if (Math.hypot(p.x - x, p.y - y) > CELL * 4) continue;
+          st.shot.waved.add(c);
+          k.hitCat(c, Math.round(k.base * 0.3 * k.catK), ev, k.path, k.at, 'sound', true);
         }
       }
       break;
@@ -312,6 +364,7 @@ export function p2Impact(b: Battle, k: ImpactCtx, ev: BattleEvent[]) {
         st.shot.stop = true;
         st.stop[targetSide] = true;
         const p = shipCenter(b, targetSide);
+        ev.push({ k: 'ultfx', fx: 'timestopHit', side: targetSide, x: p.x, y: p.y, path: k.path, at: k.at });
         info(ev, '¡TIME STOP!', p.x, p.y - 180, 0xe0b77a, k.path, k.at);
         feat(b, attSide, 'p2_timestop');
       }

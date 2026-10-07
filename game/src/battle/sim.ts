@@ -16,7 +16,7 @@ import { CONTENT } from '../data/content';
 // Parte 2: Hielo, Luz, Sombra, Sonido, Tiempo, Vacío (small hooks below, rules in multiverso.ts)
 import { p2BeginFire, p2Flight, p2Impact, p2PostHitCat, p2PreHitCat, p2PreviewMul, p2React, p2Shooters, p2StartTurn } from './multiverso';
 import { lateBossInit, lateBossStart, lateEnterPhase, wardIntercept, lateCellMul, lateAfterImpact, lateLoss, lateSplash, tickBuffs } from './bossLate';
-import { ULTS, ultBudgetFrac } from './ults';
+import { ULTS, ultBudgetFrac, ultTicks } from './ults';
 
 export interface PathPoint {
   x: number;
@@ -32,6 +32,8 @@ export interface ShotPath {
   owners?: number[];
   /** point indices where the projectile teleported */
   jumps?: number[];
+  /** swallowed by an event horizon (Horizonte de Eventos): no impact, it just vanishes */
+  eaten?: boolean;
 }
 
 export type BossWhat =
@@ -271,7 +273,23 @@ export interface Well {
   owner: number;
   /** only bends projectiles fired by this side (Abisa's lure) */
   affects?: number;
-  kind: 'well' | 'hole' | 'lure' | 'sun';
+  kind: 'well' | 'hole' | 'lure' | 'sun' | 'horizon';
+  /** event horizon: projectiles of the OTHER side that come this close vanish */
+  eat?: number;
+  /** view only: not drawn until its ultimate's impact event shows it (the sun has to fall first) */
+  hidden?: boolean;
+  /** divine ultimates that stay on the field (black hole / fallen sun): what they do at the start of each owner turn */
+  tick?: WellTick;
+}
+export interface WellTick {
+  /** structure cap of one tick (fraction of the victim's starting structure) */
+  frac: number;
+  /** cells hit per tick */
+  cells: number;
+  /** damage per cell (sun) — the horizon swallows whole cells */
+  atk: number;
+  /** ultimate meter drained from every enemy cat per tick (horizon) */
+  drain?: number;
 }
 
 export interface Portals {
@@ -748,6 +766,7 @@ export class Battle {
     ev.push(...this.updateExposure(side));
     this.stageRulesAtStart(side, ev);
     // ultimate after-effects (Gea, Eclipse, Merlina's FIN, wells) — same rules for both sides
+    ultTicks(this, side, ev);
     tickBuffs(this, side, ev);
     this.bossAtStart(side, ev);
     this.checkVictory();
@@ -1134,7 +1153,7 @@ export class Battle {
     // ultimates can't erase more than a slice of the enemy structure (GDD 2.9.4: 35%, 40% Starfall/Singularidad, bosses 15%)
     if (ult && cat) {
       const foe = this.sides[1 - side];
-      const frac = this.cfg.boss?.side === 1 - side ? 0.15 : ultBudgetFrac(cat.def.catId);
+      const frac = this.cfg.boss?.side === 1 - side ? 0.15 : ultBudgetFrac(cat.def.catId, cat.def.stars);
       this.budget = { side: 1 - side, left: Math.round((foe.ship.initialMax?.[0] ?? 0) * frac) };
     }
     if (special) {
@@ -1180,6 +1199,10 @@ export class Battle {
         this.resolveImpact(owner, shot, atk, pt.x, pt.y, events, pi, idx, k === p.impacts.length - 1);
       });
       const last = p.points[p.points.length - 1];
+      if (p.eaten) {
+        events.push({ k: 'ultfx', fx: 'eaten', side, x: last.x, y: last.y, path: pi, at: p.points.length - 1 });
+        return;
+      }
       if (!p.impacts.length && last.y >= this.waterY - 4) {
         events.push({ k: 'splash', x: last.x, y: this.waterY, path: pi, at: p.points.length - 1 });
         lateSplash(this, side, shot, last.x, events, pi, p.points.length - 1);
@@ -1263,6 +1286,13 @@ export class Battle {
             const dx = w.x - x;
             const dy = w.y - y;
             const d = Math.hypot(dx, dy);
+            // event horizon: the other side's shots that get too close are gone
+            if (w.eat && w.owner !== owner && d < w.eat) {
+              pts.push({ x, y });
+              const out = done();
+              out.eaten = true;
+              return out;
+            }
             if (d >= w.r || d < 6) continue;
             const a = w.k * (1 - d / w.r);
             vx += (dx / d) * a * sdt;

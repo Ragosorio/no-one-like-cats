@@ -18,7 +18,7 @@ import { BattleCat } from '../art/catArt';
 import { applyCatTint } from '../art/tint';
 import { goIsland } from '../app/flow';
 import { G, OwnedCat } from '../state/game';
-import { catDef } from '../data/content';
+import { CATS, catDef } from '../data/content';
 import { ensureCats } from '../panels/campaign/common';
 import { Arena, SPOT } from '../podio/arena';
 import { PodioFx, P2 } from '../podio/fx';
@@ -453,6 +453,12 @@ export class PodioScene extends Scene {
         case 'ko':
           await this.faint(e.side);
           break;
+        case 'note':
+          // a Heroico / Divino ULTI's extra (¡LA MITAD!, ¡SIN BARRA!…)
+          this.fx.banner(e.text, e.color, H * 0.34, 72, 0.8);
+          this.bars[e.side].sync();
+          await this.wait(0.35);
+          break;
         case 'decision':
           this.fx.banner('DECISIÓN DE LOS JUECES', C.paper, H * 0.4, 70, 1.2);
           await this.wait(1.2);
@@ -716,6 +722,15 @@ export class PodioScene extends Scene {
     })();
   }
 
+  private async showPrize(prize: { species: string; isNew: boolean; orbs: number }) {
+    try {
+      await revealPrize(prize);
+    } catch (err) {
+      // the cat is already in the save: a failed presentation must never block the results
+      console.warn('[podio] prize reveal failed', err);
+    }
+  }
+
   private async finish(run: number, won: boolean, _forfeit = false) {
     if (run !== this.runId || this.destroyed) return;
     const cat = this.cat!;
@@ -730,6 +745,9 @@ export class PodioScene extends Scene {
     const loot = applyDuel(cat, r.league, r.bout, won, perfect);
     this.duel = null;
     if (run !== this.runId || this.destroyed) return;
+    // a VACÍO champion's prize: the cat joins (reveal) and, the first time, Luzterna explains what it is
+    if (loot.prize) await this.showPrize(loot.prize);
+    if (run !== this.runId || this.destroyed) return;
     this.results = new PodioResults(loot, cat, `${r.trainer} (${r.def.name})`, {
       onNext: () => {
         const p = ps();
@@ -741,6 +759,38 @@ export class PodioScene extends Scene {
     });
     this.top.addChild(this.results);
   }
+}
+
+/** the Heroico / Divino a champion pays: the full reveal, then (first of its rarity) Luzterna's explanation */
+async function revealPrize(prize: { species: string; isNew: boolean; orbs: number }) {
+  const [{ playCatReveal }, { scenes }, story, dialog, lines] = await Promise.all([
+    import('../fx/sequences/catReveal'),
+    import('../core/scenes'),
+    import('../state/ext/story'),
+    import('../ui/dialog'),
+    import('../podio/lines'),
+  ]);
+  const cd = catDef(prize.species);
+  const reg = Object.values(G.s.catdex).filter((v) => v === 'registered').length;
+  await playCatReveal(scenes.fxLayer, {
+    slug: cd.art.slug,
+    name: cd.name,
+    elements: cd.elements,
+    rarity: cd.rarity,
+    species: prize.species,
+    caption: cd.lore,
+    subtitle: `${cd.epithet} · ${cd.battleForm.cry}`,
+    duplicateOrbs: prize.isNew ? undefined : prize.orbs,
+    dex: prize.isNew ? [reg - 1, reg, CATS.length] : undefined,
+    kicker: `EL PODIO · PREMIO DEL CAMPEÓN`,
+    chips: [cd.rarity === 'divine' ? 'DIVINO' : 'HEROICO', 'PREMIO DEL PODIO', cd.combat.ultimate.name.split('(')[0].trim()],
+  });
+  const beat = cd.rarity === 'divine' ? 'divino_intro' : cd.rarity === 'heroic' ? 'heroico_intro' : '';
+  if (beat && !story.beatSeen(beat)) {
+    story.markBeat(beat);
+    await dialog.say(beat === 'divino_intro' ? lines.DIVINO_INTRO : lines.HEROICO_INTRO);
+  }
+  G.save();
 }
 
 function killDeep(c: Container) {

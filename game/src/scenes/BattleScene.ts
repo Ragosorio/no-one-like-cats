@@ -15,7 +15,7 @@ import type { BossConfig, StageRules, Well } from '../battle/sim';
 import { decide, aimCannon, aimFrom, AiProfile } from '../battle/ai';
 import { summonShooters } from '../battle/bossLate';
 import { WardFx, PortalFx, InkCatFx, WellFx, GravityFx, StarTellFx, SeaIceFx, FogEyeFx, CoreMarker, wizardDecal } from '../battle/boss/lateRigs';
-import { preUlt, atUlt, UltMarks, UltCtx } from '../battle/ultFx';
+import { preUlt, atUlt, UltMarks, UltCtx, ULT_PRE_FX } from '../battle/ultFx';
 import { MatchupPanel, effLabel } from '../battle/ui/matchup';
 import { makeBattle, enemyProfile, volleySigma, aiSeed, volleyAim, WATER_Y as SIM_WATER_Y } from '../battle/autoplay';
 import { CatStatusView, playKO, playOverboard } from '../battle/catFx';
@@ -34,7 +34,7 @@ import { LabelLanes, reactionPlate, tagLabel, REACTION_INFO } from '../battle/la
 import { GargoyleWings, ThroatFx, KrakenRig, BubbleFx, RainFx } from '../battle/boss/rigs';
 import { koRank } from '../state/sys/ranks';
 import { P2_ONO, p2Hidden, p2Projectile, p2Trail } from '../battle/fx/multiversoFx';
-import { p2Feats } from '../battle/multiverso';
+import { p2Feats, p2Night } from '../battle/multiverso';
 import { settings } from '../core/settings';
 import { fmt } from '../core/format';
 import { G } from '../state/game';
@@ -418,8 +418,8 @@ export class BattleScene extends Scene {
     const sim = this.sim;
     const B = sim.boss;
     const es = sim.sides[1];
-    // wells: module wells, black holes, Abisa's lure
-    const wells = sim.wellList();
+    // wells: module wells, black holes, Abisa's lure (a divine's sun / horizon only once its impact showed it)
+    const wells = sim.wellList().filter((w) => !w.hidden);
     for (const [w, fx] of this.wellFx) {
       if (wells.some((k) => k === w || (k.kind === 'well' && w.kind === 'well' && k.x === w.x && k.y === w.y))) continue;
       this.wellFx.delete(w);
@@ -632,6 +632,7 @@ export class BattleScene extends Scene {
     if (!this.ruleE) return;
     const b = this.sim.boss;
     const items: Chip[] = [];
+    const pItemsDivine: Chip[] = [];
     const es = this.sim.sides[1];
     if (b?.id === 'gargoyle') {
       const throat = es.ship.modules.find((m) => m.tag === 'throat');
@@ -674,6 +675,12 @@ export class BattleScene extends Scene {
       if (b.devour !== null && !b.fogHit) items.push({ text: 'DISTRAXIA: ¡PÉGALE AL OJO!', color: 0xc77dff, hot: true });
     }
     if (this.sim.wells.some((w) => w.kind === 'hole')) items.push({ text: 'AGUJERO NEGRO', color: 0xff7ab8, hot: true });
+    // divines that stay on the field (their chips go on the side that suffers them)
+    for (const w of this.sim.wells) {
+      if (w.kind !== 'horizon' && w.kind !== 'sun') continue;
+      const chip: Chip = w.kind === 'horizon' ? { text: `HORIZONTE DE EVENTOS ${w.turns}`, color: 0xff2e88, ink: C.paper, hot: true } : { text: `SOL CAÍDO ${w.turns}`, color: 0xffd400, hot: true };
+      (w.owner === 0 ? items : pItemsDivine).push(chip);
+    }
     if (es.buffs.stone > 0) items.push({ text: `CORAZÓN DE PIEDRA ${es.buffs.stone}`, color: 0xc4bdab });
     if (es.buffs.blind > 0) items.push({ text: `ECLIPSADO ${es.buffs.blind}`, color: 0xff7ab8 });
     if (es.buffs.fin.length) items.push({ text: `FIN x${es.buffs.fin.length}`, color: C.paper });
@@ -686,7 +693,7 @@ export class BattleScene extends Scene {
     if (r?.regrow?.includes(1)) items.push({ text: 'ENREDADERAS', color: 0x7ed957 });
     if (r?.wetAll) items.push({ text: 'DILUVIO', color: C.cyan });
     if (this.sim.turn >= 10 && this.spec.mode !== 'duel') items.push({ text: 'MUERTE SÚBITA', color: C.red, ink: C.paper });
-    const pItems: Chip[] = [];
+    const pItems: Chip[] = [...pItemsDivine];
     const ps = this.sim.sides[0];
     if (ps.bubbleKind) pItems.push(ps.bubble > 0 ? { text: `BURBUJA x${ps.bubble}`, color: C.cyan } : { text: 'BURBUJA: RECARGA', color: 0x8a95a3 });
     if (ps.buffs.stone > 0) pItems.push({ text: `CORAZÓN DE PIEDRA ${ps.buffs.stone}`, color: 0xc4bdab });
@@ -1358,7 +1365,7 @@ export class BattleScene extends Scene {
   }
 
   /** the set pieces the ultimates stage before their projectiles fly */
-  private static PRE_FX = new Set(['sun', 'thunder', 'slash', 'eruption', 'storm', 'stone', 'lure', 'forest', 'flash', 'eclipse']);
+  private static PRE_FX = new Set<string>(['sun', 'thunder', 'slash', 'eruption', 'storm', 'stone', 'lure', 'forest', 'flash', 'eclipse', ...ULT_PRE_FX]);
   private ultCtx(): UltCtx {
     return {
       sim: this.sim,
@@ -1370,6 +1377,7 @@ export class BattleScene extends Scene {
       flt: (x, y, text, o) => this.flt(x, y, text, o),
       toOverlay: (x, y) => this.overlay.toLocal(this.world.toGlobal({ x, y })),
       marks: this.ultMarks,
+      sync: () => this.syncLate(),
     };
   }
 
@@ -1419,8 +1427,10 @@ export class BattleScene extends Scene {
       const trail = new Graphics();
       this.world.addChild(trail);
       const hist: { x: number; y: number }[][] = paths.map(() => []);
-      // Sombra: no trail, and the camera doesn't give it away
-      const hidden = p2Hidden(shot);
+      // Sombra: no trail, and the camera doesn't give it away (Medianoche's night: every shot of that side)
+      const hidden = p2Hidden(shot) || p2Night(this.sim, side);
+      if (hidden) for (const b of balls) b.node.visible = false;
+      trail.visible = !hidden;
       if (!quick && !hidden) {
         this.follow = balls[0].node;
         this.followBox = this.shipBox(side === 0 ? 1 : 0);

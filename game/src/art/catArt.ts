@@ -191,7 +191,8 @@ export async function loadCatTexture(slug: string): Promise<Texture> {
 
 /** waits for the lite vectors (fast); full detail streams in later where it is needed */
 export async function preloadCats(slugs: string[]) {
-  await Promise.all([...new Set(slugs.map(artSlug))].map(loadLite));
+  // a painting that can't load must never block an island or a battle (its stand-in takes over)
+  await Promise.all([...new Set(slugs.map(artSlug))].map((s) => loadLite(s).catch(() => undefined)));
 }
 
 /** best available painting: full vector if rasterized, else the lite vector, else WHITE (= not loaded) */

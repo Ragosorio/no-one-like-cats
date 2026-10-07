@@ -112,10 +112,16 @@ export function rival(lg: number, bout: number, islandSeed: number, elements: st
   const seed = hash(islandSeed ^ (lg * 97 + bout * 13 + 7));
   const okEl = (c: CatDef) => c.elements.every((e) => elements.includes(e));
   const okSecret = (c: CatDef) => !c.secret || owned.has(c.id);
-  let pool = CATS.filter((c) => lgd.rarities.includes(c.rarity) && okEl(c) && okSecret(c));
+  // past the VACÍO, the trainers bring Heroicos (from VACÍO II) and Divinos (from VACÍO VI) — only the ones
+  // you already have (a cat is a card: their copy plays by your copy's rules)
+  const okRarity = (c: CatDef) =>
+    lgd.rarities.includes(c.rarity) || (owned.has(c.id) && ((c.rarity === 'heroic' && lg >= 9) || (c.rarity === 'divine' && lg >= 13)));
+  let pool = CATS.filter((c) => okRarity(c) && okEl(c) && okSecret(c));
   if (pool.length < 2) pool = CATS.filter((c) => lgd.rarities.includes(c.rarity) && okSecret(c));
   if (!pool.length) pool = CATS.filter((c) => c.rarity === 'common');
-  const def = pool[seed % pool.length];
+  // a prize league's champion fights WITH the cat it pays (beat Zarpa to win Zarpa)
+  const prizeId = champion ? (PB.champion_prizes as unknown as Record<string, string>)[String(lg)] : undefined;
+  const def = (prizeId && CATS.find((c) => c.id === prizeId)) || pool[seed % pool.length];
   const power = boutPower(lg, bout);
   const stars = Math.min(BAL.cats.stars.max, 1 + Math.floor((lg - 1) / 2) + (champion ? 1 : 0));
   // level that gives that power with those stars (econ.catPower)

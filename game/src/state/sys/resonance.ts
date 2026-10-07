@@ -8,7 +8,8 @@ import { BAL, RarityId, duplicateOrbs } from '../econ';
 import { adopt, cat as getCat, collState, MUTATIONS, MutationDef, rollTrait } from './cats';
 import { Rng } from '../../core/rng';
 
-const RANK: Record<RarityId, number> = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4 };
+// heroic / divine parents count like a mythic (their own rank never makes a resonance juicier)
+const RANK: Record<RarityId, number> = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4, heroic: 4, divine: 4 };
 type Bucket = 'common' | 'rare' | 'epic' | 'legendary' | 'secret';
 
 export interface OddsRow {
@@ -39,7 +40,7 @@ export function oddsFor(aUid: string, bUid: string): OddsTable {
   const pool: Record<Bucket, string[]> = { common: [], rare: [], epic: [], legendary: [], secret: [] };
   const missing: string[] = [];
   for (const c of CATS) {
-    if (c.secret || c.rarity === 'mythic') continue;
+    if (c.secret || c.rarity === 'mythic' || c.rarity === 'heroic' || c.rarity === 'divine') continue;
     if (!subset(c.elements, U)) {
       continue;
     }

@@ -5,13 +5,15 @@
  *   epic       CMYK con rosa neón, misregistro fuerte
  *   legendary  foil dorado (el brillo animado lo pone CatCard)
  *   mythic     holográfico + glitch
+ *   heroic     carmesí + laureles dorados (premios del Podio)
+ *   divine     nácar iridiscente + halo (los "rotos")
  *   primordial negro con ruido de otra dimensión + color del elemento
  *   neutral    ficha sin rareza conocida (silueta)
  *   back       carta sellada
  */
 import { Texture } from 'pixi.js';
 
-export type PrintStyle = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic' | 'primordial' | 'neutral' | 'back' | 'backSecret';
+export type PrintStyle = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic' | 'heroic' | 'divine' | 'primordial' | 'neutral' | 'back' | 'backSecret';
 
 export interface CardLayout {
   b: number;
@@ -265,6 +267,160 @@ export function cardFace(style: PrintStyle, w: number, h: number, accent = 0xff2
       strokeRect(g, 0, 0, W, H, 2 * s, '#0D110F');
       break;
     }
+    case 'heroic': {
+      // carmesí + laureles: a champion's banner. Crimson field, gold laurel wreath hugging the window
+      g.fillStyle = '#3a0008';
+      g.fillRect(0, 0, W, H);
+      const rg = g.createRadialGradient(win.x + win.w / 2, win.y + win.h * 0.35, 0, win.x + win.w / 2, win.y + win.h * 0.35, win.h);
+      rg.addColorStop(0, '#c8253d');
+      rg.addColorStop(0.55, '#7a0a1c');
+      rg.addColorStop(1, '#2a0006');
+      g.fillStyle = rg;
+      g.fillRect(win.x, win.y, win.w, win.h);
+      // banner stripes (diagonal, tournament flag)
+      g.save();
+      g.beginPath();
+      g.rect(win.x, win.y, win.w, win.h);
+      g.clip();
+      g.strokeStyle = 'rgba(255,201,74,0.08)';
+      g.lineWidth = 6 * s;
+      for (let i = -win.h; i < win.w; i += 18 * s) {
+        g.beginPath();
+        g.moveTo(win.x + i, win.y + win.h);
+        g.lineTo(win.x + i + win.h, win.y);
+        g.stroke();
+      }
+      g.restore();
+      const crim = g.createLinearGradient(0, 0, W, H);
+      [
+        [0, '#5a0010'],
+        [0.3, '#c8102e'],
+        [0.5, '#e8455a'],
+        [0.7, '#b3122e'],
+        [1, '#4e0000'],
+      ].forEach(([o, c]) => crim.addColorStop(o as number, c as string));
+      ring(g, W, H, b, crim);
+      const goldG = g.createLinearGradient(0, 0, W, 0);
+      [
+        [0, '#8a6420'],
+        [0.35, '#ffe08a'],
+        [0.5, '#fff4c8'],
+        [0.65, '#e0b04a'],
+        [1, '#7a5418'],
+      ].forEach(([o, c]) => goldG.addColorStop(o as number, c as string));
+      strokeRect(g, b - 2.2 * s, b - 2.2 * s, W - 2 * b + 4.4 * s, H - 2 * b + 4.4 * s, 2.2 * s, '#ffc94a');
+      strokeRect(g, 1.2 * s, 1.2 * s, W - 2.4 * s, H - 2.4 * s, 1.4 * s, '#ffe08a');
+      g.fillStyle = goldG;
+      g.fillRect(pl.x, pl.y, pl.w, 3.2 * s);
+      // laurel wreath: two branches rising from the bottom of the window, one leaf pair at a time
+      const laurel = (dir: 1 | -1) => {
+        const cx = win.x + win.w / 2;
+        const baseY = win.y + win.h - 4 * s;
+        const R = win.w * 0.5;
+        const n = 11;
+        for (let i = 0; i < n; i++) {
+          const t = i / (n - 1);
+          // arc from the bottom center up the side of the window
+          const a = Math.PI / 2 + dir * (0.18 + t * 1.25);
+          const x = cx + Math.cos(a) * R * 0.98;
+          const y = baseY - R * 0.62 + Math.sin(a) * R * 0.62;
+          const tang = a + (dir > 0 ? Math.PI / 2 : -Math.PI / 2);
+          const leaf = (off: number) => {
+            g.save();
+            g.translate(x, y);
+            g.rotate(tang + off);
+            g.beginPath();
+            g.ellipse(0, -5.5 * s, 2.4 * s, 6 * s, 0, 0, Math.PI * 2);
+            g.fillStyle = goldG;
+            g.fill();
+            g.lineWidth = 0.8 * s;
+            g.strokeStyle = '#4a2a08';
+            g.stroke();
+            g.restore();
+          };
+          leaf(0.7);
+          leaf(-0.7);
+        }
+      };
+      laurel(1);
+      laurel(-1);
+      // the knot of the wreath
+      g.beginPath();
+      g.arc(win.x + win.w / 2, win.y + win.h - 5 * s, 3.2 * s, 0, Math.PI * 2);
+      g.fillStyle = '#ffc94a';
+      g.fill();
+      grain(g, W, H, 12);
+      break;
+    }
+    case 'divine': {
+      // nácar + halo: pearl card with a soft iridescent window and a halo over the cat
+      g.fillStyle = '#f7f1e6';
+      g.fillRect(0, 0, W, H);
+      const wg = g.createLinearGradient(win.x, win.y, win.x + win.w, win.y + win.h);
+      ['#fff9ef', '#f6dbe6', '#dff3ee', '#e8e1fa', '#fff1d6', '#f6dbe6'].forEach((c, i, a) => wg.addColorStop(i / (a.length - 1), c));
+      g.fillStyle = wg;
+      g.fillRect(win.x, win.y, win.w, win.h);
+      const rg = g.createRadialGradient(win.x + win.w / 2, win.y + win.h * 0.22, 0, win.x + win.w / 2, win.y + win.h * 0.22, win.h * 0.8);
+      rg.addColorStop(0, 'rgba(255,255,255,0.95)');
+      rg.addColorStop(0.5, 'rgba(255,250,235,0.35)');
+      rg.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = rg;
+      g.fillRect(win.x, win.y, win.w, win.h);
+      // light rays from the halo
+      g.save();
+      g.beginPath();
+      g.rect(win.x, win.y, win.w, win.h);
+      g.clip();
+      g.translate(win.x + win.w / 2, win.y + win.h * 0.16);
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        g.beginPath();
+        g.moveTo(0, 0);
+        g.arc(0, 0, win.h * 1.4, a, a + 0.06);
+        g.closePath();
+        g.fillStyle = i % 2 ? 'rgba(255,214,140,0.10)' : 'rgba(170,230,225,0.10)';
+        g.fill();
+      }
+      // halo
+      g.beginPath();
+      g.ellipse(0, 0, win.w * 0.27, win.w * 0.075, 0, 0, Math.PI * 2);
+      g.lineWidth = 3.4 * s;
+      g.strokeStyle = '#e8c46a';
+      g.stroke();
+      g.lineWidth = 1.2 * s;
+      g.strokeStyle = '#fffbea';
+      g.stroke();
+      g.restore();
+      // nacre border: pastel iridescence + gold filet
+      const ng = g.createLinearGradient(0, 0, W, H);
+      ['#fffaf0', '#f2cfe0', '#cdeee6', '#ded6fb', '#fff0cc', '#f2cfe0', '#fffaf0'].forEach((c, i, a) => ng.addColorStop(i / (a.length - 1), c));
+      ring(g, W, H, b, ng);
+      strokeRect(g, 0, 0, W, H, 1.8 * s, '#c9a45a');
+      strokeRect(g, b - 1.8 * s, b - 1.8 * s, W - 2 * b + 3.6 * s, H - 2 * b + 3.6 * s, 1.6 * s, '#c9a45a');
+      // tiny stars on the border
+      g.fillStyle = '#c9a45a';
+      for (const [sx, sy] of [
+        [b * 0.5, b * 0.5],
+        [W - b * 0.5, b * 0.5],
+        [W - b * 0.5, H - b * 0.5],
+        [b * 0.5, H - b * 0.5],
+      ]) {
+        g.beginPath();
+        for (let k = 0; k < 8; k++) {
+          const rr = k % 2 ? b * 0.14 : b * 0.42;
+          const a = (k / 8) * Math.PI * 2 - Math.PI / 2;
+          g.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr);
+        }
+        g.closePath();
+        g.fill();
+      }
+      const pg = g.createLinearGradient(pl.x, 0, pl.x + pl.w, 0);
+      ['#e8c46a', '#9fe0d8', '#e9b8d2', '#e8c46a'].forEach((c, i, a) => pg.addColorStop(i / (a.length - 1), c));
+      g.fillStyle = pg;
+      g.fillRect(pl.x, pl.y, pl.w, 3 * s);
+      grain(g, W, H, 6);
+      break;
+    }
     case 'primordial': {
       g.fillStyle = '#070708';
       g.fillRect(0, 0, W, H);
@@ -407,7 +563,7 @@ export function sheenTexture(): Texture {
 }
 
 /** full-screen print layer used by the reveal "reprint" (tileable) */
-export function printTile(style: 'common' | 'rare' | 'epic' | 'mythic'): Texture {
+export function printTile(style: 'common' | 'rare' | 'epic' | 'mythic' | 'heroic' | 'divine'): Texture {
   const key = `tile-${style}`;
   const hit = cache.get(key);
   if (hit) return hit;
@@ -434,6 +590,32 @@ export function printTile(style: 'common' | 'rare' | 'epic' | 'mythic'): Texture
     dots(12, 'rgba(0,184,230,0.5)', 3.4);
     dots(12, 'rgba(255,46,136,0.5)', 3.4, 4, 3);
     dots(12, 'rgba(255,212,0,0.6)', 3.4, -3, 5);
+  }
+  if (style === 'heroic') {
+    // tournament banner: crimson diagonal stripes + gold dots
+    g.strokeStyle = 'rgba(200,16,46,0.45)';
+    g.lineWidth = 14;
+    for (let i = -n; i < n * 2; i += 32) {
+      g.beginPath();
+      g.moveTo(i, n);
+      g.lineTo(i + n, 0);
+      g.stroke();
+    }
+    dots(24, 'rgba(255,201,74,0.55)', 3);
+  }
+  if (style === 'divine') {
+    // pearl: soft pastel bands + sparkles
+    for (let y = 0; y < n; y += 6) {
+      g.fillStyle = `hsla(${(y / n) * 360},80%,88%,0.35)`;
+      g.fillRect(0, y, n, 4);
+    }
+    g.fillStyle = 'rgba(255,246,214,0.9)';
+    for (let i = 0; i < 18; i++) {
+      const x = (i * 53) % n;
+      const y = (i * 97) % n;
+      g.fillRect(x - 1, y - 4, 2, 8);
+      g.fillRect(x - 4, y - 1, 8, 2);
+    }
   }
   if (style === 'mythic') {
     for (let y = 0; y < n; y += 4) {

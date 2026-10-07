@@ -3,6 +3,7 @@ import { moduleImmune, lateCellMul } from './bossLate';
 import { CELL, Cell } from './ship';
 import { Rng } from '../core/rng';
 import { ShotDef } from './types';
+import { ultWorth } from './ults';
 import { p2AimNoise, p2ShotValue } from './multiverso';
 
 export type Personality = 'clumsy' | 'sniper' | 'tuner' | 'calculator' | 'avenger' | 'looter' | 'demolisher' | 'elementalist';
@@ -80,7 +81,7 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   const options: { shooter: string; ult: boolean; shot: ShotDef; angle: number; power: number; score: number; tx: number; ty: number }[] = [];
   const shooters: { id: string; shot: ShotDef; ult: boolean }[] = [];
   for (const c of b.shooters(side)) {
-    const ult = b.canUlt(c) && r.chance(profile.ultChance);
+    const ult = b.canUlt(c) && ultWorth(b, c) && r.chance(profile.ultChance);
     shooters.push({ id: c.def.uid, shot: ult ? c.def.ultimate! : c.def.shot, ult });
   }
   if (!shooters.length) return null;
@@ -161,12 +162,14 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
     if (b.boss?.submerged && b.cfg.boss?.side === enemy && !(s.shot.element === 'electric' || s.shot.trajectory === 'torpedo')) shotMul *= lev && chills ? 0.7 : 0.1;
     // arcane ward: rayo pops a layer, physical hits it ×1.5
     if (wardUp) shotMul *= isRayo(s.shot) ? 2.2 : s.shot.element === 'earth' || s.shot.element === 'neutral' ? 1.3 : 1;
-    // a Luz ray flies dead straight: it's aimed almost flat (even a bit downward), not lobbed.
-    // Other flat shots (beams, orbs, gusts, low-gravity rails) also get low and slightly downward
-    // angles — a human can aim them flat; without these a beam could never hit a low raft
-    const g = s.shot.gravityScale ?? (s.shot.trajectory === 'beam' ? 0.15 : s.shot.trajectory === 'orb' ? 0.5 : s.shot.trajectory === 'gust' ? 0.1 : 1);
-    const elevs = s.shot.trajectory === 'ray' ? Array.from({ length: 22 }, (_, i) => -8 + i) : Array.from({ length: 22 }, (_, i) => 8 + i * 3.4);
-    if (s.shot.trajectory !== 'ray' && g < 0.6) elevs.unshift(-10, -7, -4.5, -2, 0, 2, 4, 6);
+    // a Luz ray flies dead straight: it's aimed almost flat (even a bit downward), not lobbed; rayos and ráfagas
+    // (beam / gust) barely fall either: low (even negative) elevations, never lobs. Other low-gravity shots
+    // (orbs, light rails) keep the lobs AND get low angles — a human can aim them flat (a low raft needs it)
+    const ray = s.shot.trajectory === 'ray';
+    const flat = s.shot.trajectory === 'beam' || s.shot.trajectory === 'gust';
+    const g = s.shot.gravityScale ?? (s.shot.trajectory === 'orb' ? 0.5 : 1);
+    const elevs = Array.from({ length: 22 }, (_, ai) => (ray ? -8 + ai * 1 : flat ? -14 + ai * 2.2 : 8 + ai * 3.4));
+    if (!ray && !flat && g < 0.6) elevs.unshift(-10, -7, -4.5, -2, 0, 2, 4, 6);
     for (const deg of elevs) {
       const elev = deg * (Math.PI / 180);
       const angle = dir > 0 ? -elev : Math.PI + elev;

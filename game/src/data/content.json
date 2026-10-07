@@ -13,7 +13,7 @@
   "balanceVersion": "1.0.0",
   "gdd": "research/04-gdd-no-one-like-cats.md",
   "counts": {
-   "catdexEntries": 78,
+   "catdexEntries": 86,
    "baseIllustrations": 32,
    "tintedVariants": 22,
    "secrets": 6,
@@ -22,13 +22,15 @@
     "rare": 22,
     "epic": 17,
     "legendary": 16,
-    "mythic": 3
+    "mythic": 3,
+    "heroic": 4,
+    "divine": 4
    },
    "resonanceRecipes": 73,
-   "missions": 123,
+   "missions": 125,
    "missionsByChain": {
     "historia": 28,
-    "capitan": 30,
+    "capitan": 32,
     "criador": 39,
     "explorador": 26
    },
@@ -1618,6 +1620,28 @@
     "l_nadie"
    ],
    "rule": "Tus borrados atraviesan +1 celda."
+  },
+  {
+   "id": "set_podio",
+   "name": "Salón de la Fama",
+   "cats": [
+    "h_zarpa",
+    "h_granbigote",
+    "h_valquiria",
+    "h_nekomante"
+   ],
+   "rule": "En el Podio, tus gatos pegan +10%."
+  },
+  {
+   "id": "set_divinos",
+   "name": "Los Rotos del Cielo",
+   "cats": [
+    "d_horizonte",
+    "d_solcaido",
+    "d_milvidas",
+    "d_bigbang"
+   ],
+   "rule": "En el Podio, tus gatos empiezan cada duelo con la barra de ULTI a la mitad."
   }
  ],
  "tintDecals": [
@@ -6178,7 +6202,7 @@
     },
     "ultimate": {
      "name": "AURORA ZERO! (極光零度)",
-     "effect": "Tres carámbanos de aurora en abanico con radio enorme. Congelado 3 en todo lo que tocan. Una vez por batalla.",
+     "effect": "La aurora baja sobre su barco: TODOS sus cañones se congelan (no disparan su próximo turno) y su cubierta queda escarchada: lo congelado revienta x2 con un cañonazo o una roca (x1.75 con fuego). Además, tres carámbanos en abanico. Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -6187,7 +6211,7 @@
     },
     "limitation": null,
     "passive": "Origen del Hielo: tus gatos Hielo +10%; cada CHOQUE TÉRMICO le da +10 de medidor al gato que lo provoca.",
-    "star3": "★3: su disparo congela también 1 celda vecina.",
+    "star3": "★3: su disparo congela también 1 celda vecina. Su ulti también congela sus escudos y su sala de invocación.",
     "star5": "★5: Aurora Zero se puede usar 2 veces por batalla."
    },
    "obtain": {
@@ -6488,7 +6512,7 @@
     },
     "ultimate": {
      "name": "WALL OF SOUND! (音の壁)",
-     "effect": "Su muro de bocinas suelta una onda gigante que atraviesa hasta 10 celdas y Aturde a cada gato que cruza. Una vez por batalla.",
+     "effect": "Su muro de bocinas suelta una onda por cubierta que cruza el barco de lado a lado, y el acorde llega a TODOS sus gatos: quedan Aturdidos (menos los de Sonido y los SORDOS). Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 110,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -6497,7 +6521,7 @@
     },
     "limitation": null,
     "passive": "Origen del Sonido: tus gatos Sonido +10%; cada gato enemigo Aturdido le da +5 de medidor a tus gatos Sonido.",
-    "star3": "★3: su onda es más ancha.",
+    "star3": "★3: su onda es más ancha. Su ulti suelta 4 ondas.",
     "star5": "★5: Wall of Sound se puede usar 2 veces por batalla."
    },
    "obtain": {
@@ -6798,7 +6822,7 @@
     },
     "ultimate": {
      "name": "ENDLESS MIDNIGHT! (永遠の真夜中)",
-     "effect": "Tres sombras invisibles en abanico con radio enorme. Cada impacto apuñala por la espalda al gato más cercano. Maldito 2. Una vez por batalla.",
+     "effect": "Cae la medianoche: tres sombras invisibles apuñalan por la espalda a TODOS sus gatos, y durante 2 turnos más todos tus tiros son invisibles y cada tiro de gato apuñala al gato enemigo más cercano. Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 110,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -6807,7 +6831,7 @@
     },
     "limitation": null,
     "passive": "Origen de la Sombra: tus gatos Sombra +10%; sus puñaladas hacen +10% a gatos Malditos.",
-    "star3": "★3: Maldito dura 3 turnos.",
+    "star3": "★3: Maldito dura 3 turnos. Su medianoche dura un turno más.",
     "star5": "★5: Endless Midnight se puede usar 2 veces por batalla."
    },
    "obtain": {
@@ -7418,7 +7442,7 @@
     },
     "ultimate": {
      "name": "HALO JUDGEMENT! (光輪の審判)",
-     "effect": "Un rayo de halo gigantesco que atraviesa 3 celdas en línea. Cegado 2. Una vez por batalla.",
+     "effect": "Una catedral de luz: un halo se abre sobre su barco y bajan 5 rayos que atraviesan 6 filas cada uno, primero por sus camarotes (el gato de adentro recibe el juicio). Cegado 3 y DESLUMBRADOS su próximo turno: sin críticos y sus cañones apuntan a ciegas. Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 130,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -7427,7 +7451,7 @@
     },
     "limitation": null,
     "passive": "Origen de la Luz: tus gatos Luz +10%; tus gatos Luz hacen +10% al barco rival mientras esté Cegado.",
-    "star3": "★3: atraviesa 4 celdas.",
+    "star3": "★3: atraviesa 4 celdas. Su ulti baja 6 rayos.",
     "star5": "★5: Halo Judgement se puede usar 2 veces por batalla."
    },
    "obtain": {
@@ -7728,7 +7752,7 @@
     },
     "ultimate": {
      "name": "DEAD CHANNEL! (砂嵐)",
-     "effect": "Una franja de estática más ancha que atraviesa 4 celdas: todo lo que toca queda BORRADO. Una vez por batalla.",
+     "effect": "Nadie te ve: sin proyectil, una franja vertical de 2 columnas de su barco queda BORRADA (no se repara; el núcleo y lo que sostiene el barco aguantan en 1) y se come todos sus escudos, su burbuja y las vidas extra de sus gatos. Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 120,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -7737,7 +7761,7 @@
     },
     "limitation": null,
     "passive": "Origen del Vacío: tus gatos Vacío +10%; empiezan cada batalla con +15 de medidor.",
-    "star3": "★3: atraviesa 5 celdas.",
+    "star3": "★3: atraviesa 5 celdas. Su franja es de 3 columnas.",
     "star5": "★5: Dead Channel se puede usar 2 veces por batalla."
    },
    "obtain": {
@@ -7749,6 +7773,625 @@
    "hint": "Si preguntas «¿quién anda ahí?» y contestan «Nadie», ábrele.",
    "lore": "Nadie lo adoptó. Nadie lo buscó. Nadie le puso nombre, así que se quedó con ese. Por eso, cuando alguien dice que a nadie le gustan los gatos, él levanta la pata.",
    "balanceName": "Nadie"
+  },
+  {
+   "id": "h_zarpa",
+   "name": "Capitana Zarpa",
+   "epithet": "la Espada de los Siete Puertos",
+   "art": {
+    "slug": "zarpa_pirate_cat",
+    "tint": null,
+    "aura": [
+     "#c8102e",
+     "#ff6a1a",
+     "#ffc94a"
+    ]
+   },
+   "elements": [
+    "fire"
+   ],
+   "rarity": "heroic",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "bravucon",
+   "battleForm": {
+    "name": "CAPITANA ZARPA — CRIMSON CORSAIR FORM",
+    "cry": "ONE SLASH FOR EVERY CAT ABOARD!!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.heroic",
+    "powerBase": "balance:rarities.power_base.heroic",
+    "foodMult": "balance:rarities.food_mult.heroic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Tajo de Brasa",
+     "cry": "CUTLASS FLARE!",
+     "archetype": "rayo",
+     "element": "fire",
+     "dmg": 85,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "ardiendo",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un tajo de fuego que sale volando de su alfanje: casi recto, rápido, deja la madera ardiendo."
+    },
+    "ultimate": {
+     "name": "BROADSIDE OF A HUNDRED BLADES! (百刃斬り)",
+     "effect": "Un espadazo en llamas cruza su barco: le pega a TODOS sus gatos (quedan ardiendo) y raja cada camarote. Tope 35%; jefes 15%.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Abordaje: su ulti no perdona a nadie que esté a bordo, ni al que se esconde en la bodega.",
+    "star3": "★3: los gatos tajeados arden un turno más.",
+    "star5": "★5: el tajo vuelve de regreso (un segundo espadazo a la mitad de fuerza)."
+   },
+   "obtain": {
+    "source": "podio:8",
+    "how": "Premio del Podio: gánale por primera vez al campeón de la LIGA DEL VACÍO (liga 8).",
+    "balanceSource": "podio:8"
+   },
+   "hint": "La campeona de la LIGA DEL VACÍO tiene una capitana colgada del cinturón. Bueno, la capitana la tiene colgada a ella.",
+   "lore": "Le cortó la cola a un tiburón, el sombrero a un almirante y la siesta a medio puerto. Dice que a todos de un solo espadazo. Le creemos por miedo.",
+   "balanceName": "Capitana Zarpa"
+  },
+  {
+   "id": "h_granbigote",
+   "name": "Gran Bigote",
+   "epithet": "el Yokozuna de Piedra",
+   "art": {
+    "slug": "granbigote_sumo_cat",
+    "tint": null,
+    "aura": [
+     "#a8743f",
+     "#eae1d3",
+     "#e0b77a"
+    ]
+   },
+   "elements": [
+    "earth"
+   ],
+   "rarity": "heroic",
+   "primordial": false,
+   "secret": false,
+   "role": "tanque",
+   "worker": null,
+   "trait": "gloton",
+   "battleForm": {
+    "name": "GRAN BIGOTE — YOKOZUNA FORM",
+    "cry": "DOSUKOI!! THE EARTH BOWS!!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.heroic",
+    "powerBase": "balance:rarities.power_base.heroic",
+    "foodMult": "balance:rarities.food_mult.heroic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.tanque.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Empujón de Montaña",
+     "cry": "OSHIDASHI!",
+     "archetype": "roca",
+     "element": "earth",
+     "dmg": 80,
+     "radius": 1.4,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una roca del tamaño de su ego: cae pesada y perfora."
+    },
+    "ultimate": {
+     "name": "YOKOZUNA EARTHQUAKE! (横綱大地震)",
+     "effect": "Su roca perfora y el temblor QUIEBRA toda la quilla enemiga (Maldita x1.5 por 2 turnos). Su propio barco queda de piedra hasta su siguiente turno. Tope 35%; jefes 15%.",
+     "dmg": 75,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": "3 ESCUDOS",
+    "passive": "Cinturón de Campeón: empieza cada pelea con 3 escudos (cada uno se come un golpe entero).",
+    "star3": "★3: el temblor también sacude la fila de arriba de la quilla.",
+    "star5": "★5: su barco se queda de piedra 2 turnos."
+   },
+   "obtain": {
+    "source": "podio:9",
+    "how": "Premio del Podio: gánale por primera vez al campeón de la LIGA DEL VACÍO II (liga 9).",
+    "balanceSource": "podio:9"
+   },
+   "hint": "Dicen que en el Vacío II hay un gato que no se mueve. Ni para comer. Bueno, para comer sí.",
+   "lore": "Ganó cuarenta torneos sin dar un paso: sus rivales se resbalaban solos de la pura presión. El cinturón no le cierra. Nadie se lo dice.",
+   "balanceName": "Gran Bigote"
+  },
+  {
+   "id": "h_valquiria",
+   "name": "Valquiria",
+   "epithet": "la que Elige a los Caídos",
+   "art": {
+    "slug": "valquiria_lightning_cat",
+    "tint": null,
+    "aura": [
+     "#ffd400",
+     "#00e5ff",
+     "#ffffff"
+    ]
+   },
+   "elements": [
+    "storm"
+   ],
+   "rarity": "heroic",
+   "primordial": false,
+   "secret": false,
+   "role": "francotirador",
+   "worker": null,
+   "trait": "leal",
+   "battleForm": {
+    "name": "VALQUIRIA — VALHALLA FORM",
+    "cry": "TO VALHALLA, MEOW!!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.heroic",
+    "powerBase": "balance:rarities.power_base.heroic",
+    "foodMult": "balance:rarities.food_mult.heroic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Lanza Relámpago",
+     "cry": "SPEAR OF THUNDER!",
+     "archetype": "rayo",
+     "element": "storm",
+     "dmg": 95,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "cargado",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Lanza de rayo casi recta: Carga lo que toca y, si está mojado, conduce."
+    },
+    "ultimate": {
+     "name": "VALKYRIE'S JUDGMENT! (戦乙女の審判)",
+     "effect": "Una lanza desde el cielo atraviesa una columna entera de su barco, empapada: la Conducción salta por todo lo mojado. Tope 35%; jefes 15%.",
+     "dmg": 90,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": "VENGANZA",
+    "passive": "Elige a los Caídos: cada aliado noqueado la enfurece (VENGANZA: +50% de daño por aliado caído).",
+    "star3": "★3: la lanza atraviesa 2 celdas más.",
+    "star5": "★5: una segunda lanza cae sobre su núcleo."
+   },
+   "obtain": {
+    "source": "podio:10",
+    "how": "Premio del Podio: gánale por primera vez al campeón de la LIGA DEL VACÍO III (liga 10).",
+    "balanceSource": "podio:10"
+   },
+   "hint": "En el Vacío III llueve para arriba. Alguien está tirando rayos desde abajo.",
+   "lore": "Recoge a los gatos valientes que caen en batalla y se los lleva a un salón donde hay atún infinito. Los cobardes también quieren ir. No los deja.",
+   "balanceName": "Valquiria"
+  },
+  {
+   "id": "h_nekomante",
+   "name": "Nekomante",
+   "epithet": "el que Leyó la Página Prohibida",
+   "art": {
+    "slug": "nekomante_grimoire_cat",
+    "tint": null,
+    "aura": [
+     "#5c3d5b",
+     "#8f6b93",
+     "#b89558"
+    ]
+   },
+   "elements": [
+    "magic"
+   ],
+   "rarity": "heroic",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "curioso",
+   "battleForm": {
+    "name": "NEKOMANTE — FORBIDDEN LIBRARY FORM",
+    "cry": "PAGE 666: YOUR SPELLS ARE MINE!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.heroic",
+    "powerBase": "balance:rarities.power_base.heroic",
+    "foodMult": "balance:rarities.food_mult.heroic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Runa Robada",
+     "cry": "HEX TRACER!",
+     "archetype": "runa",
+     "element": "magic",
+     "dmg": 70,
+     "radius": 1.1,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "maldito",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Runa teledirigida que Maldice (el próximo golpe ahí entra x1.5)."
+    },
+    "ultimate": {
+     "name": "FORBIDDEN PAGE: NEKRONOMICON! (禁書・猫死霊之書)",
+     "effect": "Maldice sus 3 mejores módulos (x1.5) y le roba 40% de barra a cada gato rival para repartirla en tu tripulación. Tope 35%; jefes 15%.",
+     "dmg": 60,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Biblioteca Viviente: lo que roba no se pierde, se lo da a tu tripulación.",
+    "star3": "★3: maldice 4 módulos.",
+    "star5": "★5: roba el 60% de cada barra."
+   },
+   "obtain": {
+    "source": "podio:11",
+    "how": "Premio del Podio: gánale por primera vez al campeón de la LIGA DEL VACÍO IV (liga 11).",
+    "balanceSource": "podio:11"
+   },
+   "hint": "El campeón del Vacío IV nunca pelea: lee. Cuando cierra el libro, ya ganó.",
+   "lore": "Lo echaron de la Biblioteca Arcana por leer en voz alta. El libro le hizo caso. Ahora el libro lo sigue a él.",
+   "balanceName": "Nekomante"
+  },
+  {
+   "id": "d_horizonte",
+   "name": "Horizonte de Eventos",
+   "epithet": "el Gato que se Come la Luz",
+   "art": {
+    "slug": "horizonte_blackhole_cat",
+    "tint": null,
+    "aura": [
+     "#0d110f",
+     "#ff2e88",
+     "#00e5ff"
+    ]
+   },
+   "elements": [
+    "void",
+    "cosmic"
+   ],
+   "rarity": "divine",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "perezoso",
+   "battleForm": {
+    "name": "HORIZONTE — ZERO POINT FORM",
+    "cry": "NOTHING ESCAPES. NOT EVEN LIGHT. NOT EVEN YOU."
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.divine",
+    "powerBase": "balance:rarities.power_base.divine",
+    "foodMult": "balance:rarities.food_mult.divine",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Pozo sin Fondo",
+     "cry": "SWALLOW!",
+     "archetype": "orbe_gravitatorio",
+     "element": "void",
+     "dmg": 80,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 0.85,
+     "special": "Orbe lento del Vacío: se come escudos y borra los estados de lo que toca (DEVORAR)."
+    },
+    "ultimate": {
+     "name": "ZERO POINT: NOTHING ESCAPES! (零点・何も逃さない)",
+     "effect": "Abre un AGUJERO NEGRO sobre su barco por 3 turnos: se traga celdas al abrirse y al empezar cada turno tuyo, les chupa 25% de barra y sus tiros que lo cruzan desaparecen. Una vez por batalla.",
+     "dmg": 120,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.25
+    },
+    "limitation": null,
+    "passive": "Perezoso Cósmico: no se mueve; deja que todo caiga hacia él.",
+    "star3": "★3: el agujero dura 4 turnos.",
+    "star5": "★5: cada turno se traga 2 celdas más."
+   },
+   "obtain": {
+    "source": "podio:15",
+    "how": "Premio del Podio: gánale por primera vez al campeón de la LIGA DEL VACÍO VIII (liga 15). El último Divino: el más difícil del mar.",
+    "balanceSource": "podio:15"
+   },
+   "hint": "Al fondo de la escalera del Podio hay un campeón que no tiene cara. Tiene un agujero.",
+   "lore": "No es que sea negro. Es que la luz que le cae no regresa. Tampoco las croquetas. Tampoco tu barco, si te descuidas.",
+   "balanceName": "Horizonte de Eventos"
+  },
+  {
+   "id": "d_solcaido",
+   "name": "Sol Caído",
+   "epithet": "el que Apagó el Mediodía",
+   "art": {
+    "slug": "solcaido_sun_cat",
+    "tint": null,
+    "aura": [
+     "#ffd77a",
+     "#fff8e1",
+     "#e8879a"
+    ]
+   },
+   "elements": [
+    "light",
+    "fire"
+   ],
+   "rarity": "divine",
+   "primordial": false,
+   "secret": false,
+   "role": "demoledor",
+   "worker": null,
+   "trait": "presumido",
+   "battleForm": {
+    "name": "SOL CAÍDO — SUNDOWN FORM",
+    "cry": "LOOK UP. THAT'S NOT THE SUN RISING."
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.divine",
+    "powerBase": "balance:rarities.power_base.divine",
+    "foodMult": "balance:rarities.food_mult.divine",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.demoledor.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Rayo de Mediodía",
+     "cry": "NOON BEAM!",
+     "archetype": "haz",
+     "element": "light",
+     "dmg": 95,
+     "radius": 1.5,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "ardiendo",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un haz de sol recto que perfora una línea, ignora el viento y CIEGA; deja ardiendo la madera."
+    },
+    "ultimate": {
+     "name": "SUNDOWN: THE SKY FALLS! (落日・天墜)",
+     "effect": "Hace caer EL SOL sobre su barco: todo arde a su alrededor, sus gatos se queman y quedan CEGADOS; el sol se queda 2 turnos quemando. Una vez por batalla.",
+     "dmg": 140,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.42
+    },
+    "limitation": null,
+    "passive": "Mediodía Eterno: el sol que tira no se apaga cuando él quiere, sino cuando se acaba.",
+    "star3": "★3: además quedan ECLIPSADOS su siguiente turno (sin críticos, apuntan a ciegas).",
+    "star5": "★5: el sol se queda 3 turnos."
+   },
+   "obtain": {
+    "source": "podio:14",
+    "how": "Premio del Podio: gánale por primera vez al campeón de la LIGA DEL VACÍO VII (liga 14).",
+    "balanceSource": "podio:14"
+   },
+   "hint": "El campeón del Vacío VII pelea de día. Siempre. Aunque sea de noche.",
+   "lore": "Un día le dio calor y se trajo el sol más cerca. Lo soltó sin querer. Desde entonces el mediodía dura lo que él diga.",
+   "balanceName": "Sol Caído"
+  },
+  {
+   "id": "d_milvidas",
+   "name": "Mil Vidas",
+   "epithet": "la Samurái de las Mil Sombras",
+   "art": {
+    "slug": "milvidas_shadow_cat",
+    "tint": null,
+    "aura": [
+     "#0d110f",
+     "#c8102e",
+     "#eae1d3"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "divine",
+   "primordial": false,
+   "secret": false,
+   "role": "francotirador",
+   "worker": null,
+   "trait": "rencoroso",
+   "battleForm": {
+    "name": "MIL VIDAS — THOUSAND SHADOWS FORM",
+    "cry": "I DIED A THOUSAND TIMES. YOU GET ONE."
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.divine",
+    "powerBase": "balance:rarities.power_base.divine",
+    "foodMult": "balance:rarities.food_mult.divine",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Daga de Penumbra",
+     "cry": "KAGE-UCHI!",
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 90,
+     "radius": 0.9,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una daga de sombra invisible en vuelo: al caer, apuñala por la espalda al gato más cercano."
+    },
+    "ultimate": {
+     "name": "A THOUSAND LIVES: SENJIN! (千刃)",
+     "effect": "Siete cortes de sombra a CADA gato rival (cada corte se come un escudo); ninguno pierde más del 70% de su vida por esto. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.25
+    },
+    "limitation": "SEGUNDA VIDA (Revenant)",
+    "passive": "Mil Vidas: la primera vez que cae, se levanta con 60% de vida. Las otras 998 son un decir.",
+    "star3": "★3: nueve cortes por gato.",
+    "star5": "★5: el tope por gato sube a 55%."
+   },
+   "obtain": {
+    "source": "podio:13",
+    "how": "Premio del Podio: gánale por primera vez al campeón de la LIGA DEL VACÍO VI (liga 13).",
+    "balanceSource": "podio:13"
+   },
+   "hint": "En el Vacío VI el campeón tiene mil sombras. Solo una es de él.",
+   "lore": "Murió novecientas noventa y nueve veces y en todas se levantó a terminar el corte. La milésima la guarda para ti.",
+   "balanceName": "Mil Vidas"
+  },
+  {
+   "id": "d_bigbang",
+   "name": "Big Bang",
+   "epithet": "el Principio y el Ruido",
+   "art": {
+    "slug": "bigbang_cosmic_cat",
+    "tint": null,
+    "aura": [
+     "#ff2e88",
+     "#ffd400",
+     "#2ec4e6"
+    ]
+   },
+   "elements": [
+    "sound",
+    "cosmic"
+   ],
+   "rarity": "divine",
+   "primordial": false,
+   "secret": false,
+   "role": "asediador",
+   "worker": null,
+   "trait": "impaciente",
+   "battleForm": {
+    "name": "BIG BANG — FIRST NOTE FORM",
+    "cry": "IN THE BEGINNING THERE WAS A CAT. THEN: BOOM."
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.divine",
+    "powerBase": "balance:rarities.power_base.divine",
+    "foodMult": "balance:rarities.food_mult.divine",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.asediador.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Nota Primordial",
+     "cry": "FIRST NOTE!",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 85,
+     "radius": 1.6,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una onda de sonido que atraviesa paredes: aturde a cada gato cuyo camarote cruza."
+    },
+    "ultimate": {
+     "name": "BIG BANG! (ビッグバン)",
+     "effect": "Revienta LA MITAD de su barco de un golpe (la mitad donde cae la nota) y aturde a los gatos de esa mitad. Su núcleo aguanta en 1. Una vez por batalla.",
+     "dmg": 150,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.45
+    },
+    "limitation": null,
+    "passive": "Impaciente Universal: no espera a nadie. Ni al tiempo, que todavía no existía.",
+    "star3": "★3: el aturdido dura 2 turnos.",
+    "star5": "★5: el tope sube a 50%."
+   },
+   "obtain": {
+    "source": "podio:12",
+    "how": "Premio del Podio: gánale por primera vez al campeón de la LIGA DEL VACÍO V (liga 12). El primer Divino.",
+    "balanceSource": "podio:12"
+   },
+   "hint": "El campeón del Vacío V no dice nada. Está esperando el momento exacto. Va a ser ruidoso.",
+   "lore": "Antes de él no había nada. Ni ruido, ni gatos, ni lunes. Luego bostezó.",
+   "balanceName": "Big Bang"
   }
  ],
  "catdexTeaser": {
@@ -16518,6 +17161,46 @@
    "line": "Setenta gatos. Esto ya no es una isla: es un multiverso con arenero.",
    "why": "Cada especie registrada da +2% de oro a toda la isla, gemas y Ronroneo. Setenta es casi todo lo que existe en los mares que conoces.",
    "estTime": "~40:00"
+  },
+  {
+   "id": "P02",
+   "chain": "capitan",
+   "title": "Laureles",
+   "goal": {
+    "type": "own_rarity",
+    "rarity": "heroic",
+    "text": "Consigue tu primer gato HEROICO: gánale al campeón de la LIGA DEL VACÍO en el Podio."
+   },
+   "trigger": "podio_league_6",
+   "purpose": "teach",
+   "reward": {
+    "std": true,
+    "gems": 3
+   },
+   "unlocks": [],
+   "line": "Los campeones del Vacío no pelean por croquetas. Pelean por gatos.",
+   "why": "Los HEROICOS son la rareza del Podio: solo se ganan venciendo campeones, nunca salen de la Resonancia ni del casino. Uno por liga, del Vacío al Vacío IV.",
+   "estTime": "~2:00:00"
+  },
+  {
+   "id": "P03",
+   "chain": "capitan",
+   "title": "Lo Divino",
+   "goal": {
+    "type": "own_rarity",
+    "rarity": "divine",
+    "text": "Consigue tu primer gato DIVINO: gánale al campeón de la LIGA DEL VACÍO V en el Podio."
+   },
+   "trigger": "podio_league_10",
+   "purpose": "teach",
+   "reward": {
+    "std": true,
+    "gems": 5
+   },
+   "unlocks": [],
+   "line": "Arriba del Vacío ya no hay ligas. Hay dioses con bigotes.",
+   "why": "Los DIVINOS son los gatos rotos del mar: su ulti hace cosas que ningún otro gato puede (un agujero negro, el sol cayendo, mil cortes, la mitad del barco). Uno por liga, del Vacío V al Vacío VIII.",
+   "estTime": "~8:00:00"
   }
  ],
  "events": {

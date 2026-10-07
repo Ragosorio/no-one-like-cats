@@ -14,6 +14,7 @@ import PB from '../../data/podio.json';
 import { registerPatch } from '../patches';
 import { accessoryMods } from './accessories';
 import { rankDmgBonus } from './ranks';
+import { adopt } from './cats';
 import { defaultPodio, PodioCatState, PodioState } from '../../podio/types';
 import { powerLevels, powersOf } from '../../podio/powers';
 import { RivalDef, league, rival } from '../../podio/ladder';
@@ -120,7 +121,11 @@ export function catPodioHp(c: OwnedCat) {
 
 export function playerFighter(c: OwnedCat): FighterInit {
   const def = catDef(c.species);
+  // Catdex sets of the Podio's prizes: Salón de la Fama (+10% damage) · Los Rotos del Cielo (ULTI meter at half)
+  const S = PB.sets;
   return {
+    dmgMul: G.has('set_podio') ? S.set_podio_dmg : undefined,
+    meterStart: G.has('set_divinos') ? S.set_divinos_meter : undefined,
     side: 0,
     species: c.species,
     name: c.name,
@@ -203,6 +208,35 @@ export interface PodioLoot {
   xp: XpGain;
   league: number;
   bout: number;
+  /** the champion's prize cat (first win over a VACÍO league champion): a Heroico or a Divino */
+  prize: { species: string; isNew: boolean; orbs: number } | null;
+}
+
+// ------------------------------------------------------------------ champion prizes (Heroicos / Divinos)
+const PRIZES = PB.champion_prizes as unknown as Record<string, string>;
+/** the cat a league's champion pays the first time you beat it (null: none) */
+export function championPrize(lg: number): string | null {
+  const id = PRIZES[String(lg)];
+  return id && CAT_BY_ID.has(id) ? id : null;
+}
+/** every prize league, in order */
+export function prizeLeagues(): { league: number; species: string }[] {
+  return Object.keys(PRIZES)
+    .filter((k) => /^\d+$/.test(k) && championPrize(Number(k)))
+    .map((k) => ({ league: Number(k), species: PRIZES[k] }))
+    .sort((a, b) => a.league - b.league);
+}
+/** the next prize the player can still win (a league whose champion they haven't beaten) */
+export function nextPrize(): { league: number; species: string } | null {
+  const p = ps();
+  return prizeLeagues().find((x) => !p.champions.includes(x.league)) ?? null;
+}
+/** give a champion's prize cat (a duplicate becomes orbs, like everywhere else) */
+function grantPrize(species: string) {
+  const r = adopt(species);
+  G.count('podio_prizes');
+  G.count(`podio_prize_${catDef(species).rarity}`);
+  return { species, isNew: r.isNew, orbs: r.orbs };
 }
 
 export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, perfect: boolean): PodioLoot {
@@ -262,6 +296,7 @@ export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, p
         p.league = lg + 1;
         p.bout = 0;
         leagueUp = true;
+        G.flag(`podio_league_${p.league}`);
       } else p.bout = bout + 1;
     }
   } else {
@@ -269,8 +304,11 @@ export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, p
     p.stats.losses++;
   }
   G.count('podio_duels');
+  const prizeId = firstChampion ? championPrize(lg) : null;
+  const prize = prizeId ? grantPrize(prizeId) : null;
   G.save();
   return {
+    prize,
     won,
     replay,
     champion,
@@ -310,6 +348,26 @@ G.tickers.push((dt) => {
   if (acc < 1000) return;
   acc = 0;
   if (!G.has(PODIO_FLAG) && G.s.campaign.bossesDefeated >= PB.unlock.boss && G.s.cats.length) G.flag('podio_unlocked');
+});
+
+// ------------------------------------------------------------------ Heroicos / Divinos for saves that already crowned those champions
+registerPatch({
+  id: '2026-10-podio-heroicos-divinos',
+  why: 'Los campeones de las ligas del Vacío ahora pagan un gato Heroico o Divino la primera vez; quien ya los venció antes de esta versión no lo recibió. También marca las ligas alcanzadas (misiones P02/P03).',
+  run() {
+    const p = G.s.podio;
+    if (!p) return;
+    for (let n = 2; n <= Math.max(1, Math.floor(p.league || 1)); n++) G.flag(`podio_league_${n}`);
+    const got: string[] = [];
+    for (const lg of [...(p.champions ?? [])].sort((a, b) => a - b)) {
+      const sp = championPrize(lg);
+      if (!sp || G.s.catdex[sp] === 'registered') continue;
+      grantPrize(sp);
+      got.push(catDef(sp).name);
+    }
+    if (!got.length) return;
+    return `Los campeones del Vacío que ya venciste te mandaron su premio: ${got.join(', ')}. Búscalos en tu isla y en la Catdex.`;
+  },
 });
 
 // ------------------------------------------------------------------ retro patch (old saves)

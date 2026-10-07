@@ -9,7 +9,7 @@ import { W, H } from '../../core/App';
 import { C, F } from '../theme';
 import { Button, paperBg, poster, txt } from '../widgets';
 import { G } from '../../state/game';
-import { catDef } from '../../data/content';
+import { CATS, catDef } from '../../data/content';
 import { fmt } from '../../core/format';
 import { livingCat, preloadCats } from '../../art/catArt';
 import { ART } from '../../art/livingCat';
@@ -37,7 +37,7 @@ function stats(): Block[] {
     { kind: 'gap' },
     { kind: 'body', text: `Tu primer hábitat era una caja de cartón. El mejor que tienes hoy es: ${lastHab}.` },
     { kind: 'body', text: `Tu primer gato lanzaba bolas de pelo. Hoy ${mvpName} borra medio barco (${fmt(mvp?.kos ?? 0)} K.O.).` },
-    { kind: 'body', text: `Barcos hundidos: ${fmt(s.stats.victories)} · Gatos descubiertos: ${registered}/54 · Oro ganado: ${fmt(s.stats.goldEarned)}` },
+    { kind: 'body', text: `Barcos hundidos: ${fmt(s.stats.victories)} · Gatos descubiertos: ${registered}/${CATS.length} · Oro ganado: ${fmt(s.stats.goldEarned)}` },
     { kind: 'small', text: `Momento favorito: «${moment}»` },
   ];
 }

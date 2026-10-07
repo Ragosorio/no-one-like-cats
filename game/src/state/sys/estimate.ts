@@ -116,6 +116,16 @@ export function hiddenRules(spec: BattleSpec): string[] {
   }
   const lv = spec.enemy.cats[0]?.level;
   if (lv) out.push(`Sus gatos van a Nv ${lv}. Un gato es una carta: el mismo gato hace lo mismo de los dos lados (ej. Tierra Nv 20+ perfora una capa más; Nv 10+ explota más grande). Los tuyos además suman estrellas, rangos K.O. y accesorios; los de ellos van a 1 estrella.`);
+  // Heroicos / Divinos: their ultimates are in the simulation (same rules for both sides)
+  for (const [who, cats] of [
+    ['Tu', spec.player.cats],
+    ['Su', spec.enemy.cats],
+  ] as const) {
+    for (const c of cats) {
+      const note = BIG_ULT[c.catId];
+      if (note) out.push(`${who} ${c.name}: ${note} La simulación la usa cuando le conviene.`);
+    }
+  }
   const sd = spec.suddenDeath ?? 10;
   if (spec.mode !== 'duel') out.push(sd > 0 ? `Muerte súbita desde el turno ${sd}: el mar inunda a los dos.` : 'Sin muerte súbita.');
   if (spec.intro?.lines?.length) for (const l of spec.intro.lines) if (l) out.push(l);
@@ -134,6 +144,25 @@ function assumptions(n: number): string[] {
     `Qué supone de ti: la mitad de las peleas apunta como un capitán normal (±3°, lee el viento a medias, a veces elige mal el blanco) y la mitad como uno bueno (±1.5°, casi siempre el mejor blanco). Ambos corrigen con el tiro anterior y usan la ULTIMATE cuando está lista. Si apuntas peor, te irá peor; si afinas con la sombra del tiro, mejor.`,
   ];
 }
+
+/** what the Heroico / Divino ultimates do, with their real caps (battle/ults.ts) */
+const BIG_ULT: Record<string, string> = {
+  h_zarpa: 'HEROICO. Su ulti tajea a TODOS los gatos rivales y raja sus camarotes (tope 35%, jefes 15%).',
+  h_granbigote: 'HEROICO. Su ulti quiebra toda la quilla rival (Maldita x1.5) y deja su barco de piedra un turno (tope 35%, jefes 15%).',
+  h_valquiria: 'HEROICO. Su ulti atraviesa una columna entera y la electrocuta mojada (tope 35%, jefes 15%).',
+  h_nekomante: 'HEROICO. Su ulti maldice 3 módulos y roba 40% de barra a cada gato rival (tope 35%, jefes 15%).',
+  d_horizonte: 'DIVINO. Agujero negro 3 turnos: se traga celdas cada turno (25% + 8%/turno; jefes 6% + 3%), drena barras y desaparece los tiros rivales. Una vez por batalla.',
+  d_solcaido: 'DIVINO. Hace caer el sol: arde todo a su alrededor, sus gatos se queman y quedan CEGADOS; el sol sigue quemando 2 turnos (42% + 6%/turno; jefes 15% + 3%). Una vez por batalla.',
+  d_milvidas: 'DIVINO. Siete cortes a cada gato rival, máximo 70% de la vida de cada uno (jefes 25%). Una vez por batalla.',
+  d_bigbang: 'DIVINO. Revienta la mitad del barco de un golpe (tope 45%, jefes 15%; el núcleo aguanta en 1). Una vez por batalla.',
+  // the multiverse legendaries (Parte 2): once per battle, twice at ★5
+  l_boreas: 'LEGENDARIO. Su ulti congela TODOS los cañones rivales (no disparan su próximo turno) y escarcha la cubierta: lo congelado revienta x2 con un cañonazo o roca, x1.75 con fuego (tope 35%, jefes 15%).',
+  l_aurea: 'LEGENDARIO. Su ulti baja 5 rayos de luz que atraviesan 6 filas cada uno; deja al rival CEGADO 3 turnos y DESLUMBRADO 1 (sin críticos, sus cañones apuntan a ciegas) (tope 35%, jefes 15%).',
+  l_medianoche: 'LEGENDARIO. Su ulti apuñala a TODOS los gatos rivales y trae la medianoche: 2 turnos más, todos los tiros de su lado son invisibles y cada uno apuñala al gato más cercano (tope 35%, jefes 15%).',
+  l_headliner: 'LEGENDARIO. Su ulti suelta ondas que cruzan el barco de lado a lado y ATURDE a todos los gatos rivales (no a los de Sonido ni a los SORDOS) (tope 35%, jefes 15%).',
+  l_nadie: 'LEGENDARIO. Su ulti BORRA una franja vertical de 2 columnas (no se repara; el núcleo aguanta en 1) y se come todos los escudos, burbujas y vidas extra (tope 35%, jefes 15%).',
+  l_cronos: 'LEGENDARIO. Su ulti es TIME STOP: los gatos rivales pierden su próximo turno (sus cañones sí disparan; no se encadena) y repara su barco al pegar (tope 35%, jefes 15%).',
+};
 
 const LOSS_TIP: Record<string, string> = {
   crew: 'Te noquean a la tripulación: sube nivel o estrellas, o lleva un tanque al frente.',
