@@ -765,7 +765,7 @@ export function eligibleCats(): CatDef[] {
   return CATS.filter((c) => {
     if (c.secret) return false;
     const src = c.obtain?.source ?? '';
-    if (src.startsWith('heroic')) return false;
+    if (src.startsWith('heroic') || src.startsWith('podio') || c.rarity === 'heroic' || c.rarity === 'divine') return false;
     if (src.startsWith('boss:') && bosses < Number(src.split(':')[1])) return false;
     return c.elements.every((e) => G.s.elements.includes(e));
   });

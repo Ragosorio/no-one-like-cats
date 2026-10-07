@@ -177,56 +177,72 @@
       "rare",
       "epic",
       "legendary",
-      "mythic"
+      "mythic",
+      "heroic",
+      "divine"
     ],
     "names": {
       "common": "Comun",
       "rare": "Raro",
       "epic": "Epico",
       "legendary": "Legendario",
-      "mythic": "Mitico"
+      "mythic": "Mitico",
+      "heroic": "Heroico",
+      "divine": "Divino"
     },
     "gold_base_per_s": {
       "common": 0.5,
       "rare": 0.8,
       "epic": 1.3,
       "legendary": 2.1,
-      "mythic": 3.2
+      "mythic": 3.2,
+      "heroic": 3.6,
+      "divine": 4.4
     },
     "power_base": {
       "common": 5.0,
       "rare": 5.6,
       "epic": 6.2,
       "legendary": 6.8,
-      "mythic": 7.4
+      "mythic": 7.4,
+      "heroic": 7.6,
+      "divine": 7.9
     },
     "food_mult": {
       "common": 1.0,
       "rare": 1.25,
       "epic": 1.6,
       "legendary": 2.0,
-      "mythic": 2.4
+      "mythic": 2.4,
+      "heroic": 2.6,
+      "divine": 3.0
     },
     "duplicate_orbs": {
       "common": 10,
       "rare": 20,
       "epic": 35,
       "legendary": 60,
-      "mythic": 100
+      "mythic": 100,
+      "heroic": 120,
+      "divine": 160
     },
     "star_orbs_base": {
       "common": 10,
       "rare": 15,
       "epic": 25,
       "legendary": 40,
-      "mythic": 60
+      "mythic": 60,
+      "heroic": 55,
+      "divine": 70
     },
     "discovery_gems": {
       "common": 1,
       "rare": 1,
       "epic": 2,
       "legendary": 2,
-      "mythic": 3
+      "mythic": 3,
+      "heroic": 4,
+      "divine": 6
     },
     "resonance_time_s": {
       "common": 180,
@@ -1653,7 +1669,9 @@
         "rare": 0.05,
         "epic": 0.1,
         "legendary": 0.18,
-        "mythic": 0.25
+        "mythic": 0.25,
+        "heroic": 0.3,
+        "divine": 0.4
       },
       "new_species": 0.08,
       "victory": 0.06,

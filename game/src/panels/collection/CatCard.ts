@@ -74,6 +74,7 @@ export class CatCard extends Container {
   private holo?: TilingSprite;
   private noise?: TilingSprite;
   private glitchBars?: Graphics;
+  private halo?: Graphics;
   private portraitNode?: Container;
   private phase = Math.random() * 10;
   private lastStep = -1;
@@ -92,7 +93,7 @@ export class CatCard extends Container {
     const known = this.status === 'registered' || this.status === 'rumor';
     const accent = elColor(def.elements[0]);
     this.style = this.status === 'unknown' ? (def.secret ? 'backSecret' : 'back') : known ? this.rarity : 'neutral';
-    const dark = this.style === 'legendary' || this.style === 'mythic' || this.style === 'primordial';
+    const dark = this.style === 'legendary' || this.style === 'mythic' || this.style === 'primordial' || this.style === 'heroic';
 
     // shadow block
     const sh = new Graphics().rect(Math.max(4, w * 0.035), Math.max(4, w * 0.035), w, h).fill({ color: C.ink, alpha: 0.9 });
@@ -174,7 +175,7 @@ export class CatCard extends Container {
     }
 
     // ---- plate: name + rarity
-    const nameColor = dark ? (this.style === 'primordial' ? accent : this.style === 'legendary' ? 0xffd77a : C.white) : C.ink;
+    const nameColor = dark ? (this.style === 'primordial' ? accent : this.style === 'legendary' || this.style === 'heroic' ? 0xffd77a : C.white) : C.ink;
     const name = known ? def.name.toUpperCase() : '???';
     const nt = txt(name, { fontFamily: F.poster, fontSize: Math.round(L.plate.h * 0.46), fill: nameColor, letterSpacing: 0.5 });
     nt.anchor.set(0.5, 0);
@@ -322,6 +323,49 @@ export class CatCard extends Container {
       this.addChild(mask);
       this.fx.mask = mask;
       this.sheen = s;
+    } else if (this.style === 'heroic') {
+      // a gold glint crossing the crimson, like light on a trophy
+      const s = new Sprite(sheenTexture());
+      s.anchor.set(0.5);
+      s.width = w * 0.45;
+      s.height = h * 2.2;
+      s.rotation = 0.6;
+      s.blendMode = 'add';
+      s.alpha = 0.6;
+      s.tint = 0xffc94a;
+      this.fx.addChild(s);
+      this.addChild(mask);
+      this.fx.mask = mask;
+      this.sheen = s;
+    } else if (this.style === 'divine') {
+      // pearl shimmer + a halo that breathes over the cat
+      const pearl = new TilingSprite({ texture: rainbowTile(), width: w, height: h });
+      pearl.alpha = 0.14;
+      pearl.tileScale.set(Math.max(1, w / 120), 1);
+      this.fx.addChild(pearl);
+      this.holo = pearl;
+      const L = this.L;
+      const halo = new Graphics()
+        .ellipse(0, 0, L.win.w * 0.27, L.win.w * 0.075)
+        .stroke({ width: Math.max(2, w * 0.022), color: 0xffe08a })
+        .ellipse(0, 0, L.win.w * 0.27, L.win.w * 0.075)
+        .stroke({ width: Math.max(1, w * 0.008), color: 0xffffff });
+      halo.position.set(L.win.x + L.win.w / 2, L.win.y + L.win.h * 0.16);
+      halo.blendMode = 'add';
+      this.fx.addChild(halo);
+      this.halo = halo;
+      const s = new Sprite(sheenTexture());
+      s.anchor.set(0.5);
+      s.width = w * 0.7;
+      s.height = h * 2.2;
+      s.rotation = -0.35;
+      s.blendMode = 'add';
+      s.alpha = 0.55;
+      s.tint = 0xfff3e6;
+      this.fx.addChild(s);
+      this.addChild(mask);
+      this.fx.mask = mask;
+      this.sheen = s;
     } else if (this.style === 'primordial') {
       const n = new TilingSprite({ texture: noiseTile(), width: w, height: h });
       n.alpha = 0.16;
@@ -353,12 +397,16 @@ export class CatCard extends Container {
     const { cw: w, ch: h } = this;
     const tt = t + this.phase;
     if (this.sheen) {
-      const period = this.style === 'mythic' ? 2.2 : 3.2;
+      const period = this.style === 'mythic' ? 2.2 : this.style === 'divine' ? 4.2 : 3.2;
       const k = (tt % period) / period;
       this.sheen.x = -w * 0.6 + k * w * 2.2;
       this.sheen.y = h / 2;
     }
-    if (this.holo) this.holo.tilePosition.x = tt * 60;
+    if (this.holo) this.holo.tilePosition.x = tt * (this.style === 'divine' ? 18 : 60);
+    if (this.halo) {
+      this.halo.alpha = 0.55 + 0.45 * Math.sin(tt * 2.2);
+      this.halo.y = this.L.win.y + this.L.win.h * 0.16 + Math.sin(tt * 1.3) * this.ch * 0.006;
+    }
     if (this.holoFoil) {
       this.holoFoil.tilePosition.set(tt * 45, tt * 12);
       if (this.holoSheen) {

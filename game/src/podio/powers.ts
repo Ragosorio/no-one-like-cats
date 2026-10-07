@@ -35,6 +35,19 @@ export interface PowerDef {
   sureCrit?: boolean;
   /** needs a full meter */
   ult?: boolean;
+  // ---- signature ULTIs (Heroicos / Divinos): engine.ts reads these
+  /** its hits go straight through a shield */
+  pierceShield?: boolean;
+  /** fraction of the rival's ULTI meter it removes (1 = empties it) */
+  drain?: number;
+  /** shield for itself (fraction of its max HP) after hitting */
+  selfShield?: number;
+  /** heals itself (fraction of its max HP) after hitting */
+  selfHeal?: number;
+  /** after the hits, the rival loses HALF of the HP it has left (never a K.O. by itself) */
+  halve?: boolean;
+  /** damage-over-time multiplier of the status it applies */
+  dotMul?: number;
 }
 
 export const SLOT_LABEL = ['BÁSICO', 'TÉCNICA', 'ESTILO', 'ULTI'] as const;
@@ -170,9 +183,24 @@ function style(d: CatDef): PowerDef {
   return { slot: 2, name: r.name, cry: r.cry, desc: r.desc, kind: r.kind, element: el, mult: r.mult, cd: 3, hits: r.hits, amount: r.amount, sureCrit: r.sureCrit, status };
 }
 
+/**
+ * Signature ULTIs of the Heroicos (El Podio's own warriors) and the Divinos: the same idea as their ship
+ * ultimate, translated to a 1 vs 1 (battle/ults.ts is the ship version). Same rules for a rival's copy.
+ */
+const SIGNATURE: Record<string, Partial<PowerDef> & { desc: string }> = {
+  h_zarpa: { kind: 'slash', mult: 0.9, hits: 3, pierceShield: true, status: { id: 'burn', turns: 3, chance: 1 }, desc: 'Tres espadazos en llamas que atraviesan cualquier escudo. Lo deja ARDIENDO 3 turnos.' },
+  h_granbigote: { kind: 'crush', mult: 2.4, status: { id: 'crack', turns: 3, chance: 1 }, selfShield: 0.3, desc: 'Lo aplasta (QUEBRADO 3 turnos) y se queda plantado: escudo de 30% de su vida.' },
+  h_valquiria: { kind: 'beam', mult: 1.15, hits: 2, status: { id: 'shock', turns: 3, chance: 1 }, desc: 'Dos lanzas de rayo desde el cielo. Lo deja CARGADO 3 turnos.' },
+  h_nekomante: { kind: 'orb', mult: 2.2, status: { id: 'curse', turns: 2, chance: 1 }, drain: 0.6, selfHeal: 0.15, desc: 'Lo maldice, le roba el 60% de su barra de ULTI y se cura 15% con lo robado.' },
+  d_horizonte: { kind: 'ult', mult: 2.4, drain: 1, status: { id: 'crack', turns: 3, chance: 1 }, desc: 'DIVINO. Agujero negro: le borra TODA la barra de ULTI y lo deja QUEBRADO 3 turnos.' },
+  d_solcaido: { kind: 'ult', mult: 3, status: { id: 'burn', turns: 3, chance: 1 }, dotMul: 2, desc: 'DIVINO. Le cae el sol encima: golpe enorme y ARDIENDO 3 turnos al doble.' },
+  d_milvidas: { kind: 'slash', mult: 0.3, hits: 10, pierceShield: true, desc: 'DIVINO. Diez cortes de sombra (cada uno crítico) que atraviesan escudos.' },
+  d_bigbang: { kind: 'ult', mult: 1.6, halve: true, status: { id: 'stun', turns: 1, chance: 1 }, desc: 'DIVINO. Un golpe y luego le quita LA MITAD de la vida que le quede. Lo deja ATURDIDO.' },
+};
+
 function ult(d: CatDef): PowerDef {
   const u = d.combat.ultimate;
-  return {
+  const base: PowerDef = {
     slot: 3,
     name: u.name,
     cry: d.battleForm.cry,
@@ -183,6 +211,8 @@ function ult(d: CatDef): PowerDef {
     cd: 0,
     ult: true,
   };
+  const sig = SIGNATURE[d.id];
+  return sig ? { ...base, ...sig, slot: 3, ult: true, cd: 0 } : base;
 }
 
 /**

@@ -45,6 +45,18 @@
     "loss_mult": 0.25,
     "kingdom_xp_mult": 0.5
   },
+  "champion_prizes": {
+    "_note": "liga -> gato que paga el campeon la PRIMERA vez que lo vences (Heroicos del Vacio al Vacio IV, Divinos del Vacio V al Vacio VIII). Ver state/sys/podio.ts championPrize.",
+    "8": "h_zarpa",
+    "9": "h_granbigote",
+    "10": "h_valquiria",
+    "11": "h_nekomante",
+    "12": "d_bigbang",
+    "13": "d_milvidas",
+    "14": "d_solcaido",
+    "15": "d_horizonte"
+  },
+  "sets": { "set_podio_dmg": 1.1, "set_divinos_meter": 50 },
   "cross_mode": {
     "_note": "bonos REALES que el Podio le da a ese gato fuera del Podio",
     "ship_dmg_per_power_level": 0.008,

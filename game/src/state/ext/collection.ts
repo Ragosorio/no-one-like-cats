@@ -17,7 +17,7 @@ export function printRarity(species: string): PrintRarity {
   return d.primordial ? 'primordial' : d.rarity;
 }
 
-export const RARITY_ORDER: PrintRarity[] = ['common', 'rare', 'epic', 'legendary', 'primordial', 'mythic'];
+export const RARITY_ORDER: PrintRarity[] = ['common', 'rare', 'epic', 'legendary', 'primordial', 'mythic', 'heroic', 'divine'];
 export function rarityRank(r: PrintRarity) {
   return RARITY_ORDER.indexOf(r);
 }

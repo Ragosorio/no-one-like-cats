@@ -235,7 +235,7 @@ class CatdexView {
       x += c.width + 8;
     };
     add2(mk('TODAS', this.rarFilter === null, () => this.filter(this.elFilter, null)));
-    const rars: (PrintRarity | 'secret')[] = ['common', 'rare', 'epic', 'legendary', 'primordial', 'mythic', 'secret'];
+    const rars: (PrintRarity | 'secret')[] = ['common', 'rare', 'epic', 'legendary', 'primordial', 'mythic', 'heroic', 'divine', 'secret'];
     for (const r of rars) {
       const name = r === 'secret' ? 'SECRETO' : rarityName(r);
       const col = r === 'secret' ? C.violet : r === 'common' ? 0x6d6356 : rarityColor(r);
@@ -786,6 +786,10 @@ function rarityBand(r: PrintRarity) {
       return 0x8a6a32;
     case 'mythic':
       return C.violet;
+    case 'heroic':
+      return 0x7a0a1c;
+    case 'divine':
+      return 0x2f9a96;
     default:
       return C.ink;
   }

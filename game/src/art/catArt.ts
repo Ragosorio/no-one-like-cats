@@ -51,9 +51,12 @@ const FULL_RES = 1.5;
 
 const liteTex = new Map<string, Texture>();
 const litePending = new Map<string, Promise<Texture>>();
+/** paintings that failed to load this session (art not shipped yet): never hammered again */
+const liteFailed = new Set<string>();
 function loadLite(slug: string): Promise<Texture> {
   const hit = liteTex.get(slug);
   if (hit) return Promise.resolve(hit);
+  if (liteFailed.has(slug)) return Promise.reject(new Error(`no art for ${slug}`));
   let p = litePending.get(slug);
   if (!p) {
     const url = catLiteUrl(slug);
@@ -62,7 +65,12 @@ function loadLite(slug: string): Promise<Texture> {
       litePending.delete(slug);
       return t;
     });
-    p.catch(() => litePending.delete(slug));
+    p.catch(() => {
+      litePending.delete(slug);
+      liteFailed.add(slug);
+      // the full painting won't be there either
+      svgState.set(slug, 'failed');
+    });
     litePending.set(slug, p);
   }
   return p;
@@ -129,7 +137,8 @@ export async function loadCatTexture(slug: string): Promise<Texture> {
 
 /** waits for the lite vectors (fast); full detail streams in later where it is needed */
 export async function preloadCats(slugs: string[]) {
-  await Promise.all([...new Set(slugs)].map(loadLite));
+  // a painting that isn't there yet (new cat, art still on its way) must never block an island or a battle
+  await Promise.all([...new Set(slugs)].map((s) => loadLite(s).catch(() => undefined)));
 }
 
 /** best available painting: full vector if rasterized, else the lite vector, else WHITE (= not loaded) */
@@ -147,11 +156,13 @@ export function livingCat(slug: string, o: PuppetOptions & { detail?: boolean } 
   const p = new CatPuppet(tex === Texture.WHITE ? Texture.EMPTY : tex, slug, { anchorX: 0, anchorY: 0, ...o });
   if (tex === Texture.WHITE) {
     p.renderable = false;
-    void loadLite(slug).then((t) => {
-      if (p.destroyed || p.renderable) return;
-      p.texture = t;
-      p.renderable = true;
-    });
+    loadLite(slug)
+      .then((t) => {
+        if (p.destroyed || p.renderable) return;
+        p.texture = t;
+        p.renderable = true;
+      })
+      .catch(() => undefined);
   }
   const off = onCatArt(slug, (t) => {
     if (p.destroyed) return;

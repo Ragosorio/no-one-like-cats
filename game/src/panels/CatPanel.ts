@@ -81,6 +81,7 @@ class CatPanel {
   private lastBite = 0;
   private sheen: Graphics | null = null;
   private holo: Graphics | null = null;
+  private halo: Graphics | null = null;
   private feeding = false;
   private tick = (t: Ticker) => this.onTick(t);
   private tt = 0;
@@ -365,6 +366,38 @@ class CatPanel {
       fr.rect(0, 0, FW, FH).stroke({ width: 14, color: C.gold, alignment: 1 });
       fr.rect(8, 8, FW - 16, FH - 16).stroke({ width: 2, color: 0xffd77a, alignment: 1 });
       const sh = new Graphics().poly([0, 0, 60, 0, -140, FH, -200, FH]).fill({ color: 0xffffff, alpha: 0.28 });
+      const mask = new Graphics().rect(0, 0, FW, FH).fill(0xffffff);
+      sh.mask = mask;
+      f.addChild(mask, sh);
+      this.sheen = sh;
+    } else if (rarity === 'heroic') {
+      // carmesí + laureles
+      fr.rect(0, 0, FW, FH).stroke({ width: 16, color: C.red, alignment: 1 });
+      fr.rect(9, 9, FW - 18, FH - 18).stroke({ width: 3, color: 0xffc94a, alignment: 1 });
+      const laurel = new Graphics();
+      for (const dir of [-1, 1]) {
+        for (let i = 0; i < 9; i++) {
+          const a = Math.PI / 2 + dir * (0.3 + i * 0.16);
+          const lx = FW / 2 + Math.cos(a) * 190;
+          const ly = FH - 150 + Math.sin(a) * 70 - i * 6;
+          laurel.ellipse(lx, ly, 7, 16).fill(0xffc94a).stroke({ width: 2, color: C.ink });
+        }
+      }
+      f.addChild(laurel);
+      const sh = new Graphics().poly([0, 0, 50, 0, -150, FH, -200, FH]).fill({ color: 0xffd27a, alpha: 0.3 });
+      const mask = new Graphics().rect(0, 0, FW, FH).fill(0xffffff);
+      sh.mask = mask;
+      f.addChild(mask, sh);
+      this.sheen = sh;
+    } else if (rarity === 'divine') {
+      // nácar + halo
+      const cols = [0xfffaf0, 0xf2cfe0, 0xcdeee6, 0xded6fb, 0xfff0cc];
+      for (let i = 0; i < 5; i++) fr.rect(i * 3, i * 3, FW - i * 6, FH - i * 6).stroke({ width: 4, color: cols[i], alignment: 1 });
+      fr.rect(15, 15, FW - 30, FH - 30).stroke({ width: 2, color: 0xc9a45a, alignment: 1 });
+      const halo = new Graphics().ellipse(FW / 2, 70, 120, 26).stroke({ width: 10, color: 0xffe08a }).ellipse(FW / 2, 70, 120, 26).stroke({ width: 3, color: 0xffffff });
+      f.addChild(halo);
+      this.halo = halo;
+      const sh = new Graphics().poly([0, 0, 90, 0, -110, FH, -200, FH]).fill({ color: 0xffffff, alpha: 0.35 });
       const mask = new Graphics().rect(0, 0, FW, FH).fill(0xffffff);
       sh.mask = mask;
       f.addChild(mask, sh);
@@ -837,6 +870,7 @@ class CatPanel {
     if (this.mutOverlay && this.islandCat && !this.islandCat.destroyed) syncMutationOverlay(this.mutOverlay, this.islandCat.sprite);
     if (this.sheen) this.sheen.x = ((this.tt * 260) % 1100) - 100;
     if (this.holo) this.holo.tint = [0xffffff, 0xffe0f0, 0xe0fff8, 0xfff6d0][Math.floor(this.tt * 6) % 4];
+    if (this.halo && !this.halo.destroyed) this.halo.alpha = 0.7 + 0.3 * Math.sin(this.tt * 2.2);
   }
 }
 

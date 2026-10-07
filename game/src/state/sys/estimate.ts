@@ -102,11 +102,33 @@ export function hiddenRules(spec: BattleSpec): string[] {
   }
   const lv = spec.enemy.cats[0]?.level;
   if (lv) out.push(`Sus gatos van a Nv ${lv}. Un gato es una carta: el mismo gato hace lo mismo de los dos lados (ej. Tierra Nv 20+ perfora una capa más; Nv 10+ explota más grande). Los tuyos además suman estrellas, rangos K.O. y accesorios; los de ellos van a 1 estrella.`);
+  // Heroicos / Divinos: their ultimates are in the simulation (same rules for both sides)
+  for (const [who, cats] of [
+    ['Tu', spec.player.cats],
+    ['Su', spec.enemy.cats],
+  ] as const) {
+    for (const c of cats) {
+      const note = BIG_ULT[c.catId];
+      if (note) out.push(`${who} ${c.name}: ${note} La simulación la usa cuando le conviene.`);
+    }
+  }
   const sd = spec.suddenDeath ?? 10;
   if (spec.mode !== 'duel') out.push(sd > 0 ? `Muerte súbita desde el turno ${sd}: el mar inunda a los dos.` : 'Sin muerte súbita.');
   if (spec.intro?.lines?.length) for (const l of spec.intro.lines) if (l) out.push(l);
   return out;
 }
+
+/** what the Heroico / Divino ultimates do, with their real caps (battle/ults.ts) */
+const BIG_ULT: Record<string, string> = {
+  h_zarpa: 'HEROICO. Su ulti tajea a TODOS los gatos rivales y raja sus camarotes (tope 35%, jefes 15%).',
+  h_granbigote: 'HEROICO. Su ulti sacude toda la quilla rival y deja su barco de piedra un turno (tope 35%, jefes 15%).',
+  h_valquiria: 'HEROICO. Su ulti atraviesa una columna entera y la electrocuta mojada (tope 35%, jefes 15%).',
+  h_nekomante: 'HEROICO. Su ulti maldice 3 módulos y roba 40% de barra a cada gato rival (tope 35%, jefes 15%).',
+  d_horizonte: 'DIVINO. Agujero negro 3 turnos: se traga celdas cada turno (25% + 8%/turno; jefes 6% + 3%), drena barras y desaparece los tiros rivales. Una vez por batalla.',
+  d_solcaido: 'DIVINO. Hace caer el sol: todo el barco arde y quedan cegados; el sol sigue quemando 2 turnos (42% + 6%/turno; jefes 15% + 3%). Una vez por batalla.',
+  d_milvidas: 'DIVINO. Siete cortes a cada gato rival, máximo 45% de la vida de cada uno (jefes 20%). Una vez por batalla.',
+  d_bigbang: 'DIVINO. Revienta la mitad del barco de un golpe (tope 45%, jefes 15%; el núcleo aguanta en 1). Una vez por batalla.',
+};
 
 const LOSS_TIP: Record<string, string> = {
   crew: 'Te noquean a la tripulación: sube nivel o estrellas, o lleva un tanque al frente.',
