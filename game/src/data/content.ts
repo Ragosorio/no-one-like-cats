@@ -92,6 +92,8 @@ export interface MissionDef {
   reward: Record<string, unknown> & { std: boolean };
   unlocks: string[];
   line?: string;
+  /** what the mission is FOR (shown under the goal + in the glossary) */
+  why?: string;
   estTime?: string;
 }
 export interface StageDef {

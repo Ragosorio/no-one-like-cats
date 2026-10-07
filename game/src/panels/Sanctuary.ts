@@ -200,6 +200,7 @@ class SanctuaryView {
 
   constructor() {
     const m = (this.modal = new Modal('', MW, MH, { color: P.plum, band: P.ink, bandText: P.goldHi }));
+    m.label = 'SANTUARIO DE RESONANCIA'; // the title is drawn below; story/glossary read this
     guardModal(m, () => this.portal?.stop());
     this.decorate();
     const title = serif('Santuario de Resonancia', 54, P.goldHi, { italic: true, bold: true });

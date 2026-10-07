@@ -16,7 +16,9 @@ import { W, H, game } from '../core/App';
 import { CONTENT, BEAT_BY_ID, MISSION_BY_ID, MissionDef } from '../data/content';
 import { lastRewards } from '../state/sys/missions';
 import { collectAll } from '../state/sys/island';
-import { beatSeen, markBeat, lineSeen, markLine, firstCat, nameFirstCat, offlineSummary } from '../state/ext/story';
+import { beatSeen, markBeat, lineSeen, markLine, firstCat, nameFirstCat, offlineSummary, explained, markExplained } from '../state/ext/story';
+import { FEATURES, FeatureIntro, GLOSSARY_HINT } from '../ui/story/features';
+import { Text } from 'pixi.js';
 import { Line, say, tip, clearTips, cancelDialogs, dialogActive, storyLayer } from '../ui/dialog';
 import { Modal } from '../ui/modal';
 import { missionPanel, kingdomBanner, milestonePoster, DoneItem } from '../ui/story/rewards';
@@ -174,6 +176,98 @@ function overlayBlocked() {
 function modalOpen() {
   return scenes.overlayLayer.children.some((ch) => ch instanceof Modal && ch.visible && !ch.destroyed && !ch.closed);
 }
+// ------------------------------------------------------------------ features: what / why / how (ui/story/features.ts)
+/** features already reachable when this save booted: explained on first USE only (never dumped on load) */
+let preexisting: Set<string> | null = null;
+let lastFeatureAt = -1e9;
+let lastBlockEnd = -1e9;
+/** min gap between two "it just appeared" explanations (first-use ones play right away) */
+const FEATURE_GAP_MS = 20_000;
+const modalSeenAt = new WeakMap<object, number>();
+
+function ok(fn?: () => boolean) {
+  try {
+    return !!fn?.();
+  } catch {
+    return false;
+  }
+}
+/** told already: by its own beat, or by the story beat that covers it */
+function featureDone(f: FeatureIntro) {
+  return explained(f.id) || (!!f.covered && beatSeen(f.covered));
+}
+function snapshotFeatures() {
+  if (preexisting || !G.s.cats.length) return;
+  // a brand-new island has nothing "pre-existing": everything gets its intro when it shows up
+  const fresh = G.s.missions.done.length === 0;
+  preexisting = new Set(fresh ? [] : FEATURES.filter((f) => !featureDone(f) && ok(f.appear)).map((f) => f.id));
+}
+function openModals(): Modal[] {
+  return scenes.overlayLayer.children.filter((ch): ch is Modal => ch instanceof Modal && ch.visible && !ch.destroyed && !ch.closed);
+}
+function modalTitle(m: Modal) {
+  if (m.label && m.label !== 'Container') return m.label.toUpperCase();
+  const t = m.panel.children.find((c): c is Text => c instanceof Text);
+  return (t?.text ?? '').toUpperCase();
+}
+/** the player is USING a feature that was never explained (its panel is the top one, or its scene is on) */
+function featureInUse(now: number): FeatureIntro | null {
+  const mods = openModals();
+  const top = mods[mods.length - 1];
+  if (top) {
+    if (!modalSeenAt.has(top)) modalSeenAt.set(top, now);
+    if (now - (modalSeenAt.get(top) ?? now) < 650) return null;
+    const title = modalTitle(top);
+    return FEATURES.find((f) => !f.tip && f.panel?.test(title) && !featureDone(f) && (!f.when || ok(f.when))) ?? null;
+  }
+  const w = where();
+  return FEATURES.find((f) => !f.tip && f.scene === w && !featureDone(f) && (!f.when || ok(f.when))) ?? null;
+}
+/** a feature just became available during play → explain it once things are calm */
+function featureAppeared(now: number): FeatureIntro | null {
+  snapshotFeatures();
+  if (!preexisting || now - lastBlockEnd < 2500 || openModals().length) return null;
+  const here = where();
+  return (
+    FEATURES.find(
+      (f) =>
+        f.appear &&
+        !featureDone(f) &&
+        !preexisting!.has(f.id) &&
+        (!f.onlyOn || f.onlyOn === here) &&
+        now - lastFeatureAt >= (f.tip ? 8000 : FEATURE_GAP_MS) &&
+        (!f.when || ok(f.when)) &&
+        ok(f.appear),
+    ) ?? null
+  );
+}
+async function playFeature(f: FeatureIntro, mode: 'use' | 'appear') {
+  markExplained(f.id);
+  // the mission(s) this feature drives: their "new mission" tip would repeat the same thing
+  for (const id of f.missions ?? []) markLine(id);
+  const src = mode === 'use' && f.useLines ? f.useLines : f.lines;
+  const lines = src.map(([sp, t]) => [sp, personalize(sp, t)] as Line);
+  if (f.tip) {
+    lastFeatureAt = performance.now();
+    tip(lines.map((l) => l[1]).join(' '), { speaker: lines[0]?.[0] ?? 'LUZTERNA' });
+    G.save();
+    return;
+  }
+  busy = true;
+  try {
+    await say(lines, { dim: mode === 'use' ? 0.12 : 0.22 });
+    lastFeatureAt = performance.now();
+    if (!beatSeen('glossary_hint')) {
+      markBeat('glossary_hint');
+      tip(GLOSSARY_HINT, { dur: 7 });
+    }
+    G.save();
+  } finally {
+    busy = false;
+    lastBlockEnd = performance.now();
+  }
+}
+
 function canTip() {
   const w = where();
   return (w === 'island' || w === 'map') && !transitioning() && !dialogActive() && !introRunning;
@@ -188,7 +282,8 @@ function canBeat() {
 
 /** Luzterna calls you "grumete" until Boss 1, "Capi" afterwards; Canelo keeps the name you gave him. */
 function personalize(sp: string, text: string) {
-  let t = gtxt(text);
+  // dialog boxes are plain text: element badge tokens ({fire}…) only render in iconText
+  let t = gtxt(text).replace(/\{(fire|water|nature|earth|storm|magic|cosmic|void|unknown)\}\s?/g, '');
   const c = firstCat();
   if (c && c.species === 'c_canelo' && c.name && c.name !== 'Canelo') t = t.replace(/\bCanelo\b/g, c.name);
   if (sp.toUpperCase() === 'LUZTERNA' && G.s.campaign.bossesDefeated >= 1) t = t.replace(/\bgrumete\b/g, 'Capi');
@@ -248,12 +343,16 @@ function onMission(id: string, kind: 'new' | 'progress' | 'done') {
 
 function maybeTip(m: MissionDef) {
   if (!m.line || lineSeen(m.id) || COVERED.has(m.id)) return false;
+  // a feature beat is about to explain this mission properly: let it (it marks the line when it plays)
+  if (FEATURES.some((f) => f.missions?.includes(m.id) && !featureDone(f) && preexisting && !preexisting.has(f.id) && ok(f.appear))) return false;
   if (!G.s.missions.pinned.includes(m.id) && m.chain !== 'historia') {
     markLine(m.id);
     return false;
   }
   markLine(m.id);
-  tip(personalize('LUZTERNA', m.line), { title: m.title });
+  // the joke + what it's FOR (content.json › missions[].why): context, not just a checkbox
+  const body = personalize('LUZTERNA', m.line) + (m.why ? `\n${m.why}` : '');
+  tip(body, { title: m.title });
   return true;
 }
 
@@ -317,6 +416,15 @@ async function pump() {
     if (i >= 0) {
       const q = beats.splice(i, 1)[0];
       await playBeat(q);
+      return;
+    }
+  }
+  // features: first use (over its panel) beats first appearance (when calm, spaced out)
+  if (canBeat() && !beats.some((q) => q.notBefore <= now && (!q.ref.onlyOn || q.ref.onlyOn === where()))) {
+    const used = featureInUse(now);
+    const f = used ?? featureAppeared(now);
+    if (f) {
+      await playFeature(f, used ? 'use' : 'appear');
       return;
     }
   }
@@ -414,6 +522,7 @@ async function playBeat(q: QueuedBeat) {
     G.save();
   } finally {
     busy = false;
+    lastBlockEnd = performance.now();
   }
 }
 
@@ -482,6 +591,8 @@ function resetQueues() {
   renamePrompted = false;
   busy = false;
   panelShowing = false;
+  preexisting = null;
+  lastFeatureAt = -1e9;
 }
 
 export async function maybeIntro(info: BootInfo) {
@@ -559,8 +670,9 @@ export async function wipeSaveAndRestart() {
 
 /** for debugging from the console: __story.state() */
 (globalThis as unknown as { __story: unknown }).__story = {
-  state: () => ({ where: where(), busy, panelShowing, beats: beats.map((b) => b.key), done: done.map((d) => d.m.id), kls: [...kls], canBeat: canBeat(), canTip: canTip() }),
+  state: () => ({ dialog: dialogActive(), explained: [...(G.s.explained ?? [])], where: where(), busy, panelShowing, beats: beats.map((b) => b.key), done: done.map((d) => d.m.id), kls: [...kls], canBeat: canBeat(), canTip: canTip() }),
   init: initStory,
+  layer: () => storyLayer(),
   prologue: replayPrologue,
   /** freeze/thaw rendering (for screenshots) */
   freeze: () => game.pixi.ticker.stop(),

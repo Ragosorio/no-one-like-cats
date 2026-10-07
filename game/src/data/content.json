@@ -11659,6 +11659,7 @@
     "K01"
    ],
    "line": "Toca. Con cariño… o no, tú sabrás.",
+   "why": "Es tu primer gato. Despierto, produce oro y pelea a tu lado.",
    "estTime": "1:10"
   },
   {
@@ -11677,6 +11678,7 @@
    },
    "unlocks": [],
    "line": "Si le pones 'Michi' no te juzgo. Mucho.",
+   "why": "Va a estar en toda la historia. Si te arrepientes, se renombra en su panel.",
    "estTime": "2:00"
   },
   {
@@ -11686,7 +11688,7 @@
    "goal": {
     "type": "harvest_food",
     "amount": 50,
-    "text": "Junta 50 Pescaditos en el Muelle."
+    "text": "Siembra Sardinas en el Muelle de Pesca y cosecha 50 Pescaditos."
    },
    "trigger": "mission:H02",
    "purpose": "teach",
@@ -11700,6 +11702,7 @@
     "K02"
    ],
    "line": "Los gatos comen. Mucho.",
+   "why": "Los Pescaditos son la comida de tus gatos: sin comida no suben de nivel.",
    "estTime": "3:15"
   },
   {
@@ -11710,7 +11713,7 @@
     "type": "cat_level",
     "cat": "any",
     "level": 3,
-    "text": "Alimenta a un gato hasta nivel 3 (¡ÑAM! x8)."
+    "text": "Alimenta a un gato hasta nivel 3: tócalo y dale ¡ÑAM! (4 mordidas = 1 nivel)."
    },
    "trigger": "mission:H03",
    "purpose": "teach",
@@ -11720,6 +11723,7 @@
    },
    "unlocks": [],
    "line": "¿Viste? Creció.",
+   "why": "Más nivel = más oro por segundo y más fuerza en el barco.",
    "estTime": "4:00"
   },
   {
@@ -11743,6 +11747,7 @@
     "puerto_combate"
    ],
    "line": "¿Ves ese patito de hule? Es pirata. Y nos ve feo.",
+   "why": "Pelear da oro, chatarra para el barco y Ronroneo. Y avanza la historia.",
    "estTime": "6:00"
   },
   {
@@ -11752,7 +11757,7 @@
    "goal": {
     "type": "resonance_start",
     "count": 1,
-    "text": "Lleva a Canelo y Brote al Santuario de Resonancia (resultado garantizado en 90 s)."
+    "text": "Lleva a Canelo y Brote al Santuario de Resonancia (la primera sale garantizada en 90 s)."
    },
    "trigger": "mission:C01",
    "purpose": "teach",
@@ -11764,6 +11769,7 @@
     "K07"
    ],
    "line": "Es sagrado. Y privado.",
+   "why": "La Resonancia es como consigues gatos nuevos: dos gatos «llaman» a un tercero.",
    "estTime": "8:00"
   },
   {
@@ -11773,7 +11779,7 @@
    "goal": {
     "type": "reach_kl",
     "kl": 3,
-    "text": "Llega a Reino 3."
+    "text": "Llega a Reino 3 (la barra de arriba a la izquierda se llena sola jugando)."
    },
    "trigger": "mission:H05",
    "purpose": "story",
@@ -11787,6 +11793,7 @@
     "micro:pez_dorado"
    ],
    "line": "…Eso no era una nube.",
+   "why": "El Reino es el nivel de tu isla: cada nivel deja crecer más a tus gatos y abre cosas nuevas.",
    "estTime": "7:00"
   },
   {
@@ -11796,7 +11803,7 @@
    "goal": {
     "type": "defeat_boss",
     "boss": 1,
-    "text": "Derrota al jefe de la Bahía Sardina."
+    "text": "Derrota al jefe de la Bahía Sardina (la última etapa, 1-9)."
    },
    "trigger": "stage_cleared:1-8",
    "purpose": "story",
@@ -11810,6 +11817,7 @@
     "E11"
    ],
    "line": "Tiene barriles de pólvora en la cubierta. Yo nomás digo.",
+   "why": "Cada jefe abre el mar siguiente, sube el tope de mejoras del barco y trae un elemento nuevo.",
    "estTime": "~28:00"
   },
   {
@@ -11829,6 +11837,7 @@
    },
    "unlocks": [],
    "line": "Velo Noctis. Roba gatos, roba núcleos, roba protagonismo.",
+   "why": "Es el segundo mar: más botín, y enemigos de piedra que piden Tierra.",
    "estTime": "~31:00"
   },
   {
@@ -11850,6 +11859,7 @@
     "C16"
    ],
    "line": "Trescientos años dormida. Despiértala de un cañonazo.",
+   "why": "Abre el Mar de Tormentas y te da el elemento Tormenta.",
    "estTime": "~1:06"
   },
   {
@@ -11859,7 +11869,7 @@
    "goal": {
     "type": "win_battle",
     "battle": "event_raijin",
-    "text": "Sube a la Torre del Trueno y vence a Raijin."
+    "text": "Toca esta misión para subir a la Torre del Trueno y vencer a Raijin."
    },
    "trigger": "boss:2",
    "purpose": "story",
@@ -11867,7 +11877,8 @@
     "std": true
    },
    "unlocks": [],
-   "line": "25 minutos REALES. No se pausan. Ni llorando.",
+   "line": "Pararrayos con patas. Tumba el mástil primero.",
+   "why": "Si ganas, Raijin (un gato MÍTICO) se une a tu tripulación.",
    "estTime": "~1:15"
   },
   {
@@ -11889,6 +11900,7 @@
     "C17"
    ],
    "line": "Si pierdes, se queda con tu dignidad.",
+   "why": "Si ganas, te quedas con el Merodeador, un barco de 5 gatos.",
    "estTime": "~0:55"
   },
   {
@@ -11911,6 +11923,7 @@
     "C20"
    ],
    "line": "¿Desde cuándo los calamares traen escudo?",
+   "why": "Te da los planos del ESCUDO y el Bastión, un barco de 7 gatos.",
    "estTime": "~1:44"
   },
   {
@@ -11920,7 +11933,7 @@
    "goal": {
     "type": "win_battle",
     "battle": "story_heraldo",
-    "text": "Investiga el barco que brilla en el horizonte."
+    "text": "Toca esta misión para investigar el barco que brilla en el horizonte."
    },
    "trigger": "boss:3",
    "purpose": "story",
@@ -11931,6 +11944,7 @@
     "element:magic"
    ],
    "line": "Los barcos no brillan. ¿Por qué brilla?",
+   "why": "Ese barco trae un elemento que no debería existir: Magia.",
    "estTime": "~1:50"
   },
   {
@@ -11952,6 +11966,7 @@
     "C24"
    ],
    "line": "Nos vemos en las Ruinas, dijo. Pues vamos.",
+   "why": "Abre el Abismo Estelar y suelta a Merlina, una gata de Magia.",
    "estTime": "~2:47"
   },
   {
@@ -11971,6 +11986,7 @@
    },
    "unlocks": [],
    "line": "Ahí abajo suena algo. Una nota. Una sola.",
+   "why": "Bajo las ruinas duerme un gato que nadie ha registrado.",
    "estTime": "~3:50"
   },
   {
@@ -11990,6 +12006,7 @@
    },
    "unlocks": [],
    "line": "Algo la empujó del cielo. ¿Qué empuja estrellas?",
+   "why": "Abre el último mar y trae el elemento Cósmico.",
    "estTime": "~3:57"
   },
   {
@@ -11999,7 +12016,7 @@
    "goal": {
     "type": "win_battle",
     "battle": "event_grieta",
-    "text": "Entra a la Grieta Cósmica y vence a lo que duerme adentro."
+    "text": "Toca esta misión para entrar a la Grieta Cósmica y vencer a lo que duerme adentro."
    },
    "trigger": "boss:5",
    "purpose": "story",
@@ -12008,6 +12025,7 @@
    },
    "unlocks": [],
    "line": "¡MATEN A ESE YA!",
+   "why": "Adentro duerme la Singularidad, un gato MÍTICO. Si ganas, se queda contigo.",
    "estTime": "~4:35"
   },
   {
@@ -12030,6 +12048,7 @@
     "E25"
    ],
    "line": "No lo vas a hundir. Que se acuerde de ti.",
+   "why": "No se puede hundir: cada 15% de daño que le hagas te da un Fragmento del Vacío.",
    "estTime": "~4:45"
   },
   {
@@ -12049,6 +12068,7 @@
    },
    "unlocks": [],
    "line": "Él sí se acuerda de ti.",
+   "why": "Por los viejos tiempos. Y por un Fragmento del Vacío.",
    "estTime": "~4:20"
   },
   {
@@ -12058,7 +12078,7 @@
    "goal": {
     "type": "defeat_boss",
     "boss": 6,
-    "text": "Derrota al Leviatán Almirante."
+    "text": "Derrota al Leviatán Almirante, jefe de La Marea Sin Nombre."
    },
    "trigger": "stage_cleared:6-8",
    "purpose": "story",
@@ -12070,6 +12090,7 @@
     "chapter_end"
    ],
    "line": "Todo lo que cae aquí se olvida… a menos que alguien lo recuerde muy fuerte.",
+   "why": "Es el final del Capítulo 1.",
    "estTime": "~5:24"
   },
   {
@@ -12093,6 +12114,7 @@
     "cat:s_noctis"
    ],
    "line": "Nos vemos en el próximo mar.",
+   "why": "Lo que pasó después del final. No te lo pierdas.",
    "estTime": "~6:15"
   },
   {
@@ -12102,7 +12124,7 @@
    "goal": {
     "type": "win_battle",
     "count": 2,
-    "text": "Gana 2 batallas más en la Bahía Sardina."
+    "text": "Gana 2 batallas más en la Bahía Sardina (botón ¡ZARPAR! › una etapa)."
    },
    "trigger": "mission:H05",
    "purpose": "teach",
@@ -12113,6 +12135,7 @@
     "H06"
    ],
    "line": "Arrastra desde el gato y suelta. Fácil. Como robarle a un pato.",
+   "why": "Práctica de puntería y chatarra para mejorar el barco.",
    "estTime": "7:30"
   },
   {
@@ -12123,7 +12146,7 @@
     "type": "ship_upgrade",
     "family": "weapon",
     "mk": 2,
-    "text": "Mejora las Armas a Mk II en el Astillero."
+    "text": "Mejora las Armas a Mk II en el Astillero (pestaña MEJORAS)."
    },
    "trigger": "mission:C01",
    "purpose": "teach",
@@ -12134,6 +12157,7 @@
     "C03"
    ],
    "line": "Chatarra + Doblones = cañón que no da pena.",
+   "why": "Mk es el nivel de cada pieza del barco: Armas más alto = tus cañones pegan más.",
    "estTime": "~10:00"
   },
   {
@@ -12144,7 +12168,7 @@
     "type": "ship_upgrade",
     "family": "hull",
     "mk": 2,
-    "text": "Mejora el Casco a Mk II (Balandra)."
+    "text": "Mejora el Casco a Mk II en el Astillero (Balandra)."
    },
    "trigger": "mission:C02",
    "purpose": "teach",
@@ -12155,6 +12179,7 @@
     "C04"
    ],
    "line": "Un barco que no se hunde es un barco que gana. Más o menos.",
+   "why": "Casco más alto = más vida por celda: tu barco aguanta más golpes.",
    "estTime": "~14:00"
   },
   {
@@ -12163,7 +12188,7 @@
    "title": "Bombea ese tiro",
    "goal": {
     "type": "destroy_module_arc",
-    "text": "Destruye un módulo que esté detrás de un muro (tiro bombeado)."
+    "text": "Destruye un módulo enemigo que esté detrás de un muro, tirando bombeado (alto, por encima)."
    },
    "trigger": "stage_reached:1-3",
    "purpose": "teach",
@@ -12172,6 +12197,7 @@
    },
    "unlocks": [],
    "line": "Si hay muro, tíralo por arriba.",
+   "why": "Lo valioso siempre está protegido. Tirar por arriba te lo abre.",
    "estTime": "~7:00"
   },
   {
@@ -12192,6 +12218,7 @@
     "C06"
    ],
    "line": "Un barco con motor. MOTOR. Qué lujo.",
+   "why": "Cuatro camarotes = un gato más disparando. Y en el primer turno dispara doble.",
    "estTime": "~9:00"
   },
   {
@@ -12201,7 +12228,7 @@
    "goal": {
     "type": "crew_full",
     "ship": "gorrion",
-    "text": "Asigna 4 gatos al Gorrión."
+    "text": "Pon 4 gatos en los camarotes del Gorrión (Astillero › tripulación)."
    },
    "trigger": "mission:C05",
    "purpose": "teach",
@@ -12210,6 +12237,7 @@
    },
    "unlocks": [],
    "line": "Cada camarote es una decisión. ¿Quién va arriba, quién va atrás?",
+   "why": "Camarote vacío = un tiro menos y menos Poder de Barco.",
    "estTime": "~10:00"
   },
   {
@@ -12219,7 +12247,7 @@
    "goal": {
     "type": "win_by",
     "condition": "sink",
-    "text": "Gana una batalla hundiendo al enemigo (inundación)."
+    "text": "Gana hundiendo al enemigo: rompe su casco DEBAJO de la línea de agua para inundarlo."
    },
    "trigger": "mission:C06",
    "purpose": "teach",
@@ -12231,6 +12259,7 @@
     "module:bulkhead"
    ],
    "line": "Un hoyito abajo vale más que diez arriba.",
+   "why": "A veces es más fácil ahogar un barco que romperlo. Te desbloquea Bombas y Mamparos.",
    "estTime": "~18:00"
   },
   {
@@ -12240,7 +12269,7 @@
    "goal": {
     "type": "destroy_module",
     "module": "powder",
-    "text": "Haz explotar una santabárbara enemiga."
+    "text": "Haz explotar una santabárbara enemiga (el barril de pólvora de su barco)."
    },
    "trigger": "stage_reached:1-4",
    "purpose": "teach",
@@ -12249,6 +12278,7 @@
    },
    "unlocks": [],
    "line": "¿Ves ese barril? Sí. ESE.",
+   "why": "Explota y daña SU propio barco: un tiro, muchísimo daño.",
    "estTime": "~16:00"
   },
   {
@@ -12259,7 +12289,7 @@
     "type": "stages_cleared",
     "zone": 1,
     "count": 8,
-    "text": "Gana las 8 etapas de la Bahía Sardina."
+    "text": "Gana las 8 batallas de la Bahía Sardina (todas menos la del jefe)."
    },
    "trigger": "mission:C04",
    "purpose": "open",
@@ -12270,6 +12300,7 @@
     "H08"
    ],
    "line": "Ya nomás falta el jefe.",
+   "why": "Así llegas al jefe con más botín, más niveles y mejor barco.",
    "estTime": "~30:00"
   },
   {
@@ -12280,7 +12311,7 @@
     "type": "ship_upgrade",
     "family": "any",
     "mk": 3,
-    "text": "Lleva cualquier familia a Mk III (Fragata)."
+    "text": "Lleva cualquier pieza del barco a Mk III (Fragata) en el Astillero."
    },
    "trigger": "boss:1",
    "purpose": "teach",
@@ -12289,6 +12320,7 @@
    },
    "unlocks": [],
    "line": "Cada jefe que tumbas sube el tope de Mk. Regla: jefes + 2.",
+   "why": "Cada jefe vencido sube el tope de Mk (jefes + 2). Mk III = casco de hierro y más poder.",
    "estTime": "~40:00"
   },
   {
@@ -12298,7 +12330,7 @@
    "goal": {
     "type": "use_ultimate",
     "count": 1,
-    "text": "Llena el medidor de un gato y usa su ultimate (F)."
+    "text": "Llena el medidor de un gato y usa su ultimate (botón ULT en su carta)."
    },
    "trigger": "first_meter_full",
    "purpose": "teach",
@@ -12309,6 +12341,7 @@
     "module:arcane"
    ],
    "line": "Pantalla negra, viñetas, grito. Ya sabes cómo va.",
+   "why": "La ultimate es el ataque especial de cada gato: pega muchísimo más fuerte.",
    "estTime": "~20:00"
   },
   {
@@ -12317,7 +12350,7 @@
    "title": "Astillero creativo",
    "goal": {
     "type": "edit_layout",
-    "text": "Mueve un módulo o camarote en el editor y prueba contra el muñeco."
+    "text": "Mueve un módulo o camarote en el Editor de plano (Astillero › EDITAR PLANO) y prueba contra el muñeco."
    },
    "trigger": "mission:C11",
    "purpose": "teach",
@@ -12326,6 +12359,7 @@
    },
    "unlocks": [],
    "line": "Desmontar es gratis. Experimenta.",
+   "why": "Dónde pones cada cosa importa: un camarote escondido aguanta más.",
    "estTime": "~25:00"
   },
   {
@@ -12344,6 +12378,7 @@
    },
    "unlocks": [],
    "line": "Nadie se mojó. Bueno, todos se mojaron. Pero nadie se murió.",
+   "why": "Una victoria perfecta paga más botín.",
    "estTime": "~35:00"
   },
   {
@@ -12353,7 +12388,7 @@
    "goal": {
     "type": "quick_assault",
     "count": 1,
-    "text": "Usa Asalto Rápido en una etapa que ya ganaste."
+    "text": "Usa Asalto Rápido en una etapa ya ganada donde seas mucho más fuerte (ventaja ×2.5)."
    },
    "trigger": "can_quick_assault",
    "purpose": "teach",
@@ -12362,6 +12397,7 @@
    },
    "unlocks": [],
    "line": "Ya les ganaste. No hace falta humillarlos otra vez. (Bueno, sí, pero en 5 segundos.)",
+   "why": "Ganas en 5 segundos y te llevas el botín: ideal para juntar materiales.",
    "estTime": "~45:00"
   },
   {
@@ -12371,7 +12407,7 @@
    "goal": {
     "type": "errand",
     "errand": "enc_aguas_estrechas",
-    "text": "Completa el Encargo 'Aguas Estrechas' (solo barcos chicos)."
+    "text": "Completa el Encargo 'Aguas Estrechas' (Mapa › ENCARGOS; solo barcos chicos)."
    },
    "trigger": "stage_cleared:2-3",
    "purpose": "teach",
@@ -12380,6 +12416,7 @@
    },
    "unlocks": [],
    "line": "No todos los barcos caben en todos lados. Como tus ex.",
+   "why": "Los Encargos pagan premios únicos la primera vez. Este, Planos.",
    "estTime": "~50:00"
   },
   {
@@ -12389,7 +12426,7 @@
    "goal": {
     "type": "equip_weapon_types",
     "distinct": 2,
-    "text": "Equipa 2 tipos de arma distintos (p. ej. Cañón + Bobina Tesla)."
+    "text": "Equipa 2 tipos de arma distintos (Astillero › ARMAS; p. ej. Cañón + Bobina Tesla)."
    },
    "trigger": "boss:2",
    "purpose": "teach",
@@ -12398,6 +12435,7 @@
    },
    "unlocks": [],
    "line": "Una Bobina Tesla con un gato eléctrico a bordo… ya verás.",
+   "why": "Cada arma cambia la táctica: la Tesla con un gato de rayo a bordo hace Conducción.",
    "estTime": "~1:15"
   },
   {
@@ -12407,7 +12445,7 @@
    "goal": {
     "type": "own_ship",
     "ship": "merodeador",
-    "text": "Consigue el Merodeador (evento o astillero)."
+    "text": "Consigue el Merodeador (se compra en el Astillero)."
    },
    "trigger": "kl:15",
    "purpose": "open",
@@ -12419,6 +12457,7 @@
     "artifact:bomba_humo"
    ],
    "line": "Bandera negra, cero modales.",
+   "why": "Cinco camarotes y más cañones: un salto grande de poder.",
    "estTime": "~0:50"
   },
   {
@@ -12438,6 +12477,7 @@
    },
    "unlocks": [],
    "line": "Cada módulo que rompes suelta cofrecitos. Rompe más.",
+   "why": "Para estrenar tu barco nuevo (y subirles el rango K.O. a tus gatos).",
    "estTime": "~1:30"
   },
   {
@@ -12446,7 +12486,7 @@
    "title": "Escudo arriba",
    "goal": {
     "type": "equip_shield",
-    "text": "Instala tu primer escudo."
+    "text": "Instala tu primer escudo (Astillero › EQUIPO; necesitas un barco con módulos de escudo, como el Bastión)."
    },
    "trigger": "boss:3",
    "purpose": "teach",
@@ -12457,6 +12497,7 @@
     "artifact:burbuja_emergencia"
    ],
    "line": "Ahora tú también dices 'CLANK'.",
+   "why": "El Escudo Burbuja se come un impacto completo por turno.",
    "estTime": "~1:45"
   },
   {
@@ -12477,6 +12518,7 @@
     "artifact:ancla_emergencia"
    ],
    "line": "Siete camarotes. Siete. ¿Tienes siete gatos decentes?",
+   "why": "Siete camarotes, escudos y más poder contra jefes.",
    "estTime": "~2:27"
   },
   {
@@ -12495,6 +12537,7 @@
    },
    "unlocks": [],
    "line": "Un barco para cada pleito.",
+   "why": "Barcos distintos para Encargos distintos, y uno de repuesto mientras el otro se repara.",
    "estTime": "~2:24"
   },
   {
@@ -12504,7 +12547,7 @@
    "goal": {
     "type": "errand",
     "errand": "enc_rescate",
-    "text": "Completa el Encargo 'Rescate Gatuno' (solo 3 gatos)."
+    "text": "Completa el Encargo 'Rescate Gatuno' (máximo 3 gatos)."
    },
    "trigger": "stage_cleared:2-6",
    "purpose": "teach",
@@ -12513,6 +12556,7 @@
    },
    "unlocks": [],
    "line": "Tres gatos. Ni uno más. Elige bien.",
+   "why": "Primer premio: 5 Orbes Prisma (comodines para subir estrellas).",
    "estTime": "~1:05"
   },
   {
@@ -12522,7 +12566,7 @@
    "goal": {
     "type": "errand",
     "errand": "enc_asedio_pesado",
-    "text": "Completa el Encargo 'Asedio Pesado'."
+    "text": "Completa el Encargo 'Asedio Pesado' (el enemigo trae blindaje doble)."
    },
    "trigger": "stage_cleared:4-6",
    "purpose": "teach",
@@ -12531,6 +12575,7 @@
    },
    "unlocks": [],
    "line": "Armadura doble. Necesitas el barco gordo.",
+   "why": "Primer premio: Planos para mejorar el barco.",
    "estTime": "~2:50"
   },
   {
@@ -12551,6 +12596,7 @@
     "artifact:catnip"
    ],
    "line": "Un barco que mueve gatos de cuarto. Tu mamá nunca te dejó hacer eso.",
+   "why": "El barco más fuerte en las zonas del fondo.",
    "estTime": "~4:31"
   },
   {
@@ -12560,7 +12606,7 @@
    "goal": {
     "type": "errand",
     "errand": "enc_tormenta_arcana",
-    "text": "Completa el Encargo 'Tormenta Arcana' (solo escudos arcanos)."
+    "text": "Completa el Encargo 'Tormenta Arcana' (aquí no funciona tu Escudo Burbuja)."
    },
    "trigger": "stage_cleared:5-3",
    "purpose": "teach",
@@ -12569,6 +12615,7 @@
    },
    "unlocks": [],
    "line": "Aquí los escudos normales no sirven. ¿Adivina cuál barco sí?",
+   "why": "Primer premio: cristales de Magia y 5 Orbes Prisma.",
    "estTime": "~4:00"
   },
   {
@@ -12588,6 +12635,7 @@
    },
    "unlocks": [],
    "line": "¿Ves esas constelaciones en el casco? Se mueven. No sé por qué.",
+   "why": "El tope del barco. Pide haber vencido al Jefe 5.",
    "estTime": "~5:10"
   },
   {
@@ -12606,6 +12654,7 @@
    },
    "unlocks": [],
    "line": "Tu flota ya sabe pelear sola. Tú ocúpate de lo importante.",
+   "why": "Para farmear etapas ganadas sin tener que jugarlas.",
    "estTime": "~4:34"
   },
   {
@@ -12615,7 +12664,7 @@
    "goal": {
     "type": "cat_rank",
     "rank": "oro_1",
-    "text": "Lleva a un gato al rango Oro I (170 KO entre módulos y gatos)."
+    "text": "Lleva a un gato al rango K.O. Oro I: 170 módulos rotos y gatos noqueados en total (cuentan aunque pierdas)."
    },
    "trigger": "mission:C13",
    "purpose": "teach",
@@ -12624,6 +12673,7 @@
    },
    "unlocks": [],
    "line": "Cada módulo roto cuenta. Aunque pierdas.",
+   "why": "Cada rango le da orbes de su especie y un poco más de daño.",
    "estTime": "~3:00"
   },
   {
@@ -12633,7 +12683,7 @@
    "goal": {
     "type": "collect_gold",
     "times": 3,
-    "text": "Recolecta los Doblones de un hábitat 3 veces."
+    "text": "Toca las monedas de un hábitat 3 veces para recoger tus Doblones."
    },
    "trigger": "mission:H01",
    "purpose": "teach",
@@ -12642,6 +12692,7 @@
    },
    "unlocks": [],
    "line": "Los gatos producen nomás por existir.",
+   "why": "Los Doblones (oro) pagan casi todo: casas, comida, barco y terreno.",
    "estTime": "2:00"
   },
   {
@@ -12652,7 +12703,7 @@
     "type": "harvest",
     "crop": "sardinas",
     "count": 3,
-    "text": "Cosecha Sardinas 3 veces."
+    "text": "Cosecha Sardinas 3 veces en el Muelle de Pesca."
    },
    "trigger": "mission:H03",
    "purpose": "teach",
@@ -12661,6 +12712,7 @@
    },
    "unlocks": [],
    "line": "Planta, espera (o no), cosecha.",
+   "why": "Más comida = más niveles para tus gatos.",
    "estTime": "5:00"
   },
   {
@@ -12670,7 +12722,7 @@
    "goal": {
     "type": "build_habitat",
     "element": "nature",
-    "text": "Construye un hábitat de Naturaleza: Brote no tiene casa y no produce."
+    "text": "Construye un hábitat de Naturaleza (toca una parcela vacía › CONSTRUIR): Brote no tiene casa y no produce."
    },
    "trigger": "mission:K01",
    "purpose": "teach",
@@ -12679,6 +12731,7 @@
    },
    "unlocks": [],
    "line": "Un gato sin casa no produce. Y se queja.",
+   "why": "Cada gato vive solo en una casa de SU elemento. Gato con casa = gato que produce oro.",
    "estTime": "3:45"
   },
   {
@@ -12698,6 +12751,7 @@
    },
    "unlocks": [],
    "line": "¡ÑAM! ¡ÑOM! ¡GULP!",
+   "why": "En nivel 10 su disparo mejora de verdad. Ya vas a la mitad.",
    "estTime": "9:00"
   },
   {
@@ -12707,7 +12761,7 @@
    "goal": {
     "type": "upgrade_habitat",
     "tier": 2,
-    "text": "Mejora un hábitat a Cesta de Mimbre."
+    "text": "Mejora un hábitat a Cesta de Mimbre (tócalo › MEJORAR)."
    },
    "trigger": "kl:4",
    "purpose": "teach",
@@ -12716,6 +12770,7 @@
    },
    "unlocks": [],
    "line": "De caja de cartón a canasta. Así empiezan los imperios.",
+   "why": "Produce más, cabe un gato más y guarda más oro antes de llenarse.",
    "estTime": "~12:00"
   },
   {
@@ -12726,7 +12781,7 @@
     "type": "harvest",
     "crop": "anchoas",
     "count": 1,
-    "text": "Siembra y cosecha Anchoas."
+    "text": "Siembra y cosecha Anchoas en el Muelle (receta nueva de Reino 4)."
    },
    "trigger": "kl:4",
    "purpose": "teach",
@@ -12737,6 +12792,7 @@
     "module:pantry"
    ],
    "line": "Más tiempo, más comida. Elige según cuánto te vas a quedar.",
+   "why": "Tardan más pero dan mucha más comida. Ideales para cuando te vas un rato.",
    "estTime": "~13:00"
   },
   {
@@ -12746,7 +12802,7 @@
    "goal": {
     "type": "resonance_hatch",
     "count": 1,
-    "text": "Revela tu primera Resonancia."
+    "text": "Revela tu primera Resonancia en el Santuario (tócala cuando esté lista)."
    },
    "trigger": "mission:H06",
    "purpose": "teach",
@@ -12759,6 +12815,7 @@
     "catdex"
    ],
    "line": "¡Un Raro a la primera!",
+   "why": "Ahí conoces a tu gato nuevo. Y se abre el Catdex.",
    "estTime": "9:30"
   },
   {
@@ -12768,7 +12825,7 @@
    "goal": {
     "type": "species_owned",
     "count": 5,
-    "text": "Registra 5 especies en el Catdex."
+    "text": "Registra 5 especies en el Catdex (cada gato distinto que consigues cuenta)."
    },
    "trigger": "mission:K07",
    "purpose": "teach",
@@ -12777,6 +12834,7 @@
    },
    "unlocks": [],
    "line": "73/450 es adictivo. Aquí son 54. Peor.",
+   "why": "Cada especie nueva da gemas, Ronroneo y +2% de oro a toda la isla.",
    "estTime": "~18:00"
   },
   {
@@ -12786,7 +12844,7 @@
    "goal": {
     "type": "use_feature",
     "feature": "feed_bulk",
-    "text": "Usa 'Alimentar hasta nivel X'."
+    "text": "Usa 'Alimentar hasta Nv X' en el panel de un gato."
    },
    "trigger": "kl:6",
    "purpose": "teach",
@@ -12795,6 +12853,7 @@
    },
    "unlocks": [],
    "line": "Mira los números rodar. Qué rico.",
+   "why": "Ya sabes dar de comer: ahora lo haces de un jalón.",
    "estTime": "~20:00"
   },
   {
@@ -12804,7 +12863,7 @@
    "goal": {
     "type": "use_feature",
     "feature": "crop_repeat",
-    "text": "Activa 'Repetir receta' en una granja."
+    "text": "Activa 'Repetir receta' en una parcela del Muelle."
    },
    "trigger": "kl:9",
    "purpose": "teach",
@@ -12813,6 +12872,7 @@
    },
    "unlocks": [],
    "line": "Ya aprendiste a sembrar. Ahora deja de hacerlo tú.",
+   "why": "La parcela vuelve a sembrar sola al cosechar: siembra automática mientras haces otra cosa.",
    "estTime": "~26:00"
   },
   {
@@ -12831,6 +12891,7 @@
    },
    "unlocks": [],
    "line": "Los gatos aman las torres. Y la renta.",
+   "why": "Más oro por gato y más espacio antes de ¡LLENO!.",
    "estTime": "~28:00"
   },
   {
@@ -12840,7 +12901,7 @@
    "goal": {
     "type": "orbs_of_species",
     "amount": 10,
-    "text": "Junta 10 Orbes de Alma de un mismo gato."
+    "text": "Junta 10 Orbes de Alma de un mismo gato (salen de duplicados, victorias y misiones)."
    },
    "trigger": "first_orb_drop",
    "purpose": "open",
@@ -12851,6 +12912,7 @@
     "altar_almas"
    ],
    "line": "Un duplicado nunca es inútil.",
+   "why": "Con 10 orbes despierta el Altar de Almas, donde tus gatos suben de estrella.",
    "estTime": "~20:00"
   },
   {
@@ -12860,7 +12922,7 @@
    "goal": {
     "type": "star_up",
     "stars": 2,
-    "text": "Sube un gato a ★2 en el Altar de Almas."
+    "text": "Sube un gato a ★2 en el Altar de Almas (cuesta Orbes de Alma de su especie y pide Nv10)."
    },
    "trigger": "mission:K12",
    "purpose": "teach",
@@ -12869,6 +12931,7 @@
    },
    "unlocks": [],
    "line": "¡TUNK! Sello de goma. Más fuerte.",
+   "why": "La estrella (★) es el rango del gato: ★2 le da +25% de poder y de oro.",
    "estTime": "~35:00"
   },
   {
@@ -12878,7 +12941,7 @@
    "goal": {
     "type": "own_rarity",
     "rarity": "legendary",
-    "text": "Consigue un Primordial (Legendario)."
+    "text": "Consigue un Primordial (gato Legendario, el padre de un elemento)."
    },
    "trigger": "boss:1",
    "purpose": "story",
@@ -12887,6 +12950,7 @@
    },
    "unlocks": [],
    "line": "Los Primordiales son los padres de cada elemento.",
+   "why": "Los jefes los traen, y la Resonancia también (padres Nv20+ del mismo elemento).",
    "estTime": "~33:00"
   },
   {
@@ -12896,7 +12960,7 @@
    "goal": {
     "type": "catdex_set",
     "count": 1,
-    "text": "Completa cualquier set del Catdex (p. ej. Piedra Viva)."
+    "text": "Completa cualquier set del Catdex (Catdex › SETS, p. ej. Piedra Viva)."
    },
    "trigger": "mission:K08",
    "purpose": "open",
@@ -12905,6 +12969,7 @@
    },
    "unlocks": [],
    "line": "Un set completo cambia una regla. No un porcentaje: una REGLA.",
+   "why": "Un set completo da 10 Orbes Prisma, Ronroneo y una regla nueva de batalla.",
    "estTime": "~45:00"
   },
   {
@@ -12923,6 +12988,7 @@
    },
    "unlocks": [],
    "line": "Dos parejas, dos misterios.",
+   "why": "Dos parejas a la vez = el doble de gatos nuevos. La Isla Volcánica te dio la ranura.",
    "estTime": "~35:00"
   },
   {
@@ -12932,7 +12998,7 @@
    "goal": {
     "type": "own_rarity",
     "rarity": "epic",
-    "text": "Consigue un gato Épico (padres Nv15+)."
+    "text": "Consigue un gato Épico (por Resonancia, con los dos padres Nv15+)."
    },
    "trigger": "kl:10",
    "purpose": "teach",
@@ -12941,6 +13007,7 @@
    },
    "unlocks": [],
    "line": "¡NOOOOO! (de felicidad)",
+   "why": "Los Épicos tienen ataques mucho más fuertes.",
    "estTime": "~1:00"
   },
   {
@@ -12959,6 +13026,7 @@
    },
    "unlocks": [],
    "line": "Coral. En tierra. No preguntes.",
+   "why": "Otro salto de producción y un gato más por casa.",
    "estTime": "~1:00"
   },
   {
@@ -12978,6 +13046,7 @@
    },
    "unlocks": [],
    "line": "Antes las sardinas eran un lujo. Míranos.",
+   "why": "La receta grande de comida, para subir gatos altos.",
    "estTime": "~1:05"
   },
   {
@@ -12987,7 +13056,7 @@
    "goal": {
     "type": "use_feature",
     "feature": "resonance_queue",
-    "text": "Deja 3 parejas en la Cola de Resonancia."
+    "text": "Deja 3 parejas en la Cola de Resonancia del Santuario."
    },
    "trigger": "kl:18",
    "purpose": "teach",
@@ -12996,6 +13065,7 @@
    },
    "unlocks": [],
    "line": "Que se encolen solitos.",
+   "why": "Al revelarse una, arranca la siguiente sola: Resonancia en cadena.",
    "estTime": "~1:20"
   },
   {
@@ -13005,7 +13075,7 @@
    "goal": {
     "type": "use_feature",
     "feature": "auto_harvest",
-    "text": "Activa la Auto-cosecha al Silo."
+    "text": "Activa la Auto-cosecha (Muelle de Pesca › letrero MAR DE PESCADOS AUTOMÁTICO)."
    },
    "trigger": "kl:21",
    "purpose": "teach",
@@ -13014,6 +13084,7 @@
    },
    "unlocks": [],
    "line": "Tu mar de pescados ya trabaja solo.",
+   "why": "Las cosechas listas entran solas: tu muelle ya no te necesita.",
    "estTime": "~1:25"
   },
   {
@@ -13032,6 +13103,7 @@
    },
    "unlocks": [],
    "line": "MUTACIÓN: Conductividad. AHHHHH.",
+   "why": "Una mutación es un extra permanente. Sube la probabilidad si los padres viven en el mismo hábitat.",
    "estTime": "~1:30"
   },
   {
@@ -13041,7 +13113,7 @@
    "goal": {
     "type": "upgrade_habitat",
     "tier": 5,
-    "text": "Mejora un hábitat a Palacio de Cojines (necesita cristales)."
+    "text": "Mejora un hábitat a Palacio de Cojines (pide cristales de su elemento, que salen de pelear)."
    },
    "trigger": "kl:21",
    "purpose": "teach",
@@ -13050,6 +13122,7 @@
    },
    "unlocks": [],
    "line": "Los cristales salen de pelear. Así funciona este mar.",
+   "why": "Otro salto grande de producción.",
    "estTime": "~1:40"
   },
   {
@@ -13059,7 +13132,7 @@
    "goal": {
     "type": "assign_worker",
     "count": 1,
-    "text": "Asigna un gato como trabajador (Banquero, Granjero, Constructor o Viajero)."
+    "text": "Asigna un gato a un oficio (botón OFICIOS: Banquero, Granjero, Constructor o Viajero)."
    },
    "trigger": "kl:24",
    "purpose": "teach",
@@ -13068,6 +13141,7 @@
    },
    "unlocks": [],
    "line": "Si trabaja en la isla, no sube al barco. Decide.",
+   "why": "Mejora tu isla con gatos que no usas en el barco (el que trabaja no navega).",
    "estTime": "~1:45"
   },
   {
@@ -13077,7 +13151,7 @@
    "goal": {
     "type": "star_up",
     "stars": 3,
-    "text": "Sube un gato a ★3 (desbloquea su efecto secundario)."
+    "text": "Sube un gato a ★3 en el Altar (pide Nv20 y más orbes)."
    },
    "trigger": "mission:K13",
    "purpose": "teach",
@@ -13086,6 +13160,7 @@
    },
    "unlocks": [],
    "line": "Ahora su ataque hace una cosa más. Una cosa MÁS.",
+   "why": "★3 le da a su ataque un efecto secundario: hace una cosa MÁS.",
    "estTime": "~2:00"
   },
   {
@@ -13104,6 +13179,7 @@
    },
    "unlocks": [],
    "line": "Un templo. Para gatos. Lo lógico.",
+   "why": "Más oro, más gatos por casa.",
    "estTime": "~2:40"
   },
   {
@@ -13122,6 +13198,7 @@
    },
    "unlocks": [],
    "line": "Más de la mitad. Ya hueles a coleccionista.",
+   "why": "+2% de oro por especie, y más sets al alcance.",
    "estTime": "~3:00"
   },
   {
@@ -13131,7 +13208,7 @@
    "goal": {
     "type": "inherit_trait",
     "count": 1,
-    "text": "Haz una Resonancia donde el hijo herede el rasgo de un padre."
+    "text": "Haz una Resonancia donde el hijo herede el rasgo de un padre (50% de probabilidad desde Reino 30)."
    },
    "trigger": "kl:30",
    "purpose": "teach",
@@ -13140,6 +13217,7 @@
    },
    "unlocks": [],
    "line": "Sacó lo impaciente del papá.",
+   "why": "Así crías gatos con la personalidad que quieres.",
    "estTime": "~3:20"
   },
   {
@@ -13149,7 +13227,7 @@
    "goal": {
     "type": "plant",
     "crop": "leviatan",
-    "text": "Siembra un Banquete del Leviatán (cultivo largo para cuando te vayas)."
+    "text": "Siembra un Banquete del Leviatán: tarda 6 horas, para cuando te vayas."
    },
    "trigger": "kl:33",
    "purpose": "teach",
@@ -13158,6 +13236,7 @@
    },
    "unlocks": [],
    "line": "Seis horas. Para la noche. O para que lo aceleres jugando, como siempre.",
+   "why": "Montones de comida mientras no juegas.",
    "estTime": "~4:10"
   },
   {
@@ -13176,6 +13255,7 @@
    },
    "unlocks": [],
    "line": "Antes 700 Doblones eran una fortuna. ¿Te acuerdas?",
+   "why": "Más oro, más gatos por casa.",
    "estTime": "~4:25"
   },
   {
@@ -13196,6 +13276,7 @@
     "route:s_lumen"
    ],
    "line": "Alguien quiere tomarle foto a tu colección…",
+   "why": "Cada especie sigue sumando oro para toda la isla.",
    "estTime": "~4:40"
   },
   {
@@ -13206,7 +13287,7 @@
     "type": "cat_level",
     "cat": "any",
     "level": 40,
-    "text": "Sube un gato a nivel 40 (umbral Leyenda: su ataque puede volverse mítico)."
+    "text": "Sube un gato a nivel 40 (umbral Leyenda)."
    },
    "trigger": "kl:35",
    "purpose": "teach",
@@ -13214,7 +13295,8 @@
     "std": true
    },
    "unlocks": [],
-   "line": "10% de meteorito. O de tsunami. O de árbol. Depende del gato.",
+   "line": "Cuarenta niveles. Ya no es un gato: es una institución.",
+   "why": "El techo de un gato: muchísimo más oro y poder.",
    "estTime": "~5:15"
   },
   {
@@ -13233,6 +13315,7 @@
    },
    "unlocks": [],
    "line": "Ya aprendiste. Toma: un botón.",
+   "why": "Junta el oro de toda la isla de un toque.",
    "estTime": "7:00"
   },
   {
@@ -13242,7 +13325,7 @@
    "goal": {
     "type": "buy_expansion",
     "n": 1,
-    "text": "Compra la expansión Bosque Costero."
+    "text": "Compra la expansión Bosque Costero (toca su letrero de precio sobre las nubes)."
    },
    "trigger": "kl:3",
    "purpose": "open",
@@ -13254,6 +13337,7 @@
     "K15"
    ],
    "line": "Más isla, más gatos, más problemas.",
+   "why": "Más terreno = más parcelas para casas y peces, +10% de comida y un secreto.",
    "estTime": "~7:00"
   },
   {
@@ -13263,7 +13347,7 @@
    "goal": {
     "type": "clear_expansion",
     "n": 1,
-    "text": "Termina de limpiar el Bosque Costero."
+    "text": "Espera a que terminen de limpiar el Bosque Costero (reloj verde: el Ronroneo lo acelera)."
    },
    "trigger": "mission:E02",
    "purpose": "open",
@@ -13274,6 +13358,7 @@
     "E05"
    ],
    "line": "¿Eso es un santuario? Está sellado.",
+   "why": "Limpio, te da parcelas nuevas y destapa su secreto.",
    "estTime": "~7:30"
   },
   {
@@ -13292,6 +13377,7 @@
    },
    "unlocks": [],
    "line": "Reloj rojo chiquito. Esos no esperan.",
+   "why": "Premios rápidos por estar atento. Si lo ignoras, no pasa nada.",
    "estTime": "14:00"
   },
   {
@@ -13301,7 +13387,7 @@
    "goal": {
     "type": "win_battle",
     "battle": "duel_guardian_bosque",
-    "text": "Abre el santuario del bosque (Reino 5) y vence a su guardián."
+    "text": "En Reino 5 se abre el santuario del Bosque Costero: tócalo y vence a su guardián en un duelo."
    },
    "trigger": "kl:5 & mission:E03",
    "purpose": "open",
@@ -13311,6 +13397,7 @@
    },
    "unlocks": [],
    "line": "Un guardián musgoso. Y de mal humor.",
+   "why": "Gemas y la primera pista de un gato secreto.",
    "estTime": "~20:00"
   },
   {
@@ -13331,6 +13418,7 @@
     "E07"
    ],
    "line": "Ruinas, rocas y un segundo constructor.",
+   "why": "Trae un segundo constructor: dos obras a la vez.",
    "estTime": "~12:00"
   },
   {
@@ -13340,7 +13428,7 @@
    "goal": {
     "type": "expansion_secret",
     "n": 2,
-    "text": "Saca el fósil incrustado en el acantilado."
+    "text": "Saca el fósil del Acantilado Rocoso (tócalo varias veces)."
    },
    "trigger": "mission:E06",
    "purpose": "open",
@@ -13350,6 +13438,7 @@
    },
    "unlocks": [],
    "line": "Clic, clic, clic… ¡crack!",
+   "why": "Gemas y orbes de Gea.",
    "estTime": "~13:00"
   },
   {
@@ -13369,6 +13458,7 @@
    },
    "unlocks": [],
    "line": "Verde: no hay prisa. Rojo: AHORA.",
+   "why": "Los eventos flash son de reloj rojo: premios extra si llegas a tiempo.",
    "estTime": "~9:00"
   },
   {
@@ -13390,6 +13480,7 @@
     "K16"
    ],
    "line": "600 mil era imposible… ¿te acuerdas? (Bueno, aquí son 120K, pero el chiste es el mismo.)",
+   "why": "Otra ranura de Resonancia y +10% de oro.",
    "estTime": "~34:00"
   },
   {
@@ -13399,7 +13490,7 @@
    "goal": {
     "type": "expansion_secret",
     "n": 3,
-    "text": "Enciende la forja apagada con un gato Fuego de nivel 10+."
+    "text": "Enciende la forja de la Isla Volcánica con un gato de Fuego nivel 10 o más."
    },
    "trigger": "mission:E09",
    "purpose": "open",
@@ -13411,6 +13502,7 @@
     "weapon:mortero"
    ],
    "line": "Algo se está calentando. Literal.",
+   "why": "Te da el Mortero de Magma, un arma que tira por encima de los muros.",
    "estTime": "~36:00"
   },
   {
@@ -13429,6 +13521,7 @@
    },
    "unlocks": [],
    "line": "¿Se cae el vaso o no se cae? Probabilidades a la vista. Sin trampas.",
+   "why": "Opcional: un extra con probabilidades a la vista. Si la ocultas en Ajustes, se completa sola.",
    "estTime": "~40:00"
   },
   {
@@ -13438,7 +13531,7 @@
    "goal": {
     "type": "reaction_discovered",
     "count": 1,
-    "text": "Provoca tu primera reacción elemental (p. ej. Vapor o Conducción)."
+    "text": "Provoca tu primera reacción elemental (p. ej. moja al enemigo con un gato de Agua y luego quémalo: Vapor)."
    },
    "trigger": "mission:K07",
    "purpose": "teach",
@@ -13450,6 +13543,7 @@
     "artifact:bengala"
    ],
    "line": "Agua + rayo. Tu abuela te lo advirtió.",
+   "why": "Las reacciones hacen daño extra. Se anotan en Catdex › GRIMORIO.",
    "estTime": "~25:00"
   },
   {
@@ -13471,6 +13565,7 @@
     "E15"
    ],
    "line": "Desde aquí salen las expediciones. Y entra la niebla.",
+   "why": "Desde ahí salen las expediciones: materiales mientras haces otra cosa.",
    "estTime": "~1:15"
   },
   {
@@ -13480,7 +13575,7 @@
    "goal": {
     "type": "expedition_complete",
     "count": 1,
-    "text": "Completa tu primera Expedición."
+    "text": "Completa tu primera Expedición (Puerto de las Mareas: 1 o 2 gatos que no vayan en tu barco)."
    },
    "trigger": "mission:E13",
    "purpose": "teach",
@@ -13489,6 +13584,7 @@
    },
    "unlocks": [],
    "line": "Regresan con chatarra, cristales y anécdotas.",
+   "why": "Regresan con chatarra, cristales y orbes.",
    "estTime": "~1:30"
   },
   {
@@ -13508,6 +13604,7 @@
    },
    "unlocks": [],
    "line": "La carta está firmada con un antifaz.",
+   "why": "Una pista de un gato secreto… firmada con antifaz.",
    "estTime": "~1:20"
   },
   {
@@ -13528,6 +13625,7 @@
     "E17"
    ],
    "line": "Frío, focas y un gato congelado con un cañón raro.",
+   "why": "+25% de comida y un gato congelado con un cañón raro.",
    "estTime": "~1:55"
   },
   {
@@ -13537,7 +13635,7 @@
    "goal": {
     "type": "expansion_secret",
     "n": 5,
-    "text": "Descongela al gato del glaciar con un gato Fuego."
+    "text": "Descongela al gato del Glaciar con un gato de Fuego."
    },
    "trigger": "mission:E16",
    "purpose": "open",
@@ -13549,6 +13647,7 @@
     "weapon:escarcha"
    ],
    "line": "Se llevó el cañón al hielo. ¿Por qué? Nadie sabe.",
+   "why": "Te da el Lanzaescarcha, un arma que moja todo lo que toca.",
    "estTime": "~2:05"
   },
   {
@@ -13558,7 +13657,7 @@
    "goal": {
     "type": "secret_rumors",
     "count": 3,
-    "text": "Encuentra pistas de 3 gatos '???' secretos."
+    "text": "Encuentra pistas de 3 gatos secretos '???' (se ven en el Catdex)."
    },
    "trigger": "mission:E15",
    "purpose": "open",
@@ -13568,6 +13667,7 @@
    },
    "unlocks": [],
    "line": "Hay gatos que no salen en ningún manual.",
+   "why": "Los rumores te dicen cómo conseguir gatos que no salen en ningún manual.",
    "estTime": "~2:30"
   },
   {
@@ -13588,6 +13688,7 @@
     "H16"
    ],
    "line": "Columnas, libros flotando y una nota que suena sola.",
+   "why": "Otra ranura de Resonancia, +15% de oro y algo que suena allá abajo.",
    "estTime": "~3:45"
   },
   {
@@ -13607,7 +13708,8 @@
    "unlocks": [
     "E21"
    ],
-   "line": "Corales que brillan y una mina de Orbes Prisma.",
+   "line": "Corales que brillan. Y cada gato de tu Catdex brilla más.",
+   "why": "+1% de oro por cada especie de tu Catdex.",
    "estTime": "~4:30"
   },
   {
@@ -13629,6 +13731,7 @@
     "shield:espejo"
    ],
    "line": "Te ves bien. Tu barco también.",
+   "why": "Te da el Escudo Espejo.",
    "estTime": "~4:33"
   },
   {
@@ -13649,6 +13752,7 @@
     "E23"
    ],
    "line": "Los gatos pescan organismos espaciales. Normal.",
+   "why": "+25% de oro.",
    "estTime": "~5:05"
   },
   {
@@ -13668,6 +13772,7 @@
    },
    "unlocks": [],
    "line": "Apunta a la Zona 6. Ahí está.",
+   "why": "Gemas, y una luz que apunta al último mar.",
    "estTime": "~5:08"
   },
   {
@@ -13687,6 +13792,7 @@
    },
    "unlocks": [],
    "line": "Ya no juegas: haces química.",
+   "why": "Más reacciones conocidas = más formas de ganar.",
    "estTime": "~4:30"
   },
   {
@@ -13705,6 +13811,7 @@
    },
    "unlocks": [],
    "line": "ELEMENT: ??? 7/10. Ay, no.",
+   "why": "Algo pasa cuando juntas suficientes. Luzterna está nerviosa.",
    "estTime": "~5:30"
   },
   {
@@ -13724,6 +13831,7 @@
    },
    "unlocks": [],
    "line": "Para cuando te vayas a dormir. El mundo sigue.",
+   "why": "Para cuando te vayas a dormir: vuelven con mucho más botín.",
    "estTime": "offline"
   }
  ],
@@ -15373,6 +15481,10 @@
      [
       "LUZTERNA",
       "Los gatos comen. Mucho. Siembra sardinas en el muelle."
+     ],
+     [
+      "LUZTERNA",
+      "¿Para qué tanto pescado? Para ALIMENTARLOS: gato que come sube de nivel, y gato con nivel produce más oro y pega más fuerte."
      ],
      [
       "LUZTERNA",

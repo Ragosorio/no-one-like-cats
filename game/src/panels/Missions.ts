@@ -14,6 +14,7 @@ import { fmt } from '../core/format';
 import { sfx } from '../core/audio';
 import { CHAIN_META } from '../ui/hud/MissionPins';
 import { bar, wrapText } from './island/ui';
+import { openGlossary, openMissionHelp, whatIsThisButton } from '../ui/story/glossary';
 
 const CHAINS: MissionDef['chain'][] = ['historia', 'capitan', 'criador', 'explorador'];
 
@@ -31,6 +32,10 @@ export function openMissions(..._args: unknown[]) {
     });
   };
   render();
+  // GLOSARIO: every term the missions use (Altar, ★, Reino, Mk…), for old and new saves alike
+  const gl = whatIsThisButton(() => openGlossary(), { color: C.yellow, label: 'GLOSARIO' });
+  gl.position.set(m.w - 76 - 150, 28);
+  m.panel.addChild(gl);
   m.open();
   return m;
 }
@@ -99,7 +104,19 @@ function missionCard(mi: MissionDef, w: number, rerender: () => void) {
   const goal = wrapText(mi.goal.text, w - 32, 17);
   goal.position.set(16, y);
   inner.addChild(goal);
-  y += goal.height + 12;
+  y += goal.height + 6;
+  // what it's for (content.json › missions[].why) + the glossary for its jargon
+  if (mi.why) {
+    const why = wrapText(`Para qué: ${mi.why}`, w - 32, 14, F.ui, C.ink, { fontStyle: 'italic' });
+    why.alpha = 0.85;
+    why.position.set(16, y);
+    inner.addChild(why);
+    y += why.height + 6;
+  }
+  const help = whatIsThisButton(() => openMissionHelp(mi));
+  help.position.set(16, y);
+  inner.addChild(help);
+  y += 42;
   const e = evalGoal(mi);
   const cur = Math.min(e.cur, e.need);
   const pb = bar(w - 120, 18, e.need ? cur / e.need : 0, meta.color);
