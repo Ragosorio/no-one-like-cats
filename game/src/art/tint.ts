@@ -3,7 +3,8 @@ import { ColorMatrixFilter, Filter, Sprite } from 'pixi.js';
 import { CAT_BY_ID, TintSpec } from '../data/content';
 
 /**
- * Tinted variants (22 of the 54 catdex entries reuse an illustration):
+ * Tinted variants (a species with `art.tint` reuses another cat's painting; since lote A every
+ * catdex entry has its own, so today this only serves mutations and future variants):
  * hue rotate + saturation + brightness via ColorMatrix, overlay color via sprite tint mix.
  */
 export function tintFilter(t: TintSpec | null | undefined): Filter | null {
