@@ -234,7 +234,7 @@ export const GLOSSARY: GlossEntry[] = [
     term: 'Elementos y ventajas',
     group: 'gatos',
     what: 'Cada gato es de uno o dos elementos. En batalla se ganan en ciclo: {fire} Fuego > {nature} Naturaleza > {earth} Tierra > {storm} Tormenta > {water} Agua > {fire} Fuego. {magic} Magia y {cosmic} Cósmico se pegan fuerte entre sí.',
-    why: 'Un tiro con ventaja hace ×1.5; al revés, ×0.75. Además, mezclar elementos provoca REACCIONES (Vapor, Conducción…). Los elementos nuevos llegan derrotando jefes.',
+    why: 'Un tiro con ventaja hace ×1.5; al revés, ×0.75. Además, mezclar elementos provoca REACCIONES (Vapor, Conducción…). Los elementos nuevos llegan derrotando jefes; después del Capítulo 1, las GRIETAS DEL MULTIVERSO traen seis más, y cada uno le gana a dos y pierde contra dos.',
     how: 'Antes de pelear mira el elemento del enemigo y lleva gatos que le ganen. El Catdex › GRIMORIO lista las reacciones que ya descubriste.',
   },
   {
@@ -513,7 +513,7 @@ export const GLOSSARY: GlossEntry[] = [
     term: 'Fragmentos del Vacío',
     group: 'mar',
     what: 'Pedacitos fríos y vacíos que sueltan algunos jefes y batallas de historia. Se cuentan sobre 10.',
-    why: 'Nadie sabe todavía. Luzterna dice que van a importar.',
+    why: 'Después del Capítulo 1, juntar los 10 abre la Grieta del Abismo (el elemento Vacío). Luzterna dijo que iban a importar.',
     how: 'Vence jefes del fondo y las batallas de historia del Vacío.',
     gate: { boss: 4 },
   },
@@ -547,6 +547,85 @@ export const GLOSSARY: GlossEntry[] = [
     how: 'Llegan con el Reino. El panel REINO dice cuál sigue, qué hace y dónde vive.',
     where: 'Panel REINO › automatizaciones',
   },
+
+  // ------------------------------------------------------------------ PARTE 2: GRIETAS DEL MULTIVERSO (state/sys/grietas.ts)
+  {
+    id: 'grietas',
+    term: 'Grietas del Multiverso',
+    group: 'mar',
+    what: 'Rajaduras en el cielo que se abrieron cuando el Leviatán se hundió y rompió el Primer Mar. Del otro lado hay otros mares, con elementos que aquí no existían.',
+    why: 'Cada grieta es una batalla de historia contra un barco de ese elemento. Si la ganas, el elemento y su Primordial legendario se unen a tu isla (+20 cristales de ese elemento).',
+    how: 'Aparecen como misión fijada cuando pasa algo en tu mar (terminar el capítulo, ganar una liga del Podio, limpiar ciertas expansiones…). Toca la misión › IR.',
+    where: 'Misión fijada (izquierda)',
+    quip: 'El mar se rompió. Lo bueno: ahora caben más gatos.',
+    gate: { flag: 'grietas_open' },
+  },
+  {
+    id: 'el_ice',
+    term: 'Hielo',
+    group: 'gatos',
+    what: 'En barcos: sus carámbanos dejan CONGELADO; ese cañón o camarote no dispara su próximo turno (los gatos de {water} Agua resisten la mitad). Fuego sobre lo congelado = CHOQUE TÉRMICO; tierra o cañón = ESTALLIDO. En el Podio, su Técnica FROST BITE! congela al rival: pierde su turno.',
+    why: 'Le pega ×1.5 a {water} Agua y a {time} Tiempo. Recibe ×1.5 de {fire} Fuego y de {sound} Sonido.',
+    how: 'Gana la Grieta Boreal y Bóreas se queda. Constrúyele un hábitat de Hielo en la Tienda (solo ahí viven) y haz Resonancia con un padre de Hielo para más especies.',
+    where: 'Tienda › hábitat de Hielo · Santuario',
+    quip: 'Lo congelas y luego le avientas fuego. Eres un genio malvado.',
+    gate: { element: 'ice' },
+  },
+  {
+    id: 'el_sound',
+    term: 'Sonido',
+    group: 'gatos',
+    what: 'En barcos: su onda atraviesa paredes, pega poquito a cada celda que cruza y ATURDE a cada gato de esos camarotes (pierde su próximo turno; después queda SORDO 2 turnos). El cristal sufre ×1.5. En el Podio, su Técnica SONIC BOOM! atraviesa escudos y puede aturdir.',
+    why: 'Le pega ×1.5 a {earth} Tierra y a {ice} Hielo. Recibe ×1.5 de {water} Agua y de {void} Vacío.',
+    how: 'Gana la Grieta del Escenario (aparece al coronarte campeón de una liga del Podio) y Headliner se queda. Hábitat de Sonido en la Tienda y Resonancia con un padre de Sonido.',
+    where: 'Tienda › hábitat de Sonido · Santuario',
+    quip: 'Un tiro, seis gatos aturdidos. El vecino ruidoso perfecto.',
+    gate: { element: 'sound' },
+  },
+  {
+    id: 'el_shadow',
+    term: 'Sombra',
+    group: 'gatos',
+    what: 'En barcos: su tiro no se ve volar, solo aparece al impactar. Al caer, una PUÑALADA golpea por la espalda al gato enemigo más cercano e ignora sus escudos. En el Podio, su Técnica SHADOW STITCH! no se puede esquivar e ignora el escudo.',
+    why: 'Se pega ×1.5 con {light} Luz y con {storm} Tormenta, de ida y de vuelta: les gana y le ganan.',
+    how: 'Gana la Grieta de los Faroles (al limpiar el Jardín Sakura) y Medianoche se queda. Hábitat de Sombra en la Tienda y Resonancia con un padre de Sombra.',
+    where: 'Tienda › hábitat de Sombra · Santuario',
+    quip: 'No le des la espalda. A nada.',
+    gate: { element: 'shadow' },
+  },
+  {
+    id: 'el_time',
+    term: 'Tiempo',
+    group: 'gatos',
+    what: 'En barcos: REBOBINA. Al pegar, repara las celdas más dañadas de TU barco y le atrasa 1 turno la recarga al gato enemigo golpeado. Su ultimate es TIME STOP: los gatos rivales pierden su próximo turno (los cañones no; no se encadena). En el Podio, su Técnica REWIND CLAW! se cura la mitad de lo que pega y a veces roba un turno.',
+    why: 'Le pega ×1.5 a {fire} Fuego y a {void} Vacío. Recibe ×1.5 de {cosmic} Cósmico y de {ice} Hielo.',
+    how: 'Gana la Grieta del Reloj de Arena (al limpiar el Oasis Dorado) y Cronos se queda. Hábitat de Tiempo en la Tienda y Resonancia con un padre de Tiempo.',
+    where: 'Tienda › hábitat de Tiempo · Santuario',
+    quip: 'Pegar y reparar al mismo tiempo. Ojalá mi vida.',
+    gate: { element: 'time' },
+  },
+  {
+    id: 'el_light',
+    term: 'Luz',
+    group: 'gatos',
+    what: 'En barcos: rayo casi recto que ignora el viento y atraviesa varias celdas en línea. Deja CEGADO al barco rival: su próximo turno apunta con la vista previa al 30%. En el Podio, su Técnica PRISM FLASH! deja CEGADO: sus ataques fallan más.',
+    why: 'Le pega ×1.5 a {magic} Magia y a {shadow} Sombra. Recibe ×1.5 de {earth} Tierra y de {shadow} Sombra.',
+    how: 'Gana la Grieta del Faro (Reino 36 y el Atolón Estelar limpio) y Áurea se queda. Hábitat de Luz en la Tienda y Resonancia con un padre de Luz.',
+    where: 'Tienda › hábitat de Luz · Santuario',
+    quip: 'Si el rival no ve, el rival no apunta. Ciencia.',
+    gate: { element: 'light' },
+  },
+  {
+    id: 'el_void',
+    term: 'Vacío',
+    group: 'gatos',
+    what: 'En barcos: atraviesa materia y BORRA las celdas que cruza; lo borrado no se repara, ni se rebobina, ni se regenera en toda la batalla. Se come burbujas, escudos, estados, escudos de gato y hasta segundas vidas. En el Podio, su Técnica NULL BITE! se come el escudo y borra 8% de la vida máxima del rival para siempre.',
+    why: 'Le pega ×1.5 a {cosmic} Cósmico y a {sound} Sonido. Recibe ×1.5 de {magic} Magia y de {time} Tiempo.',
+    how: 'Gana la Grieta del Abismo (al limpiar el Abismo del Ronroneo o juntar los 10 Fragmentos del Vacío) y Nadie se queda. Hábitat de Vacío en la Tienda y Resonancia con un padre de Vacío.',
+    where: 'Tienda › hábitat de Vacío · Santuario',
+    quip: 'Lo que borra Nadie, no lo arregla nadie.',
+    gate: { element: 'void' },
+  },
 ];
 
 export const GLOSS_BY_ID = new Map(GLOSSARY.map((e) => [e.id, e]));
@@ -567,6 +646,7 @@ function gateFlag(f: string) {
   const s = G.s;
   if (f === 'expedition_open') return s.expansions.cleared.includes(4) || s.expeditions.length > 0;
   if (f === 'catdex') return !!s.flags.catdex || s.missions.done.includes('K07') || Object.keys(s.catdex).length > 3;
+  if (f === 'grietas_open') return s.missions.done.includes('H22');
   if (f === 'altar_almas') return !!s.flags.altar_almas || s.cats.some((c) => c.stars > 1);
   return !!s.flags[f];
 }
@@ -626,6 +706,7 @@ const BY_GOAL: Record<string, string[]> = {
   expedition_complete: ['expediciones'],
   secret_rumors: ['secretos', 'catdex'],
   void_fragments: ['vacio'],
+  element_species: ['resonancia', 'habitat'],
   damage_pct: ['batalla', 'vacio'],
   watch: [],
 };
@@ -658,6 +739,20 @@ const EXTRA: Record<string, string[]> = {
   E05: ['batalla'],
   E10: ['elementos', 'nivel'],
   E12: ['batalla'],
+  // Parte 2
+  H23: ['grietas', 'el_ice'],
+  H24: ['grietas', 'el_sound'],
+  H25: ['grietas', 'el_shadow'],
+  H26: ['grietas', 'el_time'],
+  H27: ['grietas', 'el_light'],
+  H28: ['grietas', 'el_void'],
+  K33: ['el_ice'],
+  K34: ['el_sound'],
+  K35: ['el_shadow'],
+  K36: ['el_time'],
+  K37: ['el_light'],
+  K38: ['el_void'],
+  C29: ['reacciones'],
 };
 
 export function missionTerms(m: MissionDef): string[] {

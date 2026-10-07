@@ -15,6 +15,7 @@ import { G } from '../game';
 import { crew, layoutOf, mk } from './ship';
 import { cat as getCat } from './cats';
 import type { BattleSpec } from '../../scenes/BattleScene';
+import { p2EnemyNotes } from '../../battle/multiverso';
 
 export interface Estimate {
   /** 0–1 win rate from the sims (null while the first sims run) */
@@ -77,6 +78,8 @@ function matchup(spec: BattleSpec): { reasons: string[]; tips: string[] } {
   if (weak.length && best.length) tips.push(`Prueba con ${best.slice(0, 2).map((e) => EL_NAME[e] ?? e).join(' o ')}: ×${mult[best[0]]} contra ${MAT_NAME[main]}.`);
   const t = spec.meta?.tune;
   if (t && t.stage > 1.05) reasons.push(`Etapa reforzada: su barco y sus gatos x${t.stage.toFixed(1)} (toca ¿POR QUÉ?).`);
+  // Parte 2: what the multiverse cats on the other side will do (the sims above already play it)
+  reasons.push(...p2EnemyNotes(spec.enemy.cats.flatMap((c) => c.elements)));
   return { reasons, tips };
 }
 

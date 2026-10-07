@@ -617,7 +617,7 @@ class DetailSheet extends Container {
   private section(title: string, body: string, x: number, y: number, w: number, o: { color?: number; italic?: boolean; size?: number } = {}) {
     const t = txt(title, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: o.color ?? C.pinkHot, letterSpacing: 3 });
     t.position.set(x, y);
-    if (/\{(fire|water|nature|earth|storm|magic|cosmic|void)\}/.test(body)) {
+    if (/\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void)\}/.test(body)) {
       const ib = iconText(body, { fontFamily: F.ui, fontSize: o.size ?? 20, fill: C.ink }, { wrap: w });
       ib.position.set(x, y + 20);
       this.addChild(t, ib);

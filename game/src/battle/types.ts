@@ -11,6 +11,11 @@ export type ElementId =
   | 'spirit'
   | 'cosmic'
   | 'void'
+  // Parte 2 (battle/multiverso.ts)
+  | 'light'
+  | 'shadow'
+  | 'sound'
+  | 'time'
   | 'neutral';
 
 export type StatusId = 'wet' | 'burning' | 'frozen' | 'charged' | 'rooted' | 'cursed' | 'voided' | 'steam';
@@ -28,7 +33,9 @@ export type Trajectory =
   | 'homing' // soft homing toward the aimed cell
   | 'phase' // void: passes through, erasing cells along the line
   | 'meteor' // ultimate: falls from the sky on the aimed x
-  | 'cluster'; // splits into N bomblets at apex
+  | 'cluster' // splits into N bomblets at apex
+  | 'ray' // light: dead straight, ignores wind, pierces a line of cells
+  | 'wave'; // sound: slow arc that passes through walls (many cells, low damage each)
 
 export interface StatusApply {
   id: StatusId;
@@ -51,6 +58,8 @@ export interface ShotDef {
   speedMul?: number;
   /** cells pierced before exploding (heavy/phase) */
   pierce?: number;
+  /** damage multiplier of each pierced cell (default: heavy 0.9, phase 2.2, ray 0.6, wave 0.3) */
+  pierceMul?: number;
   statuses?: StatusApply[];
   /** fraction of trajectory shown in the aim preview (0..1) */
   preview?: number;

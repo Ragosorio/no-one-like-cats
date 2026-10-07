@@ -204,7 +204,8 @@ export function chanceLabel(zone: number, stage: number) {
 export function resonancesWith(el: string) {
   const recipes = (CONTENT.resonanceRecipes as { parents: string[] }[] | undefined) ?? [];
   const n = recipes.filter((r) => r.parents?.includes(el)).length;
-  return n || CONTENT.cats.filter((c) => c.elements.includes(el)).length;
+  // the multiverse elements (Parte 2) only document mono-element recipes: count their species instead
+  return Math.max(n, CONTENT.cats.filter((c) => c.elements.includes(el)).length);
 }
 
 export { zoneUnlocked, stageUnlocked, isCleared, stageKey, STAGES_PER_ZONE };

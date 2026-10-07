@@ -10,7 +10,9 @@ import { Container, FederatedPointerEvent, Graphics, Text, TilingSprite } from '
 import gsap from 'gsap';
 import { Modal } from '../../ui/modal';
 import { C, F } from '../../ui/theme';
-import { txt, Bar, dotGrid, crosses } from '../../ui/widgets';
+import { txt, Bar, dotGrid, crosses, Button } from '../../ui/widgets';
+import { setSimulacro, simulacroOn, simulacroStats } from '../../state/sys/simulacro';
+import { fmt } from '../../core/format';
 import { icon } from '../../ui/icons';
 import { halftoneTexture } from '../../art/textures';
 import { sfx } from '../../core/audio';
@@ -54,7 +56,7 @@ const AUTO_COPY: Record<string, { short: string; text: string; where: string; gl
   auto_feed: { short: 'Auto-alimentar', glyph: 'bowl', text: 'Regla por hábitat: «mantener a sus gatos en el tope». La comida se gasta sola.', where: 'Panel del hábitat' },
   auto_expedition: { short: 'Expediciones solas', glyph: 'compass', text: 'Las expediciones se relanzan solas con la misma tripulación y duración.', where: 'Puerto de las Mareas' },
   auto_star: { short: 'Auto-estrellas', glyph: 'star', text: 'Las estrellas se suben solas al juntar orbes, y los módulos nuevos se equipan solos si suben el Poder.', where: 'Altar y Astillero' },
-  auto_battle: { short: 'Simulacro', glyph: 'robot', text: 'Auto-batallas en etapas ya ganadas mientras haces otra cosa (70% del botín).', where: 'Mapa' },
+  auto_battle: { short: 'Simulacro', glyph: 'robot', text: 'Tu flota repite sola la mejor etapa ya ganada que tu barco domina, cada 3 minutos, y te paga el 70% del botín.', where: 'Aquí mismo: botón ENCENDER' },
   fleet_orders: { short: 'Órdenes de flota', glyph: 'anchor', text: 'El barco que NO estás usando farmea solo la mejor etapa ganada.', where: 'Astillero › flota' },
 };
 
@@ -325,6 +327,26 @@ class KingdomView {
     const st = owned ? stamp('ACTIVA', 0x2e8a52, 34, 0.08) : stamp(a.kl - kl === 1 ? '¡EN 1 NIVEL!' : `EN ${a.kl - kl} NIVELES`, C.red, 30, 0.08);
     st.position.set(w - st.width / 2 - 26, 92);
     d.addChild(st);
+    // Simulacro is the one automation you switch on and off yourself
+    if (a.id === 'auto_battle' && owned) {
+      const on = simulacroOn();
+      const s = simulacroStats();
+      const info = label(
+        s.target ? `Repite la etapa ${s.target.zone}-${s.target.stage} cada 3 min (también si no estás, hasta 8 h). Lleva ${s.runs} simulacros: ${fmt(s.gold)} oro.` : 'Todavía ninguna etapa ganada es fácil para tu barco (necesitas ×1.5 de poder).',
+        16,
+        C.inkBlue,
+        { wordWrap: true, wordWrapWidth: w - 300 },
+      );
+      info.position.set(24, 244);
+      const btn = new Button(on ? 'APAGAR SIMULACRO' : 'ENCENDER SIMULACRO', () => {
+        setSimulacro(!on);
+        sfx(on ? 'paper' : 'fanfare');
+        clearChildren(this.detail);
+        this.showAutomation(a);
+      }, { w: 260, h: 50, size: 22, color: on ? C.paper : C.mint });
+      btn.position.set(w - 290, 228);
+      d.addChild(info, btn);
+    }
   }
 
   // ------------------------------------------------------------------ road of milestones

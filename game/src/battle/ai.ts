@@ -3,6 +3,7 @@ import { moduleImmune, lateCellMul } from './bossLate';
 import { CELL, Cell } from './ship';
 import { Rng } from '../core/rng';
 import { ShotDef } from './types';
+import { p2AimNoise, p2ShotValue } from './multiverso';
 
 export type Personality = 'clumsy' | 'sniper' | 'tuner' | 'calculator' | 'avenger' | 'looter' | 'demolisher' | 'elementalist';
 
@@ -155,16 +156,17 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
     const o = b.muzzle(side, s.id === 'cannon' ? undefined : s.id);
     const dir = enemy === 1 ? 1 : -1;
     let shotMul = 1;
-    if (bubbleUp && !(s.shot.element === 'electric' && s.shot.trajectory !== 'gust') && !((s.shot.projectiles ?? 1) > 1)) shotMul *= s.ult ? 0.2 : 0.55;
+    if (bubbleUp && !(s.shot.element === 'electric' && s.shot.trajectory !== 'gust') && s.shot.element !== 'void' && !((s.shot.projectiles ?? 1) > 1)) shotMul *= s.ult ? 0.2 : 0.55;
     const chills = s.shot.element === 'water' || s.shot.element === 'ice' || s.shot.trajectory === 'gust';
     if (b.boss?.submerged && b.cfg.boss?.side === enemy && !(s.shot.element === 'electric' || s.shot.trajectory === 'torpedo')) shotMul *= lev && chills ? 0.7 : 0.1;
     // arcane ward: rayo pops a layer, physical hits it ×1.5
     if (wardUp) shotMul *= isRayo(s.shot) ? 2.2 : s.shot.element === 'earth' || s.shot.element === 'neutral' ? 1.3 : 1;
-    // flat shots (beams, orbs, gusts, low-gravity rails) also need low and slightly downward angles —
-    // a human can aim them flat; without these a beam could never hit a low raft
+    // a Luz ray flies dead straight: it's aimed almost flat (even a bit downward), not lobbed.
+    // Other flat shots (beams, orbs, gusts, low-gravity rails) also get low and slightly downward
+    // angles — a human can aim them flat; without these a beam could never hit a low raft
     const g = s.shot.gravityScale ?? (s.shot.trajectory === 'beam' ? 0.15 : s.shot.trajectory === 'orb' ? 0.5 : s.shot.trajectory === 'gust' ? 0.1 : 1);
-    const elevs = Array.from({ length: 22 }, (_, i) => 8 + i * 3.4);
-    if (g < 0.6) elevs.unshift(-10, -7, -4.5, -2, 0, 2, 4, 6);
+    const elevs = s.shot.trajectory === 'ray' ? Array.from({ length: 22 }, (_, i) => -8 + i) : Array.from({ length: 22 }, (_, i) => 8 + i * 3.4);
+    if (s.shot.trajectory !== 'ray' && g < 0.6) elevs.unshift(-10, -7, -4.5, -2, 0, 2, 4, 6);
     for (const deg of elevs) {
       const elev = deg * (Math.PI / 180);
       const angle = dir > 0 ? -elev : Math.PI + elev;
@@ -173,6 +175,8 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
         const paths = b.buildPaths(s.shot, o, angle, power, windGuess, side);
         let score = scorePaths(b, paths, targets, enemy, s.shot) * shotMul;
         if (score > 0 && (pers === 'elementalist' || pers === 'calculator')) score *= reactionBonus(b, paths, enemy, s.shot);
+        // Parte 2: the AI plays the new elements on purpose (waves through cabins, ice on cannons…)
+        if (score > 0) score *= p2ShotValue(b, side, s.shot, paths);
         if (score > 0) {
           const end = paths[0].points[paths[0].points.length - 1];
           options.push({ shooter: s.id, ult: s.ult, shot: s.shot, angle, power, score, tx: end.x, ty: end.y });
@@ -202,7 +206,8 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   const key = `${Math.round(pick.tx / CELL)}`;
   const tries = memory.get(key) ?? 0;
   memory.set(key, tries + 1);
-  const shrink = Math.pow(pers === 'tuner' ? 0.6 : 0.8, tries);
+  // CEGADO (Luz, Parte 2): a blinded crew aims with ×2.2 error, same as the player losing the preview
+  const shrink = Math.pow(pers === 'tuner' ? 0.6 : 0.8, tries) * p2AimNoise(b, side);
   const angle = pick.angle + gauss(r) * ((profile.sigmaAngleDeg * blind * Math.PI) / 180) * shrink;
   const power = pick.power * (1 + gauss(r) * profile.sigmaPower * blind * shrink);
   return { shooter: pick.shooter, ult: pick.ult, angle, power, target: { x: pick.tx, y: pick.ty } };
@@ -246,8 +251,12 @@ function reactionBonus(b: Battle, paths: ShotPath[], enemy: number, shot: ShotDe
   if (shot.trajectory === 'gust') return 1 + wet * 1.0 + burning * 1.2;
   if (el === 'water') return 1 + (1 - wet) * 0.5 + burning * 0.4;
   if (el === 'nature') return 1 + wet * 0.8;
-  if (el === 'fire') return 1 - wet * 0.5;
+  if (el === 'fire') return 1 - wet * 0.5 + frozen * 1.2; // + CHOQUE TÉRMICO
   if (el === 'earth') return 1 + frozen * 1.5;
+  // Parte 2: NOTA ALTA, ARCOÍRIS, ACELERAR
+  if (el === 'sound') return 1 + frozen * 1.5;
+  if (el === 'light') return 1 + wet * 0.5;
+  if (el === 'time') return 1 + burning * 0.8;
   return 1;
 }
 

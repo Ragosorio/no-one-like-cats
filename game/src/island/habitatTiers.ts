@@ -159,6 +159,170 @@ function elementFeature(el: string, g: Graphics, c: Container, x: number, y: num
         planet.rotation = Math.sin(stepped(t)) * 0.2;
       };
     }
+    case 'ice': {
+      // frozen pond with crystal spires; a scrap of aurora ripples above it
+      g.ellipse(x, y, 34, 14).fill(0xcfe9ff).stroke(INK);
+      g.ellipse(x - 4, y - 2, 24, 8).fill({ color: 0xffffff, alpha: 0.55 });
+      g.moveTo(x - 20, y + 2).lineTo(x - 6, y - 3).lineTo(x + 4, y + 4).moveTo(x - 6, y - 3).lineTo(x - 2, y - 9).moveTo(x + 4, y + 4).lineTo(x + 18, y - 1).stroke({ width: 1.5, color: 0x4fa3d9 });
+      for (const [dx, h, w] of [
+        [-20, 38, 7],
+        [-11, 26, 5],
+        [22, 30, 6],
+      ] as const) {
+        g.poly([x + dx - w, y, x + dx - w, y - h * 0.72, x + dx, y - h, x + dx + w, y - h * 0.72, x + dx + w, y]).fill(0x9fe8ff).stroke(THIN);
+        g.moveTo(x + dx, y - h + 3).lineTo(x + dx, y - 3).stroke({ width: 1.5, color: 0xffffff, alpha: 0.85 });
+      }
+      const aur = new Graphics();
+      const cols = [fx.accent, 0xb59cff, 0x9fe8ff];
+      for (let k = 0; k < 14; k++) aur.rect(-28 + k * 4, Math.sin(k * 0.7) * 5, 3, 16 + Math.sin(k * 1.3) * 6).fill({ color: cols[k % 3], alpha: 0.55 });
+      aur.position.set(x, y - 62);
+      aur.blendMode = 'add';
+      c.addChild(aur);
+      glow(c, x, y - 20, fx.accent, 0.3, 0.6);
+      return (t) => {
+        const s = stepped(t);
+        aur.skew.x = Math.sin(s * 1.3) * 0.25;
+        aur.alpha = 0.7 + Math.sin(s * 2.1) * 0.25;
+      };
+    }
+    case 'sound': {
+      // a stage amp with a live equalizer + a mic stand
+      g.rect(x - 22 + 4, y - 34 + 4, 40, 34).fill(C.ink);
+      g.rect(x - 22, y - 34, 40, 34).fill(0x231626).stroke(INK);
+      g.rect(x - 18, y - 30, 32, 18).fill(0x0d110f).stroke({ width: 1.5, color: 0xff2e88 });
+      g.rect(x - 22, y - 8, 40, 4).fill(0xff2e88);
+      for (const k of [0, 1, 2]) g.circle(x - 14 + k * 8, y - 6, 2).fill(0xffd400).stroke({ width: 1, color: C.ink });
+      g.moveTo(x + 28, y).lineTo(x + 28, y - 46).stroke({ width: 3, color: C.ink });
+      g.moveTo(x + 22, y).lineTo(x + 34, y).stroke({ width: 3, color: C.ink });
+      g.roundRect(x + 24, y - 56, 8, 12, 4).fill(0xc9ccd6).stroke(THIN);
+      const eq = new Graphics();
+      c.addChild(eq);
+      const cols = [0x2ec4e6, 0xff2e88, 0xffd400];
+      let last = -1;
+      return (t) => {
+        const f = Math.floor(stepped(t) * 12);
+        if (f === last) return;
+        last = f;
+        eq.clear();
+        for (let k = 0; k < 6; k++) {
+          const h = 3 + Math.abs(Math.sin(f * 0.9 + k * 1.7)) * 13;
+          eq.rect(x - 16 + k * 5, y - 13 - h, 4, h).fill(cols[k % 3]);
+        }
+      };
+    }
+    case 'shadow': {
+      // a lit shoji screen: a cat silhouette lives on the paper; red seal in the corner
+      g.rect(x - 30, y - 52, 60, 52).fill(0xfff3d6).stroke(INK);
+      for (const dx of [-10, 10]) g.moveTo(x + dx, y - 52).lineTo(x + dx, y);
+      for (const dy of [-35, -18]) g.moveTo(x - 30, y + dy).lineTo(x + 30, y + dy);
+      g.stroke({ width: 2, color: 0x2a2433, alpha: 0.6 });
+      g.rect(x - 34, y - 56, 68, 6).fill(0x2a2433).stroke(THIN);
+      g.rect(x - 32, y - 2, 4, 6).fill(0x2a2433);
+      g.rect(x + 28, y - 2, 4, 6).fill(0x2a2433);
+      g.circle(x + 22, y - 44, 4).fill(0xc8102e);
+      glow(c, x, y - 26, 0xffd9a0, 0.35, 0.8);
+      const cat = new Graphics();
+      cat.ellipse(0, 0, 14, 8).fill({ color: 0x0d110f, alpha: 0.85 });
+      cat.circle(12, -8, 7).fill({ color: 0x0d110f, alpha: 0.85 });
+      cat.poly([7, -12, 8, -21, 13, -14]).fill({ color: 0x0d110f, alpha: 0.85 });
+      cat.poly([14, -14, 19, -20, 18, -10]).fill({ color: 0x0d110f, alpha: 0.85 });
+      const tail = new Graphics().moveTo(0, 0).quadraticCurveTo(-8, -4, -6, -16).stroke({ width: 3.5, color: 0x0d110f, alpha: 0.85, cap: 'round' });
+      tail.position.set(-12, 0);
+      cat.addChild(tail);
+      cat.position.set(x - 4, y - 10);
+      c.addChild(cat);
+      return (t) => {
+        const s = stepped(t);
+        cat.x = x - 4 + Math.sin(s * 0.5) * 6;
+        cat.scale.x = Math.cos(s * 0.5) >= 0 ? 1 : -1;
+        tail.rotation = Math.sin(s * 3) * 0.3;
+      };
+    }
+    case 'time': {
+      // an astrolabe / armillary sphere on a stone pedestal; its rings turn
+      g.poly([x - 16, y, x + 16, y, x + 12, y - 8, x - 12, y - 8]).fill(0xb7a99a).stroke(INK);
+      g.rect(x - 6, y - 30, 12, 22).fill(0xd9c29a).stroke(THIN);
+      g.poly([x - 12, y - 30, x + 12, y - 30, x + 8, y - 36, x - 8, y - 36]).fill(0xb7a99a).stroke(THIN);
+      const sphere = new Container();
+      sphere.position.set(x, y - 58);
+      const fixed = new Graphics();
+      fixed.circle(0, 0, 20).stroke({ width: 5, color: C.ink }).circle(0, 0, 20).stroke({ width: 2.5, color: fx.main });
+      fixed.circle(0, 0, 5).fill(0xffd77a).stroke({ width: 1.5, color: C.ink });
+      for (let k = 0; k < 12; k++) {
+        const a = (k / 12) * Math.PI * 2;
+        fixed.moveTo(Math.cos(a) * 17, Math.sin(a) * 17).lineTo(Math.cos(a) * 20, Math.sin(a) * 20);
+      }
+      fixed.stroke({ width: 1.5, color: 0x6b4f2a });
+      const ringA = new Graphics().circle(0, 0, 16).stroke({ width: 4.5, color: C.ink }).circle(0, 0, 16).stroke({ width: 2, color: 0xd9c29a });
+      const ringB = new Graphics().circle(0, 0, 13).stroke({ width: 4, color: C.ink }).circle(0, 0, 13).stroke({ width: 2, color: 0x1c3a51 });
+      ringB.rotation = 0.5;
+      const hand = new Graphics().moveTo(0, 0).lineTo(0, -15).stroke({ width: 2, color: C.ink, cap: 'round' });
+      sphere.addChild(ringA, ringB, fixed, hand);
+      c.addChild(sphere);
+      glow(c, x, y - 58, fx.main, 0.3, 0.6);
+      return (t) => {
+        const s = stepped(t);
+        ringA.scale.x = Math.cos(s * 0.9);
+        ringB.scale.y = Math.cos(s * 0.7 + 1);
+        hand.rotation = -s * 0.8;
+      };
+    }
+    case 'light': {
+      // a rose window on a stone arch: stained-glass wedges in gold leading; the glass breathes light
+      g.rect(x - 26, y - 6, 52, 8).fill(0xfff8e1).stroke(INK);
+      g.moveTo(x - 22, y - 6).lineTo(x - 22, y - 40).bezierCurveTo(x - 22, y - 74, x + 22, y - 74, x + 22, y - 40).lineTo(x + 22, y - 6).closePath().fill(0xfff8e1).stroke(INK);
+      const cx = x;
+      const cy = y - 42;
+      const panes = [0xe8879a, 0x7fd8ff, 0xffd77a, 0xffffff, 0xb59cff, 0x7fd8ff, 0xe8879a, 0xffd77a];
+      for (let k = 0; k < 8; k++) {
+        const a0 = (k / 8) * Math.PI * 2;
+        const a1 = ((k + 1) / 8) * Math.PI * 2;
+        g.poly([cx, cy, cx + Math.cos(a0) * 16, cy + Math.sin(a0) * 16, cx + Math.cos(a1) * 16, cy + Math.sin(a1) * 16]).fill(panes[k]).stroke({ width: 1.5, color: 0xb89558 });
+      }
+      g.circle(cx, cy, 16).stroke({ width: 3, color: C.ink });
+      g.circle(cx, cy, 5).fill(0xffd77a).stroke({ width: 1.5, color: C.ink });
+      for (let k = 0; k < 5; k++) g.moveTo(x - 14 + k * 7, y - 6).lineTo(x - 14 + k * 7, y - 20);
+      g.stroke({ width: 2, color: 0xb89558 });
+      const gl = glow(c, cx, cy, 0xffd77a, 0.5, 0.8);
+      const sp = new Graphics().star(0, 0, 4, 7, 1.6).fill(0xffffff).stroke({ width: 1, color: C.ink });
+      sp.position.set(cx + 12, cy - 14);
+      c.addChild(sp);
+      return (t) => {
+        const s = stepped(t);
+        gl.alpha = 0.4 + Math.sin(s * 1.8) * 0.18;
+        sp.visible = (s * 0.6) % 1 < 0.3;
+        sp.rotation = s;
+      };
+    }
+    case 'void': {
+      // a tear in the ground full of TV snow; bits of the yard float up and get erased
+      g.ellipse(x, y, 32, 13).fill(0x0d110f).stroke({ width: 6, color: C.ink });
+      g.ellipse(x, y, 32, 13).stroke({ width: 3, color: fx.main });
+      g.ellipse(x, y, 25, 9).stroke({ width: 1.5, color: 0xffffff, alpha: 0.6 });
+      const snow = new Graphics();
+      const bits = [0, 1, 2].map((k) => {
+        const b = new Graphics().rect(-3, -3, 6, 6).fill(k === 1 ? fx.main : 0xffffff).stroke({ width: 1.5, color: C.ink });
+        c.addChild(b);
+        return b;
+      });
+      c.addChildAt(snow, 0);
+      let last = -1;
+      return (t) => {
+        const s = stepped(t);
+        bits.forEach((b, i) => {
+          const k = (s * 0.35 + i / 3) % 1;
+          b.position.set(x - 16 + i * 16 + Math.sin(k * 9 + i) * 4, y - 6 - k * 48);
+          b.rotation = k * 4;
+          b.alpha = k < 0.75 ? 1 : (1 - k) * 4;
+          b.scale.set(1 - k * 0.6);
+        });
+        const f = Math.floor(s * 12);
+        if (f === last) return;
+        last = f;
+        snow.clear();
+        for (let k = 0; k < 16; k++) snow.rect(x - 24 + Math.random() * 46, y - 7 + Math.random() * 14, 2 + Math.random() * 4, 1.5).fill({ color: 0xffffff, alpha: 0.4 + Math.random() * 0.6 });
+      };
+    }
     default: {
       g.poly([x - 8, y, x - 11, y - 18, x - 4, y - 30, x, y - 14]).fill(fx.main).stroke(THIN);
       g.poly([x, y, x + 3, y - 34, x + 9, y - 40, x + 12, y - 18, x + 8, y]).fill(fx.accent).stroke(THIN);
