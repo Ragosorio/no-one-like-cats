@@ -20,6 +20,19 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-09-estimacion-honesta',
+    date: '2026-10-09',
+    title: 'La estimación no miente',
+    luzterna: 'Antes el periódico decía "vas a perder" y ganabas. Despedimos al periodista. Ahora la batalla y la predicción son literalmente la misma pelea.',
+    items: [
+      { tag: 'ARREGLO', text: 'La batalla en pantalla es exactamente la simulación de la ESTIMACIÓN: misma semilla, mismas decisiones. Y tras fallar el tiro de tu gato, tus cañones ya no apuntan a tu propio barco.' },
+      { tag: 'CAMBIO', text: 'La ESTIMACIÓN simula hasta 40 peleas sin trabar el panel, y en ¿POR QUÉ? te dice qué supone de tu puntería, cuánto pesa la diferencia de Poder y su margen de error.' },
+      { tag: 'BALANCE', text: 'Ir muy por debajo del Poder rival ahora sí se nota (antes, ser mucho más débil casi no importaba). La estimación te lo avisa antes de zarpar.' },
+      { tag: 'ARREGLO', text: 'Rayos, orbes y ráfagas se apuntan rasantes: adiós al muro del Leviatán para tripulaciones chicas.' },
+      { tag: 'ARREGLO', text: 'Duelos de balsa justos: las balsas están más cerca, caer al agua te saca del duelo, los rivales se ajustan a tu tripulación y la Orquesta Muda pelea 3 contra 3 de verdad.' },
+    ],
+  },
+  {
     id: '2026-10-09-grietas-del-multiverso',
     date: '2026-10-09',
     title: 'Grietas del Multiverso',
