@@ -1,5 +1,6 @@
 import '@fontsource/anton';
 import { initPwa } from './core/pwa';
+import { initUpdates } from './core/updates';
 import '@fontsource/bebas-neue';
 import '@fontsource/bangers';
 import '@fontsource/dela-gothic-one';
@@ -95,6 +96,7 @@ async function boot() {
   await preloadElementIcons();
   scenes.init();
   initPwa();
+  initUpdates();
   mountMicroOverlay();
   applyAudioSettings();
   initStory();

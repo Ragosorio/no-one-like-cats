@@ -122,7 +122,9 @@ class LayoutEditor {
     private onDone: (r: { saved: boolean; test: boolean }) => void,
   ) {
     this.def = SHIP_BY_ID.get(shipId)!;
-    this.mods = layoutOf(shipId).map((m) => ({ ...m }));
+    // a saved design that broke after a rules update opens as-is (red marks say what to fix), not the factory one
+    const needsFix = G.has(`layout_needs_fix_${shipId}`) && !!G.s.layouts?.[shipId]?.length;
+    this.mods = (needsFix ? G.s.layouts![shipId] : layoutOf(shipId)).map((m) => ({ ...m }));
     this.startSig = layoutSig(this.mods);
     this.m = new Modal('EDITOR DE PLANO', 1840, 1000, { color: 0xe9e4d8, subtitle: `${shipName(shipId).toUpperCase()} · ARRASTRA MÓDULOS · TODO DEBE TOCAR LA QUILLA` });
     this.m.open();
@@ -670,6 +672,7 @@ class LayoutEditor {
       sfx('error');
       return;
     }
+    delete G.s.flags[`layout_needs_fix_${this.shipId}`];
     if (changed || layoutSig(this.mods) !== this.startSig) {
       const yard = ((G.s.ext ??= {}).yard ??= {}) as { editedSinceTrial?: boolean };
       yard.editedSinceTrial = true;

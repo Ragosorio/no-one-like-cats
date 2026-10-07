@@ -11,6 +11,8 @@ import './sys/secrets';
 import './sys/workforce';
 import './sys/decor';
 import './sys/casino';
+import { markAllPatched } from './patches';
+import { UPDATE_IDS } from '../data/updates';
 
 export function newGame() {
   G.reset();
@@ -23,6 +25,9 @@ export function newGame() {
   }
   autoHouse(); // Brote stays homeless on purpose (mission K03)
   setCrew('balsa', uids);
+  // a fresh island has nothing to repair and no "novedades" to catch up on
+  markAllPatched();
+  G.s.updatesSeen = [...UPDATE_IDS];
   G.recalc();
   checkMissions();
   G.save();

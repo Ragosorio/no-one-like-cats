@@ -334,7 +334,17 @@ export function openSettings(..._args: unknown[]) {
     credits.position.set(262, 52);
     const del = new Button('BORRAR PARTIDA', () => step1(), { w: 270, h: 64, size: 28, color: C.red, textColor: C.paper });
     del.position.set(W2 - 280, 52);
-    zone.addChild(replay, credits, del);
+    const news = new Button('NOVEDADES', () => {
+      m.close();
+      void import('../ui/updatesPanel').then((u) => u.openUpdates(true));
+    }, { w: 250, h: 64, size: 28, color: C.pink });
+    news.position.set(0, 134);
+    const backups = new Button('RESPALDOS', () => {
+      m.close();
+      void import('../ui/backupsPanel').then((u) => u.openBackups());
+    }, { w: 200, h: 64, size: 28, color: C.mint });
+    backups.position.set(262, 134);
+    zone.addChild(replay, credits, del, news, backups);
   };
   const step1 = () => {
     zone.removeChildren().forEach((c) => c.destroy({ children: true }));

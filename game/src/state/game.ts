@@ -4,7 +4,8 @@
  * Domain logic lives in state/sys/*.ts and registers timer handlers here.
  */
 import { Emitter } from '../core/events';
-import { readSave, writeSave, wipeSave } from '../core/save';
+import { readSave, writeSave, wipeSave, backupBeforeMigration } from '../core/save';
+import { SAVE_VERSION, migrate, normalize } from './migrate';
 import {
   BAL,
   FamilyId,
@@ -20,7 +21,9 @@ import {
   xpPct,
 } from './econ';
 
-export const SAVE_VERSION = 1;
+export { SAVE_VERSION };
+/** id of the running build (vite define; 'dev' in the dev server) */
+export const BUILD_ID: string = typeof __BUILD_ID__ === 'string' ? __BUILD_ID__ : 'dev';
 
 export type TimerKind = 'build' | 'habitat_upgrade' | 'farm_upgrade' | 'crop' | 'resonance' | 'yard' | 'expansion' | 'repair' | 'expedition';
 
@@ -146,6 +149,11 @@ export interface GameState {
   casino?: { tickets: number; pity: Record<string, number>; stats: Record<string, number>; chips?: number; sync?: unknown; gemBets?: unknown; hist?: unknown; welcomed?: boolean; streak?: number; [k: string]: unknown };
   /** cat accessories (gacha): owned by id → count, equipped by cat uid → accessory id */
   accessories?: { owned: Record<string, number>; equipped: Record<string, string> };
+  // ---- update ledger (state/patches.ts, data/updates.ts)
+  /** one-shot retro patches already applied to this save */
+  patches: string[];
+  /** "novedades" (update notes) the player already saw */
+  updatesSeen: string[];
 }
 
 export interface GameEvents extends Record<string, unknown> {
@@ -204,6 +212,8 @@ export function defaultState(): GameState {
     resQueue: [],
     workers: {},
     stats: { victories: 0, defeats: 0, modulesDestroyed: 0, catsKO: 0, goldEarned: 0, perfects: 0 },
+    patches: [],
+    updatesSeen: [],
   };
 }
 
@@ -222,22 +232,48 @@ class Game {
   loaded = false;
 
   // ------------------------------------------------------------ lifecycle
+  /** the save on disk comes from a NEWER build (an old cached tab): play, but never overwrite it */
+  newerSave = false;
+  /** what happened while loading (shown once by the update notes) */
+  loadInfo: { from: number; migrated: number[]; recovered: boolean; broken: boolean } = { from: SAVE_VERSION, migrated: [], recovered: false, broken: false };
+
   load(): { offlineMs: number } {
     const env = readSave<GameState>();
-    if (env && env.version === SAVE_VERSION && env.state) {
-      this.s = { ...defaultState(), ...env.state };
-      this.loaded = true;
-      const offlineMs = Math.max(0, Date.now() - env.savedAt);
-      this.recalc();
-      return { offlineMs };
+    this.newerSave = false;
+    this.loadInfo = { from: SAVE_VERSION, migrated: [], recovered: false, broken: false };
+    if (env?.state) {
+      const from = env.version || 1;
+      try {
+        if (from < SAVE_VERSION) backupBeforeMigration(from);
+        const { state, steps } = migrate(env.state as never, from);
+        this.s = normalize(state, defaultState());
+        this.newerSave = from > SAVE_VERSION;
+        this.s.v = Math.max(from, SAVE_VERSION);
+        this.loadInfo = { from, migrated: steps, recovered: !!env.recovered, broken: false };
+        this.loaded = true;
+        const offlineMs = Math.max(0, Date.now() - (env.savedAt || Date.now()));
+        this.recalc();
+        for (const f of this.afterLoad) f();
+        return { offlineMs };
+      } catch (e) {
+        // never silently replace someone's island: keep the unreadable save aside, then start fresh
+        console.error('[save] no se pudo abrir la partida', e);
+        backupBeforeMigration(`broken-${Date.now()}`);
+        this.loadInfo.broken = true;
+      }
     }
     this.s = defaultState();
     this.loaded = false;
     return { offlineMs: 0 };
   }
+  /** systems that need a loaded save (state/patches.ts) */
+  afterLoad: (() => void)[] = [];
+  /** set right before a reload that replaced the save on disk (restore/import): don't write the old one back */
+  saveLocked = false;
   save() {
+    if (this.newerSave || this.saveLocked) return;
     this.s.savedAt = Date.now();
-    writeSave(this.s, SAVE_VERSION);
+    writeSave(this.s, SAVE_VERSION, BUILD_ID);
     this.bus.emit('saved', undefined);
   }
   reset() {

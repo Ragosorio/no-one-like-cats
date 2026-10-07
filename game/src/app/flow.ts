@@ -9,7 +9,8 @@ export async function goTitle() {
   const { TitleScene } = await import('../scenes/TitleScene');
   const { G } = await import('../state/game');
   const { bootGame, newGame } = await import('../state');
-  const hasSave = !!localStorageHas();
+  const { hasSave: has } = await import('../core/save');
+  const hasSave = has();
   scenes.go(
     new TitleScene(
       async () => {
@@ -27,14 +28,6 @@ export async function goTitle() {
     'none',
   );
   void G;
-}
-
-function localStorageHas() {
-  try {
-    return localStorage.getItem('nolc-save-v1');
-  } catch {
-    return null;
-  }
 }
 
 export async function goIsland() {

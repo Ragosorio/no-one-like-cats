@@ -510,6 +510,17 @@ export async function maybeIntro(info: BootInfo) {
       busy = false;
     }
   }
+  // an update landed since this save was last played: tell them what changed (and what it did to THEIR island)
+  const upd = await import('../ui/updatesPanel');
+  if (upd.hasNews()) {
+    busy = true;
+    try {
+      await wait(0.6);
+      await upd.openUpdates();
+    } finally {
+      busy = false;
+    }
+  }
 }
 
 /** Beat b00: the "future" prologue. Resolves when it ends or is skipped (scene stays until next go()). */

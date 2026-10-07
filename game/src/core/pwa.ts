@@ -74,7 +74,8 @@ export function initPwa() {
   });
   if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     // the game boots after `load` already fired (fonts first), so register right away when it did
-    const reg = () => void navigator.serviceWorker.register('./sw.js').catch(() => undefined);
+    // the build id in the URL makes every deploy install a fresh worker (fresh code caches, art cache kept)
+    const reg = () => void navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(__BUILD_ID__)}`).catch(() => undefined);
     if (document.readyState === 'complete') reg();
     else window.addEventListener('load', reg, { once: true });
   }
