@@ -22,6 +22,8 @@ export interface Estimate {
   reasons: string[];
   /** what to try */
   tips: string[];
+  /** the full why: matchups + every hidden number of the stage (the "¿POR QUÉ?" sheet) */
+  details: string[];
 }
 
 const MAT_NAME: Record<string, string> = Object.fromEntries((CONTENT.materials as { id: string; name: string }[]).map((m) => [m.id, m.name.split(' ')[0]]));
@@ -69,9 +71,44 @@ function matchup(spec: BattleSpec): { reasons: string[]; tips: string[] } {
     .map(([e]) => e)
     .filter((e) => G.s.elements.includes(e) && !els.includes(e));
   if (weak.length && best.length) tips.push(`Prueba con ${best.slice(0, 2).map((e) => EL_NAME[e] ?? e).join(' o ')}: ×${mult[best[0]]} contra ${MAT_NAME[main]}.`);
+  const t = spec.meta?.tune;
+  if (t && t.stage > 1.05) reasons.push(`Etapa reforzada: su barco y sus gatos x${t.stage.toFixed(1)} (toca ¿POR QUÉ?).`);
   // Parte 2: what the multiverse cats on the other side will do (the sims above already play it)
   reasons.push(...p2EnemyNotes(spec.enemy.cats.flatMap((c) => c.elements)));
   return { reasons, tips };
+}
+
+const WEAPON_ES: Record<string, string> = { cannon: 'cañón', canon: 'cañón', roca: 'MORTERO de roca (Tierra, cae pesado y perfora 1)', mortero: 'mortero de magma (Fuego, perfora 1)', tesla: 'bobina Tesla (rayo)', riel: 'riel arcano (perfora 3, Maldice)', escarcha: 'lanzaescarcha', arpon: 'arpón', orbe_estelar: 'orbe estelar (Cósmico)', starbreaker: 'Starbreaker' };
+
+/**
+ * Everything the battle does that the power numbers don't say (player feedback: "enemy stone cats pierced
+ * my ship but mine couldn't — did I need to level up?"): the stage's hidden multipliers, what the enemy
+ * SHIP fires (not cats), the level of their cats (a cat is a card: same cat, same rules on both sides).
+ */
+export function hiddenRules(spec: BattleSpec): string[] {
+  const out: string[] = [];
+  const t = spec.meta?.tune;
+  if (t) {
+    const bits: string[] = [];
+    if (Math.abs(t.hull - 1) > 0.04) bits.push(`casco x${t.hull.toFixed(2)}`);
+    if (Math.abs(t.crewHp - 1) > 0.04) bits.push(`vida de sus gatos x${t.crewHp.toFixed(2)}`);
+    if (Math.abs(t.dmg - 1) > 0.04) bits.push(`su daño x${t.dmg.toFixed(2)}`);
+    if (bits.length) out.push(`Ajuste de esta pelea (aparte del Poder): ${bits.join(' · ')}.`);
+  }
+  // the enemy ship's own weapons
+  const cannons = spec.enemy.blueprint.modules.filter((m) => m.kind === 'cannon').length;
+  if (cannons) {
+    const shots = spec.enemy.cannonShots ?? [];
+    const names = Array.from({ length: cannons }, (_, i) => WEAPON_ES[shots[i]?.id ?? 'cannon'] ?? shots[i]?.name ?? 'cañón');
+    const grouped = [...new Set(names)].map((n) => `${names.filter((x) => x === n).length}x ${n}`);
+    out.push(`Su BARCO dispara solo al final de su turno: ${grouped.join(' + ')} (Mk ${spec.meta?.enemyWeaponMk ?? 3}: misma regla de puntería que tus cañones, Mk ${spec.meta?.weaponMk ?? 1}). Eso NO son sus gatos.`);
+  }
+  const lv = spec.enemy.cats[0]?.level;
+  if (lv) out.push(`Sus gatos van a Nv ${lv}. Un gato es una carta: el mismo gato hace lo mismo de los dos lados (ej. Tierra Nv 20+ perfora una capa más; Nv 10+ explota más grande). Los tuyos además suman estrellas, rangos K.O. y accesorios; los de ellos van a 1 estrella.`);
+  const sd = spec.suddenDeath ?? 10;
+  if (spec.mode !== 'duel') out.push(sd > 0 ? `Muerte súbita desde el turno ${sd}: el mar inunda a los dos.` : 'Sin muerte súbita.');
+  if (spec.intro?.lines?.length) for (const l of spec.intro.lines) if (l) out.push(l);
+  return out;
 }
 
 const LOSS_TIP: Record<string, string> = {
@@ -93,7 +130,7 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
   }
   const first = build();
   const why = matchup(first);
-  const est: Estimate = { p: null, done: 0, total, reasons: why.reasons, tips: why.tips };
+  const est: Estimate = { p: null, done: 0, total, reasons: why.reasons, tips: why.tips, details: [...why.reasons, ...hiddenRules(first), ...why.tips] };
   onUpdate?.(est);
   return import('../../battle/autoplay').then(
     ({ autoBattle }) =>
@@ -113,7 +150,10 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
             if (est.done < total) schedule(step);
             else {
               const worst = Object.entries(losses).sort((a, b) => b[1] - a[1])[0];
-              if (worst && est.p < 0.7 && LOSS_TIP[worst[0]]) est.tips.unshift(LOSS_TIP[worst[0]]);
+              if (worst && est.p < 0.7 && LOSS_TIP[worst[0]]) {
+                est.tips.unshift(LOSS_TIP[worst[0]]);
+                est.details.push(LOSS_TIP[worst[0]]);
+              }
               cache.set(sig, { at: performance.now(), est: { ...est } });
               onUpdate?.({ ...est });
               resolve(est);

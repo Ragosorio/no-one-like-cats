@@ -220,5 +220,5 @@ export function catName(id: string) {
   return CAT_BY_ID.get(id)?.name ?? id;
 }
 export function zoneBoss(zone: number) {
-  return C.bosses.find((b) => b.type === 'zone_boss' && b.zone === zone);
+  return C.bosses.find((b) => (b.type === 'zone_boss' || b.type === 'final_boss') && b.zone === zone);
 }

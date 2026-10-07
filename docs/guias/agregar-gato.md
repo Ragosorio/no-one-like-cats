@@ -123,8 +123,8 @@ Aquí no entra ni un píxel. El `.gitignore` bloquea `png`, `jpg`, `webp`, `gif`
 
 El flujo con [MAI SVG](https://github.com/Ragosorio/MAI-SVG) (la herramienta hermana de este juego, también de código abierto):
 
-1. **Dibuja o consigue la ilustración** del gato en 700×700 lógicos, fondo transparente, cuerpo completo, sentado o de tres cuartos (mira los 32 que ya existen para el encuadre). El PNG fuente vive **fuera** del repo.
-2. **Vectoriza** con MAI: `mai vectorize --preset high-color-preserved` (el alfa se vuelve máscara vectorial).
+1. **Dibuja o consigue la ilustración** del gato en 700×700 lógicos, fondo transparente, cuerpo completo, sentado o de tres cuartos (mira los 54 que ya existen para el encuadre). El PNG fuente vive **fuera** del repo. Si llega más grande (los del lote A venían a 1024×1024, gato al 90 % de alto), redúcelo a 700×700 antes de vectorizar: así el viewBox, el rig y el peso del SVG quedan como los demás.
+2. **Vectoriza** con MAI: `mai vectorize --preset high-color-preserved` (el alfa se vuelve máscara vectorial). Mira el `premultipliedRgbMae` del reporte: lo normal es 6–11. Si sale enorme (70+), el trazador se colapsó en una silueta plana; reduce el PNG con otro filtro (p. ej. `mitchell` en vez de `lanczos3`) y repite.
 3. **Exporta para el juego** con `scripts/game-export.ts` de MAI (perfil *game-compact*: mismo dibujo, verificado píxel a píxel) → `game/public/cats-svg/<slug>.svg`. El manifiesto de tamaños queda en `game/public/cats-svg/game-export.json`.
 4. **Genera la versión ligera** con `scripts/game-thumbs.ts` de MAI → `game/public/cats-svg/lite/<slug>.svg`.
 
@@ -134,7 +134,7 @@ El `slug` termina en `_cat` por convención (`canelo_cozy_cat`, `jelly_aquatic_c
 
 ### Variantes teñidas (gato nuevo sin dibujo nuevo)
 
-22 de los 54 gatos de la Catdex reutilizan una pintura con otro color. Es la forma más barata de sumar un gato. Ejemplo real:
+Hoy ningún gato de la Catdex lo usa (los 22 que reutilizaban otra pintura se rediseñaron en el lote A), pero sigue siendo la forma más barata de sumar un gato. Ejemplo (así era Chispa antes de tener su propio dibujo):
 
 ```json
 "art": {

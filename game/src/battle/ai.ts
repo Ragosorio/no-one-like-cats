@@ -1,4 +1,5 @@
-import { Battle, ShotPath } from './sim';
+import { Battle, ShotPath, isRayo } from './sim';
+import { moduleImmune, lateCellMul } from './bossLate';
 import { CELL, Cell } from './ship';
 import { Rng } from '../core/rng';
 import { ShotDef } from './types';
@@ -92,6 +93,8 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
     if (!m.alive) continue;
     const cells = es.ship.moduleCells(m.id);
     if (!cells.length) continue;
+    // a sleeping Leviatán core can't be hurt: don't waste shots on it
+    if (moduleImmune(b, enemy, m.id)) continue;
     let v = MODULE_VALUE[m.kind] ?? 1;
     if (m.kind === 'catroom') {
       const cat = es.cats.find((c) => c.room === m.id);
@@ -101,6 +104,12 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
       else if (pers === 'avenger' && hint?.dmgBy?.get(cat.def.uid)) v *= 1.8;
     }
     if (m.tag === 'throat') v = 9;
+    // an exposed boss weak point (open Grimorio, charging star-core, the Espiráculo up for air): go for it
+    if (b.cfg.boss?.side === enemy && m.kind === 'core') {
+      const mul = lateCellMul(b, enemy, cells[0]);
+      if (mul > 1) v *= 2.2;
+      else if (b.boss?.id === 'leviathan') v *= 1.5;
+    }
     if (m.tag === 'static') v = es.bubbleKind === 'static' ? 9 : 5;
     if (pers === 'sniper' && m.kind === 'core') v *= 1.5;
     if (pers === 'demolisher' && m.kind !== 'core') v *= 0.7;
@@ -117,7 +126,7 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   for (const p of es.parts) {
     if (!p.alive || !p.active) continue;
     const ctr = b.partCenter(p);
-    const v = p.kind === 'eye' ? 16 : p.kind === 'gargoyle' ? 14 : p.grab !== null ? 7 : 4;
+    const v = p.kind === 'eye' ? 16 : p.kind === 'gargoyle' ? 14 : p.kind === 'fog' ? (b.boss?.devour !== null && !b.boss?.fogHit ? 8 : 1) : p.kind === 'ink' ? 6 : p.grab !== null ? 7 : 4;
     targets.push({ x: ctr.x, y: ctr.y, v, key: `p${p.id}` });
   }
   // demolisher (Barón Ladrillo): the keel cells under modules — collapses are the goal
@@ -137,14 +146,21 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   }
   if (!targets.length) return null;
   const bubbleUp = es.bubble > 0 && !!es.bubbleKind;
+  const wardUp = !!es.ward && es.ward.layers > 0;
+  const lev = b.boss?.id === 'leviathan' && b.cfg.boss?.side === enemy;
+  // Eclipse / Noctis: a blinded side aims much worse (no preview, decoys)
+  const blind = b.sides[side].buffs.blind > 0 ? 3 : 1;
 
-  const windGuess = b.wind * (1 + (r.next() * 2 - 1) * profile.windError);
+  const windGuess = b.wind * (1 + (r.next() * 2 - 1) * profile.windError * blind);
   for (const s of shooters) {
     const o = b.muzzle(side, s.id === 'cannon' ? undefined : s.id);
     const dir = enemy === 1 ? 1 : -1;
     let shotMul = 1;
     if (bubbleUp && !(s.shot.element === 'electric' && s.shot.trajectory !== 'gust') && s.shot.element !== 'void' && !((s.shot.projectiles ?? 1) > 1)) shotMul *= s.ult ? 0.2 : 0.55;
-    if (b.boss?.submerged && b.cfg.boss?.side === enemy && !(s.shot.element === 'electric' || s.shot.trajectory === 'torpedo')) shotMul *= 0.1;
+    const chills = s.shot.element === 'water' || s.shot.element === 'ice' || s.shot.trajectory === 'gust';
+    if (b.boss?.submerged && b.cfg.boss?.side === enemy && !(s.shot.element === 'electric' || s.shot.trajectory === 'torpedo')) shotMul *= lev && chills ? 0.7 : 0.1;
+    // arcane ward: rayo pops a layer, physical hits it ×1.5
+    if (wardUp) shotMul *= isRayo(s.shot) ? 2.2 : s.shot.element === 'earth' || s.shot.element === 'neutral' ? 1.3 : 1;
     for (let ai = 0; ai < 22; ai++) {
       const elev = (8 + ai * 3.4) * (Math.PI / 180);
       const angle = dir > 0 ? -elev : Math.PI + elev;
@@ -184,10 +200,10 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   const key = `${Math.round(pick.tx / CELL)}`;
   const tries = memory.get(key) ?? 0;
   memory.set(key, tries + 1);
-  // CEGADO (Luz): a blinded crew aims with ×2.2 error, same as the player losing the preview
+  // CEGADO (Luz, Parte 2): a blinded crew aims with ×2.2 error, same as the player losing the preview
   const shrink = Math.pow(pers === 'tuner' ? 0.6 : 0.8, tries) * p2AimNoise(b, side);
-  const angle = pick.angle + gauss(r) * ((profile.sigmaAngleDeg * Math.PI) / 180) * shrink;
-  const power = pick.power * (1 + gauss(r) * profile.sigmaPower * shrink);
+  const angle = pick.angle + gauss(r) * ((profile.sigmaAngleDeg * blind * Math.PI) / 180) * shrink;
+  const power = pick.power * (1 + gauss(r) * profile.sigmaPower * blind * shrink);
   return { shooter: pick.shooter, ult: pick.ult, angle, power, target: { x: pick.tx, y: pick.ty } };
 }
 
@@ -197,7 +213,8 @@ function scorePaths(b: Battle, paths: ShotPath[], targets: Target[], enemy: numb
     if (!p.impacts.length) continue;
     const ip = p.points[p.impacts[p.impacts.length - 1]];
     const hit = b.cellAt(ip.x, ip.y);
-    if (hit && hit.side !== enemy) return -1; // would hit own ship
+    if (hit && hit.side !== enemy) return -2; // would hit own ship (a portal turned it around)
+    if (p.owners?.length && p.owners[p.owners.length - 1] !== 1 - enemy) return -2;
     for (const t of targets) {
       const d = Math.hypot(t.x - ip.x, t.y - ip.y);
       const R = shot.radius + 40;
@@ -242,11 +259,14 @@ function reactionBonus(b: Battle, paths: ShotPath[], enemy: number, shot: ShotDe
  * `sigmaDeg` controls spread (upgrades/mast make it tighter).
  */
 export function aimCannon(b: Battle, side: 0 | 1, cannonId: number, seed: number, sigmaDeg = 2.6, target?: { x: number; y: number }): { angle: number; power: number } {
+  return aimFrom(b, side, b.cannonMuzzle(side, cannonId), b.cannonShot(side, cannonId), seed, sigmaDeg * (b.sides[side].buffs.blind > 0 ? 3 : 1), target);
+}
+
+/** aim any shot from any origin (cannons, the Arcanista's ink cats) at the most valuable target */
+export function aimFrom(b: Battle, side: 0 | 1, o: { x: number; y: number }, shot: ShotDef, seed: number, sigmaDeg = 2.6, target?: { x: number; y: number }): { angle: number; power: number } {
   const r = new Rng(seed);
   const enemy = 1 - side;
   const es = b.sides[enemy];
-  const o = b.cannonMuzzle(side, cannonId);
-  const shot: ShotDef = b.cannonShot(side, cannonId);
   const targets: Target[] = [];
   for (const m of es.ship.modules) {
     if (!m.alive) continue;
@@ -275,7 +295,8 @@ export function aimCannon(b: Battle, side: 0 | 1, cannonId: number, seed: number
         const p = paths[0];
         const end = p.impacts.length ? p.points[p.impacts[p.impacts.length - 1]] : p.points[p.points.length - 1];
         const hit = p.impacts.length ? b.cellAt(end.x, end.y) : null;
-        sc = hit && hit.side !== enemy ? -1e9 : -Math.hypot(end.x - target.x, end.y - target.y) + (hit || b.partAt(end.x, end.y, enemy, 4) ? 50 : 0);
+        const flipped = !!p.owners?.length && p.owners[p.owners.length - 1] !== side;
+        sc = (hit && hit.side !== enemy) || flipped ? -1e9 : -Math.hypot(end.x - target.x, end.y - target.y) + (hit || b.partAt(end.x, end.y, enemy, 4) ? 50 : 0);
       } else sc = scorePaths(b, paths, targets, enemy, shot) + r.next() * 0.3;
       if (sc > best.score) best = { angle, power, score: sc };
     }

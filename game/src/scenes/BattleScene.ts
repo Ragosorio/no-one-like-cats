@@ -10,9 +10,13 @@ import type { ShipStyleId } from '../battle/anime';
 import { playTransform } from '../battle/fx/transform';
 import { applyCatTint } from '../art/tint';
 import { CAT_BY_ID, BOSSES } from '../data/content';
-import { Battle, BattleEvent, SideSetup, ShotPath, VictoryReason } from '../battle/sim';
-import type { BossConfig, StageRules } from '../battle/sim';
-import { decide, aimCannon, AiProfile } from '../battle/ai';
+import { Battle, BattleEvent, SideSetup, ShotPath, VictoryReason, INK_RUNE } from '../battle/sim';
+import type { BossConfig, StageRules, Well } from '../battle/sim';
+import { decide, aimCannon, aimFrom, AiProfile } from '../battle/ai';
+import { summonShooters } from '../battle/bossLate';
+import { WardFx, PortalFx, InkCatFx, WellFx, GravityFx, StarTellFx, SeaIceFx, FogEyeFx, CoreMarker, wizardDecal } from '../battle/boss/lateRigs';
+import { preUlt, atUlt, UltMarks, UltCtx } from '../battle/ultFx';
+import { MatchupPanel, effLabel } from '../battle/ui/matchup';
 import { makeBattle, enemyProfile, volleySigma, WATER_Y as SIM_WATER_Y } from '../battle/autoplay';
 import { CatStatusView, playKO, playOverboard } from '../battle/catFx';
 import { SkyLife } from '../battle/sky';
@@ -92,6 +96,11 @@ export interface BattleSpec {
     ep: number;
     sp: number;
     weaponMk?: number;
+    /** Mk of the enemy ship's weapons (same accuracy rule as yours) */
+    enemyWeaponMk?: number;
+    /** hidden stage knobs, shown in the pre-battle why + the REFORZADO chip */
+    tune?: { hull: number; crewHp: number; dmg: number; stage: number };
+    enemyLevel?: number;
     special?: string;
     errand?: string;
     gearNotes?: string[];
@@ -127,6 +136,12 @@ const ONO: Record<string, [string, number]> = {
 };
 
 const PHASE_NOTE: Record<string, string[]> = {
+  'arcanist:2': ['TELETRANSPORTE: PORTALES', 'Lo que entra por un portal sale por el otro… y CAMBIA DE DUEÑO. Los fantasmas punteados: donde se abren el próximo turno'],
+  'arcanist:3': ['¡GRIMORIO ABIERTO!', 'Gatos de tinta: son de papel ({fire} x2) y disparan runas. Su núcleo recibe x1.2 (x1.5 el turno después de invocar)'],
+  'star:2': ['INGRAVIDEZ: GRAVEDAD x0.55', 'Todo flota más (tus tiros también). Sus escombros caen sobre TI. Cada 3 turnos carga Lluvia de Estrellas'],
+  'star:3': ['¡ABAJO ES ARRIBA!', 'Sobre su barco la gravedad está invertida: tira recto o bájale el arco'],
+  'leviathan:2': ['CASCO DE AGUA VIVA', 'Se sumerge: solo {storm} rayo y torpedos le pegan. Cada 3 turnos sale a respirar: ¡el Espiráculo! {water} Agua y ráfagas congelan el mar y lo atrapan'],
+  'leviathan:3': ['EL MAR SE TRAGA TODO', 'Distraxia borra 1 módulo tuyo por turno: pégale a su ojo para que parpadee. ¡Tus ultimates al 100%!'],
   'gargoyle:2': ['LLUEVE: TODO QUEDA MOJADO CADA TURNO', 'Lo Mojado conduce {storm} y apaga {fire}'],
   'gargoyle:3': ['¡LA GÁRGOLA VUELA! SU BARCO YA NO DISPARA', 'Derríbala: es un blanco volador'],
   'kraken:2': ['NUEVA MECÁNICA: ESCUDOS', 'La burbuja anula 1 impacto por turno. Rómpela con {storm} (Sobrecarga) o con disparos múltiples'],
@@ -199,6 +214,18 @@ export class BattleScene extends Scene {
   bubbles: (BubbleFx | null)[] = [null, null];
   rain: RainFx | null = null;
   flyer: { cat: BattleCat; x: number; y: number } | null = null;
+  // bosses 4–6 + ultimates
+  ward: WardFx | null = null;
+  portalFx: PortalFx | null = null;
+  inks = new Map<number, InkCatFx>();
+  wellFx = new Map<Well, WellFx>();
+  gravityFx: GravityFx | null = null;
+  starTell: StarTellFx | null = null;
+  seaIce: SeaIceFx | null = null;
+  fogEye: FogEyeFx | null = null;
+  coreMarker: CoreMarker | null = null;
+  ultMarks = new UltMarks();
+  matchup = new MatchupPanel();
   private healAcc = 0;
   private wetDeckShown = false;
   private t = 0;
@@ -207,6 +234,7 @@ export class BattleScene extends Scene {
   private pierceAcc = 0;
   private reactions: string[] = [];
   private infoAt = new Map<string, number>();
+  private lastOno = 0;
 
   constructor(public spec: BattleSpec) {
     super();
@@ -232,7 +260,7 @@ export class BattleScene extends Scene {
     this.camRoot.addChild(this.world);
     this.addChild(this.camRoot, this.ui, this.overlay);
     const shipsLayer = (this.shipsLayer = new Container());
-    this.world.addChild(this.sea, this.sky, shipsLayer, this.debris, this.sea.frontLayer(), this.fxp, this.lastAimG, this.lastLabel, this.aimG, this.aimReadout, this.wfx);
+    this.world.addChild(this.sea, this.sky, shipsLayer, this.debris, this.sea.frontLayer(), this.fxp, this.ultMarks, this.lastAimG, this.lastLabel, this.aimG, this.aimReadout, this.wfx);
     for (let side = 0; side < 2; side++) {
       const s = this.sim.sides[side];
       const style: ShipStyleId = side === 0 ? sp.playerStyle ?? 'pirate' : sp.enemyStyle ?? 'rat';
@@ -264,6 +292,14 @@ export class BattleScene extends Scene {
           this.wings = new GargoyleWings(bc.size, s.setup.flip);
           bc.addChildAt(this.wings, 0);
           bc.addChild(this.wings.eyesLayer());
+        }
+        if (isCap && sp.boss?.id === 'arcanist') bc.addChild(wizardDecal(bc.size, s.setup.flip));
+        // a cat is a card: the enemy's copy shows its level, so you know what you're up against
+        if (side === 1 && sp.mode !== 'duel') {
+          const lv = txt(`Nv ${c.def.level}`, { fontFamily: F.poster, fontSize: 18, fill: C.paper, stroke: { color: C.ink, width: 5 } });
+          lv.anchor.set(0.5, 0);
+          lv.position.set(bc.x, bc.y + 4);
+          v.decor.addChild(lv);
         }
       }
     }
@@ -334,6 +370,127 @@ export class BattleScene extends Scene {
       this.ui.addChildAt(this.rain, 0);
       if (sp.rules?.wetAll) this.rain.setOn(true);
     }
+    // ---- bosses 4–6
+    const id = sp.boss?.id;
+    if (es.ward) {
+      this.ward = new WardFx(this.shipBox(1), es.ward.max);
+      this.world.addChildAt(this.ward, at());
+    }
+    if (id === 'arcanist') {
+      this.portalFx = new PortalFx();
+      this.world.addChildAt(this.portalFx, at());
+      for (const p of es.parts) {
+        if (p.kind !== 'ink') continue;
+        const f = new InkCatFx(p);
+        this.world.addChildAt(f, at());
+        this.inks.set(p.id, f);
+      }
+    }
+    if (id === 'star' || id === 'leviathan') {
+      this.gravityFx = new GravityFx(W, H);
+      this.world.addChildAt(this.gravityFx, this.world.getChildIndex(this.shipsLayer));
+    }
+    if (id === 'star') {
+      this.starTell = new StarTellFx();
+      this.world.addChildAt(this.starTell, at());
+    }
+    if (id === 'leviathan') {
+      const b = this.shipBox(1);
+      this.seaIce = new SeaIceFx(b.x - 150, b.x + b.w + 60, WATER_Y);
+      this.world.addChildAt(this.seaIce, at());
+      const fog = es.parts.find((p) => p.kind === 'fog');
+      if (fog) {
+        this.fogEye = new FogEyeFx(fog);
+        this.world.addChildAt(this.fogEye, at());
+      }
+    }
+    if (id === 'leviathan' || id === 'star' || id === 'arcanist') {
+      this.coreMarker = new CoreMarker();
+      this.world.addChildAt(this.coreMarker, at());
+    }
+    this.syncLate();
+  }
+
+  /** keep the late-boss / ultimate visuals in step with the sim (cheap; called on every refresh) */
+  syncLate() {
+    const sim = this.sim;
+    const B = sim.boss;
+    const es = sim.sides[1];
+    // wells: module wells, black holes, Abisa's lure
+    const wells = sim.wellList();
+    for (const [w, fx] of this.wellFx) {
+      if (wells.some((k) => k === w || (k.kind === 'well' && w.kind === 'well' && k.x === w.x && k.y === w.y))) continue;
+      this.wellFx.delete(w);
+      fx.close();
+    }
+    for (const w of wells) {
+      const known = [...this.wellFx.keys()].some((k) => k === w || (k.kind === 'well' && w.kind === 'well' && k.x === w.x && k.y === w.y));
+      if (known) continue;
+      const fx = new WellFx(w.x, w.y, w.r, w.kind);
+      this.world.addChildAt(fx, this.world.getChildIndex(this.debris));
+      this.wellFx.set(w, fx);
+    }
+    this.ward?.setLayers(es.ward?.layers ?? 0);
+    this.portalFx?.set(sim.portals, sim.portalNext);
+    if (this.gravityFx) {
+      const an = sim.field.anti;
+      this.gravityFx.mode = an ? 2 : sim.field.gMul !== 1 ? 1 : 0;
+      this.gravityFx.anti = an ? { x0: an.x0, x1: an.x1, y0: Math.max(0, an.y0), y1: WATER_Y } : null;
+    }
+    if (this.starTell && B) {
+      const ps = sim.sides[0];
+      const targets = B.charging ? B.starTargets.map((x) => ({ x, y: this.topOf(0, x) })) : [];
+      const core = es.ship.modules.find((m) => m.kind === 'core' && m.alive);
+      this.starTell.set(targets, B.charging && core ? sim.roomCenter(1, core.id) : null);
+      void ps;
+    }
+    if (this.seaIce && B) {
+      this.seaIce.level = B.freeze;
+      this.seaIce.frozen = B.frozen > 0;
+      const c2 = es.ship.modules.find((m) => m.tag === 'core2');
+      this.seaIce.spout = B.breathing && c2?.alive ? sim.roomCenter(1, c2.id) : null;
+    }
+    if (this.fogEye && B) {
+      const fog = es.parts.find((p) => p.kind === 'fog');
+      if (fog?.active && !this.fogEye.visible) this.fogEye.show();
+      const m = B.devour !== null ? sim.roomCenter(0, B.devour) : null;
+      this.fogEye.setMark(B.devour !== null && !B.fogHit ? m : null);
+    }
+    if (this.coreMarker && B) {
+      let core = es.ship.modules.find((m) => m.kind === 'core' && m.alive);
+      let text = '';
+      let hot = false;
+      if (B.id === 'leviathan') {
+        core = es.ship.modules.find((m) => m.tag === `core${B.phase}` && m.alive);
+        const exposed = B.phase !== 2 || B.breathing || B.frozen > 0;
+        text = B.phase === 1 ? 'NÚCLEO 1/3: CORAZÓN DE CORAL' : B.phase === 2 ? (exposed ? '¡ESPIRÁCULO EXPUESTO!' : 'NÚCLEO 2/3: ESPIRÁCULO (SUMERGIDO)') : 'NÚCLEO 3/3: EL CORAZÓN HONDO';
+        hot = exposed && B.phase === 2;
+      } else if (B.id === 'star') {
+        text = B.charging ? '¡NÚCLEO-ESTRELLA x2! PÉGALE Y LA CANCELAS' : '';
+        hot = B.charging;
+        if (!B.charging) core = undefined;
+      } else if (B.id === 'arcanist') {
+        text = B.phase >= 3 ? (B.grimoire > 0 ? '¡GRIMORIO ABIERTO x1.5!' : 'GRIMORIO x1.2') : '';
+        hot = B.grimoire > 0;
+        if (B.phase < 3) core = undefined;
+      }
+      this.coreMarker.set(core && text ? sim.roomCenter(1, core.id) : null, text, hot);
+    }
+    for (const [id, f] of this.inks) {
+      const p = es.parts.find((k) => k.id === id);
+      if (p?.alive && p.active && f.dead) f.summon();
+    }
+    this.ultMarks.setEclipse(sim.sides[0].buffs.blind > 0 || sim.sides[1].buffs.blind > 0);
+  }
+
+  /** world y of the top of a ship at world x */
+  private topOf(side: number, x: number) {
+    const s = this.sim.sides[side];
+    for (let gy = 0; gy < s.ship.rows; gy++) {
+      const g = this.sim.toGrid(side, x, s.setup.origin.y + gy * CELL + CELL / 2);
+      if (s.ship.get(g.x, gy)) return s.setup.origin.y + gy * CELL;
+    }
+    return WATER_Y - 40;
   }
 
   override exit() {
@@ -402,6 +559,7 @@ export class BattleScene extends Scene {
       c.position.set(c.x, c.y - H);
       bottom.addChild(c);
     }
+    bottom.addChild(this.matchup);
     for (const c of [this.top, this.ruleE, this.ruleP]) {
       c.position.set(c.x - W / 2, c.y);
       top.addChild(c);
@@ -454,6 +612,17 @@ export class BattleScene extends Scene {
     this.top.setWind(this.sim.wind);
     this.top.turn.text = `TURNO ${this.sim.turn}`;
     this.refreshRules();
+    this.syncLate();
+    this.refreshMatchup();
+  }
+
+  /** resistances card above the selected cat (only while aiming) */
+  refreshMatchup() {
+    const cat = this.phase === 'aim' ? this.sim.sides[0].cats.find((k) => k.def.uid === this.selected) : undefined;
+    this.matchup.update(this.sim, cat, cat ? this.currentShot() : undefined);
+    // pinned over your own ship (bottom-left): never covers the enemy you're aiming at
+    const card = this.cards[0];
+    if (card && this.matchup.visible) this.matchup.position.set(card.x - 20, card.y - this.matchup.height - 14);
   }
 
   /** boss/rule chips under the hull bars */
@@ -476,6 +645,38 @@ export class BattleScene extends Scene {
       if (es.bubble > 0 && es.bubbleKind) items.push({ text: 'BURBUJA', color: C.yellow });
       if (b.submerged) items.push({ text: 'SUMERGIDO', color: C.megaBlue, ink: C.paper, hot: true });
     }
+    if (b?.id === 'arcanist') {
+      if (es.ward && es.ward.layers > 0) items.push({ text: `ESCUDO ARCANO ${es.ward.layers}/${es.ward.max}`, color: 0xc77dff });
+      if (this.sim.portals) items.push({ text: 'PORTALES', color: 0xffb02e });
+      const inks = es.parts.filter((p) => p.kind === 'ink' && p.alive && p.active).length;
+      if (inks) items.push({ text: `GATOS DE TINTA x${inks}`, color: C.paper });
+      if (b.phase >= 3) items.push(b.grimoire > 0 ? { text: 'GRIMORIO ABIERTO x1.5', color: C.yellow, hot: true } : { text: 'GRIMORIO x1.2', color: 0xd8a8ee });
+    }
+    if (b?.id === 'star') {
+      const wells = es.ship.modules.filter((m) => m.tag === 'well' && m.alive).length;
+      if (wells) items.push({ text: `POZOS DE GRAVEDAD x${wells}`, color: 0xb9a7ff });
+      if (this.sim.field.anti) items.push({ text: 'ABAJO ES ARRIBA', color: 0xc77dff, hot: true });
+      else if (this.sim.field.gMul !== 1) items.push({ text: `GRAVEDAD x${this.sim.field.gMul}`, color: 0xe8c45a });
+      if (b.charging) items.push({ text: 'LLUVIA DE ESTRELLAS: ¡PÉGALE AL NÚCLEO!', color: C.yellow, hot: true });
+      else if (b.phase >= 2) items.push({ text: `LLUVIA EN ${Math.max(1, b.starIn)}`, color: 0xe8c45a });
+      if (b.debris > 0) items.push({ text: `ESCOMBROS FLOTANDO x${Math.min(4, b.debris)}`, color: 0xb9b2a0 });
+    }
+    if (b?.id === 'leviathan') {
+      items.push({ text: 'NO SE HUNDE', color: 0x9fb4c8 });
+      if (es.ward && es.ward.layers > 0) items.push({ text: `ESCAMAS ARCANAS ${es.ward.layers}/${es.ward.max}`, color: 0xc77dff });
+      items.push({ text: `NÚCLEO ${b.phase}/3`, color: C.yellow });
+      if (b.submerged) items.push({ text: 'SUMERGIDO', color: C.megaBlue, ink: C.paper, hot: true });
+      if (b.breathing) items.push({ text: '¡SALE A RESPIRAR!', color: C.yellow, hot: true });
+      if (b.frozen > 0) items.push({ text: 'MAR CONGELADO', color: 0xdff8ff, hot: true });
+      else if (b.phase === 2) items.push({ text: `HIELO ${b.freeze}/3`, color: 0x7fd8ff });
+      if (b.devour !== null && !b.fogHit) items.push({ text: 'DISTRAXIA: ¡PÉGALE AL OJO!', color: 0xc77dff, hot: true });
+    }
+    if (this.sim.wells.some((w) => w.kind === 'hole')) items.push({ text: 'AGUJERO NEGRO', color: 0xff7ab8, hot: true });
+    if (es.buffs.stone > 0) items.push({ text: `CORAZÓN DE PIEDRA ${es.buffs.stone}`, color: 0xc4bdab });
+    if (es.buffs.blind > 0) items.push({ text: `ECLIPSADO ${es.buffs.blind}`, color: 0xff7ab8 });
+    if (es.buffs.fin.length) items.push({ text: `FIN x${es.buffs.fin.length}`, color: C.paper });
+    const tune = this.spec.meta?.tune;
+    if (tune && tune.stage > 1.05) items.push({ text: `REFORZADO x${tune.stage.toFixed(1)}`, color: 0xb9b2a0 });
     if (b?.enraged) items.push({ text: 'ENFURECIDO', color: C.red, ink: C.paper });
     const r = this.spec.rules;
     if (r?.wetDeck?.includes(1)) items.push({ text: 'CUBIERTA MOJADA', color: 0x7fd8ff });
@@ -486,6 +687,11 @@ export class BattleScene extends Scene {
     const pItems: Chip[] = [];
     const ps = this.sim.sides[0];
     if (ps.bubbleKind) pItems.push(ps.bubble > 0 ? { text: `BURBUJA x${ps.bubble}`, color: C.cyan } : { text: 'BURBUJA: RECARGA', color: 0x8a95a3 });
+    if (ps.buffs.stone > 0) pItems.push({ text: `CORAZÓN DE PIEDRA ${ps.buffs.stone}`, color: 0xc4bdab });
+    if (ps.buffs.blind > 0) pItems.push({ text: `¡ECLIPSE! SIN VISTA PREVIA ${ps.buffs.blind}`, color: 0xff7ab8, hot: true });
+    if (ps.buffs.empower > 0) pItems.push({ text: 'PRÓXIMO TIRO x2', color: C.yellow, hot: true });
+    if (ps.buffs.fin.length) pItems.push({ text: `FIN x${ps.buffs.fin.length}: ¡TUMBA A SU MERLINA!`, color: C.paper, hot: true });
+    if (this.sim.wells.some((w) => w.kind === 'lure' && w.affects === 0)) pItems.push({ text: 'CEBO: TUS TIROS SE VAN AL MAR', color: 0x7fd8ff, hot: true });
     const sig = JSON.stringify([items, pItems]);
     if (sig === this.ruleSig) return;
     this.ruleSig = sig;
@@ -513,6 +719,21 @@ export class BattleScene extends Scene {
     this.refreshCards();
   }
 
+  /** boss volleys resolved by the sim outside a cat shot (star rain, falling debris): animate them */
+  async playQueued() {
+    while (this.sim.queued.length) {
+      const q = this.sim.queued.shift()!;
+      if (!q.paths.length) {
+        for (const e of q.events) this.applyEvent(e);
+        continue;
+      }
+      this.turnBanner(q.label, q.side === 1 ? C.pinkHot : C.yellow);
+      await wait(this.fast ? 150 : 500);
+      await this.animateShot(q.side, 'boss', q.paths, q.events, q.shot);
+      await this.checkBossPhase();
+    }
+  }
+
   armUlt(c: CatState) {
     if (this.phase !== 'aim' || !this.sim.canUlt(c)) return;
     this.select(c.def.uid);
@@ -524,6 +745,7 @@ export class BattleScene extends Scene {
       sparkles(this.world, wp.x, wp.y - 60, elementFx(c.def.elements[0]).accent, 14, 160);
     }
     floatText(this.overlay, 960, 300, `ULTIMATE LISTA: ${c.def.ultimate?.name ?? ''}`, { color: elementFx(c.def.elements[0]).main, size: 50, rise: 30, dur: 1.4 });
+    this.refreshMatchup();
   }
 
   currentShot(): ShotDef {
@@ -597,7 +819,9 @@ export class BattleScene extends Scene {
     layer.addChild(dim, band, bandMask, dots);
     if (I.slug) {
       const gar = this.spec.boss?.id === 'gargoyle';
-      const cat = new BattleCat(I.slug, gar ? 'earth' : this.spec.boss?.id === 'kraken' ? 'electric' : 'fire', 560, true);
+      const bid = this.spec.boss?.id;
+      const cat = new BattleCat(I.slug, gar ? 'earth' : bid === 'kraken' ? 'electric' : bid === 'arcanist' ? 'magic' : bid === 'star' ? 'cosmic' : 'fire', 560, true);
+      if (bid === 'arcanist') cat.addChild(wizardDecal(560, true));
       const cm = new ColorMatrixFilter();
       cm.saturate(gar ? -0.85 : -0.4, true);
       if (gar) cm.brightness(0.85, true);
@@ -610,6 +834,20 @@ export class BattleScene extends Scene {
       cat.position.set(W - 400, 900);
       layer.addChild(cat);
       gsap.from(cat, { x: W + 300, duration: 0.35, ease: 'power3.out' });
+    }
+    if (!I.slug && this.spec.boss?.id === 'leviathan') {
+      // EL PRIMER MAR has no captain: Distraxia's eye in the violet fog
+      const eye = new Graphics();
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        eye.circle(Math.cos(a) * 190, Math.sin(a) * 90, 90 + (i % 3) * 20).fill({ color: 0x6b3d8a, alpha: 0.45 });
+      }
+      eye.ellipse(0, 0, 170, 100).fill(0xf2d9ff).stroke({ width: 14, color: C.ink });
+      eye.circle(0, 0, 62).fill(0x8a2be2);
+      eye.ellipse(0, 0, 18, 56).fill(C.ink);
+      eye.position.set(W - 420, 560);
+      layer.addChild(eye);
+      gsap.from(eye.scale, { y: 0.05, duration: 0.4, ease: 'back.out(2)', delay: 0.3 });
     }
     const tag = poster(I.tag, 54, C.paper, { stroke: { color: C.ink, width: 8 } });
     tag.position.set(110, 240);
@@ -671,6 +909,7 @@ export class BattleScene extends Scene {
     if (this.sim.winner !== null) return this.finish();
     const ev = this.sim.startTurn(0);
     await this.playTicks(ev);
+    await this.playQueued();
     await this.checkBossPhase();
     if (this.sim.winner !== null) return this.finish();
     this.shotsLeft = this.sim.extraShots(0);
@@ -712,6 +951,7 @@ export class BattleScene extends Scene {
     this.refreshCards();
     const ev = this.sim.startTurn(1);
     await this.playTicks(ev);
+    await this.playQueued();
     await this.checkBossPhase();
     if (this.sim.winner !== null) return this.finish();
     this.turnBanner('TURNO ENEMIGO', C.pinkHot);
@@ -737,6 +977,15 @@ export class BattleScene extends Scene {
       const res = this.sim.fire(1, d.shooter, d.angle, d.power, d.ult);
       this.volleyTarget ??= this.firstImpact(res.events, 0);
       await this.animateShot(1, d.shooter, res.paths, res.events, res.shot);
+      await this.checkBossPhase();
+    }
+    // the Arcanista's ink cats fire their runes
+    for (const p of summonShooters(this.sim, 1)) {
+      if (this.sim.winner !== null) break;
+      const a = aimFrom(this.sim, 1, this.sim.partMuzzle(1, p), INK_RUNE, Math.floor(Math.random() * 1e9), 3);
+      const res = this.sim.fire(1, `part:${p.id}`, a.angle, a.power);
+      this.flt(p.x, p.y0 - 70, '¡RUNA DE TINTA!', { color: 0xd8a8ee, size: 28, font: F.poster });
+      await this.animateShot(1, 'ink', res.paths, res.events, res.shot, true);
       await this.checkBossPhase();
     }
     if (this.sim.winner === null) await this.autoVolley(1);
@@ -807,6 +1056,8 @@ export class BattleScene extends Scene {
     const meta = this.spec.meta;
     let frac = (shot.preview ?? 0.4) * this.sim.previewMul(0) * (1 + (meta?.previewBonus ?? 0));
     if (meta?.noPreview) frac = 0.06;
+    // Eclipse (theirs or a Noctis): blinded, no preview
+    if (this.sim.sides[0].buffs.blind > 0) frac = 0.04;
     const col = elementFx(shot.element === 'neutral' ? 'fire' : shot.element).main;
     // the camera pulls back on big ships: keep the dots the same size on screen
     const k = 1 / Math.max(0.5, Math.min(1.2, this.cam.z));
@@ -1027,7 +1278,13 @@ export class BattleScene extends Scene {
     if (!cannons.length) return;
     const v = this.ships[side];
     const gp = this.overlay.toLocal(v.getGlobalPosition());
-    const label = poster(cannons.length > 1 ? `¡ANDANADA x${cannons.length}!` : '¡CAÑONAZO!', 54, C.paper, { stroke: { color: C.ink, width: 8 } });
+    // the ship's own weapons (not cats): say so, and say what they are (fairness: "was that a stone cat?")
+    const wname = (id: number) => {
+      const sh = this.sim.cannonShot(side, id);
+      return sh.id === 'roca' ? 'MORTERO' : sh.id === 'cannon' || sh.id === 'canon' ? 'CAÑÓN' : sh.name.toUpperCase();
+    };
+    const names = [...new Set(cannons.map((m) => wname(m.id)))].join(' + ');
+    const label = poster(side === 1 ? `ANDANADA DEL BARCO x${cannons.length}: ${names}` : cannons.length > 1 ? `¡ANDANADA x${cannons.length}!` : '¡CAÑONAZO!', side === 1 ? 40 : 54, C.paper, { stroke: { color: C.ink, width: 8 } });
     label.anchor.set(0.5);
     label.rotation = side === 0 ? -0.06 : 0.06;
     label.position.set(gp.x + v.width / 2, Math.max(160, gp.y - 60));
@@ -1040,6 +1297,7 @@ export class BattleScene extends Scene {
       const a = aimCannon(this.sim, side, m.id, Math.floor(Math.random() * 1e9), volleySigma(this.spec, side), this.volleyTarget ?? undefined);
       const res = this.sim.fire(side, 'cannon', a.angle, a.power, false, m.id);
       const mz = this.sim.cannonMuzzle(side, m.id);
+      if (side === 1) this.flt(mz.x, mz.y - 50, `${wname(m.id)} DEL BARCO`, { color: 0xb9b2a0, size: 22, font: F.poster, dur: 0.9, rise: 30 });
       this.fxp.burst(mz.x, mz.y, { count: 18, tint: [C.yellow, C.orange, C.paper, 0x8a95a3], speed: [100, 420], gravity: -60, life: [0.2, 0.6], angle: side === 0 ? [-0.6, 0.6] : [Math.PI - 0.6, Math.PI + 0.6] });
       v.fireCannon(m.id);
       await this.animateShot(side, 'cannon', res.paths, res.events, res.shot, true);
@@ -1073,8 +1331,23 @@ export class BattleScene extends Scene {
     } else if (shot.trajectory === 'gust') {
       for (let i = 0; i < 3; i++) core.arc(0, 0, 10 + i * 7, -1.2 + i * 0.5, 1.4 + i * 0.5).stroke({ width: 5 - i, color: i ? fx.accent : C.ink, cap: 'round' });
       core.circle(0, 0, 7).fill(0xe6fbff).stroke({ width: 3, color: C.ink });
+    } else if (shot.id === 'roca' || shot.id === 'mortero') {
+      // a SHIP mortar shell (not a cat): iron ball with a lit fuse
+      core.circle(0, 0, 13).fill(0x30344a).stroke({ width: 4, color: C.ink });
+      core.circle(-4, -4, 4).fill({ color: 0xffffff, alpha: 0.4 });
+      core.moveTo(8, -9).lineTo(14, -16).stroke({ width: 3, color: 0x8a7a62 });
+      core.circle(15, -17, 4).fill(C.orange);
     } else if (shot.trajectory === 'heavy') {
       core.poly([-14, -8, -4, -15, 10, -12, 16, 0, 9, 13, -6, 14, -15, 4]).fill(0x8a7a62).stroke({ width: 4, color: C.ink, join: 'round' });
+    } else if (shot.trajectory === 'meteor' && shot.radius > CELL * 3.4) {
+      // STARFALL: the sun itself
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        core.moveTo(Math.cos(a) * 52, Math.sin(a) * 52).lineTo(Math.cos(a) * 92, Math.sin(a) * 92).stroke({ width: 8, color: 0xffd400 });
+      }
+      core.circle(0, 0, 60).fill(0xfff2c0).stroke({ width: 7, color: C.ink });
+      core.circle(0, 0, 38).fill(0xffffff);
+      glow.scale.set(2.2);
     } else if (shot.trajectory === 'torpedo') {
       core.roundRect(-18, -7, 36, 14, 7).fill(fx.main).stroke({ width: 4, color: C.ink });
     } else {
@@ -1085,7 +1358,34 @@ export class BattleScene extends Scene {
     return { node: g, core, fx };
   }
 
-  animateShot(side: number, shooter: string, paths: ShotPath[], events: BattleEvent[], shot: ShotDef, quick = false): Promise<void> {
+  /** the set pieces the ultimates stage before their projectiles fly */
+  private static PRE_FX = new Set(['sun', 'thunder', 'slash', 'eruption', 'storm', 'stone', 'lure', 'forest', 'flash', 'eclipse']);
+  private ultCtx(): UltCtx {
+    return {
+      sim: this.sim,
+      wfx: this.wfx,
+      overlay: this.overlay,
+      fxp: this.fxp,
+      shaker: this.shaker,
+      catViews: this.catViews,
+      flt: (x, y, text, o) => this.flt(x, y, text, o),
+      toOverlay: (x, y) => this.overlay.toLocal(this.world.toGlobal({ x, y })),
+      marks: this.ultMarks,
+    };
+  }
+
+  async animateShot(side: number, shooter: string, paths: ShotPath[], events: BattleEvent[], shot: ShotDef, quick = false): Promise<void> {
+    const pre = events.filter((e): e is Extract<BattleEvent, { k: 'ultfx' }> => e.k === 'ultfx' && BattleScene.PRE_FX.has(e.fx));
+    for (const e of pre) await preUlt(this.ultCtx(), e);
+    if (!paths.length) {
+      for (const e of events) if (!pre.includes(e as never)) this.applyEvent(e);
+      this.refreshCards();
+      return;
+    }
+    return this.flyShot(side, shooter, paths, events, shot, quick, new Set<BattleEvent>(pre));
+  }
+
+  private flyShot(side: number, shooter: string, paths: ShotPath[], events: BattleEvent[], shot: ShotDef, quick: boolean, consumed: Set<BattleEvent>): Promise<void> {
     if (side === 0) {
       const credit = shooter !== 'cannon' ? shooter : this.turnShooter;
       if (shooter !== 'cannon') {
@@ -1129,7 +1429,6 @@ export class BattleScene extends Scene {
       }
       const idx = paths.map(() => 0);
       const done = paths.map(() => false);
-      const consumed = new Set<BattleEvent>();
       let acc = 0;
       let frame = 0;
       const tick = (t: Ticker) => {
@@ -1156,6 +1455,15 @@ export class BattleScene extends Scene {
             const pt = p.points[i];
             const prev = p.points[Math.max(0, i - 1)];
             const b = balls[pi];
+            // portal: the projectile vanishes in one ring and comes out of the other — now it's theirs
+            if (p.jumps?.includes(i)) {
+              this.portalFx?.flash(prev.x, prev.y);
+              this.portalFx?.flash(pt.x, pt.y);
+              sfx('whoosh', 1.4);
+              hist[pi].length = 0;
+              const owner = p.owners?.[p.owners.length - 1] ?? side;
+              this.flt(pt.x, pt.y - 60, owner === side ? '¡DE VUELTA!' : owner === 0 ? '¡AHORA ES TUYO!' : '¡AHORA ES SUYO!', { color: 0xffb02e, size: 34, font: F.poster });
+            }
             b.node.position.set(pt.x, pt.y);
             b.node.rotation = Math.atan2(pt.y - prev.y, pt.x - prev.x);
             if (shot.trajectory === 'gust') b.core.rotation += 0.35;
@@ -1291,14 +1599,25 @@ export class BattleScene extends Scene {
         this.fxp.burst(e.x, e.y, { count: big ? 48 : 28, tint: [fx.main, fx.accent, C.ink, C.paper], speed: [200, 850], life: [0.4, 1], scale: [0.4, 1.3], stepped: true });
         // onomatopoeia above the impact, damage number off to the side (lanes keep them apart)
         const oSize = big ? 130 : 96;
-        const oy = this.labels.place(e.x, e.y - 90, word.length * oSize * 0.5, oSize * 0.95, 900);
-        onomatopoeia(this.wfx, e.x, oy, word, { color: col, size: oSize });
+        // multi-impact shots (ultimates, volleys): one onomatopoeia per beat, not a tower of them
+        const nowO = performance.now();
+        if (nowO - this.lastOno > 280) {
+          this.lastOno = nowO;
+          const oy = this.labels.place(e.x, e.y - 90, word.length * oSize * 0.5, oSize * 0.95, 900);
+          onomatopoeia(this.wfx, e.x, oy, word, { color: col, size: oSize });
+        }
         const sv = this.ships[e.side];
         sv.hitReact(e.x, e.y, Math.min(1.6, 0.35 + e.total / 500));
         this.cam.z += Math.min(0.08, 0.02 + e.total / 8000);
         const dx = e.side === 1 ? -150 : 150;
         this.flt(e.x + dx, e.y + 10, `-${this.show(shown)}`, { color: e.crit ? C.pinkHot : C.paper, size: e.crit ? 64 : 48, font: F.heavy, rise: 70 });
         if (e.crit) this.flt(e.x + dx, e.y - 60, '¡CRÍTICO!', { color: C.pinkHot, size: 50, rot: -0.2 });
+        // element vs material: the same numbers the sim used (×1.5 súper efectivo / ×0.75 resiste)
+        const eff = e.mul !== undefined ? effLabel(e.mul, e.mat) : null;
+        if (eff && nowO - (this.infoAt.get(eff.text) ?? -1e9) > 900) {
+          this.infoAt.set(eff.text, nowO);
+          this.flt(e.x + dx, e.y + 70, eff.text, { color: eff.color, size: eff.color === 0xffd400 ? 36 : 30, font: F.poster, rot: -0.06, dur: 1.2 });
+        }
         break;
       }
       case 'chunk': {
@@ -1365,8 +1684,12 @@ export class BattleScene extends Scene {
       case 'splash': {
         sfx('splash');
         this.fxp.burst(e.x, WATER_Y, { count: 28, tint: [C.paper, C.megaBlue], angle: [-Math.PI * 0.9, -Math.PI * 0.1], speed: [200, 600] });
-        const oy = this.labels.place(e.x, WATER_Y - 70, 200, 70, 800);
-        onomatopoeia(this.wfx, e.x, oy, '¡PLOP!', { color: C.cyan, size: 64 });
+        const nowS = performance.now();
+        if (nowS - this.lastOno > 280) {
+          this.lastOno = nowS;
+          const oy = this.labels.place(e.x, WATER_Y - 70, 200, 70, 800);
+          onomatopoeia(this.wfx, e.x, oy, '¡PLOP!', { color: C.cyan, size: 64 });
+        }
         break;
       }
       case 'shieldHit': {
@@ -1409,6 +1732,22 @@ export class BattleScene extends Scene {
         const p = this.sim.sides[e.side].parts.find((k) => k.id === e.id);
         if (!p || p.kind === 'gargoyle') break;
         const c = this.sim.partCenter(p);
+        if (p.kind === 'fog') {
+          this.fogEye?.blink();
+          sfx('crit');
+          break;
+        }
+        if (p.kind === 'ink') {
+          this.inks.get(p.id)?.hurt(e.destroyed);
+          this.stats.damageDealt += e.dmg;
+          this.flt(c.x + 40, c.y - 40, `-${this.show(e.dmg)}`, { color: C.paper, size: 40, font: F.heavy });
+          if (e.destroyed) {
+            sfx('splash', 1.3);
+            this.flt(c.x, c.y - 110, '¡TINTA DERRAMADA!', { color: 0xd8a8ee, size: 40, font: F.poster, dur: 1.3 });
+            this.refreshRules();
+          }
+          break;
+        }
         this.kraken?.hurtTentacle(e.id, e.destroyed);
         this.stats.damageDealt += e.dmg;
         this.flt(c.x + 50, c.y - 40, `-${this.show(e.dmg)}`, { color: 0xd8a8ee, size: 42, font: F.heavy });
@@ -1434,6 +1773,10 @@ export class BattleScene extends Scene {
       }
       case 'phase':
         this.phaseQueue.push(e.n);
+        break;
+      case 'ultfx':
+        if (!BattleScene.PRE_FX.has(e.fx)) atUlt(this.ultCtx(), e);
+        if (e.fx === 'wellEnd') this.syncLate();
         break;
     }
   }
@@ -1586,13 +1929,21 @@ export class BattleScene extends Scene {
       case 'submerge': {
         this.kraken?.setSubmerged(true);
         const v = this.ships[1];
-        gsap.to(v, { baseY: v.baseY + 46, duration: 0.8, ease: 'power2.in' });
+        if (this.spec.boss?.id === 'leviathan') {
+          if (this.levDown) break;
+          this.levDown = true;
+        }
+        gsap.to(v, { baseY: v.baseY + (this.spec.boss?.id === 'leviathan' ? 70 : 46), duration: 0.8, ease: 'power2.in' });
         sfx('splash');
         this.fxp.burst(x, WATER_Y, { count: 60, tint: [C.paper, C.megaBlue, 0x7fd8ff], angle: [-Math.PI * 0.95, -Math.PI * 0.05], speed: [300, 900] });
         this.flt(x, y - 260, '¡SE SUMERGE!', { color: C.cyan, size: 60, font: F.poster, dur: 1.6 });
         break;
       }
       case 'surface': {
+        if (this.spec.boss?.id === 'leviathan') {
+          this.surfaceLeviathan();
+          break;
+        }
         if (this.kraken?.submerged) {
           this.kraken.setSubmerged(false);
           const v = this.ships[1];
@@ -1658,7 +2009,149 @@ export class BattleScene extends Scene {
         sfx('zap');
         sfx('shield');
         break;
+      // ---------------------------------------------------------------- bosses 4–6
+      case 'wardUp':
+        this.ward?.setLayers(e.n ?? 0);
+        sfx('shield');
+        break;
+      case 'wardHit': {
+        sfx('shield');
+        this.ward?.hit(x, y);
+        const oy = this.labels.place(x, y - 80, 260, 90, 900);
+        onomatopoeia(this.wfx, x, oy, '¡KSHIN!', { color: 0xc77dff, size: 90 });
+        if (e.amount) this.flt(x - 120, y + 20, `CAPA -${this.show(e.amount)}`, { color: 0xe2b8ff, size: 34, font: F.heavy });
+        this.shaker.add(0.15);
+        break;
+      }
+      case 'wardPop': {
+        sfx('bigboom');
+        this.ward?.pop();
+        this.ward?.setLayers(e.n ?? 0);
+        const oy = this.labels.place(x, y - 110, 300, 100, 1000);
+        onomatopoeia(this.wfx, x, oy, '¡CRASH!', { color: 0xe2b8ff, size: 110 });
+        this.flt(x, y + 30, (e.n ?? 0) > 0 ? `¡CAPA ROTA! QUEDAN ${e.n}` : '¡ESCUDO ARCANO DESTRUIDO!', { color: C.yellow, size: 44, font: F.poster, dur: 1.5 });
+        this.shaker.add(0.5);
+        break;
+      }
+      case 'reflect':
+        sfx('shield');
+        this.ward?.hit(x, y);
+        this.flt(x, y - 60, '¡ESPEJO! LA RUNA REBOTA', { color: 0xc77dff, size: 40, font: F.poster, dur: 1.4 });
+        break;
+      case 'portalMove':
+        sfx('reveal');
+        this.portalFx?.set(this.sim.portals, this.sim.portalNext);
+        break;
+      case 'inkSummon':
+        sfx('splash');
+        sfx('reveal');
+        this.syncLate();
+        this.flt(x, y - 60, '¡TINTA, A MÍ!', { color: C.paper, size: 50, font: F.poster, dur: 1.5 });
+        break;
+      case 'grimoire':
+        if (e.n) {
+          sfx('sting');
+          this.flt(x, y - 120, 'EL GRIMORIO SE ABRE: x1.5 ESTE TURNO', { color: C.yellow, size: 36, font: F.poster, dur: 1.6 });
+        }
+        this.syncLate();
+        break;
+      case 'gravity': {
+        sfx('whoosh', 0.6);
+        this.syncLate();
+        const t = e.n === 2 ? 'TODO PESA MENOS' : e.n === 3 ? '¡ABAJO ES ARRIBA!' : '';
+        if (t) this.flt(W / 2, 300, t, { color: 0xe8c45a, size: 60, font: F.poster, dur: 1.6 });
+        break;
+      }
+      case 'starTell':
+        sfx('alarm');
+        sfx('charge');
+        this.syncLate();
+        this.flt(x, y - 150, 'CARGA LLUVIA DE ESTRELLAS…', { color: C.yellow, size: 44, font: F.poster, dur: 1.8 });
+        this.flt(W * 0.25, 260, 'MIRA LAS MIRAS EN TU BARCO: TIENES UN TURNO', { color: C.paper, size: 30, font: F.poster, dur: 2 });
+        break;
+      case 'starStop':
+        sfx('crit');
+        this.syncLate();
+        this.flt(x, y - 140, '¡LLUVIA CANCELADA!', { color: C.yellow, size: 56, font: F.poster, dur: 1.6 });
+        break;
+      case 'freeze':
+        sfx('freeze');
+        this.syncLate();
+        this.flt(x, y - 40, `EL MAR SE ENFRÍA ${e.n ?? 0}/3`, { color: 0xc6f0e4, size: 32, font: F.poster });
+        break;
+      case 'seaFrozen': {
+        sfx('freeze');
+        sfx('bigboom');
+        this.syncLate();
+        const oy = this.labels.place(x, y - 160, 420, 120, 1300);
+        onomatopoeia(this.wfx, x, oy, '¡CRIIIC!', { color: 0xdff8ff, size: 120 });
+        this.flt(x, y - 250, '¡MAR CONGELADO! ESPIRÁCULO ATRAPADO · TIERRA = ESTALLIDO x2', { color: C.paper, size: 32, font: F.poster, dur: 2 });
+        this.surfaceLeviathan();
+        break;
+      }
+      case 'thaw':
+        this.syncLate();
+        this.flt(x, y - 200, 'EL HIELO SE ROMPE', { color: 0x7fd8ff, size: 40, font: F.poster });
+        break;
+      case 'breath': {
+        sfx('splash');
+        this.surfaceLeviathan();
+        this.syncLate();
+        this.flt(x, y - 160, '¡SALE A RESPIRAR! ¡AL ESPIRÁCULO!', { color: C.yellow, size: 48, font: F.poster, dur: 1.8 });
+        this.cam.tx = x;
+        this.cam.ty = y - 60;
+        this.cam.tz = 1.1;
+        window.setTimeout(() => {
+          if (!this.follow) {
+            this.cam.tx = W / 2;
+            this.cam.ty = H / 2;
+            this.cam.tz = 1;
+          }
+        }, 1100);
+        break;
+      }
+      case 'devourTell':
+        sfx('sting');
+        this.syncLate();
+        this.flt(x, y - 140, 'DISTRAXIA TE ESTÁ MIRANDO', { color: 0xc77dff, size: 40, font: F.poster, dur: 1.6 });
+        break;
+      case 'devour': {
+        sfx('bigboom');
+        if (!settings.reduceFlashes) flash(this.overlay, 0x2a0040, 0.6, 0.4);
+        const oy = this.labels.place(x, y - 120, 360, 110, 1200);
+        onomatopoeia(this.wfx, x, oy, 'BORRADO', { color: 0xc77dff, size: 110 });
+        this.flt(x, y - 220, 'DISTRAXIA SE COMIÓ UN MÓDULO', { color: C.paper, size: 34, font: F.poster, dur: 1.6 });
+        this.shaker.add(0.6);
+        break;
+      }
+      case 'devourStop':
+        sfx('crit');
+        this.flt(x, y - 140, '¡PARPADEÓ! TU MÓDULO SE SALVA', { color: C.yellow, size: 40, font: F.poster, dur: 1.5 });
+        break;
+      case 'coreSwitch': {
+        sfx('alarm');
+        this.syncLate();
+        const t = e.n === 2 ? 'DESPIERTA EL ESPIRÁCULO' : e.n === 3 ? 'EL CORAZÓN HONDO DESPIERTA' : '';
+        if (t) this.flt(x, y - 140, t, { color: C.yellow, size: 44, font: F.poster, dur: 1.8 });
+        break;
+      }
+      case 'immune': {
+        const nowI = performance.now();
+        if (nowI - (this.infoAt.get('immune') ?? -1e9) < 3500) break;
+        this.infoAt.set('immune', nowI);
+        this.flt(x, y, 'NÚCLEO DORMIDO: INMUNE', { color: 0x9fb4c8, size: 28, font: F.poster });
+        break;
+      }
     }
+  }
+
+  /** the Leviatán comes up (breath / frozen) or goes back down */
+  private levDown = false;
+  private surfaceLeviathan() {
+    if (!this.levDown) return;
+    this.levDown = false;
+    const v = this.ships[1];
+    gsap.to(v, { baseY: v.baseY - 70, duration: 0.6, ease: 'back.out(2)' });
   }
 
   /** phase 3 gargoyle: the boss cat leaves the tower and hovers above the ship */
@@ -1725,10 +2218,12 @@ export class BattleScene extends Scene {
     this.refreshCards();
     const won = this.sim.winner === 0;
     if (this.spec.boss) {
-      const boss = BOSSES.find((b) => b.zone === this.spec.meta?.zone && b.type === 'zone_boss');
+      const boss = BOSSES.find((b) => b.zone === this.spec.meta?.zone && (b.type === 'zone_boss' || b.type === 'final_boss'));
       const line = won ? boss?.lines.defeat : boss?.lines.win;
       if (line && boss) this.speech(this.ships[1], boss.name, line, 3.2);
     }
+    // the last core of the Primer Mar falls: the prologue's blow closes the circle — STARFALL
+    if (won && this.spec.boss?.id === 'leviathan') await this.finale();
     this.rain?.setOn(false);
     this.celebrate(won);
     await this.sinkSequence(won ? 1 : 0);
@@ -1813,6 +2308,59 @@ export class BattleScene extends Scene {
       for (const [k, n] of Object.entries(p2Feats(this.sim))) if (n > 0) G.count(k, n);
       this.spec.onEnd(result);
     });
+  }
+
+  /** EL PRIMER MAR: Astra Prima's STELLAR DECREE: STARFALL, the same shot as the prologue */
+  private async finale() {
+    const layer = new Container();
+    this.overlay.addChild(layer);
+    const dim = new Graphics().rect(0, 0, W, H).fill({ color: 0x05030a, alpha: 0.9 });
+    layer.addChild(dim);
+    const astra = CAT_BY_ID.get('l_astraprima');
+    if (astra) {
+      await preloadCats([astra.art.slug]).catch(() => undefined);
+      const cat = new BattleCat(astra.art.slug, 'cosmic', 520, false);
+      cat.position.set(480, H / 2 + 240);
+      layer.addChild(cat);
+      gsap.from(cat, { x: -300, duration: 0.35, ease: 'power3.out' });
+      cat.sprite.emote('attack', 1.4);
+    }
+    const t = poster('STELLAR DECREE:', 90, C.paper, { stroke: { color: C.ink, width: 10 } });
+    t.anchor.set(0.5);
+    t.position.set(W / 2 + 280, H / 2 - 120);
+    const t2 = poster('STARFALL!', 170, C.yellow, { stroke: { color: C.ink, width: 12 } });
+    t2.anchor.set(0.5);
+    t2.position.set(W / 2 + 280, H / 2 + 20);
+    const k = txt('星の勅令', { fontFamily: F.poster, fontSize: 60, fill: 0x00e5ff });
+    k.anchor.set(0.5);
+    k.position.set(W / 2 + 280, H / 2 + 150);
+    layer.addChild(t, t2, k);
+    speedLines(layer, W / 2, H / 2, 0x00e5ff, 70, 1.2);
+    sfx('charge');
+    gsap.from(t2.scale, { x: 3, y: 3, duration: 0.25, ease: 'back.out(2)', delay: 0.15 });
+    await wait(settings.reduceMotion ? 700 : 1500);
+    gsap.to(layer, { alpha: 0, duration: 0.25, onComplete: () => layer.destroy({ children: true }) });
+    // the star falls on the whale
+    const v = this.ships[1];
+    const tx = v.x + v.width * 0.5;
+    const star = new Graphics();
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      star.moveTo(Math.cos(a) * 90, Math.sin(a) * 90).lineTo(Math.cos(a) * 170, Math.sin(a) * 170).stroke({ width: 10, color: 0xfff2c0 });
+    }
+    star.circle(0, 0, 110).fill(0xfff2c0).stroke({ width: 10, color: C.ink });
+    star.circle(0, 0, 70).fill(0xffffff);
+    star.position.set(tx + 400, -300);
+    this.wfx.addChild(star);
+    sfx('whoosh');
+    await new Promise<void>((r) => gsap.to(star, { x: tx, y: v.y + v.height * 0.4, rotation: 3, duration: 0.9, ease: 'power2.in', onComplete: () => r() }));
+    sfx('bigboom');
+    if (!settings.reduceFlashes) flash(this.overlay, 0xffffff, 1, 0.8);
+    this.shaker.add(1.2);
+    onomatopoeia(this.wfx, tx, v.y - 40, '¡STARFALL!', { color: C.yellow, size: 170, dur: 1.6 });
+    this.fxp.burst(tx, v.y + v.height * 0.4, { count: 80, tint: [0xfff2c0, 0x00e5ff, C.yellow, C.ink], speed: [300, 1200], life: [0.5, 1.2], scale: [0.5, 1.5], stepped: true });
+    gsap.to(star, { alpha: 0, duration: 0.4, onComplete: () => star.destroy() });
+    await wait(900);
   }
 
   /** end of the fight: the crew that's still standing reacts (party hops / ears down) */

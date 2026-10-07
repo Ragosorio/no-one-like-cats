@@ -9,10 +9,25 @@
       "paths": 7837,
       "premultipliedRgbMae": 10.308
     },
+    "arcanito_lantern_cat": {
+      "bytes": 1076836,
+      "paths": 10702,
+      "premultipliedRgbMae": 9.8204
+    },
     "arce_autumn_cat": {
       "bytes": 1075351,
       "paths": 10572,
       "premultipliedRgbMae": 7.1636
+    },
+    "astral_tarot_cat": {
+      "bytes": 1259979,
+      "paths": 12811,
+      "premultipliedRgbMae": 10.6426
+    },
+    "burbujas_fizz_cat": {
+      "bytes": 1283192,
+      "paths": 12682,
+      "premultipliedRgbMae": 10.7301
     },
     "bytewhisker_cat": {
       "bytes": 1001510,
@@ -29,6 +44,16 @@
       "paths": 11196,
       "premultipliedRgbMae": 6.4437
     },
+    "chispa_sparkler_cat": {
+      "bytes": 1038752,
+      "paths": 10579,
+      "premultipliedRgbMae": 7.9705
+    },
+    "cometin_stardust_cat": {
+      "bytes": 1046409,
+      "paths": 10464,
+      "premultipliedRgbMae": 10.3831
+    },
     "cyber_bloom_cat": {
       "bytes": 1060608,
       "paths": 11456,
@@ -39,10 +64,40 @@
       "paths": 11526,
       "premultipliedRgbMae": 10.1446
     },
+    "eclipse_corona_cat": {
+      "bytes": 1157498,
+      "paths": 11339,
+      "premultipliedRgbMae": 10.2639
+    },
+    "fanguito_mud_cat": {
+      "bytes": 1125191,
+      "paths": 11115,
+      "premultipliedRgbMae": 9.7972
+    },
     "fossilstone_guardian_cat": {
       "bytes": 951106,
       "paths": 9201,
       "premultipliedRgbMae": 12.3854
+    },
+    "galaxia_jelly_cat": {
+      "bytes": 1286332,
+      "paths": 12642,
+      "premultipliedRgbMae": 13.1677
+    },
+    "golem_moss_cat": {
+      "bytes": 1271389,
+      "paths": 11806,
+      "premultipliedRgbMae": 11.8463
+    },
+    "guijarro_pebble_cat": {
+      "bytes": 963705,
+      "paths": 9699,
+      "premultipliedRgbMae": 8.0232
+    },
+    "infernal_obsidian_cat": {
+      "bytes": 1176888,
+      "paths": 11773,
+      "premultipliedRgbMae": 9.9038
     },
     "iridescent_origami_cat": {
       "bytes": 611676,
@@ -69,6 +124,21 @@
       "paths": 9851,
       "premultipliedRgbMae": 7.4693
     },
+    "lunita_moonphase_cat": {
+      "bytes": 1087493,
+      "paths": 10797,
+      "premultipliedRgbMae": 9.1747
+    },
+    "magmito_forge_cat": {
+      "bytes": 1063645,
+      "paths": 10522,
+      "premultipliedRgbMae": 9.6873
+    },
+    "marea_mermaid_cat": {
+      "bytes": 1340590,
+      "paths": 13529,
+      "premultipliedRgbMae": 11.4859
+    },
     "margarita_daisy_cat": {
       "bytes": 1037437,
       "paths": 10107,
@@ -89,6 +159,11 @@
       "paths": 10401,
       "premultipliedRgbMae": 6.4926
     },
+    "meteoro_comet_cat": {
+      "bytes": 1164101,
+      "paths": 11681,
+      "premultipliedRgbMae": 10.5285
+    },
     "mochi_bell_cat": {
       "bytes": 964621,
       "paths": 9207,
@@ -103,6 +178,11 @@
       "bytes": 1080789,
       "paths": 10751,
       "premultipliedRgbMae": 8.8233
+    },
+    "neblino_teapot_cat": {
+      "bytes": 1086748,
+      "paths": 10635,
+      "premultipliedRgbMae": 10.9701
     },
     "neon_glitch_cat": {
       "bytes": 701877,
@@ -119,15 +199,30 @@
       "paths": 9128,
       "premultipliedRgbMae": 4.8712
     },
+    "plasmin_plasma_cat": {
+      "bytes": 1065712,
+      "paths": 10801,
+      "premultipliedRgbMae": 10.8911
+    },
     "prism_crystal_cat": {
       "bytes": 786940,
       "paths": 8283,
       "premultipliedRgbMae": 9.1072
     },
+    "raizvieja_bark_cat": {
+      "bytes": 1124926,
+      "paths": 10959,
+      "premultipliedRgbMae": 9.8246
+    },
     "regal_cosmic_cat": {
       "bytes": 1132289,
       "paths": 11523,
       "premultipliedRgbMae": 9.5805
+    },
+    "rencor_ninetails_cat": {
+      "bytes": 1455742,
+      "paths": 14907,
+      "premultipliedRgbMae": 10.4996
     },
     "sakura_whisper_cat": {
       "bytes": 955281,
@@ -163,6 +258,21 @@
       "bytes": 1144636,
       "paths": 11846,
       "premultipliedRgbMae": 11.9089
+    },
+    "supernova_gunslinger_cat": {
+      "bytes": 1252336,
+      "paths": 12480,
+      "premultipliedRgbMae": 12.0061
+    },
+    "vapor_ronin_cat": {
+      "bytes": 1302889,
+      "paths": 13117,
+      "premultipliedRgbMae": 10.7237
+    },
+    "voltio_static_cat": {
+      "bytes": 1131535,
+      "paths": 12041,
+      "premultipliedRgbMae": 10.7371
     }
   }
 }

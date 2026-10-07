@@ -15,7 +15,7 @@ import { ensureFonts } from './fonts';
 import { mutationLook } from '../../state/ext/collection';
 
 let artPromise: Promise<void> | null = null;
-/** load every painting once (32 webp) */
+/** load every painting once (one lite SVG per distinct art slug) */
 export function ensureCatArt(): Promise<void> {
   if (!artPromise) {
     const slugs = [...new Set(CATS.map((c) => c.art.slug))];

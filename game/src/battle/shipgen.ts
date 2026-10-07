@@ -227,6 +227,108 @@ export const STORY_SHIPS: Record<string, ShipBlueprint> = {
       { kind: 'cannon', x: 18, y: 9, w: 2, h: 1 },
     ],
   },
+  /**
+   * Jefe 4 — La Biblioteca Errante: a crystal spire (the Arcanista on top), 3 arcane generators (the
+   * ward's anchors, drawn as glowing lecterns), the Grimorio (core) deep in the wooden stacks.
+   */
+  biblioteca_errante: {
+    cols: 18,
+    rows: 12,
+    hull: [
+      '........CC........',
+      '........CC........',
+      '.......CCCC.......',
+      '.......CCCC.......',
+      '.......CCCC.......',
+      '.......CCCC.......',
+      '.......CCCC......W',
+      '.......CCCC.....WW',
+      'WWWWWWWWWWWWWWWWWW',
+      'WWWWWWWWWWWWWWWWWW',
+      '.WWWWWWWWWWWWWWWW.',
+      '...WWWWWWWWWWWW...',
+    ],
+    modules: [
+      { kind: 'catroom', x: 8, y: 0, w: 2, h: 2, slot: 0 },
+      { kind: 'cannon', x: 16, y: 7, w: 2, h: 1 },
+      { kind: 'cannon', x: 11, y: 7, w: 2, h: 1 },
+      { kind: 'cannon', x: 15, y: 9, w: 2, h: 1 },
+      { kind: 'arcane', x: 7, y: 3, w: 2, h: 2, tag: 'ward' },
+      { kind: 'arcane', x: 9, y: 5, w: 2, h: 2, tag: 'ward' },
+      { kind: 'arcane', x: 1, y: 6, w: 2, h: 2, tag: 'ward' },
+      { kind: 'mast', x: 4, y: 3, w: 1, h: 5 },
+      { kind: 'catroom', x: 13, y: 6, w: 2, h: 2, slot: 1 },
+      { kind: 'catroom', x: 5, y: 9, w: 2, h: 2, slot: 2 },
+      { kind: 'core', x: 10, y: 9, w: 2, h: 2 },
+    ],
+  },
+  /**
+   * Jefe 5 — El Cometa: iron hull + crystal dome; the star-core under the dome, 2 gravity wells low on
+   * bow and stern, the Estrella on top of the dome.
+   */
+  cometa: {
+    cols: 20,
+    rows: 11,
+    hull: [
+      '....................',
+      '....................',
+      '....................',
+      '.........CC.........',
+      '........CCCC........',
+      '.......CCCCCC.....CC',
+      '..CCCCCCCCCCCCCCCCC.',
+      'IIIIIIIIIIIIIIIIIIII',
+      'IIIIIIIIIIIIIIIIIIII',
+      '.IIIIIIIIIIIIIIIIII.',
+      '...IIIIIIIIIIIIII...',
+    ],
+    modules: [
+      { kind: 'catroom', x: 9, y: 1, w: 2, h: 2, slot: 0 },
+      { kind: 'cannon', x: 18, y: 5, w: 2, h: 1 },
+      { kind: 'cannon', x: 17, y: 8, w: 2, h: 1 },
+      { kind: 'core', x: 9, y: 6, w: 2, h: 2 },
+      { kind: 'arcane', x: 1, y: 7, w: 2, h: 2, tag: 'well' },
+      { kind: 'arcane', x: 15, y: 7, w: 2, h: 2, tag: 'well' },
+      { kind: 'catroom', x: 3, y: 4, w: 2, h: 2, slot: 1 },
+      { kind: 'catroom', x: 14, y: 4, w: 2, h: 2, slot: 2 },
+      { kind: 'catroom', x: 5, y: 8, w: 2, h: 2, slot: 3 },
+    ],
+  },
+  /**
+   * Jefe 6 — El Leviatán Almirante: a whale of bone (it can't sink: the sea holds it). Three cores, one per
+   * phase: the Coral Heart at the bow, the Espiráculo (blowhole) on top, the deep heart under the Coral
+   * Heart (dig through the hole the first one leaves).
+   */
+  leviatan: {
+    cols: 22,
+    rows: 13,
+    hull: [
+      '......................',
+      '......................',
+      '......................',
+      '.........BBBB.........',
+      '......BBBBBBBBBB......',
+      '....BBBBBBBBBBBBBB....',
+      '..BBBBBBBBBBBBBBBBBB..',
+      '.BBBBBBBBBBBBBBBBBBBB.',
+      'BBBBBBBBBBBBBBBBBBBBBC',
+      'BBBBBBBBBBBBBBBBBBBBCC',
+      '.BBBBBBBBBBBBBBBBBBBB.',
+      '..BBBBBBBBBBBBBBBBBB..',
+      '.....BBBBBBBBBBBB.....',
+    ],
+    modules: [
+      { kind: 'catroom', x: 7, y: 5, w: 2, h: 2, slot: 0 },
+      { kind: 'cannon', x: 20, y: 8, w: 2, h: 1 },
+      { kind: 'cannon', x: 14, y: 4, w: 2, h: 1 },
+      { kind: 'cannon', x: 4, y: 5, w: 2, h: 1 },
+      { kind: 'core', x: 17, y: 6, w: 2, h: 2, tag: 'core1' },
+      { kind: 'core', x: 10, y: 3, w: 2, h: 2, tag: 'core2' },
+      { kind: 'core', x: 17, y: 8, w: 2, h: 2, tag: 'core3' },
+      { kind: 'catroom', x: 14, y: 7, w: 2, h: 2, slot: 1 },
+      { kind: 'catroom', x: 3, y: 8, w: 2, h: 2, slot: 2 },
+    ],
+  },
   /** duel platform: a wooden raft for 1–2 cats, no core */
   duel_raft: {
     cols: 7,

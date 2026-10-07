@@ -136,14 +136,14 @@ Pantalla lógica de 1920×1080 que se adapta a cualquier pantalla (sin barras ne
 
 ## Pipeline de arte (MAI SVG)
 
-Los 32 dibujos de gatos y la capitana Luzterna son **SVG vectorial puro** (sin PNG, sin base64 embebido), hechos con **[MAI SVG](https://github.com/Ragosorio/MAI-SVG)**:
+Los 54 dibujos de gatos y la capitana Luzterna son **SVG vectorial puro** (sin PNG, sin base64 embebido), hechos con **[MAI SVG](https://github.com/Ragosorio/MAI-SVG)**:
 
 1. PNG original (vive fuera del repo) → `mai vectorize --preset high-color-preserved` (el alfa se vuelve máscara vectorial).
 2. `scripts/game-export.ts` de MAI (perfil *game-compact*: el mismo dibujo, verificado píxel a píxel) → `game/public/cats-svg/`.
 3. `scripts/game-thumbs.ts` de MAI (traza ligera con control de calidad) → `game/public/cats-svg/lite/`.
 4. Rigs (ojos, orejas, cabeza, cola, flotantes) en formato MAI → `game/src/data/catRigs.json`.
 
-En el juego cada pintura se deforma sobre una malla (estilo Live2D, pero ligerito) con su rig: parpadeo, orejas, cabeza que mira al cursor o a quien habla, cola, objetos flotantes, respiración, caminata, siestas, bostezos. En combate se agachan al apuntar, se lanzan al disparar, se encogen con el golpe y el viento del mar les mueve el pelo. Hay dos niveles de detalle, ambos vectoriales: `lite/` carga rápido y el completo se baja solo cuando el gato se ve grande. Con 22 variantes teñidas, esos 32 dibujos dan para los 54 gatos de la Catdex.
+En el juego cada pintura se deforma sobre una malla (estilo Live2D, pero ligerito) con su rig: parpadeo, orejas, cabeza que mira al cursor o a quien habla, cola, objetos flotantes, respiración, caminata, siestas, bostezos. En combate se agachan al apuntar, se lanzan al disparar, se encogen con el golpe y el viento del mar les mueve el pelo. Hay dos niveles de detalle, ambos vectoriales: `lite/` carga rápido y el completo se baja solo cuando el gato se ve grande. Cada uno de los 54 gatos de la Catdex tiene su propio dibujo (los 22 que antes eran variantes teñidas se rediseñaron en el lote A).
 
 ---
 

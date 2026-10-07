@@ -107,8 +107,36 @@ export const COMBAT_TUNE = {
     1: { hp: 1.5, catHp: 1.6, capHp: 2.5, dmg: 1 },
     2: { hp: 1.1, catHp: 1.3, capHp: 2.2, dmg: 1 },
     3: { hp: 1.0, catHp: 1.3, capHp: 2.2, dmg: 1 },
+    4: { hp: 1.0, catHp: 1.3, capHp: 2.0, dmg: 0.8 },
+    5: { hp: 1.0, catHp: 1.3, capHp: 2.0, dmg: 1 },
+    6: { hp: 0.7, catHp: 1.3, capHp: 1.3, dmg: 0.8 },
   } as Record<number, { hp: number; catHp: number; capHp: number; dmg: number }>,
 };
+
+/**
+ * Enemy ship weapons follow the same accuracy rule as yours (spread = 5° − 0.6°·Mk): this is the Mk the
+ * enemy fleet of each zone brings (shown in the pre-battle "why").
+ */
+export const ENEMY_WEAPON_MK: Record<number, number> = { 1: 3, 2: 3, 3: 3, 4: 4, 5: 4, 6: 5 };
+
+/** the hidden knobs of a stage, in plain numbers (the pre-battle "why" shows them) */
+export function stageTune(zone: number, stage: number) {
+  const sd = stageInfo(zone, stage);
+  const key = stageKey(zone, stage);
+  const isBoss = sd?.type === 'boss';
+  const isElite = sd?.type === 'elite';
+  const sk = COMBAT_TUNE.stage[key] ?? 1;
+  const zt = COMBAT_TUNE.zone[zone] ?? { hp: 1, dmg: 1, catHp: 1 };
+  const bt = isBoss ? COMBAT_TUNE.boss[zone] ?? { hp: 1.5, catHp: 1.6, capHp: 2.5, dmg: 1 } : null;
+  const et = isElite ? COMBAT_TUNE.elite : { hp: 1, dmg: 1, catHp: 1 };
+  return {
+    hull: (bt ? bt.hp : et.hp * zt.hp) * sk,
+    crewHp: (bt ? bt.catHp : et.catHp * zt.catHp) * sk,
+    captainHp: bt ? bt.capHp * sk : undefined,
+    dmg: (bt ? bt.dmg : et.dmg * zt.dmg) * sk,
+    weaponMk: ENEMY_WEAPON_MK[zone] ?? 3,
+  };
+}
 
 /** captain + crew for a zone boss */
 function bossCrew(zone: number): string[] {
@@ -117,6 +145,10 @@ function bossCrew(zone: number): string[] {
   const captain = CATS.find((c) => c.art.slug === b.captainArt.slug && !c.art.tint)?.id ?? 'c_canelo';
   if (zone === 2) return [captain, 'c_guijarro', 'c_musgo', 'c_terron'];
   if (zone === 3) return [captain, 'c_voltio', 'c_burbujas', 'c_nimbo'];
+  // late bosses: hand-picked crews (the ward layers are "held" by them, in this order)
+  if (zone === 4) return ['c_caramelo', 'c_guijarro', 'c_linterna'];
+  if (zone === 5) return ['c_cometin', 'e_supernova', 'c_voltio', 'c_lunita'];
+  if (zone === 6) return ['r_astral', 'r_arcanito', 'r_solar'];
   const els = b.elements.length ? b.elements : ZONES[zone - 1].elements;
   const crewIds = CATS.filter((c) => c.rarity === 'common' && els.includes(c.elements[0])).map((c) => c.id);
   return [captain, ...crewIds.slice(0, 2)];
@@ -157,7 +189,20 @@ const BOSS_INTRO: Record<number, { lines: string[]; weak: string }> = {
   1: { lines: ['BARRILES: revienta uno y estallan en cadena (daño a ÉL)', 'FASE 3: dispara dos veces por turno'], weak: 'PUNTO DÉBIL: la santabárbara tras el mástil' },
   2: { lines: ['PIEL DE PIEDRA: su piedra recibe x0.5, salvo {earth} Tierra y Estallido', 'RONRONEO: cada 3 turnos se cura 10% (RRR 1/3…)'], weak: 'PUNTO DÉBIL: La Garganta (interrumpe el ronroneo)' },
   3: { lines: ['TENTÁCULOS: agarran tus módulos y avientan gatos al agua. ¡Córtalos!', 'BURBUJA DE ESTÁTICA: anula 1 impacto por turno; {storm} rayo la revienta'], weak: 'PUNTO DÉBIL: el Ojo, cuando abre el pico' },
+  4: {
+    lines: ['ESCUDO ARCANO x3: {storm} rayo rompe 1 capa · {earth} y cañones x1.5', 'F2 PORTALES: tu tiro entra por uno… y sale siendo SUYO', 'F3 GATOS DE TINTA: de papel ({fire} x2), disparan runas'],
+    weak: 'PUNTO DÉBIL: el Grimorio (núcleo), abierto tras invocar',
+  },
+  5: {
+    lines: ['POZOS DE GRAVEDAD: curvan todo tiro cercano. Rómpelos', 'F2 GRAVEDAD x0.55 · F3 INVERTIDA SOBRE SU BARCO', 'LLUVIA DE ESTRELLAS: marca tu barco; tienes 1 turno'],
+    weak: 'PUNTO DÉBIL: el núcleo-estrella (x2) mientras carga',
+  },
+  6: {
+    lines: ['EL MAR ES EL JEFE: no se hunde. 3 núcleos, 1 por fase', 'F2 SE SUMERGE: congela el mar ({water} + ráfaga)', 'F3 DISTRAXIA BORRA TUS MÓDULOS: pégale a su ojo'],
+    weak: 'PUNTO DÉBIL: el Espiráculo, cuando sale a respirar',
+  },
 };
+const BOSS_COLOR: Record<number, number> = { 2: 0x9a9384, 3: 0x3569a3, 4: 0x6b3d8a, 5: 0xe8c45a, 6: 0x2a1f35 };
 
 /** presentation card for bosses / elites (BattleScene.introCard) */
 function stageIntro(zone: number, stage: number): BattleIntro | undefined {
@@ -169,7 +214,7 @@ function stageIntro(zone: number, stage: number): BattleIntro | undefined {
     const analysis = G.s.campaign.analysis[stageKey(zone, stage)] ?? 0;
     const lines = [...(bi?.lines ?? [b.rule])];
     lines.push(analysis >= 0.4 || zone === 1 ? bi?.weak ?? b.weakPoint : 'PUNTO DÉBIL: ??? (Análisis 40% o descúbrelo peleando)');
-    return { kind: 'boss', tag: `JEFE ${b.n}`, title: b.name, subtitle: b.title, lines, color: zone === 2 ? 0x9a9384 : zone === 3 ? 0x3569a3 : C_RED, slug: b.captainArt.slug };
+    return { kind: 'boss', tag: `JEFE ${b.n}`, title: b.name, subtitle: b.title.replace(/\s*\(balance:[^)]*\)/, ''), lines, color: BOSS_COLOR[zone] ?? C_RED, slug: b.captainArt.slug ?? undefined };
   }
   if (sd?.type === 'elite') {
     const el = (CONTENT.elites as { zone: number; name: string; ship: string; rule: string }[] | undefined)?.find((x) => x.zone === zone);
@@ -256,6 +301,15 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
   } else if (isBoss && zone === 3) {
     bp = STORY_SHIPS.kraken;
     enemyShots = [weaponShot('tesla'), weaponShot('canon'), weaponShot('tesla')];
+  } else if (isBoss && zone === 4) {
+    bp = STORY_SHIPS.biblioteca_errante;
+    enemyShots = [weaponShot('riel'), weaponShot('canon'), weaponShot('canon')];
+  } else if (isBoss && zone === 5) {
+    bp = STORY_SHIPS.cometa;
+    enemyShots = [cosmicOrb(), weaponShot('tesla')];
+  } else if (isBoss && zone === 6) {
+    bp = STORY_SHIPS.leviatan;
+    enemyShots = [weaponShot('canon'), weaponShot('riel'), weaponShot('mortero')];
   } else {
     const arch = (CONTENT.enemyArchetypes as Record<string, { size: string; hull: string; cannons: number; catrooms: number; mast: boolean; special: string }>)[o.archetype] ?? CONTENT.enemyArchetypes.chalupa;
     const spec = specFromArchetype(arch, zone * 100 + stage + (o.type === 'errand' ? 50 : 0));
@@ -285,13 +339,14 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     const def = catDef(sp);
     const role = ROLE_BY_ID.get(def.role);
     const capMul = isBoss && i === 0 ? tune!.capHp / tune!.catHp : 1;
+    const capName = isBoss && i === 0 && bossDef && zone !== 6 ? bossDef.name : def.name;
     return battleCatFrom(
-      { uid: `e${i}`, species: sp, name: isBoss && i === 0 && bossDef ? bossDef.name : def.name, level: Math.max(1, Math.min(50, enemyLevel)), stars: 1, dmgMul: ef * eDmg, hpMul: hpBoost * capMul },
+      { uid: `e${i}`, species: sp, name: capName, level: Math.max(1, Math.min(50, enemyLevel)), stars: 1, dmgMul: ef * eDmg, hpMul: hpBoost * capMul },
       role?.hp ?? 100,
     );
   });
   if (isBoss && bossDef) {
-    const id = zone === 1 ? 'sardina' : zone === 2 ? 'gargoyle' : zone === 3 ? 'kraken' : null;
+    const id = (['sardina', 'gargoyle', 'kraken', 'arcanist', 'star', 'leviathan'] as const)[zone - 1] ?? null;
     if (id) bossCfg = { id, side: 1, captain: 'e0', enrageTurn: bossDef.enrageTurn ?? 14 };
   }
   // ---- player ship
@@ -325,13 +380,29 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     },
     enemy: { blueprint: bp, hpMul: enemyHpMul, cats: enemyCats, cannonAtk: Math.round(40 * ef * 1.6 * eDmg), cannonShots: enemyShots, armor: o.enemyArmor },
     displayMul: (Math.max(1, EP / 2) / 10) * (o.displayMulX ?? 1),
-    meta: { zone, stage, key, boss: isBoss, ep: EP, sp: SP, weaponMk: mk('weapon'), special: o.special, gearNotes: gear.notes, conductionBonus: extras.conductionJumps, previewBonus: extras.previewBonus },
+    meta: {
+      zone,
+      stage,
+      key,
+      boss: isBoss,
+      ep: EP,
+      sp: SP,
+      weaponMk: mk('weapon'),
+      enemyWeaponMk: ENEMY_WEAPON_MK[zone] ?? 3,
+      tune: { hull: enemyHpMul, crewHp: hpBoost, dmg: eDmg, stage: sk },
+      enemyLevel: Math.max(1, Math.min(50, enemyLevel)),
+      special: o.special,
+      gearNotes: gear.notes,
+      conductionBonus: extras.conductionJumps,
+      previewBonus: extras.previewBonus,
+    },
     playerStyle: styleFor('player', { hullMk: mk('hull') }),
     enemyStyle: styleFor('enemy', { zone, stageKey: key, boss: isBoss }),
     boss: bossCfg,
     rules,
     intro: o.intro,
-    suddenDeath: o.suddenDeath,
+    // late bosses have long phase arcs: the storm comes later (the Primer Mar can't sink: it only drowns you)
+    suddenDeath: o.suddenDeath ?? (isBoss && zone === 6 ? 20 : isBoss && zone >= 4 ? 13 : undefined),
     onEnd,
   };
   return spec;
@@ -375,6 +446,11 @@ function applyCatPerks(d: BattleCatDef, c: OwnedCat): BattleCatDef {
       break;
   }
   return { ...d, shot, atk: Math.round(atk), reload, ultStart };
+}
+
+/** Estrella Errante's cannon: a slow cosmic orb */
+function cosmicOrb(): ShotDef {
+  return { id: 'orbe_estelar', name: 'Orbe Estelar', element: 'cosmic', trajectory: 'orb', radius: 54, power: 1, preview: 0.45, catMul: 0.45 };
 }
 
 /** catapult / gargoyle mortar: a heavy lobbed rock (earth) */
@@ -624,6 +700,8 @@ export interface SpecialDef {
   power: number | 'frontier';
   hpMul: number;
   zone: number;
+  /** your cats on the raft (default 2) */
+  crew?: number;
 }
 export const SPECIALS: Record<string, SpecialDef> = {
   duel_guardian_bosque: {
@@ -633,8 +711,20 @@ export const SPECIALS: Record<string, SpecialDef> = {
     line: 'Rrr… este santuario tiene dueño. Y raíces.',
     enemyCats: ['c_musgo'],
     power: 'frontier',
-    hpMul: 2.2,
+    hpMul: 1.7,
     zone: 1,
+  },
+  // Ruinas Arcanas (expansion 6) secret → H16 "Lo que guardan las ruinas"; prize: Sonata Prima
+  secret_orquesta: {
+    id: 'secret_orquesta',
+    name: 'La Orquesta Muda',
+    captain: 'La Directora',
+    line: '…shhh. La función empezó hace tres siglos. Llegas tarde. Siéntate y no toses.',
+    enemyCats: ['r_runachispa', 'r_astral', 's_maneki'],
+    power: 'frontier',
+    hpMul: 1,
+    zone: 4,
+    crew: 3,
   },
   duel_callejero: {
     id: 'duel_callejero',
@@ -652,9 +742,11 @@ export const SPECIALS: Record<string, SpecialDef> = {
 export function buildDuel(id: string, onEnd: (r: BattleResult) => void): BattleSpec {
   const sp = SPECIALS[id];
   const f = frontier();
-  const EP = sp.power === 'frontier' ? stagePower(Math.max(1, f.zone), Math.max(1, f.stage)) : sp.power;
-  const crewUids = crew().slice(0, 2);
   const SP = shipPower();
+  // duels are side quests: as hard as your campaign frontier, but never harder than your own ship
+  // (a late save with a lagging fleet used to face its zone-6 frontier and could never win: 0/16)
+  const EP = sp.power === 'frontier' ? Math.min(stagePower(Math.max(1, f.zone), Math.max(1, f.stage)), SP) : sp.power;
+  const crewUids = crew().slice(0, sp.crew ?? 2);
   const S = SP / EP;
   const pf = fS(S);
   const ef = fS(1 / S);

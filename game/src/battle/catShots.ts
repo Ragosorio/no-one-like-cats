@@ -107,7 +107,9 @@ export function ultFromDef(def: CatDef, level: number): ShotDef {
     id: `${def.id}_ult`,
     name: shout,
     shout,
-    power: u.dmg / Math.max(1, s.dmg),
+    // support ultimates (dmg 0: Gea, Abisa, Silvana, Lumen, Eclipse) still fire a full-strength shot;
+    // their real effect is in battle/ults.ts
+    power: u.dmg > 0 ? u.dmg / Math.max(1, s.dmg) : 1,
     radius: base.radius * 1.35,
     limits: { usesPerBattle: u.usesPerBattle ?? undefined, chargeTurns: u.chargeTurns || undefined },
   };

@@ -18,7 +18,7 @@ import { settings } from '../../core/settings';
 const INK = 0x171317;
 
 /** stepped ticker helper: calls fn at 12 fps while alive */
-class Stepped extends Container {
+export class Stepped extends Container {
   protected t = Math.random() * 10;
   private acc = 0;
   protected frame = 0;
