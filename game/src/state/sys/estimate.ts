@@ -37,6 +37,7 @@ const EL_NAME: Record<string, string> = Object.fromEntries((CONTENT.elements as 
 const CHAR_MAT: Record<string, string> = { W: 'wood', I: 'iron', C: 'crystal', B: 'bone', V: 'void', S: 'stone', L: 'canvas' };
 
 const cache = new Map<string, { at: number; est: Estimate }>();
+const inflight = new Map<string, { listeners: ((e: Estimate) => void)[]; last: Estimate; promise: Promise<Estimate> }>();
 
 function signature(key: string) {
   const c = crew()
@@ -121,13 +122,15 @@ export function hiddenRules(spec: BattleSpec): string[] {
   return out;
 }
 
-/** sims per estimate: 24 keeps the sampling error around ±10 points (12 was ±14) */
-export const EST_SIMS = 24;
+/** sims per estimate: 40 keeps the sampling error under ±8 points (12 was ±14, and 24 still missed
+ * by 15–20 on unlucky seed sets); a clean sweep stops at EST_MIN */
+export const EST_SIMS = 40;
+export const EST_MIN = 16;
 
 /** what the estimate assumes about the player (first lines of the ¿POR QUÉ? sheet) */
 function assumptions(n: number): string[] {
   return [
-    `Cómo se calcula: ${n} peleas COMPLETAS con el mismo motor que la pantalla (tu barco, tu tripulación, sus reglas). La pelea en pantalla es exactamente esta simulación: nada se decide distinto al verla.`,
+    `Cómo se calcula: hasta ${n} peleas COMPLETAS con el mismo motor que la pantalla (tu barco, tu tripulación, sus reglas). La pelea en pantalla es exactamente esta simulación: nada se decide distinto al verla.`,
     `Qué supone de ti: la mitad de las peleas apunta como un capitán normal (±3°, lee el viento a medias, a veces elige mal el blanco) y la mitad como uno bueno (±1.5°, casi siempre el mejor blanco). Ambos corrigen con el tiro anterior y usan la ULTIMATE cuando está lista. Si apuntas peor, te irá peor; si afinas con la sombra del tiro, mejor.`,
   ];
 }
@@ -149,13 +152,28 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
     onUpdate?.(hit.est);
     return Promise.resolve(hit.est);
   }
+  // the map card and the pre-battle panel ask for the same stage: share one run
+  const fly = inflight.get(sig);
+  if (fly) {
+    if (onUpdate) {
+      fly.listeners.push(onUpdate);
+      onUpdate({ ...fly.last });
+    }
+    return fly.promise;
+  }
   const first = build();
   const why = matchup(first);
   const est: Estimate = { p: null, done: 0, total, reasons: why.reasons, tips: why.tips, details: [...assumptions(total), ...why.reasons, ...hiddenRules(first), ...why.tips] };
-  onUpdate?.(est);
-  return import('../../battle/autoplay').then(
+  const listeners: ((e: Estimate) => void)[] = onUpdate ? [onUpdate] : [];
+  const entry = { listeners, last: est, promise: null as unknown as Promise<Estimate> };
+  const emit = () => {
+    entry.last = { ...est };
+    for (const l of listeners) l({ ...est });
+  };
+  emit();
+  entry.promise = import('../../battle/autoplay').then(
     ({ autoBattleSteps }) =>
-      new Promise((resolve) => {
+      new Promise<Estimate>((resolve) => {
         void import('../../battle/ai').then(({ DIFFICULTY }) => {
           let wins = 0;
           const losses: Record<string, number> = {};
@@ -177,19 +195,23 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
             else if (res.reason) losses[res.reason] = (losses[res.reason] ?? 0) + 1;
             est.done++;
             est.p = wins / est.done;
-            onUpdate?.({ ...est });
-            if (est.done < total) schedule(step);
+            // a clean sweep (all won / all lost) after EST_MIN sims is already certain: stop there
+            if (est.done >= EST_MIN && (wins === 0 || wins === est.done)) est.total = est.done;
+            emit();
+            if (est.done < est.total) schedule(step);
             else {
+              const n = est.done;
               const worst = Object.entries(losses).sort((a, b) => b[1] - a[1])[0];
               // the honest margin of a sample this size (1 standard error, in points)
-              const se = Math.round(100 * Math.sqrt(Math.max(0.04, est.p * (1 - est.p)) / total));
-              est.details.splice(2, 0, `Margen: ±${se} puntos (son ${total} peleas, no infinitas). Ganaste ${wins} de ${total}.`);
+              const se = Math.round(100 * Math.sqrt(Math.max(0.04, est.p * (1 - est.p)) / n));
+              est.details.splice(2, 0, wins === 0 || wins === n ? `Ganaste ${wins} de ${n}: sin dudas en esta configuración.` : `Ganaste ${wins} de ${n}. Margen: ±${se} puntos (son ${n} peleas, no infinitas).`);
               if (worst && est.p < 0.7 && LOSS_TIP[worst[0]]) {
                 est.tips.unshift(LOSS_TIP[worst[0]]);
                 est.details.push(LOSS_TIP[worst[0]]);
               }
               cache.set(sig, { at: performance.now(), est: { ...est } });
-              onUpdate?.({ ...est });
+              inflight.delete(sig);
+              emit();
               resolve(est);
             }
           };
@@ -197,6 +219,8 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
         });
       }),
   );
+  inflight.set(sig, entry);
+  return entry.promise;
 }
 
 function schedule(f: () => void) {
