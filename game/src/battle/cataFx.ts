@@ -227,12 +227,19 @@ let pendingVeil: Graphics | null = null;
 let pendingSun: Container | null = null;
 let pendingTide: { g: Graphics; stop: () => void } | null = null;
 
+const FALL_SUB: Record<CataId, string> = {
+  meteors: 'ENTRE MÁS GRANDE TU BARCO, MÁS PIEDRAS LE CAEN',
+  moon: 'APLASTA LO MÁS ALTO DE TU BARCO · SUBE LA MAREA',
+  sun: 'CUECE TODO LO EXPUESTO · RECALIENTA TUS CAÑONES',
+  tide: 'PUDRE TU LÍNEA DE FLOTACIÓN · TE INUNDA',
+};
+
 /** stage the fall (awaited before the cataclysm's projectiles fly / its events apply) */
 export async function preCata(ctx: UltCtx, e: CataEv, by: string, mul: number) {
   const fast = settings.reduceMotion;
   const info = CATA_INFO[e.id];
   const sim = ctx.sim;
-  cataBanner(ctx, e.id, by, info.shout, mul < 1 ? `EL SELLO AGRIETADO LO DEBILITA: x${mul}` : info.name, 1.05);
+  cataBanner(ctx, e.id, by, info.shout, mul < 1 ? `EL SELLO AGRIETADO LO DEBILITA: x${mul}` : FALL_SUB[e.id], 1.05);
   sfx('alarm', 0.9);
   if (e.id === 'meteors') {
     pendingVeil = veil(ctx, 0x14081f, 0.42);
