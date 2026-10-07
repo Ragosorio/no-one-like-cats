@@ -17,7 +17,7 @@ import { summonShooters } from '../battle/bossLate';
 import { WardFx, PortalFx, InkCatFx, WellFx, GravityFx, StarTellFx, SeaIceFx, FogEyeFx, CoreMarker, wizardDecal } from '../battle/boss/lateRigs';
 import { preUlt, atUlt, UltMarks, UltCtx, ULT_PRE_FX } from '../battle/ultFx';
 import { MatchupPanel, effLabel } from '../battle/ui/matchup';
-import { makeBattle, enemyProfile, volleySigma, WATER_Y as SIM_WATER_Y } from '../battle/autoplay';
+import { makeBattle, enemyProfile, volleySigma, aiSeed, volleyAim, WATER_Y as SIM_WATER_Y } from '../battle/autoplay';
 import { CatStatusView, playKO, playOverboard } from '../battle/catFx';
 import { SkyLife } from '../battle/sky';
 import { CatState, ShotDef } from '../battle/types';
@@ -100,6 +100,8 @@ export interface BattleSpec {
     enemyWeaponMk?: number;
     /** hidden stage knobs, shown in the pre-battle why + the REFORZADO chip */
     tune?: { hull: number; crewHp: number; dmg: number; stage: number };
+    /** power-ratio scaling (Poder tuyo / suyo → daño y aguante de cada lado) */
+    ratio?: { S: number; pf: number; ef: number; ph: number; eh: number };
     enemyLevel?: number;
     special?: string;
     errand?: string;
@@ -914,6 +916,8 @@ export class BattleScene extends Scene {
   // ---------------------------------------------------------------- turns
   async playerTurn(): Promise<void> {
     if (this.sim.winner !== null) return this.finish();
+    // a fresh turn: the volley never aims at last turn's (enemy) impact on our own ship
+    this.volleyTarget = null;
     const ev = this.sim.startTurn(0);
     await this.playTicks(ev);
     await this.playQueued();
@@ -966,7 +970,7 @@ export class BattleScene extends Scene {
     const shots = 1 + this.sim.extraShots(1);
     this.volleyTarget = null;
     for (let k = 0; k < shots && this.sim.winner === null; k++) {
-      const d = decide(this.sim, 1, this.prof, this.aiMemory, Math.floor(Math.random() * 1e9), { demolisher: this.spec.rules?.demolisher?.includes(1), dmgBy: this.dmgFrom });
+      const d = decide(this.sim, 1, this.prof, this.aiMemory, aiSeed.cat(this.sim, 1, k), { demolisher: this.spec.rules?.demolisher?.includes(1), dmgBy: this.dmgFrom });
       if (!d) break;
       const cat = this.sim.sides[1].cats.find((c) => c.def.uid === d.shooter);
       const bc = this.catViews.get(d.shooter);
@@ -982,14 +986,14 @@ export class BattleScene extends Scene {
       }
       if (d.ult && cat) await this.ultCutIn(cat);
       const res = this.sim.fire(1, d.shooter, d.angle, d.power, d.ult);
-      this.volleyTarget ??= this.firstImpact(res.events, 0);
+      this.volleyTarget = volleyAim(this.volleyTarget, res.events, 1);
       await this.animateShot(1, d.shooter, res.paths, res.events, res.shot);
       await this.checkBossPhase();
     }
     // the Arcanista's ink cats fire their runes
     for (const p of summonShooters(this.sim, 1)) {
       if (this.sim.winner !== null) break;
-      const a = aimFrom(this.sim, 1, this.sim.partMuzzle(1, p), INK_RUNE, Math.floor(Math.random() * 1e9), 3);
+      const a = aimFrom(this.sim, 1, this.sim.partMuzzle(1, p), INK_RUNE, aiSeed.ink(this.sim, p.id), 3);
       const res = this.sim.fire(1, `part:${p.id}`, a.angle, a.power);
       this.flt(p.x, p.y0 - 70, '¡RUNA DE TINTA!', { color: 0xd8a8ee, size: 28, font: F.poster });
       await this.animateShot(1, 'ink', res.paths, res.events, res.shot, true);
@@ -1133,8 +1137,8 @@ export class BattleScene extends Scene {
     this.turnShooter = this.selected;
     const res = this.sim.fire(0, this.selected, this.aim.angle, this.aim.power, ult);
     this.refreshCards();
-    const hit = this.firstImpact(res.events, 1);
-    if (hit) this.volleyTarget = hit;
+    // the volley concentrates on the FIRST hit of this turn (same rule as the headless sim)
+    this.volleyTarget = volleyAim(this.volleyTarget, res.events, 0);
     await this.animateShot(0, this.selected, res.paths, res.events, res.shot);
     await this.checkBossPhase();
     // Gorrión: a second cat on turn 1
@@ -1217,11 +1221,6 @@ export class BattleScene extends Scene {
     gsap.to(layer, { alpha: 0, duration: 0.2, onComplete: () => layer.destroy({ children: true }) });
   }
 
-  firstImpact(events: BattleEvent[], targetSide: number) {
-    for (const e of events) if (e.k === 'impact' && e.side === targetSide) return { x: e.x, y: e.y };
-    return null;
-  }
-
   /** dev: jump the boss phase (window.__battle.devPhase(3)) */
   async devPhase(n: 1 | 2 | 3) {
     for (const e of this.sim.forcePhase(n)) this.applyEvent(e);
@@ -1301,7 +1300,7 @@ export class BattleScene extends Scene {
     for (const m of cannons) {
       if (this.sim.winner !== null) break;
       if (!m.alive) continue;
-      const a = aimCannon(this.sim, side, m.id, Math.floor(Math.random() * 1e9), volleySigma(this.spec, side), this.volleyTarget ?? undefined);
+      const a = aimCannon(this.sim, side, m.id, aiSeed.cannon(this.sim, m.id), volleySigma(this.spec, side), this.volleyTarget ?? undefined);
       const res = this.sim.fire(side, 'cannon', a.angle, a.power, false, m.id);
       const mz = this.sim.cannonMuzzle(side, m.id);
       if (side === 1) this.flt(mz.x, mz.y - 50, `${wname(m.id)} DEL BARCO`, { color: 0xb9b2a0, size: 22, font: F.poster, dur: 0.9, rise: 30 });
@@ -2214,7 +2213,7 @@ export class BattleScene extends Scene {
     }
     for (const b of this.bubbles) b?.setOn(false);
     for (let i = 0; i < 4; i++)
-      window.setTimeout(() => this.fxp.burst(v.x + Math.random() * v.width, WATER_Y, { count: 30, tint: [C.paper, C.megaBlue, 0x7fd8ff], angle: [-Math.PI * 0.95, -Math.PI * 0.05], speed: [250, 750] }), 300 + i * 280);
+      window.setTimeout(() => !v.destroyed && !this.fxp.destroyed && this.fxp.burst(v.x + Math.random() * v.width, WATER_Y, { count: 30, tint: [C.paper, C.megaBlue, 0x7fd8ff], angle: [-Math.PI * 0.95, -Math.PI * 0.05], speed: [250, 750] }), 300 + i * 280);
     onomatopoeia(this.wfx, v.x + v.width / 2, WATER_Y - 160, loser === 1 ? '¡HUNDIDO!' : '¡GLU GLU GLU!', { color: C.paper, size: 120, dur: 1.4 });
     await wait(1500);
     this.cam.tx = W / 2;

@@ -67,8 +67,20 @@ export function winChanceFor(S: number) {
 export function winChance(zone: number, stage: number) {
   return winChanceFor(effectiveSP(zone, stage) / stagePower(zone, stage));
 }
+/**
+ * Power ratio → damage multiplier. The clamp used to be [0.35, 3]: below a 0.27 ratio being weaker
+ * stopped mattering, and a big ship (Bastión) beat Jefe 5 and 6 at 16% / 9% of their power. Now
+ * [0.15, 5]: the ratio keeps counting until it's absurd. Near 1 (normal progression) nothing changes.
+ */
 export function fS(S: number) {
-  return Math.max(0.35, Math.min(3, Math.pow(S, 0.8)));
+  return Math.max(0.15, Math.min(5, Math.pow(S, 0.8)));
+}
+/**
+ * Power ratio → toughness (hull and cat HP), the square root of fS. The ratio used to scale only
+ * damage, so a ship that outlasts small enemies won at any ratio. 1 at equal power.
+ */
+export function fHp(S: number) {
+  return Math.sqrt(fS(S));
 }
 
 const DIFF_MAP: Record<string, keyof typeof DIFFICULTY> = { grumete: 'easy', corsario: 'normal', capitan: 'hard', leyenda: 'boss' };
@@ -267,6 +279,8 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
   const S = SP / EP;
   const pf = fS(S);
   const ef = fS(1 / S) * (key === '1-1' ? 0.3 : 1);
+  const ph = fHp(S);
+  const eh = fHp(1 / S);
   const gear = gearBattleMods(shipId);
   const extras = gearBattleExtras(shipId);
   const avgPow = crewUids.reduce((a, u) => a + catPow(getCat(u)!), 0) / Math.max(1, crewUids.length);
@@ -278,7 +292,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     const acc = accessoryMods(c);
     // El Podio: that cat's podio power levels → +dmg and an earlier ultimate on the ship (podio/mods.ts)
     const pm = podioCatMods(c);
-    const bc = applyCatPerks(battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf * share * rank * gear.catDmgMul * acc.powMul * pm.dmgMul, hpMul: share * acc.hpMul * pm.hpMul }, catHpBase(c)), c);
+    const bc = applyCatPerks(battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf * share * rank * gear.catDmgMul * acc.powMul * pm.dmgMul, hpMul: share * acc.hpMul * pm.hpMul * ph }, catHpBase(c)), c);
     return pm.ultStart ? { ...bc, ultStart: Math.min(1, (bc.ultStart ?? 0) + pm.ultStart) } : bc;
   });
   // ---- enemy ship
@@ -341,7 +355,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     const capMul = isBoss && i === 0 ? tune!.capHp / tune!.catHp : 1;
     const capName = isBoss && i === 0 && bossDef && zone !== 6 ? bossDef.name : def.name;
     return battleCatFrom(
-      { uid: `e${i}`, species: sp, name: capName, level: Math.max(1, Math.min(50, enemyLevel)), stars: 1, dmgMul: ef * eDmg, hpMul: hpBoost * capMul },
+      { uid: `e${i}`, species: sp, name: capName, level: Math.max(1, Math.min(50, enemyLevel)), stars: 1, dmgMul: ef * eDmg, hpMul: hpBoost * capMul * eh },
       role?.hp ?? 100,
     );
   });
@@ -366,7 +380,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     seed: Date.now() % 1e9,
     player: {
       blueprint: pbp,
-      hpMul: hpMul * gear.hpMul,
+      hpMul: hpMul * gear.hpMul * ph,
       cats: playerCats,
       cannonAtk: Math.round(40 * pf * 1.6 * (1 + 0.1 * (mk('weapon') - 1)) * gear.cannonAtkMul),
       cannonShots: cannonShotsFor(shipId),
@@ -378,7 +392,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
       anchor: extras.pushImmune || extras.utility.includes('anchor'),
       conductionBonus: extras.conductionJumps,
     },
-    enemy: { blueprint: bp, hpMul: enemyHpMul, cats: enemyCats, cannonAtk: Math.round(40 * ef * 1.6 * eDmg), cannonShots: enemyShots, armor: o.enemyArmor },
+    enemy: { blueprint: bp, hpMul: enemyHpMul * eh, cats: enemyCats, cannonAtk: Math.round(40 * ef * 1.6 * eDmg), cannonShots: enemyShots, armor: o.enemyArmor },
     displayMul: (Math.max(1, EP / 2) / 10) * (o.displayMulX ?? 1),
     meta: {
       zone,
@@ -390,6 +404,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
       weaponMk: mk('weapon'),
       enemyWeaponMk: ENEMY_WEAPON_MK[zone] ?? 3,
       tune: { hull: enemyHpMul, crewHp: hpBoost, dmg: eDmg, stage: sk },
+      ratio: { S, pf, ef, ph, eh },
       enemyLevel: Math.max(1, Math.min(50, enemyLevel)),
       special: o.special,
       gearNotes: gear.notes,
@@ -702,6 +717,9 @@ export interface SpecialDef {
   zone: number;
   /** your cats on the raft (default 2) */
   crew?: number;
+  /** foe crew strength vs yours at equal power (rating ratio = edge²; default DUEL_EDGE). Tuned with the
+   * headless sim so a normal aim wins ~60–80% at equal power whatever crew you bring */
+  edge?: number;
 }
 export const SPECIALS: Record<string, SpecialDef> = {
   duel_guardian_bosque: {
@@ -713,6 +731,7 @@ export const SPECIALS: Record<string, SpecialDef> = {
     power: 'frontier',
     hpMul: 1.7,
     zone: 1,
+    edge: 0.75,
   },
   // Ruinas Arcanas (expansion 6) secret → H16 "Lo que guardan las ruinas"; prize: Sonata Prima
   secret_orquesta: {
@@ -725,6 +744,8 @@ export const SPECIALS: Record<string, SpecialDef> = {
     hpMul: 1,
     zone: 4,
     crew: 3,
+    // 3 rares at Nv 5 against your best three: the band needs more weight to be a fight
+    edge: 1.8,
   },
   duel_callejero: {
     id: 'duel_callejero',
@@ -735,10 +756,21 @@ export const SPECIALS: Record<string, SpecialDef> = {
     power: 'frontier',
     hpMul: 1,
     zone: 1,
+    edge: 0.6,
   },
 };
 
-/** 1–2 cats per side on wooden rafts; only crew K.O. wins. */
+/** challenger's edge in duels: the foe crew's rating is DUEL_EDGE² of yours at equal power */
+export const DUEL_EDGE = 0.75;
+/** a duel crew's strength: firepower per turn (ONE cat shoots per turn; reloads count) × total hit points */
+export function duelRating(cats: BattleCatDef[]) {
+  const ready = cats.reduce((a, c) => a + 1 / (1 + (c.reload ?? 0)), 0);
+  const fire = cats.reduce((a, c) => a + c.atk / (1 + (c.reload ?? 0)), 0) / Math.max(1, ready);
+  const hp = cats.reduce((a, c) => a + c.hp, 0);
+  return fire * hp;
+}
+
+/** 1–3 cats per side on wooden rafts; only crew K.O. wins. */
 export function buildDuel(id: string, onEnd: (r: BattleResult) => void): BattleSpec {
   const sp = SPECIALS[id];
   const f = frontier();
@@ -754,10 +786,18 @@ export function buildDuel(id: string, onEnd: (r: BattleResult) => void): BattleS
     const c = getCat(u)!;
     return battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf, hpMul: 1.4 }, catHpBase(c));
   });
-  const enemyCats = sp.enemyCats.map((s2, i) => {
-    const def = catDef(s2);
-    return battleCatFrom({ uid: `e${i}`, species: s2, name: i === 0 ? sp.captain : def.name, level: 5, stars: 1, dmgMul: ef, hpMul: sp.hpMul }, ROLE_BY_ID.get(def.role)?.hp ?? 100);
-  });
+  // a duel has no ship: only the cats fight. Their crew is scaled to YOUR crew on the raft (same
+  // firepower × endurance rating, then the usual power ratio on top), so a late crew with Nv 40
+  // legendaries doesn't steamroll level-5 foes and a small crew isn't crushed. The special's `edge`
+  // sets how tough they are (calibrated with the headless sim: ~60–80% for a normal aim at equal power).
+  const mkEnemy = (k: number, dmg: number) =>
+    sp.enemyCats.map((s2, i) => {
+      const def = catDef(s2);
+      return battleCatFrom({ uid: `e${i}`, species: s2, name: i === 0 ? sp.captain : def.name, level: 5, stars: 1, dmgMul: dmg * k, hpMul: sp.hpMul * k }, ROLE_BY_ID.get(def.role)?.hp ?? 100);
+    });
+  // ratings before the power ratio (pf scales your atk linearly), so S still decides who's favoured
+  const k = Math.max(0.4, Math.min(8, Math.sqrt(duelRating(playerCats) / pf / Math.max(1, duelRating(mkEnemy(1, 1)))) * (sp.edge ?? DUEL_EDGE)));
+  const enemyCats = mkEnemy(k, ef);
   return {
     playerName: 'Tu balsa',
     enemyName: sp.name,
@@ -767,8 +807,9 @@ export function buildDuel(id: string, onEnd: (r: BattleResult) => void): BattleS
     palette: FACTION_PALETTE[sp.zone],
     seed: Date.now() % 1e9,
     mode: 'duel',
-    player: { blueprint: STORY_SHIPS.duel_raft, hpMul: 1.5, cats: playerCats, cannonAtk: 0 },
-    enemy: { blueprint: STORY_SHIPS.duel_raft, hpMul: 1.5, cats: enemyCats, cannonAtk: 0 },
+    // a raft with a cabin per cat (3-a-side duels used to drop the third cat of each side silently)
+    player: { blueprint: playerCats.length > 2 ? STORY_SHIPS.duel_raft3 : STORY_SHIPS.duel_raft, hpMul: 1.5, cats: playerCats, cannonAtk: 0 },
+    enemy: { blueprint: enemyCats.length > 2 ? STORY_SHIPS.duel_raft3 : STORY_SHIPS.duel_raft, hpMul: 1.5, cats: enemyCats, cannonAtk: 0 },
     displayMul: Math.max(1, EP / 2) / 10,
     meta: { zone: sp.zone, stage: 0, key: id, boss: false, ep: EP, sp: SP, special: id },
     playerStyle: 'raft',

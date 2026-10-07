@@ -163,11 +163,15 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
     // arcane ward: rayo pops a layer, physical hits it ×1.5
     if (wardUp) shotMul *= isRayo(s.shot) ? 2.2 : s.shot.element === 'earth' || s.shot.element === 'neutral' ? 1.3 : 1;
     // a Luz ray flies dead straight: it's aimed almost flat (even a bit downward), not lobbed; rayos and ráfagas
-    // (beam / gust) barely fall either: low (even negative) elevations, never lobs
+    // (beam / gust) barely fall either: low (even negative) elevations, never lobs. Other low-gravity shots
+    // (orbs, light rails) keep the lobs AND get low angles — a human can aim them flat (a low raft needs it)
     const ray = s.shot.trajectory === 'ray';
     const flat = s.shot.trajectory === 'beam' || s.shot.trajectory === 'gust';
-    for (let ai = 0; ai < 22; ai++) {
-      const elev = (ray ? -8 + ai * 1 : flat ? -14 + ai * 2.2 : 8 + ai * 3.4) * (Math.PI / 180);
+    const g = s.shot.gravityScale ?? (s.shot.trajectory === 'orb' ? 0.5 : 1);
+    const elevs = Array.from({ length: 22 }, (_, ai) => (ray ? -8 + ai * 1 : flat ? -14 + ai * 2.2 : 8 + ai * 3.4));
+    if (!ray && !flat && g < 0.6) elevs.unshift(-10, -7, -4.5, -2, 0, 2, 4, 6);
+    for (const deg of elevs) {
+      const elev = deg * (Math.PI / 180);
       const angle = dir > 0 ? -elev : Math.PI + elev;
       for (let pi = 0; pi < 9; pi++) {
         const power = 520 + pi * 95;

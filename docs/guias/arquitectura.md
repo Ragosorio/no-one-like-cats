@@ -166,6 +166,24 @@ fondo (o muestran más mundo) hasta `game.view`. Si algo tuyo tiene que reaccion
 | `DevLab` | LABORATORIO, el índice de labs. |
 | `ArtLab`, `CatLiveLab`, `ShipArtLab`, `BattleSandbox`, `IslandSandbox` | Laboratorios de desarrollo (ver rutas). |
 
+### La batalla en pantalla ES la simulación
+
+`BattleScene` no decide nada: llama a `Battle` (`battle/sim.ts`) y anima los eventos que devuelve. La
+estimación de victoria (`state/sys/estimate.ts`) juega la misma pelea sin pantalla con `autoBattle`
+(`battle/autoplay.ts`). Para que las dos den lo mismo:
+
+- Toda decisión de IA (gatos enemigos, cañones automáticos de los dos lados, runas de tinta) saca su
+  ruido de `aiSeed` (`autoplay.ts`), nunca de `Math.random`. Misma semilla de batalla + mismos tiros
+  del jugador = la misma batalla, llamada por llamada.
+- El blanco de la andanada es `volleyAim` (el PRIMER impacto del turno sobre el enemigo), igual en
+  los dos lados.
+- `Math.random` en la escena solo para cosas que no tocan el `Battle` (partículas, tono de sonidos).
+- Si agregas una regla, va en `sim.ts` (o un módulo que `sim.ts` llame), nunca en la escena.
+
+Prueba de paridad (sin pantalla visible): crear la escena con `spec.seed = S`, jugar el lado del
+jugador con `decide(..., aiSeed.cat(sim, 0, k))` y comparar cada `startTurn`/`fire`/`endTurn` con
+`autoBattle(spec, perfil, S)`: deben ser idénticos.
+
 ### Los flujos (`src/app/`)
 
 - `flow.ts`: `goTitle()`, `goIsland()`, `goMap()`, `goBattle(zone, stage)`. Importa las escenas con

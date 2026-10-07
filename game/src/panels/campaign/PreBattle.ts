@@ -302,7 +302,7 @@ class PreBattleView {
     const v2 = txt(fmt(sp), { fontFamily: F.poster, fontSize: 64, fill: P.blue });
     v2.position.set(l2.x, 16);
     pv.addChild(l1, v1, vs, l2, v2);
-    // honest estimate: the real sim plays this stage with YOUR ship (layout, materials, crew) 12 times
+    // honest estimate: the real sim plays this stage with YOUR ship (layout, materials, crew) EST_SIMS times
     const estBox = new Container();
     estBox.position.set(0, 128);
     pv.addChild(estBox);
