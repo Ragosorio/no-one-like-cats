@@ -361,6 +361,8 @@ function connected(occ: number[][], removed?: Set<string>) {
   return seen;
 }
 
+export const MAX_BULKHEADS = 3;
+
 export function validateLayout(shipId: string, mods: LayoutModule[]): LayoutCheck {
   const def = SHIP_BY_ID.get(shipId);
   const issues: LayoutIssue[] = [];
@@ -409,6 +411,9 @@ export function validateLayout(shipId: string, mods: LayoutModule[]): LayoutChec
     }
   });
   if (used > budget) add('budget', `Utilería ${used}/${budget}: te pasaste del presupuesto`);
+  // Mamparos: real iron cells, so they're capped (playtest: a hull full of free bulkheads was unsinkable)
+  const bulk = mods.filter((m) => m.kind === 'bulkhead').length;
+  if (bulk > MAX_BULKHEADS) add('budget', `Mamparos ${bulk}/${MAX_BULKHEADS}: máximo ${MAX_BULKHEADS} por barco`);
   // connectivity (same BFS as battle/ship.ts collapse)
   const occ = occupancy(shipId, mods);
   const conn = connected(occ);

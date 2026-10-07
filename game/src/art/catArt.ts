@@ -34,10 +34,10 @@ export function elementFx(el: string) {
 /**
  * Cat art = MAI pure vectors only (no raster files are served). Two tiers, same logical 700×700
  * size so rigs/UVs/scales are identical:
- * - lite: traced from a 256 px downscale (~130–220 KB gzip) → rasterized at 350 px. Everything
+ * - lite: traced from a 240 px downscale (~130–220 KB gzip) → rasterized at 700 px. Everything
  *   waits on this one (island, battle, shop, catdex grids).
  * - full: the approved high-color-preserved trace (game-compact, pixel-identical) → rasterized at
- *   1050 px. Loaded in the background only when a puppet is drawn big (or a scene asks for it).
+ *   1050 px. Loaded in the background only when a puppet is drawn bigger than ~640 px on screen.
  */
 export function catLiteUrl(slug: string) {
   return `cats-svg/lite/${slug}.svg`;
@@ -45,7 +45,8 @@ export function catLiteUrl(slug: string) {
 export function catSvgUrl(slug: string) {
   return `cats-svg/${slug}.svg`;
 }
-const LITE_RES = 0.5;
+/** the lite trace has ~12k paths: rasterizing it at full logical size costs little and stays crisp to ~700 px */
+const LITE_RES = 1;
 const FULL_RES = 1.5;
 
 const liteTex = new Map<string, Texture>();

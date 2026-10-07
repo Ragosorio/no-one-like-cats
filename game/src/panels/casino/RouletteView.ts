@@ -184,8 +184,8 @@ export class RouletteView extends Container implements CasinoView {
         c,
         () => {
           if (this.spinning) return;
+          // keep the stake you chose: switching ROJO ⇄ NEGRO used to drop you back to the minimum
           this.bet = bet;
-          this.stakeIdx = 0;
           this.refresh();
           if (bet.kind === 'num') this.ctx.say('betBig', 0.3);
         },

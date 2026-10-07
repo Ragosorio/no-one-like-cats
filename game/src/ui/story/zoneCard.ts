@@ -9,7 +9,7 @@ import { W, H } from '../../core/App';
 import { sfx } from '../../core/audio';
 import { C, F } from '../theme';
 import { txt } from '../widgets';
-import { elementIcon } from '../elementIcon';
+import { elementIcon, iconText } from '../elementIcon';
 import { halftoneTexture } from '../../art/textures';
 import { sparkles } from '../../fx/juice';
 import { clean } from './text';
@@ -81,7 +81,7 @@ export async function zoneCard(layer: Container, zone: number): Promise<void> {
   def.bullets.forEach((b, i) => {
     const sq = new Graphics().rect(0, 0, 14, 14).fill(def.accent).stroke({ width: 2.5, color: C.ink });
     sq.position.set(m + 2, 384 + i * 44);
-    const t = txt(clean(b), { fontFamily: F.ui, fontWeight: '700', fontSize: 23, fill: C.ink, wordWrap: true, wordWrapWidth: 620 });
+    const t = b.includes('{') ? iconText(clean(b), { fontFamily: F.ui, fontWeight: '700', fontSize: 23, fill: C.ink }, { wrap: 620 }) : txt(clean(b), { fontFamily: F.ui, fontWeight: '700', fontSize: 23, fill: C.ink, wordWrap: true, wordWrapWidth: 620 });
     t.position.set(m + 28, 376 + i * 44);
     card.addChild(sq, t);
   });
@@ -118,6 +118,40 @@ export async function zoneCard(layer: Container, zone: number): Promise<void> {
     tower(art, 82, vh - 205, 1.2);
     rocks(art, vw / 2 - 10, vh - 36, 1.1);
     for (let i = 0; i < 4; i++) waves(art, 20 + i * 90, vh - 12 + (i % 2) * 6, 70, P.blue, 0.55);
+  } else if (zone === 4) {
+    // Ruinas Sumergidas: broken columns rising from the water, books floating like birds
+    for (const [cx, h] of [[70, 230], [190, 300], [vw - 160, 260], [vw - 60, 180]] as [number, number][]) {
+      art.rect(cx - 22, vh - 30 - h, 44, h).fill(P.aged).stroke({ width: 3, color: P.blue });
+      art.rect(cx - 30, vh - 30 - h, 60, 16).fill(P.aged).stroke({ width: 3, color: P.blue });
+      for (let k = 1; k < 4; k++) art.moveTo(cx - 10 + k * 5, vh - 20 - h).lineTo(cx - 10 + k * 5, vh - 34).stroke({ width: 1.5, color: P.blue, alpha: 0.5 });
+      art.poly([cx + 22, vh - 30 - h + 16, cx + 34, vh - 30 - h + 40, cx + 22, vh - 30 - h + 52]).fill(P.sea);
+    }
+    for (let i = 0; i < 6; i++) {
+      const bx = 110 + i * ((vw - 220) / 5);
+      const by = 70 + ((i * 53) % 90);
+      art.poly([bx - 22, by, bx, by - 8, bx, by + 14, bx - 22, by + 22]).fill(0xffffff).stroke({ width: 2, color: P.blue });
+      art.poly([bx + 22, by, bx, by - 8, bx, by + 14, bx + 22, by + 22]).fill(0xf2ead8).stroke({ width: 2, color: P.blue });
+    }
+    for (let i = 0; i < 4; i++) waves(art, 20 + i * 90, vh - 10 + (i % 2) * 6, 70, P.blue, 0.55);
+  } else if (zone === 5) {
+    // Abismo Estelar: star field, a falling star with its trail, a ringed planet low on the horizon
+    for (let i = 0; i < 40; i++) art.circle((i * 97) % vw, (i * 61) % (vh - 80), 1 + (i % 3)).fill({ color: 0xffffff, alpha: 0.4 + (i % 4) * 0.15 });
+    art.moveTo(vw - 60, 40).lineTo(vw / 2 - 30, vh / 2).stroke({ width: 10, color: C.yellow, alpha: 0.35, cap: 'round' });
+    art.moveTo(vw - 60, 40).lineTo(vw / 2 - 30, vh / 2).stroke({ width: 3, color: 0xffffff, cap: 'round' });
+    art.star(vw / 2 - 30, vh / 2, 5, 26, 11).fill(C.yellow).stroke({ width: 3, color: P.blue });
+    art.circle(110, vh - 90, 48).fill(0x8a5cff).stroke({ width: 3, color: P.blue });
+    art.ellipse(110, vh - 90, 86, 16).stroke({ width: 4, color: C.yellow });
+    for (let i = 0; i < 4; i++) waves(art, 20 + i * 90, vh - 10 + (i % 2) * 6, 70, P.blue, 0.55);
+  } else if (zone === 6) {
+    // La Marea Sin Nombre: fog banks and the ribs of a bone ship
+    for (let i = 0; i < 7; i++) {
+      const rx = 60 + i * 52;
+      art.moveTo(rx, vh - 30).quadraticCurveTo(rx - 28, vh - 150, rx + 8, vh - 220 + (i % 2) * 20).stroke({ width: 9, color: 0xede4d6, cap: 'round' });
+      art.moveTo(rx, vh - 30).quadraticCurveTo(rx - 28, vh - 150, rx + 8, vh - 220 + (i % 2) * 20).stroke({ width: 2, color: P.blue, cap: 'round' });
+    }
+    for (let i = 0; i < 5; i++) art.ellipse(70 + i * 120, 120 + (i % 2) * 60, 110, 26).fill({ color: 0xffffff, alpha: 0.35 });
+    art.circle(vw - 90, 90, 34).fill({ color: 0xff2e88, alpha: 0.25 });
+    for (let i = 0; i < 4; i++) waves(art, 20 + i * 90, vh - 10 + (i % 2) * 6, 70, P.blue, 0.55);
   } else {
     stormCloud(art, vw / 2 - 40, 70, 1.6, P.blue, C.yellow, 90);
     stormCloud(art, vw - 70, 120, 1.1, P.blue, C.yellow, 80);
@@ -136,7 +170,7 @@ export async function zoneCard(layer: Container, zone: number): Promise<void> {
   vin.mask = vm;
   const vframe = new Graphics().rect(vx - 6, vy - 6, vw + 12, vh + 12).stroke({ width: 3, color: P.blue }).rect(vx, vy, vw, vh).stroke({ width: 1.5, color: P.blue });
   card.addChild(vin, vframe);
-  const st = stamp(zone === 2 ? 'TERRA FIRMA (Y DURA)' : 'MAR PICADO', def.accent === 0xffd400 ? C.red : 0x2e7a3a, 26, 0.08);
+  const st = stamp(zone === 2 ? 'TERRA FIRMA (Y DURA)' : zone === 4 ? 'PROHIBIDO LEER' : zone === 5 ? 'CIELO SUELTO' : zone === 6 ? 'SIN NOMBRE' : 'MAR PICADO', def.accent === 0xffd400 ? C.red : 0x2e7a3a, 26, 0.08);
   st.position.set(vx + vw - 150, vy + vh - 26);
   card.addChild(st);
   const hint = txt('toca para zarpar', { fontFamily: F.serif, fontStyle: 'italic', fontSize: 20, fill: P.blue });

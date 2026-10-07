@@ -37,6 +37,7 @@ import { catTexture, elementFx, preloadCats, livingCat } from '../../art/catArt'
 import type { ShipBlueprint } from '../../battle/ship';
 import type { BattleSpec } from '../../scenes/BattleScene';
 import type { ShipStyleId } from '../../battle/anime';
+import { simulateEstimate, estimateLabel, Estimate } from '../../state/sys/estimate';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI'];
 
@@ -277,6 +278,7 @@ class PreBattleView {
   }
 
   // ------------------------------------------------------------------ dynamic parts
+  private estToken = 0;
   private rebuildPower() {
     const d = this.power;
     clearChildren(d);
@@ -299,13 +301,31 @@ class PreBattleView {
     const v2 = txt(fmt(sp), { fontFamily: F.poster, fontSize: 64, fill: P.blue });
     v2.position.set(l2.x, 16);
     pv.addChild(l1, v1, vs, l2, v2);
-    const est = stamp(`ESTIMACIÓN ${Math.round(pc * 100)}%`, pc >= 0.7 ? 0x2e8a52 : pc >= 0.45 ? 0xb8701e : C.red, 34, -0.05);
-    est.position.set(160, 140);
-    pv.addChild(est);
-    const hint = label(pc >= 0.7 ? 'Vas sobrado. Igual apunta bien.' : pc >= 0.45 ? 'Pelea pareja: lee el viento.' : 'Cuesta arriba. Mejora el barco o alimenta gatos… o ve con fe.', 15, C.ink, { fontStyle: 'italic' });
-    hint.position.set(0, 180);
-    pv.addChild(hint);
+    // honest estimate: the real sim plays this stage with YOUR ship (layout, materials, crew) 12 times
+    const estBox = new Container();
+    estBox.position.set(0, 128);
+    pv.addChild(estBox);
     d.addChild(pv);
+    const token = ++this.estToken;
+    const draw = (e: Estimate) => {
+      if (token !== this.estToken || estBox.destroyed) return;
+      clearChildren(estBox);
+      const p = e.p ?? pc;
+      const col = e.p === null ? P.blue : p >= 0.7 ? 0x2e8a52 : p >= 0.45 ? 0xb8701e : C.red;
+      const st = stamp(`ESTIMACIÓN ${estimateLabel(e)}`, col, 34, -0.05);
+      st.position.set(170, 12);
+      estBox.addChild(st);
+      const lines = e.p === null ? ['Simulando la pelea con tu barco real…'] : [...e.reasons, ...e.tips].slice(0, 3);
+      if (e.p !== null && !lines.length) lines.push(p >= 0.7 ? 'Vas sobrado. Igual apunta bien.' : p >= 0.45 ? 'Pelea pareja: lee el viento.' : 'Cuesta arriba. Mejora el barco o alimenta gatos… o ve con fe.');
+      let ly = 52;
+      for (const l of lines) {
+        const t = txt(l, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: C.ink, wordWrap: true, wordWrapWidth: 760, fontStyle: 'italic' });
+        t.position.set(0, ly);
+        estBox.addChild(t);
+        ly += t.height + 4;
+      }
+    };
+    void simulateEstimate(`${z}-${s}`, () => buildBattle(z, s, () => undefined), draw);
     if (this.go) this.go.disabled = !crew().length;
   }
 

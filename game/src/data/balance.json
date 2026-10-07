@@ -1622,7 +1622,9 @@
       "eventos flash",
       "carreras heroicas",
       "microeventos"
-    ]
+    ],
+    "vault_share": 0.5,
+    "vault_rule": "La mitad de cada Ronroneo va directo a tu reserva (tú decides dónde usarlo); la otra mitad acelera el reloj fijado o el más cercano a terminar (nunca las granjas automáticas, salvo que las fijes)."
   },
   "momentum": {
     "max": 3.0,

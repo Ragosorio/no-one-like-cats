@@ -24,11 +24,11 @@ import { promptCatName } from '../ui/story/nameCat';
 import { offlineReport } from '../ui/story/offline';
 import { askPlayerProfile } from '../ui/story/profile';
 import { zoneCard } from '../ui/story/zoneCard';
-import { BOSS_INTRO, BOSS_OUTRO, ELITE_WARN, ZONE_INTRO } from '../ui/story/script';
+import { BOSS_INTRO, BOSS_OUTRO, ELITE_WARN, ZONE_INTRO, RAIJIN_INTRO, RAIJIN_OUTRO, HERALDO_INTRO, HERALDO_OUTRO, GRIETA_INTRO, GRIETA_OUTRO, VACIO_INTRO, VACIO_OUTRO, PATITO_INTRO, PATITO_OUTRO, MAREA_FINAL, UNKNOWN_END, NOCTIS_JOINS } from '../ui/story/script';
+import { startMareaFinal } from '../state/sys/island';
 import { gtxt } from '../ui/gender';
 import { isCleared, zoneUnlocked } from '../state/sys/campaign';
 import { darkSky } from '../ui/story/effects';
-import { preloadStoryArt } from '../ui/story/portrait';
 import { applyAudioSettings, openSettings } from '../panels/Settings';
 import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
 import { goIsland, goTitle } from './flow';
@@ -44,8 +44,11 @@ interface BeatRef {
   delay?: number;
   /** lines written in ui/story/script.ts instead of content.story */
   custom?: Line[];
-  /** non-dialog beat: the player profile prompt (name + gender) */
-  special?: 'profile';
+  /** non-dialog beat: the player profile prompt (name + gender), the Marea Final, the credits roll,
+   *  or a cat that joins (`reveal`) */
+  special?: 'profile' | 'marea' | 'credits' | 'reveal';
+  /** for special 'reveal': the species that joins after the lines */
+  species?: string;
   /** zone arrival card before the lines (and the map pans to that zone) */
   card?: number;
   /** only plays on this screen */
@@ -63,6 +66,15 @@ const ON_NEW: Record<string, BeatRef[]> = {
   // boss presentations (the boss node just became the frontier)
   H10: [{ beat: 'b12_gargola', part: 'a', custom: BOSS_INTRO[2], onlyOn: 'map' }],
   H13: [{ beat: 'b15_kraken', part: 'a', custom: BOSS_INTRO[3], onlyOn: 'map' }],
+  // Capítulo 1, zonas 3–6 (story battles launch from their pinned mission)
+  H11: [{ beat: 'raijin_intro', custom: RAIJIN_INTRO, onlyOn: 'map', delay: 1.5 }],
+  H14: [{ beat: 'b16_algo_viene', part: 'a', custom: HERALDO_INTRO, onlyOn: 'map', delay: 1.5 }],
+  H15: [{ beat: 'boss4_intro', custom: BOSS_INTRO[4], onlyOn: 'map' }],
+  H17: [{ beat: 'boss5_intro', custom: BOSS_INTRO[5], onlyOn: 'map' }],
+  H18: [{ beat: 'grieta_intro', custom: GRIETA_INTRO, onlyOn: 'map', delay: 1.5 }],
+  H19: [{ beat: 'b20_vacio', custom: VACIO_INTRO, effect: 'darkSky', delay: 2 }],
+  H20: [{ beat: 'b21_patito', part: 'a', custom: PATITO_INTRO, onlyOn: 'map', delay: 1.5 }],
+  H21: [{ beat: 'b22_final', custom: BOSS_INTRO[6], onlyOn: 'map' }],
 };
 /** beats that play when a mission is COMPLETED */
 const ON_DONE: Record<string, BeatRef[]> = {
@@ -75,6 +87,21 @@ const ON_DONE: Record<string, BeatRef[]> = {
   // boss farewells (the T4 element discovery already played in Results)
   H10: [{ beat: 'b12_gargola', part: 'b', custom: BOSS_OUTRO[2] }],
   H13: [{ beat: 'b15_kraken', part: 'b', custom: BOSS_OUTRO[3] }],
+  H11: [{ beat: 'raijin_outro', custom: RAIJIN_OUTRO }],
+  H14: [{ beat: 'b16_algo_viene', part: 'b', custom: HERALDO_OUTRO }],
+  H15: [{ beat: 'b17_arcanista' }, { beat: 'boss4_outro', custom: BOSS_OUTRO[4] }],
+  H16: [{ beat: 'b18_archivo' }],
+  H17: [{ beat: 'b19_estrella', custom: BOSS_OUTRO[5] }],
+  H18: [{ beat: 'grieta_outro', custom: GRIETA_OUTRO }],
+  H19: [{ beat: 'vacio_outro', custom: VACIO_OUTRO }],
+  H20: [{ beat: 'b21_patito', part: 'b', custom: PATITO_OUTRO }],
+  // the end of the chapter: Marea Final (x1000 for 3:00) → NADIE → credits (completes H22 'watch')
+  H21: [
+    { beat: 'b23_marea_final', custom: MAREA_FINAL, special: 'marea' },
+    { beat: 'b24_unknown', custom: UNKNOWN_END, effect: 'darkSky', delay: 6 },
+    { beat: 'b25_creditos', special: 'credits', delay: 1 },
+  ],
+  H22: [{ beat: 'noctis_joins', custom: NOCTIS_JOINS, special: 'reveal', species: 's_noctis' }],
 };
 
 /** beats that fire when a condition becomes true (checked while calm on island/map) */
@@ -83,9 +110,15 @@ const WHEN: { key: string; cond: () => boolean; ref: BeatRef }[] = [
   { key: 'z2_elite', cond: () => isCleared('2-4') && !isCleared('2-5'), ref: { beat: 'z2_elite', custom: ELITE_WARN[2], delay: 1.2 } },
   { key: 'z3_intro', cond: () => zoneUnlocked(3) && !zoneUnlocked(4), ref: { beat: 'z3_intro', custom: ZONE_INTRO[3], card: 3, onlyOn: 'map', delay: 2.6 } },
   { key: 'z3_elite', cond: () => isCleared('3-4') && !isCleared('3-5'), ref: { beat: 'z3_elite', custom: ELITE_WARN[3], delay: 1.2 } },
+  { key: 'z4_intro', cond: () => zoneUnlocked(4) && !zoneUnlocked(5), ref: { beat: 'z4_intro', custom: ZONE_INTRO[4], card: 4, onlyOn: 'map', delay: 2.6 } },
+  { key: 'z4_elite', cond: () => isCleared('4-4') && !isCleared('4-5'), ref: { beat: 'z4_elite', custom: ELITE_WARN[4], delay: 1.2 } },
+  { key: 'z5_intro', cond: () => zoneUnlocked(5) && !zoneUnlocked(6), ref: { beat: 'z5_intro', custom: ZONE_INTRO[5], card: 5, onlyOn: 'map', delay: 2.6 } },
+  { key: 'z5_elite', cond: () => isCleared('5-4') && !isCleared('5-5'), ref: { beat: 'z5_elite', custom: ELITE_WARN[5], delay: 1.2 } },
+  { key: 'z6_intro', cond: () => zoneUnlocked(6), ref: { beat: 'z6_intro', custom: ZONE_INTRO[6], card: 6, onlyOn: 'map', delay: 2.6 } },
+  { key: 'z6_elite', cond: () => isCleared('6-4') && !isCleared('6-5'), ref: { beat: 'z6_elite', custom: ELITE_WARN[6], delay: 1.2 } },
 ];
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
-const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H13']);
+const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22']);
 
 interface QueuedBeat {
   key: string;
@@ -312,6 +345,19 @@ async function pump() {
 
 async function playBeat(q: QueuedBeat) {
   if (beatSeen(q.key)) return; // seen meanwhile (another path played it)
+  if (q.ref.special === 'credits') {
+    busy = true;
+    try {
+      const { playCredits } = await import('../ui/story/credits');
+      await playCredits(storyLayer());
+      markBeat(q.key);
+      G.save();
+    } finally {
+      busy = false;
+    }
+    return;
+  }
+  if (q.ref.special === 'marea') startMareaFinal(180);
   if (q.ref.special === 'profile') {
     if (G.s.player) return markBeat(q.key);
     // island only and with no panel open (e.g. the Shipyard, whose PROBAR starts a battle): else retry later
@@ -358,6 +404,10 @@ async function playBeat(q: QueuedBeat) {
       },
     });
     markBeat(q.key);
+    if (q.ref.special === 'reveal' && q.ref.species && !G.s.cats.some((c) => c.species === q.ref.species)) {
+      const { revealCat } = await import('./storyFlow');
+      await revealCat(q.ref.species);
+    }
     // whole beat seen once its last part played
     const b = BEAT_BY_ID.get(q.ref.beat);
     if (!q.ref.part || (q.ref.lines && b && q.ref.lines[q.ref.lines.length - 1] === b.lines.length - 1)) markBeat(q.ref.beat);
@@ -377,7 +427,7 @@ export function initStory() {
   inited = true;
   void import('../scenes/IslandScene').then((m) => (IslandCls = m.IslandScene as never)).catch(() => undefined);
   void import('../scenes/MapScene').then((m) => (MapCls = m.MapScene as never)).catch(() => undefined);
-  void preloadStoryArt(['jelly_aquatic_cat', 'arce_autumn_cat', 'masquerade_phantom_cat']);
+  // story art loads on demand (each dialog awaits its portraits): nothing heavy at boot
   G.on('mission', (p) => onMission(p.id, p.kind));
   G.on('klUp', (p) => kls.push(p.kl));
   G.on('res', (p) => {
@@ -411,6 +461,11 @@ function catchUp() {
   if (!G.s.player && G.s.cats.length && !G.s.missions.active.includes('H01') && !beats.some((q) => q.ref.special === 'profile'))
     beats.unshift({ key: 'profile', ref: { beat: 'profile', special: 'profile', custom: OLD_SAVE_PROFILE_INTRO }, notBefore: performance.now() + 1500 });
   for (const id of G.s.missions.active) for (const r of ON_NEW[id] ?? []) queueBeat(r);
+  // saves from before the chapter end was wired: the Primer Mar fell but the ending never played
+  if (G.s.missions.active.includes('H22') && !beatSeen('b25_creditos')) for (const r of ON_DONE.H21 ?? []) queueBeat(r);
+  // saves where El Arcanista fell without handing Merlina over
+  if (G.s.campaign.bossesDefeated >= 4 && !G.s.cats.some((c) => c.species === 'l_merlina'))
+    queueBeat({ beat: 'merlina_late', custom: BOSS_OUTRO[4], special: 'reveal', species: 'l_merlina', delay: 2 });
 }
 
 const OLD_SAVE_PROFILE_INTRO: Line[] = [

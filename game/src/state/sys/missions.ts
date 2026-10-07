@@ -51,6 +51,14 @@ export function evalGoal(m: MissionDef): GoalEval {
     }
     case 'reach_kl':
       return { cur: G.s.kl, need: n('kl') };
+    case 'watch':
+      return bool((G.s.beatsSeen ?? []).includes(String(g.beat ?? 'b25_creditos')));
+    case 'damage_pct': {
+      const need = Math.round(n('pct', 0.15) * 100);
+      return { cur: Math.min(need, counter(`dmgpct_${g.battle}`)), need };
+    }
+    case 'void_fragments':
+      return { cur: Math.min(n('count', 7), counter('void_fragments')), need: n('count', 7) };
     case 'defeat_boss':
       return bool(G.s.campaign.bossesDefeated >= n('boss'));
     case 'ship_upgrade': {

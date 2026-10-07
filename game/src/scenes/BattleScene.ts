@@ -50,6 +50,8 @@ export interface BattleResult {
   hullLost?: number;
   /** elemental reactions that happened in this battle (unique, in order) — newspaper headlines */
   reactions?: string[];
+  /** fraction of the ENEMY structure destroyed (story battles grade on it: Barco del Vacío) */
+  enemyHullLost?: number;
 }
 
 export interface BattleIntro {
@@ -156,6 +158,10 @@ export class BattleScene extends Scene {
   debris = new Container();
   fxp = new Particles();
   aimG = new Graphics();
+  /** ghost of your previous shot (dotted) + its numbers: so you can repeat it or correct it */
+  lastAimG = new Graphics();
+  aimReadout = txt('', { fontFamily: F.poster, fontSize: 30, fill: C.paper, stroke: { color: C.ink, width: 6, join: 'round' } });
+  lastShot: { angle: number; power: number; pts: { x: number; y: number }[]; shooter: string } | null = null;
   ui = new Container();
   overlay = new Container();
   shaker = new Shaker(this.world);
@@ -221,7 +227,7 @@ export class BattleScene extends Scene {
     this.camRoot.addChild(this.world);
     this.addChild(this.camRoot, this.ui, this.overlay);
     const shipsLayer = (this.shipsLayer = new Container());
-    this.world.addChild(this.sea, this.sky, shipsLayer, this.debris, this.sea.frontLayer(), this.fxp, this.aimG, this.wfx);
+    this.world.addChild(this.sea, this.sky, shipsLayer, this.debris, this.sea.frontLayer(), this.fxp, this.lastAimG, this.lastLabel, this.aimG, this.aimReadout, this.wfx);
     for (let side = 0; side < 2; side++) {
       const s = this.sim.sides[side];
       const style: ShipStyleId = side === 0 ? sp.playerStyle ?? 'pirate' : sp.enemyStyle ?? 'rat';
@@ -641,6 +647,8 @@ export class BattleScene extends Scene {
     if (!avail.find((c) => c.def.uid === this.selected)) this.selected = avail[0]?.def.uid ?? '';
     // only accept aiming input when someone can actually shoot
     this.phase = avail.length ? 'aim' : 'flight';
+    this.aimReadout.visible = false;
+    this.drawLastShot(1 / Math.max(0.5, Math.min(1.2, this.cam.z)));
     if (!avail.length) {
       // nobody can shoot: the cannons still fire
       floatText(this.overlay, W / 2, H / 2, 'TUS GATOS ESTÁN FUERA… ¡CAÑONES, FUEGO!', { color: C.paper, size: 46 });
@@ -737,6 +745,12 @@ export class BattleScene extends Scene {
   up() {
     if (!this.dragging) return;
     this.dragging = false;
+    this.aimReadout.visible = false;
+    if (this.phase === 'aim') {
+      const o = this.sim.muzzle(0, this.selected);
+      const paths = this.sim.buildPaths(this.currentShot(), o, this.aim.angle, this.aim.power, this.sim.wind, 0);
+      this.lastShot = { angle: this.aim.angle, power: this.aim.power, pts: paths[0]?.points ?? [], shooter: this.selected };
+    }
     const bc = this.selected ? this.catViews.get(this.selected) : undefined;
     if (bc && !bc.destroyed) {
       // release: spring forward past neutral, then settle
@@ -763,24 +777,63 @@ export class BattleScene extends Scene {
     let frac = (shot.preview ?? 0.4) * this.sim.previewMul(0) * (1 + (meta?.previewBonus ?? 0));
     if (meta?.noPreview) frac = 0.06;
     const col = elementFx(shot.element === 'neutral' ? 'fire' : shot.element).main;
+    // the camera pulls back on big ships: keep the dots the same size on screen
+    const k = 1 / Math.max(0.5, Math.min(1.2, this.cam.z));
     for (const p of paths) {
       const n = Math.max(6, Math.floor(p.points.length * Math.min(1, frac)));
       for (let i = 0; i < n; i += 5) {
         const pt = p.points[i];
-        const a = 1 - i / n;
-        g.circle(pt.x, pt.y, 7 * a + 2).fill({ color: C.ink, alpha: a });
-        g.circle(pt.x, pt.y, 4.5 * a + 1).fill({ color: i % 10 === 0 ? col : C.paper, alpha: a });
+        const a = 0.35 + 0.65 * (1 - i / n);
+        g.circle(pt.x, pt.y, (7 * a + 3) * k).fill({ color: C.ink, alpha: a });
+        g.circle(pt.x, pt.y, (4.5 * a + 1.5) * k).fill({ color: i % 10 === 0 ? col : C.paper, alpha: a });
       }
     }
     // power meter near muzzle
     const pw = (this.aim.power - 380) / 930;
-    g.rect(o.x - 40, o.y - 70, 80, 12).fill(C.ink);
-    g.rect(o.x - 38, o.y - 68, 76 * Math.min(1, pw), 8).fill(pw > 0.9 ? C.red : C.yellow);
+    g.rect(o.x - 40 * k, o.y - 70 * k, 80 * k, 12 * k).fill(C.ink);
+    g.rect(o.x - 38 * k, o.y - 68 * k, 76 * k * Math.min(1, pw), 8 * k).fill(pw > 0.9 ? C.red : C.yellow);
+    // numbers: angle (°, above the horizon) and power (%) — compare with the ghost of your last shot
+    const deg = Math.round((-this.aim.angle * 180) / Math.PI);
+    const pct = Math.round(Math.max(0, Math.min(1, pw)) * 100);
+    const r = this.aimReadout;
+    r.visible = true;
+    r.text = `${deg}° · ${pct}%`;
+    r.scale.set(k);
+    r.anchor.set(0.5, 1);
+    r.position.set(o.x, o.y - 80 * k);
+    this.drawLastShot(k);
   }
+
+  /** dotted ghost of the previous player shot, with its numbers at the end of the arc */
+  drawLastShot(k = 1) {
+    const g = this.lastAimG;
+    g.clear();
+    this.lastLabel.visible = false;
+    const ls = this.lastShot;
+    if (!ls || this.phase !== 'aim' || !ls.pts.length) return;
+    for (let i = 0; i < ls.pts.length; i += 8) {
+      const pt = ls.pts[i];
+      g.circle(pt.x, pt.y, 4.5 * k).fill({ color: C.ink, alpha: 0.45 });
+      g.circle(pt.x, pt.y, 2.8 * k).fill({ color: C.yellow, alpha: 0.85 });
+    }
+    const end = ls.pts[Math.min(ls.pts.length - 1, Math.floor(ls.pts.length * 0.5))];
+    const deg = Math.round((-ls.angle * 180) / Math.PI);
+    const pct = Math.round(Math.max(0, Math.min(1, (ls.power - 380) / 930)) * 100);
+    g.roundRect(end.x - 70 * k, end.y - 44 * k, 140 * k, 30 * k, 8 * k).fill({ color: C.ink, alpha: 0.55 });
+    this.lastLabel.visible = true;
+    this.lastLabel.text = `ANTERIOR ${deg}° · ${pct}%`;
+    this.lastLabel.scale.set(k);
+    this.lastLabel.anchor.set(0.5, 0.5);
+    this.lastLabel.position.set(end.x, end.y - 29 * k);
+  }
+  lastLabel = txt('', { fontFamily: F.bebas, fontSize: 22, fill: C.paper });
 
   async playerFire() {
     if (this.phase !== 'aim') return;
     this.phase = 'flight';
+    this.lastAimG.clear();
+    this.aimReadout.visible = false;
+    this.lastLabel.visible = false;
     const cat = this.sim.sides[0].cats.find((c) => c.def.uid === this.selected);
     const ult = this.ultArmed && !!cat && this.sim.canUlt(cat);
     if (ult && cat) {
@@ -1650,7 +1703,9 @@ export class BattleScene extends Scene {
     title.anchor.set(0.5);
     title.position.set(W / 2, H / 2 - 40);
     const reasonTxt =
-      this.sim.reason === 'core'
+      this.sim.reason === 'retreat'
+        ? 'SE FUE… PERO SE ACUERDA DE TI'
+        : this.sim.reason === 'core'
         ? won
           ? 'LE REVENTASTE EL NÚCLEO'
           : 'TE REVENTARON EL NÚCLEO'
@@ -1714,6 +1769,7 @@ export class BattleScene extends Scene {
         kos: { ...this.kos },
         hullLost: this.spec.mode === 'duel' ? 0 : lost,
         reactions: [...this.reactions],
+        enemyHullLost: this.spec.mode === 'duel' ? 0 : 1 - this.sim.hullPct(1),
       };
       this.spec.onEnd(result);
     });

@@ -410,6 +410,12 @@ export class ResultsScene extends Scene {
     } else if (L.loot.unlocks.length && !this.busy) {
       this.busy = true;
       await this.unlockStamps();
+      // a primordial that arrives without a new element (El Arcanista → Merlina) still gets her reveal
+      if (L.loot.newCat) {
+        const { revealCat } = await import('../app/storyFlow');
+        await revealCat(L.loot.newCat);
+        music.play('island');
+      }
       this.busy = false;
     }
     gsap.to(this.buttons, { alpha: 1, duration: 0.3 });

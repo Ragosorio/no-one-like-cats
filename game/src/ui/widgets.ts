@@ -169,9 +169,13 @@ export class Counter extends Container {
     this.text = txt(prefix + '0', style);
     this.addChild(this.text);
   }
+  private lastPop = 0;
   set(v: number, animate = true) {
     if (v === this.target) return;
     const up = v > this.target;
+    // passive income ticks every frame: only real gains (≥2%, at most every 1.5 s) get the pop,
+    // otherwise the number just rolls (playtest: the HUD "titilaba" non-stop with automation)
+    const big = up && v - this.target >= Math.max(1, Math.abs(this.target) * 0.02);
     this.target = v;
     this.tween?.kill();
     if (!animate) {
@@ -189,7 +193,9 @@ export class Counter extends Container {
         this.text.text = this.prefix + this.formatter(obj.v);
       },
     });
-    if (up) {
+    const now = performance.now();
+    if (big && now - this.lastPop > 1500) {
+      this.lastPop = now;
       gsap.fromTo(this.text.scale, { x: 1.18, y: 1.18 }, { x: 1, y: 1, duration: 0.35, ease: 'back.out(3)' });
     }
   }

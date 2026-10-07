@@ -78,7 +78,21 @@ export function habitatCap(h: Habitat) {
   return habitatRate(h) * habitatTier(h.tier).buffer_min * 60;
 }
 export function globalGoldMult() {
-  return islandGoldMult(speciesCount(), expansionBonus('catdex_bonus'), expansionBonus('gold'), G.s.momentum);
+  return islandGoldMult(speciesCount(), expansionBonus('catdex_bonus'), expansionBonus('gold'), G.s.momentum) * mareaMult();
+}
+
+// ---------------------------------------------------------------- Marea Final (b23): the whole island x1000 for 3:00
+export function mareaUntil() {
+  return Number((G.s.ext as Record<string, unknown> | undefined)?.mareaUntil ?? 0);
+}
+export function mareaMult() {
+  return Date.now() < mareaUntil() ? 1000 : 1;
+}
+export function startMareaFinal(seconds = 180) {
+  G.s.ext ??= {};
+  (G.s.ext as Record<string, unknown>).mareaUntil = Date.now() + seconds * 1000;
+  G.recalc();
+  window.setTimeout(() => G.recalc(), seconds * 1000 + 100);
 }
 export function habitatCapacity(h: Habitat) {
   return habitatTier(h.tier).capacity;
@@ -192,7 +206,7 @@ export function habitatFishRate(h: Habitat) {
   for (const uid of h.cats) sum += catFish(uid);
   if (sum <= 0) return 0;
   // better homes help a little (√ of the tier multiplier) — gold keeps the full multiplier
-  return sum * Math.sqrt(habitatTier(h.tier).mult) * (1 + foodBonus());
+  return sum * Math.sqrt(habitatTier(h.tier).mult) * (1 + foodBonus()) * mareaMult();
 }
 function fishMap(): Record<string, number> {
   G.s.ext ??= {};

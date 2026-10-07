@@ -54,6 +54,8 @@ import {
   wakeCat,
 } from '../state/ext/island';
 import { preloadCats, elementFx, catTexture } from '../art/catArt';
+import { STORY_BATTLES } from '../state/sys/storyBattles';
+import { startStoryBattle } from '../app/storyFlow';
 import { slugOf } from '../art/tint';
 import { glowTexture } from '../art/textures';
 import { floatText, onomatopoeia, sparkles, flash, Shaker } from '../fx/juice';
@@ -1052,7 +1054,8 @@ export class IslandScene extends Scene {
     v.splashRing(c.x, c.y);
     floatText(this.wfx, c.x, c.y - 110, `+${fmt(food)}`, { color: 0x7fd8ff, size: 34, rise: 60 });
     floatText(this.wfx, c.x, c.y - 70, 'AUTO', { color: C.paper, size: 20, font: F.bebas, rise: 40, dur: 0.8 });
-    this.hud.flyTo('food', this.wfx.toGlobal({ x: c.x, y: c.y - 30 }), food, { count: 3 });
+    // automatic income stays in the world (splash + float); the HUD number just rolls — no coin
+    // rain + icon pop every few seconds (playtest: the fish pill never stopped flickering)
     this.syncAll();
   }
 
@@ -1206,7 +1209,12 @@ export class IslandScene extends Scene {
         if (hudUnlocks().altar) openAltar();
         else openMissions();
         return;
+      case 'damage_pct':
       case 'win_battle':
+        if (typeof g.battle === 'string' && g.battle in STORY_BATTLES) {
+          void startStoryBattle(g.battle);
+          return;
+        }
         if (g.battle === 'duel_guardian_bosque') {
           const sv = this.secrets.find((x) => x.n === 1);
           if (sv?.active) {

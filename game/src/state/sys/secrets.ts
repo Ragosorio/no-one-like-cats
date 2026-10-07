@@ -115,6 +115,7 @@ export function resolveSecret(n: number): SecretReward | null {
   if (G.s.expansions.secrets.includes(n)) return null;
   const r = REWARDS[n];
   G.s.expansions.secrets.push(n);
+  if (n === 6) G.count('void_fragments', 1);
   G.add('gems', r.gems, 'secret');
   if (r.orbs) G.addOrbs(r.orbs.species, r.orbs.n);
   if (r.unlock) {

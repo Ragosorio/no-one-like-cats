@@ -491,7 +491,7 @@ export class CatPuppet extends Mesh {
     if (!this.visible || !this.parent) return;
     const m = this.getGlobalTransform(undefined, false);
     const px = Math.hypot(m.a, m.b) * this.W * (globalThis.devicePixelRatio || 1);
-    if (px > 300) {
+    if (px > 640) {
       this.detailAsked = true;
       this.onWantDetail();
     }

@@ -335,7 +335,13 @@ class Game {
   purr(action: PurrAction, source: Timer['affinity']) {
     const base = purrMinutes(action, this.s.kl, this.s.momentum, false);
     const applied: { timer: Timer | null; minutes: number }[] = [];
-    let left = base;
+    // your own vault first: half of every Ronroneo is banked for you to spend where YOU want
+    // (playtest: automation kept eating it all, so the reserve never filled)
+    const vaultShare = BAL.ronroneo.vault_share ?? 0.5;
+    const toVault = Math.min(base * vaultShare, Math.max(0, purrPoolCapMin(this.s.kl, this.has('big_hourglass')) - this.s.purr));
+    this.s.purr += toVault;
+    if (toVault > 0) applied.push({ timer: null, minutes: toVault });
+    let left = base - toVault;
     let guard = 0;
     while (left > 0.001 && guard++ < 8) {
       const t = this.pickPurrTarget();
@@ -362,8 +368,9 @@ class Game {
   private pickPurrTarget(): Timer | null {
     const pinned = this.s.pinnedTimer ? this.timer(this.s.pinnedTimer) : null;
     if (pinned) return pinned;
+    // crops replant themselves (auto-harvest): they only get Ronroneo if you pin them
     let best: Timer | null = null;
-    for (const t of this.s.timers) if (!best || t.leftMs < best.leftMs) best = t;
+    for (const t of this.s.timers) if (t.kind !== 'crop' && (!best || t.leftMs < best.leftMs)) best = t;
     return best;
   }
   /** spend reserve minutes on a timer manually */

@@ -133,6 +133,8 @@ export interface StageRules {
   regrow?: number[];
   /** Barón Ladrillo: AI targets supports */
   demolisher?: number[];
+  /** this side leaves at the end of `turn` (Barco del Vacío): the other side "wins" by surviving */
+  retreat?: { side: 0 | 1; turn: number };
 }
 
 export interface BattleConfig {
@@ -200,7 +202,7 @@ export interface SideState {
   rodUsed: boolean;
 }
 
-export type VictoryReason = 'core' | 'crew' | 'sunk';
+export type VictoryReason = 'core' | 'crew' | 'sunk' | 'retreat';
 
 /** GDD material table (content.materials): multiplier per element of the shot; 'storm' = sim 'electric' */
 const MAT_RESIST: Record<string, Partial<Record<ElementId, number>>> = (() => {
@@ -584,6 +586,11 @@ export class Battle {
           this.pending.unshift({ k: 'boss', what: 'suddenDeath', side: 0, path: -1, at: 0 });
         }
         this.checkVictory();
+      }
+      const rt = this.cfg.rules?.retreat;
+      if (rt && this.winner === null && this.turn > rt.turn) {
+        this.winner = (1 - rt.side) as 0 | 1;
+        this.reason = 'retreat';
       }
     }
     // wind drifts a little each turn

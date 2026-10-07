@@ -25,7 +25,7 @@ export const POP_REFS: PopLine[] = [
   L('cine', '{cat} es un elfo libre.', 'Bueno, con collar. Libre-ish.'),
   L('cine', '¿Por qué arañas? ¿Por qué no podía ser seguir mariposas?', 'Yo sí sigo mariposas. Es mi trabajo de tiempo completo.'),
   L('cine', 'No son nuestras habilidades las que muestran quiénes somos…', '…sino nuestras siestas. Y yo elijo dormir.'),
-  L('cine', 'Avada Ke-MIAU-vra.', '…el pepino sigue ahí. Le tengo miedo igual.', { slugs: ['candy_alchemist_cat', 'masquerade_phantom_cat'] }),
+  L('cine', 'Avada Ke-MIAU-vra.', '…el pepino sigue ahí. Le tengo miedo igual.', { slugs: ['candy_alchemist_cat', 'deepsea_sprite_cat'] }),
   L('cine', 'No debes nombrarla… a la que hace ruido.', 'La aspiradora. AAAH. La nombré. Ya viene.'),
   // Star Wars
   L('cine', 'Que el Ronroneo te acompañe, {name}.', 'Y que el atún también. Amén… digo, miau.', { slugs: ['regal_cosmic_cat', 'alien_galaxy_cat'] }),
@@ -54,7 +54,7 @@ export const POP_REFS: PopLine[] = [
   L('cine', 'Tienes mis garras.', '…y mi siesta. Y mi plato. ¡Y MI CAJA!'),
   L('cine', '¡Por Frodo!', '*se lanza contra la cortina*'),
   // Batman / DC
-  L('cine', 'Soy Batman.', 'Bat-gato. Gatman. …no, no suena igual de cool.', { slugs: ['nori_lunar_cat', 'masquerade_phantom_cat'] }),
+  L('cine', 'Soy Batman.', 'Bat-gato. Gatman. …no, no suena igual de cool.', { slugs: ['nori_lunar_cat', 'deepsea_sprite_cat'] }),
   L('cine', 'Algunos gatos solo quieren ver arder el mundo.', '…o tirar tu taza al piso. Casi lo mismo.'),
   L('cine', 'O mueres como héroe, o vives lo suficiente…', '…para ver cómo te compran una aspiradora robot.'),
   L('cine', 'La noche es más oscura justo antes del amanecer.', 'Y a las 3 a.m. empiezan mis zoomies.'),
@@ -97,7 +97,7 @@ export const POP_REFS: PopLine[] = [
   L('libro', 'Fue el tiempo que perdiste con tu rosa…', '…tiré la rosa del florero. Perdón. Fue sin querer queriendo.'),
   L('libro', 'Todas las personas mayores fueron primero gatitos.', 'Bueno, no todas. Pero deberían.'),
   L('libro', 'El lenguaje es fuente de malentendidos.', 'Por eso solo digo miau. Cero malentendidos. Bueno, casi.'),
-  L('libro', 'Aquí todos estamos locos.', 'Lo dijo el Gato de Cheshire. Mi primo. Sonríe raro.', { slugs: ['masquerade_phantom_cat', 'storybook_ink_cat'] }),
+  L('libro', 'Aquí todos estamos locos.', 'Lo dijo el Gato de Cheshire. Mi primo. Sonríe raro.', { slugs: ['deepsea_sprite_cat', 'storybook_ink_cat'] }),
   L('libro', '¿Quién diablos soy? Ese es el gran enigma.', 'Soy el que se acuesta en tu teclado. Mucho gusto.'),
   L('libro', 'Cada vez más curioso…', 'La curiosidad no mató a este gato. Solo lo asustó un pepino.'),
   L('libro', 'Empieza por el principio.', '…el principio es el desayuno. Siempre.'),

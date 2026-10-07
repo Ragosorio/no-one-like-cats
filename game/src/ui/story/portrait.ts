@@ -13,12 +13,12 @@ import { Speaker } from './text';
 import { settings } from '../../core/settings';
 import { killTweensDeep } from './tweens';
 
-/** MAI pure-vector trace of the Luzterna painting (no raster served) */
-export const LUZTERNA_URL = 'story/luzterna.svg';
+/** MAI pure-vector trace of the Luzterna painting (light tier, ~1 MB; no raster served) */
+export const LUZTERNA_URL = 'story/lite/luzterna.svg';
 
 let loading: Promise<unknown> | null = null;
 export function preloadStoryArt(extraSlugs: string[] = []) {
-  if (!loading) loading = Assets.load({ alias: LUZTERNA_URL, src: LUZTERNA_URL, data: { resolution: 1.5 } }).catch(() => undefined);
+  if (!loading) loading = Assets.load({ alias: LUZTERNA_URL, src: LUZTERNA_URL, data: { resolution: 1 } }).catch(() => undefined);
   return Promise.all([loading, extraSlugs.length ? preloadCats(extraSlugs).catch(() => undefined) : undefined]);
 }
 

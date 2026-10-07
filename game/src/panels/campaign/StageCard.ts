@@ -1,5 +1,7 @@
 /** Map stage card: a newspaper clipping with name, faction, captain, honest odds and expected loot. */
 import { Container, Graphics } from 'pixi.js';
+import { simulateEstimate, estimateLabel, Estimate } from '../../state/sys/estimate';
+import { buildBattle } from '../../state/sys/campaign';
 import gsap from 'gsap';
 import { C, F } from '../../ui/theme';
 import { txt, Button } from '../../ui/widgets';
@@ -147,9 +149,19 @@ export class StageCard extends Container {
     const rt = label(`Ventaja ×${ratio.toFixed(2)}`, 13, C.ink);
     rt.position.set(bx, y + 110);
     content.addChild(rt);
-    const est = stamp(`ESTIMACIÓN ${Math.round(pc * 100)}%`, pc >= 0.7 ? 0x2e8a52 : pc >= 0.45 ? 0xb8701e : C.red, 26, -0.04);
-    est.position.set(W0 - pad - est.width / 2 - 6, y + 122);
-    content.addChild(est);
+    // same honest sim as the pre-battle panel (cached per ship/crew/layout)
+    const estHolder = new Container();
+    content.addChild(estHolder);
+    const ey = y + 122;
+    const drawEst = (e: Estimate) => {
+      if (estHolder.destroyed) return;
+      estHolder.removeChildren().forEach((c) => c.destroy({ children: true }));
+      const p = e.p ?? pc;
+      const st = stamp(`ESTIMACIÓN ${estimateLabel(e)}`, e.p === null ? P.blue : p >= 0.7 ? 0x2e8a52 : p >= 0.45 ? 0xb8701e : C.red, 26, -0.04);
+      st.position.set(W0 - pad - st.width / 2 - 6, ey);
+      estHolder.addChild(st);
+    };
+    void simulateEstimate(`${z}-${s}`, () => buildBattle(z, s, () => undefined), drawEst);
     y += 138 + 20;
 
     // boss analysis

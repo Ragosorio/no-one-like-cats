@@ -4,6 +4,8 @@
  * future zones under "???" fog. Tap a stage → clipping card with honest odds and loot.
  */
 import { Container, Graphics, Sprite, TilingSprite } from 'pixi.js';
+import { STORY_BATTLES } from '../state/sys/storyBattles';
+import { startStoryBattle } from '../app/storyFlow';
 import gsap from 'gsap';
 import { Scene } from '../core/scenes';
 import { W, H } from '../core/App';
@@ -212,7 +214,15 @@ export class MapScene extends Scene {
     const b = boat(C.pink);
     this.marker.addChild(b);
     this.chart.addChild(this.marker);
-    this.hud = new Hud({ mode: 'map' });
+    this.hud = new Hud({
+      mode: 'map',
+      // story battles (Heraldo, Grieta, Barco del Vacío, Patito…) launch straight from their mission
+      onGoal: (m) => {
+        const g = m.goal as { battle?: unknown };
+        if (typeof g.battle === 'string' && g.battle in STORY_BATTLES) void startStoryBattle(g.battle);
+        else void import('../panels/Missions').then((x) => x.openMissions());
+      },
+    });
     this.addChild(this.hud, this.overlay);
 
     refreshQuickAssaultFlag();

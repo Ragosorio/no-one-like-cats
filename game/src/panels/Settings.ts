@@ -327,9 +327,14 @@ export function openSettings(..._args: unknown[]) {
       void import('../app/story').then((s) => s.replayPrologue());
     }, { w: 250, h: 64, size: 28, color: C.paper });
     replay.position.set(0, 52);
+    const credits = new Button('CRÉDITOS', () => {
+      m.close();
+      void Promise.all([import('../ui/story/credits'), import('../ui/dialog')]).then(([c, d]) => c.playCredits(d.storyLayer()));
+    }, { w: 200, h: 64, size: 28, color: C.yellow });
+    credits.position.set(262, 52);
     const del = new Button('BORRAR PARTIDA', () => step1(), { w: 270, h: 64, size: 28, color: C.red, textColor: C.paper });
     del.position.set(W2 - 280, 52);
-    zone.addChild(replay, del);
+    zone.addChild(replay, credits, del);
   };
   const step1 = () => {
     zone.removeChildren().forEach((c) => c.destroy({ children: true }));

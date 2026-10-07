@@ -63,6 +63,10 @@ export const GOAL_HANDLERS: Record<string, GoalHandler> = {
   win_battle: { how: 'mixed', counters: (g) => (g.stage || g.battle ? [] : [g.zone ? `wins_zone_${g.zone}` : 'wins']), flags: (g) => (g.battle ? [`won_${g.battle}`] : []), owner: 'combate (state/sys/campaign.ts)' },
   reach_kl: { how: 'state' },
   defeat_boss: { how: 'state' },
+  // story (Capítulo 1 final): the credits beat, the Barco del Vacío damage, the fragments
+  watch: { how: 'state', owner: 'historia (app/story.ts marks the beat)' },
+  damage_pct: { how: 'state', owner: 'historia (state/sys/storyBattles.ts dmgpct_<battle>)' },
+  void_fragments: { how: 'state', owner: 'historia (bosses 4–6, Orquesta, story battles)' },
   ship_upgrade: { how: 'state' },
   own_ship: { how: 'state' },
   own_ships: { how: 'state' },

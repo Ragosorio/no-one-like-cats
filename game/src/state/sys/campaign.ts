@@ -142,6 +142,14 @@ interface SiegeInput {
   sp?: number;
   special?: string;
   intro?: BattleIntro;
+  /** story battles: a hand-made ship instead of the archetype generator */
+  blueprint?: ShipBlueprint;
+  /** extra enemy structure multiplier (Barco del Vacío: you can't sink it) */
+  hpMulX?: number;
+  /** shown numbers multiplier on top of the stage one (Patito revancha: absurd damage) */
+  displayMulX?: number;
+  /** sudden-death turn override (0 = off) */
+  suddenDeath?: number;
 }
 
 const BOSS_INTRO: Record<number, { lines: string[]; weak: string }> = {
@@ -202,7 +210,7 @@ export function buildBattle(zone: number, stage: number, onEnd: (r: BattleResult
   return spec;
 }
 
-function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): BattleSpec {
+export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): BattleSpec {
   const { zone, stage, key } = o;
   const isBoss = o.type === 'boss';
   const isElite = o.type === 'elite';
@@ -234,7 +242,8 @@ function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): BattleSpec
   let enemyShots: ShotDef[] | undefined;
   const rules: StageRules = { ...(o.rules ?? {}) };
   let bossCfg: BossConfig | undefined;
-  if (key === '1-1') bp = STORY_SHIPS.patito;
+  if (o.blueprint) bp = o.blueprint;
+  else if (key === '1-1') bp = STORY_SHIPS.patito;
   else if (isBoss && zone === 1) bp = STORY_SHIPS.sardina_furiosa;
   else if (isBoss && zone === 2) {
     bp = STORY_SHIPS.risco_flotante;
@@ -285,7 +294,7 @@ function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): BattleSpec
   const { bp: pbp, hpMul } = playerBlueprint(shipId);
   const shieldMods = pbp.modules.filter((m) => m.kind === 'shield').length;
   const bubble = !o.noPlayerBubble && mk('shield') >= 1 && shieldMods > 0 ? (shieldMods >= 3 ? 2 : 1) : 0;
-  const enemyHpMul = (isBoss ? tune!.hp : et.hp * zt.hp) * sk;
+  const enemyHpMul = (isBoss ? tune!.hp : et.hp * zt.hp) * sk * (o.hpMulX ?? 1);
   const pZone = ZONES[zone - 1];
   const spec: BattleSpec = {
     playerName: G.s.flags.shipName ? String(G.s.flags.shipName) : shipLabel(),
@@ -311,13 +320,14 @@ function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): BattleSpec
       conductionBonus: extras.conductionJumps,
     },
     enemy: { blueprint: bp, hpMul: enemyHpMul, cats: enemyCats, cannonAtk: Math.round(40 * ef * 1.6 * eDmg), cannonShots: enemyShots, armor: o.enemyArmor },
-    displayMul: Math.max(1, EP / 2) / 10,
+    displayMul: (Math.max(1, EP / 2) / 10) * (o.displayMulX ?? 1),
     meta: { zone, stage, key, boss: isBoss, ep: EP, sp: SP, weaponMk: mk('weapon'), special: o.special, gearNotes: gear.notes, conductionBonus: extras.conductionJumps, previewBonus: extras.previewBonus },
     playerStyle: styleFor('player', { hullMk: mk('hull') }),
     enemyStyle: styleFor('enemy', { zone, stageKey: key, boss: isBoss }),
     boss: bossCfg,
     rules,
     intro: o.intro,
+    suddenDeath: o.suddenDeath,
     onEnd,
   };
   return spec;
@@ -476,6 +486,11 @@ function bossRewards(zone: number, loot: Loot) {
   G.bump('boss');
   G.xp('boss');
   G.count(`boss_${zone}`);
+  // Fragmentos del Vacío (E25): the Arcanista's grimoire, the Estrella, the Primer Mar
+  if (zone >= 4 && !G.has(`frag_boss_${zone}`)) {
+    G.flag(`frag_boss_${zone}`);
+    G.count('void_fragments', zone === 6 ? 2 : 1);
+  }
   for (const u of b.unlocks) {
     const [k, v] = u.split(':');
     loot.unlocks.push(u);
