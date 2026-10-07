@@ -1,9 +1,14 @@
 /**
  * Honest win estimate: instead of a power formula (which ignored your actual ship: layout, materials,
  * bulkheads…), the same headless sim the balance scripts use plays the stage N times with a decent
- * and a good aim (AI profiles normal / hard) and counts wins. ~20–30 ms per battle, run one per idle
- * slot so the panel never stutters. Also explains WHY: how your crew's elements fare against the
- * enemy hull materials, and how you tend to lose (crew K.O., sunk, core).
+ * and a good aim (AI profiles normal / hard) and counts wins. Run one per idle slot so the panel never
+ * stutters. Also explains WHY: how your crew's elements fare against the enemy hull materials, and how
+ * you tend to lose (crew K.O., sunk, core).
+ *
+ * The screen IS this sim: BattleScene only presents what `Battle` resolves, and every AI decision draws
+ * from the same deterministic seeds (autoplay.ts `aiSeed`), so a battle seed + the same shots replays
+ * the same battle on screen and headless (verified call by call: docs/guias/arquitectura.md). The only
+ * thing the estimate has to assume is YOU: half the sims aim like a decent player, half like a good one.
  */
 import { CONTENT, catDef } from '../../data/content';
 import { G } from '../game';
@@ -92,6 +97,11 @@ export function hiddenRules(spec: BattleSpec): string[] {
     if (Math.abs(t.dmg - 1) > 0.04) bits.push(`su daño x${t.dmg.toFixed(2)}`);
     if (bits.length) out.push(`Ajuste de esta pelea (aparte del Poder): ${bits.join(' · ')}.`);
   }
+  const ra = spec.meta?.ratio;
+  if (ra && Math.abs(Math.log(ra.S)) > 0.1) {
+    const x = (n: number) => `x${n.toFixed(2)}`;
+    out.push(`Poder: tienes el ${Math.round(ra.S * 100)}% del suyo. Eso pesa en la pelea: tu daño ${x(ra.pf)} y tu aguante ${x(ra.ph)}; su daño ${x(ra.ef)} y su aguante ${x(ra.eh)}.`);
+  }
   // the enemy ship's own weapons
   const cannons = spec.enemy.blueprint.modules.filter((m) => m.kind === 'cannon').length;
   if (cannons) {
@@ -108,6 +118,17 @@ export function hiddenRules(spec: BattleSpec): string[] {
   return out;
 }
 
+/** sims per estimate: 24 keeps the sampling error around ±10 points (12 was ±14) */
+export const EST_SIMS = 24;
+
+/** what the estimate assumes about the player (first lines of the ¿POR QUÉ? sheet) */
+function assumptions(n: number): string[] {
+  return [
+    `Cómo se calcula: ${n} peleas COMPLETAS con el mismo motor que la pantalla (tu barco, tu tripulación, sus reglas). La pelea en pantalla es exactamente esta simulación: nada se decide distinto al verla.`,
+    `Qué supone de ti: la mitad de las peleas apunta como un capitán normal (±3°, lee el viento a medias, a veces elige mal el blanco) y la mitad como uno bueno (±1.5°, casi siempre el mejor blanco). Ambos corrigen con el tiro anterior y usan la ULTIMATE cuando está lista. Si apuntas peor, te irá peor; si afinas con la sombra del tiro, mejor.`,
+  ];
+}
+
 const LOSS_TIP: Record<string, string> = {
   crew: 'Te noquean a la tripulación: sube nivel o estrellas, o lleva un tanque al frente.',
   sunk: 'Te hunden el barco: mejora el Casco o el Escudo en el Astillero.',
@@ -118,7 +139,7 @@ const LOSS_TIP: Record<string, string> = {
  * Run (or reuse) the estimate. `build` returns a fresh spec (the sim mutates nothing outside it).
  * `onUpdate` fires after every sim so the UI can count up. Resolves with the final estimate.
  */
-export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?: (e: Estimate) => void, total = 12): Promise<Estimate> {
+export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?: (e: Estimate) => void, total = EST_SIMS): Promise<Estimate> {
   const sig = signature(key);
   const hit = cache.get(sig);
   if (hit && performance.now() - hit.at < 120000) {
@@ -127,18 +148,28 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
   }
   const first = build();
   const why = matchup(first);
-  const est: Estimate = { p: null, done: 0, total, reasons: why.reasons, tips: why.tips, details: [...why.reasons, ...hiddenRules(first), ...why.tips] };
+  const est: Estimate = { p: null, done: 0, total, reasons: why.reasons, tips: why.tips, details: [...assumptions(total), ...why.reasons, ...hiddenRules(first), ...why.tips] };
   onUpdate?.(est);
   return import('../../battle/autoplay').then(
-    ({ autoBattle }) =>
+    ({ autoBattleSteps }) =>
       new Promise((resolve) => {
         void import('../../battle/ai').then(({ DIFFICULTY }) => {
           let wins = 0;
           const losses: Record<string, number> = {};
+          let run: ReturnType<typeof autoBattleSteps> | null = null;
           const step = () => {
             const i = est.done;
-            const spec = i === 0 ? first : build();
-            const res = autoBattle(spec, i % 2 ? DIFFICULTY.hard : DIFFICULTY.normal, 1000 + i * 77, 30);
+            if (!run) run = autoBattleSteps(i === 0 ? first : build(), i % 2 ? DIFFICULTY.hard : DIFFICULTY.normal, 1000 + i * 77, 30);
+            // a few side-turns per idle slot (~10 ms), never a whole boss fight in one frame
+            const t0 = performance.now();
+            let r = run.next();
+            while (!r.done && performance.now() - t0 < 10) r = run.next();
+            if (!r.done) {
+              schedule(step);
+              return;
+            }
+            run = null;
+            const res = r.value;
             if (res.won) wins++;
             else if (res.reason) losses[res.reason] = (losses[res.reason] ?? 0) + 1;
             est.done++;
@@ -147,6 +178,9 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
             if (est.done < total) schedule(step);
             else {
               const worst = Object.entries(losses).sort((a, b) => b[1] - a[1])[0];
+              // the honest margin of a sample this size (1 standard error, in points)
+              const se = Math.round(100 * Math.sqrt(Math.max(0.04, est.p * (1 - est.p)) / total));
+              est.details.splice(2, 0, `Margen: ±${se} puntos (son ${total} peleas, no infinitas). Ganaste ${wins} de ${total}.`);
               if (worst && est.p < 0.7 && LOSS_TIP[worst[0]]) {
                 est.tips.unshift(LOSS_TIP[worst[0]]);
                 est.details.push(LOSS_TIP[worst[0]]);

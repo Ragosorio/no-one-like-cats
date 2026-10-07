@@ -98,6 +98,8 @@ export interface BattleSpec {
     enemyWeaponMk?: number;
     /** hidden stage knobs, shown in the pre-battle why + the REFORZADO chip */
     tune?: { hull: number; crewHp: number; dmg: number; stage: number };
+    /** power-ratio scaling (Poder tuyo / suyo → daño y aguante de cada lado) */
+    ratio?: { S: number; pf: number; ef: number; ph: number; eh: number };
     enemyLevel?: number;
     special?: string;
     errand?: string;

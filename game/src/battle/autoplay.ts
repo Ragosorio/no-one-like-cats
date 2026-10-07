@@ -84,6 +84,18 @@ export interface AutoResult {
 
 /** play a whole battle AI vs AI (player side uses `playerProfile`) */
 export function autoBattle(spec: BattleSpec, playerProfile: AiProfile = DIFFICULTY.hard, seed = 1, maxRounds = 30, log?: (b: Battle, side: 0 | 1, shot: string) => void): AutoResult {
+  const it = autoBattleSteps(spec, playerProfile, seed, maxRounds, log);
+  for (;;) {
+    const r = it.next();
+    if (r.done) return r.value;
+  }
+}
+
+/**
+ * The same battle, one side-turn per `next()` (a boss fight is ~0.5 s of AI thinking: the estimate
+ * spreads it over idle frames instead of freezing the panel).
+ */
+export function* autoBattleSteps(spec: BattleSpec, playerProfile: AiProfile = DIFFICULTY.hard, seed = 1, maxRounds = 30, log?: (b: Battle, side: 0 | 1, shot: string) => void): Generator<void, AutoResult, void> {
   const b = makeBattle(spec, seed);
   const mem = [new Map<string, number>(), new Map<string, number>()];
   const kos: Record<string, number> = {};
@@ -129,6 +141,7 @@ export function autoBattle(spec: BattleSpec, playerProfile: AiProfile = DIFFICUL
       }
       b.endTurn();
       if (b.winner !== null) break;
+      yield;
     }
   }
   notePhase();
