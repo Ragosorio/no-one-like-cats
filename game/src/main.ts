@@ -51,7 +51,8 @@ async function loadFonts() {
 async function route(scene: string | null, fresh: boolean) {
   const needsState = ['island', 'map'].includes(scene ?? '');
   if (needsState) {
-    if (fresh) newGame();
+    // &new=1 wipes the live save: dev server only (on the public site it would cost a player their island)
+    if (fresh && import.meta.env.DEV) newGame();
     else bootGame();
   }
   switch (scene) {
