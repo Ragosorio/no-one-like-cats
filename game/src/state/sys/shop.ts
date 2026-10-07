@@ -9,8 +9,9 @@
  * nunca menor que su piso (múltiplo de `new_habitat_cost_base`). Así la tienda escala con tu isla y
  * nunca se vuelve gratis ni imposible (GDD 08 §8: costos ≈ minutos de ingreso esperado).
  *
- *  HÁBITATS   `nextHabitatCost()` de balance (new_habitat_cost_base · growth^(H−1)) — misma regla que
- *             el BuildMenu; la tienda solo elige DÓNDE (modo colocación en parcela libre).
+ *  HÁBITATS   `habitatCost(el)` de balance (habitats.placement): sube con los hábitats que ya tienes
+ *             y con las copias del mismo elemento. Se colocan donde quepan (modo colocación libre,
+ *             island/placement.ts); se mueven gratis y se venden por una parte de su valor.
  *  EDIFICIOS  sumideros de gemas de `BAL.gems.sinks`: Constructor extra 50 (máx 1, flag
  *             `extra_builder` que ya lee island.builders()), Reloj de arena grande 30 (máx 1, flag
  *             `big_hourglass` que ya lee G.purr), Ranura de Resonancia 40 → `buyGemSlot()` de
@@ -30,7 +31,8 @@
 import { G } from '../game';
 import { BAL, newHabitatCost, purrPoolCapMin } from '../econ';
 import { CATS, catDef } from '../../data/content';
-import { builders, globalGoldMult, nextHabitatCost, freeHabitatPlot, expansionState, regionsUnlocked, habitatPlots } from './island';
+import { builders, globalGoldMult, nextHabitatCost, expansionState } from './island';
+import { hasHabitatSpace, roomForHabitats } from '../../island/placement';
 import { adopt, collState, ownsSpecies, prismaShopLeft, starNeed, starMax } from './cats';
 import { buyGemSlot, gemSlotInfo } from './resonance';
 import { EXPANSIONS } from '../../data/content';
@@ -92,19 +94,19 @@ export function incomePrice(minutes: number, floorMult = 1) {
 }
 
 // ---------------------------------------------------------------- habitats
-export function habitatPrice() {
-  return nextHabitatCost();
+export function habitatPrice(element?: string) {
+  return nextHabitatCost(element);
 }
+/** how many more habitats fit on the land you own (greedy estimate) */
 export function freePlotCount() {
-  let n = 0;
-  for (const r of regionsUnlocked()) for (let i = 0; i < habitatPlots(r); i++) if (!G.s.habitats.some((h) => h.region === r && h.plot === i)) n++;
-  return n;
+  return roomForHabitats();
 }
+/** habitats you own + the ones that still fit */
 export function totalPlotCount() {
-  return regionsUnlocked().reduce((a, r) => a + habitatPlots(r), 0);
+  return G.s.habitats.length + roomForHabitats();
 }
 export function hasFreePlot() {
-  return !!freeHabitatPlot();
+  return hasHabitatSpace();
 }
 /** first expansion you could buy (or the next locked one) to get more plots */
 export function nextExpansion() {

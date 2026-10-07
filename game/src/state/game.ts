@@ -63,8 +63,13 @@ export interface Habitat {
   id: string;
   element: string;
   tier: number;
+  /** region under the footprint (kept in sync with gx/gy by island/placement) */
   region: string;
+  /** legacy fixed-plot index (before free placement, SAVE v3); -1 for freely placed habitats */
   plot: number;
+  /** top-left tile of the 3×3 footprint (free placement, SAVE v3) */
+  gx: number;
+  gy: number;
   buffer: number;
   cats: string[];
   busy: boolean;

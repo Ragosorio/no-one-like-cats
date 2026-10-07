@@ -81,6 +81,16 @@ const RECIPES: Record<DimId, Recipe[]> = {
   ruins: [{ kind: 'pixel', rate: 5, tex: T('pixel'), tint: [0x00e5ff, 0xff2e88, 0xffe066, 0x7cff6a, 0xffffff], scale: [0.2, 0.5], life: [2, 4], y: [0, -60], vx: [0, 0], vy: [-46, -20], alpha: 1, add: true }],
   reef: [{ kind: 'bubble', rate: 3.2, tex: T('bubble'), tint: [0xffffff, 0xcff8ff, 0xffd8ee], scale: [0.25, 0.7], life: [3, 5], y: [0, -40], vx: [-4, 4], vy: [-50, -26], alpha: 0.9 }],
   cosmic: [{ kind: 'twinkle', rate: 3, tex: T('ember'), tint: [0xffffff, 0xc8b4ff, 0x9ff3ff, 0xff9ad8], scale: [0.12, 0.3], life: [2, 4], y: [0, -200], vx: [-5, 5], vy: [-8, 2], alpha: 1, add: true }],
+  sakura: [{ kind: 'petal', rate: 4, tex: T('petal'), tint: [0xff9ec4, 0xffc9de, 0xffffff], scale: [0.3, 0.5], life: [5, 8], y: [-140, -300], vx: [12, 30], vy: [10, 22], alpha: 0.95 }],
+  desert: [{ kind: 'ash', rate: 3, tex: T('flake'), tint: [0xf6e3b4, 0xe8c48a], scale: [0.16, 0.3], life: [3, 5], y: [0, -80], vx: [30, 60], vy: [-6, 4], alpha: 0.8 }],
+  candy: [
+    { kind: 'bubble', rate: 2.2, tex: T('bubble'), tint: [0xffffff, 0xffc4df, 0xc8f4ff], scale: [0.25, 0.6], life: [3, 5], y: [0, -40], vx: [-4, 4], vy: [-44, -22], alpha: 0.9 },
+    { kind: 'petal', rate: 1.6, tex: T('petal'), tint: [0xff2e88, 0x7fe0c8, 0xffe066, 0x8a5cff], scale: [0.2, 0.32], life: [4, 6], y: [-160, -280], vx: [-8, 8], vy: [16, 30], alpha: 1 },
+  ],
+  void: [
+    { kind: 'ash', rate: 2, tex: T('cube'), tint: [0xf3eee3], scale: [0.5, 1.1], life: [5, 8], y: [0, -40], vx: [-4, 4], vy: [-18, -8], alpha: 0.6 },
+    { kind: 'mote', rate: 0.8, tex: T('ember'), tint: [0xff2e48], scale: [0.16, 0.3], life: [2, 4], y: [0, -120], vx: [-6, 6], vy: [-10, 4], alpha: 1, add: true },
+  ],
 };
 const MAX_MOTES = 420;
 
@@ -417,6 +427,10 @@ const CARD: Record<DimId, { font: string; fill: number; bg: number; ink: number;
   ruins: { font: F.glitch, fill: 0xff2e88, bg: 0x07040c, ink: 0x00e5ff, rot: 0.03 },
   reef: { font: F.comic, fill: 0x10243a, bg: 0xffd0ea, ink: 0x10243a, rot: -0.03 },
   cosmic: { font: F.bebas, fill: 0xffffff, bg: 0x2a1650, ink: 0x8a5cff, rot: 0.02 },
+  sakura: { font: F.serif, fill: 0x3a1f2a, bg: 0xffe0ec, ink: 0x3a1f2a, rot: -0.02 },
+  desert: { font: F.news, fill: 0x2a1a0a, bg: 0xf6e3b4, ink: 0x2a1a0a, rot: 0.02 },
+  candy: { font: F.comic, fill: 0xff2e88, bg: 0xfff6d6, ink: 0x3a1030, rot: -0.03 },
+  void: { font: F.heavy, fill: 0xf3eee3, bg: 0x0b0a0e, ink: 0xff2e48, rot: 0 },
 };
 function titleCard(d: DimDef): Container {
   const s = CARD[d.id];

@@ -124,6 +124,123 @@ export function patternTex(kind: PatternKind, frame = 0): Texture {
 }
 
 const PAT: Record<PatternKind, (g: G2, w: number, h: number, f: number) => void> = {
+  // ---- post-story ring
+  petals: (g, w, h) => {
+    const r = rng(303);
+    // watercolour blooms
+    for (let i = 0; i < 14; i++) {
+      const x = r() * w;
+      const y = r() * h;
+      const rx = 30 + r() * 46;
+      const c = pick(r, [0xffc9de, 0xffffff, 0xd9f0c8]);
+      tiled(w, h, (ox, oy) => {
+        g.save();
+        g.translate(ox + x, oy + y);
+        g.scale(1, 0.5);
+        const grd = g.createRadialGradient(0, 0, 0, 0, 0, rx);
+        grd.addColorStop(0, rgba(c, 0.35));
+        grd.addColorStop(1, rgba(c, 0));
+        g.fillStyle = grd;
+        g.beginPath();
+        g.arc(0, 0, rx, 0, Math.PI * 2);
+        g.fill();
+        g.restore();
+      });
+    }
+    // fallen petals
+    for (let i = 0; i < 120; i++) {
+      const x = r() * w;
+      const y = r() * h;
+      const a = r() * Math.PI;
+      const c = pick(r, [0xff9ec4, 0xffc9de, 0xffffff, 0xff7ab8]);
+      tiled(w, h, (ox, oy) => {
+        g.save();
+        g.translate(ox + x, oy + y);
+        g.rotate(a);
+        g.fillStyle = rgba(c, 0.9);
+        g.beginPath();
+        g.ellipse(0, 0, 3.6, 2, 0, 0, Math.PI * 2);
+        g.fill();
+        g.restore();
+      });
+    }
+  },
+  dunes: (g, w, h) => {
+    const r = rng(404);
+    g.lineCap = 'round';
+    // wind ripples (ink hatching, old comic)
+    for (let i = 0; i < 46; i++) {
+      const x = r() * w;
+      const y = r() * h;
+      const len = 26 + r() * 40;
+      g.strokeStyle = rgba(0x7a5630, 0.45 + r() * 0.25);
+      g.lineWidth = 1.4;
+      tiled(w, h, (ox, oy) => {
+        for (let k = 0; k < 3; k++) {
+          g.beginPath();
+          g.moveTo(ox + x, oy + y + k * 5);
+          g.quadraticCurveTo(ox + x + len * 0.5, oy + y + k * 5 - 6, ox + x + len, oy + y + k * 5);
+          g.stroke();
+        }
+      });
+    }
+    // pebbles
+    for (let i = 0; i < 60; i++) {
+      const x = r() * w;
+      const y = r() * h;
+      g.fillStyle = rgba(pick(r, [0x7a5630, 0xffe9a8, 0xb0844e]), 0.8);
+      tiled(w, h, (ox, oy) => {
+        g.beginPath();
+        g.arc(ox + x, oy + y, 1 + r() * 1.6, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
+  },
+  sprinkles: (g, w, h) => {
+    const r = rng(505);
+    g.lineCap = 'round';
+    for (let i = 0; i < 160; i++) {
+      const x = r() * w;
+      const y = r() * h;
+      const a = r() * Math.PI;
+      const c = pick(r, [0xff2e88, 0x7fe0c8, 0xffe066, 0x8a5cff, 0xffffff, 0x7fd8ff]);
+      g.strokeStyle = rgba(c, 1);
+      g.lineWidth = 2.6;
+      tiled(w, h, (ox, oy) => {
+        g.beginPath();
+        g.moveTo(ox + x - Math.cos(a) * 3.5, oy + y - Math.sin(a) * 2);
+        g.lineTo(ox + x + Math.cos(a) * 3.5, oy + y + Math.sin(a) * 2);
+        g.stroke();
+      });
+    }
+  },
+  negative: (g, w, h) => {
+    const r = rng(606);
+    g.lineCap = 'round';
+    // white scratches on black film
+    for (let i = 0; i < 40; i++) {
+      const x = r() * w;
+      const y = r() * h;
+      const len = 10 + r() * 50;
+      g.strokeStyle = rgba(0xf3eee3, 0.25 + r() * 0.35);
+      g.lineWidth = 1 + r();
+      tiled(w, h, (ox, oy) => {
+        g.beginPath();
+        g.moveTo(ox + x, oy + y);
+        g.lineTo(ox + x + len, oy + y + len * 0.5 * (r() - 0.5));
+        g.stroke();
+      });
+    }
+    // film grain + a few red specks
+    for (let i = 0; i < 200; i++) {
+      const x = r() * w;
+      const y = r() * h;
+      g.fillStyle = rgba(i % 25 === 0 ? 0xff2e48 : 0xf3eee3, i % 25 === 0 ? 0.9 : 0.25);
+      tiled(w, h, (ox, oy) => {
+        g.fillRect(ox + x, oy + y, 1.6, 1.6);
+      });
+    }
+  },
   grass: (g, w, h) => grassy(g, w, h, false),
   lush: (g, w, h) => grassy(g, w, h, true),
   hatch: (g, w, h, f) => {
@@ -1136,6 +1253,10 @@ const LAG: Record<string, (g: G2, w: number, h: number, f: number, d: DimDef) =>
     }
   },
   cosmic: (g, w, h) => PAT.stars(g, w, h, 0),
+  sakura: (g, w, h) => PAT.petals(g, w, h, 0),
+  desert: (g, w, h) => PAT.dunes(g, w, h, 0),
+  candy: (g, w, h) => PAT.sprinkles(g, w, h, 0),
+  void: (g, w, h) => PAT.negative(g, w, h, 0),
 };
 
 // =====================================================================================  FALLS

@@ -1,0 +1,33 @@
+NUEVO · inicio: 33.3K/s · Reino 32 · 12 hábitats
+  0h30     151K/s  oro   26.7M  Reino 33  hábitats 12 (tiers 4-5)  exp 6
+  1h00     359K/s  oro   8.32M  Reino 34  hábitats 12 (tiers 4-6)  exp 7
+  1h30     531K/s  oro    943M  Reino 35  hábitats 12 (tiers 4-6)  exp 7
+  2h00     850K/s  oro    967M  Reino 36  hábitats 12 (tiers 4-6)  exp 8
+  3h00    1.88M/s  oro   1.76B  Reino 37  hábitats 12 (tiers 4-7)  exp 9
+  4h00    4.86M/s  oro   4.38B  Reino 39  hábitats 12 (tiers 4-7)  exp 10
+  5h00    11.0M/s  oro   1.02B  Reino 41  hábitats 12 (tiers 4-8)  exp 11
+  6h00    20.6M/s  oro   65.3B  Reino 43  hábitats 12 (tiers 4-8)  exp 11
+  7h00    51.9M/s  oro    141B  Reino 44  hábitats 12 (tiers 4-8)  exp 12
+  exp  6 Ruinas Arcanas           200M  a los 0h28 (+28 min)  ingreso 130K/s  Reino 33
+  exp  7 Arrecife Prismatico      400M  a los 0h58 (+30 min)  ingreso 267K/s  Reino 34
+  exp  8 Atolon Estelar          1.50B  a los 1h44 (+45 min)  ingreso 573K/s  Reino 36
+  exp  9 Jardín Sakura           4.00B  a los 2h45 (+60 min)  ingreso 1.31M/s  Reino 37
+  exp 10 Oasis Dorado            10.0B  a los 3h47 (+62 min)  ingreso 3.60M/s  Reino 39
+  exp 11 Isla Caramelo           30.0B  a los 4h59 (+72 min)  ingreso 8.86M/s  Reino 41
+  exp 12 Abismo del Ronroneo      100B  a los 6h20 (+80 min)  ingreso 24.7M/s  Reino 43
+LEGACY · inicio: 23.3K/s · Reino 32 · 12 hábitats
+  0h30    84.3K/s  oro    135M  Reino 33  hábitats 12 (tiers 4-5)  exp 5
+  1h00     125K/s  oro    165M  Reino 34  hábitats 12 (tiers 4-5)  exp 6
+  1h30     189K/s  oro   71.7M  Reino 35  hábitats 12 (tiers 4-5)  exp 7
+  2h00     208K/s  oro    520M  Reino 35  hábitats 12 (tiers 4-5)  exp 7
+  3h00     452K/s  oro    154M  Reino 37  hábitats 12 (tiers 4-6)  exp 8
+  4h00     892K/s  oro   2.62B  Reino 39  hábitats 12 (tiers 5-6)  exp 8
+  5h00    1.56M/s  oro   4.23B  Reino 40  hábitats 12 (tiers 5-6)  exp 9
+  6h00    2.88M/s  oro   3.45B  Reino 42  hábitats 12 (tiers 5-6)  exp 10
+  7h00    5.58M/s  oro   19.4B  Reino 44  hábitats 12 (tiers 5-7)  exp 10
+  exp  6 Ruinas Arcanas           200M  a los 0h40 (+40 min)  ingreso 85.0K/s  Reino 33
+  exp  7 Arrecife Prismatico      400M  a los 1h24 (+44 min)  ingreso 134K/s  Reino 35
+  exp  8 Atolon Estelar          1.50B  a los 2h52 (+88 min)  ingreso 279K/s  Reino 37
+  exp  9 Jardín Sakura           4.00B  a los 4h20 (+87 min)  ingreso 936K/s  Reino 39
+  exp 10 Oasis Dorado            10.0B  a los 5h43 (+82 min)  ingreso 1.92M/s  Reino 41
+  pendiente: exp 11 Isla Caramelo (Reino 36, 30.0B)  ahora Reino 44, 5.58M/s

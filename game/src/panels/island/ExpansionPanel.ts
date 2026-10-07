@@ -1,4 +1,5 @@
 /** Expansion card: aspirational price, what it opens, bonus, buy (needs Reino + free builder). */
+import { regionRoom } from '../../island/placement';
 import { Container, Graphics } from 'pixi.js';
 import { Modal, toast } from '../../ui/modal';
 import { C, F } from '../../ui/theme';
@@ -36,6 +37,10 @@ const BIOME_NAME: Record<string, string> = {
   ruins: 'Ruinas',
   reef: 'Arrecife',
   cosmic: 'Cósmico',
+  sakura: 'Sakura',
+  desert: 'Desierto',
+  candy: 'Caramelo',
+  void: 'Vacío',
 };
 const BIOME_DECOR: Record<string, DecorKind[]> = {
   forest: ['pine', 'mushroom', 'tree'],
@@ -46,6 +51,10 @@ const BIOME_DECOR: Record<string, DecorKind[]> = {
   ruins: ['column', 'crystal', 'column'],
   reef: ['coral', 'star', 'coral'],
   cosmic: ['star', 'crystal', 'column'],
+  sakura: ['sakura', 'lamp', 'sakura'],
+  desert: ['cactus', 'palm', 'column'],
+  candy: ['lollipop', 'mushroom', 'lollipop'],
+  void: ['crystal', 'column', 'star'],
 };
 
 export function openExpansionPanel(n: number, onBought?: () => void) {
@@ -112,7 +121,7 @@ export function openExpansionPanel(n: number, onBought?: () => void) {
   const bonus = Object.entries(e.balance.bonus)
     .map(([k, v]) => BONUS_TXT[k]?.(v) ?? `${k} ${v}`)
     .join(' · ');
-  const plots = txt(`${e.balance.hab_plots} parcelas de hábitat · ${e.balance.farm_plots} de pesca${bonus ? ` · ${bonus}` : ''}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink, wordWrap: true, wordWrapWidth: m.innerW - x0 });
+  const plots = txt(`Espacio para ~${regionRoom(e.id)} hábitats · ${e.balance.farm_plots} de pesca${bonus ? ` · ${bonus}` : ''}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink, wordWrap: true, wordWrapWidth: m.innerW - x0 });
   plots.position.set(x0, y + 38);
   m.body.addChild(h2, plots);
   y += 50 + plots.height + 14;

@@ -319,4 +319,8 @@ const DONE_LINE: Record<number, string> = {
   3: 'La forja ronronea. Calientita.',
   4: 'Una botella vacía. Huele a misterio y a sardina.',
   5: 'Charquito. El pirata ya se fue a secar.',
+  9: 'El té ya se enfrió. El gato sabio sigue sin hablar.',
+  10: 'La esfinge volvió a dormirse. Ronca en jeroglífico.',
+  11: 'Quedan restos de chocolate. Y huellas. Muchas huellas.',
+  12: 'El ojo te sigue mirando. Ya te acostumbrarás.',
 };

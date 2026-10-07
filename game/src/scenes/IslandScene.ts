@@ -1,6 +1,6 @@
 /**
  * IslandScene — the "Dragon City" half: an isometric cozy archipelago that feels alive.
- * Home + 8 expansions (paper veil + aspirational prices), habitats with cats and gold buffers,
+ * Home + 12 expansions (paper veil + aspirational prices), freely placed habitats with cats and gold buffers,
  * the fishing dock, fixed buildings (Santuario, Puerto, Altar, Mesa, Faro) and the HUD.
  */
 import '../island/safety';
@@ -19,8 +19,9 @@ import { fmt } from '../core/format';
 import { C, F } from '../ui/theme';
 import { toast } from '../ui/modal';
 import { G, Habitat } from '../state/game';
+import { habitatTier } from '../state/econ';
 import { EXPANSIONS, MissionDef } from '../data/content';
-import { HOME, collectHabitat, collectAllBoth, expansionState, harvest, regionsUnlocked, habitatPlots, farmPlots, islandBus, bankUnlocked, bankKl, bankState, habitatRate, freeHabitatPlot } from '../state/sys/island';
+import { HOME, collectHabitat, collectAllBoth, expansionState, harvest, regionsUnlocked, farmPlots, islandBus, bankUnlocked, bankKl, bankState, habitatRate } from '../state/sys/island';
 import { secretInfo } from '../state/sys/secrets';
 import { expeditions, readyExpeditions, expeditionsUnlocked, resonanceQueue } from '../state/sys/workforce';
 import { SecretView } from '../island/views/SecretView';
@@ -45,7 +46,6 @@ import {
   catLevelScale,
   ctaVisible,
   featureUnlocked,
-  habitatAt,
   habitatFull,
   homelessCats,
   hudUnlocks,
@@ -88,7 +88,8 @@ import { openBuildMenu } from '../panels/island/BuildMenu';
 import { openDock } from '../panels/island/DockPanel';
 import { openExpansionPanel } from '../panels/island/ExpansionPanel';
 import { openPopMenu } from '../panels/island/PopMenu';
-import { mountDecor } from '../island/decor/DecorLayer';
+import { mountDecor, requestPlacement } from '../island/decor/DecorLayer';
+import { nearestHabitatSpot } from '../island/placement';
 
 /** dev: synthesize a tap at logical (1920×1080) coords — used for automated testing */
 function devTap(lx: number, ly: number, holdMs = 40) {
@@ -207,7 +208,7 @@ export class IslandScene extends Scene {
       sync: () => this.syncAll(),
     });
     // Tienda (agente tienda): shop decorations + placement mode
-    this.unsub.push(mountDecor({ world: this.world, objects: this.objects, bubbles: this.bubbles, wfx: this.wfx, cam: this.cam, plan: this.plan, hud: () => (this.destroyed ? null : this.hud), look: (r) => this.look(r), sync: () => this.syncAll() }));
+    this.unsub.push(mountDecor({ world: this.world, objects: this.objects, bubbles: this.bubbles, wfx: this.wfx, cam: this.cam, plan: this.plan, hud: () => (this.destroyed ? null : this.hud), look: (r) => this.look(r), sync: () => this.syncAll(), habitatGhost: (id) => this.plots.forEach((v) => v.setGhosted(v.id === id)) }));
     // events
     this.unsub.push(
       G.on('timerDone', (t) => {
@@ -458,7 +459,6 @@ export class IslandScene extends Scene {
 
   private buildPlots() {
     for (const p of this.plan.plans.values()) {
-      p.habitats.forEach((s, i) => this.plots.push(new PlotView(p.def.id, i, s, this.ctx, (v) => this.onPlotTap(v))));
       p.farms.forEach((s) => this.farms.push(new FarmView(s, this.ctx, (v) => this.onFarmTap(v))));
       if (p.def.id !== HOME) this.expansions.push(new ExpansionView(p, this.ctx, (n) => openExpansionPanel(n, () => this.focusRegion(n))));
       if (p.secret && p.def.n)
@@ -496,10 +496,7 @@ export class IslandScene extends Scene {
   private syncAll() {
     this.redrawTerrain();
     const unlocked = new Set(regionsUnlocked().filter((r) => !this.revealHold.has(r)));
-    for (const v of this.plots) {
-      const active = unlocked.has(v.region) && v.plot < habitatPlots(v.region);
-      v.sync(active, active ? habitatAt(v.region, v.plot) : null);
-    }
+    this.syncHabitats(unlocked);
     // farms: state farms are (region, plot)
     for (const p of this.plan.plans.values()) {
       const views = this.farms.filter((f) => p.farms.includes(f.spot));
@@ -531,15 +528,44 @@ export class IslandScene extends Scene {
     this.syncCats();
   }
 
-  private habitatArea(h: Habitat): Area | null {
-    const v = this.plots.find((p) => p.region === h.region && p.plot === h.plot);
-    return v ? v.catArea() : null;
+  /** one view per habitat (free placement): create, follow moves, drop sold ones */
+  private syncHabitats(unlocked: Set<string>) {
+    const alive = new Set<string>();
+    for (const h of G.s.habitats) {
+      alive.add(h.id);
+      let v = this.plots.find((p) => p.id === h.id);
+      if (!v) {
+        v = new PlotView(h, this.ctx, (pv) => this.onPlotTap(pv));
+        this.plots.push(v);
+      }
+      if (v.sync(unlocked.has(h.region), h)) {
+        // it moved: its cats walk over to the new yard
+        for (const uid of h.cats) this.cats.get(uid)?.setArea(v.catArea(), true);
+      }
+    }
+    for (const v of [...this.plots])
+      if (!alive.has(v.id)) {
+        v.destroy();
+        this.plots.splice(this.plots.indexOf(v), 1);
+      }
+  }
+  private viewOf(h: Habitat) {
+    return this.plots.find((p) => p.id === h.id) ?? null;
   }
 
+  private habitatArea(h: Habitat): Area | null {
+    return this.viewOf(h)?.catArea() ?? null;
+  }
+
+  private homelessSpot: { gx: number; gy: number; sig: string } | null = null;
   private homelessArea(): Area {
-    // near the first free plot in home (Brote waits next to the empty plot with a box)
-    const free = this.plots.find((p) => p.active && !p.habitat);
-    const s = free?.spot ?? this.plan.home.mesa;
+    // homeless cats wait (with a box) where the next habitat would fit, else next to the Mesa
+    const sig = G.s.habitats.map((h) => `${h.gx},${h.gy}`).join(';') + `|${G.s.decor?.placed.length ?? 0}`;
+    if (!this.homelessSpot || this.homelessSpot.sig !== sig) {
+      const f = nearestHabitatSpot();
+      this.homelessSpot = f ? { gx: f.gx, gy: f.gy, sig } : { gx: this.plan.home.mesa.gx, gy: this.plan.home.mesa.gy, sig };
+    }
+    const s = { gx: this.homelessSpot.gx, gy: this.homelessSpot.gy, w: 3, h: 3 };
     return { x0: s.gx + s.w - 1.5, y0: s.gy + s.h - 1.25, w: 0.7, h: 0.5 };
   }
 
@@ -644,10 +670,6 @@ export class IslandScene extends Scene {
   private lastCollect = new Map<string, number>();
   private onPlotTap(v: PlotView) {
     const h = v.habitat;
-    if (!h) {
-      openBuildMenu(v.region, v.plot);
-      return;
-    }
     const now = performance.now();
     const recent = now - (this.lastCollect.get(h.id) ?? 0) < 1400;
     if (!h.busy && !recent && !v.coins.empty && v.coins.visible) {
@@ -688,7 +710,7 @@ export class IslandScene extends Scene {
   private collectAllFx() {
     if (!featureUnlocked('collect_all')) return;
     const list = G.s.habitats.filter((h) => {
-      const v = this.plots.find((p) => p.region === h.region && p.plot === h.plot);
+      const v = this.viewOf(h);
       return Math.floor(h.buffer) > 0 || (v && !v.coins.empty);
     });
     if (!list.length) {
@@ -698,7 +720,7 @@ export class IslandScene extends Scene {
     }
     const target = this.hud.target('gold') ?? { x: W, y: 0 };
     const items = list
-      .map((h) => ({ h, v: this.plots.find((p) => p.region === h.region && p.plot === h.plot)!, amt: Math.floor(h.buffer), fish: Math.floor(((G.s.ext?.fish as Record<string, number> | undefined)?.[h.id]) ?? 0) }))
+      .map((h) => ({ h, v: this.viewOf(h)!, amt: Math.floor(h.buffer), fish: Math.floor(((G.s.ext?.fish as Record<string, number> | undefined)?.[h.id]) ?? 0) }))
       .filter((i) => i.v)
       .map((i) => ({ ...i, g: i.v.bubbleGlobal() }))
       .sort((a, b) => Math.hypot(a.g.x - target.x, a.g.y - target.y) - Math.hypot(b.g.x - target.x, b.g.y - target.y));
@@ -783,7 +805,7 @@ export class IslandScene extends Scene {
   private buildDone(hid: string) {
     const h = G.s.habitats.find((x) => x.id === hid);
     if (!h) return;
-    const v = this.plots.find((p) => p.region === h.region && p.plot === h.plot);
+    const v = this.viewOf(h);
     if (!v) return;
     const p = isoToScreen(v.spot.gx + 1, v.spot.gy + 1);
     sfx('fanfare');
@@ -794,13 +816,16 @@ export class IslandScene extends Scene {
   private upgradeDone(hid: string) {
     const h = G.s.habitats.find((x) => x.id === hid);
     if (!h) return;
-    const v = this.plots.find((p) => p.region === h.region && p.plot === h.plot);
+    const v = this.viewOf(h);
     if (!v) return;
     const p = isoToScreen(v.spot.gx + 1, v.spot.gy + 1);
     sfx('levelup');
     onomatopoeia(this.wfx, p.x, p.y - 150, '¡MEJORADO!', { size: 80, color: C.yellow });
     sparkles(this.wfx, p.x, p.y - 80, C.yellow, 16, 160);
-    toast(`¡${v.tierName().toUpperCase()}!`, { sub: 'Tu hábitat subió de nivel: más oro, más búfer.', icon: 'gold' });
+    const tier = habitatTier(h.tier);
+    const prev = habitatTier(h.tier - 1);
+    const more = tier.capacity - prev.capacity;
+    toast(`¡${v.tierName().toUpperCase()}!`, { sub: `Tu hábitat subió de nivel: ${more > 0 ? `+${more} lugar${more > 1 ? 'es' : ''} para gatos (${tier.capacity}), ` : ''}x${tier.mult} oro y más búfer.`, icon: 'gold' });
   }
   private expansionCleared(n: number) {
     const e = this.expansions.find((x) => x.n === n);
@@ -820,7 +845,7 @@ export class IslandScene extends Scene {
         onomatopoeia(this.wfx, e.center.x, e.center.y - 160, '¡TIERRA NUEVA!', { size: 110, color: C.yellow, dur: 1.6 });
         this.parts.burst(e.center.x, e.center.y - 40, { count: 50, tint: [0x8f8778, 0xa59d8c, C.yellow, C.paper], speed: [300, 900], gravity: 1200, scale: [0.4, 1], life: [0.6, 1.3] });
         const ex = EXPANSIONS[n - 1];
-        toast(`¡${ex.name.toUpperCase()} LIMPIO!`, { sub: `+${ex.balance.hab_plots} parcelas de hábitat${ex.balance.farm_plots ? ` · +${ex.balance.farm_plots} de pesca` : ''}. ${ex.opensDesign.split('.')[0]}.`, color: C.mint, dur: 3.5 });
+        toast(`¡${ex.name.toUpperCase()} LIMPIO!`, { sub: `Terreno nuevo para tus hábitats${ex.balance.farm_plots ? ` · +${ex.balance.farm_plots} de pesca` : ''}. ${ex.opensDesign.split('.')[0]}.`, color: C.mint, dur: 3.5 });
         sfx('fanfare');
       }),
     );
@@ -852,13 +877,13 @@ export class IslandScene extends Scene {
     if (id === 'pier' && this.pier) this.cam.lookAt(this.pier.top.x, this.pier.top.y + 140, true, 0.85);
   }
 
-  /** "Construir" from the Sin casa panel: first free plot, camera there, build menu */
-  buildOnFreePlot(_el?: string) {
-    const free = freeHabitatPlot();
-    const v = free ? this.plots.find((p) => p.region === free.region && p.plot === free.plot && p.active && !p.habitat) : this.plots.find((p) => p.active && !p.habitat);
-    if (!v) return false;
-    this.focusSpot(v.spot);
-    this.bag.add(gsap.delayedCall(0.6, () => openBuildMenu(v.region, v.plot)));
+  /** "Construir" (Sin casa panel, missions): placement mode for that element, or the element picker */
+  buildOnFreePlot(el?: string) {
+    const free = nearestHabitatSpot();
+    if (!free) return false;
+    if (el) return requestPlacement({ kind: 'habitat', element: el });
+    this.focusSpot({ gx: free.gx, gy: free.gy, w: 3, h: 3 });
+    this.bag.add(gsap.delayedCall(0.5, () => openBuildMenu()));
     return true;
   }
 
@@ -923,7 +948,7 @@ export class IslandScene extends Scene {
     const prod = G.s.habitats.filter((h) => habitatRate(h) > 0);
     if (!prod.length) return;
     const h = prod[Math.floor(Math.random() * prod.length)];
-    const v = this.plots.find((q) => q.region === h.region && q.plot === h.plot);
+    const v = this.viewOf(h);
     if (!v || !v.active) return;
     const from = isoToScreen(v.spot.gx + 0.5, v.spot.gy + 0.5);
     const to = this.bank.slot;
@@ -1136,7 +1161,8 @@ export class IslandScene extends Scene {
         return;
       }
       case 'collect_gold': {
-        const v = this.plots.find((p) => p.habitat && p.habitat.cats.length) ?? this.plots[0];
+        const v = this.plots.find((p) => p.habitat.cats.length) ?? this.plots[0];
+        if (!v) return;
         this.focusSpot(v.spot);
         this.pointAt(v.coins.parent!.x + v.coins.x, v.coins.parent!.y + v.coins.y - 60);
         return;
@@ -1158,16 +1184,12 @@ export class IslandScene extends Scene {
         return;
       }
       case 'build_habitat': {
-        const v = this.plots.find((p) => p.active && !p.habitat);
-        if (v) {
-          this.focusSpot(v.spot);
-          this.bag.add(gsap.delayedCall(0.7, () => openBuildMenu(v.region, v.plot)));
-        } else toast('No hay parcelas libres', { sub: 'Compra una expansión para tener más.' });
+        if (!this.buildOnFreePlot()) toast('Ya no cabe otro hábitat', { sub: 'Mueve o vende uno, o compra una expansión.' });
         return;
       }
       case 'upgrade_habitat': {
-        const v = this.plots.find((p) => p.habitat && !p.habitat.busy);
-        if (v?.habitat) openHabitatPanel(v.habitat.id);
+        const v = this.plots.find((p) => !p.habitat.busy);
+        if (v) openHabitatPanel(v.habitat.id);
         return;
       }
       case 'buy_expansion':

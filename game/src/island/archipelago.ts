@@ -1,5 +1,5 @@
 /**
- * Pure (no Pixi) archipelago generation: home + the 8 expansions from content.json.
+ * Pure (no Pixi) archipelago generation: home + every expansion from content.json.
  * Deterministic so building plots never move between sessions.
  */
 import { EXPANSIONS } from '../data/content';
@@ -22,6 +22,14 @@ export interface Tile {
 }
 
 export const GRID = 52;
+/**
+ * The outer ring of expansions (9+, post-story) lives beyond the original 52×52 board. Regions 1–8
+ * keep the old bound (GRID) so their coastline — and every plot/pen planned on it — never moves.
+ */
+export const GRID_EXT = 64;
+/** last expansion number of the original archipelago (its regions clip at GRID) */
+export const LEGACY_REGIONS = 8;
+export const gridOf = (r: { n?: number }) => ((r.n ?? 0) > LEGACY_REGIONS ? GRID_EXT : GRID);
 /** content regions are spread around home so every expansion is its own island (sea channels between) */
 export const SPREAD = 1.65;
 export const HOME_ID = 'home';
@@ -51,9 +59,10 @@ export function generateArchipelago(regions: RegionDef[], seed = 7): Map<string,
   const tiles = new Map<string, Tile>();
   for (const r of regions) {
     const wob = Array.from({ length: 12 }, () => rng.range(0.8, 1.12));
+    const lim = gridOf(r);
     for (let gy = Math.floor(r.cy - r.r - 2); gy <= r.cy + r.r + 2; gy++)
       for (let gx = Math.floor(r.cx - r.r - 2); gx <= r.cx + r.r + 2; gx++) {
-        if (gx < 1 || gy < 1 || gx >= GRID - 1 || gy >= GRID - 1) continue;
+        if (gx < 1 || gy < 1 || gx >= lim - 1 || gy >= lim - 1) continue;
         const dx = gx - r.cx;
         const dy = gy - r.cy;
         const a = Math.atan2(dy, dx);
@@ -76,8 +85,8 @@ export function generateArchipelago(regions: RegionDef[], seed = 7): Map<string,
       if (n <= 1) tiles.delete(key(t.gx, t.gy));
     }
   // fill 1-tile holes
-  for (let gy = 1; gy < GRID - 1; gy++)
-    for (let gx = 1; gx < GRID - 1; gx++) {
+  for (let gy = 1; gy < GRID_EXT - 1; gy++)
+    for (let gx = 1; gx < GRID_EXT - 1; gx++) {
       if (tiles.has(key(gx, gy))) continue;
       const ns = N4.map(([dx, dy]) => tiles.get(key(gx + dx, gy + dy))).filter(Boolean) as Tile[];
       if (ns.length >= 4) tiles.set(key(gx, gy), { gx, gy, region: ns[0].region });

@@ -519,6 +519,40 @@ export function laterSecretArt(n: number, done: boolean): SecretArt {
     g.poly([ctr.x - 26, ctr.y - 6, ctr.x - 20, ctr.y - 92, ctr.x + 4, ctr.y - 106, ctr.x + 24, ctr.y - 86, ctr.x + 26, ctr.y - 4]).fill(0x9a77a0).stroke(INK);
     g.moveTo(ctr.x - 8, ctr.y - 70).lineTo(ctr.x, ctr.y - 84).lineTo(ctr.x + 8, ctr.y - 70).moveTo(ctr.x, ctr.y - 64).lineTo(ctr.x, ctr.y - 40).stroke({ width: 3, color: done ? C.mint : 0xb7a4c7 });
     glow(c, ctr.x, ctr.y - 64, 0x8a5cff, done ? 0.2 : 0.45, 0.6);
+  } else if (n === 9) {
+    // tea under the cherry tree: low table, teapot, a tiny wise cat silhouette
+    isoBoxAt(g, 0.4, 0.4, 1.2, 1.2, 8, 0x8a5a3a, 0.04);
+    g.ellipse(ctr.x, ctr.y - 12, 26, 10).fill(0xf3eee3).stroke(THIN);
+    g.circle(ctr.x - 6, ctr.y - 26, 11).fill(0xff9ec4).stroke(THIN);
+    g.moveTo(ctr.x + 4, ctr.y - 28).lineTo(ctr.x + 16, ctr.y - 34).stroke({ width: 3, color: C.ink });
+    g.circle(ctr.x + 24, ctr.y - 30, 12).fill(0x3a1f2a);
+    g.poly([ctr.x + 15, ctr.y - 38, ctr.x + 18, ctr.y - 50, ctr.x + 23, ctr.y - 41, ctr.x + 28, ctr.y - 50, ctr.x + 31, ctr.y - 38]).fill(0x3a1f2a);
+    if (!done) glow(c, ctr.x, ctr.y - 30, 0xff9ec4, 0.4, 0.6);
+  } else if (n === 10) {
+    // sleeping sphinx-cat
+    isoBoxAt(g, 0.2, 0.2, 1.6, 1.6, 12, 0xc89458, 0.03);
+    g.ellipse(ctr.x, ctr.y - 24, 44, 18).fill(0xe2c182).stroke(INK);
+    g.circle(ctr.x - 26, ctr.y - 48, 18).fill(0xe2c182).stroke(INK);
+    g.poly([ctr.x - 40, ctr.y - 58, ctr.x - 36, ctr.y - 76, ctr.x - 28, ctr.y - 62]).fill(0xe2c182).stroke(THIN);
+    g.poly([ctr.x - 24, ctr.y - 64, ctr.x - 16, ctr.y - 78, ctr.x - 12, ctr.y - 60]).fill(0xe2c182).stroke(THIN);
+    g.poly([ctr.x - 44, ctr.y - 44, ctr.x - 8, ctr.y - 44, ctr.x - 14, ctr.y - 30, ctr.x - 38, ctr.y - 30]).fill(0x3569a3).stroke(THIN);
+    if (done) g.circle(ctr.x - 30, ctr.y - 50, 3).fill(C.ink);
+    else g.moveTo(ctr.x - 34, ctr.y - 50).lineTo(ctr.x - 26, ctr.y - 50).stroke({ width: 2, color: C.ink });
+  } else if (n === 11) {
+    // chocolate fountain
+    g.ellipse(ctr.x, ctr.y - 6, 40, 16).fill(0x6a3b2a).stroke(INK);
+    g.ellipse(ctr.x, ctr.y - 10, 32, 11).fill(0x8a4f2e);
+    g.rect(ctr.x - 6, ctr.y - 70, 12, 60).fill(0xffd3e8).stroke(THIN);
+    g.ellipse(ctr.x, ctr.y - 70, 24, 9).fill(0x6a3b2a).stroke(THIN);
+    for (const dx of [-18, 0, 18]) g.moveTo(ctr.x + dx * 0.9, ctr.y - 66).quadraticCurveTo(ctr.x + dx * 1.4, ctr.y - 40, ctr.x + dx * 1.2, ctr.y - 12).stroke({ width: 4, color: 0x8a4f2e, cap: 'round' });
+    glow(c, ctr.x, ctr.y - 40, 0xff7ab8, done ? 0.2 : 0.45, 0.6);
+  } else if (n === 12) {
+    // the eye in the ground
+    g.ellipse(ctr.x, ctr.y - 4, 48, 20).fill(0x0b0a0e).stroke({ width: 3, color: 0xf3eee3 });
+    g.moveTo(ctr.x - 40, ctr.y - 4).quadraticCurveTo(ctr.x, ctr.y - 30, ctr.x + 40, ctr.y - 4).quadraticCurveTo(ctr.x, ctr.y + 22, ctr.x - 40, ctr.y - 4).fill(0xf3eee3);
+    g.circle(ctr.x, ctr.y - 4, 12).fill(0xff2e48);
+    g.ellipse(ctr.x, ctr.y - 4, 3, 10).fill(0x000000);
+    glow(c, ctr.x, ctr.y - 4, 0xff2e48, done ? 0.25 : 0.55, 0.7);
   } else if (n === 7) {
     g.moveTo(ctr.x - 50, ctr.y).bezierCurveTo(ctr.x - 56, ctr.y - 80, ctr.x + 56, ctr.y - 80, ctr.x + 50, ctr.y).closePath().fill(0xffd2dc).stroke(INK);
     for (let k = -3; k <= 3; k++) g.moveTo(ctr.x, ctr.y - 4).lineTo(ctr.x + k * 14, ctr.y - 60 + Math.abs(k) * 6).stroke({ width: 2, color: 0xff7ab8 });

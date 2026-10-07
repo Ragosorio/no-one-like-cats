@@ -34,6 +34,11 @@ const KIND: Record<number, { kind: SecretKind; clicks?: number; minLevel?: numbe
   6: { kind: 'battle', battle: 'secret_orquesta', hint: 'Entra al Santuario Gatuno Antiguo: La Orquesta Muda.' },
   7: { kind: 'open', hint: 'Asómate a la concha gigante.' },
   8: { kind: 'open', hint: 'Enciende el faro del atolón.' },
+  // post-story ring
+  9: { kind: 'open', hint: 'Siéntate a tomar té con el gato sabio del cerezo.' },
+  10: { kind: 'clicks', clicks: 15, hint: 'Despierta a la esfinge a golpecitos: 15 clics.' },
+  11: { kind: 'open', hint: 'Asómate a la fuente de chocolate (con cuidado).' },
+  12: { kind: 'open', hint: 'Mira al ojo. Él ya te está mirando.' },
 };
 
 export function secretInfo(n: number): SecretInfo {
@@ -95,6 +100,10 @@ export interface SecretReward {
   text: string;
   unlock?: string;
   orbs?: { species: string; n: number };
+  prisma?: number;
+  crystals?: { element: string; n: number };
+  /** Ronroneo minutes */
+  purr?: number;
 }
 
 const REWARDS: Record<number, SecretReward> = {
@@ -106,6 +115,10 @@ const REWARDS: Record<number, SecretReward> = {
   6: { gems: 4, text: 'La Orquesta Muda calla. Una partitura se vuelve gato…', unlock: 'cat:s_sonata' },
   7: { gems: 2, text: 'La concha refleja tu barco… y te regala el Escudo Espejo.', unlock: 'shield:espejo' },
   8: { gems: 4, text: 'El faro se enciende y apunta al horizonte: ahí espera el Leviatán.', unlock: 'story:faro' },
+  9: { gems: 3, text: 'El gato sabio sirve té, no dice nada y te deja 10 Orbes Prisma en el plato. Sabiduría.', prisma: 10 },
+  10: { gems: 3, text: 'La esfinge bosteza, te hace un acertijo, se le olvida y te paga 30 cristales de Tierra para que te vayas.', crystals: { element: 'earth', n: 30 } },
+  11: { gems: 3, text: 'Del chocolate sale un gato. Ronronea tan fuerte que te regala 2 horas de Ronroneo.', purr: 120 },
+  12: { gems: 5, text: 'El ojo parpadea. Detrás hay otro mar. El Capítulo 2 ya sabe que existes.', unlock: 'story:capitulo2' },
 };
 export function secretReward(n: number) {
   return REWARDS[n];
@@ -118,6 +131,9 @@ export function resolveSecret(n: number): SecretReward | null {
   if (n === 6) G.count('void_fragments', 1);
   G.add('gems', r.gems, 'secret');
   if (r.orbs) G.addOrbs(r.orbs.species, r.orbs.n);
+  if (r.prisma) G.add('prisma', r.prisma, 'secret');
+  if (r.crystals) G.s.crystals[r.crystals.element] = (G.s.crystals[r.crystals.element] ?? 0) + r.crystals.n;
+  if (r.purr) G.s.purr += r.purr;
   if (r.unlock) {
     const [k, v] = r.unlock.split(':');
     if (k === 'rumor' && !G.s.catdex[v]) G.s.catdex[v] = 'rumor';

@@ -48,6 +48,53 @@ export function decorArt(kind: DecorKind, v: number): Container {
       if (v > 0.6) for (const [x, y] of [[-8, -46], [10, -52], [2, -36]]) g.circle(x * s, y * s, 3.5).fill(C.red).stroke({ width: 1.5, color: C.ink });
       break;
     }
+    case 'sakura': {
+      // cherry tree (Jardín Sakura): bent trunk, pink puffs, a couple of falling petals
+      shadow(g, 28);
+      const lean = (v - 0.5) * 14;
+      g.moveTo(-5, 0).quadraticCurveTo(lean - 6, -20 * s, lean, -38 * s).lineTo(lean + 9, -38 * s).quadraticCurveTo(lean + 4, -18 * s, 6, 0).closePath().fill(0x6a3b3b).stroke(INK);
+      const pink = v < 0.5 ? 0xffb7d2 : 0xffc9de;
+      const deep = 0xff8fbf;
+      for (const [x, y, r, col] of [
+        [lean - 18, -46, 17, deep],
+        [lean + 20, -48, 18, deep],
+        [lean, -60, 24, pink],
+        [lean - 14, -54, 15, pink],
+        [lean + 14, -58, 15, pink],
+      ] as const)
+        g.circle(x * s, y * s, r * s).fill(col).stroke(INK);
+      g.circle((lean - 6) * s, -68 * s, 6 * s).fill({ color: 0xffffff, alpha: 0.45 });
+      for (const [x, y] of [
+        [-22, -14],
+        [18, -8],
+        [30, -24],
+      ])
+        g.ellipse(x, y, 4, 2.4).fill(pink).stroke({ width: 1, color: C.ink, alpha: 0.6 });
+      break;
+    }
+    case 'cactus': {
+      shadow(g, 16);
+      const col = v < 0.5 ? 0x5f9e4a : 0x6fb35a;
+      g.roundRect(-8, -54 * s, 16, 54 * s, 8).fill(col).stroke(INK);
+      g.moveTo(-8, -26 * s).lineTo(-18, -26 * s).lineTo(-18, -42 * s).stroke({ width: 9, color: C.ink, cap: 'round' });
+      g.moveTo(-8, -26 * s).lineTo(-18, -26 * s).lineTo(-18, -42 * s).stroke({ width: 5, color: col, cap: 'round' });
+      g.moveTo(8, -34 * s).lineTo(17, -34 * s).lineTo(17, -46 * s).stroke({ width: 9, color: C.ink, cap: 'round' });
+      g.moveTo(8, -34 * s).lineTo(17, -34 * s).lineTo(17, -46 * s).stroke({ width: 5, color: col, cap: 'round' });
+      for (let k = 0; k < 4; k++) g.moveTo(-2 + (k % 2) * 4, -10 - k * 11 * s).lineTo(-2 + (k % 2) * 4, -14 - k * 11 * s).stroke({ width: 1.5, color: 0xf2e6cf });
+      if (v > 0.55) g.circle(0, -56 * s, 5).fill(0xff7ab8).stroke({ width: 1.5, color: C.ink });
+      break;
+    }
+    case 'lollipop': {
+      shadow(g, 14);
+      g.rect(-2.5, -46 * s, 5, 46 * s).fill(0xffffff).stroke(THIN);
+      const cy = -58 * s;
+      const r = 15 * s;
+      const cols = v < 0.5 ? [0xff7ab8, 0xffffff] : [0x7fe0c8, 0xffffff];
+      g.circle(0, cy, r).fill(cols[0]).stroke(INK);
+      for (let k = 0; k < 3; k++) g.arc(0, cy, r * (0.75 - k * 0.22), k, k + Math.PI * 1.2).stroke({ width: 3, color: cols[1] });
+      g.circle(-r * 0.4, cy - r * 0.4, 3).fill({ color: 0xffffff, alpha: 0.7 });
+      break;
+    }
     case 'pine': {
       shadow(g, 22);
       g.rect(-4, -14, 8, 14).fill(0x6a4325).stroke(INK);

@@ -939,7 +939,7 @@
         "name": "Cesta de Mimbre",
         "kl": 4,
         "capacity": 3,
-        "mult": 1.6,
+        "mult": 1.8,
         "buffer_min": 40,
         "cost": 700,
         "crystals": 0,
@@ -949,8 +949,8 @@
         "tier": 3,
         "name": "Torre Rascadora",
         "kl": 9,
-        "capacity": 3,
-        "mult": 2.6,
+        "capacity": 4,
+        "mult": 3.2,
         "buffer_min": 50,
         "cost": 12000,
         "crystals": 0,
@@ -959,59 +959,147 @@
       {
         "tier": 4,
         "name": "Casita de Coral",
-        "kl": 15,
-        "capacity": 4,
-        "mult": 4.2,
+        "kl": 14,
+        "capacity": 5,
+        "mult": 6.0,
         "buffer_min": 60,
-        "cost": 220000,
+        "cost": 200000,
         "crystals": 0,
         "build_s": 240
       },
       {
         "tier": 5,
         "name": "Palacio de Cojines",
-        "kl": 21,
-        "capacity": 4,
-        "mult": 7.0,
+        "kl": 19,
+        "capacity": 6,
+        "mult": 11.0,
         "buffer_min": 75,
-        "cost": 4000000.0,
-        "crystals": 3,
-        "build_s": 480
+        "cost": 3000000.0,
+        "crystals": 2,
+        "build_s": 420
       },
       {
         "tier": 6,
         "name": "Templo del Ronroneo",
-        "kl": 27,
-        "capacity": 5,
-        "mult": 11.0,
+        "kl": 24,
+        "capacity": 7,
+        "mult": 20.0,
         "buffer_min": 90,
-        "cost": 70000000.0,
-        "crystals": 6,
-        "build_s": 900
+        "cost": 40000000.0,
+        "crystals": 3,
+        "build_s": 720
       },
       {
         "tier": 7,
         "name": "Santuario Arcano",
-        "kl": 31,
-        "capacity": 5,
-        "mult": 18.0,
+        "kl": 28,
+        "capacity": 8,
+        "mult": 36.0,
         "buffer_min": 105,
-        "cost": 600000000.0,
-        "crystals": 10,
-        "build_s": 1800
+        "cost": 300000000.0,
+        "crystals": 5,
+        "build_s": 1200
       },
       {
         "tier": 8,
         "name": "Nucleo Celestial",
-        "kl": 36,
-        "capacity": 6,
-        "mult": 30.0,
+        "kl": 32,
+        "capacity": 10,
+        "mult": 64.0,
         "buffer_min": 120,
-        "cost": 4000000000.0,
-        "crystals": 15,
+        "cost": 2000000000.0,
+        "crystals": 7,
+        "build_s": 1800
+      },
+      {
+        "tier": 9,
+        "name": "Ancla Dimensional",
+        "kl": 34,
+        "capacity": 12,
+        "mult": 115.0,
+        "buffer_min": 150,
+        "cost": 15000000000.0,
+        "crystals": 9,
         "build_s": 2700
+      },
+      {
+        "tier": 10,
+        "name": "Trono Multiversal",
+        "kl": 37,
+        "capacity": 14,
+        "mult": 200.0,
+        "buffer_min": 180,
+        "cost": 100000000000.0,
+        "crystals": 12,
+        "build_s": 3600
       }
-    ]
+    ],
+    "legacy": {
+      "note": "Precios/capacidades hasta 2026-10 (parcelas fijas). Solo para el parche de reembolso.",
+      "new_habitat_cost_base": 60,
+      "new_habitat_cost_growth": 4.2,
+      "tiers": [
+        {
+          "tier": 1,
+          "capacity": 2,
+          "cost": 0,
+          "crystals": 0
+        },
+        {
+          "tier": 2,
+          "capacity": 3,
+          "cost": 700,
+          "crystals": 0
+        },
+        {
+          "tier": 3,
+          "capacity": 3,
+          "cost": 12000,
+          "crystals": 0
+        },
+        {
+          "tier": 4,
+          "capacity": 4,
+          "cost": 220000,
+          "crystals": 0
+        },
+        {
+          "tier": 5,
+          "capacity": 4,
+          "cost": 4000000.0,
+          "crystals": 3
+        },
+        {
+          "tier": 6,
+          "capacity": 5,
+          "cost": 70000000.0,
+          "crystals": 6
+        },
+        {
+          "tier": 7,
+          "capacity": 5,
+          "cost": 600000000.0,
+          "crystals": 10
+        },
+        {
+          "tier": 8,
+          "capacity": 6,
+          "cost": 4000000000.0,
+          "crystals": 15
+        }
+      ]
+    },
+    "placement": {
+      "note": "Habitats libres (estilo Dragon City): se compran en la Tienda y se colocan donde quepan (huella 3x3). Precio = cost_base * growth^(min(N,late_from)-1) * growth_late^max(0,N-late_from) * element_copy^(mismo elemento), N = habitats que ya tienes.",
+      "footprint": 3,
+      "cost_base": 60,
+      "growth": 3.0,
+      "growth_late": 1.6,
+      "late_from": 8,
+      "element_copy": 1.3,
+      "sell_back": 0.5,
+      "upgrade_sell_back": 0.25
+    }
   },
   "farms": {
     "plots_start": 2,

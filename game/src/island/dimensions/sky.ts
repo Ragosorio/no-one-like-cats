@@ -11,7 +11,7 @@ type G2 = CanvasRenderingContext2D;
 export const SKY = 1024;
 
 /** dimensions that own a backdrop (home lives in the base void) */
-export const HAS_SKY: Record<DimId, boolean> = { home: false, forest: true, cliff: true, volcano: true, ghost: true, ice: true, ruins: true, reef: true, cosmic: true };
+export const HAS_SKY: Record<DimId, boolean> = { home: false, forest: true, cliff: true, volcano: true, ghost: true, ice: true, ruins: true, reef: true, cosmic: true, sakura: true, desert: true, candy: true, void: true };
 export const SKY_FRAMES: Partial<Record<DimId, number>> = { cliff: 2 };
 
 export function skyTex(d: DimDef, sealed: boolean, frame = 0): Texture {
@@ -249,6 +249,213 @@ function spark(g: G2, x: number, y: number, s: number, c: number, a = 1) {
 
 // --------------------------------------------------------------------------------- painters
 const PAINT: Partial<Record<DimId, (g: G2, w: number, h: number, f: number) => void>> = {
+  // ---- post-story ring
+  sakura: (g, w, h) => {
+    const r = rng(41);
+    vgrad(g, w, h, [
+      [0, 0xffe0ec],
+      [0.5, 0xfff4f0],
+      [1, 0xd8ecf6],
+    ]);
+    // watercolour washes
+    for (let i = 0; i < 9; i++) {
+      const x = r() * w;
+      const y = r() * h * 0.8;
+      const rad = 90 + r() * 160;
+      const grd = g.createRadialGradient(x, y, 0, x, y, rad);
+      const c = [0xffb7d2, 0xffd6e6, 0xc8e6f2][i % 3];
+      grd.addColorStop(0, rgba(c, 0.5));
+      grd.addColorStop(1, rgba(c, 0));
+      g.fillStyle = grd;
+      g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    }
+    // a big pale sun + a distant pagoda silhouette
+    g.fillStyle = rgba(0xffffff, 0.8);
+    g.beginPath();
+    g.arc(w * 0.68, h * 0.26, 70, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = rgba(0xb98a99, 0.45);
+    const px = w * 0.22;
+    const py = h * 0.62;
+    for (let k = 0; k < 4; k++) {
+      const ww = 90 - k * 18;
+      g.beginPath();
+      g.moveTo(px - ww, py - k * 46);
+      g.lineTo(px + ww, py - k * 46);
+      g.lineTo(px + ww * 0.6, py - k * 46 - 18);
+      g.lineTo(px - ww * 0.6, py - k * 46 - 18);
+      g.closePath();
+      g.fill();
+      g.fillRect(px - ww * 0.4, py - k * 46, ww * 0.8, 28);
+    }
+    // drifting petals
+    for (let i = 0; i < 120; i++) {
+      g.fillStyle = rgba(pick2(r, [0xff9ec4, 0xffc9de, 0xffffff]), 0.85);
+      g.save();
+      g.translate(r() * w, r() * h);
+      g.rotate(r() * Math.PI);
+      g.beginPath();
+      g.ellipse(0, 0, 5, 2.6, 0, 0, Math.PI * 2);
+      g.fill();
+      g.restore();
+    }
+  },
+  desert: (g, w, h) => {
+    const r = rng(43);
+    vgrad(g, w, h, [
+      [0, 0xf2c870],
+      [0.55, 0xffe3a8],
+      [1, 0xe8a85a],
+    ]);
+    // giant sun with ink rays (old comic)
+    g.save();
+    g.translate(w * 0.5, h * 0.38);
+    for (let i = 0; i < 28; i++) {
+      const a = (i / 28) * Math.PI * 2;
+      g.fillStyle = rgba(i % 2 ? 0xffe9a8 : 0xf6c860, 0.55);
+      g.beginPath();
+      g.moveTo(0, 0);
+      g.lineTo(Math.cos(a - 0.05) * w, Math.sin(a - 0.05) * w);
+      g.lineTo(Math.cos(a + 0.05) * w, Math.sin(a + 0.05) * w);
+      g.closePath();
+      g.fill();
+    }
+    g.fillStyle = rgba(0xfff4d0, 1);
+    g.beginPath();
+    g.arc(0, 0, 90, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = rgba(0x2a1a0a, 0.8);
+    g.lineWidth = 4;
+    g.stroke();
+    g.restore();
+    // pyramids with cat ears on the horizon
+    for (const [x, s] of [
+      [0.2, 1],
+      [0.36, 0.7],
+      [0.78, 0.85],
+    ]) {
+      const bx = w * x;
+      const by = h * 0.74;
+      const hh = 170 * s;
+      g.fillStyle = rgba(0xc89458, 0.9);
+      g.beginPath();
+      g.moveTo(bx - hh, by);
+      g.lineTo(bx, by - hh);
+      g.lineTo(bx + hh, by);
+      g.closePath();
+      g.fill();
+      g.strokeStyle = rgba(0x2a1a0a, 0.7);
+      g.lineWidth = 3;
+      g.stroke();
+      // ears
+      g.beginPath();
+      g.moveTo(bx - 22 * s, by - hh + 30 * s);
+      g.lineTo(bx - 14 * s, by - hh - 4 * s);
+      g.lineTo(bx - 4 * s, by - hh + 18 * s);
+      g.moveTo(bx + 4 * s, by - hh + 18 * s);
+      g.lineTo(bx + 14 * s, by - hh - 4 * s);
+      g.lineTo(bx + 22 * s, by - hh + 30 * s);
+      g.stroke();
+    }
+    // halftone dots (print)
+    g.fillStyle = rgba(0x7a5630, 0.18);
+    for (let y = 0; y < h; y += 14)
+      for (let x = (y / 14) % 2 ? 7 : 0; x < w; x += 14) {
+        g.beginPath();
+        g.arc(x, y, 2.2 * (y / h), 0, Math.PI * 2);
+        g.fill();
+      }
+    void r;
+  },
+  candy: (g, w, h) => {
+    const r = rng(47);
+    vgrad(g, w, h, [
+      [0, 0xb8f0ff],
+      [0.5, 0xffd6ec],
+      [1, 0xfff0c8],
+    ]);
+    // cotton candy clouds
+    for (let i = 0; i < 10; i++) {
+      const x = r() * w;
+      const y = h * 0.1 + r() * h * 0.6;
+      const c = [0xffffff, 0xffc4df, 0xc8f4ff][i % 3];
+      g.fillStyle = rgba(c, 0.85);
+      for (let k = 0; k < 5; k++) {
+        g.beginPath();
+        g.arc(x + (k - 2) * 26, y + Math.sin(k * 1.7) * 10, 30 + r() * 16, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+    // rainbow
+    const rb = [0xff7ab8, 0xffc94a, 0xfff07a, 0x7fe0c8, 0x7fd8ff, 0xb59cff];
+    rb.forEach((c, i) => {
+      g.strokeStyle = rgba(c, 0.55);
+      g.lineWidth = 16;
+      g.beginPath();
+      g.arc(w * 0.5, h * 0.9, w * 0.42 - i * 16, Math.PI, Math.PI * 2);
+      g.stroke();
+    });
+    // floating lollipops
+    for (let i = 0; i < 7; i++) {
+      const x = r() * w;
+      const y = r() * h * 0.7;
+      const s = 14 + r() * 16;
+      g.strokeStyle = rgba(0xffffff, 0.9);
+      g.lineWidth = 4;
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x, y + s * 2.4);
+      g.stroke();
+      g.fillStyle = rgba(rb[i % rb.length], 0.95);
+      g.beginPath();
+      g.arc(x, y, s, 0, Math.PI * 2);
+      g.fill();
+      g.strokeStyle = rgba(0x3a1030, 0.6);
+      g.lineWidth = 2;
+      g.stroke();
+    }
+  },
+  void: (g, w, h) => {
+    const r = rng(53);
+    vgrad(g, w, h, [
+      [0, 0x000000],
+      [0.6, 0x0b0a0e],
+      [1, 0x1a0a10],
+    ]);
+    // negative stars (white) + red scratches
+    for (let i = 0; i < 160; i++) {
+      g.fillStyle = rgba(0xf3eee3, 0.3 + r() * 0.6);
+      g.beginPath();
+      g.arc(r() * w, r() * h, 0.6 + r() * r() * 2.4, 0, Math.PI * 2);
+      g.fill();
+    }
+    g.strokeStyle = rgba(0xff2e48, 0.5);
+    g.lineWidth = 2;
+    for (let i = 0; i < 14; i++) {
+      const x = r() * w;
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x + (r() - 0.5) * 40, h);
+      g.stroke();
+    }
+    // the eye
+    const ex = w * 0.5;
+    const ey = h * 0.34;
+    g.fillStyle = rgba(0xf3eee3, 0.95);
+    g.beginPath();
+    g.moveTo(ex - 150, ey);
+    g.quadraticCurveTo(ex, ey - 110, ex + 150, ey);
+    g.quadraticCurveTo(ex, ey + 110, ex - 150, ey);
+    g.fill();
+    g.fillStyle = rgba(0xff2e48, 1);
+    g.beginPath();
+    g.arc(ex, ey, 46, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = rgba(0x000000, 1);
+    g.beginPath();
+    g.ellipse(ex, ey, 10, 38, 0, 0, Math.PI * 2);
+    g.fill();
+  },
   forest: (g, w, h) => {
     const r = rng(3);
     vgrad(g, w, h, [
@@ -921,4 +1128,8 @@ export function raysTex(): Texture {
     },
     false,
   );
+}
+
+function pick2<T>(r: () => number, a: T[]): T {
+  return a[Math.floor(r() * a.length)];
 }

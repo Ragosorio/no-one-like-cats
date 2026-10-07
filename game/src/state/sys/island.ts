@@ -1,4 +1,8 @@
-/** Island economy: habitats (gold + buffer), fishing dock (crops), expansions, offline production. */
+/**
+ * Island economy: habitats (gold + buffer), fishing dock (crops), expansions, offline production.
+ * Habitats are placed freely (Dragon City style, SAVE v3): buy one of any element you know, put it
+ * anywhere it fits (island/placement.ts), move it, sell it. Price grows with how many you own.
+ */
 import { G, Habitat, FarmPlot } from '../game';
 import { Emitter } from '../../core/events';
 import { EXPANSIONS, catDef } from '../../data/content';
@@ -14,6 +18,11 @@ import {
   newHabitatCost,
 } from '../econ';
 import { catGold, cat as getCat, speciesCount } from './cats';
+import { checkHabitatSpot, ensureHabitatPositions, hasHabitatSpace, nearestHabitatSpot } from '../../island/placement';
+import { LEGACY_PLOTS } from '../migrate';
+import { registerPatch } from '../patches';
+import { legacyHabitatCost } from '../econ';
+import { fmt } from '../../core/format';
 
 export const HOME = 'home';
 
@@ -25,10 +34,11 @@ function wcfg(role: 'banker' | 'farmer' | 'builder' | 'voyager') {
   return (BAL.cats.workers as unknown as Record<string, { value: number; max: number }>)[role];
 }
 
-// ---------------------------------------------------------------- plots
+// ---------------------------------------------------------------- regions
 export function regionsUnlocked(): string[] {
   return [HOME, ...G.s.expansions.cleared.map((n) => EXPANSIONS[n - 1].id)];
 }
+/** @deprecated habitats are placed freely now; kept for old callers (legacy plot count) */
 export function habitatPlots(region: string) {
   if (region === HOME) return BAL.habitats.plots_start;
   return EXPANSIONS.find((e) => e.id === region)?.balance.hab_plots ?? 0;
@@ -37,10 +47,14 @@ export function farmPlots(region: string) {
   if (region === HOME) return BAL.farms.plots_start;
   return EXPANSIONS.find((e) => e.id === region)?.balance.farm_plots ?? 0;
 }
-export function freeHabitatPlot(): { region: string; plot: number } | null {
-  for (const r of regionsUnlocked())
-    for (let i = 0; i < habitatPlots(r); i++) if (!G.s.habitats.some((h) => h.region === r && h.plot === i)) return { region: r, plot: i };
-  return null;
+/**
+ * First free spot for a habitat (nearest to the home center), or null when nothing fits.
+ * (Name kept from the fixed-plot days: callers only test it for "is there room?".)
+ */
+export function freeHabitatPlot(): { region: string; plot: number; gx: number; gy: number } | null {
+  if (!hasHabitatSpace()) return null;
+  const s = nearestHabitatSpot();
+  return s ? { region: s.region, plot: -1, gx: s.gx, gy: s.gy } : null;
 }
 export function totalFarmPlots() {
   return regionsUnlocked().reduce((a, r) => a + farmPlots(r), 0);
@@ -98,21 +112,83 @@ export function habitatCapacity(h: Habitat) {
   return habitatTier(h.tier).capacity;
 }
 
-export function nextHabitatCost() {
-  return newHabitatCost(G.s.habitats.length);
+/** price of one more habitat of `element` (grows with how many you own, and with copies of that element) */
+export function habitatCost(element: string) {
+  return newHabitatCost(G.s.habitats.length, G.s.habitats.filter((h) => h.element === element).length);
+}
+/** without an element: the cheapest one you could buy now (an element you have the fewest of) */
+export function nextHabitatCost(element?: string) {
+  if (element) return habitatCost(element);
+  const els = G.s.elements.length ? G.s.elements : ['fire'];
+  return Math.min(...els.map(habitatCost));
 }
 export function canBuildHabitat() {
-  return !!freeHabitatPlot() && buildersBusy() < builders();
+  return hasHabitatSpace() && buildersBusy() < builders();
 }
-/** Build a new tier-1 habitat of an element (10 s build). */
-export function buildHabitat(element: string): Habitat | null {
-  const spot = freeHabitatPlot();
-  if (!spot || buildersBusy() >= builders()) return null;
-  if (!G.spend({ gold: nextHabitatCost() })) return null;
-  const h: Habitat = { id: G.uid('h'), element, tier: 1, region: spot.region, plot: spot.plot, buffer: 0, cats: [], busy: true };
+/**
+ * Buy a new tier-1 habitat of an element (10 s build) with its 3×3 footprint at (gx, gy) — or, without
+ * a spot, on the free spot nearest to the home center.
+ */
+export function buildHabitat(element: string, at?: { gx: number; gy: number }): Habitat | null {
+  if (buildersBusy() >= builders()) return null;
+  const spot = at ?? nearestHabitatSpot();
+  if (!spot) return null;
+  const chk = checkHabitatSpot(spot.gx, spot.gy);
+  if (!chk.ok) return null;
+  if (!G.spend({ gold: habitatCost(element) })) return null;
+  const h: Habitat = { id: G.uid('h'), element, tier: 1, region: chk.region, plot: -1, gx: Math.round(spot.gx), gy: Math.round(spot.gy), buffer: 0, cats: [], busy: true };
   G.s.habitats.push(h);
   G.startTimer('build', h.id, habitatTier(1).build_s * 1000 * buildTimeMul(), `Hábitat de ${element}`, 'mission');
+  G.count('habitats_bought');
   return h;
+}
+/** move a habitat (cats, buffer, timers travel with it). Free. */
+export function moveHabitat(id: string, gx: number, gy: number) {
+  const h = habitat(id);
+  if (!h) return false;
+  const chk = checkHabitatSpot(gx, gy, id);
+  if (!chk.ok) return false;
+  h.gx = Math.round(gx);
+  h.gy = Math.round(gy);
+  h.region = chk.region;
+  G.count('habitats_moved');
+  return true;
+}
+/** gold you get back for selling: part of what a replacement would cost + part of the upgrades paid */
+export function habitatSellValue(h: Habitat) {
+  const P = BAL.habitats.placement;
+  const others = G.s.habitats.filter((x) => x.id !== h.id);
+  const rebuy = newHabitatCost(others.length, others.filter((x) => x.element === h.element).length);
+  let ups = 0;
+  for (let t = 2; t <= h.tier; t++) ups += BAL.habitats.tiers[t - 1]?.cost ?? 0;
+  return Math.floor(rebuy * P.sell_back + ups * P.upgrade_sell_back);
+}
+export function canSellHabitat(h: Habitat): string | null {
+  if (h.busy) return 'Está en obra: espera a que terminen.';
+  if (G.s.habitats.length <= 1) return 'Es tu último hábitat. Tus gatos se quedarían en la calle.';
+  return null;
+}
+/**
+ * Sell a habitat: its buffer (gold + fish) is collected first, its cats move to another habitat with
+ * room (or wait homeless until you make room), then you get `habitatSellValue` back.
+ */
+export function sellHabitat(id: string): { gold: number; homeless: string[] } | null {
+  const h = habitat(id);
+  if (!h || canSellHabitat(h)) return null;
+  const value = habitatSellValue(h);
+  collectHabitat(h);
+  const cats = [...h.cats];
+  for (const uid of cats) {
+    const c = getCat(uid);
+    if (c) c.habitat = null;
+  }
+  G.s.habitats = G.s.habitats.filter((x) => x.id !== id);
+  delete fishMap()[id];
+  G.add('gold', value, 'habitat_sell');
+  G.count('habitats_sold');
+  autoHouse();
+  G.recalc();
+  return { gold: value, homeless: cats.filter((u) => !getCat(u)?.habitat) };
 }
 export function canUpgradeHabitat(h: Habitat) {
   const next = BAL.habitats.tiers[h.tier];
@@ -313,7 +389,13 @@ G.onTimer('build', (t) => {
   const h = habitat(t.ref);
   if (!h) return;
   h.busy = false;
-  G.xp('build_done');
+  // Reino XP only when the island reaches a new record of habitats (buy → sell → buy doesn't farm XP)
+  const ext = (G.s.ext ??= {}) as Record<string, unknown>;
+  const best = Number(ext.habitatsRecord ?? 0);
+  if (G.s.habitats.length > best) {
+    ext.habitatsRecord = G.s.habitats.length;
+    G.xp('build_done');
+  }
   G.count('habitats_built');
   G.count(`habitat_built_${h.element}`);
   autoHouse();
@@ -485,10 +567,77 @@ G.offliners.push((ms) => {
 export function setupNewIsland() {
   const s = G.s;
   s.habitats = [];
+  // the starting habitats stand where the first plots always were (the home paths lead there)
   BAL.start.habitats.forEach((hb, i) => {
-    s.habitats.push({ id: G.uid('h'), element: hb.element, tier: hb.tier, region: HOME, plot: i, buffer: 0, cats: [], busy: false });
+    const spot = LEGACY_PLOTS.home[i];
+    s.habitats.push({ id: G.uid('h'), element: hb.element, tier: hb.tier, region: HOME, plot: i, gx: spot[0], gy: spot[1], buffer: 0, cats: [], busy: false });
   });
+  (s.ext ??= {}).habitatsRecord = s.habitats.length;
   s.farms = [];
   ensureFarmPlots();
 }
 export { ensureFarmPlots };
+
+// every loaded save: habitats without a valid footprint get the nearest free spot (never removed).
+// unshift: runs before the retro patches (state/patches.ts), which may house cats in them.
+G.afterLoad.unshift(() => {
+  const n = ensureHabitatPositions();
+  if (n) console.info(`[island] ${n} hábitat(s) reubicados en un lugar libre`);
+  const ext = (G.s.ext ??= {}) as Record<string, unknown>;
+  ext.habitatsRecord = Math.max(Number(ext.habitatsRecord ?? 0), G.s.habitats.length);
+});
+
+// ---------------------------------------------------------------- 2026-10 · free habitats (SAVE v3)
+registerPatch({
+  id: '2026-10-habitats-reembolso',
+  why: 'Hábitats libres: el hábitat extra y las mejoras de tier 4–8 cuestan menos que antes (y menos cristales). Quien ya pagó el precio viejo recibe la diferencia; nunca se cobra.',
+  run() {
+    const start = BAL.start.habitats.length;
+    const L = BAL.habitats.legacy;
+    let gold = 0;
+    // extra habitats, in the order they were bought (the save keeps them in purchase order)
+    const seen: Record<string, number> = {};
+    G.s.habitats.forEach((h, i) => {
+      if (i >= start) {
+        const paidOld = legacyHabitatCost(i);
+        const paidNew = newHabitatCost(i, seen[h.element] ?? 0);
+        gold += Math.max(0, paidOld - paidNew);
+      }
+      seen[h.element] = (seen[h.element] ?? 0) + 1;
+    });
+    // tier upgrades already paid (an upgrade still running was paid too)
+    const crystals: Record<string, number> = {};
+    for (const h of G.s.habitats) {
+      const running = G.s.timers.find((t) => t.kind === 'habitat_upgrade' && t.ref === h.id);
+      const reached = running ? Number(running.data?.tier ?? h.tier + 1) : h.tier;
+      for (let t = 2; t <= reached; t++) {
+        const o = L.tiers[t - 1];
+        const n = BAL.habitats.tiers[t - 1];
+        if (!o || !n) continue;
+        gold += Math.max(0, o.cost - n.cost);
+        const dc = Math.max(0, o.crystals - n.crystals);
+        if (dc) crystals[h.element] = (crystals[h.element] ?? 0) + dc;
+      }
+    }
+    gold = Math.floor(gold);
+    if (gold > 0) G.add('gold', gold, 'patch_refund');
+    let nc = 0;
+    for (const [el, n] of Object.entries(crystals)) {
+      G.s.crystals[el] = (G.s.crystals[el] ?? 0) + n;
+      nc += n;
+    }
+    if (gold > 0 || nc > 0)
+      return `Los hábitats y sus mejoras bajaron de precio. Te devolvimos la diferencia de lo que ya habías pagado: +${fmt(gold)} Doblones${nc ? ` y +${nc} cristales` : ''}.`;
+  },
+});
+
+registerPatch({
+  id: '2026-10-habitats-capacidad',
+  why: 'Los tiers 3+ ahora tienen más espacio (capacidad 4/5/6/7/8/10): los gatos sin casa que ya caben se mudan solos.',
+  run() {
+    const before = G.s.cats.filter((c) => !c.habitat).length;
+    autoHouse();
+    const moved = before - G.s.cats.filter((c) => !c.habitat).length;
+    if (moved > 0) return `Tus hábitats ahora tienen más espacio: ${moved === 1 ? '1 gato sin casa se mudó' : `${moved} gatos sin casa se mudaron`} solo${moved === 1 ? '' : 's'}.`;
+  },
+});

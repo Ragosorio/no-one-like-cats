@@ -3,9 +3,9 @@
  * (ink outlines, flat colour, halftone) but lives in its own style dimension with its own palette,
  * terrain pattern, floating-rock underside, falls, sky and animation.
  */
-export type DimId = 'home' | 'forest' | 'cliff' | 'volcano' | 'ghost' | 'ice' | 'ruins' | 'reef' | 'cosmic';
+export type DimId = 'home' | 'forest' | 'cliff' | 'volcano' | 'ghost' | 'ice' | 'ruins' | 'reef' | 'cosmic' | 'sakura' | 'desert' | 'candy' | 'void';
 
-export type PatternKind = 'grass' | 'lush' | 'hatch' | 'lava' | 'neon' | 'crystal' | 'pixel' | 'caustic' | 'stars';
+export type PatternKind = 'grass' | 'lush' | 'hatch' | 'lava' | 'neon' | 'crystal' | 'pixel' | 'caustic' | 'stars' | 'petals' | 'dunes' | 'sprinkles' | 'negative';
 export type FallKind = 'water' | 'lava' | 'ink' | 'data' | 'neon' | 'ice' | 'prism' | 'stars';
 export type SpikeKind = 'round' | 'jagged' | 'crystal' | 'pixel' | 'city';
 
@@ -260,6 +260,103 @@ const D: Record<DimId, DimDef> = {
     fall: { kind: 'stars', color: 0xb9a4ff, core: 0xffffff, count: 2 },
     accent: 0x8a5cff,
     skyKey: 0x24124a,
+  },
+  // ---- post-story ring (expansions 9–12)
+  // ACUARELA — watercolour cherry garden: washed pinks, paper lanterns, petals everywhere
+  sakura: {
+    id: 'sakura',
+    name: 'DIMENSIÓN ACUARELA',
+    short: 'ACUARELA',
+    top: 0xf3dbe2,
+    topAlt: 0xebcdd8,
+    beach: 0xfff4ec,
+    side: 0xb98a99,
+    sideDark: 0x7e5566,
+    tuft: 0xff9ec4,
+    ink: 0x3a1f2a,
+    strata: 0x3a1f2a,
+    pattern: 'petals',
+    patternFrames: 1,
+    patternAlpha: 1,
+    lagoon: { a: 0xbfe6f0, b: 0x7fb8d8, foam: 0xffffff, rim: 0xb98a99, rimDark: 0x7e5566 },
+    rock: { light: 0xb98a99, dark: 0x6e4656, line: 0x3a1f2a, accent: 0xff9ec4 },
+    spikes: 'round',
+    depth: 1.15,
+    fall: { kind: 'water', color: 0xffd6e6, core: 0xffffff, count: 3 },
+    accent: 0xff7ab8,
+    skyKey: 0xffc9de,
+  },
+  // SEPIA — an old adventure comic: golden dunes, ink hatching, sand pouring off the rock
+  desert: {
+    id: 'desert',
+    name: 'DIMENSIÓN SEPIA',
+    short: 'SEPIA',
+    top: 0xeccf92,
+    topAlt: 0xe2c182,
+    beach: 0xf6e3b4,
+    side: 0xb0844e,
+    sideDark: 0x7a5630,
+    tuft: 0xc9a060,
+    ink: 0x2a1a0a,
+    strata: 0x2a1a0a,
+    pattern: 'dunes',
+    patternFrames: 1,
+    patternAlpha: 1,
+    lagoon: { a: 0x5fc8c0, b: 0x2f8f9a, foam: 0xfff4d0, rim: 0xb0844e, rimDark: 0x7a5630 },
+    rock: { light: 0xb0844e, dark: 0x6a4626, line: 0x2a1a0a, accent: 0xffd36a },
+    spikes: 'jagged',
+    depth: 1.2,
+    fall: { kind: 'ink', color: 0xf6e3b4, core: 0xffffff, count: 2 },
+    accent: 0xffc94a,
+    skyKey: 0xe8b060,
+  },
+  // CARAMELO — candy land: strawberry milk, mint cliffs, sprinkles and lollipops
+  candy: {
+    id: 'candy',
+    name: 'DIMENSIÓN CARAMELO',
+    short: 'CARAMELO',
+    top: 0xffd3e8,
+    topAlt: 0xffc4df,
+    beach: 0xfff6d6,
+    side: 0x8fdccc,
+    sideDark: 0x4fae9e,
+    tuft: 0xff7ab8,
+    ink: 0x3a1030,
+    strata: 0xffffff,
+    pattern: 'sprinkles',
+    patternFrames: 1,
+    patternAlpha: 1,
+    lagoon: { a: 0xffb8d8, b: 0xff7ab8, foam: 0xffffff, rim: 0x8fdccc, rimDark: 0x4fae9e },
+    rock: { light: 0x8fdccc, dark: 0x4fae9e, line: 0x3a1030, accent: 0xff7ab8 },
+    spikes: 'round',
+    depth: 1.1,
+    fall: { kind: 'prism', color: 0xffc4df, core: 0xffffff, count: 3 },
+    accent: 0xff7ab8,
+    skyKey: 0xffb8d8,
+  },
+  // VACÍO — photo negative: black land, white ink, one red eye that never blinks
+  void: {
+    id: 'void',
+    name: 'DIMENSIÓN VACÍO',
+    short: 'VACÍO',
+    top: 0x18161d,
+    topAlt: 0x121016,
+    beach: 0x2a2730,
+    side: 0xf3eee3,
+    sideDark: 0xc8c2b6,
+    tuft: 0xff2e48,
+    ink: 0xf3eee3,
+    strata: 0xff2e48,
+    pattern: 'negative',
+    patternFrames: 1,
+    patternAlpha: 1,
+    lagoon: { a: 0x0b0a0e, b: 0x000000, foam: 0xff2e48, rim: 0xf3eee3, rimDark: 0xc8c2b6 },
+    rock: { light: 0xe8e2d6, dark: 0xb8b2a6, line: 0x0b0a0e, accent: 0xff2e48 },
+    spikes: 'crystal',
+    depth: 1.35,
+    fall: { kind: 'ink', color: 0xf3eee3, core: 0xff2e48, count: 2 },
+    accent: 0xff2e48,
+    skyKey: 0x0b0a0e,
   },
 };
 

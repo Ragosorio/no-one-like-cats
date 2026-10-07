@@ -47,8 +47,20 @@ export function discoveryGems(r: RarityId) {
 export function habitatTier(t: number) {
   return B.habitats.tiers[Math.max(0, Math.min(B.habitats.tiers.length - 1, t - 1))];
 }
-export function newHabitatCost(n: number) {
-  return Math.round(B.habitats.new_habitat_cost_base * Math.pow(B.habitats.new_habitat_cost_growth, n - 1));
+/**
+ * Price of one more habitat (free placement, balance habitats.placement): grows with how many you own
+ * (steep at first, gentler after `late_from` so a big island stays reachable) and with copies of the
+ * same element.
+ */
+export function newHabitatCost(owned: number, sameElement = 0) {
+  const P = B.habitats.placement;
+  const n = Math.max(1, owned);
+  return Math.round(P.cost_base * Math.pow(P.growth, Math.min(n, P.late_from) - 1) * Math.pow(P.growth_late, Math.max(0, n - P.late_from)) * Math.pow(P.element_copy, Math.max(0, sameElement)));
+}
+/** what the n-th habitat cost before free placement (refund patch only) */
+export function legacyHabitatCost(n: number) {
+  const L = B.habitats.legacy;
+  return Math.round(L.new_habitat_cost_base * Math.pow(L.new_habitat_cost_growth, n - 1));
 }
 export function islandGoldMult(species: number, catdexBonus: number, expansionGold: number, momentum: number) {
   return (1 + (0.02 + catdexBonus) * species) * (1 + expansionGold) * (1 + 0.5 * (momentum - 1));

@@ -418,6 +418,6 @@ function buyToChest(ctx: ShopCtx, d: DecorDef, target: Container) {
 
 function biomeLabel(b: string) {
   return (
-    { home: 'CASA', forest: 'BOSQUE', cliff: 'ACANTILADO', volcano: 'VOLCÁN', ghost: 'PUERTO', ice: 'GLACIAR', ruins: 'RUINAS', reef: 'ARRECIFE', cosmic: 'ATOLÓN' } as Record<string, string>
+    { home: 'CASA', forest: 'BOSQUE', cliff: 'ACANTILADO', volcano: 'VOLCÁN', ghost: 'PUERTO', ice: 'GLACIAR', ruins: 'RUINAS', reef: 'ARRECIFE', cosmic: 'ATOLÓN', sakura: 'SAKURA', desert: 'OASIS', candy: 'CARAMELO', void: 'ABISMO' } as Record<string, string>
   )[b] ?? b.toUpperCase();
 }

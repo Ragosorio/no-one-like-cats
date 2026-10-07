@@ -82,11 +82,11 @@ function explain(fix: ReturnType<typeof homeFixFor>, els: string[]) {
     case 'move':
       return `Cabe en tu hábitat de ${(ELEMENT_NAME[fix.element] ?? '').toLowerCase()}. Un toque y se muda.`;
     case 'build':
-      return `Solo vive en hábitats de ${names}. Tienes una parcela libre: construye uno (${fmt(fix.cost)} Doblones).`;
+      return `Solo vive en hábitats de ${names}. Te cabe uno más en la isla: cómpralo y ponlo donde quieras (${fmt(fix.cost)} Doblones).`;
     case 'upgrade':
       return `Tu hábitat de ${(ELEMENT_NAME[fix.element] ?? '').toLowerCase()} está lleno. Mejóralo: el siguiente tier tiene más espacio.`;
     case 'expand':
-      return `Solo vive en hábitats de ${names} y no te quedan parcelas. ${EXPANSIONS[fix.n - 1].name} trae parcelas nuevas.`;
+      return `Solo vive en hábitats de ${names} y ya no cabe nada en tu isla. ${EXPANSIONS[fix.n - 1].name} trae terreno nuevo.`;
     case 'wait':
       return `Solo vive en hábitats de ${names}. ${fix.text}`;
   }
@@ -108,7 +108,7 @@ function actionFor(fix: ReturnType<typeof homeFixFor>, uid: string, m: Modal): B
     case 'build':
       return new Button(`CONSTRUIR`, () => {
         m.close();
-        if (!islandHooks.buildOnFreePlot?.(fix.element)) toast('No hay parcelas libres', { color: C.paper });
+        if (!islandHooks.buildOnFreePlot?.(fix.element)) toast('Ya no cabe otro hábitat', { sub: 'Mueve o vende uno, o compra una expansión.', color: C.paper });
       }, { w: 300, h: 76, size: 36, color: fix.affordable && fix.builderFree ? C.pinkHot : C.paperDark, textColor: fix.affordable && fix.builderFree ? C.paper : C.ink });
     case 'upgrade':
       return new Button('MEJORAR', () => {

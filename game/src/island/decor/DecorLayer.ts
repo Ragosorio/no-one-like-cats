@@ -4,9 +4,11 @@
  * decorations of `G.s.decor.placed`, hides the natural shrubs under them, lets you tap one to
  * MOVER / GUARDAR / VENDER, and runs the "colocación" mode for the shop:
  *   · decor   → ghost follows the pointer, free tiles light up, tap = place (and pay if buying)
- *   · habitat → free plots pulse, tap one = build there (buildHabitatAt, same rules as BuildMenu)
+ *   · habitat → (free placement, Dragon City style) a 3×3 ghost of the habitat: tap where you want it
+ *               (it turns green/red), tap again or press ¡AQUÍ! to buy/move it there. Touch-friendly:
+ *               nothing is placed on the first tap. Same rules as the island system (placement.ts).
  */
-import { Container, FederatedPointerEvent, Graphics, Rectangle, Ticker } from 'pixi.js';
+import { Container, FederatedPointerEvent, Graphics, Rectangle, Text, Ticker } from 'pixi.js';
 import gsap from 'gsap';
 import { W } from '../../core/App';
 import { scenes } from '../../core/scenes';
@@ -17,8 +19,11 @@ import { txt } from '../../ui/widgets';
 import { icon } from '../../ui/icons';
 import { toast } from '../../ui/modal';
 import { G } from '../../state/game';
-import { HOME, habitatPlots, regionsUnlocked } from '../../state/sys/island';
-import { buildBlocker, buildHabitatAt, habitatAt, regionLook } from '../../state/ext/island';
+import { HOME, habitat, habitatCost, moveHabitat, regionsUnlocked } from '../../state/sys/island';
+import { buildBlocker, buildHabitatAt, regionLook } from '../../state/ext/island';
+import { checkHabitatSpot, habitatTiles, HAB_SIZE, nearestHabitatSpot, ownedRegions, staticBlocked, tileFreeForDecor } from '../placement';
+import { habitatParts } from '../buildingArt';
+import type { Tick } from '../habitatTiers';
 import {
   DECOR_SETS,
   DecorSet,
@@ -57,9 +62,11 @@ export interface DecorHost {
   look?: (region: string) => string;
   /** refresh island views right away (optional) */
   sync?: () => void;
+  /** fade the real habitat while its ghost is being moved (null = none) */
+  habitatGhost?: (id: string | null) => void;
 }
 
-export type PlaceReq = { kind: 'decor'; id: string; buy?: boolean; moveUid?: string } | { kind: 'habitat'; element: string };
+export type PlaceReq = { kind: 'decor'; id: string; buy?: boolean; moveUid?: string } | { kind: 'habitat'; element: string; moveId?: string };
 
 let active: DecorLayer | null = null;
 
@@ -110,7 +117,6 @@ class DecorLayer {
   dead = false;
   private views = new Map<string, View>();
   private hidden = new Set<Container>();
-  private blocked = new Set<string>();
   private t = 0;
   private resyncAcc = 0;
   private unsub: (() => void)[] = [];
@@ -125,22 +131,14 @@ class DecorLayer {
   private ghost: DecorArt | null = null;
   private banner: Container | null = null;
   private hoverTile: { x: number; y: number } | null = null;
-  private plotMarks: { region: string; plot: number; spot: Spot; g: Container; plate: Container }[] = [];
+  // habitat placement (3×3 ghost)
+  private habGhost: { c: Container; tick: Tick | null } | null = null;
+  private habAt: { x: number; y: number } | null = null;
+  private habOk = false;
+  private habWhy: Text | null = null;
+  private confirmBtn: Container | null = null;
 
   constructor(private host: DecorHost) {
-    const p = host.plan;
-    const mark = (s: Spot | undefined) => {
-      if (!s) return;
-      for (let y = Math.floor(s.gy); y < Math.floor(s.gy) + s.h; y++) for (let x = Math.floor(s.gx); x < Math.floor(s.gx) + s.w; x++) this.blocked.add(key(x, y));
-    };
-    for (const r of p.plans.values()) {
-      r.habitats.forEach(mark);
-      r.farms.forEach(mark);
-      mark(r.secret);
-      mark(r.pier);
-    }
-    const h = p.home;
-    [h.sanctuary, h.port, h.altar, h.mesa, h.lighthouse, h.bank, h.boat].forEach(mark);
     this.validate();
     this.sync();
     this.unsub.push(decorBus.on('changed', () => this.sync()));
@@ -171,13 +169,8 @@ class DecorLayer {
     const t = this.host.plan.tiles.get(key(x, y));
     if (!t) return false;
     if (!regionsUnlocked().includes(t.region) || this.look(t.region) !== 'open') return false;
-    if (this.blocked.has(key(x, y))) return false;
-    for (const p of decorState().placed) {
-      if (p.uid === ignoreUid) continue;
-      const s = decorDef(p.id)?.size ?? 1;
-      if (x >= p.x && x < p.x + s && y >= p.y && y < p.y + s) return false;
-    }
-    return true;
+    // buildings, pens, habitats (wherever they were placed) and other decorations
+    return tileFreeForDecor(x, y, ignoreUid);
   }
   fits(x: number, y: number, size: number, ignoreUid?: string) {
     const r0 = this.host.plan.tiles.get(key(x, y))?.region;
@@ -265,11 +258,11 @@ class DecorLayer {
       }
     this.hideShrubs();
   }
-  /** natural decor (trees, rocks…) standing on a decorated tile is hidden */
+  /** natural decor (trees, rocks…) standing on a decorated tile or inside a habitat's yard is hidden */
   private hideShrubs() {
     for (const c of this.hidden) if (!c.destroyed) c.visible = true;
     this.hidden.clear();
-    const occ = new Set<string>();
+    const occ = new Set<string>(habitatTiles().keys());
     for (const p of decorState().placed) {
       const s = decorDef(p.id)?.size ?? 1;
       for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) occ.add(key(p.x + dx, p.y + dy));
@@ -297,10 +290,7 @@ class DecorLayer {
       // the scene may have re-shown shrubs (terrain redraw) or a region may have opened
       this.sync();
     }
-    if (this.req?.kind === 'habitat') {
-      const k = 0.55 + Math.sin(this.t * 5) * 0.25;
-      for (const m of this.plotMarks) m.g.alpha = k + 0.2;
-    }
+    this.habGhost?.tick?.(this.t);
   }
 
   // ================================================================ tap menu (move / store / sell)
@@ -375,6 +365,10 @@ class DecorLayer {
     ov.on('globalpointermove', (e: FederatedPointerEvent) => this.onMove(e));
     ov.on('pointertap', (e: FederatedPointerEvent) => {
       if (this.host.cam.wasDrag) return;
+      if (this.req?.kind === 'habitat') {
+        this.onMove(e, true);
+        return;
+      }
       this.onMove(e);
       this.commit();
     });
@@ -396,15 +390,126 @@ class DecorLayer {
         this.host.cam.lookAt(s.x, s.y - 40, true, Math.max(this.host.cam.zoom, 0.8));
       }
     } else {
-      this.drawFreePlots();
-      const first = this.plotMarks[0];
-      if (first) {
-        const s = isoToScreen(first.spot.gx + 1, first.spot.gy + 1);
-        this.host.cam.lookAt(s.x, s.y - 40, true, Math.max(this.host.cam.zoom, 0.75));
-      }
+      this.startHabitatPlacement(req);
     }
     this.buildBanner();
+    if (req.kind === 'habitat') this.refreshHabitatGhost();
     sfx('whoosh');
+  }
+
+  // ================================================================ habitat placement (free, 3×3)
+  private startHabitatPlacement(req: { element: string; moveId?: string }) {
+    const moving = req.moveId ? habitat(req.moveId) : null;
+    this.drawHabitatGrid(req.moveId);
+    const parts = habitatParts(req.element, moving ? moving.tier : 1, HAB_SIZE, HAB_SIZE);
+    const c = new Container();
+    c.addChild(parts.ground, parts.back, parts.front);
+    c.alpha = 0.85;
+    this.overlay!.addChild(c);
+    this.habGhost = { c, tick: parts.tick ?? null };
+    if (moving) this.host.habitatGhost?.(moving.id);
+    // first spot: where it stands (moving) or the free spot nearest to what the camera is looking at
+    let start: { x: number; y: number } | null = moving && Number.isFinite(moving.gx) ? { x: moving.gx, y: moving.gy } : null;
+    if (!start) {
+      const cc = this.host.cam.center;
+      const t = worldToTile(cc.x, cc.y);
+      const near = nearestHabitatSpot(t.x - 1, t.y - 1, req.moveId) ?? nearestHabitatSpot(undefined, undefined, req.moveId);
+      start = near ? { x: near.gx, y: near.gy } : { x: t.x - 1, y: t.y - 1 };
+    }
+    this.habAt = start;
+    const s = isoToScreen(start.x + 1, start.y + 1);
+    this.host.cam.lookAt(s.x, s.y - 40, true, Math.max(this.host.cam.zoom, 0.75));
+  }
+
+  /** free single tiles (land you own with nothing on it) */
+  private drawHabitatGrid(ignoreId?: string) {
+    const g = this.grid!;
+    g.clear();
+    const owned = ownedRegions();
+    const stat = staticBlocked();
+    const habs = habitatTiles(ignoreId);
+    const dec = new Set<string>();
+    for (const p of decorState().placed) {
+      const s = decorDef(p.id)?.size ?? 1;
+      for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) dec.add(key(p.x + dx, p.y + dy));
+    }
+    for (const t of this.host.plan.tiles.values()) {
+      if (!owned.has(t.region) || this.look(t.region) !== 'open') continue;
+      const k = key(t.gx, t.gy);
+      if (stat.has(k) || habs.has(k) || dec.has(k)) continue;
+      diamond(g, t.gx, t.gy, 1, 0.08);
+    }
+    g.fill({ color: C.mint, alpha: 0.3 }).stroke({ width: 2, color: 0xffffff, alpha: 0.9 });
+  }
+
+  /** move the ghost to `habAt`, colour the footprint, update the banner's status + confirm button */
+  private refreshHabitatGhost() {
+    const req = this.req;
+    if (!req || req.kind !== 'habitat' || !this.habAt || !this.hover) return;
+    const at = this.habAt;
+    const chk = checkHabitatSpot(at.x, at.y, req.moveId);
+    this.habOk = chk.ok;
+    const h = this.hover;
+    h.clear();
+    diamond(h, at.x, at.y, HAB_SIZE, 0.02);
+    h.fill({ color: chk.ok ? C.green : C.red, alpha: 0.45 }).stroke({ width: 6, color: chk.ok ? 0xffffff : C.ink });
+    if (this.habGhost) {
+      const s = isoToScreen(at.x, at.y);
+      this.habGhost.c.position.set(s.x, s.y);
+      this.habGhost.c.alpha = chk.ok ? 0.9 : 0.5;
+    }
+    if (this.habWhy && !this.habWhy.destroyed) {
+      this.habWhy.text = chk.ok ? (req.moveId ? 'Toca ¡AQUÍ! (o el mismo lugar otra vez) para moverlo' : 'Toca ¡AQUÍ! (o el mismo lugar otra vez) para construir') : `No cabe: ${chk.reason.toLowerCase()}`;
+      this.habWhy.style.fill = chk.ok ? C.ink : C.red;
+    }
+    if (this.confirmBtn) this.confirmBtn.alpha = chk.ok ? 1 : 0.45;
+  }
+
+  private commitHabitat(req: { element: string; moveId?: string }) {
+    const at = this.habAt;
+    if (!at) return;
+    const chk = checkHabitatSpot(at.x, at.y, req.moveId);
+    if (!chk.ok) {
+      sfx('error');
+      if (this.habGhost) gsap.fromTo(this.habGhost.c, { x: this.habGhost.c.x - 10 }, { x: this.habGhost.c.x, duration: 0.3, ease: 'elastic.out(1,0.3)' });
+      toast('Ahí no cabe', { sub: chk.reason, color: C.paper });
+      return;
+    }
+    const ctr = isoToScreen(at.x + 1, at.y + 1);
+    if (req.moveId) {
+      if (!moveHabitat(req.moveId, at.x, at.y)) {
+        sfx('error');
+        return;
+      }
+      sfx('hit', 1.2);
+      onomatopoeia(this.host.wfx, ctr.x, ctr.y - 120, '¡TOC!', { size: 64, color: C.paper });
+      this.dust(ctr.x, ctr.y, 3);
+      this.endPlacement(true);
+      this.host.sync?.();
+      this.sync();
+      return;
+    }
+    const blocker = buildBlocker(req.element);
+    if (blocker) {
+      sfx('error');
+      toast(blocker, { color: C.paper });
+      return;
+    }
+    const hab = buildHabitatAt(req.element, at.x, at.y);
+    if (!hab) {
+      sfx('error');
+      return;
+    }
+    this.payFx(ctr.x, ctr.y - 40, 'gold');
+    nextReceipt();
+    sfx('whoosh');
+    onomatopoeia(this.host.wfx, ctr.x, ctr.y - 120, '¡A CONSTRUIR!', { size: 76, color: elementFx(req.element).accent });
+    sparkles(this.host.wfx, ctr.x, ctr.y - 40, C.yellow, 14, 140);
+    this.dust(ctr.x, ctr.y, 3);
+    toast(`¡Hábitat de ${(ELEMENT_NAME[req.element] ?? req.element).toLowerCase()} en obra!`, { sub: 'Los gatos de su elemento se mudan solos al terminar. Tócalo luego para moverlo o mejorarlo.', icon: 'clock' });
+    this.endPlacement(true);
+    this.host.sync?.();
+    this.sync();
   }
 
   private drawFreeGrid(size: number, ignoreUid?: string) {
@@ -417,43 +522,26 @@ class DecorLayer {
     g.fill({ color: C.mint, alpha: 0.35 }).stroke({ width: 3, color: 0xffffff, alpha: 1 });
     void size;
   }
-  private drawFreePlots() {
-    this.plotMarks = [];
-    const plan = this.host.plan;
-    for (const r of regionsUnlocked()) {
-      if (this.look(r) !== 'open') continue;
-      const rp = plan.plans.get(r);
-      if (!rp) continue;
-      for (let i = 0; i < habitatPlots(r); i++) {
-        if (habitatAt(r, i)) continue;
-        const spot = rp.habitats[i];
-        if (!spot) continue;
-        const c = new Container();
-        const g = new Graphics();
-        diamond(g, spot.gx, spot.gy, 3, 0.1);
-        g.fill({ color: C.pinkHot, alpha: 0.35 }).stroke({ width: 5, color: C.pinkHot });
-        diamond(g, spot.gx, spot.gy, 3, 0.1);
-        g.stroke({ width: 2, color: C.ink, alpha: 0.6 });
-        const ctr = isoToScreen(spot.gx + 1, spot.gy + 1);
-        const plate = new Container();
-        const pt = txt('¡AQUÍ!', { fontFamily: F.poster, fontSize: 34, fill: C.paper });
-        pt.anchor.set(0.5);
-        const pb = new Graphics().rect(-pt.width / 2 - 14 + 5, -26 + 5, pt.width + 28, 52).fill(C.ink).rect(-pt.width / 2 - 14, -26, pt.width + 28, 52).fill(C.pinkHot).stroke({ width: 3, color: C.ink });
-        plate.addChild(pb, pt);
-        plate.position.set(ctr.x, ctr.y - 30);
-        gsap.to(plate, { y: ctr.y - 44, duration: 0.5, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-        c.addChild(g);
-        this.under!.addChildAt(c, 0);
-        this.overlay!.addChild(plate);
-        this.plotMarks.push({ region: r, plot: i, spot, g: c, plate });
-      }
-    }
-  }
-
-  private onMove(e: FederatedPointerEvent) {
+  private onMove(e: FederatedPointerEvent, tap = false) {
     if (!this.req || !this.overlay) return;
     const p = this.host.world.toLocal(e.global);
     const req = this.req;
+    if (req.kind === 'habitat') {
+      // the pointer is the footprint's center tile; touch only moves the ghost on a tap
+      if (!tap && e.pointerType !== 'mouse') return;
+      const t = worldToTile(p.x, p.y);
+      const at = { x: t.x - 1, y: t.y - 1 };
+      if (tap && this.habAt && this.habAt.x === at.x && this.habAt.y === at.y) {
+        this.commitHabitat(req);
+        return;
+      }
+      if (!this.habAt || this.habAt.x !== at.x || this.habAt.y !== at.y) {
+        this.habAt = at;
+        this.refreshHabitatGhost();
+        if (tap) sfx('pop', 1.3);
+      }
+      return;
+    }
     const size = req.kind === 'decor' ? decorDef(req.id).size : 1;
     // for 2×2 the pointer is the footprint center
     const t = worldToTile(p.x - (size - 1) * 0, p.y - (size - 1) * HH);
@@ -470,17 +558,7 @@ class DecorLayer {
         this.ghost.c.position.set(s.x, s.y);
         this.ghost.c.alpha = ok ? 0.9 : 0.45;
       }
-    } else {
-      const m = this.plotAt(t.x, t.y);
-      for (const k of this.plotMarks) k.g.scale.set(1);
-      if (m) {
-        diamond(h, m.spot.gx, m.spot.gy, 3, 0.04);
-        h.fill({ color: 0xffffff, alpha: 0.25 }).stroke({ width: 6, color: 0xffffff });
-      }
     }
-  }
-  private plotAt(x: number, y: number) {
-    return this.plotMarks.find((m) => x >= m.spot.gx && x < m.spot.gx + 3 && y >= m.spot.gy && y < m.spot.gy + 3) ?? null;
   }
 
   private commit() {
@@ -488,31 +566,7 @@ class DecorLayer {
     const t = this.hoverTile;
     if (!req || !t) return;
     if (req.kind === 'habitat') {
-      const m = this.plotAt(t.x, t.y);
-      if (!m) {
-        sfx('error');
-        toast('Toca una parcela marcada', { sub: 'Las rosas parpadeantes son las libres.', color: C.paper });
-        return;
-      }
-      const blocker = buildBlocker();
-      if (blocker) {
-        sfx('error');
-        toast(blocker, { color: C.paper });
-        return;
-      }
-      const hab = buildHabitatAt(req.element, m.region, m.plot);
-      if (!hab) {
-        sfx('error');
-        return;
-      }
-      const ctr = isoToScreen(m.spot.gx + 1, m.spot.gy + 1);
-      this.payFx(ctr.x, ctr.y - 40, 'gold');
-      sfx('whoosh');
-      onomatopoeia(this.host.wfx, ctr.x, ctr.y - 120, '¡A CONSTRUIR!', { size: 76, color: elementFx(req.element).accent });
-      sparkles(this.host.wfx, ctr.x, ctr.y - 40, C.yellow, 14, 140);
-      toast(`¡Hábitat de ${(ELEMENT_NAME[req.element] ?? req.element).toLowerCase()} en obra!`, { sub: 'Los gatos de su elemento se mudan solos al terminar.', icon: 'clock' });
-      this.host.sync?.();
-      this.endPlacement(true);
+      this.commitHabitat(req);
       return;
     }
     const d = decorDef(req.id);
@@ -634,8 +688,10 @@ class DecorLayer {
       sub = 'Toca una casilla libre · arrastra para mover la cámara · ESC cancela';
       if (req.buy) priceLine = { kind: d.cur === 'gems' ? 'gem' : 'gold', v: decorPrice(d) };
     } else {
-      title = `HÁBITAT DE ${(ELEMENT_NAME[req.element] ?? req.element).toUpperCase()}`;
-      sub = this.plotMarks.length ? 'Toca una parcela rosa para construir · ESC cancela' : 'No hay parcelas libres: compra una expansión';
+      const nm = `HÁBITAT DE ${(ELEMENT_NAME[req.element] ?? req.element).toUpperCase()}`;
+      title = req.moveId ? `MOVIENDO: ${nm}` : nm;
+      sub = 'Toca dónde lo quieres · arrastra para mover la cámara · ESC cancela';
+      if (!req.moveId) priceLine = { kind: 'gold', v: habitatCost(req.element) };
     }
     const tt = txt(title, { fontFamily: F.poster, fontSize: 38, fill: C.ink });
     tt.position.set(26, 8);
@@ -654,6 +710,31 @@ class DecorLayer {
       w += pv.width + 70;
       parts.push(pc);
     }
+    if (req.kind === 'habitat') {
+      const why = txt('', { fontFamily: F.ui, fontWeight: '700', fontSize: 17, fill: C.ink });
+      why.position.set(28, 84);
+      parts.push(why);
+      this.habWhy = why;
+      const ok = new Container();
+      const of = new Container();
+      const ot = txt('¡AQUÍ!', { fontFamily: F.poster, fontSize: 30, fill: C.paper });
+      ot.position.set(18, 6);
+      const ob = new Graphics().rect(5, 5, ot.width + 36, 50).fill(C.ink).rect(0, 0, ot.width + 36, 50).fill(C.green).stroke({ width: 3, color: C.ink });
+      of.addChild(ob, ot);
+      ok.addChild(of);
+      ok.position.set(w, 18);
+      ok.eventMode = 'static';
+      ok.cursor = 'pointer';
+      ok.on('pointerover', () => gsap.to(of, { x: -3, y: -3, duration: 0.1 }));
+      ok.on('pointerout', () => gsap.to(of, { x: 0, y: 0, duration: 0.1 }));
+      ok.on('pointertap', () => {
+        const r = this.req;
+        if (r?.kind === 'habitat') this.commitHabitat(r);
+      });
+      w += ot.width + 36 + 18;
+      parts.push(ok);
+      this.confirmBtn = ok;
+    }
     const btn = new Container();
     const bf = new Container();
     const bt = txt('CANCELAR', { fontFamily: F.poster, fontSize: 28, fill: C.paper });
@@ -671,7 +752,7 @@ class DecorLayer {
       this.cancel();
     });
     w += bt.width + 32 + 26;
-    const h = 92;
+    const h = req.kind === 'habitat' ? 118 : 92;
     const bg = new Graphics().rect(8, 8, w, h).fill(C.ink).rect(0, 0, w, h).fill(C.yellow).stroke({ width: 4, color: C.ink });
     const stripe = new Graphics();
     for (let x = -20; x < w; x += 26) stripe.poly([x, h - 10, x + 13, h - 10, x + 3, h, x - 10, h]).fill(C.ink);
@@ -702,9 +783,12 @@ class DecorLayer {
       const v = this.views.get(req.moveUid);
       if (v) v.root.alpha = 1;
     }
-    for (const m of this.plotMarks) gsap.killTweensOf(m.plate);
+    if (req.kind === 'habitat') this.host.habitatGhost?.(null);
     if (this.grid) gsap.killTweensOf(this.grid);
-    this.plotMarks = [];
+    this.habGhost = null;
+    this.habAt = null;
+    this.habWhy = null;
+    this.confirmBtn = null;
     const ov = this.overlay;
     if (ov && !ov.destroyed) {
       // never destroy the node that is dispatching the current pointer event: hide now, free next frame

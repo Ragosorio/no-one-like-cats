@@ -14,7 +14,7 @@ import type { RegionLook } from './state';
 import { txt } from '../../ui/widgets';
 import { F } from '../../ui/theme';
 
-const STAMP: Record<string, number> = { home: 0x171317, forest: 0x2f7a34, cliff: 0x171317, volcano: 0xc8102e, ghost: 0x1f5f8f, ice: 0x2a62a8, ruins: 0xb0107a, reef: 0xc83a7a, cosmic: 0x5a2ab8 };
+const STAMP: Record<string, number> = { home: 0x171317, forest: 0x2f7a34, cliff: 0x171317, volcano: 0xc8102e, ghost: 0x1f5f8f, ice: 0x2a62a8, ruins: 0xb0107a, reef: 0xc83a7a, cosmic: 0x5a2ab8, sakura: 0xc83a7a, desert: 0x7a5630, candy: 0xff2e88, void: 0xff2e48 };
 
 const DIRT = 0x9c7650;
 
@@ -36,7 +36,7 @@ function h2(a: number, b: number, s = 0) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-const RIM_LIGHT: Partial<Record<string, number>> = { volcano: 0xff6a1a, ghost: 0x00e5ff, ruins: 0xff2e88, cosmic: 0x8a5cff, cliff: 0xf3eee3 };
+const RIM_LIGHT: Partial<Record<string, number>> = { volcano: 0xff6a1a, ghost: 0x00e5ff, ruins: 0xff2e88, cosmic: 0x8a5cff, cliff: 0xf3eee3, void: 0xff2e48 };
 const FALL_SPEED: Record<string, number> = { water: 190, lava: 60, ink: 130, data: 240, neon: 150, ice: 0, prism: 160, stars: 55 };
 
 interface Fall {
@@ -281,6 +281,30 @@ export class RegionLayer extends Container {
           g.poly([x, yy - s, x + s * 0.6, yy, x, yy + s, x - s * 0.6, yy]).fill(r < 0.2 ? 0x00e5ff : 0x8a5cff).stroke({ width: 1.5, color: d.ink });
           break;
         }
+        case 'sakura': {
+          // hanging wisteria-ish petals
+          const l = 16 + r2 * 46;
+          g.moveTo(x, y - 3).bezierCurveTo(x + 6, y + l * 0.4, x - 6, y + l * 0.7, x + 2, y + l).stroke({ width: 2.5, color: 0x6e4656, cap: 'round' });
+          g.circle(x + 2, y + l, 5).fill(r < 0.2 ? 0xffffff : 0xff9ec4).stroke({ width: 1.5, color: d.ink });
+          break;
+        }
+        case 'desert': {
+          // sand trickles
+          const l = 14 + r2 * 70;
+          g.moveTo(x, y - 2).lineTo(x + 1, y + l).stroke({ width: 2, color: 0xf6e3b4, alpha: 0.8 });
+          break;
+        }
+        case 'candy': {
+          // drips of syrup
+          const l = 10 + r2 * 36;
+          g.roundRect(x - 3.5, y - 3, 7, l, 3.5).fill(r < 0.2 ? 0xffffff : 0xff7ab8).stroke({ width: 1.5, color: d.ink });
+          break;
+        }
+        case 'void': {
+          const l = 20 + r2 * 120;
+          g.rect(Math.round(x), y - 2, 2, l).fill({ color: r < 0.15 ? 0xff2e48 : 0xf3eee3, alpha: 0.8 });
+          break;
+        }
         case 'cliff': {
           // construction lines converging to a vanishing point far below (technical drawing)
           const vx = this.profile.cx;
@@ -347,6 +371,10 @@ export class RegionLayer extends Container {
       ruins: [0xffc0f0, 0x9a6ad8, 0.7],
       reef: [0xffffff, 0xffd0ea, 0.9],
       cosmic: [0xb9a4ff, 0x5a3a9a, 0.55],
+      sakura: [0xffffff, 0xffd6e6, 0.95],
+      desert: [0xfff4d0, 0xe8c48a, 0.9],
+      candy: [0xffffff, 0xffc4df, 0.95],
+      void: [0x2a2730, 0x0b0a0e, 0.8],
     };
     const [top, belly, alpha] = sealed ? [0xf6efe2, 0xd9cdb8, 0.95] : (tint[d.id] ?? tint.home);
     for (let i = 0; i < n; i++) {

@@ -12,13 +12,11 @@ import {
   buildersBusy,
   canHouse,
   expansionState,
-  freeHabitatPlot,
   habitatCap,
-  habitatPlots,
   habitatRate,
   nextHabitatCost,
-  regionsUnlocked,
 } from '../sys/island';
+import { hasHabitatSpace } from '../../island/placement';
 import { checkMissions } from '../sys/missions';
 
 export type AutoFeature = 'collect_all' | 'feed_bulk' | 'crop_repeat' | 'kingdom_bank' | 'auto_harvest';
@@ -81,33 +79,23 @@ export function habitatFill(h: Habitat) {
   const cap = habitatCap(h);
   return cap > 0 ? Math.min(1, h.buffer / cap) : 0;
 }
-export function habitatAt(region: string, plot: number) {
-  return G.s.habitats.find((h) => h.region === region && h.plot === plot) ?? null;
-}
-export function plotUnlocked(region: string, plot: number) {
-  return regionsUnlocked().includes(region) && plot < habitatPlots(region);
-}
 
 export function builderFree() {
   return buildersBusy() < builders();
 }
 
-/** reasons a habitat can't be built right now (null = ok) */
-export function buildBlocker(): string | null {
-  if (!freeHabitatPlot()) return 'No hay parcelas libres: compra una expansión.';
+/** reasons a habitat can't be bought right now (null = ok) */
+export function buildBlocker(element?: string): string | null {
+  if (!hasHabitatSpace()) return 'Ya no cabe otro hábitat: mueve o vende algo, o compra una expansión.';
   if (!builderFree()) return 'Tus constructores están ocupados.';
-  if (G.s.gold < nextHabitatCost()) return 'Te faltan Doblones.';
+  if (G.s.gold < nextHabitatCost(element)) return 'Te faltan Doblones.';
   return null;
 }
 
-/** build on a specific plot (the core system picks the first free plot; we move it to the tapped one) */
-export function buildHabitatAt(element: string, region: string, plot: number) {
-  const h = buildHabitat(element);
+/** buy a habitat with its footprint at (gx, gy) (or the nearest free spot) */
+export function buildHabitatAt(element: string, gx?: number, gy?: number) {
+  const h = buildHabitat(element, gx !== undefined && gy !== undefined ? { gx, gy } : undefined);
   if (!h) return null;
-  if ((h.region !== region || h.plot !== plot) && !habitatAt(region, plot) && plotUnlocked(region, plot)) {
-    h.region = region;
-    h.plot = plot;
-  }
   G.recalc();
   checkMissions();
   return h;
