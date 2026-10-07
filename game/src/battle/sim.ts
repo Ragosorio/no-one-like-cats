@@ -1919,7 +1919,8 @@ export class Battle {
       // the whole room sank: the cat falls into the sea
       if (!c.ko && !c.overboard && s.ship.moduleCells(room.id).length === 0 && !room.alive) {
         c.overboard = true;
-        const dmg = Math.round(c.maxHp * 0.5);
+        // duel: the raft under you is gone = out of the duel (else nobody can ever reach a swimming cat: stalemate)
+        const dmg = this.cfg.mode === 'duel' ? c.hp : Math.round(c.maxHp * 0.5);
         c.hp -= dmg;
         if (c.hp <= 0) {
           c.hp = 0;

@@ -160,8 +160,13 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
     if (b.boss?.submerged && b.cfg.boss?.side === enemy && !(s.shot.element === 'electric' || s.shot.trajectory === 'torpedo')) shotMul *= lev && chills ? 0.7 : 0.1;
     // arcane ward: rayo pops a layer, physical hits it ×1.5
     if (wardUp) shotMul *= isRayo(s.shot) ? 2.2 : s.shot.element === 'earth' || s.shot.element === 'neutral' ? 1.3 : 1;
-    for (let ai = 0; ai < 22; ai++) {
-      const elev = (8 + ai * 3.4) * (Math.PI / 180);
+    // flat shots (beams, orbs, gusts, low-gravity rails) also need low and slightly downward angles —
+    // a human can aim them flat; without these a beam could never hit a low raft
+    const g = s.shot.gravityScale ?? (s.shot.trajectory === 'beam' ? 0.15 : s.shot.trajectory === 'orb' ? 0.5 : s.shot.trajectory === 'gust' ? 0.1 : 1);
+    const elevs = Array.from({ length: 22 }, (_, i) => 8 + i * 3.4);
+    if (g < 0.6) elevs.unshift(-10, -7, -4.5, -2, 0, 2, 4, 6);
+    for (const deg of elevs) {
+      const elev = deg * (Math.PI / 180);
       const angle = dir > 0 ? -elev : Math.PI + elev;
       for (let pi = 0; pi < 9; pi++) {
         const power = 520 + pi * 95;

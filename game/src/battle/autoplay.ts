@@ -10,12 +10,18 @@ import { summonShooters } from './bossLate';
 import type { BattleSpec } from '../scenes/BattleScene';
 
 export const WATER_Y = 820;
+/** open water between the two duel rafts (px) */
+export const DUEL_GAP = 600;
 const SCREEN_W = 1920;
 
 /** the sim for a spec, with the battle-screen geometry */
 export function makeBattle(spec: BattleSpec, seed = spec.seed ?? Math.floor(Math.random() * 1e9)) {
   const eW = spec.enemy.blueprint.cols * CELL;
+  const pW = spec.player.blueprint.cols * CELL;
   const originY = (bp: { rows: number }) => WATER_Y - bp.rows * CELL + 70;
+  // duel rafts are tiny: moored closer to each other so every shot type reaches (a heavy Tierra shot
+  // can't fly 1500 px even at full pull; from the ship berths it could never hit a raft)
+  const inset = spec.mode === 'duel' ? Math.max(70, Math.round((SCREEN_W - DUEL_GAP - pW - eW) / 2)) : 70;
   return new Battle({
     seed,
     waterY: WATER_Y,
@@ -24,8 +30,8 @@ export function makeBattle(spec: BattleSpec, seed = spec.seed ?? Math.floor(Math
     rules: spec.rules,
     suddenDeath: spec.suddenDeath,
     sides: [
-      { ...spec.player, origin: { x: 70, y: originY(spec.player.blueprint) }, flip: false },
-      { ...spec.enemy, origin: { x: SCREEN_W - 70 - eW, y: originY(spec.enemy.blueprint) }, flip: true },
+      { ...spec.player, origin: { x: inset, y: originY(spec.player.blueprint) }, flip: false },
+      { ...spec.enemy, origin: { x: SCREEN_W - inset - eW, y: originY(spec.enemy.blueprint) }, flip: true },
     ],
   });
 }

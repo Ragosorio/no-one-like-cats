@@ -339,6 +339,17 @@ export const STORY_SHIPS: Record<string, ShipBlueprint> = {
       { kind: 'catroom', x: 4, y: 0, w: 2, h: 2, slot: 1 },
     ],
   },
+  /** duel platform for 3 cats a side (La Orquesta Muda) — same planks, one more cabin */
+  duel_raft3: {
+    cols: 10,
+    rows: 5,
+    hull: ['..........', '..........', 'WWWWWWWWWW', 'WWWWWWWWWW', '.WWWWWWWW.'],
+    modules: [
+      { kind: 'catroom', x: 1, y: 0, w: 2, h: 2, slot: 0 },
+      { kind: 'catroom', x: 4, y: 0, w: 2, h: 2, slot: 1 },
+      { kind: 'catroom', x: 7, y: 0, w: 2, h: 2, slot: 2 },
+    ],
+  },
   patito: {
     cols: 10,
     rows: 8,
