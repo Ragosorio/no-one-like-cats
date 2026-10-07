@@ -44,8 +44,9 @@ async function loadFonts() {
 }
 
 /**
- * Dev routes: ?scene=island|map|battle|title|art|catlive|shiplab|sandbox|islandlab
+ * Dev routes: ?scene=island|map|battle|title|art|catlive|shiplab|sandbox|islandlab|dev|fxlab
  * (&new=1 starts a fresh save). No param = the real game (title screen).
+ * ?scene=dev is the LABORATORIO hub that lists every lab; ?dev=1 adds a LAB button to the title.
  */
 async function route(scene: string | null, fresh: boolean) {
   const needsState = ['island', 'map'].includes(scene ?? '');
@@ -83,6 +84,14 @@ async function route(scene: string | null, fresh: boolean) {
     case 'islandlab': {
       const { IslandSandbox } = await import('./scenes/IslandSandbox');
       return scenes.go(new IslandSandbox(), 'none');
+    }
+    case 'dev': {
+      const { DevLab } = await import('./scenes/DevLab');
+      return scenes.go(new DevLab(), 'none');
+    }
+    case 'fxlab': {
+      const { FxLab } = await import('./scenes/FxLab');
+      return scenes.go(new FxLab(), 'none');
     }
     default:
       return goTitle();
@@ -137,6 +146,10 @@ async function boot() {
     bootGame();
     const [z, st] = q.get('stage')!.split('-').map(Number);
     return goBattle(z, st);
+  }
+  if (q.get('dev') === '1') {
+    const [{ mountDevShortcut }, { TitleScene }] = await Promise.all([import('./scenes/DevLab'), import('./scenes/TitleScene')]);
+    mountDevShortcut(() => scenes.current instanceof TitleScene);
   }
   await route(q.get('scene'), q.get('new') === '1');
 }
