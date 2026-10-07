@@ -7,9 +7,21 @@
       "bytesIn": 5624711,
       "bytesOut": 4104639
     },
+    "arcanito_lantern_cat": {
+      "bytesIn": 10158955,
+      "bytesOut": 7355414
+    },
     "arce_autumn_cat": {
       "bytesIn": 10007120,
       "bytesOut": 7268064
+    },
+    "astral_tarot_cat": {
+      "bytesIn": 11690000,
+      "bytesOut": 8470628
+    },
+    "burbujas_fizz_cat": {
+      "bytesIn": 12015700,
+      "bytesOut": 8613875
     },
     "bytewhisker_cat": {
       "bytesIn": 9356449,
@@ -23,6 +35,14 @@
       "bytesIn": 11840605,
       "bytesOut": 8596776
     },
+    "chispa_sparkler_cat": {
+      "bytesIn": 9724983,
+      "bytesOut": 7026120
+    },
+    "cometin_stardust_cat": {
+      "bytesIn": 9951950,
+      "bytesOut": 7173047
+    },
     "cyber_bloom_cat": {
       "bytesIn": 8968996,
       "bytesOut": 6487968
@@ -31,9 +51,33 @@
       "bytesIn": 9729873,
       "bytesOut": 7056326
     },
+    "eclipse_corona_cat": {
+      "bytesIn": 11461876,
+      "bytesOut": 8325796
+    },
+    "fanguito_mud_cat": {
+      "bytesIn": 10677704,
+      "bytesOut": 7762647
+    },
     "fossilstone_guardian_cat": {
       "bytesIn": 9465599,
       "bytesOut": 6877238
+    },
+    "galaxia_jelly_cat": {
+      "bytesIn": 12253533,
+      "bytesOut": 8811060
+    },
+    "golem_moss_cat": {
+      "bytesIn": 12911313,
+      "bytesOut": 9326374
+    },
+    "guijarro_pebble_cat": {
+      "bytesIn": 9952845,
+      "bytesOut": 7200513
+    },
+    "infernal_obsidian_cat": {
+      "bytesIn": 11823425,
+      "bytesOut": 8573077
     },
     "iridescent_origami_cat": {
       "bytesIn": 4273344,
@@ -55,6 +99,18 @@
       "bytesIn": 9799826,
       "bytesOut": 7100681
     },
+    "lunita_moonphase_cat": {
+      "bytesIn": 10478646,
+      "bytesOut": 7592267
+    },
+    "magmito_forge_cat": {
+      "bytesIn": 10368977,
+      "bytesOut": 7545414
+    },
+    "marea_mermaid_cat": {
+      "bytesIn": 10830056,
+      "bytesOut": 7859704
+    },
     "margarita_daisy_cat": {
       "bytesIn": 10021958,
       "bytesOut": 7230561
@@ -71,6 +127,10 @@
       "bytesIn": 9894482,
       "bytesOut": 7126277
     },
+    "meteoro_comet_cat": {
+      "bytesIn": 11431198,
+      "bytesOut": 8311527
+    },
     "mochi_bell_cat": {
       "bytesIn": 7728220,
       "bytesOut": 5559979
@@ -82,6 +142,10 @@
     "mushroom_druid_cat": {
       "bytesIn": 9154233,
       "bytesOut": 6652771
+    },
+    "neblino_teapot_cat": {
+      "bytesIn": 9351746,
+      "bytesOut": 6783326
     },
     "neon_glitch_cat": {
       "bytesIn": 5353385,
@@ -95,13 +159,25 @@
       "bytesIn": 7673726,
       "bytesOut": 5484920
     },
+    "plasmin_plasma_cat": {
+      "bytesIn": 9569592,
+      "bytesOut": 6951976
+    },
     "prism_crystal_cat": {
       "bytesIn": 6199074,
       "bytesOut": 4496906
     },
+    "raizvieja_bark_cat": {
+      "bytesIn": 11354515,
+      "bytesOut": 8228925
+    },
     "regal_cosmic_cat": {
       "bytesIn": 9283616,
       "bytesOut": 6760131
+    },
+    "rencor_ninetails_cat": {
+      "bytesIn": 13871502,
+      "bytesOut": 10046250
     },
     "sakura_whisper_cat": {
       "bytesIn": 7983379,
@@ -130,6 +206,18 @@
     "storybook_ink_cat": {
       "bytesIn": 10223978,
       "bytesOut": 7388926
+    },
+    "supernova_gunslinger_cat": {
+      "bytesIn": 11274393,
+      "bytesOut": 8219055
+    },
+    "vapor_ronin_cat": {
+      "bytesIn": 11741561,
+      "bytesOut": 8519949
+    },
+    "voltio_static_cat": {
+      "bytesIn": 11148068,
+      "bytesOut": 8041307
     }
   }
 }
