@@ -15,9 +15,25 @@
       "bytesIn": 10007120,
       "bytesOut": 7268064
     },
+    "arenita_sand_cat": {
+      "bytesIn": 11248740,
+      "bytesOut": 8150241
+    },
     "astral_tarot_cat": {
       "bytesIn": 11690000,
       "bytesOut": 8470628
+    },
+    "aurea_halo_cat": {
+      "bytesIn": 11288088,
+      "bytesOut": 8242291
+    },
+    "bigbang_cosmic_cat": {
+      "bytesIn": 10360058,
+      "bytesOut": 7489751
+    },
+    "boreas_aurora_cat": {
+      "bytesIn": 10180573,
+      "bytesOut": 7348457
     },
     "burbujas_fizz_cat": {
       "bytesIn": 12015700,
@@ -43,6 +59,14 @@
       "bytesIn": 9951950,
       "bytesOut": 7173047
     },
+    "copito_snowball_cat": {
+      "bytesIn": 9570410,
+      "bytesOut": 6877961
+    },
+    "cronos_astrolabe_cat": {
+      "bytesIn": 10784344,
+      "bytesOut": 7864819
+    },
     "cyber_bloom_cat": {
       "bytesIn": 8968996,
       "bytesOut": 6487968
@@ -51,13 +75,41 @@
       "bytesIn": 9729873,
       "bytesOut": 7056326
     },
+    "destello_firefly_cat": {
+      "bytesIn": 10244588,
+      "bytesOut": 7410577
+    },
+    "devoradora_portal_cat": {
+      "bytesIn": 10431418,
+      "bytesOut": 7561003
+    },
+    "diva_pop_cat": {
+      "bytesIn": 12262347,
+      "bytesOut": 8855164
+    },
+    "djbigotes_dj_cat": {
+      "bytesIn": 9272630,
+      "bytesOut": 6768635
+    },
     "eclipse_corona_cat": {
       "bytesIn": 11461876,
       "bytesOut": 8325796
     },
+    "ecomudo_static_cat": {
+      "bytesIn": 11438387,
+      "bytesOut": 8203914
+    },
+    "escarcha_frost_cat": {
+      "bytesIn": 10372042,
+      "bytesOut": 7458751
+    },
     "fanguito_mud_cat": {
       "bytesIn": 10677704,
       "bytesOut": 7762647
+    },
+    "faro_lighthouse_cat": {
+      "bytesIn": 11245697,
+      "bytesOut": 8241183
     },
     "fossilstone_guardian_cat": {
       "bytesIn": 9465599,
@@ -71,9 +123,25 @@
       "bytesIn": 12911313,
       "bytesOut": 9326374
     },
+    "granbigote_sumo_cat": {
+      "bytesIn": 11011221,
+      "bytesOut": 8058534
+    },
     "guijarro_pebble_cat": {
       "bytesIn": 9952845,
       "bytesOut": 7200513
+    },
+    "headliner_rock_cat": {
+      "bytesIn": 11258506,
+      "bytesOut": 8277400
+    },
+    "horizonte_blackhole_cat": {
+      "bytesIn": 12087253,
+      "bytesOut": 8791168
+    },
+    "hueco_hole_cat": {
+      "bytesIn": 9485483,
+      "bytesOut": 6870459
     },
     "infernal_obsidian_cat": {
       "bytesIn": 11823425,
@@ -86,6 +154,10 @@
     "jelly_aquatic_cat": {
       "bytesIn": 7655299,
       "bytesOut": 5540596
+    },
+    "kage_ninja_cat": {
+      "bytesIn": 10679109,
+      "bytesOut": 7743853
     },
     "kintsugi_tea_spirit_cat": {
       "bytesIn": 7761853,
@@ -123,6 +195,10 @@
       "bytesIn": 6559575,
       "bytesOut": 4819235
     },
+    "medianoche_king_cat": {
+      "bytesIn": 10640108,
+      "bytesOut": 7745612
+    },
     "menta_botanical_cat": {
       "bytesIn": 9894482,
       "bytesOut": 7126277
@@ -130,6 +206,10 @@
     "meteoro_comet_cat": {
       "bytesIn": 11431198,
       "bytesOut": 8311527
+    },
+    "milvidas_shadow_cat": {
+      "bytesIn": 9747481,
+      "bytesOut": 7036664
     },
     "mochi_bell_cat": {
       "bytesIn": 7728220,
@@ -143,9 +223,17 @@
       "bytesIn": 9154233,
       "bytesOut": 6652771
     },
+    "nadie_static_cat": {
+      "bytesIn": 11128609,
+      "bytesOut": 8013096
+    },
     "neblino_teapot_cat": {
       "bytesIn": 9351746,
       "bytesOut": 6783326
+    },
+    "nekomante_grimoire_cat": {
+      "bytesIn": 11059091,
+      "bytesOut": 8017756
     },
     "neon_glitch_cat": {
       "bytesIn": 5353385,
@@ -158,6 +246,10 @@
     "nube_dream_cat": {
       "bytesIn": 7673726,
       "bytesOut": 5484920
+    },
+    "pendulo_clock_cat": {
+      "bytesIn": 10475309,
+      "bytesOut": 7633494
     },
     "plasmin_plasma_cat": {
       "bytesIn": 9569592,
@@ -191,6 +283,14 @@
       "bytesIn": 8818656,
       "bytesOut": 6367693
     },
+    "solcaido_sun_cat": {
+      "bytesIn": 10952280,
+      "bytesOut": 7965281
+    },
+    "sombrita_shadow_cat": {
+      "bytesIn": 10529268,
+      "bytesOut": 7655475
+    },
     "sonata_prima_cat": {
       "bytesIn": 11010967,
       "bytesOut": 7991662
@@ -211,13 +311,41 @@
       "bytesIn": 11274393,
       "bytesOut": 8219055
     },
+    "tamborin_drum_cat": {
+      "bytesIn": 7241362,
+      "bytesOut": 5234555
+    },
+    "tempano_iceplate_cat": {
+      "bytesIn": 10734909,
+      "bytesOut": 7775267
+    },
+    "tic_pocketwatch_cat": {
+      "bytesIn": 8333608,
+      "bytesOut": 6036198
+    },
+    "titiritera_puppet_cat": {
+      "bytesIn": 9943527,
+      "bytesOut": 7200472
+    },
+    "valquiria_lightning_cat": {
+      "bytesIn": 10484845,
+      "bytesOut": 7656995
+    },
     "vapor_ronin_cat": {
       "bytesIn": 11741561,
       "bytesOut": 8519949
     },
+    "vitral_stainedglass_cat": {
+      "bytesIn": 8649658,
+      "bytesOut": 6336715
+    },
     "voltio_static_cat": {
       "bytesIn": 11148068,
       "bytesOut": 8041307
+    },
+    "zarpa_pirate_cat": {
+      "bytesIn": 9622464,
+      "bytesOut": 6996662
     }
   }
 }
