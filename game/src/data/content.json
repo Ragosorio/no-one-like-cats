@@ -12359,7 +12359,7 @@
    "goal": {
     "type": "use_automation",
     "automation": "auto_battle",
-    "text": "Activa el Simulacro (auto-batalla en etapas ganadas)."
+    "text": "Enciende el Simulacro en REINO › Automatizaciones: tu flota repite sola una etapa ya ganada (70% del botín)."
    },
    "trigger": "kl:40",
    "purpose": "teach",
