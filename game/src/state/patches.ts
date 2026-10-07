@@ -29,8 +29,10 @@ export const patchNotes: string[] = [];
 
 /** add a patch (feature modules call this at import time; order = registration order) */
 export function registerPatch(p: Patch) {
-  if (PATCHES.some((x) => x.id === p.id)) throw new Error(`patch duplicado: ${p.id}`);
-  PATCHES.push(p);
+  // a module evaluated twice (dev hot reload, a second import URL) re-registers the same id: keep one
+  const i = PATCHES.findIndex((x) => x.id === p.id);
+  if (i >= 0) PATCHES[i] = p;
+  else PATCHES.push(p);
 }
 
 export function runPatches() {
