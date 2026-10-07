@@ -12,6 +12,12 @@ export const SIM_ELEMENT: Record<string, ElementId> = {
   magic: 'magic',
   cosmic: 'cosmic',
   void: 'void',
+  // Parte 2 (same id in content and sim)
+  ice: 'ice',
+  light: 'light',
+  shadow: 'shadow',
+  sound: 'sound',
+  time: 'time',
 };
 const STATUS: Record<string, StatusId> = {
   ardiendo: 'burning',
@@ -31,6 +37,14 @@ const TRAJ: Record<string, Trajectory> = {
   runa: 'homing',
   orbe_gravitatorio: 'orb',
   objetivo: 'meteor',
+  // Parte 2 (battle/multiverso.ts): carámbano = parabólico + Congelado; haz = rayo de luz que perfora;
+  // sombra = parabólico invisible; onda = atraviesa paredes; reloj = parabólico (rebota si tiene rebotes); borrado = fase
+  carambano: 'ballistic',
+  haz: 'ray',
+  sombra: 'ballistic',
+  onda: 'wave',
+  reloj: 'bounce',
+  borrado: 'phase',
 };
 const LIMIT: Record<string, Limitation> = {
   'UNA BALA': 'oneShot',
@@ -49,7 +63,7 @@ export function shotFromSpec(s: ShotSpec, level: number): ShotDef {
   if (traj === 'bounce' && s.bounces <= 0) traj = 'ballistic';
   let radius = s.radius * CELL;
   let projectiles = s.projectiles;
-  let pierce = s.pierce || (traj === 'heavy' ? 2 : 0);
+  let pierce = s.pierce || (traj === 'heavy' ? 2 : traj === 'wave' ? 8 : traj === 'ray' ? 3 : traj === 'phase' ? 2 : 0);
   const el = SIM_ELEMENT[s.element] ?? 'neutral';
   // Nv10 / Nv20 element upgrades (GDD 2.3)
   if (level >= 10) {
@@ -72,9 +86,11 @@ export function shotFromSpec(s: ShotSpec, level: number): ShotDef {
     gravityScale: s.gravityMul !== 1 ? s.gravityMul : undefined,
     speedMul: s.speedMul !== 1 ? s.speedMul : undefined,
     pierce,
+    // a cat's Vacío shot erases a short line (the Starbreaker weapon keeps its own ×2.2)
+    pierceMul: traj === 'phase' ? 0.55 : undefined,
     statuses,
-    preview: traj === 'beam' ? 0.6 : traj === 'homing' ? 0.3 : 0.45,
-    catMul: traj === 'beam' ? 0.8 : 0.5,
+    preview: traj === 'beam' || traj === 'ray' ? 0.6 : traj === 'homing' ? 0.3 : 0.45,
+    catMul: traj === 'beam' ? 0.8 : traj === 'ray' ? 0.6 : 0.5,
     structMul: traj === 'beam' ? 0.75 : 1,
   };
 }

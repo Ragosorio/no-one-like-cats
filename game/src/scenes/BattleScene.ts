@@ -29,6 +29,8 @@ import { CrewCard, BattleTopBar, RuleStrip } from '../battle/hud';
 import { LabelLanes, reactionPlate, tagLabel, REACTION_INFO } from '../battle/labels';
 import { GargoyleWings, ThroatFx, KrakenRig, BubbleFx, RainFx } from '../battle/boss/rigs';
 import { koRank } from '../state/sys/ranks';
+import { P2_ONO, p2Hidden, p2Projectile, p2Trail } from '../battle/fx/multiversoFx';
+import { p2Feats } from '../battle/multiverso';
 import { settings } from '../core/settings';
 import { fmt } from '../core/format';
 import { G } from '../state/game';
@@ -121,6 +123,7 @@ const ONO: Record<string, [string, number]> = {
   cosmic: ['¡VWOOM!', 0x00e5ff],
   void: ['¡...!', 0xff2e88],
   neutral: ['¡BOOM!', C.yellow],
+  ...P2_ONO,
 };
 
 const PHASE_NOTE: Record<string, string[]> = {
@@ -1062,7 +1065,10 @@ export class BattleScene extends Scene {
     glow.tint = fx.main;
     glow.scale.set(shot.trajectory === 'beam' ? 0.7 : 0.5);
     const core = new Graphics();
-    if (shot.trajectory === 'beam') {
+    if (p2Projectile(shot, core, fx)) {
+      // Parte 2 look (battle/fx/multiversoFx.ts); Sombra is invisible until it lands
+      g.visible = !p2Hidden(shot);
+    } else if (shot.trajectory === 'beam') {
       core.poly([-22, -5, 6, -5, 2, -12, 26, 0, -2, 12, 2, 5, -22, 5]).fill(0xfff6a8).stroke({ width: 4, color: C.ink, join: 'miter' });
     } else if (shot.trajectory === 'gust') {
       for (let i = 0; i < 3; i++) core.arc(0, 0, 10 + i * 7, -1.2 + i * 0.5, 1.4 + i * 0.5).stroke({ width: 5 - i, color: i ? fx.accent : C.ink, cap: 'round' });
@@ -1114,7 +1120,9 @@ export class BattleScene extends Scene {
       const trail = new Graphics();
       this.world.addChild(trail);
       const hist: { x: number; y: number }[][] = paths.map(() => []);
-      if (!quick) {
+      // Sombra: no trail, and the camera doesn't give it away
+      const hidden = p2Hidden(shot);
+      if (!quick && !hidden) {
         this.follow = balls[0].node;
         this.followBox = this.shipBox(side === 0 ? 1 : 0);
         this.cam.tz = 1.16;
@@ -1153,7 +1161,7 @@ export class BattleScene extends Scene {
             if (shot.trajectory === 'gust') b.core.rotation += 0.35;
             hist[pi].push({ x: pt.x, y: pt.y });
             if (hist[pi].length > 14) hist[pi].shift();
-            if (i % 3 === 0) this.fxp.burst(pt.x, pt.y, { count: 1, tint: [b.fx.main, b.fx.accent], speed: [0, 30], life: [0.2, 0.4], gravity: 0, scale: [0.35, 0.55], texture: dotTexture() });
+            if (i % 3 === 0 && !hidden) this.fxp.burst(pt.x, pt.y, { count: 1, tint: [b.fx.main, b.fx.accent], speed: [0, 30], life: [0.2, 0.4], gravity: 0, scale: [0.35, 0.55], texture: dotTexture() });
             if (p.impacts.includes(i)) {
               for (const e of events)
                 if (!consumed.has(e) && 'path' in e && e.path === pi && e.at === i) {
@@ -1165,7 +1173,9 @@ export class BattleScene extends Scene {
         }
         // trails: jagged krackle bolt for rays, wind streaks for gusts
         trail.clear();
-        if (shot.trajectory === 'beam' || shot.trajectory === 'gust') {
+        if (p2Trail(trail, shot, hist, done, frame)) {
+          // Parte 2 trails (light beam, sound rings, void static)
+        } else if (shot.trajectory === 'beam' || shot.trajectory === 'gust') {
           hist.forEach((hs, pi) => {
             if (done[pi] || hs.length < 2) return;
             if (shot.trajectory === 'beam') {
@@ -1799,6 +1809,8 @@ export class BattleScene extends Scene {
         reactions: [...this.reactions],
         enemyHullLost: this.spec.mode === 'duel' ? 0 : 1 - this.sim.hullPct(1),
       };
+      // Parte 2 feats (congelar, cegar, apuñalar, aturdir, rebobinar, borrar) → counters for missions/stats
+      for (const [k, n] of Object.entries(p2Feats(this.sim))) if (n > 0) G.count(k, n);
       this.spec.onEnd(result);
     });
   }

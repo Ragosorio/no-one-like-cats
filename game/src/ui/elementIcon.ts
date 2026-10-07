@@ -7,17 +7,14 @@
 import { Assets, Container, Sprite, Text, TextStyle, TextStyleOptions, Texture } from 'pixi.js';
 import { C, F } from './theme';
 
-export const ELEMENT_IDS = ['fire', 'water', 'nature', 'earth', 'storm', 'magic', 'cosmic', 'void', 'unknown'] as const;
+export const ELEMENT_IDS = ['fire', 'water', 'nature', 'earth', 'storm', 'magic', 'cosmic', 'ice', 'sound', 'shadow', 'time', 'light', 'void', 'unknown'] as const;
 export type ElementIconId = (typeof ELEMENT_IDS)[number];
 
 /** sim/legacy ids → badge */
 const ALIAS: Record<string, ElementIconId> = {
   electric: 'storm',
   wind: 'storm',
-  ice: 'water',
   spirit: 'magic',
-  light: 'magic',
-  shadow: 'void',
   plant: 'nature',
   rock: 'earth',
   neutral: 'unknown',
@@ -79,7 +76,7 @@ export function elementIcon(el: string, size = 32): Sprite {
   return s;
 }
 
-const TOKEN = /\{(fire|water|nature|earth|storm|magic|cosmic|void|unknown|electric)\}|(🔥|💧|🌿|🌱|🪨|⚡|✨|🌌|🕳️|🕳|❔)/gu;
+const TOKEN = /\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void|unknown|electric)\}|(🔥|💧|🌿|🌱|🪨|⚡|✨|🌌|🕳️|🕳|❔)/gu;
 
 export interface IconTextOpts {
   /** wrap width in px (greedy, by words) */
