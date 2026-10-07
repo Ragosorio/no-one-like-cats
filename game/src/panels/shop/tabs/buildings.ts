@@ -2,6 +2,7 @@
  * EDIFICIOS: the balance gem sinks (Constructor extra, Ranura de Resonancia, Reloj de arena grande)
  * + links to buildings bought elsewhere (Banco, Muelle, Expansiones, Astillero) — never duplicated.
  */
+import { regionRoom } from '../../../island/placement';
 import { Container, Graphics, Ticker } from 'pixi.js';
 import gsap from 'gsap';
 import { C, F } from '../../../ui/theme';
@@ -106,7 +107,7 @@ export function renderBuildings(ctx: ShopCtx) {
       key: 'bld:exp',
       title: 'EXPANSIONES',
       kicker: 'MÁS ISLA',
-      text: nx ? `${nx.e.name}: +${nx.e.balance.hab_plots} parcela(s) de hábitat${nx.e.balance.farm_plots ? ` y +${nx.e.balance.farm_plots} de pesca` : ''}. ${nx.e.opensDesign.split(/\.\s/)[0].replace(/\.$/, '')}.` : 'Ya limpiaste todo el archipiélago. Leyenda.',
+      text: nx ? `${nx.e.name}: espacio para ~${regionRoom(nx.e.id)} hábitats más${nx.e.balance.farm_plots ? ` y +${nx.e.balance.farm_plots} de pesca` : ''}. ${nx.e.opensDesign.split(/\.\s/)[0].replace(/\.$/, '')}.` : 'Ya limpiaste todo el archipiélago. Leyenda.',
       status: nx ? (nx.st === 'locked' ? `Reino ${nx.e.balance.kl} · ${fmt(nx.e.balance.cost)} doblones` : nx.st === 'clearing' ? 'Limpiando terreno…' : `${fmt(nx.e.balance.cost)} doblones`) : 'Completo',
       color: 0x8fcf6a,
       link: nx

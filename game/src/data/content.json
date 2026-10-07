@@ -43,7 +43,7 @@
    "enemyStages": 54,
    "errands": 7,
    "ships": 6,
-   "expansions": 8,
+   "expansions": 12,
    "reactions": 12,
    "storyBeats": 26
   }
@@ -14408,7 +14408,7 @@
     "r": 4
    },
    "balance": {
-    "kl": 36,
+    "kl": 33,
     "cost": 1500000000.0,
     "clear_s": 1800,
     "hab_plots": 2,
@@ -14426,6 +14426,130 @@
     "reward": "4 gemas + escena: el faro se enciende y señala al Leviatán"
    },
    "visual": "Isla flotando sobre el agua, peces de luz, cielo glitch."
+  },
+  {
+   "n": 9,
+   "id": "jardin_sakura",
+   "name": "Jardín Sakura",
+   "biome": "sakura",
+   "region": {
+    "cx": 39,
+    "cy": 20.8,
+    "r": 5.4
+   },
+   "balance": {
+    "kl": 34,
+    "cost": 4000000000.0,
+    "clear_s": 1500,
+    "hab_plots": 0,
+    "farm_plots": 1,
+    "bonus": {
+     "builders": 1,
+     "gold": 0.3
+    },
+    "opens": "3er Constructor, +30% oro, espacio libre para hábitats"
+   },
+   "opensDesign": "3.er Constructor y +30% de oro. Terreno libre para hábitats nuevos.",
+   "secret": {
+    "name": "Té del Gato Sabio",
+    "condition": "Al terminar de limpiar",
+    "content": "Un gato anciano sirve té bajo el cerezo. Siéntate con él.",
+    "reward": "3 gemas + 10 orbes Prisma"
+   },
+   "visual": "Cerezos en flor, faroles de papel, pétalos que caen. Dimensión acuarela."
+  },
+  {
+   "n": 10,
+   "id": "oasis_dorado",
+   "name": "Oasis Dorado",
+   "biome": "desert",
+   "region": {
+    "cx": 22,
+    "cy": 40.2,
+    "r": 5.4
+   },
+   "balance": {
+    "kl": 35,
+    "cost": 10000000000.0,
+    "clear_s": 2100,
+    "hab_plots": 0,
+    "farm_plots": 1,
+    "bonus": {
+     "gold": 0.4,
+     "offline_bank_h": 2
+    },
+    "opens": "+40% oro, Banco del Reino offline +2 h"
+   },
+   "opensDesign": "+40% de oro y el Banco del Reino guarda 2 h más sin ti.",
+   "secret": {
+    "name": "Esfinge Bostezante",
+    "condition": "Al terminar de limpiar",
+    "content": "Una esfinge gata dormida. Despiértala a golpecitos: 15 clics.",
+    "reward": "3 gemas + 30 cristales de Tierra"
+   },
+   "visual": "Dunas doradas, cactus, pirámides con orejas. Dimensión sepia de cómic viejo."
+  },
+  {
+   "n": 11,
+   "id": "isla_caramelo",
+   "name": "Isla Caramelo",
+   "biome": "candy",
+   "region": {
+    "cx": 39,
+    "cy": 39,
+    "r": 5.4
+   },
+   "balance": {
+    "kl": 36,
+    "cost": 30000000000.0,
+    "clear_s": 2700,
+    "hab_plots": 0,
+    "farm_plots": 1,
+    "bonus": {
+     "gold": 0.5,
+     "food": 0.3
+    },
+    "opens": "+50% oro, +30% Pescaditos"
+   },
+   "opensDesign": "+50% de oro y +30% de Pescaditos.",
+   "secret": {
+    "name": "Fuente de Chocolate",
+    "condition": "Al terminar de limpiar",
+    "content": "Una fuente de chocolate con un gato adentro. Por supuesto.",
+    "reward": "3 gemas + 2 horas de Ronroneo"
+   },
+   "visual": "Paletas gigantes, ríos de leche con fresa, nubes de algodón. Dimensión caramelo."
+  },
+  {
+   "n": 12,
+   "id": "abismo_ronroneo",
+   "name": "Abismo del Ronroneo",
+   "biome": "void",
+   "region": {
+    "cx": 40,
+    "cy": 30.5,
+    "r": 5.4
+   },
+   "balance": {
+    "kl": 38,
+    "cost": 100000000000.0,
+    "clear_s": 3600,
+    "hab_plots": 0,
+    "farm_plots": 1,
+    "bonus": {
+     "gold": 0.75,
+     "catdex_bonus": 0.01
+    },
+    "opens": "+75% oro, Catdex +1% extra por especie"
+   },
+   "opensDesign": "+75% de oro y +1% extra por especie del Catdex. El borde del mapa.",
+   "secret": {
+    "name": "Ojo del Abismo",
+    "condition": "Al terminar de limpiar",
+    "content": "Un ojo enorme en el suelo. Parpadea. Ronronea.",
+    "reward": "5 gemas + pista del Capítulo 2"
+   },
+   "visual": "Negativo de foto: tierra negra, líneas blancas, un ojo rojo. Dimensión vacío."
   }
  ],
  "automation": [

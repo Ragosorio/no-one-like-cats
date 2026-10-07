@@ -116,8 +116,51 @@ export function createFx(L: RegionLayer, sky: SkyCtx): DimFx | null {
       return prismFx(L);
     case 'cosmic':
       return cosmicFx(L, sky);
+    case 'sakura':
+      return gentleFx(L, [0xffffff, 0xffc9de, 0xff9ec4], 4);
+    case 'desert':
+      return gentleFx(L, [0xfff2b0, 0xffd36a, 0xffffff], 3);
+    case 'candy':
+      return prismFx(L);
+    case 'void':
+      return voidFx(L);
   }
   return null;
+}
+
+// ------------------------------------------------------------------------------- post-story ring
+/** lagoon frames + glints in the dimension's colours (acuarela, sepia) */
+function gentleFx(L: RegionLayer, tints: number[], rate: number): DimFx {
+  let acc = 0;
+  let f = 0;
+  const glints = new Glints(L, tints, rate, 0.4);
+  return {
+    tick(dt) {
+      acc += dt;
+      if (acc > 0.42) {
+        acc = 0;
+        RegionLayer.frame(L.lagOv, ++f);
+      }
+      glints.tick(dt);
+    },
+    destroy() {
+      glints.destroy();
+    },
+  };
+}
+/** photo negative: a red rim that breathes + white/red glints */
+function voidFx(L: RegionLayer): DimFx {
+  const rim = edgeGlow(L, 0xff2e48, () => true, 14, 3);
+  const glints = new Glints(L, [0xffffff, 0xff2e48], 3, 0.35);
+  return {
+    tick(dt, t) {
+      rim.alpha = 0.55 + Math.sin(t * 0.9) * 0.35;
+      glints.tick(dt);
+    },
+    destroy() {
+      glints.destroy();
+    },
+  };
 }
 
 // ------------------------------------------------------------------------------- cozy / valle

@@ -15,7 +15,7 @@
 import type { GameState } from './game';
 
 /** bump when a MIGRATION is added (plain new optional fields don't need a bump: normalize() covers them) */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 type AnyState = Record<string, unknown> & Partial<GameState>;
 
@@ -26,7 +26,39 @@ const MIGRATIONS: Record<number, (s: AnyState) => void> = {
     s.patches ??= [];
     s.updatesSeen ??= [];
   },
+  // v3 (2026-10): free habitat placement — a habitat is no longer "plot i of region r" but a 3×3
+  // footprint at tile (gx, gy). Every old habitat lands on the exact tile its plot had, so nothing
+  // moves on screen; tier, element, cats, buffer and timers are untouched. `plot` stays (unused).
+  3: (s) => {
+    for (const h of (s.habitats ?? []) as unknown as Record<string, unknown>[]) {
+      if (!h || typeof h !== 'object') continue;
+      if (Number.isFinite(h.gx) && Number.isFinite(h.gy)) continue;
+      const spot = LEGACY_PLOTS[String(h.region)]?.[Number(h.plot)];
+      // unknown plot (hand-edited save): no position yet → island/placement puts it on the nearest free spot
+      if (spot) {
+        h.gx = spot[0];
+        h.gy = spot[1];
+      }
+    }
+  },
 };
+
+/**
+ * Top-left tile of every fixed habitat plot of the pre-2026-10 island (island/layout.ts LEGACY_HAB_PLOTS
+ * produces the same table; it's copied here as plain data so this migration never depends on the planner).
+ */
+const LEGACY_PLOTS: Record<string, [number, number][]> = {
+  home: [[24, 23], [20, 24], [24, 19]],
+  bosque_costero: [[10, 26], [10, 30]],
+  acantilado_rocoso: [[23, 8], [23, 12]],
+  isla_volcanica: [[38, 23], [34, 24]],
+  puerto_mareas: [[24, 38]],
+  glaciar_bigote: [[8, 9], [7, 13]],
+  ruinas_arcanas: [[37, 37], [38, 41]],
+  arrecife_prismatico: [[7, 39], [11, 39]],
+  atolon_estelar: [[43, 6], [43, 2]],
+};
+export { LEGACY_PLOTS };
 
 export function migrate(raw: AnyState, from: number): { state: AnyState; steps: number[] } {
   const steps: number[] = [];

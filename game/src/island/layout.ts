@@ -5,7 +5,25 @@
  */
 import { BAL } from '../state/econ';
 import { EXPANSIONS } from '../data/content';
-import { generateArchipelago, islandRegions, key, N4, N8, RegionDef, Tile, GRID, HOME_ID } from './archipelago';
+import { generateArchipelago, islandRegions, key, N4, N8, RegionDef, Tile, GRID, GRID_EXT, HOME_ID, gridOf } from './archipelago';
+
+/**
+ * Fixed habitat plots of the ORIGINAL island (before free placement, 2026-10). Frozen here so the
+ * plan never moves: old saves are migrated from these spots (state/migrate.ts keeps a literal copy),
+ * the home paths lead to them, and the natural decor keeps them clear. New regions get none — habitats
+ * are placed freely (island/placement.ts).
+ */
+export const LEGACY_HAB_PLOTS: Record<string, number> = {
+  home: 3,
+  bosque_costero: 2,
+  acantilado_rocoso: 2,
+  isla_volcanica: 2,
+  puerto_mareas: 1,
+  glaciar_bigote: 2,
+  ruinas_arcanas: 2,
+  arrecife_prismatico: 2,
+  atolon_estelar: 2,
+};
 
 export interface Spot {
   gx: number;
@@ -29,7 +47,10 @@ export type DecorKind =
   | 'grass'
   | 'lamp'
   | 'star'
-  | 'boulder';
+  | 'boulder'
+  | 'sakura'
+  | 'cactus'
+  | 'lollipop';
 export interface Decor {
   gx: number;
   gy: number;
@@ -40,6 +61,7 @@ export interface RegionPlan {
   def: RegionDef;
   tiles: Tile[];
   center: { gx: number; gy: number };
+  /** legacy fixed habitat plots (see LEGACY_HAB_PLOTS) — habitats now live at Habitat.gx/gy */
   habitats: Spot[];
   farms: Spot[];
   decor: Decor[];
@@ -74,6 +96,10 @@ function hash2(a: number, b: number, s = 0) {
 const DECOR_BY_BIOME: Record<string, DecorKind[]> = {
   home: ['palm', 'bush', 'flower', 'flower', 'grass', 'rock', 'tree'],
   forest: ['pine', 'pine', 'tree', 'mushroom', 'bush', 'grass'],
+  sakura: ['sakura', 'sakura', 'flower', 'lamp', 'grass', 'bush'],
+  desert: ['cactus', 'cactus', 'palm', 'boulder', 'column', 'grass'],
+  candy: ['lollipop', 'mushroom', 'lollipop', 'crystal', 'flower', 'star'],
+  void: ['crystal', 'column', 'lamp', 'star', 'rock', 'crystal'],
   cliff: ['boulder', 'rock', 'rock', 'grass', 'column'],
   volcano: ['lava', 'rock', 'boulder', 'crystal'],
   ghost: ['lamp', 'rock', 'grass', 'tree'],
@@ -92,7 +118,9 @@ export function islandPlan(): IslandPlan {
   const occ = new Set<string>();
   const ring = new Set<string>();
   const land = (gx: number, gy: number) => tiles.get(key(gx, gy));
-  const isWater = (gx: number, gy: number) => !tiles.has(key(gx, gy)) && gx >= 0 && gy >= 0 && gx < GRID && gy < GRID;
+  /** `lim`: regions 1–8 keep the original board bound so their plans never move */
+  const isWater = (gx: number, gy: number, lim = GRID) => !tiles.has(key(gx, gy)) && gx >= 0 && gy >= 0 && gx < lim && gy < lim;
+  const limOf = (reg: string) => gridOf(regions.find((r) => r.id === reg) ?? {});
 
   const mark = (s: Spot, withRing = true) => {
     for (let y = s.gy; y < s.gy + s.h; y++) for (let x = s.gx; x < s.gx + s.w; x++) occ.add(key(x, y));
@@ -135,9 +163,10 @@ export function islandPlan(): IslandPlan {
 
   /** water pen: all water, in front rows water too, touching region land on its back sides */
   const penFits = (reg: string, s: Spot, deep = 2) => {
+    const lim = limOf(reg);
     for (let y = s.gy; y < s.gy + s.h + deep; y++)
       for (let x = s.gx; x < s.gx + s.w + deep; x++) {
-        if (!isWater(x, y)) return false;
+        if (!isWater(x, y, lim)) return false;
         if (y < s.gy + s.h && x < s.gx + s.w && occ.has(key(x, y))) return false;
       }
     // keep pens from touching other pens
@@ -224,7 +253,7 @@ export function islandPlan(): IslandPlan {
   mark(sanctuary);
 
   // habitats in home
-  const habCount = (id: string) => (id === HOME_ID ? BAL.habitats.plots_start : (EXPANSIONS.find((e) => e.id === id)?.balance.hab_plots ?? 0));
+  const habCount = (id: string) => LEGACY_HAB_PLOTS[id] ?? 0;
   const farmCount = (id: string) => (id === HOME_ID ? BAL.farms.plots_start : (EXPANSIONS.find((e) => e.id === id)?.balance.farm_plots ?? 0));
   const placeHabitats = (p: RegionPlan) => {
     p.habitats = placeMany(
@@ -346,10 +375,10 @@ export function planAscii(p: IslandPlan) {
     if (r.pier) put(r.pier, 'X');
   }
   const letters: Record<string, string> = {};
-  p.regions.forEach((r, i) => (letters[r.id] = 'hbcvpgrae'[i] ?? '?'));
-  for (let y = 0; y < GRID; y++) {
+  p.regions.forEach((r, i) => (letters[r.id] = 'hbcvpgraeskdo'[i] ?? '?'));
+  for (let y = 0; y < GRID_EXT; y++) {
     let line = '';
-    for (let x = 0; x < GRID; x++) {
+    for (let x = 0; x < GRID_EXT; x++) {
       const g = glyph.get(key(x, y));
       const t = p.tiles.get(key(x, y));
       line += g ?? (t ? letters[t.region] : '.');

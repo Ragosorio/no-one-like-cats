@@ -5,7 +5,8 @@
 import { G, Habitat, OwnedCat } from '../game';
 import { BAL, habitatTier } from '../econ';
 import { EXPANSIONS, catDef } from '../../data/content';
-import { buildersBusy, builders, expansionState, freeHabitatPlot, habitatCapacity, house, nextHabitatCost } from '../sys/island';
+import { buildersBusy, builders, expansionState, habitatCapacity, house, nextHabitatCost } from '../sys/island';
+import { hasHabitatSpace } from '../../island/placement';
 import { readyExpeditions, expeditions } from '../sys/workforce';
 import { ctaVisible } from './island';
 
@@ -23,8 +24,8 @@ export function homeFixFor(c: OwnedCat): HomeFix {
   const room = own.filter((h) => !h.busy && h.cats.length < habitatCapacity(h)).sort((a, b) => b.tier - a.tier)[0];
   if (room) return { kind: 'move', habitat: room, element: room.element };
   const el = els.find((e) => G.s.elements.includes(e)) ?? els[0];
-  if (freeHabitatPlot()) {
-    const cost = nextHabitatCost();
+  if (hasHabitatSpace()) {
+    const cost = nextHabitatCost(el);
     return { kind: 'build', element: el, cost, affordable: G.s.gold >= cost, builderFree: buildersBusy() < builders() };
   }
   // a matching habitat that would gain capacity by upgrading
@@ -37,7 +38,7 @@ export function homeFixFor(c: OwnedCat): HomeFix {
     const st = expansionState(e.n);
     if (st === 'cleared') continue;
     if (st === 'available') return { kind: 'expand', n: e.n, cost: e.balance.cost, affordable: G.s.gold >= e.balance.cost };
-    if (st === 'clearing') return { kind: 'wait', text: `Están limpiando ${e.name}: ahí habrá parcelas nuevas.` };
+    if (st === 'clearing') return { kind: 'wait', text: `Están limpiando ${e.name}: ahí habrá espacio nuevo.` };
     return { kind: 'wait', text: `El próximo terreno (${e.name}) abre en Reino ${e.balance.kl}.` };
   }
   return { kind: 'wait', text: 'Mejora un hábitat para que quepan más gatos.' };
