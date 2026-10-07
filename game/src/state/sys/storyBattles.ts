@@ -93,7 +93,9 @@ export const STORY_BATTLES: Record<string, StoryBattleDef> = {
     archetype: 'observatorio',
     enemyCats: ['m_singular', 'c_lunita', 'c_cometin'],
     powerMul: 1.05,
-    intro: ['Algo se acurruca dentro de la grieta… y te está mirando', 'Gana y quizá te siga a casa'],
+    // the crack's own power (CATACLISMOS): stars fall on your ship every 3 turns, harder the bigger your hull
+    rules: { cataclysm: { id: 'meteors', side: 1, by: 'LA GRIETA', first: 2, every: 3, power: 3 } },
+    intro: ['Algo se acurruca dentro de la grieta… y te está mirando', 'Gana y quizá te siga a casa', 'PODER DE LA GRIETA: LLUVIA DE METEORITOS cada 3 turnos · TÍRALE A SU SELLO'],
     color: 0x8a5cff,
     reward: { cat: 'm_singular', fragments: 1 },
   },

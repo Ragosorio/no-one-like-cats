@@ -5,6 +5,7 @@ import { Rng } from '../core/rng';
 import { ShotDef } from './types';
 import { ultWorth } from './ults';
 import { p2AimNoise, p2ShotValue } from './multiverso';
+import { sealValue } from './cataclysm';
 
 export type Personality = 'clumsy' | 'sniper' | 'tuner' | 'calculator' | 'avenger' | 'looter' | 'demolisher' | 'elementalist';
 
@@ -153,6 +154,8 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   const blind = b.sides[side].buffs.blind > 0 ? 3 : 1;
 
   const windGuess = b.wind * (1 + (r.next() * 2 - 1) * profile.windError * blind);
+  // a cataclysm charging: a shot that ALSO flies through its seal is worth more (cataclysm.ts)
+  const sealV = sealValue(b, side);
   for (const s of shooters) {
     const o = b.muzzle(side, s.id === 'cannon' ? undefined : s.id);
     const dir = enemy === 1 ? 1 : -1;
@@ -176,7 +179,7 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
       for (let pi = 0; pi < 9; pi++) {
         const power = 520 + pi * 95;
         const paths = b.buildPaths(s.shot, o, angle, power, windGuess, side);
-        let score = scorePaths(b, paths, targets, enemy, s.shot) * shotMul;
+        let score = scorePaths(b, paths, targets, enemy, s.shot, sealV) * shotMul;
         if (score > 0 && (pers === 'elementalist' || pers === 'calculator')) score *= reactionBonus(b, paths, enemy, s.shot);
         // Parte 2: the AI plays the new elements on purpose (waves through cabins, ice on cannons…)
         if (score > 0) score *= p2ShotValue(b, side, s.shot, paths);
@@ -216,9 +219,10 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   return { shooter: pick.shooter, ult: pick.ult, angle, power, target: { x: pick.tx, y: pick.ty } };
 }
 
-function scorePaths(b: Battle, paths: ShotPath[], targets: Target[], enemy: number, shot: ShotDef) {
+function scorePaths(b: Battle, paths: ShotPath[], targets: Target[], enemy: number, shot: ShotDef, sealV = 0) {
   let score = 0;
   for (const p of paths) {
+    if (sealV && p.seal !== undefined) score += sealV;
     if (!p.impacts.length) continue;
     const ip = p.points[p.impacts[p.impacts.length - 1]];
     const hit = b.cellAt(ip.x, ip.y);

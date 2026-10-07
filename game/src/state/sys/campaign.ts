@@ -5,7 +5,10 @@ import { BAL, absStage, battleCrystals, battleGold, battleScrap, blueprintAmount
 import { adopt, cat as getCat, catHpBase, catPow, starPerks } from './cats';
 import type { OwnedCat } from '../game';
 import type { BattleCatDef } from '../../battle/types';
-import { crew, playerBlueprint, shipPower, mk, autoCrew, cannonShotsFor, balanceShip, shipName } from './ship';
+import { crew, playerBlueprint, shipPower, mk, autoCrew, cannonShotsFor, balanceShip, shipName, combatWeight } from './ship';
+import { CATA_INFO, poderDe } from '../../battle/cataclysm';
+import { registerPatch } from '../patches';
+import type { CataCfg } from '../../battle/cataclysm';
 import { gearBattleMods, gearBattleExtras } from './gear';
 import { rankDmgBonus, koRank, RANK_ORBS, KO_RANKS } from './ranks';
 import { accessoryMods } from './accessories';
@@ -52,12 +55,57 @@ export function stagePower(zone: number, stage: number) {
   if (stage === STAGES_PER_ZONE) ep /= 1 + 0.25 * Math.min(1, G.s.campaign.analysis[key] ?? 0);
   return ep;
 }
-/** ship power with the situational perk of the active ship (GDD 2.8: Bastión +10% vs jefes) */
+/**
+ * the Poder a fight scales with: the ship's combat weight (ship.ts: the Bastión's hull fights on its own, ×0.8)
+ * and the situational perk of the active ship (GDD 2.8: Bastión +10% vs jefes, Bajel +20% in zones 4–6)
+ */
 export function effectiveSP(zone: number, stage: number, sp = shipPower()) {
   const ship = G.s.ship.active;
+  sp *= combatWeight(ship);
   if (ship === 'bastion' && stage === STAGES_PER_ZONE) return sp * 1.1;
   if (ship === 'bajel' && (zone === 4 || zone === 5 || zone === 6)) return sp * 1.2;
   return sp;
+}
+
+/**
+ * CATACLISMOS (battle/cataclysm.ts): the power of zones 4–6 and their bosses — not a cat. Every few turns
+ * it falls on your ship, harder the bigger your hull; hit its SEAL to halve it, twice to cancel it.
+ * Exported (mutable) for the balance scripts.
+ */
+export const CATA_ZONE: Record<number, { stage: CataCfg; boss: CataCfg }> = {
+  4: {
+    stage: { id: 'moon', side: 1, by: 'LAS RUINAS SUMERGIDAS', first: 2, every: 3, power: 0.4 },
+    boss: { id: 'moon', side: 1, by: 'EL ARCANISTA', first: 1, every: 3, power: 0.8 },
+  },
+  5: {
+    stage: { id: 'meteors', side: 1, by: 'EL ABISMO ESTELAR', first: 2, every: 3, power: 3 },
+    boss: { id: 'sun', side: 1, by: 'LA ESTRELLA ERRANTE', first: 1, every: 3, power: 8 },
+  },
+  6: {
+    stage: { id: 'tide', side: 1, by: 'LA MAREA SIN NOMBRE', first: 2, every: 3, power: 2 },
+    boss: { id: 'tide', side: 1, by: 'EL PRIMER MAR', first: 1, every: 3, power: 1.15 },
+  },
+};
+/** the cataclysm of a campaign stage (null below zone 4) */
+export function stageCataclysm(zone: number, stage: number): CataCfg | null {
+  const z = CATA_ZONE[zone];
+  if (!z) return null;
+  const isBoss = stageInfo(zone, stage)?.type === 'boss';
+  return { ...(isBoss ? z.boss : z.stage) };
+}
+// old saves with a Bastión: the pre-battle now shows its PODER DE COMBATE (×0.9) — same ship, same modules
+registerPatch({
+  id: '2026-10-bastion-poder-de-combate',
+  why: 'El Bastión pelea con ×0.9 de su Poder (su casco ya pelea solo) y las zonas 4–6 traen CATACLISMOS; quien lo tiene ve otro número en la pre-batalla y debe saber por qué.',
+  run() {
+    if (!G.s.ship.owned.includes('bastion')) return;
+    return 'Tu BASTIÓN es el mismo barco, con los mismos módulos y la misma tripulación. Ahora se mide honesto: antes de pelear ves su PODER DE COMBATE (x0.9), porque su casco gigante, sus 5 cañones y sus burbujas ya pelean solos. Y en las zonas 4 a 6 el cielo le cae más fuerte a los barcos grandes: los CATACLISMOS.';
+  },
+});
+
+/** one intro-card line for a cataclysm ("PODER DEL JEFE: LA LUNA BAJA…") */
+export function cataIntroLine(c: CataCfg) {
+  return `${poderDe(c.by)}: ${CATA_INFO[c.id].name} cada ${c.every} turnos · TÍRALE A SU SELLO`;
 }
 /** balance win formula for a power ratio */
 export function winChanceFor(S: number) {
@@ -226,12 +274,15 @@ function stageIntro(zone: number, stage: number): BattleIntro | undefined {
     const analysis = G.s.campaign.analysis[stageKey(zone, stage)] ?? 0;
     const lines = [...(bi?.lines ?? [b.rule])];
     lines.push(analysis >= 0.4 || zone === 1 ? bi?.weak ?? b.weakPoint : 'PUNTO DÉBIL: ??? (Análisis 40% o descúbrelo peleando)');
+    const cata = stageCataclysm(zone, stage);
+    if (cata) lines.push(cataIntroLine(cata));
     return { kind: 'boss', tag: `JEFE ${b.n}`, title: b.name, subtitle: b.title.replace(/\s*\(balance:[^)]*\)/, ''), lines, color: BOSS_COLOR[zone] ?? C_RED, slug: b.captainArt.slug ?? undefined };
   }
   if (sd?.type === 'elite') {
     const el = (CONTENT.elites as { zone: number; name: string; ship: string; rule: string }[] | undefined)?.find((x) => x.zone === zone);
     const slug = sd.enemyCats?.[0] ? catDef(sd.enemyCats[0]).art.slug : undefined;
-    return { kind: 'elite', tag: 'ÉLITE', title: el?.name ?? sd.name.split('—')[0].trim(), subtitle: el?.ship ?? sd.name.split('—')[1]?.trim(), lines: [sd.eliteRule ?? el?.rule ?? ''], color: 0xffc94a, slug };
+    const cata = stageCataclysm(zone, stage);
+    return { kind: 'elite', tag: 'ÉLITE', title: el?.name ?? sd.name.split('—')[0].trim(), subtitle: el?.ship ?? sd.name.split('—')[1]?.trim(), lines: [sd.eliteRule ?? el?.rule ?? '', ...(cata ? [cataIntroLine(cata)] : [])], color: 0xffc94a, slug };
   }
   return undefined;
 }
@@ -345,6 +396,11 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     if (o.archetype === 'catapulta') enemyShots = Array.from({ length: spec.cannons }, () => rockMortar());
   }
   if (isElite && zone === 2) rules.demolisher = [1];
+  // CATACLISMOS: zones 4–6 bring their power (stages, elites, bosses); errands only when they ask for one
+  if (!rules.cataclysm && o.type !== 'errand') {
+    const c = stageCataclysm(zone, stage);
+    if (c) rules.cataclysm = c;
+  }
   // ---- enemy crew
   const enemyLevel = Math.max(1, Math.round(Math.log(EP / 5) / Math.log(1.07)) - 20);
   const hpBoost = (isBoss ? tune!.catHp : et.catHp * zt.catHp) * sk;
@@ -405,6 +461,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
       enemyWeaponMk: ENEMY_WEAPON_MK[zone] ?? 3,
       tune: { hull: enemyHpMul, crewHp: hpBoost, dmg: eDmg, stage: sk },
       ratio: { S, pf, ef, ph, eh },
+      combatWeight: combatWeight(shipId),
       enemyLevel: Math.max(1, Math.min(50, enemyLevel)),
       special: o.special,
       gearNotes: gear.notes,

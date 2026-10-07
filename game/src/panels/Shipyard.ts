@@ -32,6 +32,7 @@ import {
   setActiveShip,
   shipName,
   shipPower,
+  combatWeight,
   shipUnlocked,
   slotPower,
   totalCrystals,
@@ -273,7 +274,8 @@ class ShipyardPanel {
     const capNext = cap < BAL.ship.mk.max ? ` · Mk ${roman(cap + 1)} con el Jefe ${cap - 1}` : '';
     const q = label(`Obras ${yardBusy()}/${yardQueues()} · Tope Mk ${roman(cap)}${capNext}`, 15, P.blue);
     q.position.set(x, 24);
-    const det = label(`= ×${bs.mult.toFixed(2)} · (módulos ${fmt(slotPower(shipId))} + tripulación ${fmt(Math.max(0, crewPow))})`, 15, C.ink);
+    const cw = combatWeight(shipId);
+    const det = label(`= ×${bs.mult.toFixed(2)} · (módulos ${fmt(slotPower(shipId))} + tripulación ${fmt(Math.max(0, crewPow))})${cw !== 1 ? ` · en combate ×${cw}: su casco gigante ya pelea solo` : ''}`, 15, C.ink);
     det.position.set(x, 48);
     ph.addChild(l, v, q, det);
     // ship name, right-aligned, as a poster word

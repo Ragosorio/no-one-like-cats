@@ -16,6 +16,8 @@ import { decide, aimCannon, aimFrom, AiProfile } from '../battle/ai';
 import { summonShooters } from '../battle/bossLate';
 import { WardFx, PortalFx, InkCatFx, WellFx, GravityFx, StarTellFx, SeaIceFx, FogEyeFx, CoreMarker, wizardDecal } from '../battle/boss/lateRigs';
 import { preUlt, atUlt, UltMarks, UltCtx, ULT_PRE_FX } from '../battle/ultFx';
+import { CataFx, preCata, postCata, atCata, cataCard, cataProjectile, cataTrail } from '../battle/cataFx';
+import { CATA_INFO } from '../battle/cataclysm';
 import { MatchupPanel, effLabel } from '../battle/ui/matchup';
 import { makeBattle, enemyProfile, volleySigma, aiSeed, volleyAim, WATER_Y as SIM_WATER_Y } from '../battle/autoplay';
 import { CatStatusView, playKO, playOverboard } from '../battle/catFx';
@@ -109,6 +111,8 @@ export interface BattleSpec {
     conductionBonus?: number;
     previewBonus?: number;
     noPreview?: boolean;
+    /** share of the ship's Poder its fights scale with (ship.ts COMBAT_WEIGHT: the Bastión ×0.8) */
+    combatWeight?: number;
   };
   mode?: 'siege' | 'duel';
   /** AI personality from content (afinador, demoledor, elementalista…) */
@@ -226,6 +230,8 @@ export class BattleScene extends Scene {
   seaIce: SeaIceFx | null = null;
   fogEye: FogEyeFx | null = null;
   coreMarker: CoreMarker | null = null;
+  /** CATACLISMOS: the seal over their ship + the ghost marks on yours */
+  cataFx: CataFx | null = null;
   ultMarks = new UltMarks();
   matchup = new MatchupPanel();
   private healAcc = 0;
@@ -409,6 +415,10 @@ export class BattleScene extends Scene {
     if (id === 'leviathan' || id === 'star' || id === 'arcanist') {
       this.coreMarker = new CoreMarker();
       this.world.addChildAt(this.coreMarker, at());
+    }
+    if (this.sim.cata) {
+      this.cataFx = new CataFx(this.sim);
+      this.world.addChildAt(this.cataFx, at());
     }
     this.syncLate();
   }
@@ -684,6 +694,13 @@ export class BattleScene extends Scene {
     if (es.buffs.stone > 0) items.push({ text: `CORAZÓN DE PIEDRA ${es.buffs.stone}`, color: 0xc4bdab });
     if (es.buffs.blind > 0) items.push({ text: `ECLIPSADO ${es.buffs.blind}`, color: 0xff7ab8 });
     if (es.buffs.fin.length) items.push({ text: `FIN x${es.buffs.fin.length}`, color: C.paper });
+    // CATACLISMOS: the zone's / boss's power (not a cat), its countdown and its seal
+    const cata = this.sim.cata;
+    if (cata) {
+      const info = CATA_INFO[cata.cfg.id];
+      if (cata.charging) items.push({ text: `¡${info.name}! SELLO ${cata.cracks}/2: TÍRALE A TRAVÉS`, color: info.color, ink: C.ink, hot: true });
+      else items.push({ text: `${info.name} EN ${cata.in + 1}`, color: info.color, ink: C.ink });
+    }
     const tune = this.spec.meta?.tune;
     if (tune && tune.stage > 1.05) items.push({ text: `REFORZADO x${tune.stage.toFixed(1)}`, color: 0xb9b2a0 });
     if (b?.enraged) items.push({ text: 'ENFURECIDO', color: C.red, ink: C.paper });
@@ -701,6 +718,7 @@ export class BattleScene extends Scene {
     if (ps.buffs.empower > 0) pItems.push({ text: 'PRÓXIMO TIRO x2', color: C.yellow, hot: true });
     if (ps.buffs.fin.length) pItems.push({ text: `FIN x${ps.buffs.fin.length}: ¡TUMBA A SU MERLINA!`, color: C.paper, hot: true });
     if (this.sim.wells.some((w) => w.kind === 'lure' && w.affects === 0)) pItems.push({ text: 'CEBO: TUS TIROS SE VAN AL MAR', color: 0x7fd8ff, hot: true });
+    if (this.sim.field.tideMul !== 1) pItems.push({ text: `MAREA ALTA: TODO PESA x${this.sim.field.tideMul}`, color: 0x7fd8ff });
     const sig = JSON.stringify([items, pItems]);
     if (sig === this.ruleSig) return;
     this.ruleSig = sig;
@@ -732,6 +750,10 @@ export class BattleScene extends Scene {
   async playQueued() {
     while (this.sim.queued.length) {
       const q = this.sim.queued.shift()!;
+      if (q.cata) {
+        await this.playCataclysm(q);
+        continue;
+      }
       if (!q.paths.length) {
         for (const e of q.events) this.applyEvent(e);
         continue;
@@ -741,6 +763,30 @@ export class BattleScene extends Scene {
       await this.animateShot(q.side, 'boss', q.paths, q.events, q.shot);
       await this.checkBossPhase();
     }
+  }
+
+  /** CATACLISMOS: the set piece, then its meteors / moon fly (or its heat / black tide apply), then the sky clears */
+  private async playCataclysm(q: Battle['queued'][number]) {
+    const by = this.sim.cata?.cfg.by ?? '';
+    const fall = q.events.find((e): e is Extract<BattleEvent, { k: 'cata' }> => e.k === 'cata' && e.what === 'fall');
+    const land = q.events.find((e): e is Extract<BattleEvent, { k: 'cata' }> => e.k === 'cata' && e.what === 'land');
+    const mul = (land?.n ?? 100) / 100;
+    if (fall) await preCata(this.ultCtx(), fall, by, mul);
+    const rest = q.events.filter((e) => e !== fall);
+    if (q.paths.length) await this.animateShot(q.side, 'boss', q.paths, rest, q.shot);
+    else {
+      // the heat / the black sea sweep over the hull a few cells at a time (and no frame eats 50 cells at once)
+      let n = 0;
+      for (const e of rest) {
+        this.applyEvent(e);
+        if (e.k === 'cell' && ++n % 8 === 0) await wait(this.fast ? 10 : 35);
+      }
+      this.refreshCards();
+      await wait(this.fast ? 300 : 900);
+    }
+    postCata();
+    await this.checkBossPhase();
+    this.refreshCards();
   }
 
   armUlt(c: CatState) {
@@ -812,6 +858,9 @@ export class BattleScene extends Scene {
     await wait(1500);
     gsap.to(banner, { alpha: 0, y: banner.y - 40, duration: 0.3, onComplete: () => banner.destroy({ children: true }) });
     this.refreshRules();
+    // the zone's CATACLISMO, said up front (bosses / elites / story fights say it on their intro card)
+    const cata = this.sim.cata;
+    if (cata && !this.spec.intro) await cataCard(this.ultCtx(), cata.cfg.id, cata.cfg.by, cata.cfg.every);
   }
 
   /** anime boss / elite / errand presentation: slanted poster band, halftone, portrait, rules */
@@ -1316,8 +1365,11 @@ export class BattleScene extends Scene {
     if (!ev.length) return;
     for (const e of ev) this.applyEvent(e);
     const slow = ev.some((e) => e.k === 'boss' && ['grab', 'heal', 'fly', 'submerge', 'surface', 'eyeOpen', 'suddenDeath', 'throw'].includes(e.what));
-    await wait(this.fast ? 200 : slow ? 1100 : 450);
-    this.refreshCards();
+    // a cataclysm's warning: give its banner and the marks on your ship time to land
+    const tell = ev.some((e) => e.k === 'cata' && e.what === 'tell');
+    await wait(this.fast ? 200 : tell ? 1900 : slow ? 1100 : 450);
+    // a cataclysm already resolved in the sim: the cards / bars catch up after its set piece, not before
+    if (!this.sim.queued.some((q) => q.cata)) this.refreshCards();
   }
 
   /** projectile look per trajectory: bolt (rayo), swirl (ráfaga), rock, torpedo, orb… */
@@ -1329,7 +1381,12 @@ export class BattleScene extends Scene {
     glow.tint = fx.main;
     glow.scale.set(shot.trajectory === 'beam' ? 0.7 : 0.5);
     const core = new Graphics();
-    if (p2Projectile(shot, core, fx)) {
+    const cataGlow = cataProjectile(shot, core);
+    if (cataGlow !== null) {
+      // a cataclysm's meteor / the moon itself
+      glow.scale.set(cataGlow);
+      glow.tint = shot.id === 'cata_moon' ? 0xdfe6ff : 0xff6a1a;
+    } else if (p2Projectile(shot, core, fx)) {
       // Parte 2 look (battle/fx/multiversoFx.ts); Sombra is invisible until it lands
       g.visible = !p2Hidden(shot);
     } else if (shot.trajectory === 'beam') {
@@ -1479,7 +1536,7 @@ export class BattleScene extends Scene {
             hist[pi].push({ x: pt.x, y: pt.y });
             if (hist[pi].length > 14) hist[pi].shift();
             if (i % 3 === 0 && !hidden) this.fxp.burst(pt.x, pt.y, { count: 1, tint: [b.fx.main, b.fx.accent], speed: [0, 30], life: [0.2, 0.4], gravity: 0, scale: [0.35, 0.55], texture: dotTexture() });
-            if (p.impacts.includes(i)) {
+            if (p.impacts.includes(i) || p.seal === i) {
               for (const e of events)
                 if (!consumed.has(e) && 'path' in e && e.path === pi && e.at === i) {
                   consumed.add(e);
@@ -1490,7 +1547,9 @@ export class BattleScene extends Scene {
         }
         // trails: jagged krackle bolt for rays, wind streaks for gusts
         trail.clear();
-        if (p2Trail(trail, shot, hist, done, frame)) {
+        if (cataTrail(trail, shot, hist, done, frame)) {
+          // meteors' fire / the moon's light
+        } else if (p2Trail(trail, shot, hist, done, frame)) {
           // Parte 2 trails (light beam, sound rings, void static)
         } else if (shot.trajectory === 'beam' || shot.trajectory === 'gust') {
           hist.forEach((hs, pi) => {
@@ -1786,6 +1845,11 @@ export class BattleScene extends Scene {
       case 'ultfx':
         if (!BattleScene.PRE_FX.has(e.fx)) atUlt(this.ultCtx(), e);
         if (e.fx === 'wellEnd') this.syncLate();
+        break;
+      case 'cata':
+        // 'fall' is staged by playCataclysm before the blow
+        if (e.what !== 'fall') atCata(this.ultCtx(), e, this.sim.cata?.cfg.by ?? '');
+        this.refreshRules();
         break;
     }
   }

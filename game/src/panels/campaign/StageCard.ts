@@ -10,7 +10,7 @@ import { sfx } from '../../core/audio';
 import { BAL } from '../../state/econ';
 import { G } from '../../state/game';
 import { stagePower, winChance, stageInfo } from '../../state/sys/campaign';
-import { shipPower } from '../../state/sys/ship';
+import { combatPower, combatWeight } from '../../state/sys/ship';
 import {
   FACTION,
   KIND_LABEL,
@@ -18,7 +18,6 @@ import {
   QUICK_ASSAULT_RATIO,
   canQuickAssault,
   lootPreview,
-  powerRatio,
   prettyArchetype,
   stageCaptain,
   stageElements,
@@ -119,7 +118,8 @@ export class StageCard extends Container {
 
     // power vs power + estimate
     const ep = stagePower(z, s);
-    const sp = shipPower();
+    // the Poder the fight scales with (Bastión ×0.9: ship.ts COMBAT_WEIGHT)
+    const sp = combatPower();
     const pc = winChance(z, s);
     const box = new Graphics().rect(pad, y, inner, 138).fill({ color: P.blue, alpha: 0.07 }).stroke({ width: 2, color: P.blue });
     content.addChild(box);
@@ -127,7 +127,7 @@ export class StageCard extends Container {
     l1.position.set(pad + 16, y + 10);
     const v1 = txt(fmt(ep), { fontFamily: F.poster, fontSize: 46, fill: C.red });
     v1.position.set(pad + 16, y + 26);
-    const l2 = label('TU PODER', 13, P.blue, { letterSpacing: 2 });
+    const l2 = label(combatWeight() !== 1 ? `TU PODER DE COMBATE (x${combatWeight()})` : 'TU PODER', 13, P.blue, { letterSpacing: 2 });
     l2.anchor.set(1, 0);
     l2.position.set(W0 - pad - 16, y + 10);
     const v2 = txt(fmt(sp), { fontFamily: F.poster, fontSize: 46, fill: P.blue });
@@ -145,7 +145,7 @@ export class StageCard extends Container {
     bar.rect(bx, y + 88, bw, 14).fill(C.red).rect(bx + bw * (1 - share), y + 88, bw * share, 14).fill(P.blue).rect(bx, y + 88, bw, 14).stroke({ width: 2, color: C.ink });
     bar.moveTo(bx + bw / 2, y + 84).lineTo(bx + bw / 2, y + 106).stroke({ width: 2, color: C.ink });
     content.addChild(bar);
-    const ratio = powerRatio(z, s);
+    const ratio = sp / Math.max(1e-9, ep);
     const rt = label(`Ventaja ×${ratio.toFixed(2)}`, 13, C.ink);
     rt.position.set(bx, y + 110);
     content.addChild(rt);

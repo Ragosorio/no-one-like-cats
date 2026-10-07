@@ -16,6 +16,7 @@ import { crew, layoutOf, mk } from './ship';
 import { cat as getCat } from './cats';
 import type { BattleSpec } from '../../scenes/BattleScene';
 import { p2EnemyNotes } from '../../battle/multiverso';
+import { bpCells, cataLines } from '../../battle/cataclysm';
 
 export interface Estimate {
   /** 0–1 win rate from the sims (null while the first sims run) */
@@ -106,6 +107,17 @@ export function hiddenRules(spec: BattleSpec): string[] {
     const x = (n: number) => `x${n.toFixed(2)}`;
     out.push(`Poder: tienes el ${Math.round(ra.S * 100)}% del suyo. Eso pesa en la pelea: tu daño ${x(ra.pf)} y tu aguante ${x(ra.ph)}; su daño ${x(ra.ef)} y su aguante ${x(ra.eh)}.`);
   }
+  // the Bastión & co.: the share of the Poder its fights scale with (ship.ts COMBAT_WEIGHT)
+  const cw = spec.meta?.combatWeight;
+  if (cw !== undefined && cw !== 1) {
+    const bp = spec.player.blueprint;
+    const cells = bpCells(bp);
+    const guns = bp.modules.filter((m) => m.kind === 'cannon').length;
+    out.push(`Tu barco pelea con x${cw.toFixed(2)} de su Poder (PODER DE COMBATE): su casco de ${cells} celdas, sus ${guns} cañones y sus burbujas ya pelean solos, y el Poder solo suma módulos y gatos. Es el mismo barco: así se mide honesto.`);
+  }
+  // CATACLISMOS: the zone's / boss's power and how hard it falls on THIS ship (the sims above play it)
+  const cata = spec.rules?.cataclysm;
+  if (cata) out.push(...cataLines(cata, bpCells(spec.player.blueprint)));
   // the enemy ship's own weapons
   const cannons = spec.enemy.blueprint.modules.filter((m) => m.kind === 'cannon').length;
   if (cannons) {

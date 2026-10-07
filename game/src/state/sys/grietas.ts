@@ -19,6 +19,8 @@
 import { G } from '../game';
 import { registerPatch } from '../patches';
 import { STORY_BATTLES, StoryBattleDef, voidFragments } from './storyBattles';
+import { CATA_INFO, poderDe } from '../../battle/cataclysm';
+import type { CataId } from '../../battle/cataclysm';
 
 export const GRIETA_ELEMENTS = ['ice', 'sound', 'shadow', 'time', 'light', 'void'] as const;
 export type GrietaEl = (typeof GRIETA_ELEMENTS)[number];
@@ -72,6 +74,8 @@ interface GrietaSpec {
   color: number;
   intro: string[];
   cat: string;
+  /** the grieta's own power (CATACLISMOS, battle/cataclysm.ts) */
+  cata: CataId;
 }
 const SPECS: GrietaSpec[] = [
   {
@@ -87,6 +91,7 @@ const SPECS: GrietaSpec[] = [
     color: 0x9fe8ff,
     intro: ['Sus carámbanos de {ice} hielo congelan: lo que tocan no dispara su próximo turno.', 'Lleva {fire} Fuego: les pega ×1.5. Y ojo: ellos le pegan ×1.5 a tu {water} Agua.'],
     cat: 'l_boreas',
+    cata: 'meteors',
   },
   {
     el: 'sound',
@@ -101,6 +106,7 @@ const SPECS: GrietaSpec[] = [
     color: 0xff2e88,
     intro: ['Sus ondas de {sound} sonido atraviesan paredes y aturden a cada gato que cruzan.', '{water} Agua y {void} Vacío les pegan ×1.5. Tu cristal sufre ×1.5.'],
     cat: 'l_headliner',
+    cata: 'moon',
   },
   {
     el: 'shadow',
@@ -115,6 +121,7 @@ const SPECS: GrietaSpec[] = [
     color: 0xc8102e,
     intro: ['Sus tiros de {shadow} sombra no se ven volar: mira dónde caen.', 'Cada impacto apuñala por la espalda a tu gato más cercano. {storm} Tormenta y {light} Luz les pegan ×1.5.'],
     cat: 'l_medianoche',
+    cata: 'tide',
   },
   {
     el: 'time',
@@ -129,6 +136,7 @@ const SPECS: GrietaSpec[] = [
     color: 0xe0b77a,
     intro: ['Sus relojes de {time} tiempo reparan su barco con cada golpe y atrasan la recarga de tus gatos.', 'Ojo con TIME STOP: tus gatos pierden un turno. {cosmic} Cósmico y {ice} Hielo les pegan ×1.5.'],
     cat: 'l_cronos',
+    cata: 'meteors',
   },
   {
     el: 'light',
@@ -143,6 +151,7 @@ const SPECS: GrietaSpec[] = [
     color: 0xffd77a,
     intro: ['Su {light} luz atraviesa celdas en línea y te deja CEGADO: tu vista previa se encoge al 30%.', '{earth} Tierra y {shadow} Sombra les pegan ×1.5.'],
     cat: 'l_aurea',
+    cata: 'sun',
   },
   {
     el: 'void',
@@ -157,10 +166,13 @@ const SPECS: GrietaSpec[] = [
     color: 0xff2e88,
     intro: ['Lo que el {void} Vacío toca queda BORRADO: no se repara en toda la batalla.', 'Se come tus escudos y burbujas. {magic} Magia y {time} Tiempo le pegan ×1.5.'],
     cat: 'l_nadie',
+    cata: 'moon',
   },
 ];
 
 export const GRIETA_BATTLE_ID = (el: string) => `grieta_${el}`;
+/** strength of the grietas' cataclysms (× their cannon attack; tuned with the headless sims) */
+export const GRIETA_CATA_POWER = 4;
 for (const s of SPECS) {
   const def: StoryBattleDef = {
     id: GRIETA_BATTLE_ID(s.el),
@@ -177,7 +189,9 @@ for (const s of SPECS) {
     // a real fight: a post-story crew wins in ~5–8 turns instead of one volley (tuned with the headless sims)
     powerMul: s.powerMul + 0.25,
     hpMulX: 2.5,
-    intro: s.intro,
+    // the grieta's power: falls on your ship every 3 turns, harder the bigger your hull
+    rules: { cataclysm: { id: s.cata, side: 1, by: `LA ${s.title}`, first: 1, every: 3, power: GRIETA_CATA_POWER } },
+    intro: [...s.intro, `${poderDe(`LA ${s.title}`)}: ${CATA_INFO[s.cata].name} cada 3 turnos · TÍRALE A SU SELLO`],
     color: s.color,
     reward: { element: s.el, cat: s.cat, gems: 2, crystals: GRIETA_CRYSTALS },
   };
