@@ -415,7 +415,11 @@ export function openHabitatPanel(hid: string) {
       content.addChild(pv);
       let reason: string | null = null;
       if (G.s.kl < next.kl) reason = `Necesitas Reino ${next.kl}`;
-      else if ((G.s.crystals[h.element] ?? 0) < next.crystals) reason = `Faltan cristales de ${ELEMENT_NAME[h.element]?.toLowerCase()} (solo en combate)`;
+      else if ((G.s.crystals[h.element] ?? 0) < next.crystals) {
+        // where they really come from: Parte 2 elements have no campaign zone (expeditions + casino)
+        const parte2 = ['ice', 'light', 'shadow', 'sound', 'time', 'void'].includes(h.element);
+        reason = `Faltan cristales de ${ELEMENT_NAME[h.element]?.toLowerCase()}: ${parte2 ? 'expediciones con un gato de ese elemento o el casino' : 'batallas de su zona y expediciones'}`;
+      }
       else if (G.s.gold < next.cost) reason = `Te faltan ${fmt(next.cost - G.s.gold)} Doblones`;
       else if (buildersBusy() >= builders()) reason = 'Tus constructores están ocupados';
       const b = new Button(reason ? 'MEJORAR' : '¡MEJORAR!', () => {
