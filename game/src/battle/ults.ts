@@ -45,12 +45,31 @@
  *   d_bigbang    BIG BANG                       HALF the enemy ship (the half the note lands on) blows up at once (45%,
  *                                               the core holds at 1 hp); cats in that half stunned; breaches flood
  * Per-turn effects of the divines that stay (horizon / sun) run in ultTicks() at the start of the owner's turn.
+ *
+ * LEGENDARIOS DEL MULTIVERSO (Parte 2, the six primordials of the new elements) — 35% cap, bosses 15%;
+ * ★5 = twice per battle (content star5, battle/catShots.ts):
+ *   l_boreas     AURORA ZERO            3 icicles (×0.7) + the aurora freezes EVERY enemy cannon (no volley next turn)
+ *                                       and frosts their deck: frozen cells shatter ×2 under a cannonball / rock,
+ *                                       ×1.75 under fire (CHOQUE TÉRMICO); ★3 shields and the summoning room freeze too
+ *   l_aurea      HALO JUDGEMENT         a cathedral of 5 light beams from a halo over their ship, each piercing 6 rows;
+ *                                       CEGADO 3 (Luz) + DESLUMBRADOS their next turn (no crits, cannons aim blind); ★3 6 beams
+ *   l_medianoche ENDLESS MIDNIGHT       3 invisible shadows (×0.8, stab EVERY cat) and the night stays: this turn and the
+ *                                       next 2, every shot of his side (cannons too) flies invisible and stabs the
+ *                                       nearest cat from behind (multiverso.ts); ★3 one more turn
+ *   l_headliner  WALL OF SOUND          one flat shockwave per deck through every wall (cabins crossed are hit) and the
+ *                                       chord reaches EVERY enemy cat: all stunned, except sound cats and SORDOS; ★3 4 waves
+ *   l_nadie      DEAD CHANNEL           "nadie te ve" (no projectile): a 2-column stripe of their ship is ERASED (BORRADO,
+ *                                       never repaired; the core and the cells holding the ship together stay at 1 hp),
+ *                                       and it eats every shield: bubble, shield, cat shields, spare lives; ★3 3 columns
+ *   l_cronos     ETERNAL SECOND         TIME STOP (multiverso.ts) with its set piece: sepia, the clock stops
  */
 import type { Battle, BattleEvent, ShotPath, PathPoint } from './sim';
 import { CAT_K, DMG_K } from './sim';
 import { CELL } from './ship';
 import type { Cell } from './ship';
 import type { CatState, ElementId, ShotDef } from './types';
+import type { ShipModel } from './ship';
+import { p2Blind, p2CanStop, p2Deaf, p2Heard, p2Night, p2SetNight } from './multiverso';
 
 export interface UltCtx {
   side: 0 | 1;
@@ -117,6 +136,31 @@ function capBudget(b: Battle, side: number, frac: number) {
 /** top of a side's ship (world y) */
 function shipTop(b: Battle, side: number) {
   return b.sides[side].setup.origin.y;
+}
+
+const clamp = (v: number, a: number, z: number) => Math.max(a, Math.min(z, v));
+/** would removing `c` leave any OTHER cell hanging (not linked to the bottom row)? (ship.collapse rule) */
+function holdsShip(ship: ShipModel, c: Cell) {
+  const seen = new Set<Cell>([c]);
+  const stack: Cell[] = [];
+  for (let x = 0; x < ship.cols; x++) {
+    const k = ship.get(x, ship.rows - 1);
+    if (k && k !== c) {
+      seen.add(k);
+      stack.push(k);
+    }
+  }
+  while (stack.length) {
+    const k = stack.pop()!;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const n = ship.get(k.x + dx, k.y + dy);
+      if (n && !seen.has(n)) {
+        seen.add(n);
+        stack.push(n);
+      }
+    }
+  }
+  return ship.cells().some((k) => !seen.has(k));
 }
 
 /** where the plain ult shot would land (x, y) */
@@ -680,6 +724,208 @@ export const ULTS: Record<string, UltFn> = {
     }
     return [note];
   },
+
+  // ================================================================== LEGENDARIOS DEL MULTIVERSO
+  // ------------------------------------------------------------------ the aurora comes down
+  l_boreas(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const ctr = b.shipCenter(enemy);
+    o.events.push({ k: 'ultfx', fx: 'aurora', side: enemy, x: ctr.x, y: shipTop(b, enemy), path: 0, at: 0 });
+    const paths = normal(b, o, { ...o.shot, power: o.shot.power * 0.7 });
+    const { path, at } = endOf(paths[0]);
+    const frozen: Cell[] = [];
+    const freeze = (c: Cell) => {
+      if (c.hp <= 0 || (c.status.frozen ?? 0) >= 2) return;
+      delete c.status.burning;
+      delete c.status.wet;
+      c.status.frozen = 2;
+      frozen.push(c);
+    };
+    // every cannon they have freezes solid: no volley on their next turn
+    const kinds = new Set(stars >= 3 ? ['cannon', 'shield', 'arcane'] : ['cannon']);
+    for (const m of es.ship.modules) {
+      if (!m.alive || !kinds.has(m.kind)) continue;
+      const cells = es.ship.moduleCells(m.id);
+      if (!cells.length) continue;
+      cells.forEach(freeze);
+      const c = b.roomCenter(enemy, m.id);
+      o.events.push({ k: 'ultfx', fx: 'auroraFreeze', side: enemy, x: c.x, y: c.y, n: m.kind === 'cannon' ? 1 : 0, path, at });
+    }
+    // and the aurora frosts their whole deck (the top cell of every column, not the cabins): it shatters ×2 under
+    // the next cannonball
+    const top = new Map<number, Cell>();
+    for (const c of es.ship.cells()) if (!top.has(c.x) || top.get(c.x)!.y > c.y) top.set(c.x, c);
+    top.forEach((c) => {
+      if (c.module === undefined || es.ship.modules[c.module]?.kind !== 'catroom') freeze(c);
+    });
+    if (frozen.length) o.events.push({ k: 'status', side: enemy, cells: frozen, status: 'frozen' });
+    return paths;
+  },
+
+  // ------------------------------------------------------------------ the cathedral of light
+  l_aurea(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const span = shipSpan(b, enemy);
+    const tgt = landing(b, o);
+    const n = stars >= 3 ? 6 : 5;
+    // the halo opens high over the spot she aimed at; the beams fan down across the WHOLE ship like light
+    // through cathedral windows, each one piercing 6 rows
+    const hx = clamp(tgt.x, span.x0 + CELL * 2, span.x1 - CELL * 2);
+    const hy = -180;
+    o.events.push({ k: 'ultfx', fx: 'cathedral', side: enemy, x: hx, y: shipTop(b, enemy), n, path: 0, at: 0 });
+    const beam: ShotDef = { ...o.shot, trajectory: 'ray', projectiles: 1, pierce: 5, radius: CELL * 1.1, power: o.shot.power * 0.3, gravityScale: 0, windScale: 0 };
+    // the first beams fall through their cabins (one per cat), the rest spread over the ship
+    const aims: { x: number; y: number }[] = es.cats.filter((c) => !c.ko && !b.isFlying(c)).map((c) => b.roomCenter(enemy, c.room));
+    for (let i = 0; aims.length < n; i++) aims.push({ x: span.x0 + ((i + 0.5) / n) * (span.x1 - span.x0), y: b.waterY });
+    aims.splice(n);
+    const paths = aims.map((t) => b.integrate(beam, { x: hx, y: hy }, Math.atan2(t.y - hy, t.x - hx), 1100, 0, o.side));
+    b.resolvePaths(o.side, beam, o.atk, paths, o.events);
+    // JUDGMENT: every cat whose cabin a beam went through is struck by the light (once)
+    for (const c of es.cats) {
+      if (c.ko || b.isFlying(c)) continue;
+      const room = es.ship.modules[c.room];
+      const hit = paths.findIndex((p) =>
+        p.impacts.some((i) => {
+          const g = b.toGrid(enemy, p.points[i].x, p.points[i].y);
+          return g.x >= room.x && g.x < room.x + room.w && g.y >= room.y && g.y < room.y + room.h;
+        }),
+      );
+      if (hit >= 0) b.hitCat(c, Math.round(o.atk * o.shot.power * 0.2 * CAT_K), o.events, hit, paths[hit].points.length - 1, 'light', true);
+    }
+    // Luz already leaves them CEGADO 3 (multiverso.ts); the judgment also DAZZLES them for their next turn:
+    // no criticals and their cannons aim blind too
+    es.buffs.blind = Math.max(es.buffs.blind, 1);
+    o.events.push({ k: 'ultfx', fx: 'dazzle', side: enemy, x: b.shipCenter(enemy).x, y: shipTop(b, enemy), path: 0, at: paths[0].points.length - 1 });
+    return paths;
+  },
+
+  // ------------------------------------------------------------------ endless midnight
+  l_medianoche(b, o) {
+    const stars = o.cat.def.stars;
+    const turns = stars >= 3 ? 4 : 3;
+    const ctr = b.shipCenter(1 - o.side);
+    o.events.push({ k: 'ultfx', fx: 'midnight', side: 1 - o.side, x: ctr.x, y: ctr.y, n: turns - 1, path: 0, at: 0 });
+    // three invisible shadows: the first one that lands stabs EVERY enemy cat from behind (multiverso.ts)
+    const paths = normal(b, o, { ...o.shot, power: o.shot.power * 0.3 });
+    // the night stays: this turn and the next ones, every shot of his side is invisible and stabs
+    p2SetNight(b, o.side, turns);
+    return paths;
+  },
+
+  // ------------------------------------------------------------------ the power chord
+  l_headliner(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const span = shipSpan(b, enemy);
+    const top = shipTop(b, enemy);
+    const bottom = top + es.ship.rows * CELL;
+    // one wave per deck where their cats are (then filled up through the hull), flat, from the speaker wall
+    const n = stars >= 3 ? 4 : 3;
+    const ys: number[] = [];
+    for (const c of es.cats) {
+      if (c.ko || b.isFlying(c)) continue;
+      const y = b.roomCenter(enemy, c.room).y;
+      if (!ys.some((k) => Math.abs(k - y) < CELL * 0.8)) ys.push(y);
+    }
+    for (const f of [0.5, 0.25, 0.75, 0.4, 0.6]) {
+      if (ys.length >= n) break;
+      const y = top + CELL * 0.5 + f * (bottom - top - CELL);
+      if (!ys.some((k) => Math.abs(k - y) < CELL * 0.8)) ys.push(y);
+    }
+    ys.splice(n);
+    const wave: ShotDef = { ...o.shot, trajectory: 'wave', projectiles: 1, pierce: 40, radius: CELL * (stars >= 3 ? 1.2 : 0.9), power: o.shot.power * 0.6, gravityScale: 0, windScale: 0 };
+    const sx = o.side === 0 ? span.x0 - CELL * 2.5 : span.x1 + CELL * 2.5;
+    const paths = ys.map((y) => b.integrate(wave, { x: sx, y }, o.side === 0 ? 0 : Math.PI, 800, 0, o.side));
+    o.events.push({ k: 'ultfx', fx: 'wallofsound', side: enemy, x: sx, y: (top + bottom) / 2, n: ys.length, path: 0, at: 0 });
+    b.resolvePaths(o.side, wave, o.atk, paths, o.events);
+    const at = Math.round(Math.min(...paths.map((p) => p.points.length - 1)) * 0.6);
+    o.events.push({ k: 'ultfx', fx: 'powerchord', side: enemy, x: b.shipCenter(enemy).x, y: b.shipCenter(enemy).y, path: 0, at });
+    // the chord gets through every wall: the cats the waves missed hear it too (stunned unless SORDO / sound cats)
+    for (const c of es.cats) {
+      if (c.ko || b.isFlying(c) || p2Heard(b, c)) continue;
+      b.hitCat(c, Math.round(o.atk * o.shot.power * 0.2 * CAT_K), o.events, 0, at, 'sound', true);
+    }
+    return paths;
+  },
+
+  // ------------------------------------------------------------------ nobody sees you
+  l_nadie(b, o) {
+    const enemy = 1 - o.side;
+    const es = b.sides[enemy];
+    const stars = o.cat.def.stars;
+    const span = shipSpan(b, enemy);
+    const tgt = landing(b, o);
+    // the stripe: the columns under the spot he aimed at (never off the ship)
+    const width = stars >= 3 ? 3 : 2;
+    const g = b.toGrid(enemy, clamp(tgt.x, span.x0, span.x1), tgt.y).x;
+    const c0 = clamp(g - Math.floor((width - 1) / 2), 0, Math.max(0, es.ship.cols - width));
+    const cols = new Set(Array.from({ length: width }, (_, i) => c0 + i));
+    const xs = [...cols].map((x) => b.cellCenter(enemy, x, 0).x);
+    const sx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const ctr = b.shipCenter(enemy);
+    o.events.push({ k: 'ultfx', fx: 'nobody', side: enemy, x: sx, y: ctr.y, path: 0, at: 0 });
+    // nobody sees it coming: no projectile at all — the eye closes and the stripe is simply gone
+    const path = 0;
+    const at = 0;
+    o.events.push({ k: 'ultfx', fx: 'nobodyErase', side: enemy, x: sx, y: ctr.y, w: width * CELL, n: es.ship.rows * CELL, path, at });
+    // top to bottom: every cell of the stripe is BORRADO (statuses eaten, never repaired); the core and the cells
+    // that hold the ship together stay standing at 1 hp (it erases, it doesn't cut the ship in two)
+    const stripe = es.ship
+      .cells()
+      .filter((c) => cols.has(c.x))
+      .sort((a, z) => a.y - z.y);
+    const erased: Cell[] = [];
+    const rooms = new Set<number>();
+    for (const c of stripe) {
+      if (c.hp <= 0) continue;
+      c.status = { voided: 99 };
+      erased.push(c);
+      if (c.module !== undefined) rooms.add(c.module);
+      const core = c.module !== undefined && es.ship.modules[c.module]?.kind === 'core';
+      const raw = core || holdsShip(es.ship, c) ? c.hp - 1 : c.hp;
+      if (raw > 0) cut(b, enemy, c, raw, o.events, path, at);
+    }
+    const left = erased.filter((c) => c.hp > 0);
+    if (left.length) o.events.push({ k: 'status', side: enemy, cells: left, status: 'voided' });
+    collapse(b, enemy, o.events, path, at);
+    // it eats every shield: the bubble, the old shield, cat shields and spare lives
+    let ate = 0;
+    if (es.bubble > 0 && es.bubbleKind) {
+      es.bubble = 0;
+      ate++;
+      o.events.push({ k: 'bubble', side: enemy, what: 'break', x: ctr.x, y: ctr.y, path, at });
+    }
+    if (es.shieldHp > 0) {
+      es.shieldHp = 0;
+      ate++;
+      o.events.push({ k: 'shieldHit', side: enemy, absorbed: 0, broken: true, path, at });
+    }
+    const el = catEl(o.cat);
+    for (const c of es.cats) {
+      if (c.ko || b.isFlying(c)) continue;
+      if (c.shields > 0 || c.lives > 1) ate++;
+      c.shields = 0;
+      if (c.lives > 1) c.lives = 1;
+      // the cats whose cabin was in the stripe get the static too
+      if (rooms.has(c.room)) b.hitCat(c, Math.round(o.atk * o.shot.power * 0.25 * CAT_K), o.events, path, at, el, true);
+    }
+    o.events.push({ k: 'ultfx', fx: 'nobodyAte', side: enemy, x: ctr.x, y: shipTop(b, enemy), n: ate, path, at });
+    return [];
+  },
+
+  // ------------------------------------------------------------------ the eternal second
+  l_cronos(b, o) {
+    const enemy = 1 - o.side;
+    const ctr = b.shipCenter(enemy);
+    // the stop itself is the Tiempo rule (multiverso.ts: lands on impact, never chained); this is its set piece
+    o.events.push({ k: 'ultfx', fx: 'timestop', side: enemy, x: ctr.x, y: ctr.y, n: p2CanStop(b, enemy) ? 1 : 0, path: 0, at: 0 });
+    return normal(b, o);
+  },
 };
 
 /**
@@ -706,6 +952,25 @@ export function ultWorth(b: Battle, c: CatState): boolean {
     case 'd_solcaido':
       // the big ones: never on a ship that's already sinking by itself
       return es.ship.integrity() > 0.45;
+    // ---- the multiverse legendaries
+    case 'l_boreas':
+      // freeze when there's a volley to stop (or the fight drags on)
+      return b.cannons(enemy).length > 0 || b.turn >= 4;
+    case 'l_aurea':
+      // don't blind the already blind
+      return !p2Blind(b, enemy) || b.turn >= 5;
+    case 'l_medianoche':
+      // one night at a time, and someone to stab
+      return !p2Night(b, c.side) && alive.length > 0;
+    case 'l_headliner': {
+      // the chord is worth it when it stuns two (or the last one standing); against a crew it can't stun (all
+      // sound cats), it's still a big wave once the fight drags on
+      const stun = alive.filter((k) => k.stunned <= 0 && !k.def.elements.includes('sound') && !p2Deaf(b, k)).length;
+      return (stun > 0 && stun >= Math.min(2, alive.length)) || b.turn >= 6;
+    }
+    case 'l_cronos':
+      // TIME STOP can't be chained: wait until it can land on a crew that would shoot
+      return p2CanStop(b, enemy) && alive.some((k) => k.stunned <= 1);
     default:
       return true;
   }

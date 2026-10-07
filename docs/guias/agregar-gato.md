@@ -88,9 +88,9 @@ Así se ve Canelo (recortado, es real):
 | `trait` | Uno de `traits[]` (`impaciente`, `gloton`, `dormilon`…). Es el rasgo por defecto al adoptarlo. |
 | `battleForm.name`, `battleForm.cry` | El título de la transformación y el grito (en inglés o japonés, es parte del chiste). |
 | `combat.shot` | El disparo. `archetype` decide la trayectoria (tabla abajo). `radius` va en celdas. `status` en español (`ardiendo`, `mojado`, `enraizado`, `cargado`, `maldito`, `congelado`). |
-| `combat.ultimate` | La ulti. `dmg` se convierte en multiplicador contra `shot.dmg`; `usesPerBattle` y `chargeTurns` son límites. Si el nombre contiene `STARFALL`, `METEOR` o `DECREE` (o el arquetipo es `objetivo`) se vuelve meteoro. |
+| `combat.ultimate` | La ulti. `dmg` se convierte en multiplicador contra `shot.dmg`; `usesPerBattle` y `chargeTurns` son límites. Si el nombre contiene `STARFALL`, `METEOR` o `DECREE` (o el arquetipo es `objetivo`) se vuelve meteoro. Los legendarios/míticos/secretos/heroicos/divinos llevan además una ulti con firma en `battle/ults.ts` (`ULTS`, `ultWorth` para la IA), su set piece en `battle/ultFx.ts`, una línea en `state/sys/estimate.ts` (`BIG_ULT`) y su ULTI del Podio en `podio/powers.ts` (`SIGNATURE`). |
 | `combat.limitation` | `null` o una de las limitaciones con nombre (`UNA BALA`, `SEGUNDA VIDA (Revenant)`, `VENGANZA`, `3 ESCUDOS`, `CAÑÓN DE CRISTAL`, `INESTABLE`, `CARGA`, `CARGA 2 TURNOS`). La tabla `LIMIT` está en `battle/catShots.ts`. |
-| `combat.passive`, `star3`, `star5` | Texto que se muestra (Altar, Catdex, subida de estrellas). |
+| `combat.passive`, `star3`, `star5` | Texto que se muestra (Altar, Catdex, subida de estrellas). Ojo: si `usesPerBattle` es 1 y `star5` dice «2 veces por batalla», a ★5 la ulti de verdad se puede usar dos veces (`battleCatFrom` en `battle/catShots.ts`). |
 | `obtain.source` | Cómo se consigue: `start`, `resonance`, `boss:N`, `heroic:N`, `podio:N`, `secret`. `obtain.how` es el texto que lee el jugador. |
 | `hint` | Pista para la Catdex mientras no lo tienes (sobre todo secretos). |
 | `lore` | Una o dos frases. Sale en la revelación. Que dé risa o ternura, mejor si las dos. |
