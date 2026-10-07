@@ -13,6 +13,8 @@ import { CELL, Cell, DIRS, Material, ModuleInst, ShipBlueprint, ShipModel } from
 import { GRAVITY, DT } from './ballistics';
 import { BattleCatDef, CatFx, CatState, ElementId, ShotDef, StatusId } from './types';
 import { CONTENT } from '../data/content';
+import { lateBossInit, lateBossStart, lateEnterPhase, wardIntercept, lateCellMul, lateAfterImpact, lateLoss, lateSplash, tickBuffs } from './bossLate';
+import { ULTS, ultBudgetFrac } from './ults';
 
 export interface PathPoint {
   x: number;
@@ -24,6 +26,10 @@ export interface ShotPath {
   kind: ShotDef['trajectory'];
   /** index in points where each impact happens */
   impacts: number[];
+  /** owner (side) at each impact — a shot that went through a portal changes sides */
+  owners?: number[];
+  /** point indices where the projectile teleported */
+  jumps?: number[];
 }
 
 export type BossWhat =
@@ -47,10 +53,48 @@ export type BossWhat =
   | 'suddenDeath'
   | 'wetDeck'
   | 'regrow'
-  | 'staticUp';
+  | 'staticUp'
+  // ---- bosses 4–6
+  | 'wardUp' // arcane layers raised (n = layers)
+  | 'wardHit' // a layer absorbed a hit (n = layers left, x/y)
+  | 'wardPop' // a layer broke (n = layers left)
+  | 'reflect' // a rune bounced off the ward (Espejo)
+  | 'portalMove' // portals opened / moved (Arcanista F2)
+  | 'inkSummon' // ink cats summoned (Arcanista F3)
+  | 'grimoire' // the Grimorio opens (n = 1) / closes (n = 0)
+  | 'gravity' // field gravity changed (n = phase)
+  | 'starTell' // Estrella charges Lluvia de Estrellas (targets in pending)
+  | 'starStop' // the charge was interrupted
+  | 'starRain'
+  | 'debris' // her floating debris falls on you
+  | 'freeze' // the sea around the Leviathan freezes a notch (n = 0..3)
+  | 'seaFrozen'
+  | 'thaw'
+  | 'breath' // the Leviathan surfaces to breathe: the blowhole is exposed
+  | 'devourTell' // Distraxia marks one of your modules
+  | 'devour' // ...and erases it
+  | 'devourStop'
+  | 'coreSwitch' // phase core destroyed: the next one wakes (n = phase)
+  | 'immune' // hit on a sleeping core
+  | 'finale'; // the last core fell: STARFALL
 
 export type BattleEvent =
-  | { k: 'impact'; x: number; y: number; side: number; radius: number; element: ElementId; crit: boolean; path: number; at: number; total: number }
+  | {
+      k: 'impact';
+      x: number;
+      y: number;
+      side: number;
+      radius: number;
+      element: ElementId;
+      crit: boolean;
+      path: number;
+      at: number;
+      total: number;
+      /** element × material of what it hit first (×1.5 súper efectivo, ×0.75 resiste) */
+      mul?: number;
+      /** that material */
+      mat?: Material;
+    }
   | { k: 'cell'; side: number; cell: Cell; dmg: number; destroyed: boolean; path: number; at: number }
   | { k: 'chunk'; side: number; cells: Cell[]; path: number; at: number }
   | {
@@ -79,7 +123,9 @@ export type BattleEvent =
   | { k: 'spread'; side: number; cell: Cell; status: StatusId }
   | { k: 'flood'; side: number; flood: number; breaches: number }
   | { k: 'phase'; n: number }
-  | { k: 'boss'; what: BossWhat; side: number; n?: number; module?: number; part?: number; uid?: string; x?: number; y?: number; path: number; at: number }
+  | { k: 'boss'; what: BossWhat; side: number; n?: number; module?: number; part?: number; uid?: string; x?: number; y?: number; amount?: number; path: number; at: number }
+  /** ultimate set pieces the view stages (black hole, falling sun, slashes, FIN…) */
+  | { k: 'ultfx'; fx: string; side: number; x: number; y: number; n?: number; w?: number; uid?: string; path: number; at: number }
   | { k: 'part'; side: number; id: number; dmg: number; destroyed: boolean; path: number; at: number }
   | { k: 'bubble'; side: number; what: 'block' | 'break' | 'up' | 'down'; x: number; y: number; path: number; at: number }
   | { k: 'heal'; side: number; cell: Cell; amount: number }
@@ -114,7 +160,7 @@ export interface SideSetup {
 }
 
 export interface BossConfig {
-  id: 'sardina' | 'gargoyle' | 'kraken';
+  id: 'sardina' | 'gargoyle' | 'kraken' | 'arcanist' | 'star' | 'leviathan';
   /** boss side (always the enemy) */
   side: 0 | 1;
   /** uid of the boss cat (captain) */
@@ -153,7 +199,7 @@ export interface BattleConfig {
 /** separately targetable boss pieces (tentacles, the Kraken eye, the flying gargoyle) */
 export interface Part {
   id: number;
-  kind: 'tentacle' | 'eye' | 'gargoyle';
+  kind: 'tentacle' | 'eye' | 'gargoyle' | 'ink' | 'fog';
   side: number;
   /** capsule from (x, y0) to (x, y1) with radius r (world coords) */
   x: number;
@@ -181,6 +227,64 @@ export interface BossState {
   /** kraken stunned by an eye hit: no grabs next turn */
   dazed: boolean;
   enraged: boolean;
+  /** boss turns played (late bosses count their own rhythm) */
+  turns: number;
+  /** Arcanista: turns until the next ink summon; turns the Grimorio stays open */
+  inkIn: number;
+  grimoire: number;
+  /** Estrella: charging the star rain (targets = x over your ship) */
+  charging: boolean;
+  chargeDmg: number;
+  starIn: number;
+  starTargets: number[];
+  /** Estrella F2: her cells destroyed this round float, then fall on you */
+  debris: number;
+  /** Leviatán: sea-freeze meter (0..3), turns frozen, turns until it surfaces to breathe */
+  freeze: number;
+  frozen: number;
+  breathIn: number;
+  breathing: boolean;
+  /** Distraxia: your module marked to be erased (null = none) and whether her eye was hit since */
+  devour: number | null;
+  fogHit: boolean;
+}
+
+/** arcane layered ward (Arcanista F1, Leviatán F1): absorbs whole impacts until its layers break */
+export interface Ward {
+  layers: number;
+  max: number;
+  hp: number;
+  layerHp: number;
+}
+
+/** a point that bends projectiles toward it (gravity wells, black holes, Abisa's lure) */
+export interface Well {
+  x: number;
+  y: number;
+  r: number;
+  /** pull at the center (px/s², linear falloff) */
+  k: number;
+  /** turns left (counted at the start of `owner`'s turns); Infinity for module wells */
+  turns: number;
+  owner: number;
+  /** only bends projectiles fired by this side (Abisa's lure) */
+  affects?: number;
+  kind: 'well' | 'hole' | 'lure' | 'sun';
+}
+
+export interface Portals {
+  a: { x: number; y: number };
+  b: { x: number; y: number };
+  r: number;
+}
+
+/** a shot that the sim already resolved outside fire() (boss volleys, star rain…): the view animates it */
+export interface QueuedShot {
+  side: number;
+  label: string;
+  paths: ShotPath[];
+  events: BattleEvent[];
+  shot: ShotDef;
 }
 
 export interface SideState {
@@ -200,12 +304,27 @@ export interface SideState {
   parts: Part[];
   /** lightning rod already used this turn */
   rodUsed: boolean;
+  /** arcane layered ward (late bosses) */
+  ward: Ward | null;
+  /** status effects from ultimates (turns left, counted at this side's turn start) */
+  buffs: SideBuffs;
+}
+
+export interface SideBuffs {
+  /** Gea HEART OF STONE: modules can't be destroyed (cells stay at 1 hp) */
+  stone: number;
+  /** Eclipse: this side is blinded (no preview, no crits, the AI aims much worse) */
+  blind: number;
+  /** Eclipse: this side's next shot deals ×2 */
+  empower: number;
+  /** Merlina THE END: modules of this side marked to explode {module, turns, dmg, by} */
+  fin: { module: number; turns: number; dmg: number; by: string }[];
 }
 
 export type VictoryReason = 'core' | 'crew' | 'sunk' | 'retreat';
 
 /** GDD material table (content.materials): multiplier per element of the shot; 'storm' = sim 'electric' */
-const MAT_RESIST: Record<string, Partial<Record<ElementId, number>>> = (() => {
+export const MAT_RESIST: Record<string, Partial<Record<ElementId, number>>> = (() => {
   const out: Record<string, Partial<Record<ElementId, number>>> = {};
   const map: Record<string, ElementId> = { storm: 'electric' };
   for (const m of CONTENT.materials) {
@@ -233,7 +352,20 @@ const FLAMMABLE = new Set(['wood', 'bone', 'canvas']);
 /** sinking threshold (structure fraction) */
 export const SINK_AT = 0.28;
 /** boss damage bonus once enraged */
-const ENRAGE_MUL = 1.25;
+export const ENRAGE_MUL = 1.25;
+
+/** Arcanista's ink cats: a slow homing rune that Curses */
+export const INK_RUNE: ShotDef = {
+  id: 'ink_rune',
+  name: 'RUNA DE TINTA',
+  element: 'magic',
+  trajectory: 'homing',
+  power: 0.55,
+  radius: 46,
+  preview: 0.3,
+  catMul: 0.5,
+  statuses: [{ id: 'cursed', turns: 2 }],
+};
 
 export const NEUTRAL_SHOT: ShotDef = {
   id: 'cannon',
@@ -246,9 +378,9 @@ export const NEUTRAL_SHOT: ShotDef = {
   catMul: 0.4,
 };
 
-const isRayo = (s: ShotDef) => s.element === 'electric' && s.trajectory !== 'gust';
-const isGust = (s: ShotDef) => s.trajectory === 'gust';
-const isMulti = (s: ShotDef) => (s.trajectory === 'spread' || s.trajectory === 'cluster') && (s.projectiles ?? 1) > 1;
+export const isRayo = (s: ShotDef) => s.element === 'electric' && s.trajectory !== 'gust';
+export const isGust = (s: ShotDef) => s.trajectory === 'gust';
+export const isMulti = (s: ShotDef) => (s.trajectory === 'spread' || s.trajectory === 'cluster') && (s.projectiles ?? 1) > 1;
 
 export class Battle {
   rng: Rng;
@@ -267,6 +399,21 @@ export class Battle {
   private sdAnnounced = false;
   /** events produced outside fire()/startTurn() (phase changes) waiting for the view */
   pending: BattleEvent[] = [];
+  /** field gravity (Estrella Errante / Primer Mar): global multiplier + an inverted column */
+  field: { gMul: number; anti: { x0: number; x1: number; y0: number; k: number } | null } = { gMul: 1, anti: null };
+  /** temporary wells (ultimates: black hole, Abisa's lure); module wells are derived (wellList) */
+  wells: Well[] = [];
+  /** Arcanista F2 portals (now) and where they move next (telegraphed) */
+  portals: Portals | null = null;
+  portalNext: Portals | null = null;
+  /** shots resolved outside fire() that the view should animate (boss volleys, star rain, ults) */
+  queued: QueuedShot[] = [];
+  /** ultimate damage cap: internal structure damage left for this shot (null = uncapped) */
+  budget: { side: number; left: number } | null = null;
+  /** the cat firing right now (Espejo reflects runes at it) */
+  curShooter: CatState | null = null;
+  /** last normal cat shot of each side (Lumen ETERNAL EXPOSURE repeats it) */
+  lastShot: ({ shot: ShotDef; atk: number; angle: number; power: number; origin: PathPoint } | null)[] = [null, null];
 
   constructor(public cfg: BattleConfig) {
     this.rng = new Rng(cfg.seed);
@@ -317,12 +464,40 @@ export class Battle {
       bubbleKind: bubble ? 'bubble' : null,
       parts: [],
       rodUsed: false,
+      ward: null,
+      buffs: { stone: 0, blind: 0, empower: 0, fin: [] },
     };
   }
 
   // ---------- boss setup
-  private initBoss(b: BossConfig) {
-    this.boss = { id: b.id, phase: 1, purr: 0, flying: false, perch: 0, eyeIn: 2, eyeOpen: false, submerged: false, dazed: false, enraged: false };
+  initBoss(b: BossConfig) {
+    this.boss = {
+      id: b.id,
+      phase: 1,
+      purr: 0,
+      flying: false,
+      perch: 0,
+      eyeIn: 2,
+      eyeOpen: false,
+      submerged: false,
+      dazed: false,
+      enraged: false,
+      turns: 0,
+      inkIn: 0,
+      grimoire: 0,
+      charging: false,
+      chargeDmg: 0,
+      starIn: 2,
+      starTargets: [],
+      debris: 0,
+      freeze: 0,
+      frozen: 0,
+      breathIn: 3,
+      breathing: false,
+      devour: null,
+      fogHit: false,
+    };
+    if (b.id === 'arcanist' || b.id === 'star' || b.id === 'leviathan') lateBossInit(this, b);
     const s = this.sides[b.side];
     const ox = s.setup.origin.x;
     const oy = s.setup.origin.y;
@@ -346,7 +521,7 @@ export class Battle {
     }
   }
 
-  private captain(): CatState | undefined {
+  captain(): CatState | undefined {
     const b = this.cfg.boss;
     if (!b) return undefined;
     return this.sides[b.side].cats.find((c) => c.def.uid === b.captain);
@@ -425,6 +600,10 @@ export class Battle {
     const tip = s.setup.flip ? cannon.x : cannon.x + cannon.w - 1;
     const p = this.cellCenter(side, tip, cannon.y);
     return { x: p.x + (s.setup.flip ? -CELL : CELL), y: p.y - 6 };
+  }
+  /** where a firing boss part (ink cat) launches from */
+  partMuzzle(side: number, p: Part) {
+    return { x: p.x + (this.sides[side].setup.flip ? -30 : 30), y: p.y0 };
   }
   /** shot of a specific cannon module (weapon type) */
   cannonShot(side: number, moduleId: number): ShotDef {
@@ -564,6 +743,8 @@ export class Battle {
     }
     ev.push(...this.updateExposure(side));
     this.stageRulesAtStart(side, ev);
+    // ultimate after-effects (Gea, Eclipse, Merlina's FIN, wells) — same rules for both sides
+    tickBuffs(this, side, ev);
     this.bossAtStart(side, ev);
     this.checkVictory();
     ev.push(...this.updatePhase());
@@ -571,6 +752,9 @@ export class Battle {
   }
 
   endTurn() {
+    // Eclipse / Noctis: blindness counts the blinded side's own turns
+    const bl = this.sides[this.active].buffs;
+    if (bl.blind > 0) bl.blind--;
     if (this.active === 1) {
       this.turn++;
       // sudden death (GDD 2.9.3): from turn 10 the storm floods both ships every round
@@ -598,7 +782,7 @@ export class Battle {
   }
 
   // ---------- stage & boss rules
-  private stageRulesAtStart(side: 0 | 1, ev: BattleEvent[]) {
+  stageRulesAtStart(side: 0 | 1, ev: BattleEvent[]) {
     const r = this.cfg.rules;
     if (!r) return;
     if (r.wetAll) {
@@ -637,7 +821,7 @@ export class Battle {
     }
   }
 
-  private wetCells(side: number, cells: Cell[], ev: BattleEvent[]) {
+  wetCells(side: number, cells: Cell[], ev: BattleEvent[]) {
     const out: Cell[] = [];
     for (const c of cells) {
       if (c.status.burning) delete c.status.burning;
@@ -662,6 +846,10 @@ export class Battle {
       B.enraged = true;
       const c = this.shipCenter(bs);
       ev.push({ k: 'boss', what: 'enrage', side: bs, x: c.x, y: c.y, path: -1, at: 0 });
+    }
+    if (B.id === 'arcanist' || B.id === 'star' || B.id === 'leviathan') {
+      lateBossStart(this, side, ev);
+      return;
     }
     if (B.id === 'gargoyle') {
       // phase 2+: the sky purrs too — rain soaks the whole field every turn
@@ -772,7 +960,7 @@ export class Battle {
     }
   }
 
-  private releaseGrabs(ev: BattleEvent[]) {
+  releaseGrabs(ev: BattleEvent[]) {
     const bs = this.cfg.boss!.side;
     for (const t of this.sides[bs].parts) {
       if (t.grab === null) continue;
@@ -782,7 +970,7 @@ export class Battle {
   }
 
   /** heal `frac` of the initial structure into damaged cells + the captain */
-  private bossHeal(side: number, frac: number, ev: BattleEvent[]) {
+  bossHeal(side: number, frac: number, ev: BattleEvent[]) {
     const s = this.sides[side];
     let budget = Math.round((s.ship.initialMax?.[0] ?? 0) * frac);
     const total = budget;
@@ -809,6 +997,7 @@ export class Battle {
     const B = this.boss;
     const cfg = this.cfg.boss;
     if (!B || !cfg || this.winner !== null) return [];
+    if (B.id === 'leviathan') return [];
     const bs = cfg.side;
     const dmgFrac = (1 - this.hullPct(bs)) / (1 - SINK_AT);
     const core = this.sides[bs].ship.modules.find((m) => m.kind === 'core');
@@ -840,10 +1029,14 @@ export class Battle {
     return ev;
   }
 
-  private enterPhase(n: number, ev: BattleEvent[]) {
+  enterPhase(n: number, ev: BattleEvent[]) {
     const B = this.boss!;
     const bs = this.cfg.boss!.side;
     const S = this.sides[bs];
+    if (B.id === 'arcanist' || B.id === 'star' || B.id === 'leviathan') {
+      lateEnterPhase(this, n, ev);
+      return;
+    }
     if (B.id === 'kraken' && n === 2) {
       const gen = S.ship.modules.find((m) => m.tag === 'static');
       if (gen?.alive) {
@@ -879,13 +1072,13 @@ export class Battle {
     }
   }
 
-  private bubbleSource(side: number) {
+  bubbleSource(side: number) {
     const s = this.sides[side];
     if (s.bubbleKind === 'static') return s.ship.modules.some((m) => m.tag === 'static' && m.alive);
     return s.ship.modules.some((m) => m.kind === 'shield' && !m.tag && m.alive);
   }
 
-  private shipCenter(side: number) {
+  shipCenter(side: number) {
     const s = this.sides[side];
     return { x: s.setup.origin.x + (s.ship.cols * CELL) / 2, y: s.setup.origin.y + (s.ship.rows * CELL) / 2 };
   }
@@ -899,13 +1092,19 @@ export class Battle {
     let shot: ShotDef = NEUTRAL_SHOT;
     let atk = s.setup.cannonAtk;
     let cat: CatState | undefined;
+    let origin: PathPoint | null = null;
     if (shooter === 'cannon' && cannonId !== undefined) {
       shot = this.cannonShot(side, cannonId);
       const powder = s.ship.modules.some((m) => m.kind === 'powder' && m.alive);
       atk = s.setup.cannonAtk * (powder ? 1.25 : 1);
       if (shot.id === 'starbreaker') this.usedOnce.add(`${side}:${cannonId}`);
-    }
-    if (shooter !== 'cannon') {
+    } else if (shooter.startsWith('part:')) {
+      // a boss summon (Arcanista's ink cats) fires its own rune
+      const p = s.parts.find((k) => k.id === Number(shooter.slice(5)));
+      shot = INK_RUNE;
+      atk = s.setup.cannonAtk * 0.75;
+      if (p) origin = this.partMuzzle(side, p);
+    } else {
       cat = s.cats.find((c) => c.def.uid === shooter);
       if (cat) {
         shot = ult && cat.def.ultimate ? cat.def.ultimate : cat.def.shot;
@@ -913,28 +1112,44 @@ export class Battle {
       }
     }
     if (this.boss?.enraged && this.cfg.boss?.side === side) atk *= ENRAGE_MUL;
-    const origin = cannonId !== undefined ? this.cannonMuzzle(side, cannonId) : this.muzzle(side, cat?.def.uid);
+    const events: BattleEvent[] = [];
+    // Eclipse: the next cat shot of this side hits ×2
+    if (cat && s.buffs.empower > 0) {
+      atk *= 2;
+      s.buffs.empower = 0;
+    }
+    origin ??= cannonId !== undefined ? this.cannonMuzzle(side, cannonId) : this.muzzle(side, cat?.def.uid);
     const windNow = this.wind + this.sides[side].windNext;
     this.sides[side].windNext = 0;
-    const paths = this.buildPaths(shot, origin, angle, power, windNow, side);
-    const events: BattleEvent[] = [];
-    paths.forEach((p, pi) => {
-      for (const idx of p.impacts) {
-        const pt = p.points[idx];
-        this.resolveImpact(side, shot, atk, pt.x, pt.y, events, pi, idx, idx === p.impacts[p.impacts.length - 1]);
-      }
-      const last = p.points[p.points.length - 1];
-      if (!p.impacts.length && last.y >= this.waterY - 4) events.push({ k: 'splash', x: last.x, y: this.waterY, path: pi, at: p.points.length - 1 });
-    });
+    this.curShooter = cat ?? null;
+    let paths: ShotPath[];
+    const special = ult && cat ? ULTS[cat.def.catId] : undefined;
+    // ultimates can't erase more than a slice of the enemy structure (GDD 2.9.4: 35%, 40% Starfall/Singularidad, bosses 15%)
+    if (ult && cat) {
+      const foe = this.sides[1 - side];
+      const frac = this.cfg.boss?.side === 1 - side ? 0.15 : ultBudgetFrac(cat.def.catId);
+      this.budget = { side: 1 - side, left: Math.round((foe.ship.initialMax?.[0] ?? 0) * frac) };
+    }
+    if (special) {
+      paths = special(this, { side, cat: cat!, shot, atk, origin, angle, power, wind: windNow, events });
+    } else {
+      paths = this.buildPaths(shot, origin, angle, power, windNow, side);
+      this.resolvePaths(side, shot, atk, paths, events);
+    }
+    this.budget = null;
+    this.curShooter = null;
     // post: shooter bookkeeping
     if (cat) {
       cat.cooldown = (cat.def.reload ?? 1) + 1;
       if (ult) {
         cat.ultUsed++;
         cat.ultCharge = 0;
-      } else cat.ultCharge = Math.min(1, cat.ultCharge + 0.25 * this.meterMul(side));
+      } else {
+        cat.ultCharge = Math.min(1, cat.ultCharge + 0.25 * this.meterMul(side));
+        this.lastShot[side] = { shot, atk, angle, power, origin };
+      }
     }
-    if (isGust(shot)) {
+    if (isGust(shot) && paths.length) {
       // CORRIENTE: the next enemy projectile drifts (an Ancla ignores it)
       if (!this.sides[1 - side].setup.anchor) this.sides[1 - side].windNext = side === 0 ? 90 : -90;
       const last = paths[0].points[paths[0].impacts.length ? paths[0].impacts[paths[0].impacts.length - 1] : paths[0].points.length - 1];
@@ -943,7 +1158,26 @@ export class Battle {
     for (let i = 0; i < 2; i++) events.push(...this.updateExposure(i));
     this.checkVictory();
     events.push(...this.updatePhase());
+    // late-boss events raised while resolving (core switch…) show with this shot
+    if (this.pending.length) events.push(...this.pending.splice(0));
     return { paths, events, shot, atk };
+  }
+
+  /** resolve every impact of already-built paths (owners follow portals) + splashes */
+  resolvePaths(side: number, shot: ShotDef, atk: number, paths: ShotPath[], events: BattleEvent[], offset = 0) {
+    paths.forEach((p, i) => {
+      const pi = i + offset;
+      p.impacts.forEach((idx, k) => {
+        const pt = p.points[idx];
+        const owner = p.owners?.[k] ?? side;
+        this.resolveImpact(owner, shot, atk, pt.x, pt.y, events, pi, idx, k === p.impacts.length - 1);
+      });
+      const last = p.points[p.points.length - 1];
+      if (!p.impacts.length && last.y >= this.waterY - 4) {
+        events.push({ k: 'splash', x: last.x, y: this.waterY, path: pi, at: p.points.length - 1 });
+        lateSplash(this, side, shot, last.x, events, pi, p.points.length - 1);
+      }
+    });
   }
 
   // ---------- trajectories
@@ -979,7 +1213,7 @@ export class Battle {
     return out;
   }
 
-  private integrate(shot: ShotDef, o: PathPoint, angle: number, power: number, wind: number, side: number): ShotPath {
+  integrate(shot: ShotDef, o: PathPoint, angle: number, power: number, wind: number, side: number): ShotPath {
     const traj = shot.trajectory;
     const g = GRAVITY * (shot.gravityScale ?? (traj === 'beam' ? 0.15 : traj === 'heavy' ? 1.6 : traj === 'orb' ? 0.5 : traj === 'gust' ? 0.1 : 1));
     const windK = shot.windScale ?? (traj === 'beam' || traj === 'phase' ? 0.2 : traj === 'heavy' ? 0.5 : traj === 'gust' ? 0 : 1);
@@ -990,20 +1224,42 @@ export class Battle {
     let y = o.y;
     const pts: PathPoint[] = [{ x, y }];
     const impacts: number[] = [];
+    const owners: number[] = [];
+    const jumps: number[] = [];
     let pierceLeft = shot.pierce ?? (traj === 'heavy' ? 2 : traj === 'phase' ? 6 : 0);
     let bounced = traj !== 'bounce';
     let torpedo = false;
     const pierced = new Set<Cell>();
-    const enemy = 1 - side;
-    const homingTarget = traj === 'homing' ? this.homingTarget(enemy) : null;
-    const hasParts = this.sides[enemy].parts.length > 0;
+    // a shot that crosses a portal changes sides ("ahora es mío")
+    let owner = side;
+    const homingTarget = traj === 'homing' ? this.homingTarget(1 - side) : null;
+    const anyParts = this.sides[0].parts.length + this.sides[1].parts.length > 0;
+    // field physics: wells (modules + temporary), gravity multiplier, inverted column, portals
+    const wells = this.wellList();
+    const field = this.field;
+    const portals = this.portals;
+    let portalCool = 0;
+    const done = (): ShotPath => ({ points: pts, element: shot.element, kind: traj, impacts, owners, jumps: jumps.length ? jumps : undefined });
     for (let step = 0; step < 900; step++) {
       const sub = Math.max(1, Math.ceil((Math.hypot(vx, vy) * DT) / 8));
       const sdt = DT / sub;
       for (let k = 0; k < sub; k++) {
         if (!torpedo) {
           vx += wind * windK * sdt;
-          vy += g * sdt;
+          let gm = field.gMul;
+          const an = field.anti;
+          if (an && x >= an.x0 && x <= an.x1 && y >= an.y0) gm = an.k;
+          vy += g * gm * sdt;
+          for (const w of wells) {
+            if (w.affects !== undefined && w.affects !== owner) continue;
+            const dx = w.x - x;
+            const dy = w.y - y;
+            const d = Math.hypot(dx, dy);
+            if (d >= w.r || d < 6) continue;
+            const a = w.k * (1 - d / w.r);
+            vx += (dx / d) * a * sdt;
+            vy += (dy / d) * a * sdt;
+          }
         }
         if (homingTarget && step > 20) {
           const dx = homingTarget.x - x;
@@ -1018,6 +1274,25 @@ export class Battle {
         }
         x += vx * sdt;
         y += vy * sdt;
+        // portals: in through one ring, out of the other facing back — and the shot changes owner
+        if (portals && portalCool <= 0) {
+          const ina = Math.hypot(x - portals.a.x, y - portals.a.y) < portals.r;
+          const inb = !ina && Math.hypot(x - portals.b.x, y - portals.b.y) < portals.r;
+          if (ina || inb) {
+            const from = ina ? portals.a : portals.b;
+            const to = ina ? portals.b : portals.a;
+            pts.push({ x, y });
+            x = to.x + (x - from.x) * -1;
+            y = to.y + (y - from.y);
+            vx = -vx;
+            owner = 1 - owner;
+            jumps.push(pts.length);
+            pts.push({ x, y });
+            portalCool = 40;
+            pierced.clear();
+            continue;
+          }
+        }
         // torpedo: enter the water and run straight under the waterline
         if (traj === 'torpedo' && !torpedo && y >= this.waterY) {
           torpedo = true;
@@ -1025,20 +1300,22 @@ export class Battle {
           vx = Math.sign(vx || 1) * 760;
           vy = 0;
         }
-        // boss parts (tentacles, open eye, flying gargoyle) stop the projectile
-        if (hasParts && this.partAt(x, y, enemy)) {
+        // boss parts (tentacles, open eye, flying gargoyle, ink cats, Distraxia) stop the projectile
+        if (anyParts && this.partAt(x, y, 1 - owner)) {
           pts.push({ x, y });
           impacts.push(pts.length - 1);
-          return { points: pts, element: shot.element, kind: traj, impacts };
+          owners.push(owner);
+          return done();
         }
         const hit = this.cellAt(x, y);
-        if (hit && hit.side !== side) {
+        if (hit && hit.side !== owner) {
           if (pierced.has(hit.cell)) continue;
           if (pierceLeft > 0) {
             pierceLeft--;
             pierced.add(hit.cell);
             pts.push({ x, y });
             impacts.push(pts.length - 1);
+            owners.push(owner);
             if (traj === 'heavy') {
               vx *= 0.8;
               vy *= 0.8;
@@ -1049,6 +1326,7 @@ export class Battle {
             bounced = true;
             pts.push({ x, y });
             impacts.push(pts.length - 1);
+            owners.push(owner);
             vx = -vx * 0.45;
             vy = -Math.abs(vy) * 0.55 - 180;
             x += vx * DT * 2;
@@ -1057,17 +1335,33 @@ export class Battle {
           }
           pts.push({ x, y });
           impacts.push(pts.length - 1);
-          return { points: pts, element: shot.element, kind: traj, impacts };
+          owners.push(owner);
+          return done();
         }
       }
+      if (portalCool > 0) portalCool--;
       pts.push({ x, y });
       if (!torpedo && y >= this.waterY + 10) break;
-      if (x < -300 || x > 2300 || y > 1300) break;
+      if (x < -300 || x > 2300 || y > 1300 || y < -900) break;
     }
-    return { points: pts, element: shot.element, kind: traj, impacts };
+    return done();
   }
 
-  private homingTarget(side: number) {
+  /** every active well: gravity-well modules (Estrella) + temporary ones (ultimates) */
+  wellList(): Well[] {
+    const out = this.wells.slice();
+    for (let side = 0; side < 2; side++) {
+      const s = this.sides[side];
+      for (const m of s.ship.modules) {
+        if (m.tag !== 'well' || !m.alive) continue;
+        const c = this.roomCenter(side, m.id);
+        out.push({ x: c.x, y: c.y, r: 230, k: 1500, turns: Infinity, owner: side, kind: 'well' });
+      }
+    }
+    return out;
+  }
+
+  homingTarget(side: number) {
     const s = this.sides[side];
     const core = s.ship.modules.find((m) => m.kind === 'core' && m.alive);
     const room = s.cats.find((c) => !c.ko);
@@ -1078,7 +1372,7 @@ export class Battle {
   }
 
   // ---------- damage resolution
-  private resolveImpact(attSide: number, shot: ShotDef, atk: number, x: number, y: number, ev: BattleEvent[], path: number, at: number, final: boolean) {
+  resolveImpact(attSide: number, shot: ShotDef, atk: number, x: number, y: number, ev: BattleEvent[], path: number, at: number, final: boolean) {
     const hit = this.cellAt(x, y);
     const hitPart = this.partAt(x, y, 1 - attSide, 2);
     const targetSide = hit ? hit.side : hitPart ? hitPart.side : x > 960 ? 1 : 0;
@@ -1087,7 +1381,8 @@ export class Battle {
     const isBounceFirst = !final && shot.trajectory === 'bounce';
     const radius = isPierce ? 20 : isBounceFirst ? 36 : shot.radius;
     let base = atk * shot.power * (isBounceFirst ? 0.35 : isPierce ? (shot.trajectory === 'phase' ? 2.2 : 0.9) : 1);
-    const crit = !isPierce && this.rng.chance(0.1);
+    // Eclipse: a blinded side lands no criticals
+    const crit = !isPierce && this.sides[attSide].buffs.blind <= 0 && this.rng.chance(0.1);
     if (crit) base *= 1.5;
     const foe = attSide !== targetSide;
     const B = this.boss;
@@ -1096,6 +1391,8 @@ export class Battle {
     if (foe && B?.submerged && targetSide === bossSide && !(shot.element === 'electric' || shot.trajectory === 'torpedo')) {
       ev.push({ k: 'info', text: '¡GLUB! SUMERGIDO', x, y: y - 30, color: 0x7fd8ff, path, at });
       ev.push({ k: 'splash', x, y: this.waterY, path, at });
+      // the Leviatán's sea still chills (water / ice next to it count for the freeze)
+      lateAfterImpact(this, attSide, targetSide, shot, 0, x, y, ev, path, at, new Set());
       ev.push({ k: 'impact', x, y, side: targetSide, radius: 20, element: shot.element, crit: false, path, at, total: 0 });
       return;
     }
@@ -1110,6 +1407,8 @@ export class Battle {
         return;
       }
     }
+    // arcane layered ward (Arcanista / Leviatán): eats the whole impact while a layer stands
+    if (foe && s.ward && s.ward.layers > 0 && wardIntercept(this, attSide, targetSide, shot, base, x, y, ev, path, at)) return;
     // bubble shields: nullify one full impact per turn; ⚡ rayo overloads and pops them
     if (foe && s.bubble > 0 && s.bubbleKind && this.bubbleSource(targetSide)) {
       if (isRayo(shot) || shot.element === 'void') {
@@ -1210,8 +1509,13 @@ export class Battle {
       }
     }
     affected.sort((a, b) => a.d - b.d);
+    // what the blast hit first: the effectiveness plate the view shows (element vs material)
+    const first = affected.find((a) => a.side !== attSide)?.c;
+    const firstMat: Material | undefined = hitPart && foe ? hitPart.material : first?.material;
+    const mainMul = firstMat ? clampMul((MAT_RESIST[firstMat]?.[shot.element] ?? 1) * (shot.structMul ?? 1)) : 1;
     let throatHit = false;
     let skinShown = false;
+    const reactionNames = new Set<string>();
     const shards: { side: number; c: Cell; dmg: number }[] = [];
     for (const a of affected) {
       const fall = Math.max(0.3, Math.pow(1 - Math.min(1, a.d / (radius + CELL * 0.35)), 0.55));
@@ -1219,7 +1523,10 @@ export class Battle {
       // --- elemental reactions
       const st = a.c.status;
       const r = this.react(shot, a.c, a.side, ev, path, at, x, y, reactionDone);
-      if (r.name) reactionDone = true;
+      if (r.name) {
+        reactionDone = true;
+        reactionNames.add(r.name);
+      }
       mult *= r.mult;
       if (st.cursed) mult *= 1.5;
       if (st.charged && isRayo(shot)) mult *= 1.25;
@@ -1233,8 +1540,18 @@ export class Battle {
         }
       }
       if (a.side !== attSide) mult *= this.sides[a.side].setup.armor ?? 1;
-      const dmg = Math.max(1, Math.round(base * fall * mult * DMG_K));
-      a.c.hp -= dmg;
+      // late-boss cell rules: open Grimorio ×1.5, charging star core ×2, sleeping Leviatán cores immune
+      const lm = a.side !== attSide ? lateCellMul(this, a.side, a.c) : 1;
+      if (lm <= 0) {
+        if (!skinShown) {
+          skinShown = true;
+          ev.push({ k: 'boss', what: 'immune', side: a.side, x, y: y - 40, path, at });
+        }
+        continue;
+      }
+      mult *= lm;
+      const dmg = this.cap(a.side, Math.max(1, Math.round(base * fall * mult * DMG_K)));
+      this.hurtCell(a.side, a.c, dmg);
       total += dmg;
       const destroyed = a.c.hp <= 0;
       if (r.name === 'ESTALLIDO') shards.push({ side: a.side, c: a.c, dmg: Math.round(dmg * 0.5) });
@@ -1275,15 +1592,17 @@ export class Battle {
       for (const [dx, dy] of DIRS) {
         const n = ship.get(sh.c.x + dx, sh.c.y + dy);
         if (!n) continue;
-        n.hp -= sh.dmg;
-        total += sh.dmg;
+        if (sh.side !== attSide && lateCellMul(this, sh.side, n) <= 0) continue;
+        const sd = this.cap(sh.side, sh.dmg);
+        this.hurtCell(sh.side, n, sd);
+        total += sd;
         const destroyed = n.hp <= 0;
         if (destroyed) {
           const mid = n.module;
           ship.destroyCell(n.x, n.y);
           if (mid !== undefined) this.reportModule(sh.side, mid, ev, path, at);
         }
-        ev.push({ k: 'cell', side: sh.side, cell: n, dmg: sh.dmg, destroyed, path, at });
+        ev.push({ k: 'cell', side: sh.side, cell: n, dmg: sd, destroyed, path, at });
       }
     }
     // gargoyle throat: interrupts the purr and stuns her
@@ -1299,7 +1618,8 @@ export class Battle {
     }
     // conduction chain (wet + rayo)
     if (isRayo(shot)) this.conduct(targetSide, x, y, base, ev, path, at, attSide);
-    ev.push({ k: 'impact', x, y, side: targetSide, radius, element: shot.element, crit, path, at, total });
+    if (foe) lateAfterImpact(this, attSide, targetSide, shot, total, x, y, ev, path, at, reactionNames);
+    ev.push({ k: 'impact', x, y, side: targetSide, radius, element: shot.element, crit, path, at, total, mul: foe ? mainMul : undefined, mat: foe ? firstMat : undefined });
     for (let side = 0; side < 2; side++) {
       const chunks = this.sides[side].ship.collapse();
       for (const ch of chunks) {
@@ -1314,7 +1634,21 @@ export class Battle {
     }
   }
 
-  private reportModule(side: number, id: number, ev: BattleEvent[], path: number, at: number) {
+  /** ultimate damage cap (see fire): clamp a structure hit on the capped side */
+  cap(side: number, dmg: number) {
+    const b = this.budget;
+    if (!b || b.side !== side) return dmg;
+    const d = Math.max(0, Math.min(dmg, b.left));
+    b.left -= d;
+    return d;
+  }
+  /** apply structure damage to a cell (Gea HEART OF STONE keeps module cells at 1 hp) */
+  hurtCell(side: number, c: Cell, dmg: number) {
+    c.hp -= dmg;
+    if (c.hp <= 0 && c.module !== undefined && this.sides[side].buffs.stone > 0) c.hp = 1;
+  }
+
+  reportModule(side: number, id: number, ev: BattleEvent[], path: number, at: number) {
     const m = this.sides[side].ship.modules[id] as ModuleInst & { _reported?: boolean };
     this.sides[side].ship.refreshModule(id);
     if (!m.alive && !m._reported) {
@@ -1325,7 +1659,7 @@ export class Battle {
     }
   }
 
-  private spreadFire(side: number, from: Cell, n: number, ev: BattleEvent[]) {
+  spreadFire(side: number, from: Cell, n: number, ev: BattleEvent[]) {
     const ship = this.sides[side].ship;
     for (let i = 0; i < n; i++) {
       const ns = DIRS.map(([dx, dy]) => ship.get(from.x + dx, from.y + dy)).filter((c): c is Cell => !!c && FLAMMABLE.has(c.material) && !c.status.burning && !c.status.wet);
@@ -1336,7 +1670,7 @@ export class Battle {
     }
   }
 
-  private react(shot: ShotDef, c: Cell, side: number, ev: BattleEvent[], path: number, at: number, x: number, y: number, done: boolean) {
+  react(shot: ShotDef, c: Cell, side: number, ev: BattleEvent[], path: number, at: number, x: number, y: number, done: boolean) {
     const st = c.status;
     const el = shot.element;
     let name = '';
@@ -1387,7 +1721,7 @@ export class Battle {
     return { name, mult };
   }
 
-  private applyShotStatuses(shot: ShotDef, c: Cell) {
+  applyShotStatuses(shot: ShotDef, c: Cell) {
     for (const s of shot.statuses ?? []) {
       if (s.id === 'burning' && (!FLAMMABLE.has(c.material) || c.status.wet)) continue;
       if (s.id === 'burning' && c.status.steam) continue;
@@ -1398,7 +1732,7 @@ export class Battle {
     if (isRayo(shot) && !c.status.wet) c.status.charged = Math.max(c.status.charged ?? 0, 1);
   }
 
-  private conduct(side: number, x: number, y: number, base: number, ev: BattleEvent[], path: number, at: number, attSide: number) {
+  conduct(side: number, x: number, y: number, base: number, ev: BattleEvent[], path: number, at: number, attSide: number) {
     const ship = this.sides[side].ship;
     const g = this.toGrid(side, x, y);
     // find the nearest wet cell to start
@@ -1428,8 +1762,9 @@ export class Battle {
     ev.push({ k: 'reaction', name: 'CONDUCCIÓN', x: p.x, y: p.y, mult: 1.5, path, at });
     const stunned = new Set<CatState>();
     for (const c of chain) {
-      const dmg = Math.round(base * 0.5 * 1.5 * (this.sides[side].setup.armor ?? 1));
-      c.hp -= dmg;
+      const lm = side !== attSide ? lateCellMul(this, side, c) : 1;
+      const dmg = this.cap(side, Math.round(base * 0.5 * 1.5 * (this.sides[side].setup.armor ?? 1) * lm));
+      this.hurtCell(side, c, dmg);
       delete c.status.wet;
       c.status.charged = 1;
       const destroyed = c.hp <= 0;
@@ -1451,7 +1786,7 @@ export class Battle {
     }
   }
 
-  private powderBlast(side: number, m: ModuleInst, ev: BattleEvent[], path: number, at: number) {
+  powderBlast(side: number, m: ModuleInst, ev: BattleEvent[], path: number, at: number) {
     const ctr = this.cellCenter(side, m.x, m.y);
     ev.push({ k: 'reaction', name: '¡SANTABÁRBARA!', x: ctr.x, y: ctr.y, mult: 2, path, at });
     const ship = this.sides[side].ship;
@@ -1459,8 +1794,8 @@ export class Battle {
       const d = Math.hypot(c.x - m.x, c.y - m.y);
       if (d > 3) continue;
       // GDD: radius 3, 80 internal damage with linear falloff (+ burning)
-      const dmg = Math.round(80 * this.powderMul * (1 - d / 4));
-      c.hp -= dmg;
+      const dmg = this.cap(side, Math.round(80 * this.powderMul * (1 - d / 4)));
+      this.hurtCell(side, c, dmg);
       const destroyed = c.hp <= 0;
       if (destroyed) {
         const mid = c.module;
@@ -1472,7 +1807,7 @@ export class Battle {
     }
   }
 
-  private damageCatsInCell(side: number, cell: Cell, dmg: number, ev: BattleEvent[], path: number, at: number, el: ElementId = 'neutral', gust = false, freeze = false) {
+  damageCatsInCell(side: number, cell: Cell, dmg: number, ev: BattleEvent[], path: number, at: number, el: ElementId = 'neutral', gust = false, freeze = false) {
     if (dmg <= 0 || cell.module === undefined) {
       // exposed cats can be hit through destroyed rooms: check by position
       const exposed = this.sides[side].cats.filter((c) => c.exposed && !c.ko && !this.isFlying(c));
@@ -1505,7 +1840,7 @@ export class Battle {
     this.hitCat(cat, dmg, ev, path, at, el);
   }
 
-  private hitCat(c: CatState, dmg: number, ev: BattleEvent[], path: number, at: number, el: ElementId = 'neutral', direct = false, chained = false) {
+  hitCat(c: CatState, dmg: number, ev: BattleEvent[], path: number, at: number, el: ElementId = 'neutral', direct = false, chained = false) {
     if (c.ko || dmg <= 0) return;
     if (c.shields > 0) {
       c.shields--;
@@ -1557,7 +1892,7 @@ export class Battle {
   }
 
   /** returns true if the cat used a second life */
-  private koOrRevive(c: CatState): boolean {
+  koOrRevive(c: CatState): boolean {
     c.lives--;
     if (c.lives > 0) {
       c.hp = Math.round(c.maxHp * 0.6);
@@ -1574,7 +1909,7 @@ export class Battle {
     return false;
   }
 
-  private updateExposure(side: number): BattleEvent[] {
+  updateExposure(side: number): BattleEvent[] {
     const ev: BattleEvent[] = [];
     const s = this.sides[side];
     for (const c of s.cats) {
@@ -1603,11 +1938,13 @@ export class Battle {
     const lost: (VictoryReason | null)[] = [null, null];
     for (let side = 0; side < 2; side++) {
       const s = this.sides[side];
-      const core = s.ship.modules.find((m) => m.kind === 'core');
+      // the Leviatán: only the core of the current phase counts, and the sea holds it up until F3
+      const ov = lateLoss(this, side);
+      const core = ov ? ov.core : s.ship.modules.find((m) => m.kind === 'core');
       const duel = this.cfg.mode === 'duel';
       if (!duel && core && !core.alive) lost[side] = 'core';
       else if (s.cats.length && s.cats.every((c) => c.ko)) lost[side] = 'crew';
-      else if (!duel && (s.ship.integrity() < SINK_AT || s.flood >= 1)) lost[side] = 'sunk';
+      else if (!duel && !ov?.noSink && (s.ship.integrity() < SINK_AT || s.flood >= 1)) lost[side] = 'sunk';
       // the flying gargoyle falls: her crew surrenders
       if (!lost[side] && this.cfg.boss?.side === side && this.boss?.flying && this.captain()?.ko) lost[side] = 'crew';
     }
@@ -1635,7 +1972,7 @@ export class Battle {
   }
 }
 
-function partDist(p: Part, x: number, y: number) {
+export function partDist(p: Part, x: number, y: number) {
   const lo = Math.min(p.y0, p.y1);
   const hi = Math.max(p.y0, p.y1);
   const cy = Math.max(lo, Math.min(hi, y));
@@ -1643,6 +1980,6 @@ function partDist(p: Part, x: number, y: number) {
 }
 
 /** combined multiplier (material × statuses) bounded to [0.5, 3] (GDD 2.4) */
-function clampMul(m: number) {
+export function clampMul(m: number) {
   return Math.max(0.5, Math.min(3, m));
 }

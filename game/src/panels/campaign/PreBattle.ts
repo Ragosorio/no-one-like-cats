@@ -38,6 +38,7 @@ import type { ShipBlueprint } from '../../battle/ship';
 import type { BattleSpec } from '../../scenes/BattleScene';
 import type { ShipStyleId } from '../../battle/anime';
 import { simulateEstimate, estimateLabel, Estimate } from '../../state/sys/estimate';
+import { iconText } from '../../ui/elementIcon';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI'];
 
@@ -60,7 +61,7 @@ export async function openPreBattle(zone: number, stage: number) {
   const enemySpecies = sd?.enemyCats?.length ? sd.enemyCats : ['c_canelo'];
   await ensureCats([...G.s.cats.map((c) => c.species), ...enemySpecies]);
   const boss = zoneBoss(zone);
-  if (kind === 'boss' && boss) await preloadCats([boss.captainArt.slug]).catch(() => undefined);
+  if (kind === 'boss' && boss?.captainArt.slug) await preloadCats([boss.captainArt.slug]).catch(() => undefined);
   if (m.closed) return;
   new PreBattleView(m, zone, stage, spec?.enemy.blueprint ?? null, enemySpecies, (spec as (BattleSpec & { enemyStyle?: ShipStyleId }) | null)?.enemyStyle);
 }
@@ -169,7 +170,7 @@ class PreBattleView {
     let y = 452;
     const cap = stageCaptain(z, s);
     const boss = kind === 'boss' ? zoneBoss(z) : undefined;
-    if (boss) {
+    if (boss?.captainArt.slug) {
       const art = livingCat(boss.captainArt.slug);
       art.anchor.set(0.5, 1);
       const k = 250 / Math.max(1, art.texture.height);
@@ -315,7 +316,12 @@ class PreBattleView {
       const st = stamp(`ESTIMACIÓN ${estimateLabel(e)}`, col, 34, -0.05);
       st.position.set(170, 12);
       estBox.addChild(st);
-      const lines = e.p === null ? ['Simulando la pelea con tu barco real…'] : [...e.reasons, ...e.tips].slice(0, 3);
+      if (e.details.length) {
+        const why = new Button('¿POR QUÉ?', () => openWhy(e), { w: 170, h: 44, size: 22, color: C.paper });
+        why.position.set(370, -8);
+        estBox.addChild(why);
+      }
+      const lines = e.p === null ? ['Simulando la pelea con tu barco real…'] : [...e.reasons, ...e.tips].slice(0, 2);
       if (e.p !== null && !lines.length) lines.push(p >= 0.7 ? 'Vas sobrado. Igual apunta bien.' : p >= 0.45 ? 'Pelea pareja: lee el viento.' : 'Cuesta arriba. Mejora el barco o alimenta gatos… o ve con fe.');
       let ly = 52;
       for (const l of lines) {
@@ -378,6 +384,25 @@ class PreBattleView {
     this.m.close();
     void goBattle(this.zone, this.stage);
   }
+}
+
+/** the whole why of the estimate: matchups + the hidden numbers of the stage, nothing hidden */
+export function openWhy(e: Estimate) {
+  const m = new Modal('¿Por qué esta estimación?', 1240, 820, { color: 0xe6dcc6, band: C.oceanNoir, subtitle: 'Lo que el Poder no dice' });
+  let y = 0;
+  const head = txt(e.p === null ? 'Simulando…' : `${e.done} peleas simuladas con TU barco: ganaste ${Math.round((e.p ?? 0) * e.done)}.`, { fontFamily: F.poster, fontSize: 30, fill: C.ink });
+  m.body.addChild(head);
+  y += head.height + 14;
+  for (const l of e.details) {
+    const dot = new Graphics().circle(8, 14, 6).fill(C.red);
+    dot.position.set(0, y);
+    const t = iconText(l, { fontFamily: F.ui, fontWeight: '700', fontSize: 21, fill: C.ink }, { wrap: 1120 });
+    t.position.set(26, y);
+    m.body.addChild(dot, t);
+    y += t.height + 12;
+    if (y > m.innerH - 40) break;
+  }
+  m.open();
 }
 
 function lerpColor(a: number, b: number, t: number) {
