@@ -64,7 +64,9 @@ export type DuelEv =
   | { t: 'cleanse'; side: 0 | 1 }
   | { t: 'shield'; side: 0 | 1; amount: number }
   | { t: 'summon'; side: 0 | 1; turns: number }
-  | { t: 'skip'; side: 0 | 1; why: 'stun' | 'shock' | 'sleep' }
+  | { t: 'skip'; side: 0 | 1; why: 'stun' | 'shock' | 'sleep' | 'freeze' }
+  /** Parte 2: a short floating note (CHOQUE TÉRMICO, TURNO EXTRA, VIDA MÁX -8%, ¡NO VE NADA!) */
+  | { t: 'note'; side: 0 | 1; text: string; color: number }
   | { t: 'meter'; side: 0 | 1; v: number }
   | { t: 'ko'; side: 0 | 1 }
   | { t: 'decision'; winner: 0 | 1 };
@@ -100,6 +102,8 @@ export class Duel {
   private rnd: () => number;
   /** how smart the rival is (0 = random-ish, 1 = sharp) */
   aiSkill: number;
+  /** Tiempo (REWIND CLAW): the side that just acted goes again */
+  private extraTurn = false;
 
   constructor(a: FighterInit, b: FighterInit, seed: number, aiSkill = 0.8) {
     this.rnd = prng(seed);
@@ -122,7 +126,7 @@ export class Duel {
   /** the side to act will lose this turn for sure (stun / dormilón): don't ask the player to choose */
   willSkip(side: 0 | 1) {
     const f = this.f[side];
-    return f.skipFirst || this.hasStatus(f, 'stun');
+    return f.skipFirst || this.hasStatus(f, 'stun') || this.hasStatus(f, 'freeze');
   }
 
   /** run one full turn of the side to act. `choice` = slot for that side (auto/AI when undefined) */
@@ -159,16 +163,17 @@ export class Duel {
     }
     if (this.checkKo(ev)) return ev;
     // ---- can it act?
-    let skip: 'stun' | 'shock' | 'sleep' | null = null;
+    let skip: 'stun' | 'shock' | 'sleep' | 'freeze' | null = null;
     if (me.skipFirst) {
       me.skipFirst = false;
       skip = 'sleep';
     } else if (this.hasStatus(me, 'stun')) skip = 'stun';
+    else if (this.hasStatus(me, 'freeze')) skip = 'freeze';
     else if (this.hasStatus(me, 'shock') && this.rnd() < 0.3) skip = 'shock';
     if (skip) {
       ev.push({ t: 'skip', side, why: skip });
-      if (skip === 'stun') {
-        me.statuses = me.statuses.filter((s) => s.id !== 'stun');
+      if (skip === 'stun' || skip === 'freeze') {
+        me.statuses = me.statuses.filter((s) => s.id !== skip);
         me.stunImmune = true;
       }
     } else {
@@ -178,7 +183,7 @@ export class Duel {
       me.acted++;
     }
     // ---- end of turn: statuses age, cooldowns tick
-    for (const st of me.statuses) if (st.id !== 'stun') st.turns--;
+    for (const st of me.statuses) if (st.id !== 'stun' && st.id !== 'freeze') st.turns--;
     me.statuses = me.statuses.filter((s) => s.turns > 0);
     for (let i = 0; i < 4; i++) if (me.cds[i] > 0) me.cds[i]--;
     if (this.checkKo(ev)) return ev;
@@ -189,6 +194,11 @@ export class Duel {
       this.over = true;
       this.winner = p1 > p0 ? 1 : 0;
       ev.push({ t: 'decision', winner: this.winner });
+      return ev;
+    }
+    // Tiempo: a stolen turn (never two in a row)
+    if (this.extraTurn) {
+      this.extraTurn = false;
       return ev;
     }
     this.turn = (1 - side) as 0 | 1;
@@ -213,7 +223,11 @@ export class Duel {
       else if (p.kind === 'shield') v = me.shield > 0 ? 0 : me.hp / me.hpMax < 0.6 ? 1.9 : 0.9;
       else {
         v = p.mult * (p.hits ?? 1) * effMult(p.element, foe.elements) * this.lvlMul(me, i);
-        if (p.status && !this.hasStatus(foe, p.status.id)) v += 0.35 * p.status.chance * (p.status.id === 'stun' ? 1.6 : 1);
+        if (p.status && !this.hasStatus(foe, p.status.id)) v += 0.35 * p.status.chance * (p.status.id === 'stun' || p.status.id === 'freeze' ? 1.6 : 1);
+        // Parte 2: shields mean nothing to the shadows / the void; rewinding is worth more when hurt
+        if ((p.pierce || p.erase) && foe.shield > 0) v += 0.6;
+        if (p.rewind) v += 0.5 * (1 - me.hp / me.hpMax);
+        if (p.element === 'fire' && this.hasStatus(foe, 'freeze')) v *= 1.5;
         if (p.kind === 'summon' && !me.summon) v += 0.9;
         if (p.sureCrit) v *= 1.3;
       }
@@ -262,9 +276,21 @@ export class Duel {
     }
     const hits = (p.hits ?? 1) + (me.trait === 'travieso' && this.rnd() < 0.1 ? 1 : 0) + (me.mutation === 'doble_cola' && this.rnd() < 0.08 ? 1 : 0);
     const eff = effMult(p.element, foe.elements);
+    // Parte 2 — Vacío: the shield is eaten before the bite
+    if (p.erase && foe.shield > 0) {
+      foe.shield = 0;
+      ev.push({ t: 'shield', side: foe.side, amount: 0 });
+    }
+    let dealtNow = 0;
     for (let h = 0; h < hits && foe.hp > 0; h++) {
-      // a clean dodge now and then (never against the ULTI or a sure-crit snipe; stunned cats can't dodge)
-      if (!p.ult && !p.sureCrit && !this.hasStatus(foe, 'stun') && this.rnd() < S.dodge_chance) {
+      // Parte 2 — Luz: a blinded cat swings at nothing (never the ULTI)
+      if (!p.ult && this.hasStatus(me, 'blind') && this.rnd() < 0.35) {
+        ev.push({ t: 'hit', side: foe.side, from: side, dmg: 0, crit: false, eff: effKind(eff), absorbed: 0, hit: h, of: hits, kind: p.kind, element: p.element, dodged: true });
+        if (h === 0) ev.push({ t: 'note', side, text: '¡NO VE NADA!', color: 0xffd77a });
+        continue;
+      }
+      // a clean dodge now and then (never against the ULTI, a sure-crit snipe or a stab from the shadows; stunned/frozen cats can't dodge)
+      if (!p.ult && !p.sureCrit && !p.pierce && !this.hasStatus(foe, 'stun') && !this.hasStatus(foe, 'freeze') && this.rnd() < S.dodge_chance) {
         ev.push({ t: 'hit', side: foe.side, from: side, dmg: 0, crit: false, eff: effKind(eff), absorbed: 0, hit: h, of: hits, kind: p.kind, element: p.element, dodged: true });
         continue;
       }
@@ -285,19 +311,44 @@ export class Duel {
         foe.statuses = foe.statuses.filter((s) => s.id !== 'curse');
       }
       if (foe.trait === 'miedoso' && foe.firstHitTaken) dmg *= 0.5;
+      // Parte 2 — Hielo + fuego: CHOQUE TÉRMICO (the ice cracks, the cat thaws)
+      if (p.element === 'fire' && this.hasStatus(foe, 'freeze')) {
+        dmg *= 1.5;
+        foe.statuses = foe.statuses.filter((s) => s.id !== 'freeze');
+        ev.push({ t: 'note', side: foe.side, text: '¡CHOQUE TÉRMICO!', color: 0x9fe8ff });
+      }
       const critC = S.crit_chance + (['chismoso', 'curioso'].includes(me.trait) ? 0.05 : 0) + (me.mutation === 'estelar' ? 0.05 : 0);
       const crit = !!p.sureCrit || p.ult === true ? true : this.rnd() < critC;
       if (crit) dmg *= S.crit_mult;
-      const absorbed = Math.min(foe.shield, dmg);
+      // Sombra / Sonido go through the shield
+      const absorbed = p.pierce ? 0 : Math.min(foe.shield, dmg);
       foe.shield -= absorbed;
       const dealt = this.applyDamage(foe, dmg - absorbed, ev, true);
       me.dmgDealt += dealt;
+      dealtNow += dealt;
       ev.push({ t: 'hit', side: foe.side, from: side, dmg: dealt, crit, eff: effKind(eff), absorbed, hit: h, of: hits, kind: p.kind, element: p.element });
       foe.firstHitTaken = false;
       this.meter(foe, S.meter_per_hit_taken + (foe.trait === 'rencoroso' ? 10 : 0), ev);
       if (crit && me.trait === 'presumido') this.meter(me, 10, ev);
     }
     me.firstAttack = false;
+    // Parte 2 — Tiempo: REBOBINAR (heal half of it back; 25% to go again)
+    if (p.rewind && dealtNow > 0 && me.hp > 0) {
+      const amount = Math.min(me.hpMax - me.hp, dealtNow * 0.5);
+      me.hp += amount;
+      if (amount > 0) ev.push({ t: 'heal', side, amount });
+      if (foe.hp > 0 && this.rnd() < 0.25) {
+        this.extraTurn = true;
+        ev.push({ t: 'note', side, text: '¡TURNO EXTRA!', color: 0xe0b77a });
+      }
+    }
+    // Parte 2 — Vacío: what it bit is gone for good (max HP −8%)
+    if (p.erase && dealtNow > 0 && foe.hp > 0) {
+      const cut = foe.hpMax * 0.08;
+      foe.hpMax = Math.max(1, foe.hpMax - cut);
+      foe.hp = Math.min(foe.hp, foe.hpMax);
+      ev.push({ t: 'note', side: foe.side, text: 'VIDA MÁX −8%', color: 0xff2e88 });
+    }
     // status on hit (once per power)
     if (foe.hp > 0) {
       let st = p.status;
@@ -311,8 +362,9 @@ export class Duel {
           if (st.id === 'burn' && me.trait === 'piromano') turns++;
           if (st.id === 'curse' && me.mutation === 'runico') turns++;
           const dotDmg = st.id === 'burn' ? me.atk * 0.35 * lv : st.id === 'root' ? me.atk * 0.28 * lv : 0;
-          // stun can't chain: a cat that just lost a turn to it resists the next one
-          if (st.id === 'stun' && (foe.stunImmune || this.hasStatus(foe, 'stun'))) {
+          // stun (and freeze) can't chain: a cat that just lost a turn to it resists the next one
+          if (st.id === 'freeze') turns = 1;
+          if ((st.id === 'stun' || st.id === 'freeze') && (foe.stunImmune || this.hasStatus(foe, 'stun') || this.hasStatus(foe, 'freeze'))) {
             foe.stunImmune = false;
             ev.push({ t: 'resist', side: foe.side, id: st.id });
           } else {

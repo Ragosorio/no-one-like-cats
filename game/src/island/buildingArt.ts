@@ -202,19 +202,30 @@ export function habitatParts(element: string, tier: number, fw = 3, fh = 3, buil
   // element prop on the right corner
   const prop = elementProp(element);
   const pp = P(fw - 1.1, 0.1);
-  prop.position.set(pp.x, pp.y);
-  back.addChild(prop);
+  prop.c.position.set(pp.x, pp.y);
+  back.addChild(prop.c);
   // ---- tier ornaments (cumulative): pots, bunting, feature, banners, arch, runes, beam, rocks, halo
-  const tick = building ? null : yardForTier(element, tier, fw, fh, ground, back, front);
-  return { ground, back, front, roof: { x: hp.x, y: hp.y + house.top * hs }, tick: tick ?? undefined };
+  const yard = building ? null : yardForTier(element, tier, fw, fh, ground, back, front);
+  const propTick = building ? undefined : prop.tick;
+  const tick: Tick | undefined =
+    yard && propTick
+      ? (t) => {
+          yard(t);
+          propTick(t);
+        }
+      : (yard ?? propTick);
+  return { ground, back, front, roof: { x: hp.x, y: hp.y + house.top * hs }, tick };
 }
 
-/** element-flavored yard prop */
-function elementProp(el: string): Container {
+const stepped = (t: number) => Math.floor(t * 12) / 12;
+
+/** element-flavored yard prop (+ an optional little animation for the Parte 2 elements) */
+function elementProp(el: string): { c: Container; tick?: Tick } {
   const c = new Container();
   const g = new Graphics();
   const fx = elementFx(el);
   c.addChild(g);
+  let tick: Tick | undefined;
   g.ellipse(0, 2, 16, 6).fill({ color: C.ink, alpha: 0.15 });
   switch (el) {
     case 'fire': {
@@ -303,6 +314,202 @@ function elementProp(el: string): Container {
       g.star(14, -38, 4, 5, 2).fill(C.yellow).stroke({ width: 1.5, color: C.ink });
       break;
     }
+    case 'ice': {
+      // a tiny igloo + a cluster of ice crystals that glint
+      g.moveTo(-22, 0).bezierCurveTo(-22, -30, 10, -30, 10, 0).closePath().fill(0xeaf6ff).stroke(INK);
+      for (const y of [-8, -16]) g.moveTo(-20 + (y === -16 ? 3 : 0), y).quadraticCurveTo(-6, y - 4, 8 - (y === -16 ? 3 : 0), y);
+      g.moveTo(-14, -8).lineTo(-12, -16).moveTo(0, -8).lineTo(-2, -16).moveTo(-7, -16).lineTo(-7, -22);
+      g.stroke({ width: 1.5, color: 0x4fa3d9 });
+      g.moveTo(-12, 0).bezierCurveTo(-12, -12, 0, -12, 0, 0).closePath().fill(0x1f2b4a).stroke(THIN);
+      for (const [x, h, w] of [
+        [14, 30, 6],
+        [22, 20, 5],
+        [7, 16, 4],
+      ] as const) {
+        g.poly([x - w, 0, x - w, -h * 0.7, x, -h, x + w, -h * 0.7, x + w, 0]).fill(0x9fe8ff).stroke(THIN);
+        g.moveTo(x, -h + 2).lineTo(x, -2).stroke({ width: 1.5, color: 0xffffff, alpha: 0.8 });
+      }
+      const gl = new Sprite(glowTexture());
+      gl.anchor.set(0.5);
+      gl.tint = fx.accent;
+      gl.alpha = 0.35;
+      gl.scale.set(0.5);
+      gl.position.set(14, -16);
+      c.addChildAt(gl, 0);
+      const glint = new Graphics().star(0, 0, 4, 6, 1.5).fill(0xffffff).stroke({ width: 1, color: C.ink });
+      glint.position.set(15, -29);
+      c.addChild(glint);
+      tick = (t) => {
+        const k = (stepped(t) * 0.7) % 1;
+        glint.visible = k < 0.25;
+        glint.scale.set(0.5 + Math.sin(k * Math.PI * 4) * 0.5);
+        gl.alpha = 0.3 + Math.sin(stepped(t) * 2) * 0.08;
+      };
+      break;
+    }
+    case 'sound': {
+      // a stack of riso-pink speakers; the woofer thumps and a note floats up
+      const box = (x: number, y: number, w: number, h: number) => {
+        g.rect(x + 3, y + 3, w, h).fill(C.ink);
+        g.rect(x, y, w, h).fill(0x231626).stroke(THIN);
+      };
+      box(-20, -24, 26, 24);
+      box(-16, -44, 18, 20);
+      box(8, -16, 16, 16);
+      g.circle(-7, -36, 4.5).fill(0x2ec4e6).stroke({ width: 1.5, color: C.ink });
+      g.circle(16, -8, 4).fill(0xffd400).stroke({ width: 1.5, color: C.ink });
+      g.rect(-20, -27, 26, 3).fill(0xff2e88);
+      const woofer = new Graphics();
+      woofer.circle(0, 0, 9).fill(0xff2e88).stroke(THIN);
+      woofer.circle(0, 0, 3.5).fill(C.ink);
+      woofer.position.set(-7, -12);
+      const note = new Graphics();
+      note.ellipse(0, 0, 4.5, 3.4).fill(0xffd400).stroke({ width: 1.5, color: C.ink });
+      note.rect(3, -14, 2.5, 14).fill(C.ink);
+      note.poly([3, -14, 10, -9, 4, -9]).fill(C.ink);
+      c.addChild(woofer, note);
+      tick = (t) => {
+        const s = stepped(t);
+        woofer.scale.set(Math.floor(s * 4) % 2 ? 1.12 : 1);
+        const k = (s * 0.5) % 1;
+        note.position.set(10 + Math.sin(k * 8) * 4, -46 - k * 26);
+        note.alpha = 1 - k;
+      };
+      break;
+    }
+    case 'shadow': {
+      // a paper lantern (andon) with a cat silhouette prowling across its paper
+      g.rect(-2, -6, 4, 6).fill(0x2a2433);
+      g.poly([-14, 0, 14, 0, 10, -6, -10, -6]).fill(0x2a2433).stroke(THIN);
+      const gl = new Sprite(glowTexture());
+      gl.anchor.set(0.5);
+      gl.tint = 0xffd9a0;
+      gl.alpha = 0.45;
+      gl.scale.set(0.7);
+      gl.y = -24;
+      c.addChildAt(gl, 0);
+      g.rect(-13, -44, 26, 38).fill(0xfff3d6).stroke(INK);
+      g.moveTo(0, -44).lineTo(0, -6).moveTo(-13, -25).lineTo(13, -25).stroke({ width: 1.5, color: 0x2a2433, alpha: 0.5 });
+      g.rect(-16, -48, 32, 5).fill(0x2a2433).stroke(THIN);
+      g.circle(9, -40, 3).fill(0xc8102e);
+      g.moveTo(14, -46).lineTo(18, -40).stroke({ width: 2, color: 0xc8102e });
+      const cat = new Graphics();
+      cat.ellipse(0, 0, 6, 3.5).fill(0x0d110f);
+      cat.circle(5, -3.5, 3).fill(0x0d110f);
+      cat.poly([3, -5.5, 3.5, -9, 5.5, -6]).fill(0x0d110f);
+      cat.poly([6, -6, 8, -9, 8, -5]).fill(0x0d110f);
+      cat.moveTo(-5, 0).quadraticCurveTo(-10, -2, -9, -8).stroke({ width: 1.8, color: 0x0d110f, cap: 'round' });
+      cat.position.set(0, -12);
+      c.addChild(cat);
+      tick = (t) => {
+        const s = stepped(t) * 0.6;
+        const x = Math.sin(s) * 3.5;
+        cat.x = x;
+        cat.scale.x = Math.cos(s) >= 0 ? 1 : -1;
+        cat.y = -12 + (Math.floor(stepped(t) * 6) % 2 ? -0.6 : 0);
+        gl.alpha = 0.42 + Math.sin(stepped(t) * 5) * 0.05;
+      };
+      break;
+    }
+    case 'time': {
+      // an hourglass on a stone pedestal: the sand runs, then it flips
+      g.poly([-12, 0, 12, 0, 9, -6, -9, -6]).fill(0xb7a99a).stroke(THIN);
+      g.rect(-6, -22, 12, 16).fill(0xd9c29a).stroke(THIN);
+      g.poly([-10, -22, 10, -22, 8, -27, -8, -27]).fill(0xb7a99a).stroke(THIN);
+      const hg = new Container();
+      hg.position.set(0, -44);
+      const frame = new Graphics();
+      frame.moveTo(-7, -15).bezierCurveTo(-7, -6, -2, -3, -1.5, 0).bezierCurveTo(-2, 3, -7, 6, -7, 15).lineTo(7, 15).bezierCurveTo(7, 6, 2, 3, 1.5, 0).bezierCurveTo(2, -3, 7, -6, 7, -15).closePath().fill({ color: 0xf7ebd0, alpha: 0.9 }).stroke(THIN);
+      const sand = new Graphics();
+      const cap = new Graphics();
+      cap.rect(-10, -18, 20, 4).fill(0x6b4f2a).stroke({ width: 1.5, color: C.ink });
+      cap.rect(-10, 14, 20, 4).fill(0x6b4f2a).stroke({ width: 1.5, color: C.ink });
+      cap.rect(-9, -15, 2, 29).fill(0x6b4f2a);
+      cap.rect(7, -15, 2, 29).fill(0x6b4f2a);
+      hg.addChild(frame, sand, cap);
+      c.addChild(hg);
+      const drawSand = (k: number) => {
+        sand.clear();
+        const top = 1 - k;
+        if (top > 0.02) sand.poly([-5 * top, -2 - 9 * top, 5 * top, -2 - 9 * top, 0, -1.5]).fill(0xe0b77a);
+        if (k > 0.02) sand.poly([-6, 14, 6, 14, 0, 14 - 10 * k]).fill(0xe0b77a);
+        if (k < 0.98) sand.rect(-0.6, -1, 1.2, 15 - 10 * k).fill(0xe0b77a);
+      };
+      drawSand(0);
+      let last = -1;
+      tick = (t) => {
+        const s = stepped(t) % 7;
+        const k = Math.min(1, s / 6);
+        const q = Math.round(k * 12);
+        if (q !== last) {
+          last = q;
+          drawSand(q / 12);
+        }
+        hg.rotation = s > 6 ? ((s - 6) / 1) * Math.PI : 0;
+      };
+      break;
+    }
+    case 'light': {
+      // a lighthouse lens on a post: stained-glass panes in gold leading, the beam sweeps
+      g.rect(-3, -26, 6, 26).fill(0xb89558).stroke(THIN);
+      g.poly([-10, 0, 10, 0, 6, -6, -6, -6]).fill(0xb89558).stroke(THIN);
+      const beam = new Graphics();
+      beam.poly([0, 0, 60, -12, 60, 12]).fill({ color: 0xfff8e1, alpha: 0.55 });
+      beam.position.set(0, -38);
+      beam.blendMode = 'add';
+      c.addChild(beam);
+      const lens = new Graphics();
+      lens.roundRect(-12, -52, 24, 28, 6).fill(0xffd77a).stroke(INK);
+      const panes = [0xe8879a, 0x7fd8ff, 0xffffff, 0xffd77a, 0xb59cff, 0xe8879a];
+      for (let k = 0; k < 6; k++) lens.rect(-9 + (k % 3) * 6, -48 + Math.floor(k / 3) * 12, 6, 12).fill(panes[k]).stroke({ width: 1.5, color: 0xb89558 });
+      lens.poly([-12, -52, 0, -60, 12, -52]).fill(0xb89558).stroke(THIN);
+      lens.circle(0, -62, 2.5).fill(0xffd77a).stroke({ width: 1, color: C.ink });
+      c.addChild(lens);
+      const gl = new Sprite(glowTexture());
+      gl.anchor.set(0.5);
+      gl.tint = 0xffd77a;
+      gl.alpha = 0.55;
+      gl.scale.set(0.6);
+      gl.y = -38;
+      c.addChildAt(gl, 0);
+      tick = (t) => {
+        const a = Math.sin(stepped(t) * 1.2);
+        beam.scale.x = a;
+        beam.alpha = 0.3 + Math.abs(a) * 0.6;
+        gl.alpha = 0.45 + Math.abs(a) * 0.2;
+      };
+      break;
+    }
+    case 'void': {
+      // a little black hole hovering over the grass: pink event horizon, TV snow inside
+      g.ellipse(0, 0, 14, 5).fill({ color: C.ink, alpha: 0.25 });
+      const hole = new Container();
+      hole.position.set(0, -26);
+      const ring = new Graphics();
+      ring.ellipse(0, 0, 20, 7).stroke({ width: 6, color: C.ink }).ellipse(0, 0, 20, 7).stroke({ width: 3, color: 0xff2e88 });
+      const core = new Graphics().circle(0, 0, 12).fill(0x0d110f).stroke({ width: 2.5, color: 0xffffff });
+      const snow = new Graphics();
+      const front = new Graphics().arc(0, 0, 20, 0.15, Math.PI - 0.15).stroke({ width: 3, color: 0xff2e88 });
+      front.scale.y = 0.35;
+      hole.addChild(ring, core, snow, front);
+      c.addChild(hole);
+      let last = -1;
+      tick = (t) => {
+        const s = stepped(t);
+        hole.y = -26 + Math.sin(s * 1.6) * 3;
+        hole.rotation = Math.sin(s * 0.8) * 0.12;
+        const f = Math.floor(s * 12);
+        if (f === last) return;
+        last = f;
+        snow.clear();
+        for (let k = 0; k < 9; k++) {
+          const a = Math.random() * Math.PI * 2;
+          const d = Math.random() * 9;
+          snow.rect(Math.cos(a) * d - 1.5, Math.sin(a) * d, 3, 1.2).fill({ color: 0xffffff, alpha: 0.5 + Math.random() * 0.5 });
+        }
+      };
+      break;
+    }
     default: {
       g.poly([-8, 0, -11, -18, -4, -30, 0, -14]).fill(fx.main).stroke(THIN);
       g.poly([0, 0, 3, -34, 9, -40, 12, -18, 8, 0]).fill(fx.accent).stroke(THIN);
@@ -315,7 +522,7 @@ function elementProp(el: string): Container {
       c.addChildAt(gl, 0);
     }
   }
-  return c;
+  return { c, tick };
 }
 
 /** the little house per tier. Returns container + local y of its top. */
@@ -479,6 +686,12 @@ function trims(el: string) {
     storm: { roof: 0x1f2b4a, glass: C.cyan, stone: 0xc9ccd6, banner: C.yellow },
     magic: { roof: 0x5c3d5b, glass: 0xff7ab8, stone: 0xb7a4c7, banner: 0x8a5cff },
     cosmic: { roof: 0x231626, glass: C.cyan, stone: 0x6d5a80, banner: 0x8a5cff },
+    ice: { roof: 0x4fa3d9, glass: 0x7cffc4, stone: 0xdcefff, banner: 0x9fe8ff },
+    sound: { roof: 0xff2e88, glass: 0xffd400, stone: 0xd9cde6, banner: 0x2ec4e6 },
+    shadow: { roof: 0x2a2433, glass: 0xfff3d6, stone: 0xeae1d3, banner: 0xc8102e },
+    time: { roof: 0x6b4f2a, glass: 0xe0b77a, stone: 0xd9c29a, banner: 0x1c3a51 },
+    light: { roof: 0xffd77a, glass: 0x7fd8ff, stone: 0xfff8e1, banner: 0xe8879a },
+    void: { roof: 0x0d110f, glass: 0xffffff, stone: 0xd9d9d6, banner: 0xff2e88 },
   };
   return { fx, ...(map[el] ?? map.fire) };
 }
@@ -509,6 +722,33 @@ function topper(g: Graphics, x: number, y: number, el: string, s = 1) {
       g.circle(x, y - 9 * s, 7 * s).fill(0x8a5cff).stroke(THIN);
       g.ellipse(x, y - 9 * s, 13 * s, 3.5 * s).stroke({ width: 2, color: C.cyan });
       break;
+    case 'ice':
+      g.star(x, y - 10 * s, 6, 10 * s, 3.5 * s).fill(0xeaf6ff).stroke(THIN);
+      g.circle(x, y - 10 * s, 2.5 * s).fill(0x7cffc4);
+      break;
+    case 'sound':
+      g.ellipse(x - 2 * s, y - 4 * s, 5 * s, 3.8 * s).fill(0xff2e88).stroke(THIN);
+      g.rect(x + 2 * s, y - 20 * s, 2.5 * s, 16 * s).fill(C.ink);
+      g.poly([x + 2 * s, y - 20 * s, x + 10 * s, y - 14 * s, x + 3 * s, y - 13 * s]).fill(C.ink);
+      break;
+    case 'shadow':
+      g.moveTo(x - 10 * s, y - 9 * s).quadraticCurveTo(x, y - 20 * s, x + 10 * s, y - 9 * s).quadraticCurveTo(x, y + 2 * s, x - 10 * s, y - 9 * s).fill(0x0d110f).stroke(THIN);
+      g.circle(x, y - 9 * s, 3.5 * s).fill(0xc8102e);
+      g.rect(x - 0.8 * s, y - 12 * s, 1.6 * s, 6 * s).fill(0x0d110f);
+      break;
+    case 'time':
+      g.poly([x - 6 * s, y - 20 * s, x + 6 * s, y - 20 * s, x, y - 10 * s, x + 6 * s, y, x - 6 * s, y, x, y - 10 * s]).fill(0xf7ebd0).stroke(THIN);
+      g.poly([x - 4 * s, y - 1 * s, x + 4 * s, y - 1 * s, x, y - 6 * s]).fill(0xe0b77a);
+      g.rect(x - 8 * s, y - 22 * s, 16 * s, 3 * s).fill(0x6b4f2a).stroke({ width: 1.5, color: C.ink });
+      break;
+    case 'light':
+      g.star(x, y - 10 * s, 8, 11 * s, 4.5 * s).fill(0xfff8e1).stroke(THIN);
+      g.circle(x, y - 10 * s, 3.5 * s).fill(0xe8879a).stroke({ width: 1.5, color: 0xb89558 });
+      break;
+    case 'void':
+      g.circle(x, y - 9 * s, 7 * s).fill(0x0d110f).stroke({ width: 2, color: 0xffffff });
+      g.ellipse(x, y - 9 * s, 12 * s, 3.5 * s).stroke({ width: 2, color: 0xff2e88 });
+      break;
     default:
       g.star(x, y - 9 * s, 5, 9 * s, 4 * s).fill(fx.accent).stroke(THIN);
   }
@@ -528,7 +768,8 @@ function glowAt(c: Container, x: number, y: number, tint: number, alpha = 0.4, s
 /** Tier 4 · Casita de Coral: bulbous coral dome + side bulb + turret, sea-weed, element turret/topper */
 function casitaCoral(g: Graphics, c: Container, el: string) {
   const t = trims(el);
-  const coral = el === 'earth' ? 0xf2b48a : el === 'storm' ? 0xc9b6e8 : 0xff9fb4;
+  const CORAL: Record<string, number> = { earth: 0xf2b48a, storm: 0xc9b6e8, ice: 0xcfe9ff, sound: 0xffb3d4, shadow: 0xd9cfc0, time: 0xe8d2a8, light: 0xfff0c2, void: 0xe2e2e0 };
+  const coral = CORAL[el] ?? 0xff9fb4;
   const coralD = shade(coral, 0.82);
   g.ellipse(0, 8, 62, 22).fill(0xf2dca8).stroke(INK);
   // seaweed

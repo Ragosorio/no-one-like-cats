@@ -10,7 +10,7 @@ Guías hermanas: [agregar-gato.md](agregar-gato.md) · [agregar-historia.md](agr
 
 ## 1. Lo que ya existe
 
-Hoy hay 8 elementos en `content.json` → `elements[]`, en este orden:
+Hoy hay 13 elementos en `content.json` → `elements[]`, en este orden:
 
 | id | Nombre | Cómo se desbloquea (`unlock`) |
 |---|---|---|
@@ -21,9 +21,46 @@ Hoy hay 8 elementos en `content.json` → `elements[]`, en este orden:
 | `storm` | Tormenta | `boss:2` |
 | `magic` | Magia | `kl:24` (llega el Arcanista) |
 | `cosmic` | Cósmico | `boss:5` |
-| `void` | Vacío | `chapter:2` (solo adelanto; no se juega en el Capítulo 1) |
+| `ice` | Hielo | `grieta:ice` — Grieta Boreal, después de los créditos (H23) |
+| `sound` | Sonido | `grieta:sound` — campeón de una liga del Podio (H24) |
+| `shadow` | Sombra | `grieta:shadow` — Jardín Sakura limpio (H25) |
+| `time` | Tiempo | `grieta:time` — Oasis Dorado limpio (H26) |
+| `light` | Luz | `grieta:light` — Reino 36 + Atolón Estelar limpio (H27) |
+| `void` | Vacío | `grieta:void` — Abismo del Ronroneo limpio o 10 Fragmentos del Vacío (H28) |
 
-Ojo con un detalle de nombres: en el contenido el elemento se llama `storm`, pero en el simulador de combate se llama `electric` (`SIM_ELEMENT` en `game/src/battle/catShots.ts` y `toContentEl()` en `game/src/battle/sim.ts`). No es un error, es historia.
+Ojo con un detalle de nombres: en el contenido el elemento se llama `storm`, pero en el simulador de combate se llama `electric` (`SIM_ELEMENT` en `game/src/battle/catShots.ts` y `toContentEl()` en `game/src/battle/sim.ts`). No es un error, es historia. Los seis de la Parte 2 se llaman igual en los dos lados.
+
+### Parte 2: los seis del multiverso
+
+Las reglas viven en `game/src/battle/multiverso.ts` (el simulador solo tiene ganchos chiquitos) y su
+look en `game/src/battle/fx/multiversoFx.ts`. Las Grietas (descubrimiento, batallas, banderas
+`grieta:<id>`, parche para partidas viejas) en `game/src/state/sys/grietas.ts`.
+
+| Elemento | Disparo (`archetype` → trayectoria) | Qué hace (igual para jugador y enemigo) | Podio (TÉCNICA) |
+|---|---|---|---|
+| Hielo | `carambano` → parabólico | Congelado 2: el cañón/camarote no actúa su próximo turno; el gato golpeado se congela (los de Hielo no). Fuego encima = CHOQUE TÉRMICO ×1.75 | FROST BITE: Congelado (pierde turno; fuego lo revienta ×1.5) |
+| Luz | `haz` → `ray` (recto, sin viento, perfora) | CEGADO: el rival apunta su próximo turno con 30% de vista previa (la IA con ×2.2 de error). Luz sobre Mojado = ARCOÍRIS | PRISM FLASH: Cegado (falla 35%) |
+| Sombra | `sombra` → parabólico invisible | No se ve volar; PUÑALADA al gato enemigo más cercano (ignora escudos de gato) | SHADOW STITCH: no se esquiva, atraviesa escudo |
+| Sonido | `onda` → `wave` (atraviesa paredes) | Aturde a cada gato cuyo camarote cruza; luego SORDO 2 turnos. Sonido sobre Congelado = NOTA ALTA ×2 | SONIC BOOM: atraviesa escudo, puede aturdir |
+| Tiempo | `reloj` → parabólico (rebota si tiene rebotes) | REBOBINAR: repara tus celdas con 35% del daño hecho; el gato golpeado pierde su próximo turno. Ulti = TIME STOP (los gatos rivales pierden un turno; no se encadena). Tiempo sobre Ardiendo/Enraizado = ACELERAR | REWIND CLAW: se cura la mitad, 25% turno extra |
+| Vacío | `borrado` → `phase` | Borra en línea; lo que toca queda BORRADO (no se repara ni regenera). Se come burbujas, escudos, escudos de gato y una segunda vida | NULL BITE: se come el escudo, −8% vida máx. permanente |
+
+**Afinidad** (atacante → defensor ×1.5; el defensor devuelve ×0.75). Lo del Capítulo 1 no cambió:
+
+```
+Anillo de 10 (alterna nuevo / viejo):
+  hielo > agua > sonido > tierra > luz > magia > vacío > cósmico > tiempo > fuego > hielo
+Duelos (×1.5 de ida y de vuelta): luz <-> sombra, sombra <-> tormenta
+Ciclo interno: hielo > tiempo > vacío > sonido > hielo
+```
+
+Cada elemento nuevo le gana a 2 y pierde contra 2. Cada elemento viejo (menos Naturaleza, que queda
+intacta) gana exactamente una ventaja y una debilidad, así el Capítulo 1 sigue balanceado.
+
+**Materiales** (`mult` contra el casco): Luz ×1.5 a la lona y ×0.5 al cristal (pasa a través);
+Sonido ×1.5 al cristal, ×0.75 a madera y lona, ×0.5 al vacío; Tiempo ×1.25 a madera, lona y hierro
+(se pudre, se oxida), ×0.75 al hueso; Hielo ×1.25 a hierro y lona; Sombra ×1.25 a cristal y hueso;
+Vacío ×1.25 al cristal y ×0.5 contra el vacío.
 
 ---
 

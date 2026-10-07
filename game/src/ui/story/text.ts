@@ -110,6 +110,12 @@ const SPEAKERS: Record<string, Speaker> = {
   DISTRAXIA: { id: 'distraxia', name: 'DISTRAXIA', kind: 'system', band: C.violet, bandText: C.paper, box: C.plumInk, pitch: 0.5 },
   NADIE: { id: 'nadie', name: 'NADIE', kind: 'system', band: C.ink, bandText: C.paper, box: C.ink, pitch: 0.4 },
   '???': { id: 'unknown', name: '???', kind: 'system', band: C.ink, bandText: C.paper, box: C.ink, pitch: 0.4 },
+  // Parte 2 — the primordials of the Grietas del Multiverso (NADIE stays a voice without a face)
+  BÓREAS: { id: 'boreas', name: 'BÓREAS', kind: 'cat', slug: 'boreas_aurora_cat', band: 0x1f2b4a, bandText: 0x7cffc4, box: 0xeaf6ff, pitch: 0.95, treat: 'rival' },
+  HEADLINER: { id: 'headliner', name: 'HEADLINER', kind: 'cat', slug: 'headliner_rock_cat', band: 0xff2e88, bandText: 0xffd400, box: 0xffe3f0, pitch: 0.8, treat: 'rival' },
+  MEDIANOCHE: { id: 'medianoche', name: 'MEDIANOCHE', kind: 'cat', slug: 'medianoche_king_cat', band: 0x0d110f, bandText: 0xc8102e, box: 0xeae1d3, pitch: 0.6, treat: 'rival' },
+  CRONOS: { id: 'cronos', name: 'CRONOS', kind: 'cat', slug: 'cronos_astrolabe_cat', band: 0x6b4f2a, bandText: 0xe0b77a, box: 0xd9c29a, pitch: 0.7, treat: 'rival' },
+  ÁUREA: { id: 'aurea', name: 'ÁUREA', kind: 'cat', slug: 'aurea_halo_cat', band: 0xb89558, bandText: 0xfff8e1, box: 0xfff8e1, pitch: 1.2, treat: 'rival' },
   'TUS GATOS': { id: 'cats', name: 'TUS GATOS', kind: 'cat', slug: 'canelo_cozy_cat', band: C.pink, bandText: C.ink, box: C.paper, pitch: 1.1, treat: 'ally' },
 };
 
