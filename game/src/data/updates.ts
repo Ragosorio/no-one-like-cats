@@ -20,6 +20,17 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-09-cataclismos',
+    date: '2026-10-09',
+    title: 'Cataclismos',
+    luzterna: 'El cielo se enteró de que tienes un barco gigante. Y se lo tomó personal.',
+    items: [
+      { tag: 'NUEVO', text: 'CATACLISMOS: las zonas 4 a 6, sus jefes y las Grietas tienen poder propio: LLUVIA DE METEORITOS, LA LUNA BAJA, EL SOL BAJA y MAREA NEGRA. Te avisan un turno antes: pasa un tiro de gato por su SELLO para debilitarlo (dos lo cancelan).' },
+      { tag: 'BALANCE', text: 'Entre más grande tu barco, más le cae del cielo. Un Gorrión casi ni lo siente; un Bastión recibe el cielo completo.' },
+      { tag: 'CAMBIO', text: 'El Bastión es el mismo barco, pero ahora pelea con ×0.9 de su Poder (PODER DE COMBATE en la pre-batalla): su casco gigante, sus 5 cañones y sus burbujas ya peleaban solos. La estimación lo toma en cuenta.' },
+    ],
+  },
+  {
     id: '2026-10-09-estimacion-honesta',
     date: '2026-10-09',
     title: 'La estimación no miente',
