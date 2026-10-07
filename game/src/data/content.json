@@ -1280,21 +1280,8 @@
    "name": "Chispa",
    "epithet": "la Sonrisa Peligrosa",
    "art": {
-    "slug": "sol_sunbeam_cat",
-    "tint": {
-     "hue": -12,
-     "sat": 1.25,
-     "bright": 1.0,
-     "overlay": "#ff6a1a",
-     "overlayAlpha": 0.18,
-     "decal": "brasas",
-     "scale": 0.92,
-     "aura": [
-      "#ff6a1a",
-      "#ffc94a",
-      "#ff2e2e"
-     ]
-    },
+    "slug": "chispa_sparkler_cat",
+    "tint": null,
     "aura": [
      "#ff6a1a",
      "#ffc94a",
@@ -1447,24 +1434,11 @@
    "name": "Burbujas",
    "epithet": "la Efervescente",
    "art": {
-    "slug": "jelly_aquatic_cat",
-    "tint": {
-     "hue": 40,
-     "sat": 1.15,
-     "bright": 1.1,
-     "overlay": "#a3f7ff",
-     "overlayAlpha": 0.2,
-     "decal": "burbujas",
-     "scale": 0.92,
-     "aura": [
-      "#a3f7ff",
-      "#ffb8ff",
-      "#ffffff"
-     ]
-    },
+    "slug": "burbujas_fizz_cat",
+    "tint": null,
     "aura": [
-     "#a3f7ff",
-     "#ffb8ff",
+     "#7fd8ff",
+     "#a7e8d7",
      "#ffffff"
     ]
    },
@@ -1768,24 +1742,11 @@
    "name": "Guijarro",
    "epithet": "la Cría de Piedra",
    "art": {
-    "slug": "fossilstone_guardian_cat",
-    "tint": {
-     "hue": 10,
-     "sat": 0.6,
-     "bright": 1.1,
-     "overlay": "#d1b37b",
-     "overlayAlpha": 0.15,
-     "decal": null,
-     "scale": 0.88,
-     "aura": [
-      "#d1b37b",
-      "#8ef7ff",
-      "#6b5c3f"
-     ]
-    },
+    "slug": "guijarro_pebble_cat",
+    "tint": null,
     "aura": [
-     "#d1b37b",
-     "#8ef7ff",
+     "#e0b77a",
+     "#8a8178",
      "#6b5c3f"
     ]
    },
@@ -1858,23 +1819,10 @@
    "name": "Voltio",
    "epithet": "el Cable Pelado",
    "art": {
-    "slug": "mecha_neon_cat",
-    "tint": {
-     "hue": 50,
-     "sat": 1.1,
-     "bright": 1.1,
-     "overlay": "#ffe14a",
-     "overlayAlpha": 0.18,
-     "decal": "rayos",
-     "scale": 0.9,
-     "aura": [
-      "#ffe14a",
-      "#00e5ff",
-      "#ffffff"
-     ]
-    },
+    "slug": "voltio_static_cat",
+    "tint": null,
     "aura": [
-     "#ffe14a",
+     "#ffd400",
      "#00e5ff",
      "#ffffff"
     ]
@@ -2179,25 +2127,12 @@
    "name": "Cometín",
    "epithet": "el Visitante Chiquito",
    "art": {
-    "slug": "alien_galaxy_cat",
-    "tint": {
-     "hue": 150,
-     "sat": 1.0,
-     "bright": 1.1,
-     "overlay": "#59f5ff",
-     "overlayAlpha": 0.2,
-     "decal": "estrellas",
-     "scale": 0.9,
-     "aura": [
-      "#59f5ff",
-      "#ffffff",
-      "#8a5cff"
-     ]
-    },
+    "slug": "cometin_stardust_cat",
+    "tint": null,
     "aura": [
-     "#59f5ff",
-     "#ffffff",
-     "#8a5cff"
+     "#8a5cff",
+     "#ff2e88",
+     "#ffd974"
     ]
    },
    "elements": [
@@ -2269,25 +2204,12 @@
    "name": "Lunita",
    "epithet": "la del Lado Oscuro",
    "art": {
-    "slug": "nori_lunar_cat",
-    "tint": {
-     "hue": 20,
-     "sat": 0.9,
-     "bright": 1.25,
-     "overlay": "#b8d5ff",
-     "overlayAlpha": 0.22,
-     "decal": "lunas",
-     "scale": 0.9,
-     "aura": [
-      "#b8d5ff",
-      "#6ea7ff",
-      "#ffffff"
-     ]
-    },
+    "slug": "lunita_moonphase_cat",
+    "tint": null,
     "aura": [
-     "#b8d5ff",
-     "#6ea7ff",
-     "#ffffff"
+     "#1c3a51",
+     "#ffd974",
+     "#c9c4cf"
     ]
    },
    "elements": [
@@ -2359,25 +2281,12 @@
    "name": "Neblino",
    "epithet": "el Vaporcito",
    "art": {
-    "slug": "nube_dream_cat",
-    "tint": {
-     "hue": -30,
-     "sat": 0.7,
-     "bright": 1.0,
-     "overlay": "#ffb0a0",
-     "overlayAlpha": 0.18,
-     "decal": "vapor",
-     "scale": 1.0,
-     "aura": [
-      "#ffffff",
-      "#ff9f9f",
-      "#a3f7ff"
-     ]
-    },
+    "slug": "neblino_teapot_cat",
+    "tint": null,
     "aura": [
      "#ffffff",
-     "#ff9f9f",
-     "#a3f7ff"
+     "#3569a3",
+     "#ffb07a"
     ]
    },
    "elements": [
@@ -2606,24 +2515,11 @@
    "name": "Magmito",
    "epithet": "el Hijo de la Fragua",
    "art": {
-    "slug": "molten_ember_cat",
-    "tint": {
-     "hue": 15,
-     "sat": 1.0,
-     "bright": 1.15,
-     "overlay": "#ff9a3a",
-     "overlayAlpha": 0.2,
-     "decal": "grietas_lava",
-     "scale": 0.88,
-     "aura": [
-      "#ff9a3a",
-      "#ffef7a",
-      "#4e0000"
-     ]
-    },
+    "slug": "magmito_forge_cat",
+    "tint": null,
     "aura": [
-     "#ff9a3a",
-     "#ffef7a",
+     "#ff6a1a",
+     "#ffc94a",
      "#4e0000"
     ]
    },
@@ -2697,25 +2593,12 @@
    "name": "Fanguito",
    "epithet": "el Charco con Patas",
    "art": {
-    "slug": "kintsugi_tea_spirit_cat",
-    "tint": {
-     "hue": -20,
-     "sat": 0.6,
-     "bright": 0.8,
-     "overlay": "#6b4a2b",
-     "overlayAlpha": 0.3,
-     "decal": "lodo",
-     "scale": 1.0,
-     "aura": [
-      "#6b4a2b",
-      "#a3f7ff",
-      "#d4a64b"
-     ]
-    },
+    "slug": "fanguito_mud_cat",
+    "tint": null,
     "aura": [
      "#6b4a2b",
-     "#a3f7ff",
-     "#d4a64b"
+     "#ffd400",
+     "#7ec850"
     ]
    },
    "elements": [
@@ -2788,25 +2671,12 @@
    "name": "Raíz Vieja",
    "epithet": "la Abuela del Bosque",
    "art": {
-    "slug": "mushroom_druid_cat",
-    "tint": {
-     "hue": 25,
-     "sat": 0.7,
-     "bright": 0.85,
-     "overlay": "#857b1b",
-     "overlayAlpha": 0.2,
-     "decal": "raices",
-     "scale": 0.92,
-     "aura": [
-      "#c9ff83",
-      "#a57454",
-      "#4d4b0c"
-     ]
-    },
+    "slug": "raizvieja_bark_cat",
+    "tint": null,
     "aura": [
-     "#c9ff83",
+     "#5fbf4a",
      "#a57454",
-     "#4d4b0c"
+     "#d4f27a"
     ]
    },
    "elements": [
@@ -2879,25 +2749,12 @@
    "name": "Plasmín",
    "epithet": "el Enchufe Caliente",
    "art": {
-    "slug": "mecha_neon_cat",
-    "tint": {
-     "hue": -140,
-     "sat": 1.2,
-     "bright": 1.0,
-     "overlay": "#ff2e88",
-     "overlayAlpha": 0.2,
-     "decal": "plasma",
-     "scale": 1.0,
-     "aura": [
-      "#ff2e88",
-      "#ff6a1a",
-      "#00e5ff"
-     ]
-    },
+    "slug": "plasmin_plasma_cat",
+    "tint": null,
     "aura": [
      "#ff2e88",
      "#ff6a1a",
-     "#00e5ff"
+     "#ffc94a"
     ]
    },
    "elements": [
@@ -3207,25 +3064,12 @@
    "name": "Arcanito",
    "epithet": "el Farolito Rabioso",
    "art": {
-    "slug": "lantern_spirit_cat",
-    "tint": {
-     "hue": 180,
-     "sat": 1.2,
-     "bright": 1.0,
-     "overlay": "#ff6a1a",
-     "overlayAlpha": 0.22,
-     "decal": "runas",
-     "scale": 1.0,
-     "aura": [
-      "#ff6a1a",
-      "#ff2e88",
-      "#ffe28c"
-     ]
-    },
+    "slug": "arcanito_lantern_cat",
+    "tint": null,
     "aura": [
-     "#ff6a1a",
-     "#ff2e88",
-     "#ffe28c"
+     "#c8102e",
+     "#b06cff",
+     "#ffc94a"
     ]
    },
    "elements": [
@@ -3298,25 +3142,12 @@
    "name": "Marea Encantada",
    "epithet": "la Sirena de la Biblioteca",
    "art": {
-    "slug": "deepsea_sprite_cat",
-    "tint": {
-     "hue": 60,
-     "sat": 1.1,
-     "bright": 1.05,
-     "overlay": "#d296ff",
-     "overlayAlpha": 0.22,
-     "decal": "runas",
-     "scale": 1.0,
-     "aura": [
-      "#d296ff",
-      "#7cb0ff",
-      "#ffffff"
-     ]
-    },
+    "slug": "marea_mermaid_cat",
+    "tint": null,
     "aura": [
-     "#d296ff",
-     "#7cb0ff",
-     "#ffffff"
+     "#2ec4d6",
+     "#204a7a",
+     "#ffd974"
     ]
    },
    "elements": [
@@ -3623,25 +3454,12 @@
    "name": "Astral",
    "epithet": "la Viajera del Tarot",
    "art": {
-    "slug": "alien_galaxy_cat",
-    "tint": {
-     "hue": 90,
-     "sat": 1.1,
-     "bright": 1.0,
-     "overlay": "#c48cff",
-     "overlayAlpha": 0.22,
-     "decal": "estrellas",
-     "scale": 1.0,
-     "aura": [
-      "#c48cff",
-      "#ffd974",
-      "#59f5ff"
-     ]
-    },
+    "slug": "astral_tarot_cat",
+    "tint": null,
     "aura": [
-     "#c48cff",
-     "#ffd974",
-     "#59f5ff"
+     "#5c3d5b",
+     "#b89558",
+     "#c48cff"
     ]
    },
    "elements": [
@@ -3714,24 +3532,11 @@
    "name": "Vapor Ronin",
    "epithet": "el que Vuelve",
    "art": {
-    "slug": "sakura_whisper_cat",
-    "tint": {
-     "hue": 0,
-     "sat": 0.85,
-     "bright": 1.05,
-     "overlay": "#dff1ff",
-     "overlayAlpha": 0.12,
-     "decal": "vapor",
-     "scale": 1.0,
-     "aura": [
-      "#ffffff",
-      "#ffb6d0",
-      "#a3f7ff"
-     ]
-    },
+    "slug": "vapor_ronin_cat",
+    "tint": null,
     "aura": [
-     "#ffffff",
-     "#ffb6d0",
+     "#c8102e",
+     "#2b3f7a",
      "#a3f7ff"
     ]
    },
@@ -3809,25 +3614,12 @@
    "name": "Canelo Infernal",
    "epithet": "el Pirómano",
    "art": {
-    "slug": "canelo_cozy_cat",
-    "tint": {
-     "hue": -10,
-     "sat": 1.4,
-     "bright": 0.75,
-     "overlay": "#4e0000",
-     "overlayAlpha": 0.35,
-     "decal": "grietas_lava",
-     "scale": 1.05,
-     "aura": [
-      "#ff2e2e",
-      "#ff6a1a",
-      "#4e0000"
-     ]
-    },
+    "slug": "infernal_obsidian_cat",
+    "tint": null,
     "aura": [
-     "#ff2e2e",
      "#ff6a1a",
-     "#4e0000"
+     "#ffc94a",
+     "#2a0d08"
     ]
    },
    "elements": [
@@ -3904,25 +3696,12 @@
    "name": "Gólem Musgoso",
    "epithet": "la Montaña que Respira",
    "art": {
-    "slug": "fossilstone_guardian_cat",
-    "tint": {
-     "hue": 70,
-     "sat": 0.9,
-     "bright": 0.9,
-     "overlay": "#4f8f4a",
-     "overlayAlpha": 0.28,
-     "decal": "musgo",
-     "scale": 1.08,
-     "aura": [
-      "#4f8f4a",
-      "#c9ff83",
-      "#44d9e6"
-     ]
-    },
+    "slug": "golem_moss_cat",
+    "tint": null,
     "aura": [
-     "#4f8f4a",
+     "#5fbf4a",
      "#c9ff83",
-     "#44d9e6"
+     "#ffb6d0"
     ]
    },
    "elements": [
@@ -3999,21 +3778,8 @@
    "name": "Rencor",
    "epithet": "el Gato Vengativo",
    "art": {
-    "slug": "arce_autumn_cat",
-    "tint": {
-     "hue": -25,
-     "sat": 1.3,
-     "bright": 0.6,
-     "overlay": "#c8102e",
-     "overlayAlpha": 0.3,
-     "decal": "rayos",
-     "scale": 1.0,
-     "aura": [
-      "#c8102e",
-      "#ffd400",
-      "#0d110f"
-     ]
-    },
+    "slug": "rencor_ninetails_cat",
+    "tint": null,
     "aura": [
      "#c8102e",
      "#ffd400",
@@ -4176,25 +3942,12 @@
    "name": "Galaxia",
    "epithet": "la Medusa Sideral",
    "art": {
-    "slug": "jelly_aquatic_cat",
-    "tint": {
-     "hue": 70,
-     "sat": 1.2,
-     "bright": 0.7,
-     "overlay": "#204a7a",
-     "overlayAlpha": 0.35,
-     "decal": "estrellas",
-     "scale": 1.05,
-     "aura": [
-      "#8a5cff",
-      "#00e5ff",
-      "#204a7a"
-     ]
-    },
+    "slug": "galaxia_jelly_cat",
+    "tint": null,
     "aura": [
-     "#8a5cff",
+     "#ff7ab8",
      "#00e5ff",
-     "#204a7a"
+     "#8a5cff"
     ]
    },
    "elements": [
@@ -4271,25 +4024,12 @@
    "name": "Meteoro",
    "epithet": "la Lluvia Real",
    "art": {
-    "slug": "regal_cosmic_cat",
-    "tint": {
-     "hue": -150,
-     "sat": 1.2,
-     "bright": 0.95,
-     "overlay": "#ff6a1a",
-     "overlayAlpha": 0.25,
-     "decal": "brasas",
-     "scale": 1.0,
-     "aura": [
-      "#ff6a1a",
-      "#ffd974",
-      "#8a5cff"
-     ]
-    },
+    "slug": "meteoro_comet_cat",
+    "tint": null,
     "aura": [
      "#ff6a1a",
      "#ffd974",
-     "#8a5cff"
+     "#2b2230"
     ]
    },
    "elements": [
@@ -4366,25 +4106,12 @@
    "name": "Supernova",
    "epithet": "la de Una Sola Bala",
    "art": {
-    "slug": "sol_sunbeam_cat",
-    "tint": {
-     "hue": 170,
-     "sat": 0.9,
-     "bright": 1.2,
-     "overlay": "#8cc8ff",
-     "overlayAlpha": 0.3,
-     "decal": "estrellas",
-     "scale": 1.0,
-     "aura": [
-      "#ffffff",
-      "#8cc8ff",
-      "#c48cff"
-     ]
-    },
+    "slug": "supernova_gunslinger_cat",
+    "tint": null,
     "aura": [
-     "#ffffff",
-     "#8cc8ff",
-     "#c48cff"
+     "#00e5ff",
+     "#2b3f9a",
+     "#ffd974"
     ]
    },
    "elements": [
@@ -5654,25 +5381,12 @@
    "name": "Eclipse",
    "epithet": "la que Apaga el Sol",
    "art": {
-    "slug": "selene_moonlit_cat",
-    "tint": {
-     "hue": 0,
-     "sat": 0.2,
-     "bright": 0.35,
-     "overlay": "#ffd974",
-     "overlayAlpha": 0.25,
-     "decal": "corona",
-     "scale": 1.0,
-     "aura": [
-      "#0d110f",
-      "#ffd974",
-      "#ff6a1a"
-     ]
-    },
+    "slug": "eclipse_corona_cat",
+    "tint": null,
     "aura": [
-     "#0d110f",
-     "#ffd974",
-     "#ff6a1a"
+     "#ffd77a",
+     "#ff6a1a",
+     "#0d110f"
     ]
    },
    "elements": [
