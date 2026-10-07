@@ -25,7 +25,8 @@ export type GlyphKind =
   | 'shop'
   | 'capsule'
   | 'tools'
-  | 'vault';
+  | 'vault'
+  | 'podium';
 
 export function glyph(kind: GlyphKind, s = 48, color: number = C.ink, accent: number = C.pink): Container {
   const c = new Container();
@@ -160,6 +161,13 @@ export function glyph(kind: GlyphKind, s = 48, color: number = C.ink, accent: nu
       g.roundRect(-18, -14, 22, 30, 3).fill(C.paper).stroke(INK);
       g.roundRect(-4, -18, 22, 30, 3).fill(0xb3202a).stroke(INK);
       g.circle(7, -3, 4).fill(C.paper);
+      break;
+    case 'podium':
+      // El Podio: 1-2-3 steps with a crown on top
+      g.rect(-8, -6, 16, 26).fill(C.yellow).stroke(INK);
+      g.rect(-24, 2, 16, 18).fill(accent).stroke(INK);
+      g.rect(8, 8, 16, 12).fill(0xc77b3a).stroke(INK);
+      g.poly([-9, -10, -9, -22, -4, -15, 0, -24, 4, -15, 9, -22, 9, -10]).fill(C.yellow).stroke({ width: 2, color: C.ink });
       break;
   }
   c.addChild(g);

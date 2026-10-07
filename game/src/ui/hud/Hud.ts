@@ -30,6 +30,7 @@ import { workersUnlocked } from '../../state/sys/workforce';
 import { autoHarvestOn, bankUnlocked, fishBuffer } from '../../state/sys/island';
 import { toast } from '../modal';
 import { isCasinoHidden } from '../../state/sys/casino';
+import { podioUnlocked } from '../../state/sys/podio';
 
 /** panels owned by agents that may not exist yet: resolved lazily with import.meta.glob (never a hard import) */
 const LAZY = import.meta.glob<Record<string, unknown>>(['../../panels/shop/Shop.ts', '../../panels/casino/open.ts']);
@@ -198,6 +199,7 @@ export class Hud extends Container {
       { id: 'missions', label: 'MISIONES', glyph: 'scroll', onTap: () => openMissions(), visible: () => true, badge: () => (G.s.missions.active.length ? String(G.s.missions.active.length) : null) },
       { id: 'workers', label: 'OFICIOS', glyph: 'tools', onTap: () => void import('../../panels/island/WorkersPanel').then((m) => m.openWorkers()), visible: () => island && workersUnlocked() },
       { id: 'shop', label: 'TIENDA', glyph: 'shop', onTap: () => lazyOpen('../../panels/shop/Shop.ts', 'openShop', 'TIENDA'), visible: () => island && u().sail },
+      { id: 'podio', label: 'PODIO', glyph: 'podium', onTap: () => void import('../../panels/podio/open').then((m) => m.openPodio()), visible: () => podioUnlocked() },
       { id: 'casino', label: 'CASINO', glyph: 'capsule', onTap: () => lazyOpen('../../panels/casino/open.ts', 'openCasino', 'CASINO'), visible: () => island && u().mesa && !isCasinoHidden() },
       { id: 'settings', label: 'AJUSTES', glyph: 'gear', onTap: () => openSettings(), visible: () => true },
     ]);
