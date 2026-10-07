@@ -1259,13 +1259,32 @@ export class IslandScene extends Scene {
       case 'win_by':
       case 'win_perfect':
       case 'quick_assault':
+      case 'cat_rank':
+      case 'destroy_modules_with':
+      case 'reaction_discovered':
+      case 'errand':
         goMap();
         return;
       case 'ship_upgrade':
       case 'own_ship':
+      case 'own_ships':
+      case 'own_ship_or_event':
       case 'crew_full':
       case 'edit_layout':
+      case 'equip_shield':
+      case 'equip_weapon_types':
         openShipyard();
+        return;
+      // breeding goals: the Sanctuary (Resonancia) is where new species, mutations and traits come from
+      case 'element_species':
+      case 'own_mutation':
+      case 'inherit_trait':
+        openSanctuary();
+        return;
+      case 'own_rarity':
+        // Heroico/Divino only come from the Podio
+        if (m.id.startsWith('P')) void import('../panels/podio/open').then((p) => p.openPodio());
+        else openSanctuary();
         return;
       case 'use_feature': {
         if (g.feature === 'collect_all') this.collectAllFx();
@@ -1277,6 +1296,12 @@ export class IslandScene extends Scene {
         else openMissions();
         return;
       }
+      case 'watch':
+        // «Continuará»: play the ending now instead of waiting for a calm moment
+        void import('../app/story').then((st) => {
+          if (!st.playChapterEnding()) openMissions();
+        });
+        return;
       case 'void_fragments':
         void import('../ui/fragmentsPanel').then((f) => f.openFragments());
         return;

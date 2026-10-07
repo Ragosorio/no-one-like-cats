@@ -623,6 +623,21 @@ function resetQueues() {
   lastFeatureAt = -1e9;
 }
 
+/** mission H22 «Continuará»: its IR button plays the chapter ending (if it hasn't played yet) right now */
+export function playChapterEnding() {
+  if (beatSeen('b25_creditos')) return false;
+  // straight to the front of the line: the player asked for it (older catch-up beats wait)
+  const refs = (ON_DONE.H21 ?? []).map((r) => ({ ...r, delay: 0 }));
+  for (const r of [...refs].reverse()) {
+    const key = keyOf(r);
+    const i = beats.findIndex((q) => q.key === key);
+    if (i >= 0) beats.splice(i, 1);
+    if (beatSeen(key) || beatSeen(r.beat)) continue;
+    beats.unshift({ key, ref: r, notBefore: performance.now() });
+  }
+  return true;
+}
+
 export async function maybeIntro(info: BootInfo) {
   initStory();
   resetQueues();

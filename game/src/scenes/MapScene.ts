@@ -221,6 +221,8 @@ export class MapScene extends Scene {
         const g = m.goal as { battle?: unknown; type?: string };
         if (typeof g.battle === 'string' && g.battle in STORY_BATTLES) void startStoryBattle(g.battle);
         else if (g.type === 'void_fragments') void import('../ui/fragmentsPanel').then((f) => f.openFragments());
+        // «Continuará»: the ending plays on the island
+        else if (g.type === 'watch') void import('../app/flow').then((fl) => fl.goIsland()).then(() => import('../app/story')).then((st) => st.playChapterEnding());
         else void import('../panels/Missions').then((x) => x.openMissions());
       },
     });

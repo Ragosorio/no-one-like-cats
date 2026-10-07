@@ -27,6 +27,8 @@ export const UPDATES: UpdateNote[] = [
     items: [
       { tag: 'ARREGLO', text: 'Si venciste al Arcanista, a la Estrella Errante o al Primer Mar antes de que existieran los Fragmentos del Vacío, nunca te dieron los suyos y la misión «Fragmentos» era imposible. Ya te llegaron.' },
       { tag: 'NUEVO', text: 'El botón IR de «Fragmentos» abre la lista de los 10: de dónde sale cada uno, cuáles ya tienes y un IR directo al siguiente.' },
+      { tag: 'ARREGLO', text: '«Continuará»: su botón IR ahora reproduce el final del capítulo en ese momento (y con él se abren las Grietas del Multiverso).' },
+      { tag: 'ARREGLO', text: 'Más misiones con un IR que sí te lleva: crías y rarezas al Santuario, barcos y escudos al Astillero, Heroicos y Divinos al Podio, rangos y reacciones al mapa.' },
     ],
   },
   {
