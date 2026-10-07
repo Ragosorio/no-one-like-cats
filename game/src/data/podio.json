@@ -1,0 +1,54 @@
+{
+  "_note": "El Podio (duelos 1 vs 1). Numeros del modo; formulas en src/podio/*.ts. Poder de gato = econ.catPower (nivel, estrellas, rareza).",
+  "unlock": { "boss": 1 },
+  "stats": {
+    "hp_per_power": 13,
+    "role_hp_exp": 0.5,
+    "role_atk_exp": 0.35,
+    "display_mul": 10,
+    "crit_chance": 0.12,
+    "crit_mult": 1.5,
+    "dodge_chance": 0.07,
+    "variance": 0.18,
+    "power_level_dmg": 0.12,
+    "meter_per_action": 22,
+    "meter_per_hit_taken": 14,
+    "max_turns": 40
+  },
+  "ladder": {
+    "bouts_per_league": 5,
+    "league1_power": 6.5,
+    "league_growth": 1.32,
+    "bout_growth": 0.09,
+    "champion_mult": 1.12
+  },
+  "levels": {
+    "max": 20,
+    "xp_base": 60,
+    "xp_growth": 1.3,
+    "cap_per_cat_levels": 3,
+    "cap_per_star": 1
+  },
+  "xp": { "win": 40, "win_per_league": 10, "replay_mult": 0.6, "loss": 12 },
+  "rewards": {
+    "gold_income_seconds": 30,
+    "gold_min": 40,
+    "gold_league_growth": 1.35,
+    "food_income_seconds": 30,
+    "food_min": 25,
+    "orbs_win": 3,
+    "orbs_replay": 1,
+    "orbs_champion": 6,
+    "gem_chance_frontier": 0.04,
+    "champion_gems": 2,
+    "replay_mult": 0.4,
+    "loss_mult": 0.25,
+    "kingdom_xp_mult": 0.5
+  },
+  "cross_mode": {
+    "_note": "bonos REALES que el Podio le da a ese gato fuera del Podio",
+    "ship_dmg_per_power_level": 0.008,
+    "ship_ult_start_per_ult_level": 0.03,
+    "island_gold_per_podio_level": 0.005
+  }
+}

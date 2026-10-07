@@ -13725,6 +13725,25 @@
    "unlocks": [],
    "line": "Para cuando te vayas a dormir. El mundo sigue.",
    "estTime": "offline"
+  },
+  {
+   "id": "P01",
+   "chain": "capitan",
+   "title": "El Podio",
+   "goal": {
+    "type": "use_feature",
+    "feature": "podio_win",
+    "text": "Gana tu primer duelo 1 contra 1 en el Podio (botón PODIO)."
+   },
+   "trigger": "podio_unlocked",
+   "purpose": "teach",
+   "reward": {
+    "std": true,
+    "gems": 1
+   },
+   "unlocks": [],
+   "line": "Botón PODIO, abajo. Un gato, cuatro poderes, cero excusas.",
+   "estTime": "~1:00"
   }
  ],
  "events": {

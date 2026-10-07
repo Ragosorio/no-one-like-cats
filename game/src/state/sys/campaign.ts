@@ -9,6 +9,7 @@ import { crew, playerBlueprint, shipPower, mk, autoCrew, cannonShotsFor, balance
 import { gearBattleMods, gearBattleExtras } from './gear';
 import { rankDmgBonus, koRank, RANK_ORBS, KO_RANKS } from './ranks';
 import { accessoryMods } from './accessories';
+import { podioCatMods } from '../../podio/mods';
 import { generateShip, specFromArchetype, STORY_SHIPS } from '../../battle/shipgen';
 import { battleCatFrom } from '../../battle/catShots';
 import { weaponShot } from '../../battle/weapons';
@@ -230,7 +231,10 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     const rank = 1 + rankDmgBonus(c.kos ?? 0);
     // casino accessories + Holo foil (small capped bonuses; catPow doesn't include powMul yet)
     const acc = accessoryMods(c);
-    return applyCatPerks(battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf * share * rank * gear.catDmgMul * acc.powMul, hpMul: share * acc.hpMul }, catHpBase(c)), c);
+    // El Podio: that cat's podio power levels → +dmg and an earlier ultimate on the ship (podio/mods.ts)
+    const pm = podioCatMods(c);
+    const bc = applyCatPerks(battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf * share * rank * gear.catDmgMul * acc.powMul * pm.dmgMul, hpMul: share * acc.hpMul * pm.hpMul }, catHpBase(c)), c);
+    return pm.ultStart ? { ...bc, ultStart: Math.min(1, (bc.ultStart ?? 0) + pm.ultStart) } : bc;
   });
   // ---- enemy ship
   const tune = isBoss ? COMBAT_TUNE.boss[zone] ?? { hp: 1.5, catHp: 1.6, capHp: 2.5, dmg: 1 } : null;

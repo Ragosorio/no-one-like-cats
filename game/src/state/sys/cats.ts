@@ -1,6 +1,7 @@
 /** Owned cats: adoption, duplicates→orbs, feeding (4 ÑAM per level), stars, catdex. */
 import { G, OwnedCat } from '../game';
 import { accessoryMods } from './accessories';
+import { podioCatMods } from '../../podio/mods';
 import { CATS, CONTENT, catDef, ROLE_BY_ID } from '../../data/content';
 import {
   BAL,
@@ -118,7 +119,7 @@ export function feedTo(c: OwnedCat, target: number) {
 
 export function catGold(c: OwnedCat) {
   const def = catDef(c.species);
-  return catGoldPerSec(def.rarity, c.level, c.stars) * (def.economy.goldMod ?? 1) * accessoryMods(c).goldMul;
+  return catGoldPerSec(def.rarity, c.level, c.stars) * (def.economy.goldMod ?? 1) * accessoryMods(c).goldMul * podioCatMods(c).goldMul;
 }
 export function catPow(c: OwnedCat) {
   return catPower(catDef(c.species).rarity, c.level, c.stars);

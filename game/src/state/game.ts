@@ -6,6 +6,7 @@
 import { Emitter } from '../core/events';
 import { readSave, writeSave, wipeSave, backupBeforeMigration } from '../core/save';
 import { SAVE_VERSION, migrate, normalize } from './migrate';
+import { defaultPodio, type PodioState } from '../podio/types';
 import {
   BAL,
   FamilyId,
@@ -149,6 +150,8 @@ export interface GameState {
   casino?: { tickets: number; pity: Record<string, number>; stats: Record<string, number>; chips?: number; sync?: unknown; gemBets?: unknown; hist?: unknown; welcomed?: boolean; streak?: number; [k: string]: unknown };
   /** cat accessories (gacha): owned by id → count, equipped by cat uid → accessory id */
   accessories?: { owned: Record<string, number>; equipped: Record<string, string> };
+  /** El Podio: 1 vs 1 cat duels (ladder, per-cat podio level, speed/auto prefs) — podio/types.ts */
+  podio: PodioState;
   // ---- update ledger (state/patches.ts, data/updates.ts)
   /** one-shot retro patches already applied to this save */
   patches: string[];
@@ -212,6 +215,7 @@ export function defaultState(): GameState {
     resQueue: [],
     workers: {},
     stats: { victories: 0, defeats: 0, modulesDestroyed: 0, catsKO: 0, goldEarned: 0, perfects: 0 },
+    podio: defaultPodio(),
     patches: [],
     updatesSeen: [],
   };

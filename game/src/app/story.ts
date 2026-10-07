@@ -32,6 +32,7 @@ import { darkSky } from '../ui/story/effects';
 import { applyAudioSettings, openSettings } from '../panels/Settings';
 import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
 import { goIsland, goTitle } from './flow';
+import { PODIO_INTRO } from '../podio/lines';
 
 // ------------------------------------------------------------------ beat plan (M1: b01–b11 · M2: zones 2–3)
 interface BeatRef {
@@ -75,6 +76,8 @@ const ON_NEW: Record<string, BeatRef[]> = {
   H19: [{ beat: 'b20_vacio', custom: VACIO_INTRO, effect: 'darkSky', delay: 2 }],
   H20: [{ beat: 'b21_patito', part: 'a', custom: PATITO_INTRO, onlyOn: 'map', delay: 1.5 }],
   H21: [{ beat: 'b22_final', custom: BOSS_INTRO[6], onlyOn: 'map' }],
+  // El Podio opens (after Boss 1): Luzterna explains what it is and why it exists
+  P01: [{ beat: 'podio_intro', custom: PODIO_INTRO, onlyOn: 'island', delay: 2.5 }],
 };
 /** beats that play when a mission is COMPLETED */
 const ON_DONE: Record<string, BeatRef[]> = {
@@ -118,7 +121,7 @@ const WHEN: { key: string; cond: () => boolean; ref: BeatRef }[] = [
   { key: 'z6_elite', cond: () => isCleared('6-4') && !isCleared('6-5'), ref: { beat: 'z6_elite', custom: ELITE_WARN[6], delay: 1.2 } },
 ];
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
-const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22']);
+const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01']);
 
 interface QueuedBeat {
   key: string;
