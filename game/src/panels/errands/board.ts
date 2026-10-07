@@ -26,6 +26,9 @@ import {
   errandWinChance,
 } from '../../state/sys/campaign';
 import { clipping, stamp, resChip, catPortrait, ensureCats, chanceColor, hash1 } from '../campaign/common';
+import { raftDuels } from '../../state/sys/secrets';
+import { SPECIALS } from '../../state/sys/campaign';
+import { crew } from '../../state/sys/ship';
 import { shipPreview } from '../campaign/shipArt';
 import { sfx } from '../../core/audio';
 
@@ -81,11 +84,31 @@ export function openErrandBoard() {
   const cols = 4;
   const pw = 360;
   const ph = 340;
-  list.forEach((it, i) => {
+  // Duelos de balsa live on the board too (they used to hide behind an optional expansion)
+  const total = list.length + 1;
+  const slot = (i: number) => {
     const col = i % cols;
     const row = Math.floor(i / cols);
-    const x = 20 + col * (pw + 30) + (row === 1 ? (pw + 30) / 2 : 0);
-    const y = 12 + row * (ph + 22);
+    const inRow = Math.min(cols, total - row * cols);
+    return { x: 20 + col * (pw + 30) + ((cols - inRow) * (pw + 30)) / 2, y: 12 + row * (ph + 22) };
+  };
+  {
+    const at = slot(list.length);
+    const rp = raftPoster(list.length);
+    rp.position.set(at.x + pw / 2, at.y + ph / 2);
+    rp.rotation = (hash1(list.length * 7 + 3) - 0.5) * 0.07;
+    b.addChild(rp);
+    rp.eventMode = 'static';
+    rp.cursor = 'pointer';
+    rp.on('pointerover', () => gsap.to(rp.scale, { x: 1.04, y: 1.04, duration: 0.15 }));
+    rp.on('pointerout', () => gsap.to(rp.scale, { x: 1, y: 1, duration: 0.15 }));
+    rp.on('pointertap', () => {
+      sfx('paper');
+      openRaftDuels(m);
+    });
+  }
+  list.forEach((it, i) => {
+    const { x, y } = slot(i);
     const p = posterCard(it.def, it.rule, it.unlocked, it.done, i);
     p.position.set(x + pw / 2, y + ph / 2);
     p.rotation = (hash1(i * 7 + 3) - 0.5) * 0.07;
@@ -108,6 +131,112 @@ export function openErrandBoard() {
     t.position.set(W0 / 2, H0 - 40);
     b.addChild(t);
   }
+  m.open();
+}
+
+/** the raft-duel poster: two cats on two rafts */
+function raftPoster(seed: number): Container {
+  const c = new Container();
+  const w = 360;
+  const h = 340;
+  const duels = raftDuels();
+  const open = duels.some((d) => !d.lock);
+  const fresh = duels.some((d) => !d.lock && !d.done);
+  const paper = clipping(w, h, { seed: seed + 31, color: open ? 0xefe4cb : 0xc9bfa9 });
+  paper.position.set(-w / 2, -h / 2);
+  c.addChild(paper);
+  const band = new Graphics().rect(-w / 2 + 14, -h / 2 + 14, w - 28, 50).fill(open ? 0x7ed957 : 0x8a8378).stroke({ width: 4, color: C.ink });
+  const tag = poster('DUELO DE BALSA', 34, C.ink);
+  tag.anchor.set(0.5);
+  tag.position.set(0, -h / 2 + 39);
+  c.addChild(band, tag);
+  // two little rafts facing each other on a wavy sea: your first cat vs the guardian
+  const g = new Graphics();
+  for (const sx of [-1, 1]) {
+    const x = sx * 92;
+    g.roundRect(x - 62, -h / 2 + 150, 124, 22, 6).fill(0xb98348).stroke({ width: 4, color: C.ink });
+    for (let k = -2; k <= 2; k++) g.moveTo(x + k * 22, -h / 2 + 150).lineTo(x + k * 22, -h / 2 + 172).stroke({ width: 2, color: C.ink });
+  }
+  for (let i = 0; i < 9; i++) g.moveTo(-160 + i * 36, -h / 2 + 182).quadraticCurveTo(-142 + i * 36, -h / 2 + 172, -124 + i * 36, -h / 2 + 182).stroke({ width: 3, color: 0x3569a3 });
+  c.addChild(g);
+  const mineSp = getCat(crew()[0] ?? '')?.species ?? 'c_canelo';
+  const left = catPortrait(mineSp, 84);
+  left.position.set(-92, -h / 2 + 110);
+  const right = catPortrait('c_musgo', 84);
+  right.position.set(92, -h / 2 + 110);
+  const vs = poster('VS', 40, C.red, { stroke: { color: C.paper, width: 6 } });
+  vs.anchor.set(0.5);
+  vs.position.set(0, -h / 2 + 118);
+  c.addChild(left, right, vs);
+  const sub = txt('2 gatos por balsa · gana quien noquea a los otros', { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: 0x3d3020, wordWrap: true, wordWrapWidth: w - 40, align: 'center' });
+  sub.anchor.set(0.5, 0);
+  sub.position.set(0, -h / 2 + 200);
+  c.addChild(sub);
+  const strip = new Graphics().rect(-w / 2 + 14, -h / 2 + 248, w - 28, 40).fill(C.ink);
+  const st = txt(duels.map((d) => `${d.name.toUpperCase()}${d.done ? (d.repeatable ? ' (REVANCHA)' : ' (GANADO)') : d.lock ? ' (CERRADO)' : ''}`).join(' · '), { fontFamily: F.poster, fontSize: 17, fill: C.yellow });
+  st.position.set(-w / 2 + 24, -h / 2 + 258);
+  if (st.width > w - 50) st.scale.set((w - 50) / st.width);
+  c.addChild(strip, st);
+  const pin = new Graphics().circle(0, 0, 13).fill(C.red).stroke({ width: 3, color: C.ink }).circle(-4, -4, 4).fill({ color: 0xffffff, alpha: 0.7 });
+  pin.position.set(0, -h / 2 - 2);
+  c.addChild(pin);
+  if (fresh) {
+    const s = stamp('¡TE RETAN!', C.red, 34, 0.16);
+    s.position.set(w / 2 - 80, -h / 2 + 84);
+    c.addChild(s);
+    gsap.to(s.scale, { x: 1.08, y: 1.08, yoyo: true, repeat: -1, duration: 0.5, ease: 'sine.inOut' });
+    s.on('destroyed', () => gsap.killTweensOf(s.scale));
+  }
+  return c;
+}
+
+/** the two raft duels: who, rules, your two cats → ¡AL DUELO! */
+function openRaftDuels(board: Modal) {
+  const m = new Modal('Duelos de balsa', 1240, 640, { band: 0x1f4a2a, subtitle: 'Dos gatos por bando, cada quien en su balsa. Sin cañones: solo cuenta noquear.' });
+  const b = m.body;
+  const mine = crew()
+    .slice(0, 2)
+    .map((u) => getCat(u))
+    .filter((c): c is NonNullable<typeof c> => !!c);
+  raftDuels().forEach((d, i) => {
+    const y = i * 270;
+    const card = clipping(1180, 250, { seed: 90 + i, color: d.lock ? 0xc9bfa9 : 0xefe4cb });
+    card.position.set(0, y);
+    b.addChild(card);
+    const sp = SPECIALS[d.id];
+    if (sp) {
+      const foe = catPortrait(sp.enemyCats[0], 150);
+      foe.position.set(110, y + 125);
+      b.addChild(foe);
+    }
+    const nm = poster(d.name.toUpperCase(), 46, C.ink);
+    nm.position.set(220, y + 24);
+    b.addChild(nm);
+    const line = txt(sp ? `“${sp.line}”` : '', { fontFamily: F.comic, fontSize: 24, fill: C.ink, wordWrap: true, wordWrapWidth: 560 });
+    line.position.set(220, y + 84);
+    b.addChild(line);
+    const info = txt(
+      d.lock ? `CERRADO: ${d.lock}` : d.done ? (d.repeatable ? 'Ya le ganaste. Revancha cuando quieras (premio chico).' : 'Ya le ganaste: el Santuario es tuyo.') : d.secret ? 'Premio: 2 gemas + una pista (Rumor) del Catdex. Sin castigo si pierdes.' : 'Premio: Ronroneo y XP. Sin castigo si pierdes.',
+      { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: d.lock ? C.red : 0x3d3020, wordWrap: true, wordWrapWidth: 560 },
+    );
+    info.position.set(220, y + 170);
+    b.addChild(info);
+    mine.forEach((c, k) => {
+      const p = catPortrait(c.species, 96);
+      p.position.set(840 + k * 110, y + 80);
+      b.addChild(p);
+    });
+    const can = !d.lock && (!d.done || d.repeatable) && mine.length > 0;
+    const go = new Button(d.done && d.repeatable ? 'REVANCHA' : '¡AL DUELO!', async () => {
+      if (!can) return;
+      m.close();
+      board.close();
+      const { startIslandDuel } = await import('../../island/duel');
+      await startIslandDuel(d.id, d.secret ?? null);
+    }, { w: 260, h: 70, size: 30, color: can ? C.pink : 0x8a8378, disabled: !can });
+    go.position.set(880, y + 160);
+    b.addChild(go);
+  });
   m.open();
 }
 

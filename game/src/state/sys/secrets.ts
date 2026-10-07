@@ -5,6 +5,7 @@
  */
 import { G } from '../game';
 import { EXPANSIONS, catDef } from '../../data/content';
+import { registerPatch } from '../patches';
 
 export type SecretKind = 'battle' | 'clicks' | 'needs_fire_cat' | 'open';
 
@@ -139,8 +140,62 @@ export function trySecret(n: number): SecretReward | null {
   return null;
 }
 
-/** a won special battle resolves its secret (called by the island duel flow) */
+/** a won special battle resolves its secret (called by the duel flow — from the shrine OR the Encargos board) */
 export function resolveBattleSecret(battleId: string): SecretReward | null {
-  for (const [n, k] of Object.entries(KIND)) if (k.battle === battleId && G.s.expansions.cleared.includes(Number(n))) return resolveSecret(Number(n));
+  for (const [n, k] of Object.entries(KIND)) if (k.battle === battleId) return resolveSecret(Number(n));
   return null;
 }
+
+// ---------------------------------------------------------------- Duelos de balsa (discoverability)
+/**
+ * The raft duel used to hide behind: buy Bosque Costero → clear it → reach Reino 5 → find a tiny "¿?" on a
+ * shrine (and mission E05 only showed up after all that, unpinned). Testers who never bought that
+ * expansion never saw it. Now the Guardián Musgoso challenges EVERYONE at Reino 5 (or after Jefe 1):
+ * it's on the Encargos board of the map, it's announced once, and the shrine still works for whoever
+ * finds it first. Winning resolves the shrine's secret (it shows as done when you clear the forest).
+ */
+export interface RaftDuel {
+  id: string;
+  name: string;
+  /** why it's closed (null = open) */
+  lock: string | null;
+  done: boolean;
+  /** expansion secret it resolves */
+  secret?: number;
+  repeatable: boolean;
+}
+export function raftDuels(): RaftDuel[] {
+  const gOpen = G.s.kl >= 5 || G.s.campaign.bossesDefeated >= 1;
+  const gDone = G.has('won_duel_guardian_bosque') || G.s.expansions.secrets.includes(1);
+  return [
+    { id: 'duel_guardian_bosque', name: 'Guardián Musgoso', lock: gOpen ? null : 'Reino 5 (o vence al Jefe 1)', done: gDone, secret: 1, repeatable: false },
+    { id: 'duel_callejero', name: 'Gato Callejero', lock: gDone ? null : 'Vence primero al Guardián Musgoso', done: G.has('won_duel_callejero'), repeatable: true },
+  ];
+}
+/** the challenge everyone should hear about once */
+export function raftDuelPending() {
+  const g = raftDuels()[0];
+  return !g.lock && !g.done;
+}
+
+let duelAcc = 0;
+G.tickers.push((dt) => {
+  duelAcc += dt;
+  if (duelAcc < 2500) return;
+  duelAcc = 0;
+  if (!G.s.cats.length || G.has('raft_duel_told') || !raftDuelPending()) return;
+  G.flag('raft_duel_told');
+  void import('../../ui/modal')
+    .then((m) => m.toast('¡TE RETAN A UN DUELO DE BALSA!', { sub: 'El Guardián Musgoso te espera: MAPA › ENCARGOS', color: 0x7ed957 }))
+    .catch(() => undefined);
+});
+
+registerPatch({
+  id: '2026-10-duelo-balsa-para-todos',
+  why: 'El duelo de balsa solo aparecía tras comprar y limpiar el Bosque Costero y llegar a Reino 5 (y su misión E05 no se fijaba). Muchos nunca lo vieron.',
+  run() {
+    if (!raftDuelPending()) return;
+    G.flag('raft_duel_told');
+    return 'Un Guardián Musgoso te reta a un DUELO DE BALSA (2 gatos por bando, gana quien noquea). Está en el MAPA › ENCARGOS; ya no hace falta limpiar el Bosque Costero.';
+  },
+});
