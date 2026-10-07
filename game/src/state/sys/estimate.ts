@@ -131,6 +131,13 @@ const BIG_ULT: Record<string, string> = {
   d_solcaido: 'DIVINO. Hace caer el sol: arde todo a su alrededor, sus gatos se queman y quedan CEGADOS; el sol sigue quemando 2 turnos (42% + 6%/turno; jefes 15% + 3%). Una vez por batalla.',
   d_milvidas: 'DIVINO. Siete cortes a cada gato rival, máximo 70% de la vida de cada uno (jefes 25%). Una vez por batalla.',
   d_bigbang: 'DIVINO. Revienta la mitad del barco de un golpe (tope 45%, jefes 15%; el núcleo aguanta en 1). Una vez por batalla.',
+  // the multiverse legendaries (Parte 2): once per battle, twice at ★5
+  l_boreas: 'LEGENDARIO. Su ulti congela TODOS los cañones rivales (no disparan su próximo turno) y escarcha la cubierta: lo congelado revienta x2 con un cañonazo o roca, x1.75 con fuego (tope 35%, jefes 15%).',
+  l_aurea: 'LEGENDARIO. Su ulti baja 5 rayos de luz que atraviesan 6 filas cada uno; deja al rival CEGADO 3 turnos y DESLUMBRADO 1 (sin críticos, sus cañones apuntan a ciegas) (tope 35%, jefes 15%).',
+  l_medianoche: 'LEGENDARIO. Su ulti apuñala a TODOS los gatos rivales y trae la medianoche: 2 turnos más, todos los tiros de su lado son invisibles y cada uno apuñala al gato más cercano (tope 35%, jefes 15%).',
+  l_headliner: 'LEGENDARIO. Su ulti suelta ondas que cruzan el barco de lado a lado y ATURDE a todos los gatos rivales (no a los de Sonido ni a los SORDOS) (tope 35%, jefes 15%).',
+  l_nadie: 'LEGENDARIO. Su ulti BORRA una franja vertical de 2 columnas (no se repara; el núcleo aguanta en 1) y se come todos los escudos, burbujas y vidas extra (tope 35%, jefes 15%).',
+  l_cronos: 'LEGENDARIO. Su ulti es TIME STOP: los gatos rivales pierden su próximo turno (sus cañones sí disparan; no se encadena) y repara su barco al pegar (tope 35%, jefes 15%).',
 };
 
 const LOSS_TIP: Record<string, string> = {

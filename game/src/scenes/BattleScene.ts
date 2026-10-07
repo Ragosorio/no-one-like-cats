@@ -34,7 +34,7 @@ import { LabelLanes, reactionPlate, tagLabel, REACTION_INFO } from '../battle/la
 import { GargoyleWings, ThroatFx, KrakenRig, BubbleFx, RainFx } from '../battle/boss/rigs';
 import { koRank } from '../state/sys/ranks';
 import { P2_ONO, p2Hidden, p2Projectile, p2Trail } from '../battle/fx/multiversoFx';
-import { p2Feats } from '../battle/multiverso';
+import { p2Feats, p2Night } from '../battle/multiverso';
 import { settings } from '../core/settings';
 import { fmt } from '../core/format';
 import { G } from '../state/game';
@@ -1428,8 +1428,10 @@ export class BattleScene extends Scene {
       const trail = new Graphics();
       this.world.addChild(trail);
       const hist: { x: number; y: number }[][] = paths.map(() => []);
-      // Sombra: no trail, and the camera doesn't give it away
-      const hidden = p2Hidden(shot);
+      // Sombra: no trail, and the camera doesn't give it away (Medianoche's night: every shot of that side)
+      const hidden = p2Hidden(shot) || p2Night(this.sim, side);
+      if (hidden) for (const b of balls) b.node.visible = false;
+      trail.visible = !hidden;
       if (!quick && !hidden) {
         this.follow = balls[0].node;
         this.followBox = this.shipBox(side === 0 ? 1 : 0);

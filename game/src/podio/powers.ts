@@ -225,6 +225,14 @@ const SIGNATURE: Record<string, Partial<PowerDef> & { desc: string }> = {
   d_solcaido: { kind: 'ult', mult: 3, status: { id: 'burn', turns: 3, chance: 1 }, dotMul: 2, desc: 'DIVINO. Le cae el sol encima: golpe enorme y ARDIENDO 3 turnos al doble.' },
   d_milvidas: { kind: 'slash', mult: 0.3, hits: 10, pierce: true, desc: 'DIVINO. Diez cortes de sombra (cada uno crítico) que atraviesan escudos.' },
   d_bigbang: { kind: 'ult', mult: 1.6, halve: true, status: { id: 'stun', turns: 1, chance: 1 }, desc: 'DIVINO. Un golpe y luego le quita LA MITAD de la vida que le quede. Lo deja ATURDIDO.' },
+  // the multiverse legendaries (Parte 2): a plain ULTI hits ×2.6; these trade part of it for their element (a lost
+  // turn, blindness, erasing…), ending above a plain ULTI and below the Heroicos
+  l_boreas: { kind: 'orb', mult: 2.2, status: { id: 'freeze', turns: 1, chance: 1 }, desc: 'La aurora lo CONGELA (pierde su turno). Si luego le pegas fuego, revienta ×1.5.' },
+  l_aurea: { kind: 'beam', mult: 0.8, hits: 3, status: { id: 'blind', turns: 3, chance: 1 }, desc: 'Tres rayos del halo. Lo deja CEGADO 3 turnos (sus ataques fallan más).' },
+  l_medianoche: { kind: 'slash', mult: 1.25, hits: 2, pierce: true, status: { id: 'curse', turns: 2, chance: 1 }, desc: 'Dos puñaladas desde la medianoche: no se esquivan, atraviesan el escudo y lo dejan MALDITO.' },
+  l_headliner: { kind: 'beam', mult: 2.2, pierce: true, status: { id: 'stun', turns: 1, chance: 1 }, desc: 'Un acorde que atraviesa cualquier escudo y lo ATURDE (si no acaba de estarlo).' },
+  l_nadie: { kind: 'crush', mult: 2.2, erase: true, pierce: true, desc: 'Nadie lo ve venir: se come su escudo y le BORRA 8% de la vida máxima para siempre.' },
+  l_cronos: { kind: 'ult', mult: 1.9, rewind: true, status: { id: 'stun', turns: 1, chance: 1 }, desc: 'TIME STOP: pierde su próximo turno, y Cronos se cura la mitad de lo que pega.' },
 };
 
 function ult(d: CatDef): PowerDef {

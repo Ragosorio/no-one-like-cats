@@ -6202,7 +6202,7 @@
     },
     "ultimate": {
      "name": "AURORA ZERO! (極光零度)",
-     "effect": "Tres carámbanos de aurora en abanico con radio enorme. Congelado 3 en todo lo que tocan. Una vez por batalla.",
+     "effect": "La aurora baja sobre su barco: TODOS sus cañones se congelan (no disparan su próximo turno) y su cubierta queda escarchada: lo congelado revienta x2 con un cañonazo o una roca (x1.75 con fuego). Además, tres carámbanos en abanico. Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -6211,7 +6211,7 @@
     },
     "limitation": null,
     "passive": "Origen del Hielo: tus gatos Hielo +10%; cada CHOQUE TÉRMICO le da +10 de medidor al gato que lo provoca.",
-    "star3": "★3: su disparo congela también 1 celda vecina.",
+    "star3": "★3: su disparo congela también 1 celda vecina. Su ulti también congela sus escudos y su sala de invocación.",
     "star5": "★5: Aurora Zero se puede usar 2 veces por batalla."
    },
    "obtain": {
@@ -6512,7 +6512,7 @@
     },
     "ultimate": {
      "name": "WALL OF SOUND! (音の壁)",
-     "effect": "Su muro de bocinas suelta una onda gigante que atraviesa hasta 10 celdas y Aturde a cada gato que cruza. Una vez por batalla.",
+     "effect": "Su muro de bocinas suelta una onda por cubierta que cruza el barco de lado a lado, y el acorde llega a TODOS sus gatos: quedan Aturdidos (menos los de Sonido y los SORDOS). Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 110,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -6521,7 +6521,7 @@
     },
     "limitation": null,
     "passive": "Origen del Sonido: tus gatos Sonido +10%; cada gato enemigo Aturdido le da +5 de medidor a tus gatos Sonido.",
-    "star3": "★3: su onda es más ancha.",
+    "star3": "★3: su onda es más ancha. Su ulti suelta 4 ondas.",
     "star5": "★5: Wall of Sound se puede usar 2 veces por batalla."
    },
    "obtain": {
@@ -6822,7 +6822,7 @@
     },
     "ultimate": {
      "name": "ENDLESS MIDNIGHT! (永遠の真夜中)",
-     "effect": "Tres sombras invisibles en abanico con radio enorme. Cada impacto apuñala por la espalda al gato más cercano. Maldito 2. Una vez por batalla.",
+     "effect": "Cae la medianoche: tres sombras invisibles apuñalan por la espalda a TODOS sus gatos, y durante 2 turnos más todos tus tiros son invisibles y cada tiro de gato apuñala al gato enemigo más cercano. Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 110,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -6831,7 +6831,7 @@
     },
     "limitation": null,
     "passive": "Origen de la Sombra: tus gatos Sombra +10%; sus puñaladas hacen +10% a gatos Malditos.",
-    "star3": "★3: Maldito dura 3 turnos.",
+    "star3": "★3: Maldito dura 3 turnos. Su medianoche dura un turno más.",
     "star5": "★5: Endless Midnight se puede usar 2 veces por batalla."
    },
    "obtain": {
@@ -7442,7 +7442,7 @@
     },
     "ultimate": {
      "name": "HALO JUDGEMENT! (光輪の審判)",
-     "effect": "Un rayo de halo gigantesco que atraviesa 3 celdas en línea. Cegado 2. Una vez por batalla.",
+     "effect": "Una catedral de luz: un halo se abre sobre su barco y bajan 5 rayos que atraviesan 6 filas cada uno, primero por sus camarotes (el gato de adentro recibe el juicio). Cegado 3 y DESLUMBRADOS su próximo turno: sin críticos y sus cañones apuntan a ciegas. Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 130,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -7451,7 +7451,7 @@
     },
     "limitation": null,
     "passive": "Origen de la Luz: tus gatos Luz +10%; tus gatos Luz hacen +10% al barco rival mientras esté Cegado.",
-    "star3": "★3: atraviesa 4 celdas.",
+    "star3": "★3: atraviesa 4 celdas. Su ulti baja 6 rayos.",
     "star5": "★5: Halo Judgement se puede usar 2 veces por batalla."
    },
    "obtain": {
@@ -7752,7 +7752,7 @@
     },
     "ultimate": {
      "name": "DEAD CHANNEL! (砂嵐)",
-     "effect": "Una franja de estática más ancha que atraviesa 4 celdas: todo lo que toca queda BORRADO. Una vez por batalla.",
+     "effect": "Nadie te ve: sin proyectil, una franja vertical de 2 columnas de su barco queda BORRADA (no se repara; el núcleo y lo que sostiene el barco aguantan en 1) y se come todos sus escudos, su burbuja y las vidas extra de sus gatos. Una vez por batalla. Tope 35%; jefes 15%.",
      "dmg": 120,
      "meterCost": 100,
      "usesPerBattle": 1,
@@ -7761,7 +7761,7 @@
     },
     "limitation": null,
     "passive": "Origen del Vacío: tus gatos Vacío +10%; empiezan cada batalla con +15 de medidor.",
-    "star3": "★3: atraviesa 5 celdas.",
+    "star3": "★3: atraviesa 5 celdas. Su franja es de 3 columnas.",
     "star5": "★5: Dead Channel se puede usar 2 veces por batalla."
    },
    "obtain": {
