@@ -166,9 +166,38 @@
     {
       "id": "void",
       "name": "Vacio",
-      "unlock": "chapter:2",
-      "teaser_only": true,
-      "story": "Al hundirse el Leviatan, el cielo se abre: UNKNOWN ELEMENT DETECTED. CONTINUARA."
+      "unlock": "grieta:void",
+      "story": "Grieta del Abismo: limpiar el Abismo del Ronroneo o juntar 10 Fragmentos del Vacio. Baja NADIE."
+    },
+    {
+      "id": "ice",
+      "name": "Hielo",
+      "unlock": "grieta:ice",
+      "story": "Grieta Boreal: justo despues de los creditos del Capitulo 1."
+    },
+    {
+      "id": "sound",
+      "name": "Sonido",
+      "unlock": "grieta:sound",
+      "story": "Grieta del Escenario: campeon de una liga del Podio."
+    },
+    {
+      "id": "shadow",
+      "name": "Sombra",
+      "unlock": "grieta:shadow",
+      "story": "Grieta de los Faroles: Jardin Sakura limpio."
+    },
+    {
+      "id": "time",
+      "name": "Tiempo",
+      "unlock": "grieta:time",
+      "story": "Grieta del Reloj de Arena: Oasis Dorado limpio."
+    },
+    {
+      "id": "light",
+      "name": "Luz",
+      "unlock": "grieta:light",
+      "story": "Grieta del Faro: Reino 36 + Atolon Estelar limpio."
     }
   ],
   "rarities": {
@@ -895,6 +924,270 @@
       "worker": null,
       "source": "heroic:2",
       "art": null
+    },
+    {
+      "id": "c_copito",
+      "name": "Copito",
+      "rarity": "common",
+      "el": [
+        "ice"
+      ],
+      "worker": "builder",
+      "source": "resonance",
+      "art": "copito_snowball_cat"
+    },
+    {
+      "id": "r_escarcha",
+      "name": "Escarcha",
+      "rarity": "rare",
+      "el": [
+        "ice"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "escarcha_frost_cat"
+    },
+    {
+      "id": "e_tempano",
+      "name": "Témpano",
+      "rarity": "epic",
+      "el": [
+        "ice"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "tempano_iceplate_cat"
+    },
+    {
+      "id": "l_boreas",
+      "name": "Bóreas",
+      "rarity": "legendary",
+      "el": [
+        "ice"
+      ],
+      "worker": null,
+      "source": "grieta:ice",
+      "art": "boreas_aurora_cat"
+    },
+    {
+      "id": "c_tamborin",
+      "name": "Tamborín",
+      "rarity": "common",
+      "el": [
+        "sound"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "tamborin_drum_cat"
+    },
+    {
+      "id": "r_djbigotes",
+      "name": "DJ Bigotes",
+      "rarity": "rare",
+      "el": [
+        "sound"
+      ],
+      "worker": "banker",
+      "source": "resonance",
+      "art": "djbigotes_dj_cat"
+    },
+    {
+      "id": "e_diva",
+      "name": "Diva",
+      "rarity": "epic",
+      "el": [
+        "sound"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "diva_pop_cat"
+    },
+    {
+      "id": "l_headliner",
+      "name": "Headliner",
+      "rarity": "legendary",
+      "el": [
+        "sound"
+      ],
+      "worker": null,
+      "source": "grieta:sound",
+      "art": "headliner_rock_cat"
+    },
+    {
+      "id": "c_sombrita",
+      "name": "Sombrita",
+      "rarity": "common",
+      "el": [
+        "shadow"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "sombrita_shadow_cat"
+    },
+    {
+      "id": "r_kage",
+      "name": "Kage",
+      "rarity": "rare",
+      "el": [
+        "shadow"
+      ],
+      "worker": "voyager",
+      "source": "resonance",
+      "art": "kage_ninja_cat"
+    },
+    {
+      "id": "e_titiritera",
+      "name": "Titiritera",
+      "rarity": "epic",
+      "el": [
+        "shadow"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "titiritera_puppet_cat"
+    },
+    {
+      "id": "l_medianoche",
+      "name": "Medianoche",
+      "rarity": "legendary",
+      "el": [
+        "shadow"
+      ],
+      "worker": null,
+      "source": "grieta:shadow",
+      "art": "medianoche_king_cat"
+    },
+    {
+      "id": "c_tic",
+      "name": "Tic",
+      "rarity": "common",
+      "el": [
+        "time"
+      ],
+      "worker": "banker",
+      "source": "resonance",
+      "art": "tic_pocketwatch_cat"
+    },
+    {
+      "id": "r_arenita",
+      "name": "Arenita",
+      "rarity": "rare",
+      "el": [
+        "time"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "arenita_sand_cat"
+    },
+    {
+      "id": "e_pendulo",
+      "name": "Péndulo",
+      "rarity": "epic",
+      "el": [
+        "time"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "pendulo_clock_cat"
+    },
+    {
+      "id": "l_cronos",
+      "name": "Cronos",
+      "rarity": "legendary",
+      "el": [
+        "time"
+      ],
+      "worker": null,
+      "source": "grieta:time",
+      "art": "cronos_astrolabe_cat"
+    },
+    {
+      "id": "c_destello",
+      "name": "Destello",
+      "rarity": "common",
+      "el": [
+        "light"
+      ],
+      "worker": "farmer",
+      "source": "resonance",
+      "art": "destello_firefly_cat"
+    },
+    {
+      "id": "r_vitral",
+      "name": "Vitral",
+      "rarity": "rare",
+      "el": [
+        "light"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "vitral_stainedglass_cat"
+    },
+    {
+      "id": "e_faro",
+      "name": "Faro",
+      "rarity": "epic",
+      "el": [
+        "light"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "faro_lighthouse_cat"
+    },
+    {
+      "id": "l_aurea",
+      "name": "Áurea",
+      "rarity": "legendary",
+      "el": [
+        "light"
+      ],
+      "worker": null,
+      "source": "grieta:light",
+      "art": "aurea_halo_cat"
+    },
+    {
+      "id": "c_hueco",
+      "name": "Hueco",
+      "rarity": "common",
+      "el": [
+        "void"
+      ],
+      "worker": "farmer",
+      "source": "resonance",
+      "art": "hueco_hole_cat"
+    },
+    {
+      "id": "r_ecomudo",
+      "name": "Eco Mudo",
+      "rarity": "rare",
+      "el": [
+        "void"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "ecomudo_static_cat"
+    },
+    {
+      "id": "e_devoradora",
+      "name": "Devoradora",
+      "rarity": "epic",
+      "el": [
+        "void"
+      ],
+      "worker": null,
+      "source": "resonance",
+      "art": "devoradora_portal_cat"
+    },
+    {
+      "id": "l_nadie",
+      "name": "Nadie",
+      "rarity": "legendary",
+      "el": [
+        "void"
+      ],
+      "worker": null,
+      "source": "grieta:void",
+      "art": "nadie_static_cat"
     }
   ],
   "resonance": {

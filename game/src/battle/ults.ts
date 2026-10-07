@@ -584,8 +584,9 @@ export const ULTS: Record<string, UltFn> = {
     }
     if (lit.length) o.events.push({ k: 'status', side: enemy, cells: lit, status: 'burning' });
     for (const c of es.cats) if (!c.ko && !b.isFlying(c)) b.hitCat(c, Math.round(o.atk * o.shot.power * 0.08 * CAT_K), o.events, path, at, 'fire', true);
-    // the glare: no preview, no criticals, their AI aims half blind
-    es.buffs.blind = Math.max(es.buffs.blind, stars >= 3 ? 2 : 1);
+    // the glare: Luz already leaves them CEGADO (multiverso.ts, 3 turns for an ultimate); ★3 also ECLIPSADO
+    // (no criticals, the AI aims far worse) for their next turn
+    if (stars >= 3) es.buffs.blind = Math.max(es.buffs.blind, 1);
     b.wells.push({
       x: ctr.x,
       y: shipTop(b, enemy) - CELL * 0.6,

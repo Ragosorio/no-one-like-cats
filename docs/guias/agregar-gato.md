@@ -124,7 +124,7 @@ Aquí no entra ni un píxel. El `.gitignore` bloquea `png`, `jpg`, `webp`, `gif`
 El flujo con [MAI SVG](https://github.com/Ragosorio/MAI-SVG) (la herramienta hermana de este juego, también de código abierto):
 
 1. **Dibuja o consigue la ilustración** del gato en 700×700 lógicos, fondo transparente, cuerpo completo, sentado o de tres cuartos (mira los 54 que ya existen para el encuadre). El PNG fuente vive **fuera** del repo. Si llega más grande (los del lote A venían a 1024×1024, gato al 90 % de alto), redúcelo a 700×700 antes de vectorizar: así el viewBox, el rig y el peso del SVG quedan como los demás.
-2. **Vectoriza** con MAI: `mai vectorize --preset high-color-preserved` (el alfa se vuelve máscara vectorial). Mira el `premultipliedRgbMae` del reporte: lo normal es 6–11. Si sale enorme (70+), el trazador se colapsó en una silueta plana; reduce el PNG con otro filtro (p. ej. `mitchell` en vez de `lanczos3`) y repite.
+2. **Vectoriza** con MAI: `mai vectorize --preset high-color-preserved` (el alfa se vuelve máscara vectorial). Mira el `premultipliedRgbMae` del reporte: lo normal es 6–11. Si sale enorme (70+), el trazador se colapsó en una silueta plana; reduce el PNG con otro filtro (p. ej. `mitchell` en vez de `lanczos3`, o al revés: Kage colapsó con `mitchell` y salió bien con `lanczos3`) y repite.
 3. **Exporta para el juego** con `scripts/game-export.ts` de MAI (perfil *game-compact*: mismo dibujo, verificado píxel a píxel) → `game/public/cats-svg/<slug>.svg`. El manifiesto de tamaños queda en `game/public/cats-svg/game-export.json`.
 4. **Genera la versión ligera** con `scripts/game-thumbs.ts` de MAI → `game/public/cats-svg/lite/<slug>.svg`.
 
@@ -195,7 +195,8 @@ Con `npm run dev` corriendo (desde `game/`):
 - `?scene=catlive` muestra **todos** los gatos vivos. El tuyo debe estar ahí con su etiqueta.
 - `?scene=catlive&cat=<slug>` lo pone grande. Haz click para recorrer emociones (`happy`, `surprise`, `hurt`, `attack`, `sleepy`).
 - `?scene=catlive&cat=<slug>&rig=1` dibuja el rig encima: cabeza en amarillo, orejas en rojo, ojos en verde, cola en magenta, flotantes en cian. Si algo no cae donde debe, ahí lo ves.
-- `?scene=catlive&cats=<slug1>,<slug2>` compara pocos lado a lado.
+- `?scene=catlive&cats=<slug1>,<slug2>` compara pocos lado a lado. Funciona con cualquier slug, aunque ningún gato de `content.json` lo use todavía.
+- `?scene=catlive&lote=b` / `lote=c` / `lote=parte2` muestra las pinturas nuevas de `game/src/data/art-parte2.json` (id → slug).
 - `?scene=fxlab&cat=<id o slug>` dispara con tu gato la revelación (normal, duplicado, holo), el descubrimiento de elemento, la invocación, la subida de estrellas y la portada del periódico.
 - `?scene=dev` es el **LABORATORIO**: la lista de todos los laboratorios con su guía.
 

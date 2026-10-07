@@ -6,16 +6,24 @@ import { C, F } from '../ui/theme';
 import { livingCat, preloadCats } from '../art/catArt';
 import { ART, CatEmote, CatPuppet, catRig } from '../art/livingCat';
 import { CATS } from '../data/content';
+import parte2 from '../data/art-parte2.json';
 
 /**
  * Dev scene (?scene=catlive): every painting as a living MAI puppet.
- * &cat=<slug> shows one big · &rig=1 draws the MAI rig over it · click a cat to cycle emotes.
+ * &cat=<slug> shows one big · &cats=a,b,c a few · &lote=b|c|parte2 the new paintings · &rig=1 draws the MAI rig
+ * over it · click a cat to cycle emotes. Any slug works, even one no content.json cat uses yet.
  * window.__catlab exposes the puppets for headless checks.
  */
 export class CatLiveLab extends Scene {
   override async enter() {
     const q = new URLSearchParams(location.search);
-    const pick = q.get('cats')?.split(',').filter(Boolean);
+    // &lote=b|c|parte2: the new paintings (art-parte2.json, id → slug), even before content.json uses them
+    const lote = q.get('lote');
+    const pick = lote
+      ? Object.entries(parte2)
+          .filter(([id]) => lote === 'parte2' || (lote === 'c' ? /^[hd]_/ : /^[crel]_/).test(id))
+          .map(([, slug]) => slug)
+      : q.get('cats')?.split(',').filter(Boolean);
     const one = q.get('cat');
     const showRig = q.get('rig') === '1';
     this.addChild(paperBg(W, H));
@@ -25,9 +33,9 @@ export class CatLiveLab extends Scene {
     const slugs = one ? [one] : pick ?? [...new Set(CATS.map((c) => c.art.slug))].sort();
     await preloadCats(slugs);
     const puppets: CatPuppet[] = [];
-    const cols = one ? 1 : pick ? Math.min(4, slugs.length) : 8;
+    const cols = one ? 1 : pick && slugs.length <= 8 ? Math.min(4, slugs.length) : 8;
     const rows = Math.ceil(slugs.length / cols);
-    const cell = one ? 900 : Math.min(pick ? 470 : 225, (W - 40) / cols, (H - 190) / rows / 0.98);
+    const cell = one ? 900 : Math.min(pick && slugs.length <= 8 ? 470 : 225, (W - 40) / cols, (H - 190) / rows / 0.98);
     const ox = one ? W / 2 : (W - cols * cell) / 2 + cell / 2;
     const oy = one ? H - 60 : 130 + cell * 0.95;
     const emotes: CatEmote[] = ['happy', 'surprise', 'hurt', 'attack', 'sleepy'];

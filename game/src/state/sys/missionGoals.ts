@@ -85,6 +85,8 @@ export const GOAL_HANDLERS: Record<string, GoalHandler> = {
   clear_expansion: { how: 'state' },
   expansion_secret: { how: 'state' },
   cat_rank: { how: 'state' },
+  // Parte 2: species registered of one element (the multiverse elements' criador chain K33–K38)
+  element_species: { how: 'state' },
 };
 
 /** counter keys whose baseline is stored when the mission appears */

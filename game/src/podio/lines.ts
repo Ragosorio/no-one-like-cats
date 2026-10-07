@@ -39,7 +39,7 @@ export const LOSS_QUIPS = [
   'Aliméntalo en la isla y vuelve. Esto es personal.',
   'La revancha es gratis. El orgullo no.',
 ];
-export const SKIP_TEXT: Record<string, string> = { stun: '¡ATURDIDO!', shock: '¡TIESO! (CARGADO)', sleep: 'zZz… (DORMILÓN)' };
+export const SKIP_TEXT: Record<string, string> = { stun: '¡ATURDIDO!', shock: '¡TIESO! (CARGADO)', sleep: 'zZz… (DORMILÓN)', freeze: '¡CONGELADO!' };
 
 export function pick<T>(a: readonly T[]): T {
   return a[Math.floor(Math.random() * a.length)];

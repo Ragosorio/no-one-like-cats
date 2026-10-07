@@ -1,5 +1,5 @@
 import { Assets, Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
-import { ART, CatPuppet, PuppetOptions } from './livingCat';
+import { ART, CatPuppet, PuppetOptions, catRig } from './livingCat';
 import { GlowFilter, OutlineFilter } from 'pixi-filters';
 import gsap from 'gsap';
 import { ComicFilter, InkFilter } from '../fx/filters';
@@ -14,17 +14,17 @@ export const ELEMENT_FX: Record<string, { main: number; accent: number; dark: nu
   earth: { main: 0xa8743f, accent: 0xe0b77a, dark: 0x3d2a1a, particle: 'rock' },
   electric: { main: 0xffe14a, accent: 0xffffff, dark: 0x3a3200, particle: 'spark' },
   storm: { main: 0xffe14a, accent: 0x00e5ff, dark: 0x1f2b4a, particle: 'spark' },
-  ice: { main: 0xa7e8d7, accent: 0xffffff, dark: 0x204a7a, particle: 'shard' },
+  ice: { main: 0x9fe8ff, accent: 0x7cffc4, dark: 0x1f2b4a, particle: 'shard' },
   wind: { main: 0xc6f0e4, accent: 0xffffff, dark: 0x3a6f6a, particle: 'wisp' },
   magic: { main: 0x8a5cff, accent: 0xff7ab8, dark: 0x231626, particle: 'rune' },
   spirit: { main: 0xb7a4c7, accent: 0xffffff, dark: 0x171317, particle: 'wisp' },
   cosmic: { main: 0x8a5cff, accent: 0x00e5ff, dark: 0x0d110f, particle: 'star' },
-  void: { main: 0x231626, accent: 0xff2e88, dark: 0x000000, particle: 'glitch' },
-  light: { main: 0xfff3b0, accent: 0xffffff, dark: 0xb89558, particle: 'star' },
+  void: { main: 0xff2e88, accent: 0xffffff, dark: 0x0d110f, particle: 'glitch' },
+  light: { main: 0xffd77a, accent: 0xffffff, dark: 0xb89558, particle: 'star' },
   tech: { main: 0x00e5ff, accent: 0xff2e88, dark: 0x0d110f, particle: 'glitch' },
-  sound: { main: 0xff7ab8, accent: 0xffffff, dark: 0x5c3d5b, particle: 'spark' },
-  time: { main: 0xb89558, accent: 0xfff3b0, dark: 0x3d2a1a, particle: 'rune' },
-  shadow: { main: 0x5c3d5b, accent: 0xff2e88, dark: 0x0d110f, particle: 'wisp' },
+  sound: { main: 0xff2e88, accent: 0xffd400, dark: 0x231626, particle: 'spark' },
+  time: { main: 0xe0b77a, accent: 0xd9c29a, dark: 0x6b4f2a, particle: 'rune' },
+  shadow: { main: 0x5a4a78, accent: 0xc8102e, dark: 0x0d110f, particle: 'wisp' },
 };
 
 export function elementFx(el: string) {
@@ -49,14 +49,67 @@ export function catSvgUrl(slug: string) {
 const LITE_RES = 1;
 const FULL_RES = 1.5;
 
+/**
+ * Paintings that are decided (slug fixed in content.json) but not produced yet: until the art pipeline
+ * drops `cats-svg/<slug>.svg` + `lite/<slug>.svg` AND its rig in catRigs.json, the cat wears a tinted
+ * stand-in painting (an existing one, multiplied by the element's color) so nothing breaks or shows a
+ * white square. The moment the rig exists, the real painting is used — no code change needed.
+ * Parte 2: the 24 cats of Hielo, Sonido, Sombra, Tiempo, Luz and Vacío.
+ */
+const STAND_IN: Record<string, [base: string, tint: number]> = {
+  copito_snowball_cat: ['nube_dream_cat', 0xcdeeff],
+  escarcha_frost_cat: ['selene_moonlit_cat', 0xbfe3ff],
+  tempano_iceplate_cat: ['fossilstone_guardian_cat', 0xbde6ff],
+  boreas_aurora_cat: ['regal_cosmic_cat', 0xc8f5ea],
+  tamborin_drum_cat: ['mochi_bell_cat', 0xffc2df],
+  djbigotes_dj_cat: ['bytewhisker_cat', 0xffd0e6],
+  diva_pop_cat: ['sonata_prima_cat', 0xffc8dc],
+  headliner_rock_cat: ['mecha_neon_cat', 0xffd6a0],
+  sombrita_shadow_cat: ['nori_lunar_cat', 0x9a8fb0],
+  kage_ninja_cat: ['masquerade_phantom_cat', 0xa898b8],
+  titiritera_puppet_cat: ['storybook_ink_cat', 0xb0a0c0],
+  medianoche_king_cat: ['deepsea_sprite_cat', 0x8f7fa8],
+  tic_pocketwatch_cat: ['steampunk_clockwork_cat', 0xe8d2a8],
+  arenita_sand_cat: ['kintsugi_tea_spirit_cat', 0xf0d9a8],
+  pendulo_clock_cat: ['arce_autumn_cat', 0xe6cfa0],
+  cronos_astrolabe_cat: ['lumen_lens_cat', 0xead6ac],
+  destello_firefly_cat: ['margarita_daisy_cat', 0xfff0b8],
+  vitral_stainedglass_cat: ['prism_crystal_cat', 0xffe8c0],
+  faro_lighthouse_cat: ['lantern_spirit_cat', 0xfff0c0],
+  aurea_halo_cat: ['sol_sunbeam_cat', 0xfff4c8],
+  hueco_hole_cat: ['alien_galaxy_cat', 0xc8a8d8],
+  ecomudo_static_cat: ['neon_glitch_cat', 0xd0d0d8],
+  devoradora_portal_cat: ['candy_alchemist_cat', 0xd8a0c8],
+  nadie_static_cat: ['iridescent_origami_cat', 0xa0a0b0],
+};
+/** generic stand-in when a slug's file fails to load at runtime (404, offline cache miss…) */
+const FALLBACK_SLUG = 'nube_dream_cat';
+/** slugs whose own file failed to load this session */
+const missingArt = new Set<string>();
+
+/** the painting actually drawn for `slug` (itself once its art + rig exist; else its stand-in) */
+export function artSlug(slug: string): string {
+  if (catRig(slug)) return slug;
+  const s = STAND_IN[slug];
+  if (s) return s[0];
+  return missingArt.has(slug) ? FALLBACK_SLUG : slug;
+}
+/** multiply tint of a stand-in painting (undefined = real painting) */
+export function standInTint(slug: string): number | undefined {
+  if (catRig(slug)) return undefined;
+  return STAND_IN[slug]?.[1] ?? (missingArt.has(slug) ? 0xb8b0a8 : undefined);
+}
+/** true while the cat is drawn with a stand-in painting */
+export function isStandIn(slug: string) {
+  return artSlug(slug) !== slug;
+}
+
 const liteTex = new Map<string, Texture>();
 const litePending = new Map<string, Promise<Texture>>();
-/** paintings that failed to load this session (art not shipped yet): never hammered again */
-const liteFailed = new Set<string>();
-function loadLite(slug: string): Promise<Texture> {
+function loadLite(raw: string): Promise<Texture> {
+  const slug = artSlug(raw);
   const hit = liteTex.get(slug);
   if (hit) return Promise.resolve(hit);
-  if (liteFailed.has(slug)) return Promise.reject(new Error(`no art for ${slug}`));
   let p = litePending.get(slug);
   if (!p) {
     const url = catLiteUrl(slug);
@@ -67,9 +120,8 @@ function loadLite(slug: string): Promise<Texture> {
     });
     p.catch(() => {
       litePending.delete(slug);
-      liteFailed.add(slug);
-      // the full painting won't be there either
-      svgState.set(slug, 'failed');
+      // the file isn't there (yet): from now on this slug draws the generic stand-in
+      if (slug !== FALLBACK_SLUG && !catRig(slug)) missingArt.add(slug);
     });
     litePending.set(slug, p);
   }
@@ -110,7 +162,8 @@ function pumpSvg() {
 }
 
 /** ask for the full-detail vector (background; no-op if loaded/loading) */
-export function requestCatSvg(slug: string) {
+export function requestCatSvg(raw: string) {
+  const slug = artSlug(raw);
   if (svgTex.has(slug) || svgState.has(slug)) return;
   svgState.set(slug, 'queued');
   svgQueue.push(slug);
@@ -118,7 +171,8 @@ export function requestCatSvg(slug: string) {
 }
 
 /** `cb` gets the full-detail texture when it exists (now if loaded). Does NOT request it. Returns an unsubscribe. */
-export function onCatArt(slug: string, cb: (t: Texture) => void): () => void {
+export function onCatArt(raw: string, cb: (t: Texture) => void): () => void {
+  const slug = artSlug(raw);
   const ready = svgTex.get(slug);
   if (ready) {
     cb(ready);
@@ -137,12 +191,13 @@ export async function loadCatTexture(slug: string): Promise<Texture> {
 
 /** waits for the lite vectors (fast); full detail streams in later where it is needed */
 export async function preloadCats(slugs: string[]) {
-  // a painting that isn't there yet (new cat, art still on its way) must never block an island or a battle
-  await Promise.all([...new Set(slugs)].map((s) => loadLite(s).catch(() => undefined)));
+  // a painting that can't load must never block an island or a battle (its stand-in takes over)
+  await Promise.all([...new Set(slugs.map(artSlug))].map((s) => loadLite(s).catch(() => undefined)));
 }
 
 /** best available painting: full vector if rasterized, else the lite vector, else WHITE (= not loaded) */
-export function catTexture(slug: string): Texture {
+export function catTexture(raw: string): Texture {
+  const slug = artSlug(raw);
   return svgTex.get(slug) ?? liteTex.get(slug) ?? Texture.WHITE;
 }
 
@@ -151,17 +206,30 @@ export function catTexture(slug: string): Texture {
  * until one is), upgrades itself to the full-detail vector when it is drawn big.
  * Drop-in for `new Sprite(catTexture(slug))` (same default anchor 0,0, `anchor.set`, tint, filters, texture).
  */
-export function livingCat(slug: string, o: PuppetOptions & { detail?: boolean } = {}): CatPuppet {
+export function livingCat(raw: string, o: PuppetOptions & { detail?: boolean } = {}): CatPuppet {
+  const slug = artSlug(raw);
   const tex = catTexture(slug);
   const p = new CatPuppet(tex === Texture.WHITE ? Texture.EMPTY : tex, slug, { anchorX: 0, anchorY: 0, ...o });
+  // a stand-in painting wears its element's color so two cats never look identical
+  const tint = standInTint(raw);
+  if (tint !== undefined) p.tint = tint;
   if (tex === Texture.WHITE) {
     p.renderable = false;
-    loadLite(slug)
+    void loadLite(slug)
       .then((t) => {
         if (p.destroyed || p.renderable) return;
         p.texture = t;
         p.renderable = true;
       })
+      // its file is missing: show the generic stand-in instead of nothing (the rig stays the original's)
+      .catch(() =>
+        loadLite(FALLBACK_SLUG).then((t) => {
+          if (p.destroyed || p.renderable) return;
+          p.texture = t;
+          p.tint = 0xb8b0a8;
+          p.renderable = true;
+        }),
+      )
       .catch(() => undefined);
   }
   const off = onCatArt(slug, (t) => {

@@ -13,25 +13,25 @@
   "balanceVersion": "1.0.0",
   "gdd": "research/04-gdd-no-one-like-cats.md",
   "counts": {
-   "catdexEntries": 62,
+   "catdexEntries": 86,
    "baseIllustrations": 32,
    "tintedVariants": 22,
    "secrets": 6,
    "byRarity": {
-    "common": 14,
-    "rare": 16,
-    "epic": 11,
-    "legendary": 10,
+    "common": 20,
+    "rare": 22,
+    "epic": 17,
+    "legendary": 16,
     "mythic": 3,
     "heroic": 4,
     "divine": 4
    },
-   "resonanceRecipes": 61,
-   "missions": 111,
+   "resonanceRecipes": 73,
+   "missions": 125,
    "missionsByChain": {
-    "historia": 22,
-    "capitan": 31,
-    "criador": 32,
+    "historia": 28,
+    "capitan": 32,
+    "criador": 39,
     "explorador": 26
    },
    "microEvents": 11,
@@ -46,8 +46,9 @@
    "errands": 7,
    "ships": 6,
    "expansions": 12,
-   "reactions": 12,
-   "storyBeats": 26
+   "reactions": 16,
+   "storyBeats": 26,
+   "elements": 13
   }
  },
  "elements": [
@@ -384,43 +385,250 @@
   {
    "id": "void",
    "name": "Vacío",
-   "emoji": "🕳️",
-   "order": 8,
-   "unlock": "chapter:2",
-   "teaserOnly": true,
-   "discovery": "Al hundirse el Leviatán: UNKNOWN ELEMENT DETECTED. CONTINUARÁ. (No jugable en el Cap. 1; solo lo usa el Barco del Vacío.)",
-   "dimension": "NOIR INVERTIDO + ruido de transmisión",
+   "emoji": "",
+   "order": 14,
+   "unlock": "grieta:void",
+   "discovery": "Grieta del Abismo: al limpiar el Abismo del Ronroneo o juntar los 10 Fragmentos del Vacío, el cielo se abre como una caja y baja NADIE.",
+   "dimension": "NOIR INVERTIDO + estática de TV",
    "palette": [
     "#0D110F",
+    "#FFFFFF",
     "#231626",
-    "#FF2E88",
-    "#000000"
+    "#FF2E88"
    ],
    "verb": "Devorar",
    "shotArchetype": "borrado",
-   "shotRule": "Proyectil que atraviesa materia y BORRA celdas (no se pueden reparar). DEVORAR: elimina escudos, estados y segundas vidas.",
-   "midFlight": "implosión.",
+   "shotRule": "Proyectil que atraviesa materia BORRANDO las celdas que cruza: lo que el Vacío toca queda BORRADO para siempre en esa batalla (no se puede reparar, ni rebobinar, ni regenerar). DEVORAR: se come burbujas, escudos, estados y los escudos de gato (y una segunda vida si le pega directo al gato).",
+   "midFlight": "implosión: por un instante ahí no hay nada. Ni el tiro.",
    "status": "vacio",
-   "beats": null,
-   "beatenBy": null,
-   "levelUpgrades": {},
+   "beats": "cosmic",
+   "beatenBy": "magic",
+   "levelUpgrades": {
+    "10": {
+     "name": "Hueco Grande",
+     "effect": "+25% radio."
+    },
+    "20": {
+     "name": "Hambre",
+     "effect": "DEVORAR también se come 10 de medidor del gato que toca."
+    }
+   },
    "habitatBiome": null,
    "particle": "glitch",
    "onomatopoeia": [
     "…",
-    "¡¿?!"
+    "¡KSSHHT!"
    ],
-   "sfxLayer": "reverb invertida"
+   "sfxLayer": "reverb invertida + estática de TV"
+  },
+  {
+   "id": "ice",
+   "name": "Hielo",
+   "emoji": "",
+   "order": 9,
+   "unlock": "grieta:ice",
+   "discovery": "Grieta Boreal: justo después de los créditos del Capítulo 1; el Leviatán se hundió y rompió el Primer Mar (misión H23). Trae a Bóreas.",
+   "dimension": "AURORA (ukiyo-e glacial + aurora boreal)",
+   "palette": [
+    "#1F2B4A",
+    "#EAF6FF",
+    "#4FA3D9",
+    "#7CFFC4"
+   ],
+   "verb": "Congelar",
+   "shotArchetype": "carambano",
+   "shotRule": "Carámbano parabólico (gravedad x1.0). Deja Congelado 2: el cañón o camarote congelado NO dispara su próximo turno (el gato de un camarote congelado tampoco). Fuego sobre lo congelado = CHOQUE TÉRMICO (x1.75 a la celda, y se descongela); Tierra o cañón = ESTALLIDO. Un gato golpeado por hielo pierde su turno (los de Agua resisten 50%).",
+   "midFlight": "escarcha: deja una estela de copos. Pura vanidad.",
+   "status": "congelado",
+   "beats": "water",
+   "beatenBy": "fire",
+   "levelUpgrades": {
+    "10": {
+     "name": "Carámbano Gordo",
+     "effect": "+25% radio."
+    },
+    "20": {
+     "name": "Permafrost",
+     "effect": "Congelado dura +1 turno."
+    }
+   },
+   "habitatBiome": null,
+   "particle": "shard",
+   "onomatopoeia": [
+    "¡CRIIIC!",
+    "¡KSSHH!"
+   ],
+   "sfxLayer": "cristal que cruje + viento helado"
+  },
+  {
+   "id": "sound",
+   "name": "Sonido",
+   "emoji": "",
+   "order": 10,
+   "unlock": "grieta:sound",
+   "discovery": "Grieta del Escenario: al coronarte campeón de una liga del PODIO, el rugido del público rasga el cielo. Trae a Headliner.",
+   "dimension": "PÓSTER DE CONCIERTO (risografía, city-pop)",
+   "palette": [
+    "#231626",
+    "#FFD400",
+    "#FF2E88",
+    "#2EC4E6"
+   ],
+   "verb": "Retumbar",
+   "shotArchetype": "onda",
+   "shotRule": "Onda que ATRAVIESA paredes: pasa por muchas celdas haciendo poco daño a cada una y ATURDE a cada gato cuyo camarote cruza (pierde su próximo turno). Un gato aturdido por sonido queda SORDO 2 turnos (no se le puede volver a aturdir con sonido). El cristal sufre x1.5.",
+   "midFlight": "eco: la onda se oye dos veces. La segunda es de mentiras.",
+   "status": "aturdido",
+   "beats": "earth",
+   "beatenBy": "water",
+   "levelUpgrades": {
+    "10": {
+     "name": "Amplificador",
+     "effect": "+25% radio de la onda."
+    },
+    "20": {
+     "name": "Retorno",
+     "effect": "SORDO dura 1 turno (en vez de 2) contra tus ondas."
+    }
+   },
+   "habitatBiome": null,
+   "particle": "spark",
+   "onomatopoeia": [
+    "¡BWAAANG!",
+    "¡DUM-DUM!"
+   ],
+   "sfxLayer": "bombo + feedback de guitarra"
+  },
+  {
+   "id": "shadow",
+   "name": "Sombra",
+   "emoji": "",
+   "order": 11,
+   "unlock": "grieta:shadow",
+   "discovery": "Grieta de los Faroles: al limpiar el Jardín Sakura, los faroles de papel proyectan sombras que se mueven solas. Trae a Medianoche.",
+   "dimension": "TEATRO DE SOMBRAS (kage-e, tinta, acento rojo)",
+   "palette": [
+    "#0D110F",
+    "#EAE1D3",
+    "#2A2433",
+    "#C8102E"
+   ],
+   "verb": "Acechar",
+   "shotArchetype": "sombra",
+   "shotRule": "Proyectil parabólico INVISIBLE: no se ve volar, solo aparece al impactar. Al impactar, una PUÑALADA golpea POR LA ESPALDA al gato enemigo más cercano (ignora sus escudos de gato).",
+   "midFlight": "desaparecer: ya estaba desaparecido. Esa es la gracia.",
+   "status": "acechado",
+   "beats": "storm",
+   "beatenBy": "storm",
+   "levelUpgrades": {
+    "10": {
+     "name": "Sombra Larga",
+     "effect": "+25% radio."
+    },
+    "20": {
+     "name": "Puñal Fino",
+     "effect": "La puñalada por la espalda hace +10%."
+    }
+   },
+   "habitatBiome": null,
+   "particle": "wisp",
+   "onomatopoeia": [
+    "¡SHHK!",
+    "…¿eh?"
+   ],
+   "sfxLayer": "papel que roza + taiko apagado"
+  },
+  {
+   "id": "time",
+   "name": "Tiempo",
+   "emoji": "",
+   "order": 12,
+   "unlock": "grieta:time",
+   "discovery": "Grieta del Reloj de Arena: al limpiar el Oasis Dorado, el reloj de arena de la Esfinge Bostezante empieza a correr al revés. Trae a Cronos.",
+   "dimension": "DAGUERROTIPO (sepia, reloj de arena, astrolabio)",
+   "palette": [
+    "#1C3A51",
+    "#D9C29A",
+    "#6B4F2A",
+    "#E0B77A"
+   ],
+   "verb": "Rebobinar",
+   "shotArchetype": "reloj",
+   "shotRule": "Reloj parabólico (rebota si tiene rebotes). REBOBINAR: al pegar, repara las celdas más dañadas de TU barco (35% del daño que hizo) y la recarga del gato enemigo golpeado retrocede 1 turno (-1 TURNO). Su ultimate es ¡TIME STOP!: el rival pierde el turno de sus gatos (sus cañones sí disparan; no se puede encadenar).",
+   "midFlight": "tic-tac: suena cada segundo de vuelo. Solo para ponerte nervioso.",
+   "status": "rebobinado",
+   "beats": "fire",
+   "beatenBy": "cosmic",
+   "levelUpgrades": {
+    "10": {
+     "name": "Cuerda",
+     "effect": "+25% radio."
+    },
+    "20": {
+     "name": "Segundero",
+     "effect": "Repara 40% del daño que hace (en vez de 35%)."
+    }
+   },
+   "habitatBiome": null,
+   "particle": "rune",
+   "onomatopoeia": [
+    "¡TIC-TAC!",
+    "¡DONG!"
+   ],
+   "sfxLayer": "tic-tac + campanada al revés"
+  },
+  {
+   "id": "light",
+   "name": "Luz",
+   "emoji": "",
+   "order": 13,
+   "unlock": "grieta:light",
+   "discovery": "Grieta del Faro: con Reino 36 y el Atolón Estelar limpio, el Faro del Primer Mar se vuelve a encender… y apunta a otro mar. Trae a Áurea.",
+   "dimension": "VITRAL (vidrio de catedral + art déco dorado)",
+   "palette": [
+    "#B89558",
+    "#FFF8E1",
+    "#FFD77A",
+    "#E8879A"
+   ],
+   "verb": "Cegar",
+   "shotArchetype": "haz",
+   "shotRule": "Haz casi recto que NO le hace caso al viento y ATRAVIESA varias celdas en línea (perfora). Deja CEGADO al barco rival: en su próximo turno su vista previa de trayectoria se encoge al 30% (y la IA apunta con el doble de error).",
+   "midFlight": "destello: brilla tanto que hasta tú cierras los ojos.",
+   "status": "cegado",
+   "beats": "magic",
+   "beatenBy": "earth",
+   "levelUpgrades": {
+    "10": {
+     "name": "Lente",
+     "effect": "+25% radio del haz."
+    },
+    "20": {
+     "name": "Prisma",
+     "effect": "Cegado dura +1 turno."
+    }
+   },
+   "habitatBiome": null,
+   "particle": "star",
+   "onomatopoeia": [
+    "¡FLAAASH!",
+    "¡TIIING!"
+   ],
+   "sfxLayer": "coro de cristal + campanita"
   }
  ],
  "affinity": {
   "fire": {
    "nature": 1.5,
-   "water": 0.75
+   "water": 0.75,
+   "ice": 1.5,
+   "time": 0.75
   },
   "water": {
    "fire": 1.5,
-   "storm": 0.75
+   "storm": 0.75,
+   "sound": 1.5,
+   "ice": 0.75
   },
   "nature": {
    "earth": 1.5,
@@ -428,17 +636,57 @@
   },
   "earth": {
    "storm": 1.5,
-   "nature": 0.75
+   "nature": 0.75,
+   "light": 1.5,
+   "sound": 0.75
   },
   "storm": {
    "water": 1.5,
-   "earth": 0.75
+   "earth": 0.75,
+   "shadow": 1.5
   },
   "magic": {
-   "cosmic": 1.5
+   "cosmic": 1.5,
+   "void": 1.5,
+   "light": 0.75
   },
   "cosmic": {
-   "magic": 1.5
+   "magic": 1.5,
+   "time": 1.5,
+   "void": 0.75
+  },
+  "ice": {
+   "water": 1.5,
+   "time": 1.5,
+   "fire": 0.75,
+   "sound": 0.75
+  },
+  "sound": {
+   "earth": 1.5,
+   "ice": 1.5,
+   "water": 0.75,
+   "void": 0.75
+  },
+  "light": {
+   "magic": 1.5,
+   "shadow": 1.5,
+   "earth": 0.75
+  },
+  "void": {
+   "cosmic": 1.5,
+   "sound": 1.5,
+   "magic": 0.75,
+   "time": 0.75
+  },
+  "time": {
+   "fire": 1.5,
+   "void": 1.5,
+   "cosmic": 0.75,
+   "ice": 0.75
+  },
+  "shadow": {
+   "light": 1.5,
+   "storm": 1.5
   }
  },
  "materials": [
@@ -457,7 +705,13 @@
     "earth": 1.0,
     "storm": 0.75,
     "magic": 1.0,
-    "cosmic": 1.0
+    "cosmic": 1.0,
+    "ice": 1.0,
+    "light": 1.0,
+    "shadow": 1.0,
+    "sound": 0.75,
+    "time": 1.25,
+    "void": 1.0
    }
   },
   {
@@ -474,7 +728,13 @@
     "earth": 0.75,
     "storm": 1.25,
     "magic": 1.0,
-    "cosmic": 1.0
+    "cosmic": 1.0,
+    "ice": 1.25,
+    "light": 1.5,
+    "shadow": 1.0,
+    "sound": 0.75,
+    "time": 1.25,
+    "void": 1.0
    }
   },
   {
@@ -492,7 +752,13 @@
     "earth": 1.25,
     "storm": 1.5,
     "magic": 1.0,
-    "cosmic": 1.25
+    "cosmic": 1.25,
+    "ice": 1.25,
+    "light": 0.75,
+    "shadow": 1.0,
+    "sound": 1.0,
+    "time": 1.25,
+    "void": 1.0
    }
   },
   {
@@ -509,7 +775,13 @@
     "earth": 1.25,
     "storm": 0.75,
     "magic": 1.0,
-    "cosmic": 1.0
+    "cosmic": 1.0,
+    "ice": 1.0,
+    "light": 0.75,
+    "shadow": 1.0,
+    "sound": 1.25,
+    "time": 1.0,
+    "void": 1.0
    }
   },
   {
@@ -527,7 +799,13 @@
     "earth": 1.5,
     "storm": 0.75,
     "magic": 0.75,
-    "cosmic": 1.0
+    "cosmic": 1.0,
+    "ice": 0.75,
+    "light": 0.5,
+    "shadow": 1.25,
+    "sound": 1.5,
+    "time": 1.0,
+    "void": 1.25
    }
   },
   {
@@ -545,7 +823,13 @@
     "earth": 1.0,
     "storm": 1.0,
     "magic": 1.5,
-    "cosmic": 1.0
+    "cosmic": 1.0,
+    "ice": 1.0,
+    "light": 1.0,
+    "shadow": 1.25,
+    "sound": 1.0,
+    "time": 0.75,
+    "void": 1.0
    }
   },
   {
@@ -563,7 +847,13 @@
     "earth": 0.5,
     "storm": 0.5,
     "magic": 1.0,
-    "cosmic": 1.0
+    "cosmic": 1.0,
+    "ice": 0.75,
+    "light": 0.75,
+    "shadow": 1.0,
+    "sound": 0.5,
+    "time": 1.25,
+    "void": 0.5
    }
   }
  ],
@@ -679,6 +969,38 @@
    "target": "módulo",
    "turns": 2,
    "effect": "El siguiente impacto en el módulo es crítico garantizado (x1.3)."
+  },
+  {
+   "id": "cegado",
+   "name": "Cegado",
+   "icon": "sol",
+   "target": "barco",
+   "turns": 1,
+   "effect": "Luz: en su próximo turno la vista previa de trayectoria se encoge al 30% (la computadora apunta con más del doble de error)."
+  },
+  {
+   "id": "sordo",
+   "name": "Sordo",
+   "icon": "audífonos",
+   "target": "gato",
+   "turns": 2,
+   "effect": "Sonido: después de que una onda lo aturde, ya no se le puede volver a aturdir con sonido por 2 turnos."
+  },
+  {
+   "id": "borrado",
+   "name": "Borrado",
+   "icon": "estática",
+   "target": "celda",
+   "turns": null,
+   "effect": "Vacío: la celda que tocó el Vacío no se puede reparar en esa batalla (ni Rebobinar, ni raíces, ni curas de jefe)."
+  },
+  {
+   "id": "tiempo_detenido",
+   "name": "Tiempo detenido",
+   "icon": "reloj de bolsillo",
+   "target": "barco",
+   "turns": 1,
+   "effect": "Ultimate de Tiempo: los gatos de ese barco no disparan su próximo turno (los cañones sí). No se puede encadenar."
   }
  ],
  "reactions": [
@@ -832,15 +1154,65 @@
   },
   {
    "id": "devorar",
-   "name": "Devorar (teaser)",
+   "name": "Devorar",
    "trigger": {
     "by": "void"
    },
-   "effect": "Elimina escudos, estados y segundas vidas; las celdas borradas no se reparan. Solo el Barco del Vacío lo usa en el Cap. 1.",
+   "effect": "Elimina burbujas, escudos (también los de gato), estados y una segunda vida; lo borrado no se repara en esa batalla.",
    "mult": 1.0,
    "axis": "inversión",
-   "grimoire": "???",
-   "teaser": true
+   "grimoire": "El Vacío no rompe cosas. Las desinventa."
+  },
+  {
+   "id": "choque_termico",
+   "name": "Choque térmico",
+   "trigger": {
+    "status": "congelado",
+    "by": "fire"
+   },
+   "effect": "Fuego sobre una celda Congelada: x1.75 y se descongela. Un gato congelado que recibe fuego: x1.5.",
+   "mult": 1.75,
+   "axis": "control",
+   "grimoire": "Del congelador al horno. Tu vajilla también lo odia."
+  },
+  {
+   "id": "nota_alta",
+   "name": "Nota alta",
+   "trigger": {
+    "status": "congelado",
+    "by": "sound"
+   },
+   "effect": "Una onda de Sonido revienta lo Congelado: x2 y se descongela.",
+   "mult": 2.0,
+   "axis": "control",
+   "grimoire": "Como la cantante que rompe la copa. Pero la copa es un barco."
+  },
+  {
+   "id": "arcoiris",
+   "name": "Arcoíris",
+   "trigger": {
+    "status": "mojado",
+    "by": "light"
+   },
+   "effect": "Luz sobre lo Mojado: x1.2 y el Cegado dura 1 turno más.",
+   "mult": 1.2,
+   "axis": "control",
+   "grimoire": "Agua + luz = arcoíris. Bonito, hasta que no ves por dónde disparas."
+  },
+  {
+   "id": "acelerar",
+   "name": "Acelerar",
+   "trigger": {
+    "status": [
+     "ardiendo",
+     "enraizado"
+    ],
+    "by": "time"
+   },
+   "effect": "El Tiempo adelanta los estados: lo que iba a arder o pudrirse en los próximos turnos pasa YA (x1.5) y el estado se consume.",
+   "mult": 1.5,
+   "axis": "tiempo",
+   "grimoire": "¿Para qué esperar a que se queme si puedes adelantarle el reloj?"
   }
  ],
  "roles": [
@@ -1182,6 +1554,72 @@
     "l_astraprima"
    ],
    "rule": "Tus Primordiales empiezan cada batalla con la ultimate al 50%. (Set de prestigio del capítulo.)"
+  },
+  {
+   "id": "set_ice",
+   "name": "Aurora de Bolsillo",
+   "cats": [
+    "c_copito",
+    "r_escarcha",
+    "e_tempano",
+    "l_boreas"
+   ],
+   "rule": "Congelado dura +1 turno para tus gatos de Hielo."
+  },
+  {
+   "id": "set_sound",
+   "name": "Gira Mundial",
+   "cats": [
+    "c_tamborin",
+    "r_djbigotes",
+    "e_diva",
+    "l_headliner"
+   ],
+   "rule": "Tus ondas de Sonido cruzan +2 celdas."
+  },
+  {
+   "id": "set_shadow",
+   "name": "Teatro de Sombras",
+   "cats": [
+    "c_sombrita",
+    "r_kage",
+    "e_titiritera",
+    "l_medianoche"
+   ],
+   "rule": "Tus puñaladas por la espalda hacen +15%."
+  },
+  {
+   "id": "set_time",
+   "name": "Hora Exacta",
+   "cats": [
+    "c_tic",
+    "r_arenita",
+    "e_pendulo",
+    "l_cronos"
+   ],
+   "rule": "Tus gatos de Tiempo reparan 45% del daño que hacen (en vez de 35%)."
+  },
+  {
+   "id": "set_light",
+   "name": "Vitral Completo",
+   "cats": [
+    "c_destello",
+    "r_vitral",
+    "e_faro",
+    "l_aurea"
+   ],
+   "rule": "Cegado dura +1 turno para tus gatos de Luz."
+  },
+  {
+   "id": "set_void",
+   "name": "Nadie y Compañía",
+   "cats": [
+    "c_hueco",
+    "r_ecomudo",
+    "e_devoradora",
+    "l_nadie"
+   ],
+   "rule": "Tus borrados atraviesan +1 celda."
   },
   {
    "id": "set_podio",
@@ -5477,6 +5915,1866 @@
    "lore": "La luna se puso enfrente del sol y se quedó ahí. A propósito."
   },
   {
+   "id": "c_copito",
+   "name": "Copito",
+   "epithet": "el Primer Copo",
+   "art": {
+    "slug": "copito_snowball_cat",
+    "tint": null,
+    "aura": [
+     "#eaf6ff",
+     "#9fe8ff",
+     "#4fa3d9"
+    ]
+   },
+   "elements": [
+    "ice"
+   ],
+   "rarity": "common",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": "builder",
+   "trait": "curioso",
+   "battleForm": {
+    "name": "COPITO — AVALANCHE FORM",
+    "cry": "SNOWBALL FIGHT!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+    "powerBase": "balance:rarities.power_base.common",
+    "foodMult": "balance:rarities.food_mult.common",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 0,
+    "shot": {
+     "name": "Bola de Nieve",
+     "cry": null,
+     "archetype": "carambano",
+     "element": "ice",
+     "dmg": 55,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "congelado",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Bola de nieve parabólica. Lo que toca queda Congelado 2: ese cañón o camarote no dispara su próximo turno (y el gato de un camarote congelado tampoco). Si después le pegas fuego, CHOQUE TÉRMICO."
+    },
+    "ultimate": {
+     "name": "SNOWBALL FIGHT! (雪合戦)",
+     "effect": "Tres bolas de nieve en abanico, más grandes. Todo lo que tocan queda Congelado 2.",
+     "dmg": 50,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Guantes de hielo: +10% de daño a celdas que ya están Congeladas.",
+    "star3": "★3: la bola de nieve congela también 1 celda vecina.",
+    "star5": "★5: el Congelado que aplica dura 1 turno más."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con al menos un padre de Hielo (Común).",
+    "balanceSource": "resonance"
+   },
+   "hint": "Aparece con la primera nevada. O en el congelador, si lo dejas abierto.",
+   "lore": "Nunca había visto la nieve. Ahora la avienta. Con cariño. Y con una piedrita adentro.",
+   "balanceName": "Copito"
+  },
+  {
+   "id": "r_escarcha",
+   "name": "Escarcha",
+   "epithet": "la Venganza Fría",
+   "art": {
+    "slug": "escarcha_frost_cat",
+    "tint": null,
+    "aura": [
+     "#9fe8ff",
+     "#eaf6ff",
+     "#b59cff"
+    ]
+   },
+   "elements": [
+    "ice"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "francotirador",
+   "worker": null,
+   "trait": "rencoroso",
+   "battleForm": {
+    "name": "ESCARCHA — BLACK ICE FORM",
+    "cry": "DIAMOND DUST!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Aguja de Escarcha",
+     "cry": null,
+     "archetype": "carambano",
+     "element": "ice",
+     "dmg": 70,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 1,
+     "status": "congelado",
+     "statusTurns": 2,
+     "gravityMul": 0.6,
+     "speedMul": 1.4,
+     "special": "Carámbano plano y rápido que perfora 1 capa. Lo que toca queda Congelado 2: ese cañón o camarote no dispara su próximo turno (y el gato de un camarote congelado tampoco). Si después le pegas fuego, CHOQUE TÉRMICO."
+    },
+    "ultimate": {
+     "name": "DIAMOND DUST! (細氷)",
+     "effect": "Tres agujas de hielo en abanico, planas y rápidas, que perforan 1 capa. Congelado 2.",
+     "dmg": 65,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Bufanda helada: +15% de daño contra el último gato enemigo que la golpeó.",
+    "star3": "★3: perfora 2 capas.",
+    "star5": "★5: si congela a un gato, le roba 10 de medidor de ultimate."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Hielo.",
+    "balanceSource": "resonance"
+   },
+   "hint": "Se forma en la ventana de quien te dejó en visto.",
+   "lore": "La venganza se sirve fría. Ella la sirve congelada, con bufanda y sin ninguna prisa.",
+   "balanceName": "Escarcha"
+  },
+  {
+   "id": "e_tempano",
+   "name": "Témpano",
+   "epithet": "el Refri con Patas",
+   "art": {
+    "slug": "tempano_iceplate_cat",
+    "tint": null,
+    "aura": [
+     "#4fa3d9",
+     "#eaf6ff",
+     "#7cffc4"
+    ]
+   },
+   "elements": [
+    "ice"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "tanque",
+   "worker": null,
+   "trait": "leal",
+   "battleForm": {
+    "name": "TÉMPANO — GLACIER FORTRESS FORM",
+    "cry": "ICEBERG AHEAD!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.tanque.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Placa de Hielo",
+     "cry": null,
+     "archetype": "carambano",
+     "element": "ice",
+     "dmg": 80,
+     "radius": 1.5,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "congelado",
+     "statusTurns": 2,
+     "gravityMul": 1.3,
+     "speedMul": 1.0,
+     "special": "Placa de hielo pesada que cae rápido y abre un área grande. Lo que toca queda Congelado 2: ese cañón o camarote no dispara su próximo turno (y el gato de un camarote congelado tampoco). Si después le pegas fuego, CHOQUE TÉRMICO."
+    },
+    "ultimate": {
+     "name": "ICEBERG AHEAD! (前方氷山)",
+     "effect": "Tres placas de hielo en abanico, más anchas. Congelado 2 a cada cañón y camarote que tocan.",
+     "dmg": 75,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": "3 ESCUDOS",
+    "passive": "Vaho: los gatos de los camarotes vecinos al suyo reciben −20% de daño de Fuego.",
+    "star3": "★3: cada escudo que pierde le da +15 de medidor.",
+    "star5": "★5: el Congelado de su disparo dura 3 turnos."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Hielo, ambos padres Nv15+.",
+    "balanceSource": "resonance",
+    "minParentLevel": 15
+   },
+   "hint": "Si el hielo cruje bajo tus patas, no es el hielo. Es él respirando.",
+   "lore": "Abraza como glaciar: lento, frío y para siempre. Trae tres escudos y aun así pide cobija.",
+   "balanceName": "Tempano"
+  },
+  {
+   "id": "l_boreas",
+   "name": "Bóreas",
+   "epithet": "Aurora Primera",
+   "art": {
+    "slug": "boreas_aurora_cat",
+    "tint": null,
+    "aura": [
+     "#7cffc4",
+     "#b59cff",
+     "#9fe8ff"
+    ]
+   },
+   "elements": [
+    "ice"
+   ],
+   "rarity": "legendary",
+   "primordial": true,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "presumido",
+   "battleForm": {
+    "name": "BÓREAS — AURORA CROWN FORM",
+    "cry": "AURORA ZERO!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+    "powerBase": "balance:rarities.power_base.legendary",
+    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Cortina de Aurora",
+     "cry": null,
+     "archetype": "carambano",
+     "element": "ice",
+     "dmg": 90,
+     "radius": 1.6,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "congelado",
+     "statusTurns": 3,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Carámbano de aurora con área grande. Lo que toca queda Congelado 3 (un turno más que los demás): ese cañón o camarote no dispara su próximo turno. Fuego encima = CHOQUE TÉRMICO."
+    },
+    "ultimate": {
+     "name": "AURORA ZERO! (極光零度)",
+     "effect": "Tres carámbanos de aurora en abanico con radio enorme. Congelado 3 en todo lo que tocan. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Origen del Hielo: tus gatos Hielo +10%; cada CHOQUE TÉRMICO le da +10 de medidor al gato que lo provoca.",
+    "star3": "★3: su disparo congela también 1 celda vecina.",
+    "star5": "★5: Aurora Zero se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "grieta:ice",
+    "how": "Grieta Boreal: la traes al ganar la batalla de la grieta. Duplicados: dos padres que compartan Hielo, Nv20+.",
+    "balanceSource": "grieta:ice",
+    "minParentLevel": 20
+   },
+   "hint": "Cuando el cielo se pone verde de noche, no es fiesta. Es ella peinándose.",
+   "lore": "Su melena es una aurora boreal. Cuando se enoja, el cielo de tres mares se pone verde. Cuando está contenta, también. Nadie sabe cuál es cuál.",
+   "balanceName": "Boreas"
+  },
+  {
+   "id": "c_tamborin",
+   "name": "Tamborín",
+   "epithet": "el Vecino Ruidoso",
+   "art": {
+    "slug": "tamborin_drum_cat",
+    "tint": null,
+    "aura": [
+     "#ffd400",
+     "#ff2e88",
+     "#2ec4e6"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "common",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "impaciente",
+   "battleForm": {
+    "name": "TAMBORÍN — MARCHING BAND FORM",
+    "cry": "DRUM ROLL!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+    "powerBase": "balance:rarities.power_base.common",
+    "foodMult": "balance:rarities.food_mult.common",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 0,
+    "shot": {
+     "name": "Redoble",
+     "cry": null,
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 60,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 5,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Onda que atraviesa paredes: cruza hasta 6 celdas haciendo poco daño a cada una y Aturde a cada gato cuyo camarote toca (pierde su próximo turno). El cristal sufre x1.5."
+    },
+    "ultimate": {
+     "name": "DRUM ROLL! (連打)",
+     "effect": "Un redoble más gordo que atraviesa paredes y Aturde a cada gato cuyo camarote cruza. El cristal sufre x1.5.",
+     "dmg": 45,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Ritmo: si un aliado ya Aturdió a alguien este turno, su redoble hace +10%.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: los gatos que Aturde pierden también 10 de medidor."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con al menos un padre de Sonido (Común).",
+    "balanceSource": "resonance"
+   },
+   "hint": "Llega un domingo a las siete de la mañana. Siempre.",
+   "lore": "Le regalaron un tambor de cumpleaños. Los vecinos todavía no lo perdonan. Los barcos enemigos tampoco.",
+   "balanceName": "Tamborin"
+  },
+  {
+   "id": "r_djbigotes",
+   "name": "DJ Bigotes",
+   "epithet": "el de las Cuatro de la Mañana",
+   "art": {
+    "slug": "djbigotes_dj_cat",
+    "tint": null,
+    "aura": [
+     "#2ec4e6",
+     "#ff2e88",
+     "#ffd400"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": "banker",
+   "trait": "callejero",
+   "battleForm": {
+    "name": "DJ BIGOTES — BASS DROP FORM",
+    "cry": "DROP THE BASS!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Scratch",
+     "cry": null,
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 55,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 8,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Onda que atraviesa paredes: cruza hasta 8 celdas haciendo poco daño a cada una y Aturde a cada gato cuyo camarote toca (pierde su próximo turno). El cristal sufre x1.5."
+    },
+    "ultimate": {
+     "name": "DROP THE BASS! (低音落とし)",
+     "effect": "Un bajo más gordo que atraviesa hasta 8 celdas y Aturde a cada gato cuyo camarote cruza.",
+     "dmg": 55,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Remix: el primer gato que Aturde en la batalla pierde también 15 de medidor.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: su ultimate también baja 10 de medidor a cada gato que Aturde."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Sonido.",
+    "balanceSource": "resonance"
+   },
+   "hint": "Aparece cuando alguien dice «una más y nos vamos».",
+   "lore": "No se quita los lentes de sol ni de noche ni bajo el agua. Dice que es por la luz. No hay luz.",
+   "balanceName": "DJ Bigotes"
+  },
+  {
+   "id": "e_diva",
+   "name": "Diva",
+   "epithet": "la que Rompe Copas",
+   "art": {
+    "slug": "diva_pop_cat",
+    "tint": null,
+    "aura": [
+     "#ff2e88",
+     "#ffd400",
+     "#2ec4e6"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "demoledor",
+   "worker": null,
+   "trait": "presumido",
+   "battleForm": {
+    "name": "DIVA — WORLD TOUR FORM",
+    "cry": "SHATTERING HIGH C!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.demoledor.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Nota Alta",
+     "cry": null,
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 76,
+     "radius": 1.6,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 6,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Onda que atraviesa paredes: cruza hasta 6 celdas haciendo poco daño a cada una y Aturde a cada gato cuyo camarote toca (pierde su próximo turno). El cristal sufre x1.5."
+    },
+    "ultimate": {
+     "name": "SHATTERING HIGH C! (超高音)",
+     "effect": "Un agudo enorme que atraviesa hasta 6 celdas y Aturde a cada gato cuyo camarote cruza. El cristal se hace añicos (x1.5).",
+     "dmg": 90,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": "CAÑÓN DE CRISTAL",
+    "passive": "Ovación: cada gato que Aturde le da +10 de medidor.",
+    "star3": "★3: su onda es un poco más ancha.",
+    "star5": "★5: si cae KO, deja Aturdido al gato que la tumbó."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Sonido, ambos padres Nv15+.",
+    "balanceSource": "resonance",
+    "minParentLevel": 15
+   },
+   "hint": "Cantó en la regadera. La regadera ya no existe.",
+   "lore": "Rompe copas con un agudo y corazones con el siguiente. Si le tocas el camarote, la que se rompe es ella. Es una diva: todo tiene un costo.",
+   "balanceName": "Diva"
+  },
+  {
+   "id": "l_headliner",
+   "name": "Headliner",
+   "epithet": "el Acto Principal",
+   "art": {
+    "slug": "headliner_rock_cat",
+    "tint": null,
+    "aura": [
+     "#ffd400",
+     "#2ec4e6",
+     "#ff2e88"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "legendary",
+   "primordial": true,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "bravucon",
+   "battleForm": {
+    "name": "HEADLINER — STADIUM FORM",
+    "cry": "WALL OF SOUND!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+    "powerBase": "balance:rarities.power_base.legendary",
+    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Riff de Estadio",
+     "cry": null,
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 82,
+     "radius": 1.5,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 8,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Onda que atraviesa paredes: cruza hasta 10 celdas haciendo poco daño a cada una y Aturde a cada gato cuyo camarote toca (pierde su próximo turno). El cristal sufre x1.5."
+    },
+    "ultimate": {
+     "name": "WALL OF SOUND! (音の壁)",
+     "effect": "Su muro de bocinas suelta una onda gigante que atraviesa hasta 10 celdas y Aturde a cada gato que cruza. Una vez por batalla.",
+     "dmg": 110,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Origen del Sonido: tus gatos Sonido +10%; cada gato enemigo Aturdido le da +5 de medidor a tus gatos Sonido.",
+    "star3": "★3: su onda es más ancha.",
+    "star5": "★5: Wall of Sound se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "grieta:sound",
+    "how": "Grieta del Escenario: lo traes al ganar la batalla de la grieta. Duplicados: dos padres que compartan Sonido, Nv20+.",
+    "balanceSource": "grieta:sound",
+    "minParentLevel": 20
+   },
+   "hint": "Si el cielo grita «¡OTRA! ¡OTRA!», ya viene en camino.",
+   "lore": "Tocó tan fuerte que rasgó el cielo. Literal. Ahora firma autógrafos en tu isla y se queja del ruido de la cafetera.",
+   "balanceName": "Headliner"
+  },
+  {
+   "id": "c_sombrita",
+   "name": "Sombrita",
+   "epithet": "el que se Asusta Solo",
+   "art": {
+    "slug": "sombrita_shadow_cat",
+    "tint": null,
+    "aura": [
+     "#eae1d3",
+     "#2a2433",
+     "#c8102e"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "common",
+   "primordial": false,
+   "secret": false,
+   "role": "asediador",
+   "worker": null,
+   "trait": "miedoso",
+   "battleForm": {
+    "name": "SOMBRITA — PAPER LANTERN FORM",
+    "cry": "PEEK-A-BOO!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+    "powerBase": "balance:rarities.power_base.common",
+    "foodMult": "balance:rarities.food_mult.common",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.asediador.hp",
+    "recarga": 0,
+    "shot": {
+     "name": "Susto",
+     "cry": null,
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 50,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "maldito",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "No se ve volar: aparece al impactar. Y ahí mismo una puñalada golpea por la espalda al gato enemigo más cercano e ignora sus escudos de gato. Deja Maldito 1."
+    },
+    "ultimate": {
+     "name": "PEEK-A-BOO! (いないいないばあ)",
+     "effect": "Tres sustos invisibles en abanico, más grandes. Cada impacto apuñala por la espalda al gato más cercano. Maldito 1.",
+     "dmg": 50,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Compañía: su sombra lo cuida: la primera puñalada por la espalda que recibe por batalla hace 50% menos.",
+    "star3": "★3: Maldito dura 2 turnos.",
+    "star5": "★5: la puñalada alcanza a 2 gatos."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con al menos un padre de Sombra (Común).",
+    "balanceSource": "resonance"
+   },
+   "hint": "Si tu sombra se mueve antes que tú, no grites. Es él.",
+   "lore": "Un día su sombra se despegó del piso y lo siguió con ojitos. Desde entonces él no duerme. Ella tampoco. Se cuidan.",
+   "balanceName": "Sombrita"
+  },
+  {
+   "id": "r_kage",
+   "name": "Kage",
+   "epithet": "el que No Estaba",
+   "art": {
+    "slug": "kage_ninja_cat",
+    "tint": null,
+    "aura": [
+     "#2a2433",
+     "#c8102e",
+     "#eae1d3"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "francotirador",
+   "worker": "voyager",
+   "trait": "leal",
+   "battleForm": {
+    "name": "KAGE — SMOKE SCARF FORM",
+    "cry": "SHADOW SHURIKEN!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Shuriken de Sombra",
+     "cry": null,
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 70,
+     "radius": 0.9,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 0.7,
+     "speedMul": 1.3,
+     "special": "Shuriken plano y rápido que no se ve volar: aparece al impactar. Y ahí mismo una puñalada golpea por la espalda al gato enemigo más cercano e ignora sus escudos de gato."
+    },
+    "ultimate": {
+     "name": "SHADOW SHURIKEN! (影手裏剣)",
+     "effect": "Tres shurikens invisibles en abanico, planos y rápidos. Cada impacto apuñala por la espalda al gato más cercano.",
+     "dmg": 70,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Sigilo: su puñalada hace +20% a gatos Expuestos.",
+    "star3": "★3: su puñalada también deja Maldito 1.",
+    "star5": "★5: +1 shuriken en su disparo normal."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Sombra.",
+    "balanceSource": "resonance"
+   },
+   "hint": "Ya pasó por aquí. No lo viste. Ese es el punto.",
+   "lore": "Lleva tres semanas viviendo en tu isla. Te enteraste hoy. Dice que eso es un cumplido.",
+   "balanceName": "Kage"
+  },
+  {
+   "id": "e_titiritera",
+   "name": "Titiritera",
+   "epithet": "la de los Hilos",
+   "art": {
+    "slug": "titiritera_puppet_cat",
+    "tint": null,
+    "aura": [
+     "#c8102e",
+     "#eae1d3",
+     "#2a2433"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "invocador",
+   "worker": null,
+   "trait": "travieso",
+   "battleForm": {
+    "name": "TITIRITERA — KAGE-E THEATER FORM",
+    "cry": "PUPPET SHOW!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.invocador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Marionetas",
+     "cry": null,
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 55,
+     "radius": 1.2,
+     "projectiles": 2,
+     "spreadDeg": 6,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Dos marionetas de sombra en abanico que no se ven volar: aparecen al impactar. Cada impacto suelta una puñalada por la espalda al gato enemigo más cercano e ignora sus escudos de gato."
+    },
+    "ultimate": {
+     "name": "PUPPET SHOW! (影絵芝居)",
+     "effect": "Tres marionetas invisibles en abanico, más grandes. Cada una apuñala por la espalda al gato más cercano.",
+     "dmg": 55,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Hilos: si sus dos marionetas pegan al mismo gato, la segunda puñalada hace +20%.",
+    "star3": "★3: 3 marionetas en su disparo normal.",
+    "star5": "★5: sus puñaladas dejan Maldito 1."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Sombra, ambos padres Nv15+.",
+    "balanceSource": "resonance",
+    "minParentLevel": 15
+   },
+   "hint": "Mueve los dedos y alguien en otro barco se rasca la oreja.",
+   "lore": "Hace teatro de sombras con los gatos enemigos. Ellos no saben que son los actores. Nunca les paga.",
+   "balanceName": "Titiritera"
+  },
+  {
+   "id": "l_medianoche",
+   "name": "Medianoche",
+   "epithet": "el Rey de las Doce",
+   "art": {
+    "slug": "medianoche_king_cat",
+    "tint": null,
+    "aura": [
+     "#2a2433",
+     "#c8102e",
+     "#eae1d3"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "legendary",
+   "primordial": true,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "rencoroso",
+   "battleForm": {
+    "name": "MEDIANOCHE — CROWN OF EYES FORM",
+    "cry": "ENDLESS MIDNIGHT!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+    "powerBase": "balance:rarities.power_base.legendary",
+    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Hora Muerta",
+     "cry": null,
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 90,
+     "radius": 1.5,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "maldito",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Sombra con área grande que no se ve volar: aparece al impactar. Y ahí mismo una puñalada golpea por la espalda al gato enemigo más cercano e ignora sus escudos de gato. Deja Maldito 2."
+    },
+    "ultimate": {
+     "name": "ENDLESS MIDNIGHT! (永遠の真夜中)",
+     "effect": "Tres sombras invisibles en abanico con radio enorme. Cada impacto apuñala por la espalda al gato más cercano. Maldito 2. Una vez por batalla.",
+     "dmg": 110,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Origen de la Sombra: tus gatos Sombra +10%; sus puñaladas hacen +10% a gatos Malditos.",
+    "star3": "★3: Maldito dura 3 turnos.",
+    "star5": "★5: Endless Midnight se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "grieta:shadow",
+    "how": "Grieta de los Faroles: lo traes al ganar la batalla de la grieta. Duplicados: dos padres que compartan Sombra, Nv20+.",
+    "balanceSource": "grieta:shadow",
+    "minParentLevel": 20
+   },
+   "hint": "Cuenta las campanadas de la medianoche. Si suenan trece, ya llegó.",
+   "lore": "Su corona está hecha de ojos que nunca parpadean. Lo ven todo. Lo juzgan todo. Sobre todo tu decoración.",
+   "balanceName": "Medianoche"
+  },
+  {
+   "id": "c_tic",
+   "name": "Tic",
+   "epithet": "el Puntual",
+   "art": {
+    "slug": "tic_pocketwatch_cat",
+    "tint": null,
+    "aura": [
+     "#e0b77a",
+     "#d9c29a",
+     "#6b4f2a"
+    ]
+   },
+   "elements": [
+    "time"
+   ],
+   "rarity": "common",
+   "primordial": false,
+   "secret": false,
+   "role": "soporte",
+   "worker": "banker",
+   "trait": "impaciente",
+   "battleForm": {
+    "name": "TIC — POCKET WATCH FORM",
+    "cry": "TIME STOP!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+    "powerBase": "balance:rarities.power_base.common",
+    "foodMult": "balance:rarities.food_mult.common",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.soporte.hp",
+    "recarga": 0,
+    "shot": {
+     "name": "Tic-Tac",
+     "cry": null,
+     "archetype": "reloj",
+     "element": "time",
+     "dmg": 55,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Reloj parabólico. Al pegar, repara las celdas más dañadas de tu barco (35% del daño que hizo) y al gato enemigo golpeado le atrasa la recarga 1 turno."
+    },
+    "ultimate": {
+     "name": "TIME STOP! (時よ止まれ)",
+     "effect": "¡TIME STOP!: el rival pierde el próximo turno de sus gatos (sus cañones sí disparan; no se puede encadenar). Además lanza tres relojes en abanico que rebobinan.",
+     "dmg": 40,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Cuerda: la primera reparación que hace en la batalla repara el doble.",
+    "star3": "★3: repara 45% del daño que hace (en vez de 35%).",
+    "star5": "★5: su TIME STOP también le baja 10 de medidor a cada gato rival."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con al menos un padre de Tiempo (Común).",
+    "balanceSource": "resonance"
+   },
+   "hint": "Llega cinco minutos antes. A todo. Hasta a donde no lo invitaron.",
+   "lore": "Su reloj de bolsillo pesa más que él y no lo suelta. Dice que el tiempo es oro. Por eso cuida tu bóveda.",
+   "balanceName": "Tic"
+  },
+  {
+   "id": "r_arenita",
+   "name": "Arenita",
+   "epithet": "la Siesta de Arena",
+   "art": {
+    "slug": "arenita_sand_cat",
+    "tint": null,
+    "aura": [
+     "#d9c29a",
+     "#e0b77a",
+     "#1c3a51"
+    ]
+   },
+   "elements": [
+    "time"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "dormilon",
+   "battleForm": {
+    "name": "ARENITA — HOURGLASS FORM",
+    "cry": "SANDMAN STOP!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Arena Dormida",
+     "cry": null,
+     "archetype": "reloj",
+     "element": "time",
+     "dmg": 60,
+     "radius": 1.4,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 0.8,
+     "speedMul": 1.0,
+     "special": "Reloj de arena que flota más y cae suave. Al pegar, repara las celdas más dañadas de tu barco (35% del daño que hizo) y al gato enemigo golpeado le atrasa la recarga 1 turno."
+    },
+    "ultimate": {
+     "name": "TIME STOP: SANDMAN! (砂時計の眠り)",
+     "effect": "¡TIME STOP!: el rival pierde el próximo turno de sus gatos (sus cañones sí disparan; no se puede encadenar). Además lanza tres relojes de arena en abanico que rebobinan.",
+     "dmg": 55,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Duermevela: su primer disparo de la batalla repara el doble.",
+    "star3": "★3: el gato que golpea pierde también 10 de medidor.",
+    "star5": "★5: su reloj de arena rebota 1 vez."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Tiempo.",
+    "balanceSource": "resonance"
+   },
+   "hint": "Se escurre entre los dedos. Literal. No la cargues.",
+   "lore": "Está hecha de la arena de un reloj que nadie volteó a tiempo. Se duerme en cualquier lado. El tiempo se duerme con ella.",
+   "balanceName": "Arenita"
+  },
+  {
+   "id": "e_pendulo",
+   "name": "Péndulo",
+   "epithet": "el Abuelo de Pie",
+   "art": {
+    "slug": "pendulo_clock_cat",
+    "tint": null,
+    "aura": [
+     "#6b4f2a",
+     "#e0b77a",
+     "#d9c29a"
+    ]
+   },
+   "elements": [
+    "time"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "tanque",
+   "worker": null,
+   "trait": "perezoso",
+   "battleForm": {
+    "name": "PÉNDULO — GRANDFATHER CLOCK FORM",
+    "cry": "STILL PENDULUM!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.tanque.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Contrapeso",
+     "cry": null,
+     "archetype": "reloj",
+     "element": "time",
+     "dmg": 66,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 1,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Péndulo parabólico que rebota 1 vez. Al pegar, repara las celdas más dañadas de tu barco (35% del daño que hizo) y al gato enemigo golpeado le atrasa la recarga 1 turno."
+    },
+    "ultimate": {
+     "name": "TIME STOP: STILL PENDULUM! (止まる振り子)",
+     "effect": "¡TIME STOP!: el rival pierde el próximo turno de sus gatos (sus cañones sí disparan; no se puede encadenar). Además lanza tres péndulos en abanico que rebotan y rebobinan.",
+     "dmg": 70,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Campanada: cada 3 turnos repara 5% de su propio camarote.",
+    "star3": "★3: +1 rebote.",
+    "star5": "★5: repara 50% del daño que hace."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Tiempo, ambos padres Nv15+.",
+    "balanceSource": "resonance",
+    "minParentLevel": 15
+   },
+   "hint": "Da las horas. Las que él quiere, cuando él quiere.",
+   "lore": "Lleva cien años sin moverse del pasillo. Dice que el tiempo pasa; él no tiene por qué.",
+   "balanceName": "Pendulo"
+  },
+  {
+   "id": "l_cronos",
+   "name": "Cronos",
+   "epithet": "el que Ya lo Vio Todo",
+   "art": {
+    "slug": "cronos_astrolabe_cat",
+    "tint": null,
+    "aura": [
+     "#e0b77a",
+     "#1c3a51",
+     "#d9c29a"
+    ]
+   },
+   "elements": [
+    "time"
+   ],
+   "rarity": "legendary",
+   "primordial": true,
+   "secret": false,
+   "role": "invocador",
+   "worker": null,
+   "trait": "chismoso",
+   "battleForm": {
+    "name": "CRONOS — ASTROLABE FORM",
+    "cry": "ETERNAL SECOND!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+    "powerBase": "balance:rarities.power_base.legendary",
+    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.invocador.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Astrolabio",
+     "cry": null,
+     "archetype": "reloj",
+     "element": "time",
+     "dmg": 90,
+     "radius": 1.5,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Reloj parabólico con área grande. Al pegar, repara las celdas más dañadas de tu barco (35% del daño que hizo) y al gato enemigo golpeado le atrasa la recarga 1 turno."
+    },
+    "ultimate": {
+     "name": "TIME STOP: ETERNAL SECOND! (永遠の一秒)",
+     "effect": "¡TIME STOP!: el rival pierde el próximo turno de sus gatos (sus cañones sí disparan; no se puede encadenar). Además lanza tres astrolabios enormes en abanico que rebobinan. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Origen del Tiempo: tus gatos Tiempo +10%; sus reparaciones también apagan el fuego de la celda reparada.",
+    "star3": "★3: le atrasa la recarga 2 turnos al gato que golpea.",
+    "star5": "★5: Eternal Second se puede usar 2 veces por batalla (nunca seguidas)."
+   },
+   "obtain": {
+    "source": "grieta:time",
+    "how": "Grieta del Reloj de Arena: lo traes al ganar la batalla de la grieta. Duplicados: dos padres que compartan Tiempo, Nv20+.",
+    "balanceSource": "grieta:time",
+    "minParentLevel": 20
+   },
+   "hint": "Ya sabe que lo vas a buscar. Te está esperando desde ayer.",
+   "lore": "Vio nacer al primer mar y lo va a ver secarse. Mientras tanto te ve a ti. Y toma notas.",
+   "balanceName": "Cronos"
+  },
+  {
+   "id": "c_destello",
+   "name": "Destello",
+   "epithet": "la Lamparita",
+   "art": {
+    "slug": "destello_firefly_cat",
+    "tint": null,
+    "aura": [
+     "#ffd77a",
+     "#fff8e1",
+     "#7fd8ff"
+    ]
+   },
+   "elements": [
+    "light"
+   ],
+   "rarity": "common",
+   "primordial": false,
+   "secret": false,
+   "role": "soporte",
+   "worker": "farmer",
+   "trait": "curioso",
+   "battleForm": {
+    "name": "DESTELLO — FIREFLY FORM",
+    "cry": "FIREFLY LIGHT!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+    "powerBase": "balance:rarities.power_base.common",
+    "foodMult": "balance:rarities.food_mult.common",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.soporte.hp",
+    "recarga": 0,
+    "shot": {
+     "name": "Chispazo",
+     "cry": null,
+     "archetype": "haz",
+     "element": "light",
+     "dmg": 45,
+     "radius": 0.9,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 2,
+     "status": "cegado",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Rayo casi recto que no le hace caso al viento y atraviesa 2 celdas en línea. Deja Cegado al barco rival: en su próximo turno su vista previa se encoge al 30%."
+    },
+    "ultimate": {
+     "name": "FIREFLY LIGHT! (蛍の光)",
+     "effect": "Un haz más ancho que atraviesa 2 celdas en línea. Cegado 1 al barco rival.",
+     "dmg": 45,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Lucecita: los gatos de los camarotes vecinos al suyo apuntan con +10% de vista previa.",
+    "star3": "★3: atraviesa 3 celdas.",
+    "star5": "★5: Cegado dura 2 turnos."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con al menos un padre de Luz (Común).",
+    "balanceSource": "resonance"
+   },
+   "hint": "Se prende en las noches de verano y se apaga cuando la miras.",
+   "lore": "Su colita se prende cuando está feliz. En tu isla no se apaga nunca. Los cultivos crecen de noche y ya nadie duerme.",
+   "balanceName": "Destello"
+  },
+  {
+   "id": "r_vitral",
+   "name": "Vitral",
+   "epithet": "el Caleidoscopio",
+   "art": {
+    "slug": "vitral_stainedglass_cat",
+    "tint": null,
+    "aura": [
+     "#e8879a",
+     "#7fd8ff",
+     "#ffd77a"
+    ]
+   },
+   "elements": [
+    "light"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "travieso",
+   "battleForm": {
+    "name": "VITRAL — ROSE WINDOW FORM",
+    "cry": "ROSE WINDOW!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Rayos de Colores",
+     "cry": null,
+     "archetype": "haz",
+     "element": "light",
+     "dmg": 40,
+     "radius": 0.9,
+     "projectiles": 3,
+     "spreadDeg": 5,
+     "bounces": 0,
+     "pierce": 1,
+     "status": "cegado",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Tres rayos casi rectos en abanico que ignoran el viento; cada uno atraviesa 1 celda. Deja Cegado al barco rival: en su próximo turno su vista previa se encoge al 30%."
+    },
+    "ultimate": {
+     "name": "ROSE WINDOW! (薔薇窓)",
+     "effect": "Tres haces de colores en abanico, más anchos; cada uno atraviesa 1 celda. Cegado 1.",
+     "dmg": 40,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Refracción: si 2 de sus rayos pegan en la misma celda, el tercero hace +20%.",
+    "star3": "★3: cada rayo atraviesa 2 celdas.",
+    "star5": "★5: Cegado dura 2 turnos."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Luz.",
+    "balanceSource": "resonance"
+   },
+   "hint": "Cuando le da el sol, pinta el piso de colores. Y los barcos de agujeros.",
+   "lore": "Lo armaron con los vidrios de una ventana rota. Quedó más bonito que la ventana. No se lo digas a la ventana.",
+   "balanceName": "Vitral"
+  },
+  {
+   "id": "e_faro",
+   "name": "Faro",
+   "epithet": "el que Nunca Duerme",
+   "art": {
+    "slug": "faro_lighthouse_cat",
+    "tint": null,
+    "aura": [
+     "#ffd77a",
+     "#ffffff",
+     "#b89558"
+    ]
+   },
+   "elements": [
+    "light"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "francotirador",
+   "worker": null,
+   "trait": "leal",
+   "battleForm": {
+    "name": "FARO — STORM WATCH FORM",
+    "cry": "LIGHTHOUSE LANCE!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Haz de Faro",
+     "cry": null,
+     "archetype": "haz",
+     "element": "light",
+     "dmg": 100,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 4,
+     "status": "cegado",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Rayo casi recto que no le hace caso al viento y atraviesa 4 celdas en línea. Deja Cegado 2 al barco rival: en su próximo turno su vista previa se encoge al 30%."
+    },
+    "ultimate": {
+     "name": "LIGHTHOUSE LANCE! (灯台の槍)",
+     "effect": "Un haz enorme que atraviesa 4 celdas en línea. Cegado 2 al barco rival.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Vigía: ves la vida de los gatos enemigos cuyos camarotes cruza su haz.",
+    "star3": "★3: atraviesa 5 celdas.",
+    "star5": "★5: su ultimate también Revela al gato del último camarote que cruza."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Luz, ambos padres Nv15+.",
+    "balanceSource": "resonance",
+    "minParentLevel": 15
+   },
+   "hint": "Prende la linterna cuando hay tormenta. Y cuando no, también. Por si acaso.",
+   "lore": "Cuidó un faro cuarenta años y nunca se le hundió un barco. Bueno, los suyos no. Los tuyos tampoco, si lo llevas.",
+   "balanceName": "Faro"
+  },
+  {
+   "id": "l_aurea",
+   "name": "Áurea",
+   "epithet": "la Primera Luz",
+   "art": {
+    "slug": "aurea_halo_cat",
+    "tint": null,
+    "aura": [
+     "#ffd77a",
+     "#fff8e1",
+     "#e8879a"
+    ]
+   },
+   "elements": [
+    "light"
+   ],
+   "rarity": "legendary",
+   "primordial": true,
+   "secret": false,
+   "role": "demoledor",
+   "worker": null,
+   "trait": "presumido",
+   "battleForm": {
+    "name": "ÁUREA — GOLDEN HALO FORM",
+    "cry": "HALO JUDGEMENT!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+    "powerBase": "balance:rarities.power_base.legendary",
+    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.demoledor.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Halo",
+     "cry": null,
+     "archetype": "haz",
+     "element": "light",
+     "dmg": 100,
+     "radius": 1.6,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 3,
+     "status": "cegado",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Rayo ancho y casi recto que no le hace caso al viento y atraviesa 3 celdas en línea. Deja Cegado 2 al barco rival: en su próximo turno su vista previa se encoge al 30%."
+    },
+    "ultimate": {
+     "name": "HALO JUDGEMENT! (光輪の審判)",
+     "effect": "Un rayo de halo gigantesco que atraviesa 3 celdas en línea. Cegado 2. Una vez por batalla.",
+     "dmg": 130,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Origen de la Luz: tus gatos Luz +10%; tus gatos Luz hacen +10% al barco rival mientras esté Cegado.",
+    "star3": "★3: atraviesa 4 celdas.",
+    "star5": "★5: Halo Judgement se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "grieta:light",
+    "how": "Grieta del Faro: la traes al ganar la batalla de la grieta. Duplicados: dos padres que compartan Luz, Nv20+.",
+    "balanceSource": "grieta:light",
+    "minParentLevel": 20
+   },
+   "hint": "No la mires directo. Ella sí te mira directo.",
+   "lore": "Brilla tanto que los barcos enemigos se rinden para no quedarse ciegos. Ella dice que es humildad. No es humildad.",
+   "balanceName": "Aurea"
+  },
+  {
+   "id": "c_hueco",
+   "name": "Hueco",
+   "epithet": "el Agujerito",
+   "art": {
+    "slug": "hueco_hole_cat",
+    "tint": null,
+    "aura": [
+     "#ff2e88",
+     "#231626",
+     "#ffffff"
+    ]
+   },
+   "elements": [
+    "void"
+   ],
+   "rarity": "common",
+   "primordial": false,
+   "secret": false,
+   "role": "asediador",
+   "worker": "farmer",
+   "trait": "gloton",
+   "battleForm": {
+    "name": "HUECO — POCKET VOID FORM",
+    "cry": "HOLE-IN-ONE!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+    "powerBase": "balance:rarities.power_base.common",
+    "foodMult": "balance:rarities.food_mult.common",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.asediador.hp",
+    "recarga": 0,
+    "shot": {
+     "name": "Mordidita",
+     "cry": null,
+     "archetype": "borrado",
+     "element": "void",
+     "dmg": 58,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 2,
+     "status": "vacio",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Atraviesa 2 celdas y las BORRA: no se pueden reparar, ni rebobinar, ni regenerar en esta batalla. Se come burbujas, escudos y estados de lo que toca."
+    },
+    "ultimate": {
+     "name": "BLACK HOLE-IN-ONE! (ホールインワン)",
+     "effect": "Un borrado más ancho que atraviesa 2 celdas. Lo que toca queda BORRADO para siempre en esta batalla.",
+     "dmg": 40,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Bolsillo: el primer estado que le ponen en la batalla se lo come (no le hace nada).",
+    "star3": "★3: atraviesa 3 celdas.",
+    "star5": "★5: si borra la celda de un camarote, le baja 10 de medidor al gato de adentro."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con al menos un padre de Vacío (Común).",
+    "balanceSource": "resonance"
+   },
+   "hint": "Asómate a su panza. No. Mejor no.",
+   "lore": "Tiene un hoyo en la panza y adentro se ven estrellas. Come y come y nunca se llena. Los pescaditos aparecen en otra galaxia.",
+   "balanceName": "Hueco"
+  },
+  {
+   "id": "r_ecomudo",
+   "name": "Eco Mudo",
+   "epithet": "el que No Contesta",
+   "art": {
+    "slug": "ecomudo_static_cat",
+    "tint": null,
+    "aura": [
+     "#ffffff",
+     "#ff2e88",
+     "#231626"
+    ]
+   },
+   "elements": [
+    "void"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "chismoso",
+   "battleForm": {
+    "name": "ECO MUDO — DEAD AIR FORM",
+    "cry": "SILENT SCREAM!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Silencio",
+     "cry": null,
+     "archetype": "borrado",
+     "element": "void",
+     "dmg": 55,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 2,
+     "status": "vacio",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Atraviesa 2 celdas y las BORRA: no se pueden reparar, ni rebobinar, ni regenerar en esta batalla. Se come burbujas, escudos y estados de lo que toca."
+    },
+    "ultimate": {
+     "name": "SILENT SCREAM! (無音の叫び)",
+     "effect": "Un silencio más ancho que atraviesa 2 celdas. Lo que toca queda BORRADO para siempre en esta batalla.",
+     "dmg": 50,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Contorno: el primer golpe que recibe en la batalla le pasa por el hueco (no le hace daño).",
+    "star3": "★3: atraviesa 3 celdas.",
+    "star5": "★5: también se come 10 de medidor del gato enemigo que toca."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Vacío.",
+    "balanceSource": "resonance"
+   },
+   "hint": "Le hablas y no contesta. Le vuelves a hablar y tampoco. Ya lo encontraste.",
+   "lore": "Es puro contorno: lo de adentro se lo llevó la estática. Chismea con mímica. Nadie le entiende. Él jura que está buenísimo.",
+   "balanceName": "Eco Mudo"
+  },
+  {
+   "id": "e_devoradora",
+   "name": "Devoradora",
+   "epithet": "la Boca del Mundo",
+   "art": {
+    "slug": "devoradora_portal_cat",
+    "tint": null,
+    "aura": [
+     "#ff2e88",
+     "#ffffff",
+     "#231626"
+    ]
+   },
+   "elements": [
+    "void"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "demoledor",
+   "worker": null,
+   "trait": "bravucon",
+   "battleForm": {
+    "name": "DEVORADORA — EVENT HORIZON FORM",
+    "cry": "EVENT HORIZON!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.demoledor.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Bocado",
+     "cry": null,
+     "archetype": "borrado",
+     "element": "void",
+     "dmg": 68,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 3,
+     "status": "vacio",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Atraviesa 3 celdas y las BORRA: no se pueden reparar, ni rebobinar, ni regenerar en esta batalla. Se come burbujas, escudos, estados y escudos de gato de lo que toca."
+    },
+    "ultimate": {
+     "name": "EVENT HORIZON! (事象の地平線)",
+     "effect": "Su boca-portal se abre más: un borrado ancho que atraviesa 3 celdas y BORRA todo lo que toca.",
+     "dmg": 80,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": "INESTABLE",
+    "passive": "Hambre: +10% de daño contra módulos con escudo o burbuja.",
+    "star3": "★3: atraviesa 4 celdas.",
+    "star5": "★5: si se come el escudo de un gato, recupera 10% de vida."
+   },
+   "obtain": {
+    "source": "resonance",
+    "how": "Resonancia con un padre de Vacío, ambos padres Nv15+.",
+    "balanceSource": "resonance",
+    "minParentLevel": 15
+   },
+   "hint": "Abre la boca y se apaga la luz del cuarto. Literal.",
+   "lore": "Donde iba la boca tiene un portal. Se come la luz, los escudos y tu postre. Del otro lado nadie ha vuelto a decir «provecho».",
+   "balanceName": "Devoradora"
+  },
+  {
+   "id": "l_nadie",
+   "name": "Nadie",
+   "epithet": "el Gato que Nadie Quiere",
+   "art": {
+    "slug": "nadie_static_cat",
+    "tint": null,
+    "aura": [
+     "#ffffff",
+     "#ff2e88",
+     "#231626"
+    ]
+   },
+   "elements": [
+    "void"
+   ],
+   "rarity": "legendary",
+   "primordial": true,
+   "secret": false,
+   "role": "francotirador",
+   "worker": null,
+   "trait": "callejero",
+   "battleForm": {
+    "name": "NADIE — DEAD CHANNEL FORM",
+    "cry": "NO ONE LIKES CATS!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+    "powerBase": "balance:rarities.power_base.legendary",
+    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Estática",
+     "cry": null,
+     "archetype": "borrado",
+     "element": "void",
+     "dmg": 95,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 4,
+     "status": "vacio",
+     "statusTurns": 1,
+     "gravityMul": 0.5,
+     "speedMul": 1.3,
+     "special": "Tiro largo, plano y rápido que atraviesa 4 celdas y las BORRA para siempre en esta batalla. Devora burbujas, escudos, estados y escudos de gato; si le pega directo a un gato, se come también su segunda vida."
+    },
+    "ultimate": {
+     "name": "DEAD CHANNEL! (砂嵐)",
+     "effect": "Una franja de estática más ancha que atraviesa 4 celdas: todo lo que toca queda BORRADO. Una vez por batalla.",
+     "dmg": 120,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Origen del Vacío: tus gatos Vacío +10%; empiezan cada batalla con +15 de medidor.",
+    "star3": "★3: atraviesa 5 celdas.",
+    "star5": "★5: Dead Channel se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "grieta:void",
+    "how": "Grieta del Abismo: lo traes al ganar la batalla de la grieta. Duplicados: dos padres que compartan Vacío, Nv20+.",
+    "balanceSource": "grieta:void",
+    "minParentLevel": 20
+   },
+   "hint": "Si preguntas «¿quién anda ahí?» y contestan «Nadie», ábrele.",
+   "lore": "Nadie lo adoptó. Nadie lo buscó. Nadie le puso nombre, así que se quedó con ese. Por eso, cuando alguien dice que a nadie le gustan los gatos, él levanta la pata.",
+   "balanceName": "Nadie"
+  },
+  {
    "id": "h_zarpa",
    "name": "Capitana Zarpa",
    "epithet": "la Espada de los Siete Puertos",
@@ -5903,7 +8201,7 @@
     "shot": {
      "name": "Rayo de Mediodía",
      "cry": "NOON BEAM!",
-     "archetype": "rayo",
+     "archetype": "haz",
      "element": "light",
      "dmg": 95,
      "radius": 1.5,
@@ -5915,7 +8213,7 @@
      "statusTurns": 2,
      "gravityMul": 1.0,
      "speedMul": 1.0,
-     "special": "Un rayo de sol en línea recta: deja ardiendo lo que es madera."
+     "special": "Un haz de sol recto que perfora una línea, ignora el viento y CIEGA; deja ardiendo la madera."
     },
     "ultimate": {
      "name": "SUNDOWN: THE SKY FALLS! (落日・天墜)",
@@ -5928,7 +8226,7 @@
     },
     "limitation": null,
     "passive": "Mediodía Eterno: el sol que tira no se apaga cuando él quiere, sino cuando se acaba.",
-    "star3": "★3: la ceguera dura 2 turnos.",
+    "star3": "★3: además quedan ECLIPSADOS su siguiente turno (sin críticos, apuntan a ciegas).",
     "star5": "★5: el sol se queda 3 turnos."
    },
    "obtain": {
@@ -5980,7 +8278,7 @@
     "shot": {
      "name": "Daga de Penumbra",
      "cry": "KAGE-UCHI!",
-     "archetype": "runa",
+     "archetype": "sombra",
      "element": "shadow",
      "dmg": 90,
      "radius": 0.9,
@@ -5992,7 +8290,7 @@
      "statusTurns": 0,
      "gravityMul": 1.0,
      "speedMul": 1.0,
-     "special": "Una daga de sombra teledirigida: no se ve venir hasta que llega."
+     "special": "Una daga de sombra invisible en vuelo: al caer, apuñala por la espalda al gato más cercano."
     },
     "ultimate": {
      "name": "A THOUSAND LIVES: SENJIN! (千刃)",
@@ -6058,7 +8356,7 @@
     "shot": {
      "name": "Nota Primordial",
      "cry": "FIRST NOTE!",
-     "archetype": "orbe_gravitatorio",
+     "archetype": "onda",
      "element": "sound",
      "dmg": 85,
      "radius": 1.6,
@@ -6070,7 +8368,7 @@
      "statusTurns": 0,
      "gravityMul": 1.0,
      "speedMul": 1.0,
-     "special": "Una onda de sonido redonda y gorda: retumba en todo lo que toca."
+     "special": "Una onda de sonido que atraviesa paredes: aturde a cada gato cuyo camarote cruza."
     },
     "ultimate": {
      "name": "BIG BANG! (ビッグバン)",
@@ -6103,7 +8401,7 @@
    "void"
   ],
   "label": "Próximo mar",
-  "note": "Silueta que aparece en el Catdex tras el final. No cuenta para el 54/54."
+  "note": "Silueta del Vacío tras el final (histórico). Desde la Parte 2 el Vacío es jugable: Grieta del Abismo."
  },
  "resonanceRules": {
   "balanceRules": [
@@ -8715,6 +11013,378 @@
    ],
    "secretPct": 0.58,
    "secretCandidates": 4
+  },
+  {
+   "id": "rec_ice_ice_low",
+   "parents": [
+    "ice",
+    "ice"
+   ],
+   "scenario": "padres Nv<15",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_copito",
+     "name": "Copito",
+     "rarity": "common",
+     "pct": 64.33
+    },
+    {
+     "cat": "r_escarcha",
+     "name": "Escarcha",
+     "rarity": "rare",
+     "pct": 35.09
+    }
+   ],
+   "secretPct": 0.58,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_ice_ice_high",
+   "parents": [
+    "ice",
+    "ice"
+   ],
+   "scenario": "padres Nv20+",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_copito",
+     "name": "Copito",
+     "rarity": "common",
+     "pct": 55.0
+    },
+    {
+     "cat": "r_escarcha",
+     "name": "Escarcha",
+     "rarity": "rare",
+     "pct": 30.0
+    },
+    {
+     "cat": "e_tempano",
+     "name": "Témpano",
+     "rarity": "epic",
+     "pct": 11.0
+    },
+    {
+     "cat": "l_boreas",
+     "name": "Bóreas",
+     "rarity": "legendary",
+     "pct": 3.5
+    }
+   ],
+   "secretPct": 0.5,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_sound_sound_low",
+   "parents": [
+    "sound",
+    "sound"
+   ],
+   "scenario": "padres Nv<15",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_tamborin",
+     "name": "Tamborín",
+     "rarity": "common",
+     "pct": 64.33
+    },
+    {
+     "cat": "r_djbigotes",
+     "name": "DJ Bigotes",
+     "rarity": "rare",
+     "pct": 35.09
+    }
+   ],
+   "secretPct": 0.58,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_sound_sound_high",
+   "parents": [
+    "sound",
+    "sound"
+   ],
+   "scenario": "padres Nv20+",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_tamborin",
+     "name": "Tamborín",
+     "rarity": "common",
+     "pct": 55.0
+    },
+    {
+     "cat": "r_djbigotes",
+     "name": "DJ Bigotes",
+     "rarity": "rare",
+     "pct": 30.0
+    },
+    {
+     "cat": "e_diva",
+     "name": "Diva",
+     "rarity": "epic",
+     "pct": 11.0
+    },
+    {
+     "cat": "l_headliner",
+     "name": "Headliner",
+     "rarity": "legendary",
+     "pct": 3.5
+    }
+   ],
+   "secretPct": 0.5,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_shadow_shadow_low",
+   "parents": [
+    "shadow",
+    "shadow"
+   ],
+   "scenario": "padres Nv<15",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_sombrita",
+     "name": "Sombrita",
+     "rarity": "common",
+     "pct": 64.33
+    },
+    {
+     "cat": "r_kage",
+     "name": "Kage",
+     "rarity": "rare",
+     "pct": 35.09
+    }
+   ],
+   "secretPct": 0.58,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_shadow_shadow_high",
+   "parents": [
+    "shadow",
+    "shadow"
+   ],
+   "scenario": "padres Nv20+",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_sombrita",
+     "name": "Sombrita",
+     "rarity": "common",
+     "pct": 55.0
+    },
+    {
+     "cat": "r_kage",
+     "name": "Kage",
+     "rarity": "rare",
+     "pct": 30.0
+    },
+    {
+     "cat": "e_titiritera",
+     "name": "Titiritera",
+     "rarity": "epic",
+     "pct": 11.0
+    },
+    {
+     "cat": "l_medianoche",
+     "name": "Medianoche",
+     "rarity": "legendary",
+     "pct": 3.5
+    }
+   ],
+   "secretPct": 0.5,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_time_time_low",
+   "parents": [
+    "time",
+    "time"
+   ],
+   "scenario": "padres Nv<15",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_tic",
+     "name": "Tic",
+     "rarity": "common",
+     "pct": 64.33
+    },
+    {
+     "cat": "r_arenita",
+     "name": "Arenita",
+     "rarity": "rare",
+     "pct": 35.09
+    }
+   ],
+   "secretPct": 0.58,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_time_time_high",
+   "parents": [
+    "time",
+    "time"
+   ],
+   "scenario": "padres Nv20+",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_tic",
+     "name": "Tic",
+     "rarity": "common",
+     "pct": 55.0
+    },
+    {
+     "cat": "r_arenita",
+     "name": "Arenita",
+     "rarity": "rare",
+     "pct": 30.0
+    },
+    {
+     "cat": "e_pendulo",
+     "name": "Péndulo",
+     "rarity": "epic",
+     "pct": 11.0
+    },
+    {
+     "cat": "l_cronos",
+     "name": "Cronos",
+     "rarity": "legendary",
+     "pct": 3.5
+    }
+   ],
+   "secretPct": 0.5,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_light_light_low",
+   "parents": [
+    "light",
+    "light"
+   ],
+   "scenario": "padres Nv<15",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_destello",
+     "name": "Destello",
+     "rarity": "common",
+     "pct": 64.33
+    },
+    {
+     "cat": "r_vitral",
+     "name": "Vitral",
+     "rarity": "rare",
+     "pct": 35.09
+    }
+   ],
+   "secretPct": 0.58,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_light_light_high",
+   "parents": [
+    "light",
+    "light"
+   ],
+   "scenario": "padres Nv20+",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_destello",
+     "name": "Destello",
+     "rarity": "common",
+     "pct": 55.0
+    },
+    {
+     "cat": "r_vitral",
+     "name": "Vitral",
+     "rarity": "rare",
+     "pct": 30.0
+    },
+    {
+     "cat": "e_faro",
+     "name": "Faro",
+     "rarity": "epic",
+     "pct": 11.0
+    },
+    {
+     "cat": "l_aurea",
+     "name": "Áurea",
+     "rarity": "legendary",
+     "pct": 3.5
+    }
+   ],
+   "secretPct": 0.5,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_void_void_low",
+   "parents": [
+    "void",
+    "void"
+   ],
+   "scenario": "padres Nv<15",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_hueco",
+     "name": "Hueco",
+     "rarity": "common",
+     "pct": 64.33
+    },
+    {
+     "cat": "r_ecomudo",
+     "name": "Eco Mudo",
+     "rarity": "rare",
+     "pct": 35.09
+    }
+   ],
+   "secretPct": 0.58,
+   "secretCandidates": 2
+  },
+  {
+   "id": "rec_void_void_high",
+   "parents": [
+    "void",
+    "void"
+   ],
+   "scenario": "padres Nv20+",
+   "assumptions": "Dos padres de un solo elemento (el primordial de la grieta + uno de sus hijos), sin pity, elemento descubierto. Con un padre de otro elemento se suman los comunes y raros de ese otro elemento.",
+   "results": [
+    {
+     "cat": "c_hueco",
+     "name": "Hueco",
+     "rarity": "common",
+     "pct": 55.0
+    },
+    {
+     "cat": "r_ecomudo",
+     "name": "Eco Mudo",
+     "rarity": "rare",
+     "pct": 30.0
+    },
+    {
+     "cat": "e_devoradora",
+     "name": "Devoradora",
+     "rarity": "epic",
+     "pct": 11.0
+    },
+    {
+     "cat": "l_nadie",
+     "name": "Nadie",
+     "rarity": "legendary",
+     "pct": 3.5
+    }
+   ],
+   "secretPct": 0.5,
+   "secretCandidates": 2
   }
  ],
  "secretRecipes": [
@@ -14209,6 +16879,288 @@
    "unlocks": [],
    "line": "Botón PODIO, abajo. Un gato, cuatro poderes, cero excusas.",
    "estTime": "~1:00"
+  },
+  {
+   "id": "H23",
+   "chain": "historia",
+   "title": "Grietas del Multiverso",
+   "goal": {
+    "type": "win_battle",
+    "battle": "grieta_ice",
+    "text": "Toca esta misión para entrar a la Grieta Boreal y vencer a Bóreas."
+   },
+   "trigger": "mission:H22",
+   "purpose": "story",
+   "reward": {
+    "std": true,
+    "gems": 2
+   },
+   "unlocks": [
+    "grietas_open"
+   ],
+   "line": "El mar se rompió. Del otro lado hace un frío del carajo.",
+   "why": "Abre las Grietas del Multiverso y trae el Hielo: un elemento nuevo y su Primordial, Bóreas.",
+   "estTime": "~6:30"
+  },
+  {
+   "id": "H24",
+   "chain": "historia",
+   "title": "Grieta del Escenario",
+   "goal": {
+    "type": "win_battle",
+    "battle": "grieta_sound",
+    "text": "Toca esta misión para entrar a la Grieta del Escenario y vencer a Headliner."
+   },
+   "trigger": "grieta:sound",
+   "purpose": "story",
+   "reward": {
+    "std": true,
+    "gems": 2
+   },
+   "unlocks": [],
+   "line": "El público pidió otra. El cielo no aguantó.",
+   "why": "Trae el Sonido y a Headliner: ondas que atraviesan paredes y aturden a los gatos que tocan.",
+   "estTime": "~6:30"
+  },
+  {
+   "id": "H25",
+   "chain": "historia",
+   "title": "Grieta de los Faroles",
+   "goal": {
+    "type": "win_battle",
+    "battle": "grieta_shadow",
+    "text": "Toca esta misión para entrar a la Grieta de los Faroles y vencer a Medianoche."
+   },
+   "trigger": "grieta:shadow",
+   "purpose": "story",
+   "reward": {
+    "std": true,
+    "gems": 2
+   },
+   "unlocks": [],
+   "line": "Las sombras de los faroles se mueven solas. La tuya no debería.",
+   "why": "Trae la Sombra y a Medianoche: tiros invisibles y puñaladas por la espalda.",
+   "estTime": "~6:45"
+  },
+  {
+   "id": "H26",
+   "chain": "historia",
+   "title": "Grieta del Reloj de Arena",
+   "goal": {
+    "type": "win_battle",
+    "battle": "grieta_time",
+    "text": "Toca esta misión para entrar a la Grieta del Reloj de Arena y vencer a Cronos."
+   },
+   "trigger": "grieta:time",
+   "purpose": "story",
+   "reward": {
+    "std": true,
+    "gems": 2
+   },
+   "unlocks": [],
+   "line": "La arena sube. Eso no es normal. Ni en la arena.",
+   "why": "Trae el Tiempo y a Cronos: pegar repara tu barco, y su ultimate TIME STOP le quita un turno a los gatos rivales.",
+   "estTime": "~7:00"
+  },
+  {
+   "id": "H27",
+   "chain": "historia",
+   "title": "Grieta del Faro",
+   "goal": {
+    "type": "win_battle",
+    "battle": "grieta_light",
+    "text": "Toca esta misión para entrar a la Grieta del Faro y vencer a Áurea."
+   },
+   "trigger": "grieta:light",
+   "purpose": "story",
+   "reward": {
+    "std": true,
+    "gems": 2
+   },
+   "unlocks": [],
+   "line": "El faro se prendió solo. Y no apunta a casa.",
+   "why": "Trae la Luz y a Áurea: rayos que atraviesan en línea y dejan ciego al rival.",
+   "estTime": "~7:00"
+  },
+  {
+   "id": "H28",
+   "chain": "historia",
+   "title": "Grieta del Abismo",
+   "goal": {
+    "type": "win_battle",
+    "battle": "grieta_void",
+    "text": "Toca esta misión para entrar a la Grieta del Abismo y vencer a Nadie."
+   },
+   "trigger": "grieta:void",
+   "purpose": "story",
+   "reward": {
+    "std": true,
+    "gems": 3
+   },
+   "unlocks": [],
+   "line": "Alguien toca la puerta del cielo. Dice que es Nadie.",
+   "why": "El último elemento: el Vacío y NADIE, el gato del título. Lo que borra no se repara.",
+   "estTime": "~7:30"
+  },
+  {
+   "id": "K33",
+   "chain": "criador",
+   "title": "Hielo para dos",
+   "goal": {
+    "type": "element_species",
+    "element": "ice",
+    "count": 2,
+    "text": "Cría una segunda especie de Hielo: en el Santuario, junta a Bóreas con cualquier gato y ¡A RESONAR!."
+   },
+   "trigger": "element:ice",
+   "purpose": "teach",
+   "reward": {
+    "std": true
+   },
+   "unlocks": [],
+   "line": "Bóreas sola se aburre. Y aburrida congela cosas.",
+   "why": "Cada especie nueva da +2% de oro a TODA la isla. Y los gatos de Hielo solo viven en su hábitat de Hielo: constrúyelo en la Tienda antes de que salga el bebé.",
+   "estTime": "~8:00"
+  },
+  {
+   "id": "K34",
+   "chain": "criador",
+   "title": "Segunda voz",
+   "goal": {
+    "type": "element_species",
+    "element": "sound",
+    "count": 2,
+    "text": "Cría una segunda especie de Sonido: en el Santuario, junta a Headliner con cualquier gato y ¡A RESONAR!."
+   },
+   "trigger": "element:sound",
+   "purpose": "teach",
+   "reward": {
+    "std": true
+   },
+   "unlocks": [],
+   "line": "Todo solista necesita una banda. O un vecino que lo soporte.",
+   "why": "Cada especie nueva da +2% de oro a TODA la isla. Y los gatos de Sonido solo viven en su hábitat de Sonido: constrúyelo en la Tienda antes de que salga el bebé.",
+   "estTime": "~8:00"
+  },
+  {
+   "id": "K35",
+   "chain": "criador",
+   "title": "Sombra de una sombra",
+   "goal": {
+    "type": "element_species",
+    "element": "shadow",
+    "count": 2,
+    "text": "Cría una segunda especie de Sombra: en el Santuario, junta a Medianoche con cualquier gato y ¡A RESONAR!."
+   },
+   "trigger": "element:shadow",
+   "purpose": "teach",
+   "reward": {
+    "std": true
+   },
+   "unlocks": [],
+   "line": "Medianoche quiere súbditos. Dale uno. Chiquito.",
+   "why": "Cada especie nueva da +2% de oro a TODA la isla. Y los gatos de Sombra solo viven en su hábitat de Sombra: constrúyelo en la Tienda antes de que salga el bebé.",
+   "estTime": "~8:00"
+  },
+  {
+   "id": "K36",
+   "chain": "criador",
+   "title": "Otro reloj",
+   "goal": {
+    "type": "element_species",
+    "element": "time",
+    "count": 2,
+    "text": "Cría una segunda especie de Tiempo: en el Santuario, junta a Cronos con cualquier gato y ¡A RESONAR!."
+   },
+   "trigger": "element:time",
+   "purpose": "teach",
+   "reward": {
+    "std": true
+   },
+   "unlocks": [],
+   "line": "Cronos ya sabe quién va a salir. No te lo quiere decir.",
+   "why": "Cada especie nueva da +2% de oro a TODA la isla. Y los gatos de Tiempo solo viven en su hábitat de Tiempo: constrúyelo en la Tienda antes de que salga el bebé.",
+   "estTime": "~8:00"
+  },
+  {
+   "id": "K37",
+   "chain": "criador",
+   "title": "Más luz",
+   "goal": {
+    "type": "element_species",
+    "element": "light",
+    "count": 2,
+    "text": "Cría una segunda especie de Luz: en el Santuario, junta a Áurea con cualquier gato y ¡A RESONAR!."
+   },
+   "trigger": "element:light",
+   "purpose": "teach",
+   "reward": {
+    "std": true
+   },
+   "unlocks": [],
+   "line": "Una luz sola es un faro. Dos ya es fiesta.",
+   "why": "Cada especie nueva da +2% de oro a TODA la isla. Y los gatos de Luz solo viven en su hábitat de Luz: constrúyelo en la Tienda antes de que salga el bebé.",
+   "estTime": "~8:00"
+  },
+  {
+   "id": "K38",
+   "chain": "criador",
+   "title": "Alguien para Nadie",
+   "goal": {
+    "type": "element_species",
+    "element": "void",
+    "count": 2,
+    "text": "Cría una segunda especie de Vacío: en el Santuario, junta a Nadie con cualquier gato y ¡A RESONAR!."
+   },
+   "trigger": "element:void",
+   "purpose": "teach",
+   "reward": {
+    "std": true
+   },
+   "unlocks": [],
+   "line": "Nadie no debería estar solo. Bueno, nadie. Ya me entendiste.",
+   "why": "Cada especie nueva da +2% de oro a TODA la isla. Y los gatos de Vacío solo viven en su hábitat de Vacío: constrúyelo en la Tienda antes de que salga el bebé.",
+   "estTime": "~8:00"
+  },
+  {
+   "id": "C29",
+   "chain": "capitan",
+   "title": "Química Multiversal",
+   "goal": {
+    "type": "reaction_discovered",
+    "count": 3,
+    "text": "Descubre 3 sinergias nuevas en batalla (por ejemplo CHOQUE TÉRMICO: fuego sobre algo congelado). Se anotan en Catdex › GRIMORIO."
+   },
+   "trigger": "mission:H23",
+   "purpose": "teach",
+   "reward": {
+    "std": true,
+    "gems": 1
+   },
+   "unlocks": [],
+   "line": "Hielo más fuego. ¿Qué podría salir mal? Todo. Eso queremos.",
+   "why": "Las sinergias hacen daño extra o efectos, y con los elementos nuevos hay mezclas que antes no existían. Un barco variado descubre más.",
+   "estTime": "~5:00"
+  },
+  {
+   "id": "K39",
+   "chain": "criador",
+   "title": "Coleccionista del Multiverso",
+   "goal": {
+    "type": "species_owned",
+    "count": 70,
+    "text": "Registra 70 especies de gato en el Catdex."
+   },
+   "trigger": "mission:K33",
+   "purpose": "story",
+   "reward": {
+    "std": true,
+    "gems": 5
+   },
+   "unlocks": [],
+   "line": "Setenta gatos. Esto ya no es una isla: es un multiverso con arenero.",
+   "why": "Cada especie registrada da +2% de oro a toda la isla, gemas y Ronroneo. Setenta es casi todo lo que existe en los mares que conoces.",
+   "estTime": "~40:00"
   },
   {
    "id": "P02",

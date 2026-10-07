@@ -430,9 +430,17 @@ export class PodioScene extends Scene {
           if (e.why === 'sleep') sp.emote('sleepy', 1);
           else sp.emote('surprise', 1);
           gsap.fromTo(this.cats[e.side], { rotation: -0.06 }, { rotation: 0, duration: 0.6, ease: 'elastic.out(1, 0.25)' });
-          if (e.why === 'stun') this.clearStun(e.side);
+          if (e.why === 'stun' || e.why === 'freeze') this.clearStun(e.side);
           sfx('error', 0.7);
           await this.wait(0.7);
+          break;
+        }
+        case 'note': {
+          // Parte 2: CHOQUE TÉRMICO, TURNO EXTRA, VIDA MÁX −8%, ¡NO VE NADA!
+          const at = this.pos(e.side, 'head');
+          this.fx.number({ x: at.x, y: at.y - 30 }, e.text, { color: e.color, size: 46, rot: 0 });
+          this.bars[e.side].sync();
+          await this.wait(0.45);
           break;
         }
         case 'meter':

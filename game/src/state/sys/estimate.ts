@@ -10,6 +10,7 @@ import { G } from '../game';
 import { crew, layoutOf, mk } from './ship';
 import { cat as getCat } from './cats';
 import type { BattleSpec } from '../../scenes/BattleScene';
+import { p2EnemyNotes } from '../../battle/multiverso';
 
 export interface Estimate {
   /** 0–1 win rate from the sims (null while the first sims run) */
@@ -72,6 +73,8 @@ function matchup(spec: BattleSpec): { reasons: string[]; tips: string[] } {
   if (weak.length && best.length) tips.push(`Prueba con ${best.slice(0, 2).map((e) => EL_NAME[e] ?? e).join(' o ')}: ×${mult[best[0]]} contra ${MAT_NAME[main]}.`);
   const t = spec.meta?.tune;
   if (t && t.stage > 1.05) reasons.push(`Etapa reforzada: su barco y sus gatos x${t.stage.toFixed(1)} (toca ¿POR QUÉ?).`);
+  // Parte 2: what the multiverse cats on the other side will do (the sims above already play it)
+  reasons.push(...p2EnemyNotes(spec.enemy.cats.flatMap((c) => c.elements)));
   return { reasons, tips };
 }
 
@@ -121,12 +124,12 @@ export function hiddenRules(spec: BattleSpec): string[] {
 /** what the Heroico / Divino ultimates do, with their real caps (battle/ults.ts) */
 const BIG_ULT: Record<string, string> = {
   h_zarpa: 'HEROICO. Su ulti tajea a TODOS los gatos rivales y raja sus camarotes (tope 35%, jefes 15%).',
-  h_granbigote: 'HEROICO. Su ulti sacude toda la quilla rival y deja su barco de piedra un turno (tope 35%, jefes 15%).',
+  h_granbigote: 'HEROICO. Su ulti quiebra toda la quilla rival (Maldita x1.5) y deja su barco de piedra un turno (tope 35%, jefes 15%).',
   h_valquiria: 'HEROICO. Su ulti atraviesa una columna entera y la electrocuta mojada (tope 35%, jefes 15%).',
   h_nekomante: 'HEROICO. Su ulti maldice 3 módulos y roba 40% de barra a cada gato rival (tope 35%, jefes 15%).',
   d_horizonte: 'DIVINO. Agujero negro 3 turnos: se traga celdas cada turno (25% + 8%/turno; jefes 6% + 3%), drena barras y desaparece los tiros rivales. Una vez por batalla.',
-  d_solcaido: 'DIVINO. Hace caer el sol: todo el barco arde y quedan cegados; el sol sigue quemando 2 turnos (42% + 6%/turno; jefes 15% + 3%). Una vez por batalla.',
-  d_milvidas: 'DIVINO. Siete cortes a cada gato rival, máximo 45% de la vida de cada uno (jefes 20%). Una vez por batalla.',
+  d_solcaido: 'DIVINO. Hace caer el sol: arde todo a su alrededor, sus gatos se queman y quedan CEGADOS; el sol sigue quemando 2 turnos (42% + 6%/turno; jefes 15% + 3%). Una vez por batalla.',
+  d_milvidas: 'DIVINO. Siete cortes a cada gato rival, máximo 70% de la vida de cada uno (jefes 25%). Una vez por batalla.',
   d_bigbang: 'DIVINO. Revienta la mitad del barco de un golpe (tope 45%, jefes 15%; el núcleo aguanta en 1). Una vez por batalla.',
 };
 

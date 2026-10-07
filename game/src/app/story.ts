@@ -36,6 +36,7 @@ import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
 import { goIsland, goTitle } from './flow';
 import { PODIO_INTRO, HEROICO_INTRO, DIVINO_INTRO } from '../podio/lines';
 import { CASINO_INTRO } from '../panels/casino/intro';
+import { GRIETAS_EXPLAIN, MULTI_INTRO, MULTI_OUTRO } from '../ui/story/grietasScript';
 
 // ------------------------------------------------------------------ beat plan (M1: b01–b11 · M2: zones 2–3)
 interface BeatRef {
@@ -81,6 +82,13 @@ const ON_NEW: Record<string, BeatRef[]> = {
   H21: [{ beat: 'b22_final', custom: BOSS_INTRO[6], onlyOn: 'map' }],
   // El Podio opens (after Boss 1): Luzterna explains what it is and why it exists
   P01: [{ beat: 'podio_intro', custom: PODIO_INTRO, onlyOn: 'island', delay: 2.5 }],
+  // Parte 2 — Grietas del Multiverso (why each one opened; the battle launches from the pinned mission)
+  H23: [{ beat: 'grietas_explain', custom: GRIETAS_EXPLAIN, effect: 'darkSky', delay: 3 }, { beat: 'grieta_ice_intro', custom: MULTI_INTRO.ice, delay: 1 }],
+  H24: [{ beat: 'grieta_sound_intro', custom: MULTI_INTRO.sound, delay: 2 }],
+  H25: [{ beat: 'grieta_shadow_intro', custom: MULTI_INTRO.shadow, delay: 2 }],
+  H26: [{ beat: 'grieta_time_intro', custom: MULTI_INTRO.time, delay: 2 }],
+  H27: [{ beat: 'grieta_light_intro', custom: MULTI_INTRO.light, delay: 2 }],
+  H28: [{ beat: 'grieta_void_intro', custom: MULTI_INTRO.void, effect: 'darkSky', delay: 2 }],
 };
 /** beats that play when a mission is COMPLETED */
 const ON_DONE: Record<string, BeatRef[]> = {
@@ -108,6 +116,13 @@ const ON_DONE: Record<string, BeatRef[]> = {
     { beat: 'b25_creditos', special: 'credits', delay: 1 },
   ],
   H22: [{ beat: 'noctis_joins', custom: NOCTIS_JOINS, special: 'reveal', species: 's_noctis' }],
+  // Parte 2: after each grieta — what the element DOES and how to get more of its cats
+  H23: [{ beat: 'grieta_ice_outro', custom: MULTI_OUTRO.ice, delay: 1.5 }],
+  H24: [{ beat: 'grieta_sound_outro', custom: MULTI_OUTRO.sound, delay: 1.5 }],
+  H25: [{ beat: 'grieta_shadow_outro', custom: MULTI_OUTRO.shadow, delay: 1.5 }],
+  H26: [{ beat: 'grieta_time_outro', custom: MULTI_OUTRO.time, delay: 1.5 }],
+  H27: [{ beat: 'grieta_light_outro', custom: MULTI_OUTRO.light, delay: 1.5 }],
+  H28: [{ beat: 'grieta_void_outro', custom: MULTI_OUTRO.void, delay: 1.5 }],
 };
 
 /** beats that fire when a condition becomes true (checked while calm on island/map) */
@@ -133,7 +148,7 @@ function catRarity(species: string) {
   return CONTENT.cats.find((c) => c.id === species)?.rarity;
 }
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
-const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01']);
+const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28']);
 
 interface QueuedBeat {
   key: string;

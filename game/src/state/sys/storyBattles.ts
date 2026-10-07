@@ -41,7 +41,8 @@ export interface StoryBattleDef {
   /** what the intro card says (honest: only mechanics that exist) */
   intro: string[];
   color: number;
-  reward: { element?: string; cat?: string; fragments?: number; gems?: number };
+  /** crystals: of the reward element (Grietas del Multiverso, state/sys/grietas.ts) */
+  reward: { element?: string; cat?: string; fragments?: number; gems?: number; crystals?: number };
   /** Barco del Vacío: graded by damage, not by sinking */
   grade?: 'damage';
 }
@@ -188,6 +189,8 @@ export interface StoryLoot {
   fragments: number;
   newElement: string | null;
   newCat: string | null;
+  /** crystals of the new element (Grietas) */
+  crystals?: { el: string; n: number };
   /** Barco del Vacío: % of its hull you took (0–100) */
   damagePct?: number;
 }
@@ -234,6 +237,10 @@ export function applyStoryResult(id: string, r: BattleResult): StoryLoot {
       G.emit('element', { id: el });
     }
     if (def.reward.cat) loot.newCat = def.reward.cat;
+    if (el && def.reward.crystals) {
+      G.addCrystals(el, def.reward.crystals);
+      loot.crystals = { el, n: def.reward.crystals };
+    }
   } else if (def.grade === 'damage' && passed) {
     // a better attempt later still pays the missing fragments
     const before = Math.min(3, Math.floor(cnt(`dmgpct_paid_${id}`) / 15));

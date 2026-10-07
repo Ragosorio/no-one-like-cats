@@ -13,6 +13,8 @@ import { CELL, Cell, DIRS, Material, ModuleInst, ShipBlueprint, ShipModel } from
 import { GRAVITY, DT } from './ballistics';
 import { BattleCatDef, CatFx, CatState, ElementId, ShotDef, StatusId } from './types';
 import { CONTENT } from '../data/content';
+// Parte 2: Hielo, Luz, Sombra, Sonido, Tiempo, Vacío (small hooks below, rules in multiverso.ts)
+import { p2BeginFire, p2Flight, p2Impact, p2PostHitCat, p2PreHitCat, p2PreviewMul, p2React, p2Shooters, p2StartTurn } from './multiverso';
 import { lateBossInit, lateBossStart, lateEnterPhase, wardIntercept, lateCellMul, lateAfterImpact, lateLoss, lateSplash, tickBuffs } from './bossLate';
 import { ULTS, ultBudgetFrac, ultTicks } from './ults';
 
@@ -348,8 +350,8 @@ export const MAT_RESIST: Record<string, Partial<Record<ElementId, number>>> = ((
   for (const m of CONTENT.materials) {
     const row: Partial<Record<ElementId, number>> = {};
     for (const [el, v] of Object.entries(m.mult)) row[map[el] ?? (el as ElementId)] = v;
-    // derived: the ice shards behave like water, the wind like storm
-    row.ice = row.water ?? 1;
+    // derived (when content has no column): the ice shards behave like water, the wind like storm
+    row.ice ??= row.water ?? 1;
     row.wind = row.electric ?? 1;
     out[m.id] = row;
   }
@@ -657,7 +659,7 @@ export class Battle {
   /** fraction of the arc the shooter can preview (mast alive = long) */
   previewMul(side: number) {
     const mast = this.sides[side].ship.modules.find((m) => m.kind === 'mast');
-    return mast && !mast.alive ? 0.5 : 1;
+    return (mast && !mast.alive ? 0.5 : 1) * p2PreviewMul(this, side);
   }
 
   isFlying(c: CatState) {
@@ -669,7 +671,8 @@ export class Battle {
     const list = this.sides[side].cats.filter((c) => !c.ko && c.stunned <= 0 && c.cooldown <= 0);
     // phase 3 gargoyle: only the flying gargoyle acts
     if (this.boss?.flying && this.cfg.boss?.side === side) return list.filter((c) => this.isFlying(c));
-    return list;
+    // TIME STOP (Tiempo ultimate): this side's cats skip the turn
+    return p2Shooters(this, side, list);
   }
   canCannon(side: number) {
     return this.cannons(side).length > 0;
@@ -697,6 +700,7 @@ export class Battle {
     this.pending = [];
     const s = this.sides[side];
     const ship = s.ship;
+    p2StartTurn(this, side, ev);
     for (const m of ship.modules) if (m.disabled > 0) m.disabled--;
     s.rodUsed = false;
     // bubble regenerates at the start of its owner's turn
@@ -826,7 +830,7 @@ export class Battle {
     }
     if (r.regrow?.includes(side)) {
       const ship = this.sides[side].ship;
-      const dmg = ship.cells().filter((c) => c.hp < c.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
+      const dmg = ship.cells().filter((c) => c.hp < c.maxHp && !c.status.voided).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
       const heal = dmg.slice(0, 2);
       for (const c of heal) {
         const amount = Math.round(Math.min(c.maxHp - c.hp, c.maxHp * 0.5));
@@ -993,7 +997,7 @@ export class Battle {
     const s = this.sides[side];
     let budget = Math.round((s.ship.initialMax?.[0] ?? 0) * frac);
     const total = budget;
-    const cells = s.ship.cells().filter((c) => c.hp < c.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
+    const cells = s.ship.cells().filter((c) => c.hp < c.maxHp && !c.status.voided).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
     for (const c of cells) {
       if (budget <= 0) break;
       const amount = Math.min(budget, c.maxHp - c.hp);
@@ -1138,6 +1142,9 @@ export class Battle {
       s.buffs.empower = 0;
     }
     origin ??= cannonId !== undefined ? this.cannonMuzzle(side, cannonId) : this.muzzle(side, cat?.def.uid);
+    p2BeginFire(this);
+    // INESTABLE (limitation): the shot wobbles a little, for whoever owns the cat
+    if (cat?.def.limitation === 'unstable') angle += this.rng.range(-0.06, 0.06);
     const windNow = this.wind + this.sides[side].windNext;
     this.sides[side].windNext = 0;
     this.curShooter = cat ?? null;
@@ -1205,7 +1212,7 @@ export class Battle {
 
   // ---------- trajectories
   buildPaths(shot: ShotDef, o: PathPoint, angle: number, power: number, wind: number, side: number): ShotPath[] {
-    const n = shot.trajectory === 'spread' ? shot.projectiles ?? 3 : 1;
+    const n = shot.trajectory === 'spread' ? shot.projectiles ?? 3 : shot.trajectory === 'ray' ? Math.max(1, shot.projectiles ?? 1) : 1;
     const spread = ((shot.spreadDeg ?? 10) * Math.PI) / 180;
     const out: ShotPath[] = [];
     for (let i = 0; i < n; i++) {
@@ -1238,9 +1245,10 @@ export class Battle {
 
   integrate(shot: ShotDef, o: PathPoint, angle: number, power: number, wind: number, side: number): ShotPath {
     const traj = shot.trajectory;
-    const g = GRAVITY * (shot.gravityScale ?? (traj === 'beam' ? 0.15 : traj === 'heavy' ? 1.6 : traj === 'orb' ? 0.5 : traj === 'gust' ? 0.1 : 1));
-    const windK = shot.windScale ?? (traj === 'beam' || traj === 'phase' ? 0.2 : traj === 'heavy' ? 0.5 : traj === 'gust' ? 0 : 1);
-    const speed = power * (traj === 'beam' ? 1.7 : traj === 'orb' ? 0.85 : traj === 'gust' ? 1.5 : 1);
+    const p2 = p2Flight(traj);
+    const g = GRAVITY * (shot.gravityScale ?? (p2 ? p2.g : traj === 'beam' ? 0.15 : traj === 'heavy' ? 1.6 : traj === 'orb' ? 0.5 : traj === 'gust' ? 0.1 : 1));
+    const windK = shot.windScale ?? (p2 ? p2.wind : traj === 'beam' || traj === 'phase' ? 0.2 : traj === 'heavy' ? 0.5 : traj === 'gust' ? 0 : 1);
+    const speed = power * (p2 ? p2.speed : traj === 'beam' ? 1.7 : traj === 'orb' ? 0.85 : traj === 'gust' ? 1.5 : 1);
     let vx = Math.cos(angle) * speed;
     let vy = Math.sin(angle) * speed;
     let x = o.x;
@@ -1249,7 +1257,7 @@ export class Battle {
     const impacts: number[] = [];
     const owners: number[] = [];
     const jumps: number[] = [];
-    let pierceLeft = shot.pierce ?? (traj === 'heavy' ? 2 : traj === 'phase' ? 6 : 0);
+    let pierceLeft = shot.pierce ?? (p2 ? p2.pierce : traj === 'heavy' ? 2 : traj === 'phase' ? 6 : 0);
     let bounced = traj !== 'bounce';
     let torpedo = false;
     const pierced = new Set<Cell>();
@@ -1407,10 +1415,11 @@ export class Battle {
     const hitPart = this.partAt(x, y, 1 - attSide, 2);
     const targetSide = hit ? hit.side : hitPart ? hitPart.side : x > 960 ? 1 : 0;
     const s = this.sides[targetSide];
-    const isPierce = !final && (shot.trajectory === 'heavy' || shot.trajectory === 'phase');
+    const p2f = p2Flight(shot.trajectory);
+    const isPierce = !final && (shot.trajectory === 'heavy' || shot.trajectory === 'phase' || !!p2f);
     const isBounceFirst = !final && shot.trajectory === 'bounce';
     const radius = isPierce ? 20 : isBounceFirst ? 36 : shot.radius;
-    let base = atk * shot.power * (isBounceFirst ? 0.35 : isPierce ? (shot.trajectory === 'phase' ? 2.2 : 0.9) : 1);
+    let base = atk * shot.power * (isBounceFirst ? 0.35 : isPierce ? shot.pierceMul ?? (p2f ? p2f.pierceMul : shot.trajectory === 'phase' ? 2.2 : 0.9) : 1);
     // Eclipse: a blinded side lands no criticals
     const crit = !isPierce && this.sides[attSide].buffs.blind <= 0 && this.rng.chance(0.1);
     if (crit) base *= 1.5;
@@ -1649,6 +1658,8 @@ export class Battle {
     // conduction chain (wet + rayo)
     if (isRayo(shot)) this.conduct(targetSide, x, y, base, ev, path, at, attSide);
     if (foe) lateAfterImpact(this, attSide, targetSide, shot, total, x, y, ev, path, at, reactionNames);
+    // Parte 2: blind, backstab, sound through cabins, rewind / time stop, erase
+    p2Impact(this, { attSide, targetSide, shot, base, x, y, radius, final, total, path, at, catK: CAT_K, hitCat: (c, d, e, p, a, el, direct, chained) => this.hitCat(c, d, e, p, a, el, direct, chained) }, ev);
     ev.push({ k: 'impact', x, y, side: targetSide, radius, element: shot.element, crit, path, at, total, mul: foe ? mainMul : undefined, mat: foe ? firstMat : undefined });
     for (let side = 0; side < 2; side++) {
       const chunks = this.sides[side].ship.collapse();
@@ -1705,7 +1716,11 @@ export class Battle {
     const el = shot.element;
     let name = '';
     let mult = 1;
-    if (el === 'fire' && st.wet) {
+    const p2r = p2React(this, shot, c);
+    if (p2r) {
+      name = p2r.name;
+      mult = p2r.mult;
+    } else if (el === 'fire' && st.wet) {
       delete st.wet;
       st.steam = 2;
       name = 'VAPOR';
@@ -1872,6 +1887,8 @@ export class Battle {
 
   hitCat(c: CatState, dmg: number, ev: BattleEvent[], path: number, at: number, el: ElementId = 'neutral', direct = false, chained = false) {
     if (c.ko || dmg <= 0) return;
+    // Parte 2: fire cracks a frozen cat (×1.5), the void eats its shields / spare life
+    const p2m = p2PreHitCat(c, el);
     if (c.shields > 0) {
       c.shields--;
       ev.push({ k: 'cat', side: c.side, uid: c.def.uid, dmg: 0, ko: false, shield: true, element: el, fx: { ...c.fx }, path, at });
@@ -1901,14 +1918,17 @@ export class Battle {
         stunned = true;
       }
     } else if (el === 'ice') {
-      if (!(c.def.elements[0] === 'water' && this.rng.chance(0.5))) {
+      // ice cats don't freeze (Parte 2); water cats resist 50%
+      if (!c.def.elements.includes('ice') && !(c.def.elements[0] === 'water' && this.rng.chance(0.5))) {
         c.fx.frozen = 2;
         c.stunned = Math.max(c.stunned, 2);
       }
       c.fx.burning = 0;
     }
     if (chained && !c.def.elements.includes('electric')) stunned = true;
-    const real = Math.round(dmg * aff * iceBreak * (c.exposed && !direct ? 1.5 : 1) * (c.def.limitation === 'glass' ? 3 : 1));
+    // Parte 2: a sound wave stuns (then the cat is SORDO for a while)
+    if (p2PostHitCat(this, c, el, 1 - c.side)) stunned = true;
+    const real = Math.round(dmg * aff * iceBreak * p2m * (c.exposed && !direct ? 1.5 : 1) * (c.def.limitation === 'glass' ? 3 : 1));
     c.hp -= real;
     c.ultCharge = Math.min(1, c.ultCharge + 0.15 * this.meterMul(c.side));
     const revived = c.hp <= 0 ? this.koOrRevive(c) : false;

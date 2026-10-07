@@ -60,6 +60,11 @@ export const REACTION_INFO: Record<string, ReactionInfo> = {
   'MAR HELADO': { ono: '¡CRIC!', color: 0xc6f0e4, desc: 'Congela lo Mojado', els: ['water'] },
   AMPLIFICAR: { ono: '¡ZING!', color: 0xff7ab8, desc: 'Duplica los estados', els: ['magic'] },
   DEVORAR: { ono: '¡...!', color: 0xff2e88, desc: 'Borra estados y escudos', els: ['void'] },
+  // Parte 2 (battle/multiverso.ts)
+  'CHOQUE TÉRMICO': { ono: '¡KRSSSH!', color: 0x9fe8ff, desc: 'Fuego sobre lo Congelado ×1.75', els: ['fire', 'ice'] },
+  'NOTA ALTA': { ono: '¡IIIIING!', color: 0xff2e88, desc: 'Una nota revienta el hielo ×2', els: ['sound', 'ice'] },
+  'ARCOÍRIS': { ono: '¡SHIIIN!', color: 0xffd77a, desc: 'Luz sobre lo Mojado: Cegado +1 turno', els: ['light', 'water'] },
+  ACELERAR: { ono: '¡TIC-TAC!', color: 0xe0b77a, desc: 'Lo que iba a arder, arde ya ×1.5', els: ['time', 'fire'] },
   '¡SANTABÁRBARA!': { ono: '¡KABOOM!', color: 0xff6a1a, desc: 'Pólvora: explosión en cadena', els: ['fire'] },
   '¡PARARRAYOS!': { ono: '¡ZAP!', color: 0xffe14a, desc: 'El pararrayos se tragó tu rayo', els: ['storm'] },
 };

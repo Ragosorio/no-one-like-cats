@@ -44,15 +44,21 @@ export function elColor(id: string): number {
     magic: 0x8f6b93,
     cosmic: 0x8a5cff,
     void: 0xff2e88,
+    // Parte 2
+    ice: 0x4fa3d9,
+    sound: 0xff2e88,
+    shadow: 0x5a4a78,
+    time: 0xb8925a,
+    light: 0xe0b040,
   };
   return MAIN[id] ?? 0x9a8f80;
 }
 export function isElementKnown(id: string) {
   return G.s.elements.includes(id);
 }
-/** the chapter's catdex element row (void only once discovered) */
+/** the catdex element row: the multiverse elements (Grietas, Parte 2) only once discovered */
 export function dexElements(): ElementDef[] {
-  return [...ELEMENTS].filter((e) => !e.unlock.startsWith('chapter') || isElementKnown(e.id)).sort((a, b) => a.order - b.order);
+  return [...ELEMENTS].filter((e) => !/^(chapter|grieta)/.test(e.unlock) || isElementKnown(e.id)).sort((a, b) => a.order - b.order);
 }
 
 // ---------------------------------------------------------------- catdex
@@ -116,10 +122,16 @@ export function mutationLook(id: string | null | undefined): MutationLook | null
   return MUT_LOOK[id] ?? { decal: null, color: C_MUT, el: null, sfxWord: '¡MUTA!' };
 }
 const C_MUT = 0xff2e88;
+/** plain-string limitations (the ones the battle sim applies, battle/catShots.ts LIMIT) explained */
+const LIM_TEXT: Record<string, string> = {
+  '3 ESCUDOS': '3 ESCUDOS: empieza cada batalla con 3 escudos; cada uno se traga un golpe entero a su camarote.',
+  'CAÑÓN DE CRISTAL': 'CAÑÓN DE CRISTAL: pega durísimo, pero cualquier golpe a su camarote le hace el triple.',
+  INESTABLE: 'INESTABLE: su portal no obedece del todo: cada disparo se desvía un poquito al azar.',
+};
 export function limitationText(def: CatDef): string | null {
   const l = def.combat.limitation as unknown;
   if (!l) return null;
-  if (typeof l === 'string') return l;
+  if (typeof l === 'string') return LIM_TEXT[l] ?? l;
   return (l as { text?: string }).text ?? null;
 }
 /** "cómo se obtiene", readable: strips design jargon (bucket, CHARLA, Ruta A/B…) */

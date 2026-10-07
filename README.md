@@ -12,7 +12,7 @@ Una isla flotante llena de gatos que coleccionas, crías y consientes… y que l
 
 ## Qué es
 
-- **Tu isla de gatos.** Colecciona 54 gatos de 8 elementos (Fuego, Agua, Naturaleza, Tierra, Tormenta, Magia, Cósmico y un Vacío que todavía no te toca). Cada uno tiene nombre, mañas, oficio y un lore que te va a dar ternura o miedo.
+- **Tu isla de gatos.** Colecciona 86 gatos de 13 elementos: los 7 del Primer Mar (Fuego, Agua, Naturaleza, Tierra, Tormenta, Magia, Cósmico) y, después del Capítulo 1, los 6 que se cuelan por las Grietas del Multiverso (Hielo, Sonido, Sombra, Tiempo, Luz y Vacío). Arriba de Mítico hay dos rarezas que no se invocan: los 4 **Heroicos** y los 4 **Divinos** (los rotos), que solo pagan los campeones de las ligas del Vacío del Podio. Cada uno tiene nombre, mañas, oficio y un lore que te va a dar ternura o miedo.
 - **Resonancia.** Dos gatos se van a "invocar otro gatito". Las probabilidades se ven completas, sin letra chiquita.
 - **Combate de artillería por turnos.** Apuntas, calculas el viento y disparas contra barcos modulares que se rompen celda por celda: casco, mástiles, cañones, la despensa. Tus gatos se transforman en su **Battle Form** y gritan sus ataques en inglés o japonés, como debe ser.
 - **Capítulo 1: El Primer Mar.** Seis zonas, jefes con mecánicas propias, una capitana (Luzterna) con más historia de la que admite, y un periódico, el *Diario del Mar*, que publica cada victoria.
