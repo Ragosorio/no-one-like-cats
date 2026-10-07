@@ -218,8 +218,9 @@ export class MapScene extends Scene {
       mode: 'map',
       // story battles (Heraldo, Grieta, Barco del Vacío, Patito…) launch straight from their mission
       onGoal: (m) => {
-        const g = m.goal as { battle?: unknown };
+        const g = m.goal as { battle?: unknown; type?: string };
         if (typeof g.battle === 'string' && g.battle in STORY_BATTLES) void startStoryBattle(g.battle);
+        else if (g.type === 'void_fragments') void import('../ui/fragmentsPanel').then((f) => f.openFragments());
         else void import('../panels/Missions').then((x) => x.openMissions());
       },
     });

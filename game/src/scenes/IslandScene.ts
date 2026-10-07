@@ -1277,6 +1277,9 @@ export class IslandScene extends Scene {
         else openMissions();
         return;
       }
+      case 'void_fragments':
+        void import('../ui/fragmentsPanel').then((f) => f.openFragments());
+        return;
       case 'use_automation':
         // Simulacro (and any switchable automation) lives in the Reino panel
         void import('../panels/kingdom/KingdomPanel').then((k) => k.openKingdomPanel());

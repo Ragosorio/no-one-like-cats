@@ -12,6 +12,7 @@ import './sys/workforce';
 import './sys/decor';
 import './sys/casino';
 import './sys/simulacro';
+import './sys/storyBattles'; // registers the Fragmentos retro patch before any save loads
 import './sys/podio';
 import './sys/grietas';
 import { markAllPatched } from './patches';

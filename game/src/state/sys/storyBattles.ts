@@ -10,6 +10,7 @@
  * Winning flags `won_<id>` (what the win_battle missions read); rewards are given once.
  */
 import { G } from '../game';
+import { registerPatch } from '../patches';
 import { catDef } from '../../data/content';
 import { adopt, cat as getCat } from './cats';
 import { crew, shipPower } from './ship';
@@ -272,6 +273,24 @@ export function addVoidFragments(n: number) {
 export function voidFragments() {
   return cnt('void_fragments');
 }
+
+// the boss fragments arrived in the update that wired zones 4–6: saves that had already beaten those bosses
+// never got them, and E25 (7/10) became impossible (max reachable 6). Pay them now.
+registerPatch({
+  id: '2026-10-fragmentos-de-jefes',
+  why: 'Jefes 4–6 vencidos antes de que existieran los Fragmentos del Vacío: E25 quedaba imposible.',
+  run() {
+    let n = 0;
+    for (const z of [4, 5, 6]) {
+      if (G.s.campaign.bossesDefeated < z || G.has(`frag_boss_${z}`)) continue;
+      G.flag(`frag_boss_${z}`);
+      n += z === 6 ? 2 : 1;
+    }
+    if (!n) return;
+    addVoidFragments(n);
+    return `Los jefes que venciste antes de que existieran los Fragmentos del Vacío te mandaron los suyos: +${n} (ahora tienes ${voidFragments()} de 10).`;
+  },
+});
 
 /** who the crew's MVP is for the story poster (fallback to the strongest) */
 export function storyMvpName(r: BattleResult) {

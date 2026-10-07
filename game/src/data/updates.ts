@@ -20,6 +20,16 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-10-fragmentos',
+    date: '2026-10-10',
+    title: 'Fragmentos del Vacío',
+    luzterna: 'Unos jefes se quedaron con algo tuyo. Ya hablé con ellos. Bueno, les grité. Ya te lo mandaron.',
+    items: [
+      { tag: 'ARREGLO', text: 'Si venciste al Arcanista, a la Estrella Errante o al Primer Mar antes de que existieran los Fragmentos del Vacío, nunca te dieron los suyos y la misión «Fragmentos» era imposible. Ya te llegaron.' },
+      { tag: 'NUEVO', text: 'El botón IR de «Fragmentos» abre la lista de los 10: de dónde sale cada uno, cuáles ya tienes y un IR directo al siguiente.' },
+    ],
+  },
+  {
     id: '2026-10-09-cataclismos',
     date: '2026-10-09',
     title: 'Cataclismos',
