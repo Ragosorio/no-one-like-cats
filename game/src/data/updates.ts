@@ -20,6 +20,31 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-08-podio-casino-habitats',
+    date: '2026-10-08',
+    title: 'El Podio, hábitats libres y un casino sin vergüenza',
+    luzterna: 'Abrieron un coliseo de gatos, te dejaron poner casas donde se te antoje y el casino ya no se esconde. Yo solo pedí una siesta.',
+    items: [
+      { tag: 'NUEVO', text: 'EL PODIO: duelos 1 contra 1 entre gatos con cuatro poderes (Básico, Técnica, Estilo y ULTI), velocidad ×½ a ×4 y modo AUTO. Ligas de Cartón a Vacío; cada victoria paga oro, comida, orbes de ESE gato y Ronroneo. Botón PODIO abajo, después del Jefe 1.' },
+      { tag: 'NUEVO', text: 'Lo que tu gato aprende en el Podio sirve en el barco (pega más y llega con la ulti cargada) y en la isla (produce más oro).' },
+      { tag: 'NUEVO', text: 'Hábitats libres: compra hábitats de cualquier elemento y ponlos donde quepan; muévelos gratis o véndelos. Tus hábitats se quedaron exactamente donde estaban.' },
+      { tag: 'NUEVO', text: 'Cada mejora de hábitat se ve distinta y da más espacio (hasta 14 gatos), con dos niveles nuevos: Ancla Dimensional y Trono Multiversal.' },
+      { tag: 'NUEVO', text: 'Cuatro islas para después de la historia: Jardín Sakura, Oasis Dorado, Isla Caramelo y el Abismo del Ronroneo, cada una con su secreto.' },
+      { tag: 'NUEVO', text: 'Casino con piloto automático (x1, x2, x4 o TURBO) que se para cuando tú digas, apuestas BAJA/MEDIA/ALTA, ALTO RIESGO y TODO O NADA en el Portal, y LA CASA TE DEBE.' },
+      { tag: 'BALANCE', text: 'Muchos más boletos, tu primer legendario garantizado en 20 tiros, gato garantizado cada 6, rachas calientes y Lumen la Fotógrafa en el Portal. Cuando sale algo épico o mejor, el gato aparece directo con su presentación completa.' },
+      { tag: 'ARREGLO', text: 'Tu apuesta ya no se reinicia al cambiar de color o de moneda. El casino ya no se puede ocultar, y Luzterna te cuenta por qué existe.' },
+      { tag: 'NUEVO', text: 'Los jefes 4, 5 y 6 por fin pelean distinto: el Arcanista con portales, la Estrella Errante con pozos de gravedad y EL PRIMER MAR con tres núcleos y un final con STARFALL.' },
+      { tag: 'NUEVO', text: 'Ultimates de verdad para legendarios y míticos: agujero negro, el sol que cae, los rieles de Raijin, los mil cortes de Noctis, el FIN de Merlina y más. Mismo gato, mismas reglas de los dos lados.' },
+      { tag: 'NUEVO', text: 'Al apuntar ves cuánto le pega tu gato a cada material del casco enemigo; cada golpe dice ¡SÚPER EFECTIVO! o RESISTE. Lo que te dispara el barco enemigo dice MORTERO o CAÑÓN DEL BARCO, y ¿POR QUÉ? en la pre-batalla enseña los ajustes ocultos.' },
+      { tag: 'NUEVO', text: 'Los 22 gatos que eran otro gato teñido ahora tienen su propio dibujo: Chispa y su bengala, Neblino en su tetera, Rencor y sus nueve colas, Eclipse y su corona solar.' },
+      { tag: 'NUEVO', text: 'GLOSARIO DEL MAR: botón «¿QUÉ ES ESTO?» en cada misión, y cada sistema se presenta la primera vez que lo usas. Todas las misiones dicen para qué sirven.' },
+      { tag: 'NUEVO', text: 'SIMULACRO (Reino 40): tu flota repite sola la mejor etapa ganada cada 3 minutos, también mientras no estás.' },
+      { tag: 'ARREGLO', text: 'Misiones que nunca se completaban: Banquete del Leviatán, Bandera Negra, Lo que guardan las ruinas (la Orquesta Muda ya despertó y te da a Sonata Prima) y el Simulacro.' },
+      { tag: 'ARREGLO', text: 'El Duelo de Balsa ya no se esconde: MAPA › ENCARGOS, desde Reino 5 o el Jefe 1. Y los duelos ya no se ponen más fuertes que tu propio barco.' },
+      { tag: 'NUEVO', text: 'El juego y su herramienta de arte, MAI SVG, son de código abierto (MIT). Hay guías para colaborar y un laboratorio para desarrolladores.' },
+    ],
+  },
+  {
     id: '2026-10-07-capitulo-1-completo',
     date: '2026-10-07',
     title: 'Capítulo 1 completo',
