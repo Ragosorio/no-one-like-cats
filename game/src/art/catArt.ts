@@ -1,4 +1,5 @@
 import { cachedRaster, storeRaster } from './rasterCache';
+import { artUrl } from './artBase';
 import { Assets, Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
 import { ART, CatPuppet, PuppetOptions, catRig } from './livingCat';
 import { GlowFilter, OutlineFilter } from 'pixi-filters';
@@ -41,10 +42,10 @@ export function elementFx(el: string) {
  *   1050 px. Loaded in the background only when a puppet is drawn bigger than ~640 px on screen.
  */
 export function catLiteUrl(slug: string) {
-  return `cats-svg/lite/${slug}.svg`;
+  return artUrl(`cats-svg/lite/${slug}.svg`);
 }
 export function catSvgUrl(slug: string) {
-  return `cats-svg/${slug}.svg`;
+  return artUrl(`cats-svg/${slug}.svg`);
 }
 /** the lite trace has ~12k paths: rasterizing it at full logical size costs little and stays crisp to ~700 px */
 const LITE_RES = 1;

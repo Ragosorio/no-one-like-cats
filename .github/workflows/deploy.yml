@@ -28,7 +28,20 @@ jobs:
           cache: npm
           cache-dependency-path: game/package-lock.json
       - run: npm ci
+      # Optional art site (docs/part-ii/09-hosting-arte.md). Repository variables NOLC_ART_BASE /
+      # NOLC_ART_BASE_FULL; both unset (the default) = every SVG ships with the game, exactly as before.
+      - name: Guard — art site published and identical (only when an art base is set)
+        if: ${{ vars.NOLC_ART_BASE != '' || vars.NOLC_ART_BASE_FULL != '' }}
+        env:
+          VITE_ART_BASE: ${{ vars.NOLC_ART_BASE }}
+          VITE_ART_BASE_FULL: ${{ vars.NOLC_ART_BASE_FULL }}
+        run: node scripts/art-publish.ts check --src public
       - run: npm run build
+        env:
+          VITE_ART_BASE: ${{ vars.NOLC_ART_BASE }}
+          VITE_ART_BASE_FULL: ${{ vars.NOLC_ART_BASE_FULL }}
+      - name: Site size (GitHub Pages limit is 1 GB)
+        run: du -sh dist
       - name: Guard — no raster images in the build
         run: |
           if find dist -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.gif' \) | grep -q .; then

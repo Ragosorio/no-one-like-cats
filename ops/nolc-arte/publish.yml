@@ -1,0 +1,98 @@
+# TEMPLATE for the art repo (e.g. Ragosorio/nolc-arte) — copy it there as .github/workflows/publish.yml.
+# It is NOT a workflow of this repo (GitHub only runs files under the repo root's .github/workflows/).
+#
+# Publishes the cat/story SVGs of Ragosorio/no-one-like-cats to the art repo's GitHub Pages site,
+# https://ragosorio.github.io/<art repo>/ — the SAME origin as the game, so no CORS and saves untouched.
+# The art is NOT committed to the art repo: every run checks out the game repo (sparse, depth 1) and
+# publishes from there. Steps + rationale: docs/part-ii/09-hosting-arte.md.
+#
+# Art repo variables (Settings › Secrets and variables › Actions › Variables), all optional:
+#   NOLC_ART_TIERS  all | full | lite   (default full: only cats-svg/<slug>.svg; lite + story stay with the game)
+#   NOLC_ART_SHARD  0..COUNT-1          (default 0)
+#   NOLC_ART_COUNT  number of art sites (default 1) — must equal the number of bases in the game's NOLC_ART_BASE_FULL
+name: Publish art to GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit / branch of Ragosorio/no-one-like-cats to publish
+        default: main
+  repository_dispatch:
+    types: [publish-art]
+  # New or redrawn cats pushed to the game reach this site on their own: every 6 h the job compares the
+  # game's cats-svg tree with the one already published and only deploys when it changed.
+  # (GitHub disables schedules in public repos after 60 days without activity: re-enable it in Actions.)
+  schedule:
+    - cron: '23 */6 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.same.outputs.skip }}
+    env:
+      TIERS: ${{ vars.NOLC_ART_TIERS || 'full' }}
+      SHARD: ${{ vars.NOLC_ART_SHARD || '0' }}
+      COUNT: ${{ vars.NOLC_ART_COUNT || '1' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Ragosorio/no-one-like-cats
+          ref: ${{ inputs.ref || github.event.client_payload.ref || 'main' }}
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            game/public/cats-svg/
+            game/public/story/
+            game/src/art/artPaths.ts
+            game/scripts/art-publish.ts
+      - name: Already published? (scheduled runs only)
+        id: same
+        run: |
+          TREE="$(git rev-parse HEAD:game/public/cats-svg)"
+          echo "TREE=$TREE" >> "$GITHUB_ENV"
+          if [ "${{ github.event_name }}" = "schedule" ] && curl -fsS "https://ragosorio.github.io/${{ github.event.repository.name }}/art-manifest.json" | grep -q "tree:$TREE"; then
+            echo "Art unchanged since the last publish (tree $TREE): nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.same.outputs.skip != 'true'
+        with:
+          node-version: 22
+      - name: Build the art site
+        if: steps.same.outputs.skip != 'true'
+        run: |
+          export NOLC_ART_SOURCE="$(git rev-parse --short HEAD) tree:$TREE"
+          node game/scripts/art-publish.ts build --src game/public --out _site --tiers "$TIERS" --shard "$SHARD" --count "$COUNT"
+          du -sh _site
+      - name: Guard — no raster images
+        if: steps.same.outputs.skip != 'true'
+        run: |
+          if find _site -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.gif' \) | grep -q .; then
+            echo "Raster image found in _site/"; exit 1
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.same.outputs.skip != 'true'
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

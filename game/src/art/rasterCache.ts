@@ -22,7 +22,9 @@ const enabled = (() => {
     return false;
   }
 })();
-const keyOf = (url: string, res: number) => new Request(`/__raster__/${encodeURIComponent(__BUILD_ID__)}/${res}/${url}`);
+/** relative art paths keep today's key; an absolute art URL (VITE_ART_BASE) drops its "scheme://" */
+export const rasterKeyPath = (url: string) => url.replace(/^(?:[a-z][a-z0-9+.-]*:)?\/\//i, '');
+const keyOf = (url: string, res: number) => new Request(`/__raster__/${encodeURIComponent(__BUILD_ID__)}/${res}/${rasterKeyPath(url)}`);
 
 let pruned = false;
 /** old builds' entries go (once per session, in the background) */

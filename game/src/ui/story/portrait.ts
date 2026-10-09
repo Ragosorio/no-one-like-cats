@@ -7,6 +7,7 @@ import { GlowFilter, OutlineFilter } from 'pixi-filters';
 import gsap from 'gsap';
 import { glowTexture, sparkTexture } from '../../art/textures';
 import { catTexture, livingCat, preloadCats } from '../../art/catArt';
+import { artUrl } from '../../art/artBase';
 import { CatPuppet } from '../../art/livingCat';
 import { C } from '../theme';
 import { Speaker } from './text';
@@ -14,7 +15,7 @@ import { settings } from '../../core/settings';
 import { killTweensDeep } from './tweens';
 
 /** MAI pure-vector trace of the Luzterna painting (light tier, ~1 MB; no raster served) */
-export const LUZTERNA_URL = 'story/lite/luzterna.svg';
+export const LUZTERNA_URL = artUrl('story/lite/luzterna.svg');
 
 let loading: Promise<unknown> | null = null;
 export function preloadStoryArt(extraSlugs: string[] = []) {

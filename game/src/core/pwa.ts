@@ -5,6 +5,8 @@
  * - Installed (standalone / fullscreen display): nothing to offer.
  * - Phone in a browser tab: the first tap asks for fullscreen + landscape lock (best effort).
  */
+import { artSwQuery } from '../art/artBase';
+
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -75,7 +77,7 @@ export function initPwa() {
   if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     // the game boots after `load` already fired (fonts first), so register right away when it did
     // the build id in the URL makes every deploy install a fresh worker (fresh code caches, art cache kept)
-    const reg = () => void navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(__BUILD_ID__)}`).catch(() => undefined);
+    const reg = () => void navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(__BUILD_ID__)}${artSwQuery()}`).catch(() => undefined);
     if (document.readyState === 'complete') reg();
     else window.addEventListener('load', reg, { once: true });
   }
