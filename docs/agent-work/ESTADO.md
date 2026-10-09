@@ -113,3 +113,11 @@ nueva partida, `file_handlers` .nocat en el manifest. Tests: `tests/saveSafety.t
 - No migrar a AgentGameEngine todavía: su render es un pipeline de triángulos sin texturas/sprites/texto
   (Pixi v8 ya lo hace mejor). Reutilizable más adelante: tick determinista + replay, `Saves`, `Jobs`,
   `AssetManager`, `audit()` de layout, patrón AgentService/MCP. Ver informe inicial.
+
+## Parte II — La Era de las Rupturas (2026-10-09)
+
+Arrancó la Parte II. Toda su bitácora vive en `docs/part-ii/` (empezar por `00-LEEME.md` y `10-estado-implementacion.md`).
+Resumen: `art/puppetCore.ts` (núcleo del puppet sin renderer; CatPuppet es adaptador, paridad probada),
+`src/engine/` (AgentGameEngine runtime sobre three.js r186), vertical slice aislado `rupturas.html` + `src/rupturas/`,
+arreglo del precio de orbes (`state/sys/shop.ts`, 15 tests). 92 tests verdes. Sin commit ni push.
+Ojo: "Parte 2" en el código sigue significando las Grietas; lo nuevo usa el prefijo `rupturas`.

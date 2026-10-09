@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo de conceptos</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--ink:#1d1b24;--mute:#6a6675;--line:#e0dbd0;
+--mar:#1f8fa8;--cel:#d9a441;--ast:#7556ae;--sis:#5b6470;--hi:#c8352e;--md:#d07a1e;--ok:#3e9e5a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13121a;--card:#1d1c26;--ink:#ece8f2;--mute:#9a96a6;--line:#2e2c3a}}
+:root[data-theme="dark"]{--bg:#13121a;--card:#1d1c26;--ink:#ece8f2;--mute:#9a96a6;--line:#2e2c3a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:24px 16px 8px;max-width:1280px;margin:0 auto}
+h1{margin:0 0 4px;font-size:22px}
+header p{margin:0;color:var(--mute);max-width:80ch}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0}
+.filters button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+main{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;padding:16px;max-width:1280px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.thumb{position:relative;aspect-ratio:4/3;background:#0b0c18;display:flex;align-items:center;justify-content:center;color:#888;font-size:12px}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.num{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.7);color:#fff;font-weight:700;border-radius:6px;padding:2px 8px}
+.ip{position:absolute;top:8px;right:8px;color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px}
+.ip.alto{background:var(--hi)}.ip.medio{background:var(--md)}
+.body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:7px}
+.body h2{font-size:15px;margin:0;line-height:1.25}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:11px;font-weight:600;border-radius:999px;padding:2px 8px;color:#fff}
+.c-mar{background:var(--mar)}.c-cel{background:var(--cel);color:#1d1b24}.c-ast{background:var(--ast)}.c-sis{background:var(--sis)}
+.v{font-size:11px;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--mute)}
+.pal{display:flex;height:26px;border-radius:6px;overflow:hidden}
+.pal span{flex:1;position:relative}
+.pal span:hover::after{content:attr(data-hex);position:absolute;bottom:100%;left:0;background:var(--ink);color:var(--bg);font-size:10px;padding:1px 4px;border-radius:3px;white-space:nowrap}
+.hex{font:11px/1.3 ui-monospace,Menlo,monospace;color:var(--mute);word-spacing:2px}
+ul{margin:0;padding-left:16px}
+li{margin:1px 0}
+footer{max-width:1280px;margin:0 auto;padding:0 16px 32px;color:var(--mute);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+<h1>NO ONE LIKE CATS · Parte II · Conceptos fase 2</h1>
+<p>Hoja de referencia de las 21 imágenes de moodboard. Las imágenes se leen por <code>file://</code> desde la carpeta fuera del repo y no se copian, así que sólo se ven en esta Mac. El análisis completo está en <code>04-catalogo-conceptos.md</code>. Paletas estimadas.</p>
+<div class="filters" role="group" aria-label="Filtrar por capa">
+<button data-f="all" aria-pressed="true">Todas</button>
+<button data-f="mar" aria-pressed="false">Marítimo</button>
+<button data-f="cel" aria-pressed="false">Celeste</button>
+<button data-f="ast" aria-pressed="false">Astral</button>
+<button data-f="sis" aria-pressed="false">Sistemas / personajes</button>
+<button data-f="ip" aria-pressed="false">Riesgo IP</button>
+</div>
+</header>
+<main id="grid"></main>
+<footer>Veredictos: USAR = guía diseño final traducido al estilo del juego · REF = referencia parcial · NO = no sale del moodboard. Ninguna imagen se embarca: todo asset final se repinta (MAI SVG) o se modela.</footer>
+<script>
+const DIR="file:///Users/roor.osorio/Desktop/No%20one%20-%20raster%20(fuera%20del%20repo)/conceptos/fase%202/";
+const L={mar:"Marítimo",cel:"Celeste",ast:"Astral",sis:"Sistema"};
+const D=[
+[1,"Hub de islas flotantes con haces de colores",[["sis","Mapa-hub de navegación"],["ast","El Umbral"]],"REF","alto",["#17232D","#46668C","#6FD9E6","#E2643A","#A57BE8"],["Lago-pesquera central y haces de luz que unen islas temáticas.","Sirve como mapa de regiones: cada haz es una ruta y su color, el elemento.","Sonic (SEGA) en el centro: no se puede usar; Canelo debería ocupar su lugar."]],
+[2,"Galeón en remolino cósmico",[["ast","Puerto Cometa"]],"USAR","",["#0C1A32","#1B3E69","#3072A6","#C57C27","#7B4726"],["El mar se convierte en galaxia: es la transición de marítimo a astral.","Shader de remolino polar de mar a estrellas, y un mascarón-reloj para el elemento Tiempo.","Hay glifos de IA en las velas y la jarcia es imposible."]],
+[3,"Gata cósmica con cuerno dorado",[["ast","Material Astral"]],"NO","alto",["#23144E","#7556AE","#C392F1","#DCC6EF","#D9A441"],["Muy probablemente es arte oficial de Yuumi (Riot Games).","Sólo sirve para describir en texto el material: pelaje-constelación, estela y oro.","Hay que sacarla del moodboard compartido."]],
+[4,"Isla con montaña de cristal",[["mar","Isla Nácar"]],"USAR","",["#18293A","#2C5582","#4B8FBF","#97A66D","#9A6BE0"],["Una meseta con foso y una corona de cristales azul-violeta.","Cristales facetados con matcap iridiscente y refracción falsa.","Está en 512 px y sus props son ilegibles; faltan las cuevas en la base."]],
+[5,"Reino de cuento con cascadas a las nubes",[["ast","Archipiélago de los Sueños"],["cel","Islas Invertidas"]],"USAR","",["#152741","#5675A7","#BDC4D4","#4F8A4A","#8DE3F0"],["Hay castillo, fantasmitas, faroles y una ballena voladora.","Se aprovechan la ballena (jefe o fauna), los faroles instanciados y las cascadas a invertir.","Está sobrecargada, no tiene foco y las hadas humanoides no encajan con el tono."]],
+[6,"Cráter de lava con domo-escudo y cometa",[["ast","Puerto Cometa (impacto)"],["sis","VFX de combate"]],"USAR","",["#1E192B","#34354D","#F07A2A","#E07BD8","#6FC8F0"],["Un cometa rosa choca contra un escudo sobre un cráter de lava.","Sirve para el VFX de escudo con ondas de impacto, el proyectil de Plasma y el decal de lava.","Los tótems deberían ser estatuas de gato y la imagen necesita un solo foco."]],
+[7,"Mar-espejo con islotes flotantes",[["cel","Islas Invertidas"],["ast","Sueños"]],"USAR","",["#0C1136","#2C3976","#486CB4","#C5B1E5","#F2B79A"],["Un río lechoso corre sobre el mar y los islotes flotan sobre su reflejo.","Es el mejor concepto que hay de agua que desafía las leyes.","La saturación está sin control y el reflejo planar es caro."]],
+[8,"Faro sobre isla-libro en tormenta",[["mar","Páginas Hundidas"]],"USAR","",["#2B322D","#536457","#919B88","#E5E4D4","#D9A85A"],["Es el faro de Luzterna sobre un libro abierto gigante.","Haz volumétrico con godrays, páginas como partículas y la pista de REGISTRO 000.","Es fotorrealista y sombrío: hay que traducirlo a anime."]],
+[9,"Ciudad sobre las nubes con aeronaves",[["cel","Corona Celeste"]],"USAR","medio",["#314D6C","#4299EC","#A4CFE4","#F2EDE2","#3E9E8A"],["Ciudad de techos de cobre, engranajes y dirigibles.","Es el acabado más cercano al objetivo: da un kit arquitectónico celeste.","Parece obra humana: hacer búsqueda inversa antes de compartirla."]],
+[10,"Isla abandonada de noche",[["mar","La Isla que Nadie Recuerda"]],"REF","",["#061A25","#114952","#36898A","#97B997","#E0A050"],["Ruinas tropicales bajo la luna con barriles hundidos.","Aporta la paleta de noche teal, niebla con LUT y un shader de memoria tipo glitch.","No se lee como la isla del jugador, que es la clave de la región."]],
+[11,"Héroe y zorro ante islas elementales",[["ast","El Umbral"]],"REF","",["#0C1023","#3B5182","#9BD8F0","#E05A2A","#C2B8C0"],["Póster épico con titanes, islas por elemento y un anillo rúnico.","Se aprovechan el anillo-portal (mejor como gatera) y las islas-muestra por elemento.","El héroe humano, el zorro y la chica demoníaca no encajan con el tono."]],
+[12,"Gato-joya de cristal negro",[["mar","Especie Cristal"]],"USAR","",["#0E0D10","#1D6385","#3FB6E8","#E89A2E","#D63A7A"],["Chibi negro con orejas-ala facetadas y cola de vidrio.","Silueta de especie y shader de facetas para el billboard.","Es un render de resina en 3D: traducirlo a pintura MAI y quitar joyería."]],
+[13,"Gato negro con capa y orbe",[["ast","Especie Sueño"]],"USAR","medio",["#132D51","#203B5F","#4C3FA0","#D9B54A","#8FE0F0"],["Gato que flota dormido, panza arriba, junto a un orbe violeta.","Da una pose de puppet, un orbe-proyectil y un glow de contorno.","El fondo parece una captura de videojuego y la marca frontal recuerda a Luna."]],
+[14,"Gato acorazado de tormenta",[["sis","VFX Tormenta / Plasma"]],"REF","medio",["#2A0E29","#5B2845","#443C83","#567DCF","#95D9F4"],["Gato con casco y un arco eléctrico en carrera.","Sólo aprovechar la idea de armadura ligera y el VFX de rayo.","Imita el estilo de splash de Riot; está en 512 px y borroso."]],
+[15,"Gato acuarela en la luna",[["ast","Sueños (filtro)"]],"USAR","",["#1D2F53","#536589","#F5D2C9","#E4B58D","#A8D8C8"],["Gatito con gorro de fiesta sentado en una luna creciente.","Úsalo como post-proceso de acuarela cuando un sueño altera el mundo.","No es para especies, porque su estilo choca con el MAI glossy."]],
+[16,"Gatito naranja chibi con estrella",[["sis","Canelo base"]],"USAR","",["#FEFEFE","#DC8E50","#F5E1C4","#3BB3A0","#F2C531"],["Atigrado naranja con pañoleta, cascabel y mochila-estrella.","Es el modelo de proporción chibi y de gato de papel con contorno.","Le falta actitud irreverente; debe llevar la bufanda canónica."]],
+[17,"Gato pirata de tormenta",[["cel","Canelo Almirante (vestuario)"]],"USAR","",["#14131B","#2A3143","#436486","#9ED4E9","#C8312C"],["Gato azul con tricornio, casaca y rayos en cubierta.","No es Canelo: sólo aporta el kit de capitán para Canelo Almirante.","Tiene marineros humanos al fondo y está en 500 px."]],
+[18,"Gato astronauta naranja",[["ast","Canelo Astral"]],"USAR","",["#051228","#20364E","#ED9B4C","#E9DBBF","#40778E"],["Atigrado naranja con traje espacial y mochila-cohete.","Aporta el visor que refleja el skydome y la ola de nube como suelo astral.","Lleva bandera de EE. UU. y el traje naranja se come al gato."]],
+[19,"Chibi pirata en barco rojo",[["mar","Tono marítimo / olas"]],"REF","medio",["#165483","#4286B0","#54CADE","#E2EFEF","#C8352E"],["Barco negro y rojo entre olas cel-shaded.","Es la referencia exacta para el agua toon del O0.","Se ven las líneas de corte de un rompecabezas comercial y el personaje no es un gato."]],
+[20,"Barco volador con globogatos",[["cel","Navegación celeste"]],"USAR","",["#3A3750","#546D99","#80A2C7","#AD6B77","#E9A23B"],["Barco con velas-ala entre nubes, con peces-globo con orejas de gato.","De aquí salen los globogatos (fauna o munición) y las velas-ala.","La tripulación es humanoide: debe ser de gatos de papel."]],
+[21,"Galeón astral con mascarón de gato",[["ast","Puerto Cometa (barco astral)"]],"USAR","medio",["#090C27","#1B326F","#6569AF","#E27157","#D4A548"],["Galeón índigo y oro cuyo casco es un gato coronado.","Mascarón-gato animado y modular: cambia según el capitán.","Parece stock de IA, el gato es fotorrealista y la jarcia es ilegible."]]
+];
+const g=document.getElementById("grid");
+for(const [n,t,regs,v,ip,pal,sum] of D){
+  const a=document.createElement("article");a.className="card";
+  a.dataset.layers=regs.map(r=>r[0]).join(" ")+(ip?" ip":"");
+  a.innerHTML=`<div class="thumb"><img loading="lazy" alt="Concepto ${n}: ${t}" src="${DIR}${n}.jpeg"><span class="num">${n}</span>${ip?`<span class="ip ${ip}">IP ${ip.toUpperCase()}</span>`:""}</div>
+<div class="body"><h2>${t}</h2>
+<div class="chips">${regs.map(([k,r])=>`<span class="chip c-${k}" title="${L[k]}">${r}</span>`).join("")}<span class="v">${v}</span></div>
+<div class="pal">${pal.map(h=>`<span style="background:${h}" data-hex="${h}"></span>`).join("")}</div>
+<div class="hex">${pal.join(" ")}</div>
+<ul>${sum.map(s=>`<li>${s}</li>`).join("")}</ul></div>`;
+  a.querySelector("img").onerror=e=>{e.target.replaceWith(Object.assign(document.createElement("span"),{textContent:"Imagen no disponible (sólo se ve en la Mac del proyecto)"}))};
+  g.appendChild(a);
+}
+document.querySelectorAll(".filters button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".filters button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  const f=b.dataset.f;
+  g.querySelectorAll(".card").forEach(c=>c.style.display=(f==="all"||c.dataset.layers.split(" ").includes(f))?"":"none");
+});
+</script>
+</body>
+</html>
