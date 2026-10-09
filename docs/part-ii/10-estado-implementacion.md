@@ -174,6 +174,26 @@ Objetivo del dueño: cero pendientes de la Oleada 1 antes de publicar.
   - La silueta del GATO CALLEJERO se dibuja encima del panel del Catdex.
   - En el cartel «¿CÓMO TE LLAMAS?», el título toca el subtítulo.
 
+
+## 2h. PUBLICADO (2026-10-09, autorizado por el dueño)
+
+- **Commits:** `017cc93` (arte del Lote D) y `bcf7850` (Parte II + niveles hasta 100 + pantallas), en `main`.
+- **En vivo:** build `bcf7850-20261009T2152`.
+- **Sitio de arte:** 100 SVG completos (manifest `tree:ebcbeab…`).
+- **Verificado:**
+  - La portada carga sin errores y sin chunks 3D.
+  - El arte nuevo responde 200 en las versiones completa y lite.
+  - Tests 215/215 y verify-missions 138 OK.
+- **NOVEDADES:**
+  - «Nivel 100 (y pantallas que ya caben)»: la ven todos.
+  - «PARTE II · La Marea Imposible»: no destripa la historia a quien no ha terminado.
+- **Problemas de la Parte I que aparecieron durante la prueba completa (cerrados):**
+  - el texto «RESONANCIA Nº 001» en la recompensa de jefe;
+  - el aviso de gsap «alpha» en endScreen;
+  - el microevento del gato callejero que se dibujaba sobre los paneles;
+  - el título «¿CÓMO TE LLAMAS?» pegado a su subtítulo;
+  - los consejos del Podio con el tope por estrellas.
+
 ## 3. Resultados verificados del slice (headless, M4, Alta, 1600×900)
 
 **Rendimiento** (vsync limita a 60):
