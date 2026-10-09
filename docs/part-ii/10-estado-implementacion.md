@@ -76,6 +76,14 @@ En la barra inferior están la hora, la velocidad del día, el clima, ZARPAR y C
 
 **Pruebas:** 121/121 y typecheck limpio.
 
+
+## 2d. Publicado (2026-10-09, autorizado por el dueño)
+
+- **Juego:** 5 commits en `main` (`4e9a3b3`…`92d8acf`), desplegados en Pages. En vivo: carga sin errores, `rupturas.html` corre a 60 FPS y el service worker trae `&art=…&tiers=full`.
+- **Repo de arte:** `Ragosorio/nolc-arte` (público, Pages por Actions), en https://ragosorio.github.io/nolc-arte/. 86 SVG completos, con el manifest `tree:<hash>`. Revisa cada 6 h y solo publica si `cats-svg` cambió.
+- **Variable** `NOLC_ART_BASE_FULL=https://ragosorio.github.io/nolc-arte/` en el repo del juego. **dist: 690 MB → 102 MB.** Para revertir: `gh variable delete NOLC_ART_BASE_FULL -R Ragosorio/no-one-like-cats` y redesplegar.
+- **Codex:** el **Lote D** (14 gatos de la Oleada 1) ya está en `~/Desktop/No one - raster (fuera del repo)/arte-nuevo/`: manifest, prompts compilados, PROGRESO, la rareza `Evolución` y el lote `d` en las herramientas. Respaldo previo en `_respaldos/2026-10-09-antes-lote-d/`. La orden para Codex es «Haz el lote D». Cuando el dueño apruebe los PNG, Claude los convierte a SVG + rig + `content.json` (elemento Cristal incluido) y ahí se ven en el juego.
+
 ## 3. Resultados verificados del slice (headless, M4, Alta, 1600×900)
 
 **Rendimiento** (vsync limita a 60):
