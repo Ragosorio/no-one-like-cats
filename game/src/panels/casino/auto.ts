@@ -1,9 +1,11 @@
 /**
  * PILOTO AUTOMÁTICO (casino agent): auto-play for the Tragamichis, the Ruleta and the Portal.
  *   - start / stop from the left column; Space also stops it.
- *   - speeds x1 · x2 · x4 · TURBO (TURBO skips straight to the results; only new legendary+ cats get a reveal).
- *   - stop conditions (saved in the game): big win, legendary+, new cat, balance below X% of the start,
- *     after N rounds. Running out of money always stops it.
+ *   - speeds x1 · x2 · x10 (x10 = results-first: every banner is skipped but each result stays readable).
+ *   - ETERNO (button next to the speeds): the 20-second overheating session (panels/casino/eterno.ts).
+ *   - plays "until you stop" by default: a prize never ends the run. Optional stop conditions (saved in the game):
+ *     big win, legendary+, new cat, balance below X% of the start (on by default), after N rounds.
+ *     Running out of money always stops it. Every round is paid.
  * One runner, one widget: the CasinoScene owns it; views only implement `AutoHost`.
  * Nothing is allocated per round here (the label texts are reused).
  */
@@ -12,7 +14,7 @@ import { Modal } from '../../ui/modal';
 import { C, F } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { sfx } from '../../core/audio';
-import { AutoPrefs, AutoSpeed, autoPrefs } from '../../state/sys/casino';
+import { AUTO_SPEEDS, AutoPrefs, AutoSpeed, AutoSpeedChoice, autoPrefs } from '../../state/sys/casino';
 import { CP, CButton, Seg, clickable, heading, label } from './kit';
 import type { CasinoCtx } from './ctx';
 
@@ -37,14 +39,11 @@ export interface AutoHost {
   onAutoStop?(): void;
 }
 
-export const SPEEDS: { v: AutoSpeed; label: string }[] = [
-  { v: 1, label: 'x1' },
-  { v: 2, label: 'x2' },
-  { v: 4, label: 'x4' },
-  { v: 99, label: 'TURBO' },
-];
-/** pause between rounds (ms) */
-const GAP: Record<AutoSpeed, number> = { 1: 450, 2: 200, 4: 70, 99: 16 };
+export const SPEEDS: { v: AutoSpeedChoice; label: string }[] = AUTO_SPEEDS.map((v) => ({ v, label: `x${v}` }));
+/** pause between rounds (ms): x10 still leaves the result on screen for a beat */
+export function gapFor(speed: AutoSpeed) {
+  return speed <= 1 ? 450 : speed <= 2 ? 200 : speed <= 10 ? 160 : Math.max(16, 1600 / speed);
+}
 
 export type StopReason = 'user' | 'rounds' | 'floor' | 'poor' | 'big' | 'legend' | 'new' | 'gone';
 export const STOP_TEXT: Record<StopReason, string> = {
@@ -64,7 +63,8 @@ export class AutoPanel extends Container {
   private count = 0;
   private startBal = 0;
   private btn: CButton;
-  private seg: Seg<AutoSpeed>;
+  private seg: Seg<AutoSpeedChoice>;
+  private eternoBtn: CButton;
   private status: Text;
   private gear = new Container();
   private dimmed = false;
@@ -73,22 +73,28 @@ export class AutoPanel extends Container {
     private ctx: CasinoCtx,
     private host: () => AutoHost | null,
     private onStop: (reason: StopReason, rounds: number) => void,
+    private onEterno: () => void,
   ) {
     super();
     const head = label('PILOTO AUTOMÁTICO', 13, CP.yellow, { letterSpacing: 2 });
     this.status = label('', 13, CP.softPink, { letterSpacing: 1 });
     this.status.anchor.set(1, 0);
     this.status.position.set(286, 0);
-    this.seg = new Seg<AutoSpeed>(
+    this.seg = new Seg<AutoSpeedChoice>(
       SPEEDS.map((s) => ({ v: s.v, label: s.label })),
       autoPrefs().speed,
       (v) => {
         autoPrefs().speed = v;
-        this.ctx.say(v === 99 ? 'autoTurbo' : 'autoSpeed', 0.6);
+        this.ctx.say(v === 10 ? 'autoTurbo' : 'autoSpeed', 0.6);
       },
-      { w: 64, h: 36, size: 18, gap: 6, color: CP.yellow },
+      { w: 50, h: 40, size: 22, gap: 5, color: CP.yellow },
     );
     this.seg.position.set(0, 22);
+    // ETERNO: not a speed, a session (hot button)
+    const flame = new Graphics();
+    flame.moveTo(0, 12).bezierCurveTo(-9, 4, -6, -6, 0, -14).bezierCurveTo(2, -6, 9, -4, 7, 4).bezierCurveTo(6, 10, 3, 12, 0, 12).fill(CP.yellow).stroke({ width: 2, color: CP.ink });
+    this.eternoBtn = new CButton('ETERNO', () => this.onEterno(), { w: 120, h: 40, color: 0xff3b1f, fg: CP.paper, size: 22, icon: flame });
+    this.eternoBtn.position.set(166, 22);
     this.btn = new CButton('AUTO', () => this.toggle(), { w: 206, h: 54, color: CP.cyan, size: 30, sub: 'TIRA POR TI' });
     this.btn.position.set(0, 70);
     // gear (stop conditions)
@@ -104,15 +110,18 @@ export class AutoPanel extends Container {
     this.gear.addChild(gg);
     this.gear.position.set(218, 70);
     clickable(this.gear, () => openAutoRules());
-    this.addChild(head, this.status, this.seg, this.btn, this.gear);
+    this.addChild(head, this.status, this.seg, this.eternoBtn, this.btn, this.gear);
     this.refresh();
   }
 
+  /** an ETERNO session owns the table */
+  eterno = false;
   /** the current tab supports auto-play? */
   setAvailable(ok: boolean) {
     this.dimmed = !ok;
     this.alpha = ok ? 1 : 0.4;
     this.btn.disabled = !ok;
+    this.eternoBtn.disabled = !ok;
     if (!ok && this.running) this.stop('gone');
     this.refresh();
   }
@@ -177,7 +186,7 @@ export class AutoPanel extends Container {
           else if (p.stopBig && out.big) this.stop('big');
         }
         if (!this.running) break;
-        await wait(GAP[p.speed]);
+        await wait(gapFor(p.speed));
       }
     } catch (e) {
       console.warn('[casino] auto-play stopped', e);
@@ -206,15 +215,15 @@ export class AutoPanel extends Container {
       this.status.text = '';
     } else {
       this.btn.draw(CP.cyan);
-      this.btn.setText('AUTO', this.dimmed ? 'AQUÍ NO' : p.rounds ? `${p.rounds} TIRADAS` : 'SIN LÍMITE');
-      this.status.text = this.dimmed ? 'SLOT · RULETA · PORTAL' : '';
+      this.btn.setText('AUTO', this.eterno ? 'ETERNO EN CURSO' : this.dimmed ? 'AQUÍ NO HAY AUTO' : p.rounds ? `${p.rounds} TIRADAS` : 'HASTA QUE PARES');
+      this.status.text = '';
     }
   }
 }
 
 // ------------------------------------------------------------------ stop-condition settings (saved in the game)
 export function openAutoRules() {
-  const m = new Modal('Piloto automático', 1320, 780, { subtitle: 'TÚ PONES LAS REGLAS · SE GUARDAN' });
+  const m = new Modal('Piloto automático', 1320, 800, { subtitle: 'TÚ PONES LAS REGLAS · SE GUARDAN' });
   const b = m.body;
   const p = autoPrefs();
   const T = (s: string, size = 22, fill: number = C.ink) => txt(s, { fontFamily: F.ui, fontWeight: '700', fontSize: size, fill, wordWrap: true, wordWrapWidth: 1080, lineHeight: size + 6 });
@@ -241,7 +250,7 @@ export function openAutoRules() {
     );
   row(
     'TIRADAS POR RONDA',
-    'Cuántas veces tira antes de pararse solo.',
+    'SIN FIN = juega hasta que lo pares tú (cada tirada se paga).',
     new Seg<number>(
       [10, 25, 50, 100, 0].map((n) => ({ v: n, label: n ? String(n) : 'SIN FIN' })),
       p.rounds,
@@ -259,11 +268,11 @@ export function openAutoRules() {
       { w: 120, h: 50, size: 24, color: CP.pink, gap: 8 },
     ),
   );
-  row('PARAR EN PREMIO GORDO', 'Tragamichis x5 o más o un gato, jackpot, pleno en la ruleta; en el Portal: legendario o un gato épico nuevo.', toggle('stopBig'));
+  row('PARAR EN PREMIO GORDO', 'Apagado: un premio se celebra y sigue jugando. Prendido: x5 o más, jackpot, pleno o un gato.', toggle('stopBig'));
   row('PARAR EN LEGENDARIO', 'Legendario, HOLO o mítico (Portal y gatos de la Tragamichis).', toggle('stopLegend'));
   row('PARAR EN GATO NUEVO', 'Cualquier gato que todavía no tenías.', toggle('stopNew'));
   const n = T(
-    'Velocidades: x1 juega todo · x2 y x4 aceleran las animaciones · TURBO salta directo a los resultados (solo te enseña los gatos legendarios nuevos). Si te quedas sin saldo, se para solo. Espacio también lo para.',
+    'Velocidades: x1 juega todo · x2 acelera · x10 va rapidísimo pero cada resultado se ve (solo se detiene a enseñarte gatos legendarios nuevos). Si te quedas sin saldo, se para solo. Espacio también lo para. ETERNO no es una velocidad: es una sesión de 20 segundos con 50/50 final (te pide confirmación).',
     17,
     C.ink,
   );

@@ -1,11 +1,13 @@
 /**
  * CASINO "EL GATO NEGRO" — the neon-glitch dimension of the multiverse (casino agent).
- * Tabs: TRAGAMICHIS (slots) · RULETA · PORTAL (gacha) · LA CAJA (prize counter) · ACCESORIOS.
+ * Tables come from panels/casino/games/registry.ts (grouped, scrollable left nav): Tragamichis, Ruleta, Plinko,
+ * Duelo de Dados, Mayor o Menor, Bingo Exprés, Rasca y Gana, Cajas Misteriosas, Portal, La Caja, Accesorios.
+ * Owns MODO ETERNO (panels/casino/eterno.ts): the 20-second overheating session over the current table.
  * Entered via panels/casino/open.ts (openCasino / openGacha). Leaves to the island with goIsland().
  * Owns the PILOTO AUTOMÁTICO (panels/casino/auto.ts, left column) and the LA CASA TE DEBE meter (top bar).
  * Remembers the last tab you played (saved with the stakes in G.s.casino.prefs).
  */
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, FederatedPointerEvent, FederatedWheelEvent, Graphics, Rectangle, Text } from 'pixi.js';
 import gsap from 'gsap';
 import { Scene, scenes } from '../core/scenes';
 import { W, H } from '../core/App';
@@ -16,14 +18,17 @@ import { speak, stopVoice, voice } from '../core/voice';
 import { settings } from '../core/settings';
 import { G } from '../state/game';
 import { CANDY, chips, ensureGambitOpen, owed, prefs, syncChips, tickets } from '../state/sys/casino';
-import { CP, Bubble, ChatFeed, Host, Marquee, ResPill, block, clickable, halftone, heading, label, neon, ticketIcon, killDeep } from '../panels/casino/kit';
+import { CP, Bubble, ChatFeed, Host, Marquee, ResPill, block, clickable, halftone, heading, label, neon, killDeep } from '../panels/casino/kit';
+import { GAMES, GAME_BY_ID, GROUPS, isGame } from '../panels/casino/games/registry';
+import { settleAbandoned } from '../state/sys/casino/eterno';
 import { chatLines, hostLine, Ev } from '../panels/casino/lines';
 import type { CasinoCtx, CasinoTab, CasinoView, PillKind } from '../panels/casino/ctx';
 import { lounge } from '../panels/casino/lounge';
 import { sfx } from '../core/audio';
 import { AutoHost, AutoPanel, STOP_TEXT } from '../panels/casino/auto';
+import { screenRect } from '../ui/screen';
 
-type TabDef = { id: CasinoTab; name: string; sub: string; color: number; draw: () => Container };
+const NAV = { x: 14, y: 194, w: 306, h: 598, row: 66, gap: 6, head: 30 } as const;
 
 export class CasinoScene extends Scene {
   private root = new Container();
@@ -43,6 +48,17 @@ export class CasinoScene extends Scene {
   private voiceBtn!: { c: Container; t: Text; g: Graphics };
   private busyFlag = false;
   private frozen: Record<PillKind, number> | null = null;
+  private held: Record<PillKind, number> = { gold: 0, gems: 0, chips: 0, tickets: 0 };
+  private navList = new Container();
+  private navScroll = 0;
+  private navMax = 0;
+  private navBar = new Graphics();
+  private navMore!: Container;
+  private navLess!: Container;
+  private navDrag: { y0: number; s0: number; moved: boolean } | null = null;
+  private navMoved = false;
+  private eterno: { stop: (why: 'user' | 'gone') => void } | null = null;
+  private leaveAfterEterno = false;
   private current: CasinoTab = 'slot';
   private offs: (() => void)[] = [];
   private lastSay = 0;
@@ -71,6 +87,8 @@ export class CasinoScene extends Scene {
     music.play('silence');
     lounge.start();
     ensureGambitOpen();
+    // an ETERNO session left open by a reload (before the explosion) = abandoned: no roll was drawn, nothing changes
+    const ab = settleAbandoned();
     const got = syncChips();
     this.show(this.tab, this.banner);
     window.addEventListener('keydown', this.onKey);
@@ -88,21 +106,27 @@ export class CasinoScene extends Scene {
           this.refresh();
         }, 3600);
       }
+      if (ab) {
+        this.bubble.say('La máquina del ETERNO se apagó sola cuando te fuiste: no hubo 50/50, no perdiste ni ganaste nada.', 'MODO ETERNO', CP.cyan);
+        this.host.talk(1600);
+      }
     }, 650);
   }
 
   /** switch tab (also used by openCasino/openGacha when already inside) */
   show(tab: 'floor' | 'gacha' | CasinoTab, banner?: string) {
     const last = prefs().tab;
-    const t: CasinoTab = tab === 'floor' ? (last === 'roulette' || last === 'gacha' ? last : 'slot') : tab;
+    const t: CasinoTab = tab === 'floor' ? (isGame(last) && GAME_BY_ID.get(last)!.remember ? last : 'slot') : tab;
     this.go(t, banner);
   }
 
   private async go(tab: CasinoTab, arg?: string) {
     if (this.busyFlag) return;
     this.current = tab;
-    if (tab === 'slot' || tab === 'roulette' || tab === 'gacha') prefs().tab = tab;
+    const def = GAME_BY_ID.get(tab) ?? GAMES[0];
+    if (def.remember) prefs().tab = tab;
     for (const [id, b] of this.tabBtns) this.drawTab(id, b, id === tab);
+    this.scrollNavTo(tab);
     if (this.view) {
       this.view.dispose?.();
       killDeep(this.view);
@@ -110,32 +134,11 @@ export class CasinoScene extends Scene {
       this.view = null;
     }
     let v: CasinoView;
-    switch (tab) {
-      case 'slot': {
-        const { SlotView } = await import('../panels/casino/SlotView');
-        v = new SlotView(this.ctx);
-        break;
-      }
-      case 'roulette': {
-        const { RouletteView } = await import('../panels/casino/RouletteView');
-        v = new RouletteView(this.ctx);
-        break;
-      }
-      case 'gacha': {
-        const { GachaView } = await import('../panels/casino/GachaView');
-        v = new GachaView(this.ctx, arg);
-        break;
-      }
-      case 'caja': {
-        const { CajaView } = await import('../panels/casino/CajaView');
-        v = new CajaView(this.ctx);
-        break;
-      }
-      case 'acc': {
-        const { AccessoryView } = await import('../panels/casino/AccessoryPanel');
-        v = new AccessoryView(this.ctx, arg);
-        break;
-      }
+    try {
+      v = await def.load(this.ctx, arg);
+    } catch (e) {
+      console.warn('[casino] table failed to load', tab, e);
+      return;
     }
     if (this.destroyed || this.current !== tab) {
       v.dispose?.();
@@ -153,7 +156,7 @@ export class CasinoScene extends Scene {
 
   // ------------------------------------------------------------------ background (neon-glitch dimension in a Swiss poster)
   private buildBg() {
-    const g = new Graphics().rect(0, 0, W, H).fill(CP.night);
+    const g = screenRect(CP.night);
     this.bg.addChild(g);
     // big poster shapes
     const shapes = new Graphics();
@@ -241,37 +244,8 @@ export class CasinoScene extends Scene {
     this.marquee = new Marquee(306, 176, 30);
     this.marquee.position.set(12, 12);
     this.bg.addChild(this.marquee);
-    // nav
-    const tabs: TabDef[] = [
-      { id: 'slot', name: 'TRAGAMICHIS', sub: 'Jala la cola', color: CP.pink, draw: () => this.navIcon('slot') },
-      { id: 'roulette', name: 'RULETA', sub: 'Rojo, negro o gato', color: CP.red, draw: () => this.navIcon('roulette') },
-      { id: 'gacha', name: 'PORTAL', sub: 'Invoca gatos', color: CP.violet, draw: () => this.navIcon('gacha') },
-      { id: 'caja', name: 'LA CAJA', sub: 'Canjea fichas', color: CP.yellow, draw: () => this.navIcon('caja') },
-      { id: 'acc', name: 'ACCESORIOS', sub: 'Viste a tus gatos', color: CP.cyan, draw: () => this.navIcon('acc') },
-    ];
-    tabs.forEach((t, i) => {
-      const c = new Container();
-      c.position.set(22, 220 + i * 128);
-      const bg = new Graphics();
-      const ic = t.draw();
-      ic.position.set(46, 54);
-      const nt = heading(t.name, 34, CP.paper);
-      nt.position.set(90, 18);
-      const st = label(t.sub, 15, CP.softPink);
-      st.position.set(92, 62);
-      c.addChild(bg, ic, nt, st);
-      (c as Container & { tabColor: number }).tabColor = t.color;
-      clickable(c, () => {
-        if (this.busyFlag) {
-          sfx('error');
-          return;
-        }
-        this.go(t.id);
-      });
-      this.bg.addChild(c);
-      this.tabBtns.set(t.id, { c, bg, t: nt });
-      this.drawTab(t.id, { c, bg, t: nt }, false);
-    });
+    // nav (registry, grouped, scrollable): wheel, drag or the arrows
+    this.buildNav();
     // exit
     const ex = new Container();
     const exBg = block(270, 70, CP.paper, { off: 6, border: 4 });
@@ -294,7 +268,7 @@ export class CasinoScene extends Scene {
       ['tickets', 'tickets', () => this.frozen?.tickets ?? tickets()],
     ];
     kinds.forEach(([k, kind, get], i) => {
-      const p = new ResPill(kind, get, i === 0 ? 220 : 170);
+      const p = new ResPill(kind, () => get() - (this.frozen ? 0 : this.held[kind]), i === 0 ? 220 : 170);
       p.position.set(362 + (i === 0 ? 0 : 220 + 14 + (i - 1) * 184), 22);
       this.bg.addChild(p);
       this.pills[k] = p;
@@ -354,58 +328,147 @@ export class CasinoScene extends Scene {
     t.text = voice.supported ? (on ? 'VOCES: SÍ' : 'VOCES: NO') : 'VOCES: N/D';
   }
 
-  private navIcon(kind: CasinoTab): Container {
-    const c = new Container();
-    const g = new Graphics();
-    c.addChild(g);
-    switch (kind) {
-      case 'slot':
-        g.roundRect(-24, -26, 48, 52, 6).fill(CP.pink).stroke({ width: 3, color: CP.paper });
-        g.rect(-17, -12, 34, 18).fill(CP.paper);
-        for (let i = 0; i < 3; i++) g.circle(-11 + i * 11, -3, 3.5).fill(i === 1 ? CP.ink : CP.pink);
-        g.moveTo(28, -18).lineTo(28, 10).stroke({ width: 4, color: CP.paper, cap: 'round' });
-        g.circle(28, -20, 6).fill(CP.yellow);
-        break;
-      case 'roulette':
-        g.circle(0, 0, 26).fill(CP.red).stroke({ width: 3, color: CP.paper });
-        for (let i = 0; i < 8; i++) {
-          const a = (i / 8) * Math.PI * 2;
-          const a2 = a + Math.PI / 8;
-          g.poly([0, 0, Math.cos(a) * 24, Math.sin(a) * 24, Math.cos(a2) * 24, Math.sin(a2) * 24]).fill(i % 2 ? CP.ink : CP.red);
-        }
-        g.circle(0, 0, 8).fill(CP.yellow).stroke({ width: 2, color: CP.ink });
-        g.circle(12, -14, 4).fill(CP.paper);
-        break;
-      case 'gacha':
-        g.circle(0, 0, 26).stroke({ width: 5, color: CP.violet });
-        g.circle(0, 0, 18).stroke({ width: 3, color: CP.cyan });
-        g.star(0, 0, 4, 12, 4).fill(CP.paper);
-        break;
-      case 'caja':
-        c.addChild(ticketIcon(48, CP.yellow));
-        break;
-      case 'acc': {
-        g.rect(-18, -24, 36, 30).fill(CP.ink).stroke({ width: 3, color: CP.paper });
-        g.rect(-18, -2, 36, 7).fill(CP.cyan);
-        g.ellipse(0, 8, 28, 7).fill(CP.ink).stroke({ width: 3, color: CP.paper });
-        break;
+  private buildNav() {
+    const wrap = new Container();
+    wrap.position.set(NAV.x, NAV.y);
+    const mask = new Graphics().rect(-6, 0, NAV.w + 12, NAV.h).fill(0xffffff);
+    wrap.addChild(this.navList, mask);
+    this.navList.mask = mask;
+    let y = 0;
+    for (const grp of GROUPS) {
+      const list = GAMES.filter((g) => g.group === grp);
+      if (!list.length) continue;
+      const h = label(grp, 14, CP.yellow, { letterSpacing: 3 });
+      h.position.set(6, y + 6);
+      const rule = new Graphics().rect(h.width + 16, y + 15, NAV.w - h.width - 30, 2).fill({ color: CP.yellow, alpha: 0.35 });
+      this.navList.addChild(h, rule);
+      y += NAV.head;
+      for (const t of list) {
+        const c = new Container();
+        c.position.set(0, y);
+        const bg = new Graphics();
+        const ic = t.icon();
+        ic.scale.set(0.8);
+        ic.position.set(38, NAV.row / 2);
+        const nt = heading(t.name, 28, CP.paper);
+        nt.position.set(74, 4);
+        if (nt.width > NAV.w - 92) nt.style.fontSize = 24;
+        const st = label(t.sub, 14, CP.softPink);
+        st.position.set(76, 40);
+        c.addChild(bg, ic, nt, st);
+        (c as Container & { tabColor: number; sub: Text }).tabColor = t.color;
+        (c as Container & { tabColor: number; sub: Text }).sub = st;
+        clickable(
+          c,
+          () => {
+            if (this.navMoved) return;
+            if (this.busyFlag) {
+              sfx('error');
+              return;
+            }
+            this.go(t.id);
+          },
+          { hover: false },
+        );
+        this.navList.addChild(c);
+        this.tabBtns.set(t.id, { c, bg, t: nt });
+        this.drawTab(t.id, { c, bg, t: nt }, false);
+        y += NAV.row + NAV.gap;
       }
     }
-    return c;
+    this.navMax = Math.max(0, y - NAV.gap - NAV.h);
+    // scroll track + arrows (only if it overflows)
+    this.navBar.position.set(NAV.x + NAV.w + 2, NAV.y);
+    const arrow = (up: boolean) => {
+      const a = new Container();
+      const g = new Graphics();
+      const w = up ? 70 : 222;
+      g.rect(0, 0, w, 26).fill(CP.ink).stroke({ width: 2, color: CP.yellow, alpha: 0.7 });
+      g.poly(up ? [27, 19, 35, 8, 43, 19] : [14, 8, 22, 19, 30, 8]).fill(CP.yellow);
+      a.addChild(g);
+      if (!up) {
+        const t = label('MÁS JUEGOS', 13, CP.yellow, { letterSpacing: 2 });
+        t.position.set(40, 5);
+        a.addChild(t);
+      }
+      a.position.set(up ? NAV.x + 236 : NAV.x + 6, NAV.y + NAV.h + 6);
+      clickable(a, () => this.setNavScroll(this.navScroll + (up ? -1 : 1) * (NAV.row + NAV.gap) * 2), { hover: false });
+      return a;
+    };
+    this.navLess = arrow(true);
+    this.navMore = arrow(false);
+    this.bg.addChild(wrap, this.navBar, this.navLess, this.navMore);
+    // wheel + drag
+    wrap.eventMode = 'static';
+    wrap.hitArea = new Rectangle(-6, 0, NAV.w + 12, NAV.h);
+    wrap.on('wheel', (e: FederatedWheelEvent) => {
+      this.setNavScroll(this.navScroll + e.deltaY * 0.8);
+      e.preventDefault?.();
+    });
+    wrap.on('pointerdown', (e: FederatedPointerEvent) => {
+      this.navDrag = { y0: e.global.y, s0: this.navScroll, moved: false };
+      this.navMoved = false;
+    });
+    wrap.on('globalpointermove', (e: FederatedPointerEvent) => {
+      const d = this.navDrag;
+      if (!d) return;
+      const k = 1 / Math.max(0.01, this.root.worldTransform.a || 1);
+      const dy = (e.global.y - d.y0) * k;
+      if (Math.abs(dy) > 10) d.moved = this.navMoved = true;
+      if (d.moved) this.setNavScroll(d.s0 - dy);
+    });
+    const end = () => {
+      this.navDrag = null;
+      // a drag must not also "tap" the row under the finger (the tap fires right after pointerup)
+      if (this.navMoved) window.setTimeout(() => (this.navMoved = false), 0);
+    };
+    wrap.on('pointerup', end);
+    wrap.on('pointerupoutside', end);
+    this.setNavScroll(0);
+  }
+
+  private setNavScroll(v: number) {
+    this.navScroll = Math.max(0, Math.min(this.navMax, v));
+    this.navList.y = -Math.round(this.navScroll);
+    const over = this.navMax > 0;
+    this.navMore.alpha = over && this.navScroll < this.navMax - 2 ? 1 : 0.3;
+    this.navLess.alpha = over && this.navScroll > 2 ? 1 : 0.3;
+    this.navMore.visible = this.navLess.visible = over;
+    const g = this.navBar.clear();
+    if (over) {
+      const th = Math.max(60, (NAV.h * NAV.h) / (NAV.h + this.navMax));
+      const ty = ((NAV.h - th) * this.navScroll) / this.navMax;
+      g.rect(0, 0, 4, NAV.h).fill({ color: 0xffffff, alpha: 0.08 });
+      g.rect(0, ty, 4, th).fill({ color: CP.yellow, alpha: 0.75 });
+    }
+  }
+
+  /** keep the selected table visible in the nav */
+  private scrollNavTo(tab: CasinoTab) {
+    const b = this.tabBtns.get(tab);
+    if (!b) return;
+    const top = b.c.y;
+    const bot = top + NAV.row;
+    if (top < this.navScroll + 30) this.setNavScroll(top - NAV.head);
+    else if (bot > this.navScroll + NAV.h - 30) this.setNavScroll(bot - NAV.h + 34);
   }
 
   private drawTab(_id: CasinoTab, b: { c: Container; bg: Graphics; t: Text }, on: boolean) {
     const col = (b.c as Container & { tabColor: number }).tabColor;
+    const w = NAV.w - 14;
     b.bg.clear();
     if (on) {
-      b.bg.rect(8, 8, 286, 104).fill(CP.pink);
-      b.bg.rect(0, 0, 286, 104).fill(col).stroke({ width: 4, color: CP.paper, alignment: 1 });
-      b.t.style.fill = col === CP.yellow || col === CP.cyan ? CP.ink : CP.paper;
-      b.c.x = 30;
+      b.bg.rect(6, 6, w, NAV.row).fill(CP.pink);
+      b.bg.rect(0, 0, w, NAV.row).fill(col).stroke({ width: 3, color: CP.paper, alignment: 1 });
+      const dark = col === CP.yellow || col === CP.cyan || col === CP.green || col === CP.softPink;
+      b.t.style.fill = dark ? CP.ink : CP.paper;
+      (b.c as Container & { sub?: Text }).sub!.style.fill = dark ? CP.ink : CP.paper;
+      b.c.x = 8;
     } else {
-      b.bg.rect(0, 0, 286, 104).fill({ color: 0xffffff, alpha: 0.04 }).stroke({ width: 2, color: 0x4a3150, alignment: 1 });
+      b.bg.rect(0, 0, w, NAV.row).fill({ color: 0xffffff, alpha: 0.04 }).stroke({ width: 2, color: 0x4a3150, alignment: 1 });
       b.t.style.fill = CP.paper;
-      b.c.x = 22;
+      (b.c as Container & { sub?: Text }).sub!.style.fill = CP.softPink;
+      b.c.x = 0;
     }
   }
 
@@ -430,6 +493,16 @@ export class CasinoScene extends Scene {
       unfreeze: () => {
         this.frozen = null;
         this.refresh();
+      },
+      hold: (d) => {
+        for (const k of Object.keys(d) as PillKind[]) this.held[k] += d[k] ?? 0;
+        let done = false;
+        return () => {
+          if (done) return;
+          done = true;
+          for (const k of Object.keys(d) as PillKind[]) this.held[k] -= d[k] ?? 0;
+          if (!this.destroyed) this.refresh();
+        };
       },
       setBusy: (b) => {
         this.busyFlag = b;
@@ -501,13 +574,60 @@ export class CasinoScene extends Scene {
         this.host.talk(1200);
         this.refresh();
       },
+      () => void this.askEterno(),
     );
-    this.auto.position.set(24, 846);
+    this.auto.position.set(24, 832);
     this.bg.addChild(this.auto);
     this.auto.setAvailable(false);
   }
 
+  // ------------------------------------------------------------------ MODO ETERNO
+  private async askEterno() {
+    const h = this.autoHost();
+    if (!h || this.busyFlag || this.auto?.running || this.eterno) {
+      sfx('error');
+      return;
+    }
+    const { openEternoConfirm, EternoRun } = await import('../panels/casino/eterno');
+    openEternoConfirm(() => {
+      if (this.destroyed || this.eterno || this.busyFlag) return;
+      const run = new EternoRun({
+        ctx: this.ctx,
+        host: () => this.autoHost(),
+        game: this.current,
+        viewLayer: this.viewLayer,
+        hud: this.topLayer,
+        chat: this.chatFeed,
+        marquee: this.marquee,
+        bubble: (text, who, color) => {
+          this.bubble.say(text, who, color);
+          this.host.talk(Math.min(3500, 700 + text.length * 40));
+        },
+        say: (ev) => this.say(ev),
+        chatEv: (ev, n) => this.chat(ev, n),
+      });
+      this.eterno = run;
+      this.auto.eterno = true;
+      this.auto.setAvailable(false);
+      void run.run().finally(() => {
+        this.eterno = null;
+        if (!this.destroyed) {
+          if (this.leaveAfterEterno) window.setTimeout(() => !this.destroyed && this.leave(), 50);
+          this.auto.eterno = false;
+          this.auto.setAvailable(!!this.autoHost());
+          this.refresh();
+        }
+      });
+    });
+  }
+
   private leave() {
+    if (this.eterno) {
+      // ENFRIAR first (only possible before the explosion), then leave by itself when the machine is quiet
+      this.eterno.stop('user');
+      this.leaveAfterEterno = true;
+      return;
+    }
     if (this.auto?.running) this.auto.stop('user');
     if (this.busyFlag) return;
     this.say('exit');
@@ -522,6 +642,7 @@ export class CasinoScene extends Scene {
     if (e.repeat) return;
     if (e.code === 'Space' || e.code === 'Enter') {
       if (document.activeElement && (document.activeElement as HTMLElement).tagName === 'INPUT') return;
+      if (this.eterno) return;
       // Space stops the auto-play (never starts a manual bet on top of it)
       if (this.auto?.running) {
         this.auto.stop('user');
@@ -549,7 +670,14 @@ export class CasinoScene extends Scene {
     }
   }
 
+  override destroy(o?: Parameters<Container['destroy']>[0]) {
+    // belt and braces: a shaker left on the ticker would throw every frame once root is gone
+    this.shaker?.destroy();
+    super.destroy(o);
+  }
+
   override exit() {
+    this.eterno?.stop('gone');
     if (this.auto?.running) this.auto.stop('gone');
     window.removeEventListener('keydown', this.onKey);
     for (const f of this.offs) f();

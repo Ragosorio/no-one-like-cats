@@ -4,7 +4,7 @@
  * the symbols above/below the line are the real strip neighbours. Anticipation only stretches time.
  * RISK TIERS: BAJA / MEDIA / ALTA change the paytable (bigger stake = fewer prizes, bigger prizes).
  * The chosen currency + tier are remembered in the save (never reset when you switch currency).
- * Auto-play: implements AutoHost (x1 / x2 / x4 / TURBO — TURBO lands the reels instantly, no cards, no banners).
+ * Auto-play: implements AutoHost (x1 / x2 / x10 — x10 skips banners; ETERNO pushes past INSTANT_SPEED: reels land instantly).
  */
 import { Container, Graphics, Sprite, Text, Ticker } from 'pixi.js';
 import gsap from 'gsap';
@@ -17,6 +17,7 @@ import { G } from '../../state/game';
 import {
   AutoSpeed,
   Cur,
+  INSTANT_SPEED,
   LINES,
   SLOT_MATH,
   SLOT_TIER_BLURB,
@@ -261,7 +262,8 @@ export class SlotView extends Container implements CasinoView, AutoHost {
     const ptT = heading('TABLA DE PAGOS', 24, CP.ink);
     ptT.position.set(18, 6);
     pt.addChild(ptBg, ptT);
-    pt.position.set(x0 + CW + 40, y0 + CH - 40);
+    // inside the table area (the old spot spilled into the chat column)
+    pt.position.set(1196, y0 + CH + 22);
     clickable(pt, () => openOdds('slot', this.cur, this.stake(), undefined, this.tier));
     this.addChild(this.info, this.net, pt);
     // ---- lever (cat tail)
@@ -424,7 +426,7 @@ export class SlotView extends Container implements CasinoView, AutoHost {
       this.ctx.say('poor');
       return { ok: false };
     }
-    const turbo = speed >= 99;
+    const turbo = speed >= INSTANT_SPEED;
     this.ctx.freeze({ [this.cur === 'gold' ? 'gold' : 'chips']: -stake });
     const res = spinSlot(this.cur, this.tier);
     if (!res) {
@@ -466,7 +468,7 @@ export class SlotView extends Container implements CasinoView, AutoHost {
     };
   }
 
-  /** TURBO: put the reels on their stops instantly */
+  /** INSTANT (ETERNO top speed): put the reels on their stops instantly */
   private landNow(res: SlotResult) {
     this.reels.forEach((r, i) => {
       gsap.killTweensOf(r);
@@ -572,7 +574,7 @@ export class SlotView extends Container implements CasinoView, AutoHost {
 
   private async present(res: SlotResult, speed: AutoSpeed = 1, auto = false) {
     const stake = res.stake;
-    const turbo = speed >= 99;
+    const turbo = speed >= INSTANT_SPEED;
     const fast = speed >= 4;
     const plan = auto ? revealPlanFor(speed) : {};
     if (!res.wins.length) {
@@ -665,7 +667,7 @@ export class SlotView extends Container implements CasinoView, AutoHost {
       this.ctx.say('jackpot');
       this.ctx.chat('jackpot', 4);
       const catG = res.granted.find((g) => g.kind === 'cat');
-      await jackpotTakeover(this.ctx.top, this.ctx.particles, { sub: isGold ? `+${fmt(won)} DOBLONES` : catG ? `TE LLEVAS A ${catG.label}` : '¡PREMIO MAYOR!', loot: isGold ? 'gold' : 'chips' });
+      await jackpotTakeover(this.ctx.top, this.ctx.particles, { sub: isGold ? `+${fmt(won)} DOBLONES` : catG ? `TE LLEVAS A ${catG.label}` : '¡PREMIO MAYOR!', loot: isGold ? 'gold' : 'chips', autoClose: auto ? 2.6 : undefined });
     } else if (big) {
       this.marquee.burst(2200 / speed, 'rainbow');
       this.ctx.shake(0.35);
@@ -706,7 +708,7 @@ export class SlotView extends Container implements CasinoView, AutoHost {
     this.ctx.say('candy');
     this.ctx.chat('candy', 1);
     csfx.winSmall();
-    if (speed >= 99) return;
+    if (speed >= INSTANT_SPEED) return;
     const t = stamp(this.ctx.fx, this.x0 + 380, this.winY + 200, 'LA CASA TE DEBÍA UNA', CP.cyan, 54, -0.06);
     flyLoot(this.ctx.fx, 'tickets', { x: this.x0 + 380, y: this.winY + 200 }, this.ctx.pillPos('tickets'), 4);
     await wait(900 / speed);

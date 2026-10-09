@@ -30,9 +30,9 @@ export interface RevealPlan {
 }
 const rankT: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3, holo: 4, mythic: 5 };
 export const tierRank = (t?: string) => rankT[t ?? 'common'] ?? 0;
-/** reveal plan for an auto-play speed: x1 = new or épico+ · x2 = new épico+ or any legendary+ · x4 / TURBO = only NEW legendary+ (faster, self-closing) */
+/** reveal plan for an auto-play speed: x1 = new or épico+ · x2 = new épico+ or any legendary+ · x10 / ETERNO = only NEW legendary+ (faster, self-closing) */
 export function revealPlanFor(speed: number): RevealPlan {
-  if (speed >= 99) return { only: (g) => !!g.isNew && catRank(g) >= 3, timeScale: 2.6, autoClose: 0.8 };
+  if (speed >= 10) return { only: (g) => !!g.isNew && catRank(g) >= 3, timeScale: 2.6, autoClose: 0.8 };
   if (speed >= 4) return { only: (g) => (!!g.isNew || !!g.upgraded) && catRank(g) >= 3, timeScale: 2.4, autoClose: 0.8 };
   if (speed >= 2) return { only: (g) => ((!!g.isNew || !!g.upgraded) && catRank(g) >= 2) || catRank(g) >= 3, timeScale: 1.8, autoClose: 1.2 };
   return { only: (g) => !!g.isNew || !!g.upgraded || !!g.holo || catRank(g) >= 2, autoClose: 2.5 };

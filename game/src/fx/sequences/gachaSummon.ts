@@ -10,7 +10,7 @@
  *  3. every cat worth it (épico+ or new) gets the full Pokémon-style cat reveal STRAIGHT out of the portal —
  *     no card flip first. Each one gets a beam in its own tier colour before its reveal.
  *  4. the haul: all cards dealt FACE UP (nothing to flip), then CONTINUAR (auto-play closes it by itself).
- * Speeds (auto-play): x1 full · x2 / x4 compressed · TURBO never calls this (GachaView shows the results strip).
+ * Speeds (auto-play): x1 full · x2 compressed · x10 / ETERNO never call this (GachaView shows the results strip).
  */
 import { Container, Graphics, Rectangle, Text, TilingSprite } from 'pixi.js';
 import { RGBSplitFilter } from 'pixi-filters';
@@ -30,6 +30,7 @@ import { catArt, catRank, prizeCard, RevealPlan, revealCats, TIER_COL } from '..
 import { CP, killDeep } from '../../panels/casino/kit';
 import { csfx } from '../../panels/casino/sfx';
 import { holoSheen } from './gachaHolo';
+import { screenRect } from '../../ui/screen';
 
 const PX = W / 2;
 const PY = 470;
@@ -65,9 +66,9 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
     const timers: number[] = [];
     const later = (fn: () => void, t: number) => timers.push(window.setTimeout(() => !root.destroyed && fn(), t));
     // --- dim + halftone
-    const dim = new Graphics().rect(0, 0, W, H).fill(CP.night);
+    const dim = screenRect(CP.night);
     dim.alpha = 0;
-    const tint = new Graphics().rect(0, 0, W, H).fill(mythic ? 0x2a0006 : GOLD);
+    const tint = screenRect(mythic ? 0x2a0006 : GOLD);
     tint.alpha = 0;
     const dots = new TilingSprite({ texture: halftoneTexture(b.accent, 18, 2.6), width: W, height: H });
     dots.alpha = 0;
@@ -169,11 +170,19 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
     gsap.to(title, { alpha: 1, duration: 0.2, delay: 0.3 * k });
     let fr = 0;
     const iv = window.setInterval(() => {
+      if (root.destroyed) return;
       fr++;
       coreDots.tilePosition.y += 3;
       title.x = PX + (fr % 5 === 0 ? (Math.random() - 0.5) * 18 : 0);
       ringB.rotation = fr % 2 ? 0.02 : -0.02;
     }, 1000 / 12);
+
+    // the layer can be destroyed under us (leaving the casino mid-summon): stop every loop, never touch it again
+    root.once('destroyed', () => {
+      window.clearInterval(iv);
+      for (const t of timers) window.clearTimeout(t);
+      shaker.destroy();
+    });
 
     let phase = 0;
     let skipPortal = () => {};

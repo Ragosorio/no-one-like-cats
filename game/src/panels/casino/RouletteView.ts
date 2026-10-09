@@ -3,7 +3,7 @@
  * The pocket is drawn first (state/sys/casino.spinRoulette); the ball physically lands in it (wheel-local coords).
  * Stake memory: currency, bet and the stake per currency persist in the save; switching ROJO / NEGRO, bet type or
  * currency never drops you back to the minimum (stakeFor picks the closest option <= what you chose).
- * Auto-play: implements AutoHost (x1/x2/x4 spin faster; TURBO drops the ball straight into the pocket).
+ * Auto-play: implements AutoHost (x1/x2/x10 spin faster; ETERNO's top speed drops the ball straight into the pocket).
  */
 import { Container, Graphics, Text } from 'pixi.js';
 import gsap from 'gsap';
@@ -14,6 +14,7 @@ import { sfx } from '../../core/audio';
 import { onomatopoeia, sparkles, flash } from '../../fx/juice';
 import {
   AutoSpeed,
+  INSTANT_SPEED,
   Cur,
   RouletteBet,
   RouletteResult,
@@ -377,7 +378,7 @@ export class RouletteView extends Container implements CasinoView, AutoHost {
     const idx = WHEEL.indexOf(res.pocket);
     const target = -Math.PI / 2 + (idx + 0.5) * SEG;
     const outcome = (): AutoOutcome => ({ ok: true, big: res.win && betMult(res.bet) >= 24 });
-    if (speed >= 99) {
+    if (speed >= INSTANT_SPEED) {
       // TURBO: the ball is simply in its pocket
       gsap.killTweensOf(this.wheel);
       this.ballAng = target;
@@ -437,7 +438,7 @@ export class RouletteView extends Container implements CasinoView, AutoHost {
 
   private async result(r: RouletteResult, speed: AutoSpeed = 1, auto = false) {
     lounge.hype(0);
-    const turbo = speed >= 99;
+    const turbo = speed >= INSTANT_SPEED;
     const fast = speed >= 4;
     const col = r.color === 'red' ? 'ROJO' : r.color === 'black' ? 'NEGRO' : 'GATO NEGRO';
     for (const c of this.betCells) {

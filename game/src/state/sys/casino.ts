@@ -21,7 +21,7 @@ import { ACC_BY_ID, AccRarity, addAccessory, rollAccessory } from './accessories
 import { registerPatch } from '../patches';
 
 export type Cur = 'gold' | 'gems' | 'chips';
-export type GameId = 'slot' | 'roulette' | 'gacha' | 'caja';
+export type GameId = 'slot' | 'roulette' | 'gacha' | 'caja' | 'plinko' | 'dice' | 'scratch' | 'boxes' | 'bingo' | 'hilo' | 'eterno';
 
 export interface HistEntry {
   g: GameId;
@@ -48,12 +48,27 @@ export interface CasinoState {
   owed?: number;
   /** stake memory + auto-play settings (persist across sessions) */
   prefs?: CasinoPrefs;
+  /** open multi-step hands (already paid; a reload resumes them, it never re-deals) — see state/sys/casino/*.ts */
+  duel?: unknown;
+  boxes?: unknown;
+  hilo?: unknown;
+  /** MODO ETERNO sessions (state/sys/casino/eterno.ts) */
+  eterno?: unknown;
 }
 
-/** speed of the auto-play: x1 · x2 · x4 · TURBO (99 = skip straight to results) */
-export type AutoSpeed = 1 | 2 | 4 | 99;
+/**
+ * Animation speed of the auto-play (2026-10 overhaul): the player picks x1 · x2 · x10. ETERNO is not a speed but a
+ * session (state/sys/casino/eterno.ts) that ramps the speed continuously, so views accept any number ≥ 1.
+ *   ≥ 4   "fast": shorter banners, no host chatter
+ *   ≥ 10  results-first: the reels/wheel still move but every banner is skipped (results stay readable)
+ *   ≥ INSTANT_SPEED (only reached by ETERNO): the result is placed instantly
+ */
+export type AutoSpeed = number;
+export const AUTO_SPEEDS = [1, 2, 10] as const;
+export type AutoSpeedChoice = (typeof AUTO_SPEEDS)[number];
+export const INSTANT_SPEED = 25;
 export interface AutoPrefs {
-  speed: AutoSpeed;
+  speed: AutoSpeedChoice;
   /** rounds per run (0 = until a stop condition) */
   rounds: number;
   /** stop on a big win (slot ×5+ / jackpot / pleno · gacha épico+ cat) */
@@ -64,14 +79,30 @@ export interface AutoPrefs {
   stopNew: boolean;
   /** stop if the balance drops below this % of what you had when you pressed AUTO (0 = never) */
   floorPct: number;
+  /** prefs schema: 2 = x1/x2/x10 speeds + "until you stop" defaults (2026-10 overhaul) */
+  v?: number;
 }
-export const AUTO_DEFAULT: AutoPrefs = { speed: 2, rounds: 25, stopBig: true, stopLegend: true, stopNew: false, floorPct: 50 };
+/** continuous play by default: a prize never ends the run (stop conditions are opt-in), the balance floor stays on */
+export const AUTO_DEFAULT: AutoPrefs = { speed: 2, rounds: 0, stopBig: false, stopLegend: false, stopNew: false, floorPct: 50, v: 2 };
 export interface CasinoPrefs {
   tab?: string;
   slot?: { cur?: Cur; tier?: Partial<Record<Cur, number>> };
   roulette?: { cur?: Cur; bet?: RouletteBet; stake?: Partial<Record<Cur, number>> };
   gacha?: { banner?: string; pay?: 'tickets' | 'gems'; mode?: string; n?: 1 | 10 };
   auto?: AutoPrefs;
+  /** new tables (plinko, dados, rasca, cajas, bingo, mayor/menor): currency + stake + risk memory per game */
+  games?: Record<string, MiniPrefs>;
+}
+export interface MiniPrefs {
+  cur?: Cur;
+  /** remembered stake value (stakeFor() keeps it when the option list changes) */
+  stake?: number;
+  /** risk tier / variant */
+  tier?: number;
+  /** cards per round (bingo) */
+  n?: number;
+  /** bingo cards the player keeps between rounds (cosmetic: every card has the same odds) */
+  cards?: number[][];
 }
 
 export function cs(): CasinoState {
@@ -93,8 +124,26 @@ export function prefs(): CasinoPrefs {
 }
 export function autoPrefs(): AutoPrefs {
   const p = prefs();
-  p.auto = { ...AUTO_DEFAULT, ...(p.auto ?? {}) };
+  p.auto = migrateAutoPrefs(p.auto);
   return p.auto;
+}
+/**
+ * Saved auto-play prefs → current schema. Old speeds x4 / TURBO (99) become x10; the old defaults (25 rounds,
+ * stop on any big win / legendary) become "until you stop" once — a player who picked other values keeps them.
+ */
+export function migrateAutoPrefs(old: Partial<AutoPrefs> | Record<string, unknown> | undefined): AutoPrefs {
+  const o = { ...AUTO_DEFAULT, ...((old ?? {}) as Partial<AutoPrefs>) };
+  const sp = Number((old as Partial<AutoPrefs> | undefined)?.speed ?? AUTO_DEFAULT.speed);
+  o.speed = sp === 1 || sp === 2 ? sp : sp > 2 ? 10 : AUTO_DEFAULT.speed;
+  if ((old as Partial<AutoPrefs> | undefined)?.v !== 2 && old) {
+    if (o.rounds === 25) o.rounds = 0;
+    if (o.stopBig === true) o.stopBig = false;
+    if (o.stopLegend === true) o.stopLegend = false;
+  }
+  if (![0, 10, 25, 50, 100].includes(o.rounds)) o.rounds = 0;
+  if (![0, 25, 50, 75].includes(o.floorPct)) o.floorPct = 50;
+  o.v = 2;
+  return o;
 }
 function stat(k: string, n = 1) {
   const s = cs().stats;
@@ -135,6 +184,7 @@ export function weighted<T>(items: readonly T[], w: (t: T) => number): T {
  */
 export const CHIPS = {
   welcome: 150,
+  /** income cap: fichas EARNED BY PLAYING the campaign stop filling the tray at this amount. Winnings and prizes are never capped. */
   welcomeTickets: 10,
   perVictory: 6,
   perPerfect: 3,
@@ -153,11 +203,21 @@ export function chips() {
 export function tickets() {
   return cs().tickets ?? 0;
 }
-export function addChips(n: number, source = 'casino') {
-  if (!n) return;
+/**
+ * Add (or spend, n < 0) fichas. Returns what was REALLY added, so labels never lie.
+ * Only campaign income (source 'sync') respects CHIPS.cap, and it never removes chips you already have;
+ * casino winnings and prizes are not capped (2026-10: the old silent clamp ate prizes over 1500).
+ */
+export function addChips(n: number, source = 'casino'): number {
+  if (!n) return 0;
   const c = cs();
-  c.chips = Math.max(0, Math.min(CHIPS.cap, (c.chips ?? 0) + n));
-  G.emit('res', { key: 'chips', delta: n, source });
+  const before = c.chips ?? 0;
+  let next = Math.max(0, before + n);
+  if (source === 'sync' && n > 0) next = Math.max(before, Math.min(CHIPS.cap, next));
+  c.chips = next;
+  const d = next - before;
+  if (d) G.emit('res', { key: 'chips', delta: d, source });
+  return d;
 }
 export function addTickets(n: number, source = 'casino') {
   if (!n) return;
@@ -210,7 +270,11 @@ export function syncChips(): { gained: number; tickets: number; parts: string[] 
     tk += d.boss * CHIPS.ticketsPerBoss;
     parts.push(`${d.boss} jefes: +${d.boss * CHIPS.perBoss} y ${d.boss * CHIPS.ticketsPerBoss} boletos`);
   }
-  if (gained) addChips(gained, 'sync');
+  if (gained) {
+    const real = addChips(gained, 'sync');
+    if (real < gained) parts.push(real > 0 ? `La bandeja de fichas llegó al tope de ${CHIPS.cap}: entraron ${real}` : `Tu bandeja de fichas ya está en el tope de ${CHIPS.cap} (lo que ganes apostando no tiene tope)`);
+    gained = real;
+  }
   if (tk) addTickets(tk, 'welcome');
   return { gained, tickets: tk, parts };
 }
@@ -291,14 +355,14 @@ export function canPay(cur: Cur, n: number) {
   if (cur === 'gems' && gemBetsLeft() <= 0) return false;
   return balanceOf(cur) >= n && n > 0;
 }
-function pay(cur: Cur, n: number) {
+export function payBet(cur: Cur, n: number) {
   if (cur === 'gold') G.add('gold', -n, 'casino');
   else if (cur === 'gems') {
     G.add('gems', -n, 'casino');
     cs().gemBets = (cs().gemBets ?? 0) + 1;
   } else addChips(-n, 'bet');
 }
-function credit(cur: Cur, n: number) {
+export function creditWin(cur: Cur, n: number) {
   if (n <= 0) return;
   if (cur === 'gold') G.add('gold', n, 'casino');
   else if (cur === 'gems') G.add('gems', n, 'casino');
@@ -314,8 +378,8 @@ export function owed() {
 
 /** saves are throttled while auto-play runs at TURBO (never later than ~1.5 s after the bet) */
 let lastSave = 0;
-let saveTimer = 0;
-function persist() {
+let saveTimer: ReturnType<typeof setTimeout> | 0 = 0;
+export function persist() {
   const now = Date.now();
   if (now - lastSave > 1500) {
     lastSave = now;
@@ -323,14 +387,14 @@ function persist() {
     return;
   }
   if (saveTimer) return;
-  saveTimer = window.setTimeout(() => {
+  saveTimer = setTimeout(() => {
     saveTimer = 0;
     lastSave = Date.now();
     G.save();
   }, 1500);
 }
 
-function record(g: GameId, cur: Cur, stake: number, win: number, r: string, isWin = win > stake): Granted[] {
+export function recordBet(g: GameId, cur: Cur, stake: number, win: number, r: string, isWin = win > stake): Granted[] {
   const c = cs();
   c.hist!.unshift({ g, cur, stake, win, r });
   if (c.hist!.length > 40) c.hist!.length = 40;
@@ -646,7 +710,7 @@ export function spinSlot(cur: Cur, tier: SlotTier): SlotResult | null {
   if (cur === 'gems') return null;
   const stake = slotStakes(cur)[tier] ?? 0;
   if (!canPay(cur, stake)) return null;
-  pay(cur, stake);
+  payBet(cur, stake);
   const stops = [randInt(STRIP_LEN), randInt(STRIP_LEN), randInt(STRIP_LEN)];
   const grid = gridAt(stops);
   const wins = evalGrid(grid, tier);
@@ -656,7 +720,7 @@ export function spinSlot(cur: Cur, tier: SlotTier): SlotResult | null {
   const mult = wins.reduce((s, w) => s + w.mult, 0) / LINES.length;
   if (cur === 'gold') {
     payout = Math.round(wins.reduce((s, w) => s + w.mult * lineBet, 0));
-    credit('gold', payout);
+    creditWin('gold', payout);
   } else {
     for (const w of wins) prizes.push(...chipLinePrizes(w.sym, tier));
   }
@@ -667,7 +731,7 @@ export function spinSlot(cur: Cur, tier: SlotTier): SlotResult | null {
   const won = cur === 'gold' ? payout : chipWon;
   const label = wins.length ? wins.map((w) => (w.sym === 'neko2' ? '2x GATO' : `3x ${SYM_NAME[w.sym as Sym]}`)).join(' + ') : 'NADA';
   const realPrize = granted.some((g) => g.kind !== 'chips') || won > stake;
-  const candy = record('slot', cur, stake, won, label, cur === 'gold' ? won > stake : realPrize);
+  const candy = recordBet('slot', cur, stake, won, label, cur === 'gold' ? won > stake : realPrize);
   stat(`slot_tier${tier}`);
   if (jackpot) {
     stat('jackpots');
@@ -745,16 +809,16 @@ export interface RouletteResult {
 export function spinRoulette(cur: Cur, bet: RouletteBet, stake: number): RouletteResult | null {
   if (cur === 'gems') stake = Math.min(stake, gemStakeMax(betMult(bet)));
   if (!canPay(cur, stake)) return null;
-  pay(cur, stake);
+  payBet(cur, stake);
   const pocket = WHEEL[randInt(WHEEL.length)];
   const win = betWins(bet, pocket);
   const payout = win ? stake * betMult(bet) : 0;
-  credit(cur, payout);
+  creditWin(cur, payout);
   const color = pocketColor(pocket);
   const bonus: Granted[] = [];
   const pt = win ? plenoTickets(cur, bet, stake) : 0;
   if (pt) bonus.push(grantPrize({ kind: 'tickets', n: pt, tier: 'epic' }));
-  bonus.push(...record('roulette', cur, stake, payout, `${pocket} ${color === 'red' ? 'ROJO' : color === 'black' ? 'NEGRO' : 'GATO'}`));
+  bonus.push(...recordBet('roulette', cur, stake, payout, `${pocket} ${color === 'red' ? 'ROJO' : color === 'black' ? 'NEGRO' : 'GATO'}`));
   return { cur, stake, bet, pocket, color, win, payout, bonus };
 }
 
@@ -796,9 +860,12 @@ export function rollCatDef(rarities: RarityId[], weights?: number[], featured?: 
   let i = order.indexOf(r);
   while (!list.length && i > 0) list = catsOfRarity(order[--i], gacha);
   if (!list.length) list = gacha ? gachaCats() : eligibleCats();
+  // featured rate-up: only inside the rarities THIS roll can give (2026-10 fix: the old "one step below" test was always
+  // true for a higher-rarity featured cat, so the HOLO banner's épico entry handed out its featured LEGENDARY labelled as
+  // épico — legendary pity not reset, beginner's luck not counted, printed odds wrong)
   if (featured && rand() < featuredShare) {
     const pool = gacha ? gachaCats() : eligibleCats();
-    const f = list.find((c) => c.id === featured) ?? pool.find((c) => c.id === featured && order.indexOf(c.rarity) >= order.indexOf(r) - 1);
+    const f = pool.find((c) => c.id === featured && rarities.includes(c.rarity as RarityId));
     if (f) return f;
   }
   return weighted(list, (c) => (G.s.catdex[c.id] === 'registered' ? 1 : UNOWNED_WEIGHT));
@@ -850,9 +917,10 @@ export function grantPrize(p: Prize): Granted {
     case 'tickets':
       addTickets(p.n, 'prize');
       return { ...p, label: `+${p.n} ${p.n === 1 ? 'BOLETO' : 'BOLETOS'}` };
-    case 'chips':
-      addChips(p.n, 'prize');
-      return { ...p, label: `+${p.n} FICHAS` };
+    case 'chips': {
+      const real = addChips(p.n, 'prize');
+      return { ...p, n: real, label: `+${real} FICHAS` };
+    }
     case 'crystal': {
       const el = p.ref ?? pick(G.s.elements);
       G.addCrystals(el, p.n);

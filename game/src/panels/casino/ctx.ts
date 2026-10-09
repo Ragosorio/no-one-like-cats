@@ -25,6 +25,11 @@ export interface CasinoCtx {
   freeze(deltas?: Partial<Record<PillKind, number>>): void;
   /** let the pills catch up with the real balances */
   unfreeze(): void;
+  /**
+   * Concurrent-safe version of freeze for the newer tables: hide `deltas` (already credited) from the pills until the
+   * returned release() is called (e.g. when the coins land). Several holds can overlap (plinko balls in flight).
+   */
+  hold(deltas: Partial<Record<PillKind, number>>): () => void;
   /** lock navigation while a spin/animation runs */
   setBusy(b: boolean): void;
   readonly busy: boolean;
@@ -35,7 +40,7 @@ export interface CasinoCtx {
 }
 
 export type PillKind = 'gold' | 'gems' | 'chips' | 'tickets';
-export type CasinoTab = 'slot' | 'roulette' | 'gacha' | 'caja' | 'acc';
+export type CasinoTab = 'slot' | 'roulette' | 'gacha' | 'caja' | 'acc' | 'plinko' | 'dice' | 'scratch' | 'boxes' | 'bingo' | 'hilo';
 
 export interface CasinoView extends Container {
   /** called before destroy (stop timers, listeners) */

@@ -230,7 +230,13 @@ function gachaOdds(root: Container, id: string | undefined, mode0: GachaMode) {
         const y = y0 + 52 + i * 44;
         b.addChild(new Graphics().rect(x, y, colW - 12, 40).fill(i % 2 ? C.paper : 0xe6dccb));
         const nm = T(it.label, 14, C.ink, { wordWrap: true, wordWrapWidth: colW - 90, lineHeight: 16 });
-        nm.position.set(x + 8, y + (nm.height > 20 ? 4 : 11));
+        // a 3-line label ("Gato épico o legendario (destacado 50%)") spilled into the next row: 2 lines max
+        if (nm.height > 36) {
+          nm.style.fontSize = 12;
+          nm.style.lineHeight = 13;
+          if (nm.height > 36) nm.scale.set(36 / nm.height);
+        }
+        nm.position.set(x + 8, y + (nm.height > 20 ? 2 : 11));
         const pp = T(pct(it.p), 14, C.pinkHot);
         pp.anchor.set(1, 0);
         pp.position.set(x + colW - 20, y + 11);
@@ -268,8 +274,10 @@ function gachaOdds(root: Container, id: string | undefined, mode0: GachaMode) {
           `SUERTE DE PRINCIPIANTE: hasta tu primer legendario del portal, la rampa empieza en el tiro ${BEGINNER.softPity + 1} y es seguro en el ${BEGINNER.hardPity}.`,
           `¡SE ESCAPÓ!: ${Math.round(ESCAPE.p * 100)}% por tiro normal sin legendario (descansa ${ESCAPE.cooldown} tiros). Deja RASTRO: +${ESCAPE.trail} al contador y RACHA CALIENTE de ${ESCAPE.hot} tiros con legendario x${HOT.legend} y épico x${HOT.epic}.`,
           `Gato garantizado cada ${bn.catPity} tiros normales. Épico o mejor cada ${bn.epicPity}. Los gatos que NO tienes pesan x${UNOWNED_WEIGHT}.`,
-          bn.id === 'michi' ? `Lumen, la Fotógrafa: ${Math.round(LUMEN_SHARE * 100)}% de los gatos legendarios hasta que la tengas.` : 'El destacado sale la mitad de las veces en su rareza.',
-          'Alto Riesgo y Todo o Nada cuentan como 3 y 10 tiros para todas las garantías.',
+          bn.id === 'michi'
+            ? `Lumen, la Fotógrafa: ${Math.round(LUMEN_SHARE * 100)}% de los gatos legendarios hasta que la tengas.`
+            : 'El destacado sale la mitad de las veces, pero solo en las líneas de su rareza (un destacado legendario no sale en la línea de raro o épico).',
+          'Alto Riesgo y Todo o Nada cuentan como 3 y 10 tiros para la garantía de legendario y la de mítico; para la de épico cuentan como 1.',
         ]
       : [`Épico o mejor cada ${bn.epicPity} tiros. Legendario seguro a más tardar en ${bn.hardPity}.`];
     let cy = ry;
@@ -298,7 +306,9 @@ function rules(b: Container) {
     `Fichas y boletos se ganan peleando: +${CHIPS.perVictory} fichas por victoria (y 1 boleto cada ${CHIPS.victoriesPerTicket}), +${CHIPS.perKl} fichas y ${CHIPS.ticketsPerKl} boleto por nivel de Reino, +${CHIPS.perBoss} fichas y ${CHIPS.ticketsPerBoss} boletos por jefe.`,
     'La casa siempre gana en promedio (retorno 95–97%). A cambio, la casa reparte dulces: LA CASA TE DEBE, rachas calientes, legendarios que se escapan y garantías. Todo está escrito en cada mesa.',
     'Más apuesta = más riesgo: menos premios, pero más gordos. Tú eliges. Tu apuesta se queda como la dejaste.',
-    'PILOTO AUTOMÁTICO: tira por ti a x1, x2, x4 o TURBO, y se para solo cuando tú digas (premio gordo, legendario, gato nuevo, saldo bajo o número de tiradas).',
+    'PILOTO AUTOMÁTICO: tira por ti a x1, x2 o x10 hasta que lo pares. Ganar no lo detiene; si quieres, ponle un tope (saldo bajo, número de tiradas, premio gordo, legendario o gato nuevo). Cada tirada se paga.',
+    'MODO ETERNO: 20 segundos de máquina acelerando hasta reventar. Al explotar, 50/50 honesto (azar criptográfico): si ganas, gato legendario, mítico u HOLO; si pierdes, tu oro, gemas, pescaditos, boletos y fichas quedan en 0. Tus gatos, barcos, hábitats y progreso nunca se tocan. Puedes enfriarla antes y salir sin premio y sin riesgo.',
+    'Mesas: Plinko, Duelo de Dados, Mayor o Menor, Bingo Exprés, Rasca y Gana y Cajas Misteriosas. Cada una trae su TABLA DE PAGOS con la probabilidad exacta de cada resultado y su retorno (94–97%).',
     'Cada tirada de la Tragamichis y la Ruleta es independiente. En el Portal, en cambio, las garantías sí se acumulan: mientras más tiras sin legendario, más cerca está.',
   ];
   let y = 0;

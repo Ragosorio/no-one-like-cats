@@ -12,6 +12,7 @@ import { settings } from '../../core/settings';
 import { halftoneTexture, paperTexture } from '../../art/textures';
 import { CP, chipIcon, ticketIcon } from './kit';
 import { csfx } from './sfx';
+import { screenRect } from '../../ui/screen';
 
 const texCache = new Map<string, Texture>();
 function bake(key: string, make: () => Container, px = 64): Texture {
@@ -145,14 +146,14 @@ export function winBanner(layer: Container, title: string, sub: string, color: n
  * T3 JACKPOT (storyboard j): the screen turns into a "Le Chat Noir" poster — ink flood, yellow halo,
  * giant black cat, stacked JACKPOT type with misregistration + RGB split, coin rain. Tap to continue.
  */
-export function jackpotTakeover(layer: Container, _p: Particles | null, o: { title?: string; sub: string; loot?: Loot }): Promise<void> {
+export function jackpotTakeover(layer: Container, _p: Particles | null, o: { title?: string; sub: string; loot?: Loot; autoClose?: number }): Promise<void> {
   return new Promise((res) => {
     const root = new Container();
     layer.addChild(root);
     const p = new Particles();
     csfx.jackpot();
     flash(layer, CP.yellow, 0.9, 0.35);
-    const ink = new Graphics().rect(0, 0, W, H).fill(CP.ink);
+    const ink = screenRect(CP.ink);
     const paper = new TilingSprite({ texture: paperTexture(0xf0e2c8), width: W, height: H });
     paper.alpha = 0;
     const dots = new TilingSprite({ texture: halftoneTexture(CP.pink, 16, 3.4), width: W, height: H });
@@ -278,7 +279,7 @@ export function jackpotTakeover(layer: Container, _p: Particles | null, o: { tit
     root.eventMode = 'static';
     root.hitArea = new Rectangle(0, 0, W, H);
     window.setTimeout(() => root.on('pointertap', finish), 900);
-    window.setTimeout(finish, 9000);
+    window.setTimeout(finish, o.autoClose ? 900 + o.autoClose * 1000 : 9000);
   });
 }
 

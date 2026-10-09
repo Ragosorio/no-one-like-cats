@@ -18,7 +18,10 @@
  *   3. Soft pity ramps long before the hard pity; mythic has its own (long) guarantee.
  *   4. Cats you DON'T own weigh x3 in every cat roll; Lumen (la Fotógrafa) has a rate-up while you don't have her.
  *   5. RISK MODES (cat banners): ALTO RIESGO (3 boletos) and TODO O NADA (10): far higher legendary/mythic odds,
- *      but most of the time you get only a consolation. They count as 3 / 10 pulls for every guarantee.
+ *      but most of the time you get only a consolation. They count as 3 / 10 pulls for the LEGENDARY and MÍTICO
+ *      guarantees (the ones they honour). The ÉPICO guarantee is not part of their fixed odds, so a risk pull moves
+ *      that counter by 1, like any pull (2026-10 fix: it moved by 3 / 10 and turned the next normal pull into a
+ *      surprise guaranteed épico that the odds panel never mentioned).
  * Pulls cost Boletos (earned playing / La Caja / Tragamichis) or Ojos de Gato. No real money anywhere.
  * Rewards are granted the moment you pull (the animation only presents them).
  */
@@ -37,6 +40,8 @@ export const rankOf = (t: Tier) => TIER_ORDER.indexOf(t);
 interface Entry {
   w: number;
   label: string;
+  /** rarities this cat entry can give: the banner's featured cat only appears here if its rarity is one of them */
+  feat?: RarityId[];
   make: (featured: string | null) => Prize;
   /** this entry gives a cat (for the cat guarantee) */
   cat?: boolean;
@@ -159,14 +164,14 @@ export const BANNERS: Banner[] = [
         { w: 22, label: '1 Orbe Prisma', make: () => ({ kind: 'prisma', n: 1, tier: 'rare' }) },
       ],
       epic: [
-        { w: 75, label: 'Gato raro o épico (destacado 50%)', make: cat(['rare', 'epic'], [0.45, 0.55], 0, 'banner'), cat: true },
+        { w: 75, label: 'Gato raro o épico (destacado 50%)', make: cat(['rare', 'epic'], [0.45, 0.55], 0, 'banner'), cat: true, feat: ['rare', 'epic'] },
         { w: 25, label: 'Accesorio épico', make: acc('epic') },
       ],
       legendary: [
-        { w: 85, label: 'Gato épico o legendario (destacado 50%)', make: cat(['epic', 'legendary'], [0.35, 0.65], 0, 'banner'), cat: true },
+        { w: 85, label: 'Gato épico o legendario (destacado 50%)', make: cat(['epic', 'legendary'], [0.35, 0.65], 0, 'banner'), cat: true, feat: ['epic', 'legendary'] },
         { w: 15, label: 'Accesorio legendario', make: acc('legendary') },
       ],
-      holo: [{ w: 100, label: 'Gato HOLO (destacado 50%)', make: cat(['epic', 'legendary'], [0.5, 0.5], 1, 'banner'), cat: true }],
+      holo: [{ w: 100, label: 'Gato HOLO (destacado 50%)', make: cat(['epic', 'legendary'], [0.5, 0.5], 1, 'banner'), cat: true, feat: ['epic', 'legendary'] }],
       mythic: MYTHIC_ENTRY,
     },
     epicPity: 8,
@@ -369,15 +374,24 @@ export function expectedPulls(b: Banner, beginner = isBeginner(b)) {
   return e;
 }
 
+/** an entry's label, honest about the featured cat (it only shows up in the rarities the entry can give) */
+export function entryLabel(e: { label: string; feat?: RarityId[] }, featured: string | null = featuredCat()): string {
+  if (!e.feat) return e.label;
+  const r = featured ? (catDef(featured).rarity as RarityId) : null;
+  if (r && e.feat.includes(r)) return e.label;
+  return e.label.replace(/ \(destacado 50%\)/, r ? ' (el destacado no sale aquí)' : '');
+}
+
 /** flat list for the "Probabilidades" table: every reward with its exact chance (base odds) */
 export function ratesTable(b: Banner, mode: GachaMode = 'normal'): { tier: Tier; p: number; items: { label: string; p: number }[] }[] {
   const md = MODES[mode];
+  const featured = b.id === 'holo' ? featuredCat() : null;
   const tiers = md.odds && b.hasCats ? md.odds : b.tiers;
   return TIER_ORDER.filter((t) => tiers[t] > 0).map((t) => {
     if (md.odds && t === 'common' && md.consolation) return { tier: t, p: tiers[t], items: [{ label: md.consolation.label, p: tiers[t] }] };
     const list = b.table[t].length ? b.table[t] : b.table.legendary;
     const tot = list.reduce((s, e) => s + e.w, 0);
-    return { tier: t, p: tiers[t], items: list.map((e) => ({ label: e.label, p: (tiers[t] * e.w) / tot })) };
+    return { tier: t, p: tiers[t], items: list.map((e) => ({ label: entryLabel(e, featured), p: (tiers[t] * e.w) / tot })) };
   });
 }
 
@@ -430,7 +444,8 @@ function pullOne(b: Banner, featured: string | null, mode: GachaMode): Pull {
   const got = grantPrize(prize);
   // counters
   const wasHot = pity.hot > 0;
-  p[K(b, 'e')] = rank >= 2 ? 0 : pity.e + cost;
+  // the épico guarantee is a normal-pull rule: risk pulls move its counter by 1 (they still count `cost` below)
+  p[K(b, 'e')] = rank >= 2 ? 0 : pity.e + (md.odds && b.hasCats ? 1 : cost);
   p[K(b, 'l')] = rank >= 3 ? 0 : pity.l + cost;
   p[K(b, 'm')] = tier === 'mythic' ? 0 : pity.m + cost;
   p[K(b, 'c')] = prize.kind === 'cat' ? 0 : pity.c + 1;

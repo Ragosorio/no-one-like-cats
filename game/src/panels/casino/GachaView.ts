@@ -3,7 +3,7 @@
  *  - NORMAL x1 / x10, ALTO RIESGO (3 boletos) and TODO O NADA (10): bigger bet = more variance, better top odds.
  *  - paid with Boletos or Ojos de Gato. Banner, payment, mode and x1/x10 are remembered in the save.
  *  - the poster changes when the portal is "hot" (RACHA CALIENTE) or your beginner's guarantee is close.
- *  - auto-play (AutoHost): x1/x2/x4 play the summon (compressed), TURBO shows a results strip and only stops
+ *  - auto-play (AutoHost): x1/x2 play the summon (compressed), x10 / ETERNO show a results strip and only stop
  *    for the reveal of NEW legendary+ cats.
  * The summon itself lives in fx/sequences/gachaSummon.ts.
  */
@@ -417,14 +417,14 @@ export class GachaView extends Container implements CasinoView, AutoHost {
     const n = this.mode === 'normal' ? this.n : 1;
     if (!canPull(this.b, n, this.pay, this.mode)) return { ok: false };
     const cost = pullCost(this.b, n, this.pay, this.mode);
-    if (speed < 99) this.ctx.freeze(this.pay === 'tickets' ? { tickets: -cost } : { gems: -cost });
+    if (speed < 10) this.ctx.freeze(this.pay === 'tickets' ? { tickets: -cost } : { gems: -cost });
     const res = pull(this.b.id, n, this.pay, this.mode);
     if (!res) {
       this.ctx.unfreeze();
       return { ok: false };
     }
     this.ctx.refresh();
-    if (speed >= 99) await this.turboShow(res);
+    if (speed >= 10) await this.turboShow(res);
     else await this.present(res, speed, true);
     return outcomeOf(res);
   }
@@ -493,13 +493,13 @@ export class GachaView extends Container implements CasinoView, AutoHost {
     }
   }
 
-  // ---------------------------------------------------------------- TURBO results strip (reused objects)
+  // ---------------------------------------------------------------- x10 results strip (reused objects)
   private ensureTurbo() {
     if (this.turbo && Date.now() - this.turbo.last < 4000) return this.turbo;
     this.hideTurbo();
     const box = this.turboBox;
     const bg = new Graphics().rect(X0 + 8, 646 + 8, PW - 120, 112).fill(CP.ink).rect(X0, 646, PW - 120, 112).fill(0x0b0f0c).stroke({ width: 4, color: CP.cyan });
-    const h = label('TURBO · RESULTADOS', 14, CP.cyan, { letterSpacing: 3 });
+    const h = label('x10 · RESULTADOS', 14, CP.cyan, { letterSpacing: 3 });
     h.position.set(X0 + 16, 654);
     const t = label('', 20, CP.paper);
     t.position.set(X0 + 16, 676);
@@ -536,8 +536,8 @@ export class GachaView extends Container implements CasinoView, AutoHost {
       sfx('fanfare');
       this.ctx.say(best >= 5 ? 'gachaMythic' : 'gachaLegend', 0.6);
     }
-    // only NEW legendary+ cats interrupt TURBO (with a fast, self-closing reveal)
-    await revealCats(this.ctx.top, res.map((p) => p.got), revealPlanFor(99));
+    // only NEW legendary+ cats interrupt x10 (with a fast, self-closing reveal)
+    await revealCats(this.ctx.top, res.map((p) => p.got), revealPlanFor(10));
   }
 
   dispose() {
