@@ -212,6 +212,75 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
     for (const l of listeners) l({ ...est });
   };
   emit();
+  const finishEst = (wins: number, losses: Record<string, number>, resolve: (e: Estimate) => void) => {
+    const n = est.done;
+    const worst = Object.entries(losses).sort((a, b) => b[1] - a[1])[0];
+    // the honest margin of a sample this size (1 standard error, in points)
+    const se = Math.round(100 * Math.sqrt(Math.max(0.04, (est.p ?? 0) * (1 - (est.p ?? 0))) / n));
+    est.details.splice(2, 0, wins === 0 || wins === n ? `Ganaste ${wins} de ${n}: sin dudas en esta configuración.` : `Ganaste ${wins} de ${n}. Margen: ±${se} puntos (son ${n} peleas, no infinitas).`);
+    if (worst && (est.p ?? 0) < 0.7 && LOSS_TIP[worst[0]]) {
+      est.tips.unshift(LOSS_TIP[worst[0]]);
+      est.details.push(LOSS_TIP[worst[0]]);
+    }
+    cache.set(sig, { at: performance.now(), est: { ...est } });
+    inflight.delete(sig);
+    emit();
+    resolve(est);
+  };
+  // preferred: a Web Worker plays the sims (zero main-thread cost); the idle-slot path below is the fallback
+  const viaWorker = simWorker();
+  if (viaWorker) {
+    entry.promise = new Promise<Estimate>((resolve) => {
+      let wins = 0;
+      const losses: Record<string, number> = {};
+      const id = ++simSeq;
+      let sent = 0;
+      const send = () => {
+        const spec = sent === 0 ? first : build();
+        const { onEnd: _drop, ...plain } = spec;
+        viaWorker.postMessage({ id, i: sent, spec: plain });
+        sent++;
+      };
+      const onMsg = (e: MessageEvent<{ id: number; i: number; res?: { won: boolean; reason: string | null }; error?: string }>) => {
+        if (e.data.id !== id) return;
+        if (!e.data.res) {
+          // the worker can't play this one: fall back for the whole estimate
+          viaWorker.removeEventListener('message', onMsg);
+          workerBroken = true;
+          inflight.delete(sig);
+          void simulateEstimate(key, build, undefined, total).then(resolve);
+          return;
+        }
+        const res = e.data.res;
+        if (res.won) wins++;
+        else if (res.reason) losses[res.reason] = (losses[res.reason] ?? 0) + 1;
+        est.done++;
+        est.p = wins / est.done;
+        if (est.done >= EST_MIN && (wins === 0 || wins === est.done)) est.total = est.done;
+        emit();
+        if (est.done < est.total) {
+          if (sent < est.total) send();
+          return;
+        }
+        viaWorker.removeEventListener('message', onMsg);
+        finishEst(wins, losses, resolve);
+      };
+      viaWorker.addEventListener('message', onMsg);
+      // a worker that never answers (failed to load) must not leave the stamp on SIMULANDO… forever
+      window.setTimeout(() => {
+        if (est.done > 0 || !inflight.has(sig)) return;
+        viaWorker.removeEventListener('message', onMsg);
+        workerBroken = true;
+        inflight.delete(sig);
+        void simulateEstimate(key, build, (x) => listeners.forEach((l) => l(x)), total).then(resolve);
+      }, 8000);
+      // two in flight keeps the worker busy without queueing work that a clean sweep would waste
+      send();
+      send();
+    });
+    inflight.set(sig, entry);
+    return entry.promise;
+  }
   entry.promise = import('../../battle/autoplay').then(
     ({ autoBattleSteps }) =>
       new Promise<Estimate>((resolve) => {
@@ -240,21 +309,7 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
             if (est.done >= EST_MIN && (wins === 0 || wins === est.done)) est.total = est.done;
             emit();
             if (est.done < est.total) schedule(step);
-            else {
-              const n = est.done;
-              const worst = Object.entries(losses).sort((a, b) => b[1] - a[1])[0];
-              // the honest margin of a sample this size (1 standard error, in points)
-              const se = Math.round(100 * Math.sqrt(Math.max(0.04, est.p * (1 - est.p)) / n));
-              est.details.splice(2, 0, wins === 0 || wins === n ? `Ganaste ${wins} de ${n}: sin dudas en esta configuración.` : `Ganaste ${wins} de ${n}. Margen: ±${se} puntos (son ${n} peleas, no infinitas).`);
-              if (worst && est.p < 0.7 && LOSS_TIP[worst[0]]) {
-                est.tips.unshift(LOSS_TIP[worst[0]]);
-                est.details.push(LOSS_TIP[worst[0]]);
-              }
-              cache.set(sig, { at: performance.now(), est: { ...est } });
-              inflight.delete(sig);
-              emit();
-              resolve(est);
-            }
+            else finishEst(wins, losses, resolve);
           };
           schedule(step);
         });
@@ -262,6 +317,27 @@ export function simulateEstimate(key: string, build: () => BattleSpec, onUpdate?
   );
   inflight.set(sig, entry);
   return entry.promise;
+}
+
+// ------------------------------------------------------------------ the sim worker (one per session, lazy)
+let worker: Worker | null = null;
+let workerBroken = false;
+let simSeq = 0;
+function simWorker(): Worker | null {
+  if (workerBroken || typeof Worker === 'undefined') return null;
+  if (!worker) {
+    try {
+      worker = new Worker(new URL('../../workers/estimate.worker.ts', import.meta.url), { type: 'module' });
+      worker.addEventListener('error', () => {
+        workerBroken = true;
+        worker = null;
+      });
+    } catch {
+      workerBroken = true;
+      return null;
+    }
+  }
+  return worker;
 }
 
 function schedule(f: () => void) {

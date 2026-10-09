@@ -1,6 +1,8 @@
+import './core/pixiFixes'; // Pixi v8 footguns (Graphics contexts leaked on destroy({children}))
 import '@fontsource/anton';
 import { initPwa } from './core/pwa';
 import { initUpdates } from './core/updates';
+import { initSaveGuard } from './ui/saveGuard';
 import '@fontsource/bebas-neue';
 import '@fontsource/bangers';
 import '@fontsource/dela-gothic-one';
@@ -107,6 +109,7 @@ async function boot() {
   scenes.init();
   initPwa();
   initUpdates();
+  initSaveGuard();
   mountMicroOverlay();
   applyAudioSettings();
   initStory();

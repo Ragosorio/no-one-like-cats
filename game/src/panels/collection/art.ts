@@ -15,17 +15,29 @@ import { ensureFonts } from './fonts';
 import { mutationLook } from '../../state/ext/collection';
 
 let artPromise: Promise<void> | null = null;
-/** load every painting once (one lite SVG per distinct art slug) */
-export function ensureCatArt(): Promise<void> {
+/**
+ * Load every painting once (one lite SVG per distinct art slug). Rasterizing a cat SVG costs ~15–25 ms
+ * of main thread; all 86 at once froze the game for over a second, so they load a few at a time,
+ * in `first`-then-catalog order, yielding a frame between batches.
+ */
+export function ensureCatArt(first: string[] = []): Promise<void> {
   if (!artPromise) {
-    const slugs = [...new Set(CATS.map((c) => c.art.slug))];
-    const art = preloadCats(slugs).catch(async () => {
-      // one bad file shouldn't block the rest
-      await Promise.all(slugs.map((s) => loadCatTexture(s).catch(() => undefined)));
-    });
-    artPromise = Promise.all([art, ensureFonts()]).then(() => undefined);
+    const order = [...new Set([...first.map(slugOf), ...CATS.map((c) => c.art.slug)])];
+    artPromise = Promise.all([loadInBatches(order), ensureFonts()]).then(() => undefined);
   }
   return artPromise;
+}
+/** just these species' paintings (and the fonts): what a panel needs before it can draw its first frame */
+export async function ensureArtFor(species: string[]) {
+  void ensureCatArt(species);
+  await Promise.all([ensureFonts(), ...[...new Set(species.map(slugOf))].map((s) => loadCatTexture(s).catch(() => undefined))]);
+}
+async function loadInBatches(slugs: string[], batch = 3) {
+  for (let i = 0; i < slugs.length; i += batch) {
+    // one bad file shouldn't block the rest
+    await Promise.all(slugs.slice(i, i + batch).map((s) => loadCatTexture(s).catch(() => undefined)));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+  }
 }
 
 function hash(s: string) {

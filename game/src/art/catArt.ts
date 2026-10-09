@@ -1,3 +1,4 @@
+import { cachedRaster, storeRaster } from './rasterCache';
 import { Assets, Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
 import { ART, CatPuppet, PuppetOptions, catRig } from './livingCat';
 import { GlowFilter, OutlineFilter } from 'pixi-filters';
@@ -104,6 +105,15 @@ export function isStandIn(slug: string) {
   return artSlug(slug) !== slug;
 }
 
+/** a cached raster from a previous session (fast, decoded off-thread) or the SVG itself (then cached) */
+async function loadRasterOrSvg(url: string, res: number): Promise<Texture> {
+  const hit = await cachedRaster(url, res);
+  if (hit) return hit;
+  const t = await Assets.load<Texture>({ alias: url, src: url, data: { resolution: res } });
+  storeRaster(url, res, t);
+  return t;
+}
+
 const liteTex = new Map<string, Texture>();
 const litePending = new Map<string, Promise<Texture>>();
 function loadLite(raw: string): Promise<Texture> {
@@ -113,7 +123,7 @@ function loadLite(raw: string): Promise<Texture> {
   let p = litePending.get(slug);
   if (!p) {
     const url = catLiteUrl(slug);
-    p = Assets.load<Texture>({ alias: url, src: url, data: { resolution: LITE_RES } }).then((t) => {
+    p = loadRasterOrSvg(url, LITE_RES).then((t) => {
       liteTex.set(slug, t);
       litePending.delete(slug);
       return t;
@@ -141,7 +151,7 @@ function pumpSvg() {
     svgState.set(slug, 'loading');
     const url = catSvgUrl(slug);
     const go = () =>
-      Assets.load<Texture>({ alias: url, src: url, data: { resolution: FULL_RES } })
+      loadRasterOrSvg(url, FULL_RES)
         .then((tex) => {
           svgTex.set(slug, tex);
           svgState.delete(slug);
