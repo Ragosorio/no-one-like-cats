@@ -19,6 +19,11 @@
       "paths": 10572,
       "premultipliedRgbMae": 7.1636
     },
+    "archivista_scholar_cat": {
+      "bytes": 1129038,
+      "paths": 11301,
+      "premultipliedRgbMae": 11.5882
+    },
     "arenita_sand_cat": {
       "bytes": 1139383,
       "paths": 11552,
@@ -34,6 +39,11 @@
       "paths": 12218,
       "premultipliedRgbMae": 9.1812
     },
+    "bibliotecario_drowned_cat": {
+      "bytes": 1187884,
+      "paths": 10937,
+      "premultipliedRgbMae": 10.5544
+    },
     "bigbang_cosmic_cat": {
       "bytes": 1153791,
       "paths": 11860,
@@ -43,6 +53,11 @@
       "bytes": 1186428,
       "paths": 11216,
       "premultipliedRgbMae": 11.4393
+    },
+    "brillito_crystal_cat": {
+      "bytes": 959451,
+      "paths": 9241,
+      "premultipliedRgbMae": 8.1238
     },
     "burbujas_fizz_cat": {
       "bytes": 1283192,
@@ -58,6 +73,16 @@
       "bytes": 1029137,
       "paths": 10229,
       "premultipliedRgbMae": 11.6621
+    },
+    "canelo_admiral_cat": {
+      "bytes": 1154341,
+      "paths": 10839,
+      "premultipliedRgbMae": 10.0975
+    },
+    "canelo_astral_cat": {
+      "bytes": 1432349,
+      "paths": 14270,
+      "premultipliedRgbMae": 10.9087
     },
     "canelo_cozy_cat": {
       "bytes": 1183316,
@@ -129,6 +154,21 @@
       "paths": 11132,
       "premultipliedRgbMae": 10.2131
     },
+    "espejito_mirror_cat": {
+      "bytes": 949272,
+      "paths": 9105,
+      "premultipliedRgbMae": 8.2688
+    },
+    "espumita_foam_cat": {
+      "bytes": 1098933,
+      "paths": 10675,
+      "premultipliedRgbMae": 9.1167
+    },
+    "facetas_geode_cat": {
+      "bytes": 987300,
+      "paths": 9342,
+      "premultipliedRgbMae": 8.9045
+    },
     "fanguito_mud_cat": {
       "bytes": 1125191,
       "paths": 11115,
@@ -138,6 +178,11 @@
       "bytes": 1211383,
       "paths": 11847,
       "premultipliedRgbMae": 9.3031
+    },
+    "farolillo_angler_cat": {
+      "bytes": 1015143,
+      "paths": 9986,
+      "premultipliedRgbMae": 9.862
     },
     "fossilstone_guardian_cat": {
       "bytes": 951106,
@@ -219,10 +264,20 @@
       "paths": 10797,
       "premultipliedRgbMae": 9.1747
     },
+    "madrenacar_pearl_cat": {
+      "bytes": 1315883,
+      "paths": 12739,
+      "premultipliedRgbMae": 9.396
+    },
     "magmito_forge_cat": {
       "bytes": 1063645,
       "paths": 10522,
       "premultipliedRgbMae": 9.6873
+    },
+    "marcapaginas_bookmark_cat": {
+      "bytes": 805333,
+      "paths": 8213,
+      "premultipliedRgbMae": 7.8978
     },
     "marea_mermaid_cat": {
       "bytes": 1340590,
@@ -324,10 +379,20 @@
       "paths": 8283,
       "premultipliedRgbMae": 9.1072
     },
+    "prismarina_seaglass_cat": {
+      "bytes": 1145454,
+      "paths": 11483,
+      "premultipliedRgbMae": 10.0524
+    },
     "raizvieja_bark_cat": {
       "bytes": 1124926,
       "paths": 10959,
       "premultipliedRgbMae": 9.8246
+    },
+    "refracta_prism_cat": {
+      "bytes": 1132708,
+      "paths": 11544,
+      "premultipliedRgbMae": 10.278
     },
     "regal_cosmic_cat": {
       "bytes": 1132289,
@@ -403,6 +468,11 @@
       "bytes": 863414,
       "paths": 8398,
       "premultipliedRgbMae": 7.2026
+    },
+    "tintero_ink_cat": {
+      "bytes": 1098363,
+      "paths": 10613,
+      "premultipliedRgbMae": 8.0617
     },
     "titiritera_puppet_cat": {
       "bytes": 1175544,

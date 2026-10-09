@@ -15,6 +15,10 @@
       "bytesIn": 10007120,
       "bytesOut": 7268064
     },
+    "archivista_scholar_cat": {
+      "bytesIn": 10952176,
+      "bytesOut": 7936787
+    },
     "arenita_sand_cat": {
       "bytesIn": 11248740,
       "bytesOut": 8150241
@@ -27,6 +31,10 @@
       "bytesIn": 11288088,
       "bytesOut": 8242291
     },
+    "bibliotecario_drowned_cat": {
+      "bytesIn": 12355561,
+      "bytesOut": 8995482
+    },
     "bigbang_cosmic_cat": {
       "bytesIn": 10360058,
       "bytesOut": 7489751
@@ -34,6 +42,10 @@
     "boreas_aurora_cat": {
       "bytesIn": 10180573,
       "bytesOut": 7348457
+    },
+    "brillito_crystal_cat": {
+      "bytesIn": 8961829,
+      "bytesOut": 6492229
     },
     "burbujas_fizz_cat": {
       "bytesIn": 12015700,
@@ -46,6 +58,14 @@
     "candy_alchemist_cat": {
       "bytesIn": 8291480,
       "bytesOut": 6035757
+    },
+    "canelo_admiral_cat": {
+      "bytesIn": 11242302,
+      "bytesOut": 8241658
+    },
+    "canelo_astral_cat": {
+      "bytesIn": 12128948,
+      "bytesOut": 8780332
     },
     "canelo_cozy_cat": {
       "bytesIn": 11840605,
@@ -103,6 +123,18 @@
       "bytesIn": 10372042,
       "bytesOut": 7458751
     },
+    "espejito_mirror_cat": {
+      "bytesIn": 8221593,
+      "bytesOut": 5959376
+    },
+    "espumita_foam_cat": {
+      "bytesIn": 10256511,
+      "bytesOut": 7428843
+    },
+    "facetas_geode_cat": {
+      "bytesIn": 10258494,
+      "bytesOut": 7442055
+    },
     "fanguito_mud_cat": {
       "bytesIn": 10677704,
       "bytesOut": 7762647
@@ -110,6 +142,10 @@
     "faro_lighthouse_cat": {
       "bytesIn": 11245697,
       "bytesOut": 8241183
+    },
+    "farolillo_angler_cat": {
+      "bytesIn": 9830069,
+      "bytesOut": 7126470
     },
     "fossilstone_guardian_cat": {
       "bytesIn": 9465599,
@@ -175,9 +211,17 @@
       "bytesIn": 10478646,
       "bytesOut": 7592267
     },
+    "madrenacar_pearl_cat": {
+      "bytesIn": 10583430,
+      "bytesOut": 7662703
+    },
     "magmito_forge_cat": {
       "bytesIn": 10368977,
       "bytesOut": 7545414
+    },
+    "marcapaginas_bookmark_cat": {
+      "bytesIn": 8102974,
+      "bytesOut": 5854545
     },
     "marea_mermaid_cat": {
       "bytesIn": 10830056,
@@ -259,9 +303,17 @@
       "bytesIn": 6199074,
       "bytesOut": 4496906
     },
+    "prismarina_seaglass_cat": {
+      "bytesIn": 10593937,
+      "bytesOut": 7619784
+    },
     "raizvieja_bark_cat": {
       "bytesIn": 11354515,
       "bytesOut": 8228925
+    },
+    "refracta_prism_cat": {
+      "bytesIn": 9502269,
+      "bytesOut": 6874681
     },
     "regal_cosmic_cat": {
       "bytesIn": 9283616,
@@ -322,6 +374,10 @@
     "tic_pocketwatch_cat": {
       "bytesIn": 8333608,
       "bytesOut": 6036198
+    },
+    "tintero_ink_cat": {
+      "bytesIn": 10361020,
+      "bytesOut": 7508908
     },
     "titiritera_puppet_cat": {
       "bytesIn": 9943527,
