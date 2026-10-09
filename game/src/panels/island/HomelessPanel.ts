@@ -33,7 +33,8 @@ export function openHomeless(focusUid?: string) {
   m.body.addChild(content);
   const box = emptyBoxArt();
   box.scale.set(2.2);
-  box.position.set(m.innerW - 90, 110);
+  // below the title band: at y 110 its flaps covered the X (close) button
+  box.position.set(m.innerW - 90, 175);
   content.addChild(box);
   list.slice(0, 4).forEach((c, i) => {
     const row = new Container();

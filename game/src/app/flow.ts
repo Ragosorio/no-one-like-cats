@@ -44,6 +44,17 @@ export async function goMap() {
   await scenes.go(new MapScene(), 'blocks');
 }
 
+/**
+ * Parte II: visit a 3D region (Páginas Hundidas, Isla Nácar…). Only reachable after H30; the 3D engine
+ * and three.js are lazy-loaded here, so Part I players never download them.
+ * `cinematic` regions play a camera path and return to the island by themselves.
+ */
+export async function goRegion(id: string) {
+  const { RegionScene } = await import('../scenes/RegionScene');
+  music.play('island');
+  await scenes.go(new RegionScene(id), 'blocks');
+}
+
 /** start a campaign battle; on end shows results then returns to the map */
 export async function goBattle(zone: number, stage: number) {
   const { startCampaignBattle } = await import('./battleFlow');

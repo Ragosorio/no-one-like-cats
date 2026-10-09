@@ -3,7 +3,8 @@
  * animates the events each step returns. Deterministic for a given seed.
  *
  * Turn: start-of-turn effects (DOTs, regen, summons) → stun check → the actor uses one power
- * (player: chosen or auto; rival: AI) → cooldowns tick. Ends on a K.O. (or a judges' decision at max turns).
+ * (player: chosen or auto; rival: AI) → cooldowns tick. Ends on a K.O. (or a judges' decision at max turns);
+ * `finish` / `koBy` tell which, so the results (and H38's final blow) can tell a K.O. from a decision.
  */
 import { affinityMult } from '../data/content';
 import PB from '../data/podio.json';
@@ -101,6 +102,12 @@ export class Duel {
   n = 0;
   over = false;
   winner: 0 | 1 | null = null;
+  /**
+   * How it ended: 'ko' = a cat's HP reached 0 (in a 1-vs-1 every point of damage the loser took came from
+   * the winner: its hits, its burn / root, its summon); 'decision' = the judges at max turns. A forfeit
+   * (PodioScene sets over/winner itself) leaves it null. Parte II H38 «¡A BABOR!» counts only a K.O.
+   */
+  finish: 'ko' | 'decision' | null = null;
   private rnd: () => number;
   /** how smart the rival is (0 = random-ish, 1 = sharp) */
   aiSkill: number;
@@ -114,6 +121,11 @@ export class Duel {
     // the quicker style goes first (controllers and snipers), ties → the player
     const agi = (x: Fighter) => ({ controlador: 3, francotirador: 3, artillero: 2, asediador: 2, soporte: 1, invocador: 1, demoledor: 1, tanque: 0 })[x.role] ?? 1;
     this.turn = agi(this.f[1]) > agi(this.f[0]) ? 1 : 0;
+  }
+
+  /** the side that knocked the other one out (null: still going, a judges' decision or a forfeit) */
+  get koBy(): 0 | 1 | null {
+    return this.finish === 'ko' ? this.winner : null;
   }
 
   /** whose powers are usable now (cooldown 0, unlocked, ult needs a full meter) */
@@ -195,6 +207,7 @@ export class Duel {
       const p1 = this.f[1].hp / this.f[1].hpMax;
       this.over = true;
       this.winner = p1 > p0 ? 1 : 0;
+      this.finish = 'decision';
       ev.push({ t: 'decision', winner: this.winner });
       return ev;
     }
@@ -426,6 +439,7 @@ export class Duel {
         f.hp = 0;
         this.over = true;
         this.winner = (1 - f.side) as 0 | 1;
+        this.finish = 'ko';
         ev.push({ t: 'ko', side: f.side });
         return true;
       }

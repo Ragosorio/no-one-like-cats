@@ -15,6 +15,11 @@ import { BattleCatDef, CatFx, CatState, ElementId, ShotDef, StatusId } from './t
 import { CONTENT } from '../data/content';
 // Parte 2: Hielo, Luz, Sombra, Sonido, Tiempo, Vacío (small hooks below, rules in multiverso.ts)
 import { p2BeginFire, p2Flight, p2Impact, p2PostHitCat, p2PreHitCat, p2PreviewMul, p2React, p2Shooters, p2StartTurn } from './multiverso';
+// Parte II · Oleada 1: Cristal — PRISMA / REFRACCIÓN / FACETA (small hooks below, rules in cristal.ts)
+import { crBeginFire, crFacet, crImpact, crReact, crRefract, crShards, crStartTurn } from './cristal';
+// H34 «Shhh»: the Bibliotecario hates noise — Sonido ×2, RUIDO, ¡SHHHH! (rules in ruido.ts)
+import { nzAtkMul, nzBeginFire, nzImpact, nzStartTurn } from './ruido';
+import type { NoiseCfg } from './ruido';
 import { lateBossInit, lateBossStart, lateEnterPhase, wardIntercept, lateCellMul, lateAfterImpact, lateLoss, lateSplash, tickBuffs } from './bossLate';
 import { ULTS, ultBudgetFrac, ultTicks } from './ults';
 import { cataInit, cataStart, cataCrack, sealOpen } from './cataclysm';
@@ -84,7 +89,9 @@ export type BossWhat =
   | 'devourStop'
   | 'coreSwitch' // phase core destroyed: the next one wakes (n = phase)
   | 'immune' // hit on a sleeping core
-  | 'finale'; // the last core fell: STARFALL
+  | 'finale' // the last core fell: STARFALL
+  // ---- Parte II
+  | 'shhh'; // H34: RUIDO 3/3, the Bibliotecario wakes up furious (n = times; ruido.ts)
 
 export type BattleEvent =
   | {
@@ -193,6 +200,8 @@ export interface StageRules {
   retreat?: { side: 0 | 1; turn: number };
   /** CATACLISMOS: the zone's / boss's power that falls on the other ship every few turns (cataclysm.ts) */
   cataclysm?: CataCfg;
+  /** H34 «Shhh»: this side hates noise — Sonido hits its ship ×2; 3 hits wake it furious (ruido.ts) */
+  noise?: NoiseCfg;
 }
 
 export interface BattleConfig {
@@ -446,6 +455,16 @@ export class Battle {
   curShooter: CatState | null = null;
   /** last normal cat shot of each side (Lumen ETERNAL EXPOSURE repeats it) */
   lastShot: ({ shot: ShotDef; atk: number; angle: number; power: number; origin: PathPoint } | null)[] = [null, null];
+  /**
+   * THE FINAL BLOW (Parte II H38 «¡A BABOR!»): uid of the last CAT of each side whose shot hurt the foe.
+   * The automatic cannon volley follows the cat's aim, so it never steals it. Pure bookkeeping (no rng):
+   * the screen and the headless estimate agree.
+   */
+  lastBlow: [string | null, string | null] = [null, null];
+  /** who finished the battle: the winner's last cat blow (null while it goes on) */
+  get finalBlow(): string | null {
+    return this.winner === null ? null : this.lastBlow[this.winner];
+  }
 
   constructor(public cfg: BattleConfig) {
     this.rng = new Rng(cfg.seed);
@@ -714,6 +733,8 @@ export class Battle {
     const s = this.sides[side];
     const ship = s.ship;
     p2StartTurn(this, side, ev);
+    crStartTurn(this, side);
+    nzStartTurn(this, side, ev);
     for (const m of ship.modules) if (m.disabled > 0) m.disabled--;
     s.rodUsed = false;
     // bubble regenerates at the start of its owner's turn
@@ -1150,6 +1171,8 @@ export class Battle {
       }
     }
     if (this.boss?.enraged && this.cfg.boss?.side === side) atk *= ENRAGE_MUL;
+    // H34: the Bibliotecario's furious turn (RUIDO 3/3) hits ×1.5 — cats and the volley
+    atk *= nzAtkMul(this, side);
     const events: BattleEvent[] = [];
     // Eclipse: the next cat shot of this side hits ×2
     if (cat && s.buffs.empower > 0) {
@@ -1158,17 +1181,20 @@ export class Battle {
     }
     origin ??= cannonId !== undefined ? this.cannonMuzzle(side, cannonId) : this.muzzle(side, cat?.def.uid);
     p2BeginFire(this);
+    crBeginFire(this);
+    nzBeginFire(this);
     // INESTABLE (limitation): the shot wobbles a little, for whoever owns the cat
     if (cat?.def.limitation === 'unstable') angle += this.rng.range(-0.06, 0.06);
     const windNow = this.wind + this.sides[side].windNext;
     this.sides[side].windNext = 0;
     this.curShooter = cat ?? null;
     let paths: ShotPath[];
-    const special = ult && cat ? ULTS[cat.def.catId] : undefined;
+    // a FORM may point its ultimate at another effect (ultKey); everyone else: the species' own
+    const special = ult && cat ? ULTS[cat.def.ultKey ?? cat.def.catId] : undefined;
     // ultimates can't erase more than a slice of the enemy structure (GDD 2.9.4: 35%, 40% Starfall/Singularidad, bosses 15%)
     if (ult && cat) {
       const foe = this.sides[1 - side];
-      const frac = this.cfg.boss?.side === 1 - side ? 0.15 : ultBudgetFrac(cat.def.catId, cat.def.stars);
+      const frac = this.cfg.boss?.side === 1 - side ? 0.15 : ultBudgetFrac(cat.def.ultKey ?? cat.def.catId, cat.def.stars);
       this.budget = { side: 1 - side, left: Math.round((foe.ship.initialMax?.[0] ?? 0) * frac) };
     }
     if (special) {
@@ -1197,6 +1223,7 @@ export class Battle {
       events.push({ k: 'info', text: 'CORRIENTE', x: last.x, y: last.y - 40, color: 0xc6f0e4, path: 0, at: paths[0].points.length - 1 });
     }
     for (let i = 0; i < 2; i++) events.push(...this.updateExposure(i));
+    if (cat && this.winner === null && events.some((e) => hurtsSide(e, 1 - side))) this.lastBlow[side] = cat.def.uid;
     this.checkVictory();
     events.push(...this.updatePhase());
     // late-boss events raised while resolving (core switch…) show with this shot
@@ -1503,6 +1530,10 @@ export class Battle {
         }
       }
     }
+    // H34: Sonido on the noise-hater's ship hits ×2 and adds RUIDO (ruido.ts)
+    if (foe) base *= nzImpact(this, attSide, targetSide, shot, ev, path, at);
+    // Cristal: a nacre FACET on the target ship redirects the next projectile that lands there (cristal.ts)
+    if (foe && final) base *= crFacet(this, attSide, targetSide, base, CAT_K, x, y, ev, path, at);
     let total = 0;
     let reactionDone = false;
     // boss parts in the blast
@@ -1581,12 +1612,13 @@ export class Battle {
     let skinShown = false;
     const reactionNames = new Set<string>();
     const shards: { side: number; c: Cell; dmg: number }[] = [];
+    let refract: { side: number; c: Cell; dmg: number; n: number } | null = null;
     for (const a of affected) {
       const fall = Math.max(0.3, Math.pow(1 - Math.min(1, a.d / (radius + CELL * 0.35)), 0.55));
       let mult = (MAT_RESIST[a.c.material]?.[shot.element] ?? 1) * (shot.structMul ?? 1);
-      // --- elemental reactions
+      // --- elemental reactions (Cristal's REFRACCIÓN first: a foe hit on a PRISMA cell, once per shot)
       const st = a.c.status;
-      const r = this.react(shot, a.c, a.side, ev, path, at, x, y, reactionDone);
+      const r = (a.side !== attSide && crReact(this, shot, a.c, ev, path, at, x, y)) || this.react(shot, a.c, a.side, ev, path, at, x, y, reactionDone);
       if (r.name) {
         reactionDone = true;
         reactionNames.add(r.name);
@@ -1619,6 +1651,7 @@ export class Battle {
       total += dmg;
       const destroyed = a.c.hp <= 0;
       if (r.name === 'ESTALLIDO') shards.push({ side: a.side, c: a.c, dmg: Math.round(dmg * 0.5) });
+      if (crShards(r.name)) refract = { side: a.side, c: a.c, dmg, n: crShards(r.name) };
       if (r.name === 'AVIVAR') this.spreadFire(a.side, a.c, 2, ev);
       // statuses from the shot
       if (!destroyed) this.applyShotStatuses(shot, a.c);
@@ -1669,6 +1702,8 @@ export class Battle {
         ev.push({ k: 'cell', side: sh.side, cell: n, dmg: sd, destroyed, path, at });
       }
     }
+    // Cristal: the refracted blow splits into shards that jump to the nearest cells the blast missed
+    if (refract) total += crRefract(this, refract.side, refract.c, refract.dmg, refract.n, new Set(affected.map((k) => k.c)), attSide, ev, path, at);
     // gargoyle throat: interrupts the purr and stuns her
     if (throatHit && B?.id === 'gargoyle') {
       const cap = this.captain();
@@ -1685,6 +1720,8 @@ export class Battle {
     if (foe) lateAfterImpact(this, attSide, targetSide, shot, total, x, y, ev, path, at, reactionNames);
     // Parte 2: blind, backstab, sound through cabins, rewind / time stop, erase
     p2Impact(this, { attSide, targetSide, shot, base, x, y, radius, final, total, path, at, catK: CAT_K, hitCat: (c, d, e, p, a, el, direct, chained) => this.hitCat(c, d, e, p, a, el, direct, chained) }, ev);
+    // Parte II: a Cristal cat shot that landed raises a facet on its own ship
+    crImpact(this, attSide, targetSide, shot, final, ev, path, at);
     ev.push({ k: 'impact', x, y, side: targetSide, radius, element: shot.element, crit, path, at, total, mul: foe ? mainMul : undefined, mat: foe ? firstMat : undefined });
     for (let side = 0; side < 2; side++) {
       const chunks = this.sides[side].ship.collapse();
@@ -2045,6 +2082,22 @@ export class Battle {
     const s = this.sides[side];
     const hull = (s.ship.integrity() - SINK_AT) / (1 - SINK_AT);
     return Math.max(0, Math.min(1, hull, 1 - (s.flood ?? 0)));
+  }
+}
+
+/** this event hurt `side` (structure, a module, a cat, a boss part): what counts as a blow */
+export function hurtsSide(e: BattleEvent, side: number) {
+  switch (e.k) {
+    case 'cell':
+    case 'cat':
+    case 'part':
+    case 'tick':
+      return e.side === side && e.dmg > 0;
+    case 'module':
+    case 'chunk':
+      return e.side === side;
+    default:
+      return false;
   }
 }
 

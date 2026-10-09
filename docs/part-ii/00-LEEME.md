@@ -17,6 +17,10 @@
 | 08 | [biblia-arte](08-biblia-arte.md) | Dirección de arte 2.5D: luz por hora, jerarquía de detalle, animación, hábitats, lentes regionales y producción |
 | 09 | [hosting-arte](09-hosting-arte.md) | Dónde vive el arte (2º repo de Pages, mismo origen), por qué el juego no se muda (partidas), pasos y rollback |
 | 11 | [rendimiento-sin-iris-xe](11-rendimiento-sin-iris-xe.md) | Mediciones con el M4 sin tope, CPU frenada y SwiftShader; estimación para Iris Xe; recomendaciones aplicadas |
+| 12 | [puente-oleada-1](12-puente-oleada-1.md) | **El puente en el juego real**: H31–H38, contratos (ids, slugs, flags, batallas), REGISTRO 000 en superficies existentes, formas de Canelo |
+| 13 | [guion-parte-ii](13-guion-parte-ii.md) | El guion de las 4 oleadas, misión por misión, y dónde se paga cada hilo de la Parte I |
+| 14 | [regiones-3d](14-regiones-3d.md) | Las islas 3D de la Parte II dentro del juego: motor, contrato, cómo agregar una región |
+| 15 | [balance-cristal](15-balance-cristal.md) | Balance del elemento Cristal y regla del Sonido (sims antes y después) |
 | 10 | [estado-implementacion](10-estado-implementacion.md) | **Bitácora:** qué está hecho y verificado, qué no se pudo verificar, limitaciones y siguiente trabajo en orden |
 
 **Código:**

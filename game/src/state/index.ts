@@ -16,6 +16,7 @@ import './sys/storyBattles'; // registers the Fragmentos retro patch before any 
 import './sys/podio';
 import './sys/grietas';
 import './sys/finale'; // EL ARCHIVO RASGADO (H29–H30), after the grietas register theirs
+import './sys/rupturas'; // Parte II · Oleada 1 «La Marea Imposible» (H31–H38), after «Fin»
 import { markAllPatched } from './patches';
 import { UPDATE_IDS } from '../data/updates';
 

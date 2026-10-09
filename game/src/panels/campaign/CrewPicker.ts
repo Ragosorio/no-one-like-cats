@@ -12,6 +12,7 @@ import { catDef } from '../../data/content';
 import { autoCrew, crew, crewSize, setCrew } from '../../state/sys/ship';
 import { cat as getCat, catPow } from '../../state/sys/cats';
 import { P, catPortrait, clickable, elTok, label, clearChildren } from './common';
+import { catSlug } from '../../state/sys/forms';
 import { iconText } from '../../ui/elementIcon';
 import { toast } from '../../ui/modal';
 import { catBusy } from '../../state/sys/workforce';
@@ -78,20 +79,33 @@ export class CrewPicker extends Container {
       slot.addChild(bg);
       const cab = label(`CAMAROTE ${i + 1}`, 13, c || sel ? P.blue : sub, { letterSpacing: 2 });
       cab.position.set(8, 6);
+      if (cab.width > slotW - 14) cab.scale.set((slotW - 14) / cab.width);
       slot.addChild(cab);
       if (c) {
         const d0 = catDef(c.species);
-        const ps = Math.min(slotH * 0.5, slotW - 36);
-        const p = catPortrait(c.species, ps);
+        // short cabins (the Shipyard's 122 px) have no room for a line under the name: the
+        // Nv · ★ · element line rides on the portrait as an ink pill instead of spilling out
+        const compact = slotH - 92 < Math.min(slotH * 0.5, slotW - 36) * 0.75;
+        const ps = Math.min(slotH * 0.5, slotW - 36, compact ? slotH - 66 : slotH - 92);
+        const p = catPortrait(c.species, ps, { slug: catSlug(c) });
         p.position.set(slotW / 2, 24 + ps / 2 + 4);
         const nm = txt(c.name.toUpperCase(), { fontFamily: F.poster, fontSize: 22, fill: C.ink });
         nm.anchor.set(0.5, 0);
         nm.position.set(slotW / 2, 30 + ps + 2);
         if (nm.width > slotW - 10) nm.scale.set((slotW - 10) / nm.width);
-        const info = iconText(`Nv ${c.level} · ${'★'.repeat(c.stars)} ${d0.elements.map((e) => elTok(e)).join('')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink });
-        info.position.set(slotW / 2 - info.width / 2, nm.y + nm.height + 2);
+        // narrow cabins (7 on a 844 px row = 110 px) + Nv 50 ★★★★★★ used to spill past the card's left edge
+        const stars = c.stars > 3 && slotW < 150 ? `${c.stars}★` : '★'.repeat(c.stars);
+        const info = iconText(`Nv ${c.level} · ${stars} ${d0.elements.map((e) => elTok(e)).join('')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: compact ? 11 : 13, fill: compact ? C.paper : C.ink });
+        if (info.width > slotW - (compact ? 18 : 8)) info.scale.set((slotW - (compact ? 18 : 8)) / info.width);
+        let infoNode: Container = info;
+        if (compact) {
+          const pill = new Container();
+          pill.addChild(new Graphics().roundRect(-4, -1, info.width + 8, info.height + 2, 5).fill(C.ink), info);
+          pill.position.set(slotW / 2 - info.width / 2, 24 + ps + 4 - info.height);
+          infoNode = pill;
+        } else info.position.set(slotW / 2 - info.width / 2, nm.y + nm.height + 2);
         const rc = new Graphics().rect(0, slotH - 7, slotW, 7).fill(RARITY[d0.rarity]?.color ?? C.ink);
-        slot.addChild(p, nm, info, rc);
+        slot.addChild(p, nm, infoNode, rc);
       } else {
         const plus = txt('+', { fontFamily: F.poster, fontSize: 70, fill: sel ? C.ink : sub });
         plus.anchor.set(0.5);
@@ -137,7 +151,7 @@ export class CrewPicker extends Container {
       const cc = new Container();
       const inCrew = cur.includes(c.uid);
       const busy = catBusy(c.uid);
-      const p = catPortrait(c.species, size, { ring: inCrew ? C.pinkHot : C.ink });
+      const p = catPortrait(c.species, size, { ring: inCrew ? C.pinkHot : C.ink, slug: catSlug(c) });
       p.position.set(size / 2, size / 2);
       if (busy) {
         const gray = new ColorMatrixFilter();
@@ -198,8 +212,12 @@ export class CrewPicker extends Container {
       this.addChild(cc);
     });
     if (cats.length > per * rows) {
-      const more = label(`+${cats.length - per * rows} gatos más: toca VER TODOS para buscarlos y filtrarlos`, 14, sub);
-      more.position.set(0, ry + rows * (size + 12));
+      // on the TUS GATOS row (between the label and VER TODOS): below the roster it ran out of
+      // the Shipyard panel
+      const more = label(`+${cats.length - per * rows} gatos más: toca VER TODOS para buscarlos y filtrarlos`, 13, sub);
+      const room = W0 - 226 - (rl.width + 18) - 12;
+      if (more.width > room) more.scale.set(Math.max(0.5, room / more.width));
+      more.position.set(rl.width + 18, rl.y + (rl.height - more.height) / 2);
       this.addChild(more);
     }
   }

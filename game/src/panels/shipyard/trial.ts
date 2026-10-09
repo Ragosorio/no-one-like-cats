@@ -10,6 +10,7 @@ import { music } from '../../core/music';
 import type { BattleResult, BattleSpec } from '../../scenes/BattleScene';
 import type { ShipBlueprint } from '../../battle/ship';
 import { battleCatFrom } from '../../battle/catShots';
+import { activeFormId } from '../../state/sys/forms';
 import { styleFor } from '../../battle/anime';
 import { G } from '../../state/game';
 import { catDef, ROLE_BY_ID } from '../../data/content';
@@ -72,7 +73,7 @@ export function buildTrial(onEnd: (r: BattleResult) => void): BattleSpec {
   const cats = uids.map((u) => {
     const c = getCat(u)!;
     const share = Math.max(0.7, Math.min(1.4, catPow(c) / avg));
-    return battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: share * gm.catDmgMul, hpMul: share }, catHpBase(c));
+    return battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: share * gm.catDmgMul, hpMul: share, form: activeFormId(c) }, catHpBase(c));
   });
   const dummySp = 'c_guijarro';
   const dd = catDef(dummySp);

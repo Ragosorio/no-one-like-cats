@@ -192,9 +192,11 @@ const ON_DONE: Record<string, BeatRef[]> = {
 
 Campos de `BeatRef`: `beat` (id; también es la llave de "ya visto"), `lines` (índices del beat),
 `part` (para partir un beat en varios momentos), `custom` (líneas de `script.ts`), `delay` (segundos
-de calma antes), `onlyOn: 'map' | 'island'`, `effect: 'darkSky'`, `card` (número de zona: muestra la
-carta de zona antes), y `special`: `'profile'`, `'marea'`, `'credits'` o `'reveal'` (con `species`: un
-gato se une después de las líneas).
+de calma antes), `onlyOn: 'map' | 'island' | 'region'`, `inRegion` (también puede sonar dentro de una
+isla 3D de la Parte II), `effect: 'darkSky'`, `card` (número de zona: muestra la carta de zona antes), y
+`special`: `'profile'`, `'marea'`, `'credits'`, `'reveal'` (con `species`: un gato se une después de las
+líneas) o `'region'` (con `region`: viaja a esa isla 3D, como la cinemática de H31; su `beat` la guarda
+para que pase una sola vez).
 
 Además existe `WHEN`: beats por condición (llegada a zona, aviso de élite), revisados mientras estás
 tranquilo en isla o mapa.

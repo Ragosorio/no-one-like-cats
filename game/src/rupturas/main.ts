@@ -743,6 +743,7 @@ function applyTier() {
   }
   sun.shadow.map?.dispose();
   sun.shadow.map = null as unknown as THREE.WebGLRenderTarget;
+  renderer.shadowMap.needsUpdate = true; // recreate now: the throttled refresh must never sample an empty map
   for (const c of cats)
     if (c.def !== LUZTERNA && c.def !== REGISTRO) {
       c.cat.shadowAllowed = Q().catShadows;

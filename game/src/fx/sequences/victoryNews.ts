@@ -35,6 +35,8 @@ export interface VictoryNewsOpts {
   place: string;
   photo: Texture | null;
   mvpSpecies: string | null;
+  /** the MVP's own painting (its FORM, state/sys/forms.ts catSlug); default: the species' */
+  mvpSlug?: string;
   rows: NewsLootRow[];
   golden: boolean;
   perfect: boolean;
@@ -158,7 +160,7 @@ export class VictoryNews extends Container {
       inner.addChild(g);
     }
     if (o.mvpSpecies) {
-      const cat = livingCat(slugOf(o.mvpSpecies));
+      const cat = livingCat(o.mvpSlug ?? slugOf(o.mvpSpecies));
       cat.emote('happy');
       cat.anchor.set(0.5, 1);
       const s = (phH * 1.05) / Math.max(1, cat.texture.height);

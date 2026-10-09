@@ -25,6 +25,7 @@ import { CatFilterBar } from '../../ui/catFilterBar';
 import { ScrollBox } from '../collection/ui';
 import { elementIcon } from '../../ui/elementIcon';
 import { P, catPortrait, clearChildren, clickable, label } from './common';
+import { catSlug } from '../../state/sys/forms';
 
 const MW = 1760;
 const MH = 1000;
@@ -137,7 +138,7 @@ class CrewSelect {
       s.addChild(cab);
       if (c) {
         const d = catDef(c.species);
-        const p = catPortrait(c.species, 92);
+        const p = catPortrait(c.species, 92, { slug: catSlug(c) });
         p.position.set(w / 2, 72);
         const nm = txt(c.name.toUpperCase(), { fontFamily: F.poster, fontSize: 22, fill: C.ink });
         nm.anchor.set(0.5, 0);
@@ -257,7 +258,7 @@ class CrewSelect {
     const face = inCrew ? 0xfff1b8 : C.paper;
     card.addChild(new Graphics().rect(5, 5, CARD_W, CARD_H).fill(C.ink).rect(0, 0, CARD_W, CARD_H).fill(face).stroke({ width: inCrew ? 4 : 2.5, color: inCrew ? C.pinkHot : C.ink }));
     card.addChild(new Graphics().rect(0, 0, 7, CARD_H).fill(RARITY[d.rarity]?.color ?? C.ink));
-    const p = catPortrait(c.species, 104, { ring: inCrew ? C.pinkHot : C.ink });
+    const p = catPortrait(c.species, 104, { ring: inCrew ? C.pinkHot : C.ink, slug: catSlug(c) });
     p.position.set(66, 70);
     if (busy) {
       const gray = new ColorMatrixFilter();

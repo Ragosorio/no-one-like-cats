@@ -21,6 +21,8 @@ import { effMult } from './engine';
 import { elColor } from './fx';
 import { podioCatMods } from './mods';
 import { RivalDef } from './ladder';
+import { levelCap as islandLevelCap } from '../state/sys/cats';
+import { BAL } from '../state/econ';
 import {
   DuelOutlook,
   catBeat,
@@ -42,6 +44,18 @@ import {
   suggestCats,
   xpNeed,
 } from '../state/sys/podio';
+
+/**
+ * What actually raises this cat's Podio cap: feeding it on the island — unless the cat already sits at
+ * its OWN level cap (Nv 50 + 10 per ★ from ★2), where only a star helps.
+ */
+export function podioCapAdvice(cat: OwnedCat): string {
+  const target = nextCapLevel(cat);
+  if (cat.level >= islandLevelCap(cat)) {
+    return cat.stars >= BAL.cats.stars.max ? `${cat.name} ya está en su nivel máximo (NV ${cat.level})` : `súbele una ★ a ${cat.name} en el Altar (su tope de nivel sube +10)`;
+  }
+  return `sube a ${cat.name} a NV ${Math.min(target, islandLevelCap(cat))} en la isla`;
+}
 
 export interface LobbyOpts {
   onFight: (uid: string, lg: number, bout: number) => void;
@@ -343,9 +357,9 @@ export class Lobby extends Container {
     const bank = st.bank ?? 0;
     const capT = txt(
       bank > 0
-        ? `TOPE: sube a ${cat.name} a NV ${nextCapLevel(cat)} en la isla (o una estrella). Tiene ${fmt(bank)} XP GUARDADA que entra sola al subir el tope.`
+        ? `TOPE: ${podioCapAdvice(cat)}. Tiene ${fmt(bank)} XP GUARDADA que entra sola al subir el tope.`
         : st.lvl >= cap && !max
-          ? `TOPE ALCANZADO: sube a ${cat.name} a NV ${nextCapLevel(cat)} en la isla (o una estrella) para seguir creciendo.`
+          ? `TOPE ALCANZADO: ${podioCapAdvice(cat)} para seguir creciendo.`
           : `Tope actual: Podio NV ${cap} (sube con el nivel y las estrellas del gato).`,
       { fontFamily: F.ui, fontSize: 17, fill: st.lvl >= cap && !max ? C.red : C.plum, wordWrap: true, wordWrapWidth: pw - 36, fontWeight: '700' },
     );

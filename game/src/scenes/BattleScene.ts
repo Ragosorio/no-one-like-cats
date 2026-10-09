@@ -37,6 +37,7 @@ import { GargoyleWings, ThroatFx, KrakenRig, BubbleFx, RainFx } from '../battle/
 import { koRank } from '../state/sys/ranks';
 import { P2_ONO, p2Hidden, p2Projectile, p2Trail } from '../battle/fx/multiversoFx';
 import { p2Feats, p2Night } from '../battle/multiverso';
+import { NZ_RAGE, NZ_SHOUT, nzChips } from '../battle/ruido';
 import { settings } from '../core/settings';
 import { fmt } from '../core/format';
 import { G } from '../state/game';
@@ -63,6 +64,8 @@ export interface BattleResult {
   reactions?: string[];
   /** fraction of the ENEMY structure destroyed (story battles grade on it: Barco del Vacío) */
   enemyHullLost?: number;
+  /** wins only: uid of the player cat whose shot was the last to hurt the foe (sim.finalBlow · Parte II H38) */
+  finalBlow?: string;
 }
 
 export interface BattleIntro {
@@ -717,6 +720,8 @@ export class BattleScene extends Scene {
     if (r?.rod?.includes(1)) items.push({ text: es.rodUsed ? 'PARARRAYOS (USADO)' : 'PARARRAYOS', color: es.rodUsed ? 0x8a95a3 : C.yellow });
     if (r?.regrow?.includes(1)) items.push({ text: 'ENREDADERAS', color: 0x7ed957 });
     if (r?.wetAll) items.push({ text: 'DILUVIO', color: C.cyan });
+    // H34: RUIDO n/3 (Sonido ×2) or ¡SHHHH! FURIOSO
+    if (r?.noise?.side === 1) items.push(...nzChips(this.sim));
     if (this.sim.turn >= 10 && this.spec.mode !== 'duel') items.push({ text: 'MUERTE SÚBITA', color: C.red, ink: C.paper });
     const pItems: Chip[] = [...pItemsDivine];
     const ps = this.sim.sides[0];
@@ -2223,6 +2228,14 @@ export class BattleScene extends Scene {
         this.flt(x, y, 'NÚCLEO DORMIDO: INMUNE', { color: 0x9fb4c8, size: 28, font: F.poster });
         break;
       }
+      // H34: RUIDO 3/3 — the Bibliotecario wakes up furious (battle/ruido.ts)
+      case 'shhh':
+        sfx('alarm');
+        this.speech(this.ships[1], this.spec.captain ?? 'Capitán', NZ_SHOUT, 2.4);
+        this.flt(x, y - 120, `¡DESPERTÓ! SU TURNO PEGA ×${NZ_RAGE}`, { color: C.red, size: 44, font: F.poster, dur: 1.8 });
+        this.shaker.add(0.5);
+        this.refreshRules();
+        break;
     }
   }
 
@@ -2357,6 +2370,7 @@ export class BattleScene extends Scene {
         hullLost: this.spec.mode === 'duel' ? 0 : lost,
         reactions: [...this.reactions],
         enemyHullLost: this.spec.mode === 'duel' ? 0 : 1 - this.sim.hullPct(1),
+        finalBlow: won ? this.sim.finalBlow ?? undefined : undefined,
       };
       // Parte 2 feats (congelar, cegar, apuñalar, aturdir, rebobinar, borrar) → counters for missions/stats
       for (const [k, n] of Object.entries(p2Feats(this.sim))) if (n > 0) G.count(k, n);

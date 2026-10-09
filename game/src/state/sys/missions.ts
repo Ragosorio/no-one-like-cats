@@ -127,6 +127,12 @@ export function evalGoal(m: MissionDef): GoalEval {
       // total rumors found so far (clues found before the mission appeared count too)
       // clues held right now (rumors + secret cats already registered): every route counts, old saves too
       return { cur: Math.max(counter('secret_rumors'), secretCluesFound()), need: n('count', 3) };
+    case 'wins_with_species':
+      // victories since the mission appeared with that species in the crew (`{ species, n }`)
+      return { cur: since(m.id, `wins_with_${g.species}`), need: n('n', n('count', 1)) };
+    case 'final_blow':
+      // battles won since the mission appeared where that species landed the last blow (`{ species, n }`)
+      return { cur: since(m.id, ck(g)), need: n('n', n('count', 1)) };
     case 'element_species':
       return { cur: CATS.filter((c) => c.elements.includes(String(g.element)) && G.s.catdex[c.id] === 'registered').length, need: n('count', 2) };
     case 'use_automation':

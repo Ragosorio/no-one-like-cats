@@ -11,7 +11,7 @@ import parte2 from '../data/art-parte2.json';
 /**
  * Dev scene (?scene=catlive): every painting as a living MAI puppet.
  * &cat=<slug> shows one big · &cats=a,b,c a few · &lote=b|c|parte2 the new paintings · &rig=1 draws the MAI rig
- * over it · click a cat to cycle emotes. Any slug works, even one no content.json cat uses yet.
+ * over it (white ellipses = pins) · click a cat to cycle emotes. Any slug works, even one no content.json cat uses yet.
  * window.__catlab exposes the puppets for headless checks.
  */
 export class CatLiveLab extends Scene {
@@ -80,11 +80,15 @@ function rigOverlay(slug: string, size: number) {
   g.ellipse(X(hx), Y(hy), rx * k, ry * k).stroke({ width: 2, color: 0xffd400 });
   g.circle(X(rig.neck[0]), Y(rig.neck[1]), 5).fill(0xffd400);
   for (const [bx, by, tx, ty] of rig.ears) g.moveTo(X(bx), Y(by)).lineTo(X(tx), Y(ty)).stroke({ width: 3, color: 0xff2e2e });
-  for (const [x0, y0, x1, y1] of rig.eyes) g.rect(X(x0), Y(y0), (x1 - x0) * k, (y1 - y0) * k).stroke({ width: 2, color: 0x22dd44 });
+  // elliptic-lid eyes (5th value) draw as their ellipse
+  for (const [x0, y0, x1, y1, lid] of rig.eyes)
+    (lid === undefined ? g.rect(X(x0), Y(y0), (x1 - x0) * k, (y1 - y0) * k) : g.ellipse(X((x0 + x1) / 2), Y((y0 + y1) / 2), ((x1 - x0) / 2) * k, ((y1 - y0) / 2) * k)).stroke({ width: 2, color: 0x22dd44 });
   if (rig.tail) {
     rig.tail.pts.forEach(([x, y], i) => (i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))));
     g.stroke({ width: 3, color: 0xff2ef0 });
   }
   for (const [fx, fy, fr] of rig.floats) g.circle(X(fx), Y(fy), fr * k).stroke({ width: 2, color: 0x00e5ff });
+  // pinned paint (never follows head / ears / tail)
+  for (const [px, py, prx, pry] of rig.pins ?? []) g.ellipse(X(px), Y(py), prx * k, pry * k).stroke({ width: 2, color: 0xffffff });
   return g;
 }

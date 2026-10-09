@@ -271,13 +271,14 @@ function posterCard(e: ErrandDef, rule: ErrandRule | undefined, unlocked: boolea
   }
   const name = poster((unlocked ? e.name : '???').toUpperCase(), 38, C.ink);
   name.anchor.set(0.5, 0);
-  name.position.set(0, -h / 2 + 184);
+  name.position.set(0, -h / 2 + 179);
   if (name.width > w - 40) name.scale.set((w - 40) / name.width);
   if (unlocked) c.addChild(name);
   else name.destroy();
   const zone = txt(`ZONA ${e.zone} · ${ZONES[e.zone - 1]?.name.toUpperCase() ?? ''} · TRAS ${e.zone}-${e.afterStage}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 14, fill: 0x5a4a30 });
   zone.anchor.set(0.5, 0);
-  zone.position.set(0, -h / 2 + 226);
+  // under the title's baseline, not on it (the poster font's descent sits ~8 px into the box)
+  zone.position.set(0, -h / 2 + 229);
   c.addChild(zone);
   const strip = new Graphics().rect(-w / 2 + 14, -h / 2 + 248, w - 28, 40).fill(C.ink);
   c.addChild(strip);

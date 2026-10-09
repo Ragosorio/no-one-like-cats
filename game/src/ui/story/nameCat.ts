@@ -17,6 +17,7 @@ import { clean } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
 import { destroyDeep } from './tweens';
 import { screenRect } from '../screen';
+import { FOLIO_000 } from './rupturasScript';
 
 const SUGGEST = ['Michi', 'Don Gato', 'Pelusa', 'Tostada', 'Sr. Bigotes', 'Nacho'];
 
@@ -33,6 +34,23 @@ export interface NamePromptOpts {
   keep: string;
   /** shout when it's settled (default ¡NAME!) */
   shout?: (name: string) => string;
+  /** Parte II (from H32, the crew register): the line above yours, «FOLIO 000 — ~~vacante~~» */
+  folio000?: boolean;
+}
+
+/** «FOLIO 000 — ~~vacante~~»: printed label + a struck-through word (no strikethrough in canvas text) */
+export function folio000Line() {
+  const c = new Container();
+  const a = txt(FOLIO_000.label, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink, letterSpacing: 3 });
+  const b = txt(FOLIO_000.struck, { fontFamily: F.serif, fontStyle: 'italic', fontSize: 22, fill: 0x7d7264, padding: 4 });
+  b.position.set(a.width + 10, -3);
+  const strike = new Graphics()
+    .moveTo(b.x - 4, b.y + b.height * 0.55)
+    .lineTo(b.x + b.width + 4, b.y + b.height * 0.5)
+    .stroke({ width: 3, color: C.pinkHot });
+  c.addChild(a, b, strike);
+  c.alpha = 0.85;
+  return c;
 }
 
 /** H02: rename the first cat */
@@ -114,14 +132,15 @@ export async function promptName(layer: Container, o: NamePromptOpts): Promise<s
       wordWrap: true,
       wordWrapWidth: 560,
     });
-    sub.position.set(566, 270);
+    // below the real bottom of the title (the poster font's descenders touched the subtitle)
+    sub.position.set(566, Math.max(270, t2.y + t2.height + 14));
     panel.addChild(sub);
     // name plate
     const plate = new Container();
     const pw = 540;
     const ph = 96;
     plate.addChild(new Graphics().rect(8, 8, pw, ph).fill(C.ink).rect(0, 0, pw, ph).fill(C.yellow).stroke({ width: 5, color: C.ink, alignment: 1 }));
-    const label = txt('NOMBRE', { fontFamily: F.ui, fontWeight: '700', fontSize: 14, fill: C.ink, letterSpacing: 3 });
+    const label = txt(o.folio000 ? 'FOLIO 001 · NOMBRE' : 'NOMBRE', { fontFamily: F.ui, fontWeight: '700', fontSize: 14, fill: C.ink, letterSpacing: 3 });
     label.position.set(16, 6);
     const nameT = poster(current, 60, C.ink);
     nameT.position.set(18, 18);
@@ -129,6 +148,14 @@ export async function promptName(layer: Container, o: NamePromptOpts): Promise<s
     caret.y = 26;
     plate.addChild(label, nameT, caret);
     plate.position.set(566, 352);
+    // Parte II (from H32): the register has a line above yours that nobody filled — the plate and the
+    // chips move down to make room for it (the buttons stay put: there's slack above them)
+    if (o.folio000) {
+      const f = folio000Line();
+      f.position.set(570, Math.max(sub.y + sub.height + 12, 330));
+      panel.addChild(f);
+      plate.y = Math.max(plate.y, f.y + f.height + 12);
+    }
     plate.eventMode = 'static';
     plate.cursor = 'text';
     panel.addChild(plate);
@@ -160,7 +187,7 @@ export async function promptName(layer: Container, o: NamePromptOpts): Promise<s
       });
       chips.addChild(chip);
     }
-    chips.position.set(566, 476);
+    chips.position.set(566, plate.y + 124);
     panel.addChild(chips);
     // buttons
     const ok = new Button(o.ok, () => finish(input.value), { w: 320, h: 84, size: 40, color: C.yellow });

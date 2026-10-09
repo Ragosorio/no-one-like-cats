@@ -17,6 +17,7 @@ export const ELEMENT_ICON: Record<string, string> = {
   sound: '🎵',
   time: '🕰️',
   shadow: '🌑',
+  crystal: '💎',
 };
 
 export const ELEMENT_NAME: Record<string, string> = {
@@ -37,4 +38,5 @@ export const ELEMENT_NAME: Record<string, string> = {
   sound: 'SONIDO',
   time: 'TIEMPO',
   shadow: 'SOMBRA',
+  crystal: 'CRISTAL',
 };

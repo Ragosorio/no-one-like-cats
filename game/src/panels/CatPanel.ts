@@ -15,9 +15,11 @@ import { C, F, RARITY } from '../ui/theme';
 import { Button, txt } from '../ui/widgets';
 import { icon } from '../ui/icons';
 import { G, OwnedCat } from '../state/game';
-import { catDef, ROLE_BY_ID, CONTENT, ELEMENT_BY_ID } from '../data/content';
+import { catDef, ROLE_BY_ID, CONTENT, ELEMENT_BY_ID, type CatDef } from '../data/content';
+import { applyForm, formsOf, type FormDef } from '../data/rupturas/formas';
+import { activeForm, activeFormId, catSlug, formIsNew, formUnlocked, formsVisible, markFormSeen, setForm } from '../state/sys/forms';
 import { ELEMENT_NAME } from '../data/elementsMeta';
-import { biteCost, canStarUp, cat as getCat, catGold, feed, levelCap, mutationOf, nextThreshold, starNeed, starPerks, traitOf } from '../state/sys/cats';
+import { biteCost, canStarUp, cat as getCat, catGold, feed, levelCap, levelCapInfo, mutationOf, nextThreshold, starNeed, starPerks, traitOf, type CapInfo } from '../state/sys/cats';
 import { koRank, rankDef, rankProgress } from '../state/sys/ranks';
 import { limitationText, mutationLook, mutationShort, starCapNote, starInfo, starMissing, starRoadmap } from '../state/ext/collection';
 import { collState } from '../state/sys/cats';
@@ -28,7 +30,7 @@ import { habitatTier } from '../state/econ';
 import { checkMissions } from '../state/sys/missions';
 import { catLevelScale, featureKl, featureUnlocked, hudUnlocks, missionActive, renameCat } from '../state/ext/island';
 import { IslandCat, BattleCat, elementFx, catTexture, preloadCats } from '../art/catArt';
-import { applyCatTint, slugOf } from '../art/tint';
+import { applyCatTint } from '../art/tint';
 import { halftoneTexture } from '../art/textures';
 import { fmt } from '../core/format';
 import { sfx } from '../core/audio';
@@ -41,7 +43,24 @@ const NYAMS = ['¡ÑAM!', '¡ÑOM!', '¡ÑAM ÑAM!', '¡GULP!', '¡MMM!'];
 /** level numeral: center x and max width inside the NIVEL block */
 const LV_CX = 84;
 const LV_MAXW = 140;
+/** width of the level block's left column (cap texts): the ÑAM bar and the «HASTA NV» row start at x = 180 */
+const CAP_W = 154;
+
+/** the short «why» under TOPE Nv X (left column: two short lines) */
+function capWhyText(ci: CapInfo, stars: number, atCap: boolean) {
+  if (ci.why === 'reino') return atCap ? 'sube tu Reino:\n+1 de tope por nivel' : 'tu Reino + 5\n(hasta Nv 50)';
+  if (ci.why === 'max') return '★6 · el máximo.\nSolo queda presumir';
+  return atCap ? `★${stars} · sube una ★\npara +${ci.perStar} niveles` : `★${stars} · cada ★ nueva\nsuma +${ci.perStar} niveles`;
+}
+/** the toast when a bite hits the cap */
+function capToastSub(ci: CapInfo, stars: number) {
+  if (ci.why === 'reino') return 'Cada nivel de Reino sube el tope +1 (hasta 50; después, las ★).';
+  if (ci.why === 'max') return 'Nv 100 con ★6: el techo del universo. Ahora a presumir en el Podio.';
+  return `Con ★${stars + 1} en el Altar de Almas su tope sube a Nv ${ci.nextStarCap ?? ci.cap + ci.perStar}.`;
+}
 const WORKER_NAME: Record<string, string> = { banker: 'Banquero', farmer: 'Granjero', builder: 'Constructor', voyager: 'Viajero' };
+/** FORMA selector: offset under the stars row (its "what's missing" line wraps to 2 lines at most: ≤ 82 px) */
+const FORM_ROW_DY = 94;
 
 export function openCatPanel(uid: string) {
   const c0 = getCat(uid);
@@ -49,7 +68,7 @@ export function openCatPanel(uid: string) {
     toast('Ese gato no está en tu isla');
     return null;
   }
-  const slug = slugOf(c0.species);
+  const slug = catSlug(c0);
   if (catTexture(slug) === Texture.WHITE) {
     preloadCats([slug]).then(() => new CatPanel(uid).open());
     return null;
@@ -67,9 +86,19 @@ class CatPanel {
   islandCat: IslandCat | null = null;
   battleCat: BattleCat | null = null;
   battleMode = false;
+  /** VER BATTLE FORM toggle (a form switch drops back to the island view) */
+  private togBtn: Button | null = null;
+  /** element/rarity/role chips, combat cards and the FORMA selector: redrawn when the cat switches form */
+  private chipsBox = new Container();
+  private cardsBox = new Container();
+  private formBox = new Container();
+  private chipsAt = { x0: 0, iw: 0 };
+  private cardsAt = { x0: 0, y: 0, rw: 0 };
   // live refs
   lvText!: Text;
   capText!: Text;
+  /** why the cap is there and what raises it (Reino / ★ / Nv100), under capText in the left column */
+  capWhy!: Text;
   segs: Graphics[] = [];
   costText!: Text;
   feedBtn = new Container();
@@ -102,13 +131,18 @@ class CatPanel {
     Ticker.shared.add(this.tick);
     const origClose = this.m.close.bind(this.m);
     this.m.close = () => {
-      if (!this.m.closed) killTree(this.starsBox);
+      if (!this.m.closed) {
+        killTree(this.starsBox);
+        killTree(this.formBox);
+      }
       origClose();
     };
     // the same cat changed somewhere else (another panel, an expedition, a patch): show it now
     this.m.listen(
       G.on('cat', (e) => {
-        if (e.uid === this.uid && !this.m.closed) this.refresh(false);
+        if (e.uid !== this.uid || this.m.closed) return;
+        if (e.why === 'form') this.formChanged();
+        this.refresh(false);
       }),
     );
     this.m.onClose = () => {
@@ -120,6 +154,11 @@ class CatPanel {
   }
   get c(): OwnedCat {
     return getCat(this.uid)!;
+  }
+  /** the cat as it shows up now: its species, or its active FORM's kit (painting, elements, ultimate…) */
+  get kit(): CatDef {
+    const c = this.c;
+    return applyForm(catDef(c.species), activeFormId(c));
   }
   open() {
     this.m.open();
@@ -161,31 +200,23 @@ class CatPanel {
     const tog = new Button('VER BATTLE FORM', () => this.toggleForm(tog), { w: 300, h: 56, size: 26, color: C.ink, textColor: C.paper });
     tog.position.set(FW / 2 - 150, FH - 76);
     this.frame.addChild(tog);
+    this.togBtn = tog;
     // stars + orbs
     this.starsBox.position.set(0, FH + 22);
     body.addChild(this.starsBox);
     this.drawStars();
+    // FORMA (Parte II evolutions): only for species with forms, once the Parte II started (state/sys/forms.ts)
+    this.formBox.position.set(0, FH + 22 + FORM_ROW_DY);
+    body.addChild(this.formBox);
+    this.drawFormRow(FW);
 
     // ------------------------------------------------ right column
     const x0 = FW + 40;
     const RW = IW - x0;
     let y = 0;
-    const chips: Container[] = [...def.elements.map((e) => elementChip(e, 22)), rarityChip(def.rarity, 22)];
-    const role = ROLE_BY_ID.get(def.role);
-    if (role) chips.push(chip(role.name.toUpperCase(), C.paper, C.ink, 22));
-    if (def.worker) chips.push(chip(`OFICIO: ${(WORKER_NAME[def.worker] ?? def.worker).toUpperCase()}`, C.mint, C.ink, 22));
-    if (c.holo) chips.push(chip('HOLO', C.cyan, C.ink, 22));
-    let cx = x0;
-    for (const ch of chips) {
-      if (cx + ch.width > IW) {
-        cx = x0;
-        y += 42;
-      }
-      ch.position.set(cx, y);
-      body.addChild(ch);
-      cx += ch.width + 10;
-    }
-    y += 46;
+    this.chipsAt = { x0, iw: IW };
+    body.addChild(this.chipsBox);
+    y += this.drawChips();
     // rasgo + mutación (combat-only effects, readable)
     y = this.traitCards(x0, y, RW);
     // H02 naming prompt
@@ -220,10 +251,13 @@ class CatPanel {
     // centered so the level-up pop grows in place instead of spilling over "tope Nv" and the ÑAM bar
     this.lvText = txt(String(c.level), { fontFamily: F.poster, fontSize: 96, fill: C.ink });
     this.lvText.anchor.set(0.5, 0.5);
-    this.lvText.position.set(LV_CX, 94);
+    this.lvText.position.set(LV_CX, 90);
+    // cap + why, inside the left column (x < CAP_W): the «HASTA NV» stepper row starts at barX, right of it
     this.capText = txt('', { fontFamily: F.heavy, fontSize: 20, fill: C.ink });
-    this.capText.position.set(20, 160);
-    lb.addChild(nvl, this.lvText, this.capText);
+    this.capText.position.set(16, 153);
+    this.capWhy = txt('', { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink, wordWrap: true, wordWrapWidth: CAP_W, lineHeight: 15 });
+    this.capWhy.position.set(16, 178);
+    lb.addChild(nvl, this.lvText, this.capText, this.capWhy);
     // ÑAM bar
     const barX = 180;
     const segW = 92;
@@ -281,7 +315,7 @@ class CatPanel {
       const go = new Button('¡A COMER!', () => this.feedTo(), { w: 150, h: 40, size: 22, color: C.yellow });
       go.position.set(262, 0);
       ftC.addChild(minus, this.feedToText, plus, go);
-      this.feedTarget = Math.min(levelCap(), c.level + 5);
+      this.feedTarget = Math.min(levelCap(c), c.level + 5);
     } else {
       const li = icon('lock', 20);
       li.position.set(10, 20);
@@ -305,32 +339,10 @@ class CatPanel {
     y += 50;
 
     // ------------------------------------------------ combat sheet
-    const cb = def.combat;
-    const lim = limitationText(def);
-    const cards: [string, string, string, number][] = [
-      ['DISPARO', `${cb.shot.name}${cb.shot.cry ? ` — ${cb.shot.cry}` : ''}`, shotDescription(c), fx.main],
-      ['ULTIMATE', cb.ultimate.name, cb.ultimate.effect, C.pinkHot],
-      ['PASIVA', 'Siempre activa', cb.passive, C.mint],
-      ['LIMITACIÓN', lim ? lim.split(':')[0].slice(0, 28) : 'Ninguna', lim ? (lim.includes(':') ? lim.slice(lim.indexOf(':') + 1).trim() : lim) : 'Sin limitaciones. Disfrútalo.', C.paperDark],
-    ];
-    const cw = (RW - 16) / 2;
     const chh = 112;
-    cards.forEach(([k, t, d, col], i) => {
-      const cc = new Container();
-      const g = new Graphics().rect(5, 5, cw, chh).fill(C.ink).rect(0, 0, cw, chh).fill(C.paper).stroke({ width: 3, color: C.ink, alignment: 1 });
-      g.rect(0, 0, 12, chh).fill(col);
-      const kt = txt(k, { fontFamily: F.bebas, fontSize: 18, fill: C.ink, letterSpacing: 2 });
-      kt.position.set(24, 6);
-      const tt = txt(t, { fontFamily: F.poster, fontSize: 20, fill: C.ink });
-      tt.position.set(24, 28);
-      if (tt.width > cw - 36) tt.scale.set((cw - 36) / tt.width);
-      // re-wrap at a smaller size before shrinking the whole block (long ultimates used to turn into ant text)
-      const dt = fitBlock(d, cw - 36, chh - 58, { fontFamily: F.ui, fill: C.ink }, [15, 14, 13, 12, 11]);
-      dt.position.set(24, 54);
-      cc.addChild(g, kt, tt, dt);
-      cc.position.set(x0 + (i % 2) * (cw + 16), y + Math.floor(i / 2) * (chh + 12));
-      body.addChild(cc);
-    });
+    this.cardsAt = { x0, y, rw: RW };
+    body.addChild(this.cardsBox);
+    this.drawCards();
     y += 2 * (chh + 12);
     y = this.starPerkRow(x0, y, RW);
     const lore = wrapText(`“${def.lore}”`, RW, 17, F.serif, C.ink, { fontStyle: 'italic' });
@@ -440,7 +452,7 @@ class CatPanel {
   private showIsland() {
     this.stage.removeChildren().forEach((x) => x.destroy({ children: true }));
     const c = this.c;
-    const ic = new IslandCat(slugOf(c.species), 400);
+    const ic = new IslandCat(catSlug(c), 400);
     applyCatTint(ic.sprite, c.species);
     const ts = catDef(c.species).art.tint?.scale;
     if (ts) ic.baseScale *= ts;
@@ -452,6 +464,202 @@ class CatPanel {
     if (this.mutOverlay) ic.addChild(this.mutOverlay);
   }
   private mutOverlay: Container | null = null;
+
+  // ================================================================== FORMS (Parte II)
+  private chipList(def: CatDef): Container[] {
+    const chips: Container[] = [...def.elements.map((e) => elementChip(e, 22)), rarityChip(def.rarity, 22)];
+    const role = ROLE_BY_ID.get(def.role);
+    if (role) chips.push(chip(role.name.toUpperCase(), C.paper, C.ink, 22));
+    if (def.worker) chips.push(chip(`OFICIO: ${(WORKER_NAME[def.worker] ?? def.worker).toUpperCase()}`, C.mint, C.ink, 22));
+    if (this.c.holo) chips.push(chip('HOLO', C.cyan, C.ink, 22));
+    return chips;
+  }
+  /** flow chips from x0, wrapping at iw; returns the height the row takes (the old `y += 42 … y += 46`) */
+  private flowChips(chips: Container[], place: boolean) {
+    const { x0, iw } = this.chipsAt;
+    let cx = x0;
+    let y = 0;
+    for (const ch of chips) {
+      if (cx + ch.width > iw) {
+        cx = x0;
+        y += 42;
+      }
+      if (place) {
+        ch.position.set(cx, y);
+        this.chipsBox.addChild(ch);
+      }
+      cx += ch.width + 10;
+    }
+    return y + 46;
+  }
+  /** element / rarity / role chips of the current kit; reserves the tallest row any of its forms needs */
+  private drawChips() {
+    this.chipsBox.removeChildren().forEach((x) => x.destroy({ children: true }));
+    let h = this.flowChips(this.chipList(this.kit), true);
+    const species = this.c.species;
+    for (const f of formsOf(species)) {
+      const probe = this.chipList(applyForm(catDef(species), f.id));
+      h = Math.max(h, this.flowChips(probe, false));
+      probe.forEach((x) => x.destroy({ children: true }));
+    }
+    if (activeFormId(this.c)) {
+      const probe = this.chipList(catDef(species));
+      h = Math.max(h, this.flowChips(probe, false));
+      probe.forEach((x) => x.destroy({ children: true }));
+    }
+    return h;
+  }
+  /** DISPARO / ULTIMATE / PASIVA / LIMITACIÓN of the current kit */
+  private drawCards() {
+    this.cardsBox.removeChildren().forEach((x) => x.destroy({ children: true }));
+    const c = this.c;
+    const def = this.kit;
+    const fx = elementFx(def.elements[0]);
+    const { x0, y, rw: RW } = this.cardsAt;
+    const cb = def.combat;
+    const lim = limitationText(def);
+    const cards: [string, string, string, number][] = [
+      ['DISPARO', `${cb.shot.name}${cb.shot.cry ? ` — ${cb.shot.cry}` : ''}`, shotDescription(c, def), fx.main],
+      ['ULTIMATE', cb.ultimate.name, cb.ultimate.effect, C.pinkHot],
+      ['PASIVA', 'Siempre activa', cb.passive, C.mint],
+      ['LIMITACIÓN', lim ? lim.split(':')[0].slice(0, 28) : 'Ninguna', lim ? (lim.includes(':') ? lim.slice(lim.indexOf(':') + 1).trim() : lim) : 'Sin limitaciones. Disfrútalo.', C.paperDark],
+    ];
+    const cw = (RW - 16) / 2;
+    const chh = 112;
+    cards.forEach(([k, t, d, col], i) => {
+      const cc = new Container();
+      const g = new Graphics().rect(5, 5, cw, chh).fill(C.ink).rect(0, 0, cw, chh).fill(C.paper).stroke({ width: 3, color: C.ink, alignment: 1 });
+      g.rect(0, 0, 12, chh).fill(col);
+      const kt = txt(k, { fontFamily: F.bebas, fontSize: 18, fill: C.ink, letterSpacing: 2 });
+      kt.position.set(24, 6);
+      const tt = txt(t, { fontFamily: F.poster, fontSize: 20, fill: C.ink });
+      tt.position.set(24, 28);
+      if (tt.width > cw - 36) tt.scale.set((cw - 36) / tt.width);
+      // re-wrap at a smaller size before shrinking the whole block (long ultimates used to turn into ant text)
+      const dt = fitBlock(d, cw - 36, chh - 58, { fontFamily: F.ui, fill: C.ink }, [15, 14, 13, 12, 11]);
+      dt.position.set(24, 54);
+      cc.addChild(g, kt, tt, dt);
+      cc.position.set(x0 + (i % 2) * (cw + 16), y + Math.floor(i / 2) * (chh + 12));
+      this.cardsBox.addChild(cc);
+    });
+  }
+
+  /**
+   * «FORMA: ORIGINAL / ALMIRANTE / ASTRAL» under the stars (left column, FW wide, ≤ 80 px tall).
+   * Free and instant; a locked form says how to get it, a sealed one shows its hint.
+   */
+  private drawFormRow(FW = 540) {
+    const box = this.formBox;
+    killTree(box);
+    box.removeChildren().forEach((x) => x.destroy({ children: true }));
+    const c = this.c;
+    if (!formsVisible(c)) return;
+    const forms = formsOf(c.species);
+    const cur = activeForm(c);
+    const lab = txt('FORMA', { fontFamily: F.bebas, fontSize: 24, fill: C.ink, letterSpacing: 2 });
+    lab.position.set(0, 6);
+    box.addChild(lab);
+    const bx = 78;
+    const gap = 6;
+    const BH = 38;
+    const opts: { id: string | null; label: string; f?: FormDef }[] = [{ id: null, label: 'ORIGINAL' }, ...forms.map((f) => ({ id: f.id, label: f.label, f }))];
+    const bw = (FW - bx - gap * (opts.length - 1)) / opts.length;
+    opts.forEach((o, i) => {
+      const on = (cur?.id ?? null) === o.id;
+      const open = !o.f || formUnlocked(o.f);
+      const isNew = !!o.f && formIsNew(o.f);
+      const b = new Container();
+      const g = new Graphics();
+      if (on) g.rect(4, 4, bw, BH).fill(C.ink);
+      g.rect(0, 0, bw, BH).fill(on ? C.yellow : open ? C.paper : C.paperDark).stroke({ width: 3, color: isNew ? C.pinkHot : C.ink, alignment: 1 });
+      b.addChild(g);
+      let tx = 10;
+      if (!open) {
+        const li = icon('lock', 18);
+        li.position.set(16, BH / 2);
+        li.alpha = 0.75;
+        b.addChild(li);
+        tx = 30;
+      }
+      const t = txt(o.label, { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 1 });
+      t.anchor.set(0, 0.5);
+      t.position.set(tx, BH / 2 + 1);
+      fitLine(t, bw - tx - 8);
+      if (!open) t.alpha = 0.6;
+      b.addChild(t);
+      if (isNew) {
+        const nb = new Container();
+        const nt = txt('¡NUEVO!', { fontFamily: F.bebas, fontSize: 14, fill: C.paper, letterSpacing: 1 });
+        nt.position.set(5, 0);
+        nb.addChild(new Graphics().rect(0, 0, nt.width + 10, nt.height).fill(C.pinkHot).stroke({ width: 2, color: C.ink }), nt);
+        nb.position.set(bw - nb.width + 4, -nb.height + 6);
+        nb.rotation = 0.06;
+        b.addChild(nb);
+        gsap.to(nb.scale, { x: 1.12, y: 1.12, yoyo: true, repeat: -1, duration: 0.45, ease: 'sine.inOut' });
+      }
+      b.position.set(bx + i * (bw + gap), 0);
+      b.eventMode = 'static';
+      b.cursor = 'pointer';
+      b.on('pointertap', () => this.pickForm(o.id, o.f));
+      box.addChild(b);
+    });
+    // what the shown form is, and how to get the ones still locked (one line each, never wider than the column)
+    const info = cur ? `${cur.label}: ${cur.blurb}` : 'ORIGINAL: el de siempre. Ninguna forma lo reemplaza: cambia cuando quieras, gratis.';
+    const l1 = txt(info, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink });
+    l1.position.set(0, BH + 6);
+    fitLine(l1, FW);
+    box.addChild(l1);
+    const locked = forms.filter((f) => !formUnlocked(f));
+    if (locked.length) {
+      const hint = locked.map((f) => `${f.label}${f.sealed ? ' (SELLADA)' : ''}: ${f.sealed ? f.sealedHint ?? f.lockedHint : f.lockedHint}`).join('   ·   ');
+      const l2 = txt(hint, { fontFamily: F.ui, fontStyle: 'italic', fontSize: 13, fill: C.ink });
+      l2.alpha = 0.75;
+      l2.position.set(0, BH + 24);
+      fitLine(l2, FW);
+      box.addChild(l2);
+    }
+    // the sheet showed it: the ¡NUEVO! goes away next time
+    for (const f of forms) if (formIsNew(f)) markFormSeen(f.id);
+  }
+
+  private pickForm(id: string | null, f?: FormDef) {
+    const c = this.c;
+    if (f && !formUnlocked(f)) {
+      sfx('error');
+      toast(f.sealed ? `${f.name}: sellada` : `${f.name}: todavía no`, { icon: 'lock', sub: f.sealed ? f.sealedHint ?? f.lockedHint : f.lockedHint, color: C.paper });
+      return;
+    }
+    const r = setForm(c, id);
+    if (r === 'same') {
+      sfx('tick');
+      return;
+    }
+    if (r !== 'ok') {
+      sfx('error');
+      return;
+    }
+    // the redraw itself comes from the `cat` {why:'form'} event (formChanged)
+    const fx = elementFx(this.kit.elements[this.kit.elements.length - 1]);
+    sfx(id ? 'charge' : 'pop');
+    flash(scenes.fxLayer, fx.main, 0.3, 0.18);
+    const to = this.catPoint();
+    onomatopoeia(this.m.panel, to.x, to.y - 40, id ? `¡${(f?.label ?? '').toUpperCase()}!` : '¡EL DE SIEMPRE!', { size: 58, color: fx.accent, font: F.comic, dur: 0.9 });
+  }
+
+  /** the cat switched form (here or elsewhere): painting, chips, combat cards and the selector follow */
+  private formChanged() {
+    if (this.battleMode) {
+      this.battleMode = false;
+      this.togBtn?.setText('VER BATTLE FORM');
+    }
+    const slug = catSlug(this.c);
+    if (catTexture(slug) === Texture.WHITE) void preloadCats([slug]).then(() => !this.m.closed && !this.battleMode && this.showIsland());
+    this.showIsland();
+    this.islandCat?.hop();
+    this.drawChips();
+    this.drawCards();
+    this.drawFormRow();
+  }
 
   /** K.O. rank medal (state/sys/ranks, combat counts OwnedCat.kos) */
   private koBadge(FW: number) {
@@ -566,20 +774,21 @@ class CatPanel {
   }
   private toggleForm(btn: Button) {
     const c = this.c;
-    const def = catDef(c.species);
+    const def = this.kit;
     this.battleMode = !this.battleMode;
     sfx(this.battleMode ? 'charge' : 'pop');
     if (this.battleMode) {
       this.stage.removeChildren().forEach((x) => x.destroy({ children: true }));
-      const bc = new BattleCat(slugOf(c.species), def.elements[0], 380);
+      const bc = new BattleCat(catSlug(c), def.elements[0], 380);
       applyCatTint(bc.sprite, c.species);
       this.stage.addChild(bc);
       this.battleCat = bc;
       this.islandCat = null;
       const name = txt(def.battleForm.name, { fontFamily: F.heavy, fontSize: 26, fill: C.paper, stroke: { color: C.ink, width: 6, join: 'round' } });
       name.anchor.set(0, 0.5);
-      name.position.set(-250, -438);
-      if (name.width > 330) name.scale.set(330 / name.width);
+      // under the K.O. medal (at -438 the medal covered the start of the name)
+      name.position.set(-250, -368);
+      fitLine(name, 330);
       this.stage.addChild(name);
       onomatopoeia(this.m.panel, 28 + 270, 108 + 200, def.battleForm.cry, { size: 54, color: elementFx(def.elements[0]).accent, font: F.heavy, dur: 1.1 });
       flash(scenes.fxLayer, elementFx(def.elements[0]).main, 0.35, 0.2);
@@ -651,9 +860,20 @@ class CatPanel {
     this.lvText.text = String(c.level);
     this.lvBase = Math.min(1, LV_MAXW / Math.max(1, this.lvText.width / Math.abs(this.lvText.scale.x || 1)));
     if (!this.lvPopping) this.lvText.scale.set(this.lvBase);
-    const cap = levelCap();
-    this.capText.text = c.level >= cap ? `TOPE Nv ${cap} (sube tu Reino)` : `tope Nv ${cap}`;
-    this.capText.style.fill = c.level >= cap ? C.red : C.ink;
+    const ci = levelCapInfo(c);
+    const cap = ci.cap;
+    const atCap = c.level >= cap;
+    this.capText.text = atCap ? `TOPE Nv ${cap}` : `tope Nv ${cap}`;
+    this.capText.style.fill = atCap ? C.red : C.ink;
+    fitLine(this.capText, CAP_W);
+    this.capWhy.text = capWhyText(ci, c.stars, atCap);
+    this.capWhy.style.fill = atCap ? C.red : C.ink;
+    // never under the stepper row nor out of the block (2 short lines at most): smaller type first
+    for (const fs of [13, 12, 11]) {
+      this.capWhy.style.fontSize = fs;
+      this.capWhy.style.lineHeight = fs + 2;
+      if (this.capWhy.height <= 38) break;
+    }
     const segW = 92;
     this.segs.forEach((g, i) => {
       const on = i < c.bites;
@@ -667,6 +887,11 @@ class CatPanel {
       const n = th.level - c.level;
       this.thresholdText.text = n <= 0 ? '' : `en ${n} nivel${n > 1 ? 'es' : ''}: ¡${th.up.name.toUpperCase()}! — ${th.up.effect}`;
     } else this.thresholdText.text = 'Su ataque ya es leyenda.';
+    // never over the «HASTA NV» row below it (long upgrade texts wrapped to 3 lines): smaller type first
+    for (const fs of [17, 15, 14, 13]) {
+      this.thresholdText.style.fontSize = fs;
+      if (this.thresholdText.height <= 52) break;
+    }
     // gold/s (cat base × habitat tier × global)
     const h = c.habitat ? habitat(c.habitat) : null;
     const gps = catGold(c) * (h ? habitatTier(h.tier).mult : 0) * globalGoldMult();
@@ -679,7 +904,7 @@ class CatPanel {
 
   private setFeedTarget(v: number, sound = true) {
     const c = this.c;
-    const cap = levelCap();
+    const cap = levelCap(c);
     this.feedTarget = Math.max(Math.min(c.level + 1, cap), Math.min(cap, v));
     this.feedToText.text = `HASTA NV ${this.feedTarget}`;
     if (sound) sfx('tick');
@@ -720,7 +945,7 @@ class CatPanel {
     }
     if (r === 'cap') {
       sfx('error');
-      toast(`Tope de nivel: Nv ${levelCap()}`, { icon: 'crown', sub: 'Cada nivel de Reino sube el tope +1.' });
+      toast(`Tope de nivel: Nv ${levelCap(c)}`, { icon: 'crown', sub: capToastSub(levelCapInfo(c), c.stars) });
       return false;
     }
     const now = performance.now();
@@ -830,7 +1055,7 @@ class CatPanel {
   private async feedTo() {
     if (this.feeding) return;
     const c = this.c;
-    const target = Math.min(this.feedTarget, levelCap());
+    const target = Math.min(this.feedTarget, levelCap(c));
     if (c.level >= target) {
       sfx('error');
       return;
@@ -957,9 +1182,8 @@ function openInput(value: string, box: { x: number; y: number; w: number; h: num
   void Sprite;
 }
 
-/** the cat's OWN shot description (never the generic element rule) */
-function shotDescription(c: OwnedCat) {
-  const def = catDef(c.species);
+/** the cat's OWN shot description (never the generic element rule); `def` = its kit (species or form) */
+function shotDescription(c: OwnedCat, def: CatDef = catDef(c.species)) {
   const sh = def.combat.shot;
   const pk = starPerks(c);
   const proj = sh.projectiles + pk.shot.projectiles;

@@ -32,6 +32,9 @@ export class GameApp {
     await this.pixi.init({
       resizeTo: window,
       background: '#0D110F',
+      // < 1 so Pixi asks for an alpha-capable WebGL context: Parte II's 3D regions render on a canvas
+      // UNDER this one and need it to go transparent (RegionScene sets alpha 0). 0.999 looks identical.
+      backgroundAlpha: 0.999,
       antialias: true,
       autoDensity: true,
       resolution: Math.min(window.devicePixelRatio || 1, 2),

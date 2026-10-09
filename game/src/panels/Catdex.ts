@@ -52,6 +52,9 @@ import { runSliced } from '../core/sliced';
 import { openCatPanel } from './CatPanel';
 import { openHabitatPanel } from './island/HabitatPanel';
 import { openHomeless } from './island/HomelessPanel';
+import { Registro000Sheet, registroCard } from './collection/registro000';
+import { openRegistro000, registro000Visible } from '../state/sys/rupturas';
+import { checkMissions } from '../state/sys/missions';
 
 type TabId = 'cats' | 'sets' | 'grimorio';
 
@@ -184,7 +187,7 @@ class CatdexView {
     const counts: Record<TabId, string> = {
       cats: `${n}/${dexTotal()}`,
       sets: `${setsCompleted().length}/${CONTENT.catdexSets.length}`,
-      grimorio: `${(CONTENT as unknown as { reactions: { id: string; name: string }[] }).reactions.filter((r) => reactionKnown(r)).length}/12`,
+      grimorio: `${(CONTENT as unknown as { reactions: { id: string; name: string }[] }).reactions.filter((r) => reactionKnown(r)).length}/${(CONTENT as unknown as { reactions: unknown[] }).reactions.length}`,
     };
     let tx = 1130;
     (['cats', 'sets', 'grimorio'] as TabId[]).forEach((id) => {
@@ -318,11 +321,25 @@ class CatdexView {
     const ch = 198;
     const gap = (IW - 10 - cols * cw) / (cols - 1);
     this.list = CATS.filter((c) => this.passes(c.id)).map((c) => c.id);
+    // Parte II: REGISTRO 000 sits before Nº01 (unfiltered view only). Not a species: it is not in
+    // this.list, not in CATS, not in the counts (collection/registro000.ts)
+    const reg = registro000Visible() && !this.search && !this.elFilter && !this.rarFilter && !this.stFilter ? 1 : 0;
+    if (reg) {
+      const holder = new Container();
+      holder.addChild(registroCard(cw, ch));
+      holder.position.set(0, 12);
+      clickable(holder, () => {
+        if (grid.wasDrag) return;
+        sfx('paper');
+        this.showRegistro();
+      }, { lift: 6 });
+      grid.content.addChild(holder);
+    }
     // cards stream in a few per frame (each one rasterizes its cat): the panel opens at once and never freezes
     const jobs: (() => void)[] = [];
     this.list.forEach((id, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
+      const col = (i + reg) % cols;
+      const row = Math.floor((i + reg) / cols);
       const slot = new Graphics().rect(0, 0, cw, ch).fill({ color: C.ink, alpha: 0.06 }).stroke({ width: 2, color: C.ink, alpha: 0.15 });
       slot.position.set(col * (cw + gap), 12 + row * (ch + 22));
       grid.content.addChild(slot);
@@ -336,7 +353,7 @@ class CatdexView {
       });
     });
     runSliced(jobs, grid, 10);
-    const rows = Math.ceil(this.list.length / cols);
+    const rows = Math.ceil((this.list.length + reg) / cols);
     grid.setContentHeight(12 + rows * (ch + 22) + 10);
     if (!this.list.length) {
       const e = poster('NADA POR AQUÍ. TODAVÍA.', 60, C.ink);
@@ -428,6 +445,17 @@ class CatdexView {
     this.modal.body.addChild(d);
     if (animate) gsap.from(d, { x: IW + 60, duration: 0.32, ease: 'power3.out' });
   }
+  /** Parte II: the card nobody wrote (H32 «REGISTRO 000» completes when it opens) */
+  showRegistro() {
+    this.closeDetail(false);
+    const d = new Registro000Sheet(IW, IH, () => this.closeDetail(true));
+    this.detailSpecies = null;
+    this.detail = d;
+    this.modal.body.addChild(d);
+    gsap.from(d, { x: IW + 60, duration: 0.32, ease: 'power3.out' });
+    openRegistro000();
+    checkMissions();
+  }
   private closeDetail(animate: boolean) {
     const d = this.detail;
     if (!d) return;
@@ -468,13 +496,19 @@ class CatdexView {
     const act = chip(`${done.size}/${CONTENT.catdexSets.length} REGLAS ACTIVAS`, { bg: done.size ? C.pinkHot : C.ink, fg: C.paper, size: 16, font: F.poster });
     act.position.set(IW - act.width, 188);
     p.addChild(head, act);
-    const colW = (IW - 20) / 2;
+    // 21+ sets never fit in one screen: a masked scroller below the header (wheel / drag / bar);
+    // the right gutter keeps the scrollbar off the cards, the top pad keeps the tilted REGLA ACTIVA chip in
+    const list = new ScrollBox(IW, IH - 222, C.ink);
+    list.y = 222;
+    p.addChild(list);
+    const colW = (IW - 20 - 18) / 2;
     const sh = 104;
+    const top = 16;
     CONTENT.catdexSets.forEach((set, i) => {
       const col = i % 2;
       const row = Math.floor(i / 2);
       const c = new Container();
-      c.position.set(col * (colW + 20), 230 + row * (sh + 8));
+      c.position.set(col * (colW + 20), top + row * (sh + 8));
       const complete = done.has(set.id);
       const reg = set.cats.filter((id) => G.s.catdex[id] === 'registered').length;
       const tone = elColor(catDef(set.cats[0]).elements[0]);
@@ -544,9 +578,10 @@ class CatdexView {
         st.position.set(colW - 250, -12);
         c.addChild(st);
       }
-      p.addChild(c);
-      gsap.from(c, { alpha: 0, x: c.x - 30, duration: 0.25, delay: i * 0.03 });
+      list.content.addChild(c);
+      gsap.from(c, { alpha: 0, x: c.x - 30, duration: 0.25, delay: Math.min(i, 12) * 0.03 });
     });
+    list.setContentHeight(top + Math.ceil(CONTENT.catdexSets.length / 2) * (sh + 8) + 10);
   }
 
   // ------------------------------------------------------------ grimorio
@@ -554,15 +589,20 @@ class CatdexView {
     const p = this.page;
     const reactions = (CONTENT as unknown as { reactions: { id: string; name: string; effect: string; grimoire: string; axis: string; mult: number }[] }).reactions;
     const known = reactions.filter((r) => reactionKnown(r)).length;
-    const head = txt(`GRIMORIO DE SINERGIAS · ${known}/12 — mezcla elementos en batalla y apúntalas aquí`, { fontFamily: F.poster, fontSize: 26, fill: C.ink });
+    const head = txt(`GRIMORIO DE SINERGIAS · ${known}/${reactions.length} — mezcla elementos en batalla y apúntalas aquí`, { fontFamily: F.poster, fontSize: 26, fill: C.ink });
     head.position.set(0, 186);
+    fitText(head, IW);
     p.addChild(head);
+    // every synergy (the Grietas brought more than the 12 that fit on one page): masked scroller
+    const list = new ScrollBox(IW, IH - 228, C.ink);
+    list.y = 228;
+    p.addChild(list);
     const cols = 4;
-    const gw = (IW - 3 * 20) / cols;
+    const gw = (IW - 18 - 3 * 20) / cols;
     const gh = 206;
-    reactions.slice(0, 12).forEach((r, i) => {
+    reactions.forEach((r, i) => {
       const c = new Container();
-      c.position.set((i % cols) * (gw + 20), 236 + Math.floor(i / cols) * (gh + 16));
+      c.position.set((i % cols) * (gw + 20), 8 + Math.floor(i / cols) * (gh + 16));
       const k = reactionKnown(r);
       const bg = new Graphics()
         .rect(6, 6, gw, gh)
@@ -606,9 +646,10 @@ class CatdexView {
         num.position.set(12, 6);
         c.addChild(q, t, num);
       }
-      p.addChild(c);
-      gsap.from(c, { alpha: 0, y: c.y + 20, duration: 0.25, delay: i * 0.03 });
+      list.content.addChild(c);
+      gsap.from(c, { alpha: 0, y: c.y + 20, duration: 0.25, delay: Math.min(i, 12) * 0.03 });
     });
+    list.setContentHeight(8 + Math.ceil(reactions.length / cols) * (gh + 16) + 6);
   }
 }
 
@@ -709,7 +750,7 @@ class DetailSheet extends Container {
   private section(title: string, body: string, x: number, y: number, w: number, o: { color?: number; italic?: boolean; size?: number } = {}) {
     const t = txt(title, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: o.color ?? C.pinkHot, letterSpacing: 3 });
     t.position.set(x, y);
-    if (/\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void)\}/.test(body)) {
+    if (/\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void|crystal)\}/.test(body)) {
       const ib = iconText(body, { fontFamily: F.ui, fontSize: o.size ?? 20, fill: C.ink }, { wrap: w });
       ib.position.set(x, y + 20);
       this.addChild(t, ib);

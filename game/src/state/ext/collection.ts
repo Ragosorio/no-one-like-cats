@@ -4,7 +4,7 @@
  */
 import { G, OwnedCat, ResonanceJob } from '../game';
 import { CATS, CONTENT, ELEMENTS, ELEMENT_BY_ID, ROLE_BY_ID, catDef, CatDef, ElementDef } from '../../data/content';
-import { BAL, RarityId, catGoldPerSec, catLevelCap, catPower, starMinLevel, starMult } from '../econ';
+import { BAL, RarityId, catGoldPerSec, catLevelCapFor, catPower, starMinLevel, starMult } from '../econ';
 import { cat as getCat, starNeed, canStarUp, speciesCount, mutationDef, traitInfoById } from '../sys/cats';
 import { busyCats, freeSlots, queuedCats, queueUnlocked, revealCopy, startResonance } from '../sys/resonance';
 import { queueResonance, resonanceQueue } from '../sys/workforce';
@@ -50,6 +50,8 @@ export function elColor(id: string): number {
     shadow: 0x5a4a78,
     time: 0xb8925a,
     light: 0xe0b040,
+    // Parte II
+    crystal: 0x8fd3ff,
   };
   return MAIN[id] ?? 0x9a8f80;
 }
@@ -324,7 +326,7 @@ export function revealInfo(species: string, isNew: boolean, orbs: number, mutati
 export interface StarInfo {
   cat: OwnedCat;
   usePrisma: boolean;
-  /** cat level cap right now (Reino + 5) and the Reino needed to reach minLevel */
+  /** this cat's level cap right now (econ.catLevelCapFor: Reino + 5 up to 50, then +10 per ★) and the Reino needed to reach minLevel */
   levelCap: number;
   needKl: number;
   max: boolean;
@@ -356,7 +358,7 @@ export function starInfo(c: OwnedCat, usePrisma = true): StarInfo {
   const minLevel = max ? 0 : starMinLevel(c.stars);
   const gm = def.economy.goldMod ?? 1;
   const unlockKey = BAL.cats.stars.unlocks[next - 1] ?? '';
-  const cap = catLevelCap(G.s.kl);
+  const cap = catLevelCapFor(G.s.kl, c.stars);
   return {
     cat: c,
     usePrisma,

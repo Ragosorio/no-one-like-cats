@@ -21,11 +21,22 @@ export interface CatRig {
   neck: V2;
   /** baseX, baseY, tipX, tipY, halfWidth */
   ears: [number, number, number, number, number][];
-  /** eye boxes x0, y0, x1, y1 (upper lid at y0, lower lid at y1) */
-  eyes: [number, number, number, number][];
+  /**
+   * eye boxes x0, y0, x1, y1 (upper lid at y0, lower lid at y1). Optional 5th value `lid` (px) = an ELLIPTIC lid:
+   * the eye is the ellipse inscribed in the box and only the `lid` px painted right above its upper contour slide
+   * down over it, so a glasses rim / crown / fringe painted just above the eye stays put (Archivista). Without it,
+   * the classic flat lid: a band as tall as the eye, right above it, stretches down over it.
+   */
+  eyes: [number, number, number, number, number?][];
   tail: { pts: V2[]; r: number } | null;
   /** cx, cy, r of detached props that bob in place */
   floats: [number, number, number][];
+  /**
+   * cx, cy, rx, ry of painted things that must NOT follow the head, the ears or the tail (after-images, a backdrop):
+   * inside they only bend with the whole body (lean, crouch) and can still bob as a `floats` prop (Refracta).
+   * Soft edge from 1 to 1.15 radii.
+   */
+  pins?: [number, number, number, number][];
 }
 const RIGS = rigsJson as unknown as Record<string, CatRig>;
 export function catRig(slug: string): CatRig | undefined {
@@ -110,10 +121,12 @@ export class PuppetModel {
     const [W, H] = rig.size ?? [ART, ART];
     this.W = W;
     this.H = H;
-    const dense = rig.eyes.map(([x0, y0, x1, y1]) => {
+    const dense = rig.eyes.map(([x0, y0, x1, y1, lid]) => {
       const hw = (x1 - x0) / 2;
       const cx = x0 + hw;
       const h = y1 - y0;
+      // elliptic lid: fine rows and columns on the eye itself (its band above is only a few px)
+      if (lid !== undefined) return { x: [x0, x1, 24] as [number, number, number], y: [y0 - lid * 2, y1 + 2, 28] as [number, number, number] };
       return { x: [cx - hw * 1.6, cx + hw * 1.6, 12] as [number, number, number], y: [y0 - h * 1.1, y1 + h * 0.45, 16] as [number, number, number] };
     });
     const xs = axis(W, W / 26, dense.map((e) => e.x));
@@ -163,6 +176,9 @@ export class PuppetModel {
       const x = this.rest[v * 2];
       const y = this.rest[v * 2 + 1];
       this.bodyH[v] = clamp((this.feetY - y) / (this.feetY - this.topY || 1), 0, 1.3);
+      // pinned paint (after-images, a backdrop): head, ears and tail let go of it
+      let keep = 1;
+      if (rig.pins) for (const [px, py, prx, pry] of rig.pins) keep = Math.min(keep, smooth(1, 1.15, Math.hypot((x - px) / prx, (y - py) / pry)));
       // head ellipse with a soft collar
       const e = Math.hypot((x - hx) / hrx, (y - hy) / hry);
       let wh = 1 - smooth(1, 1.32, e);
@@ -178,15 +194,32 @@ export class PuppetModel {
         const along = 1 - smooth(1.12, 1.5, s);
         const region = lateral * along * smooth(-0.45, -0.1, s);
         wh = Math.max(wh, region);
-        const w = region * smooth(-0.05, 0.55, s);
+        const w = region * smooth(-0.05, 0.55, s) * keep;
         if (w > 0.001) this.ears[k][v] = w;
       });
-      if (wh > 0.001) this.head[v] = wh;
+      if (wh * keep > 0.001) this.head[v] = wh * keep;
       // eyes: lids slide down — fur above the eye stretches over it, the eye squeezes into a lash line
-      rig.eyes.forEach(([x0, y0, x1, y1], k) => {
+      rig.eyes.forEach(([x0, y0, x1, y1, lid], k) => {
         const hw = (x1 - x0) / 2;
         const cx = x0 + hw;
         const h = y1 - y0;
+        if (lid !== undefined) {
+          // elliptic lid: per column, the thin band right above the eye's upper contour covers 78% of it
+          const u = (x - cx) / hw;
+          if (u <= -1 || u >= 1) return;
+          const half = (h / 2) * Math.sqrt(1 - u * u);
+          const top = y0 + h / 2 - half;
+          const bot = top + 2 * half;
+          const band = Math.max(0.5, lid);
+          const yt = top - band;
+          const yc = top + (bot - top) * 0.78;
+          let f = y;
+          if (y > yt && y <= top) f = yt + ((y - yt) * (yc - yt)) / band;
+          else if (y > top && y < bot) f = yc + ((y - top) * (bot - yc)) / (bot - top);
+          const d = f - y;
+          if (Math.abs(d) > 0.01) this.eyes[k][v] = d;
+          return;
+        }
         const across = 1 - smooth(0.82, 1.5, Math.abs(x - cx) / hw);
         if (across <= 0) return;
         const yt = y0 - h * 1.0;
@@ -201,7 +234,7 @@ export class PuppetModel {
       if (tail) {
         const { d, s } = nearestOnPolyline(tail.pts, cum, x, y);
         let w = 1 - smooth(tail.r, tail.r * 2, d);
-        w *= 1 - clamp(wh * 1.5, 0, 1); // never drag the face
+        w *= (1 - clamp(wh * 1.5, 0, 1)) * keep; // never drag the face (nor pinned paint)
         if (w > 0.001) {
           this.tailW[v] = w;
           this.tailS[v] = s / tailLen;

@@ -230,11 +230,14 @@ class PreBattleView {
     elL.position.set(0, y);
     b.addChild(elL);
     const els = stageElements(z, s);
+    // badge + name per element, all before the enemy crew column (x 440): bosses bring 3 elements
+    const step = Math.min(170, 410 / Math.max(1, els.length));
     els.forEach((el, i) => {
       const eb = elementBadge(el, 54);
-      eb.position.set(30 + i * 170, y + 52);
+      eb.position.set(30 + i * step, y + 52);
       const en = label(elName(el), 15, C.ink);
-      en.position.set(62 + i * 170, y + 44);
+      en.position.set(62 + i * step, y + 44);
+      if (en.width > step - 40) en.scale.set((step - 40) / en.width);
       b.addChild(eb, en);
     });
     const crL = label('TRIPULACIÓN ENEMIGA', 14, P.blue, { letterSpacing: 3 });
@@ -261,6 +264,10 @@ class PreBattleView {
     const tl = label('TU BARCO', 14, P.blue, { letterSpacing: 3 });
     tl.position.set(x0, 0);
     box.addChild(tl);
+    // the whole fleet on one row, always inside the panel (x0 → 1744): tabs shrink as the fleet
+    // grows (6 ships = 134 px each; Button shrinks / wraps the name to fit)
+    const gap = 8;
+    const tw = Math.min(200, (1744 - x0 - gap * (owned.length - 1)) / Math.max(1, owned.length));
     let tx = x0;
     for (const id of owned) {
       const def = SHIP_BY_ID.get(id);
@@ -274,10 +281,10 @@ class PreBattleView {
         this.buildShip();
         this.picker.setShip(id);
         this.rebuildPower();
-      }, { w: 200, h: 46, size: 22, color: active ? C.ink : C.paper, textColor: active ? C.paper : C.ink });
+      }, { w: tw, h: 46, size: 22, color: active ? C.ink : C.paper, textColor: active ? C.paper : C.ink });
       b.position.set(tx, 22);
       box.addChild(b);
-      tx += 212;
+      tx += tw + gap;
     }
     const prev = shipPreview(playerBlueprint().bp, { maxW: 360, maxH: 230, style: 'pirate' });
     prev.position.set(1744 - 370, 84);
@@ -326,7 +333,7 @@ class PreBattleView {
       estBox.addChild(st);
       if (e.details.length) {
         const why = new Button('¿POR QUÉ?', () => openWhy(e), { w: 170, h: 44, size: 22, color: C.paper });
-        why.position.set(370, -8);
+        why.position.set(Math.max(370, st.x + st.width / 2 + 16), -8);
         estBox.addChild(why);
       }
       const lines = e.p === null ? ['Simulando la pelea con tu barco real…'] : [...e.reasons, ...e.tips].slice(0, 2);

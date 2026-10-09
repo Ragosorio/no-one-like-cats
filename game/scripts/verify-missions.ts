@@ -15,7 +15,24 @@ import { GOAL_HANDLERS, MISSION_GATES, TRIGGER_KINDS, goalCounters, goalFlags } 
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'src');
-const content = JSON.parse(readFileSync(join(SRC, 'data/content.json'), 'utf8'));
+/**
+ * The MERGED content the game runs on (content.json + Parte II modules: H31+ live in data/rupturas/*.json).
+ * Under tsx / vite-node, src/data/content.ts imports as-is. Plain `node` can't load its JSON imports, so it
+ * merges the same modules, in the same order, with the same function (data/mergeContent.ts).
+ */
+async function loadContent(): Promise<any> {
+  try {
+    return (await import('../src/data/content.ts')).CONTENT;
+  } catch {
+    const { mergeContent } = await import('../src/data/mergeContent.ts');
+    const dataDir = join(SRC, 'data');
+    const ts = readFileSync(join(dataDir, 'content.ts'), 'utf8');
+    const json = [...ts.matchAll(/^import\s+\w+\s+from\s+'\.\/([^']+\.json)';/gm)].map((m) => m[1]);
+    const [base, ...mods] = json.map((f) => JSON.parse(readFileSync(join(dataDir, f), 'utf8')));
+    return mergeContent(base, ...mods);
+  }
+}
+const content = await loadContent();
 const balance = JSON.parse(readFileSync(join(SRC, 'data/balance.json'), 'utf8'));
 const ALL = process.argv.includes('--all');
 const CUT: Record<string, number> = { historia: 13, capitan: 22, criador: 23, explorador: 17 };

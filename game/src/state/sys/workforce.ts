@@ -121,8 +121,9 @@ export interface ExpeditionLoot {
   element: string;
 }
 /** loot formula (balance.expeditions): h^0.85 × (1 + 0.5·viajeros) × rates of the zone */
-/** Parte 2: a cat of a multiverse element brings back crystals of ITS element (their habitats need them for tiers 5+) */
-const MULTIVERSE = ['ice', 'sound', 'shadow', 'time', 'light', 'void'];
+/** Parte 2: a cat of a multiverse element brings back crystals of ITS element (their habitats need them for tiers 5+);
+ * Parte II's Cristal works the same (no campaign zone of its own either) */
+const MULTIVERSE = ['ice', 'sound', 'shadow', 'time', 'light', 'void', 'crystal'];
 export function expeditionCrystalElement(catUids: string[]): string | null {
   for (const u of catUids) {
     const c = getCat(u);

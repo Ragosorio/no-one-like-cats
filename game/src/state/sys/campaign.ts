@@ -15,6 +15,8 @@ import { accessoryMods } from './accessories';
 import { podioCatMods } from '../../podio/mods';
 import { generateShip, specFromArchetype, STORY_SHIPS } from '../../battle/shipgen';
 import { battleCatFrom } from '../../battle/catShots';
+import { activeFormId } from './forms';
+import { bareSpecies } from './missionGoals';
 import { weaponShot } from '../../battle/weapons';
 import type { BattleSpec, BattleResult, BattleIntro } from '../../scenes/BattleScene';
 import type { BossConfig, StageRules } from '../../battle/sim';
@@ -343,7 +345,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     const acc = accessoryMods(c);
     // El Podio: that cat's podio power levels → +dmg and an earlier ultimate on the ship (podio/mods.ts)
     const pm = podioCatMods(c);
-    const bc = applyCatPerks(battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf * share * rank * gear.catDmgMul * acc.powMul * pm.dmgMul, hpMul: share * acc.hpMul * pm.hpMul * ph }, catHpBase(c)), c);
+    const bc = applyCatPerks(battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf * share * rank * gear.catDmgMul * acc.powMul * pm.dmgMul, hpMul: share * acc.hpMul * pm.hpMul * ph, form: activeFormId(c) }, catHpBase(c)), c);
     return pm.ultStart ? { ...bc, ultStart: Math.min(1, (bc.ultStart ?? 0) + pm.ultStart) } : bc;
   });
   // ---- enemy ship
@@ -552,6 +554,19 @@ export interface Loot {
   prisma?: number;
 }
 
+/**
+ * A win with these cats aboard (every mode: campaign, errands, story, duels, the Podio):
+ *  - `wins_with_<species>` once per species (Parte II H37 «Canelo quiere el timón»);
+ *  - `<species>_final_blow` when the battle's last blow (BattleResult.finalBlow = sim.finalBlow) was one of
+ *    them (H38 «¡A BABOR!» reads `canelo_final_blow`).
+ */
+export function countCrewWins(uids: string[], finalBlow?: string | null) {
+  const species = new Set(uids.map((u) => getCat(u)?.species).filter((x): x is string => !!x));
+  for (const sp of species) G.count(`wins_with_${sp}`);
+  const fb = finalBlow && uids.includes(finalBlow) ? getCat(finalBlow)?.species : undefined;
+  if (fb) G.count(`${bareSpecies(fb)}_final_blow`);
+}
+
 /** Apply rewards after a campaign battle. */
 export function applyResult(zone: number, stage: number, r: BattleResult): Loot {
   const key = stageKey(zone, stage);
@@ -597,6 +612,7 @@ export function applyResult(zone: number, stage: number, r: BattleResult): Loot 
     // Eclipse's sure route: a win with the sun (Solar) and the moon (Lunita) on the same deck
     const sp = new Set(crew().map((u) => getCat(u)?.species));
     if (sp.has('r_solar') && sp.has('c_lunita')) G.count('eclipse_duo_win');
+    countCrewWins(crew(), r.finalBlow);
     if (r.perfect) G.count('wins_perfect');
     if (r.reason === 'sunk') G.count('wins_sink');
     if (r.reason === 'core') G.count('wins_core');
@@ -844,7 +860,7 @@ export function buildDuel(id: string, onEnd: (r: BattleResult) => void): BattleS
   const ef = fS(1 / S);
   const playerCats = crewUids.map((u) => {
     const c = getCat(u)!;
-    return battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf, hpMul: 1.4 }, catHpBase(c));
+    return battleCatFrom({ uid: c.uid, species: c.species, name: c.name, level: c.level, stars: c.stars, dmgMul: pf, hpMul: 1.4, form: activeFormId(c) }, catHpBase(c));
   });
   // a duel has no ship: only the cats fight. Their crew is scaled to YOUR crew on the raft (same
   // firepower × endurance rating, then the usual power ratio on top), so a late crew with Nv 40
@@ -891,6 +907,8 @@ export function applySpecialResult(id: string, r: BattleResult) {
   G.bump('victory');
   G.xp('victory');
   G.count('wins');
+  // the raft crew buildDuel took (Parte II H37/H38 count duels too)
+  countCrewWins(crew().slice(0, SPECIALS[id]?.crew ?? 2), r.finalBlow);
   return { won: true };
 }
 
@@ -1091,6 +1109,7 @@ export function applyErrandResult(id: string, r: BattleResult): ErrandLoot {
     G.bump('victory');
     G.xp('victory');
     G.count('wins');
+    countCrewWins(errandCrew(id), r.finalBlow);
     if (r.perfect) G.count('wins_perfect');
     if (r.reason === 'sunk') G.count('wins_sink');
   } else {

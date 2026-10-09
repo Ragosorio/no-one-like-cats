@@ -16,8 +16,9 @@ export const STATUS_TINT: Partial<Record<StatusId, number>> = {
   rooted: 0xd4ecb4,
   voided: 0x9a88b8,
   steam: 0xf2f2f2,
+  prism: 0xe6e0ff,
 };
-const TINT_ORDER: StatusId[] = ['frozen', 'burning', 'charged', 'voided', 'wet', 'cursed', 'rooted', 'steam'];
+const TINT_ORDER: StatusId[] = ['frozen', 'burning', 'charged', 'voided', 'wet', 'cursed', 'rooted', 'steam', 'prism'];
 
 export function statusTint(st: Partial<Record<StatusId, number>>): number {
   for (const k of TINT_ORDER) if (st[k]) return STATUS_TINT[k] ?? 0xffffff;
@@ -173,6 +174,17 @@ export class CellStatusFx extends Container {
         const x = (hash(s, frame, 50 + i) - 0.5) * 34;
         const y = (hash(s, frame, 60 + i) - 0.5) * 34;
         g.rect(x, y, 4 + hash(s, frame, i) * 10, 3 + hash(s, frame, i + 9) * 4).fill(i % 2 ? 0x0d0a14 : 0xff2e88);
+      }
+    }
+    if (this.kinds.has('prism')) {
+      // Cristal: nacre glints wander over the cell (pearl / sky / lilac / sea-glass)
+      const cols = [0xf7f2ff, 0x8fd3ff, 0xb79cff, 0x6fe0c8];
+      for (let i = 0; i < 2; i++) {
+        const f = Math.floor(frame / 3) + i * 7;
+        const gx = (hash(s, f, 70 + i) - 0.5) * 32 * k;
+        const gy = (hash(s, f, 80 + i) - 0.5) * 28;
+        const r = 3.5 + hash(s, f, 90 + i) * 3;
+        g.poly([gx, gy - r * 1.4, gx + r, gy, gx, gy + r * 1.4, gx - r, gy]).fill(cols[(f + i) % 4]).stroke({ width: 1.4, color: ink });
       }
     }
     if (this.kinds.has('steam')) {

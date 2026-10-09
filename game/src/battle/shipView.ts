@@ -114,6 +114,7 @@ export class ShipView extends Container {
     if (c.status.frozen) g.rect(0, 0, s, s).fill({ color: 0xc6f0e4, alpha: 0.55 });
     if (c.status.burning) g.rect(0, 0, s, s).fill({ color: 0xff6a1a, alpha: 0.4 });
     if (c.status.charged) g.rect(0, 0, s, s).fill({ color: 0xffe14a, alpha: 0.3 });
+    if (c.status.prism) g.rect(0, 0, s, s).fill({ color: 0xb79cff, alpha: 0.3 });
     g.rect(0, 0, s, s).stroke({ width: 2.5, color: C.ink, alignment: 0.5 });
   }
 

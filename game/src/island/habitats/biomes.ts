@@ -9,6 +9,7 @@
  *   front     low props on the front edges
  *   ambient   particles + breathing glows (island/habitats/ambient.ts)
  * Concept references (outside the repo): fuego, hielo, luz, magia, sombra, agua, tiempo.
+ * Parte II: cristal (NÁCAR PRISMÁTICO — mother-of-pearl floor, geodes, a prism that splits the light).
  */
 import { Container, Graphics } from 'pixi.js';
 import { C } from '../../ui/theme';
@@ -1545,4 +1546,116 @@ function light(c: BiomeCtx) {
   c.amb.add('mote', pal.glow, 2 + stage * 2, inYard(c), { amp: 10, sp: 0.07, h: 100 });
 }
 
-const BIOMES: Record<string, (c: BiomeCtx) => void> = { fire, water, nature, earth, storm, magic, cosmic, void: voidB, ice, sound, shadow, time, light };
+// =========================================================================================== CRYSTAL
+function crystalB(c: BiomeCtx) {
+  const { pal, N, stage } = c;
+  const s = SZ[stage];
+  const sheen = [pal.glow, pal.rock, pal.leaf, pal.bloom];
+  // mother-of-pearl floor: pearly tiles with an iridescent sheen band each, sea-glass pebbles in the joints
+  for (let gy = 0; gy < N; gy++)
+    for (let gx = 0; gx < N; gx++) {
+      diamond(c.gnd, gx + 0.04, gy + 0.04, 0.92, 0.92).fill({ color: (gx + gy) % 2 ? pal.soil : pal.soil2, alpha: 0.96 }).stroke({ width: 1.5, color: pal.rock, alpha: 0.55 });
+      const p = P(gx, gy);
+      c.gnd.ellipse(p.x - 4, p.y - 2, 16, 4).fill({ color: sheen[(gx * 3 + gy) % 4], alpha: 0.28 });
+    }
+  for (let i = 0; i < 4 + N * 2; i++) {
+    const p = inYard(c, 0.3)();
+    const w = 3 + c.r() * 3;
+    c.gnd.poly([p.x - w, p.y, p.x - w * 0.3, p.y - w * 0.7, p.x + w, p.y - 1, p.x + w * 0.4, p.y + w * 0.6]).fill(sheen[i % 4]).stroke({ width: 1, color: pal.rockDark, alpha: 0.6 });
+  }
+  // an open giant shell with a glowing pearl (T4+)
+  if (stage >= 1) {
+    const p = P(N * 0.62, N * 0.6);
+    const R = 30 + stage * 6;
+    c.gnd.ellipse(p.x, p.y, R, R * 0.42).fill(pal.rockLit).stroke(INK);
+    for (let k = -3; k <= 3; k++) c.gnd.moveTo(p.x, p.y + R * 0.3).lineTo(p.x + k * R * 0.28, p.y - R * 0.3).stroke({ width: 1.5, color: pal.rock, alpha: 0.7 });
+    c.gnd.ellipse(p.x, p.y - 2, R * 0.6, R * 0.22).fill({ color: pal.glow, alpha: 0.35 });
+    const pearl = new Graphics().circle(0, 0, 7 + stage * 1.5).fill(0xffffff).stroke(THIN);
+    pearl.circle(-2.5, -2.5, 2.2).fill(pal.bloom);
+    pearl.position.set(p.x, p.y - 6);
+    c.gFx.addChild(pearl);
+    c.amb.glow(glowSprite(c.gFx, p.x, p.y - 6, pal.glow, 0.45, 0.45 * s, true));
+  }
+  // backdrop: crystal clusters → lilac prisms → a split geode behind the back corner
+  crystals(c.bk, BR(c, 0.8).x, BR(c, 0.8).y, 0.9 * s, pal.rock, c.r);
+  crystals(c.bk, BL(c, 0.74).x, BL(c, 0.74).y, 0.8 * s, pal.glow, c.r);
+  if (stage >= 1) {
+    for (const [u, h, col, lean] of [
+      [0.5, 110, pal.rock, -8],
+      [0.62, 80, pal.leaf, 6],
+    ] as const) {
+      const p = BL(c, u, 0.3);
+      crystal(c.bk, p.x, p.y, h * s, 12 * s, col, lean);
+    }
+    const q = BR(c, 0.58, 0.3);
+    crystal(c.bk, q.x, q.y, 96 * s, 11 * s, pal.glow, 5);
+    c.amb.glow(glowSprite(c.bFx, q.x, q.y - 50 * s, pal.glow, 0.25, 0.6 * s, true));
+  }
+  if (stage >= 2) {
+    // the geode: a half-open rock shell, crystals growing inside it
+    const p = BR(c, 0.16, 0.7);
+    const R = 92 * s;
+    c.bk.moveTo(p.x - R, p.y).quadraticCurveTo(p.x - R * 1.05, p.y - R * 1.5, p.x, p.y - R * 1.55).quadraticCurveTo(p.x + R * 1.05, p.y - R * 1.5, p.x + R, p.y).closePath().fill(pal.rockDark).stroke(INK);
+    c.bk.moveTo(p.x - R * 0.78, p.y).quadraticCurveTo(p.x - R * 0.8, p.y - R * 1.22, p.x, p.y - R * 1.26).quadraticCurveTo(p.x + R * 0.8, p.y - R * 1.22, p.x + R * 0.78, p.y).closePath().fill(pal.rockLit).stroke(THIN);
+    for (let k = 0; k < 7; k++) {
+      const f = (k + 0.5) / 7;
+      const a = Math.PI * (1.08 + f * 0.84);
+      crystal(c.bk, p.x + Math.cos(a) * R * 0.55, p.y + 4 + Math.sin(a) * R * 0.25, (34 + (k % 3) * 14) * s, 7 * s, sheen[k % 4], Math.cos(a) * 10);
+    }
+    c.amb.glow(glowSprite(c.bFx, p.x, p.y - R * 0.6, pal.rock, 0.4, 1.1 * s, true));
+  }
+  // crown: a floating prism over the house splits a white beam into colours (T7+); T10 a giant pearl joins it
+  if (stage >= 2) {
+    const top = { x: c.house.x + 70, y: c.roofY - 70 - stage * 15 };
+    const prism = new Container();
+    prism.position.set(top.x, top.y);
+    const rays = new Graphics();
+    rays.moveTo(-170, 26).lineTo(0, 0).stroke({ width: 7, color: 0xffffff, alpha: 0.75 });
+    [0xff8fb1, 0xffd77a, pal.leaf, pal.glow, pal.rock].forEach((col, k) => rays.moveTo(0, 0).lineTo(190, -60 + k * 30).stroke({ width: 6, color: col, alpha: 0.6 }));
+    const tri = new Graphics().poly([-26, 18, 0, -28, 26, 18]).fill({ color: 0xffffff, alpha: 0.9 }).stroke(INK);
+    tri.moveTo(-12, 8).lineTo(-2, -12).stroke({ width: 3, color: pal.glow, cap: 'round' });
+    prism.addChild(rays, tri);
+    c.cFx.addChild(prism);
+    c.amb.glow(rays, 0.7);
+    c.ticks.push((t) => {
+      const st = stepped(t);
+      prism.y = top.y + Math.sin(st * 1.3) * 5;
+      tri.rotation = Math.sin(st * 0.7) * 0.08;
+      rays.alpha = 0.6 + Math.sin(st * 1.1) * 0.25;
+    });
+  }
+  if (stage >= 3) {
+    const p = { x: c.house.x - 95, y: c.roofY - 120 };
+    const pearl = new Graphics().circle(0, 0, 34).fill(pal.wall).stroke(INK);
+    pearl.ellipse(-8, -6, 22, 14).fill({ color: pal.bloom, alpha: 0.5 });
+    pearl.ellipse(10, 10, 16, 8).fill({ color: pal.glow, alpha: 0.45 });
+    pearl.circle(-12, -12, 6).fill(0xffffff);
+    pearl.position.set(p.x, p.y);
+    c.cFx.addChild(pearl);
+    const orbit = [0, 1, 2].map((k) => {
+      const g = new Graphics().poly([0, -7, 5, 0, 0, 7, -5, 0]).fill(sheen[k]).stroke(HAIR);
+      c.cFx.addChild(g);
+      return g;
+    });
+    c.amb.glow(glowSprite(c.cFx, p.x, p.y, pal.glow, 0.5, 1.2, true));
+    c.ticks.push((t) => {
+      const st = stepped(t);
+      pearl.y = p.y + Math.sin(st * 0.9) * 6;
+      orbit.forEach((g, k) => {
+        const a = st * 0.8 + (k / 3) * Math.PI * 2;
+        g.position.set(p.x + Math.cos(a) * 56, pearl.y + Math.sin(a) * 18);
+      });
+    });
+  }
+  // front: sea-glass pieces and little shells
+  for (let i = 0; i < 2 + stage; i++) {
+    const p = i % 2 ? FR(c, 0.3 + c.r() * 0.5) : FL(c, 0.6 + c.r() * 0.3);
+    c.fr.moveTo(p.x - 8, p.y + 2).quadraticCurveTo(p.x, p.y - 10, p.x + 8, p.y + 2).closePath().fill(pal.bloom).stroke(HAIR);
+    crystal(c.fr, p.x + 10, p.y + 2, 14, 3.5, sheen[i % 4], 2);
+  }
+  c.amb.add('twinkle', 0xffffff, 3 + c.tier, inYard(c, 0), { sp: 0.14 });
+  c.amb.add('shard', pal.rock, 2 + stage * 2, inYard(c), { amp: 10, sp: 0.08, h: 90 });
+  if (stage >= 1) c.amb.add('shard', pal.leaf, 1 + stage, inYard(c, 0.3), { amp: 8, sp: 0.1, h: 70 });
+}
+
+const BIOMES: Record<string, (c: BiomeCtx) => void> = { fire, water, nature, earth, storm, magic, cosmic, void: voidB, ice, sound, shadow, time, light, crystal: crystalB };

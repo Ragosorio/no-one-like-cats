@@ -119,6 +119,8 @@ export const PAL: Record<string, Pal> = {
   shadow: { soil: 0x2c2442, soil2: 0x352b50, rock: 0x1e1830, rockLit: 0x3a3058, rockDark: 0x120e1d, glow: 0xff3fa4, glowHot: 0xffc2e4, leaf: 0x1d1730, leaf2: 0x2a2244, bloom: 0xff3fa4, bloom2: 0xb84dff, wall: 0x4a3f66, roof: 0x2a2433, trim: 0xff3fa4, glass: 0xffd9a0 },
   time: { soil: 0xd8c8a6, soil2: 0xc9b690, rock: 0xb7a48a, rockLit: 0xd9c9ad, rockDark: 0x7a6a55, glow: 0xffe9b0, glowHot: 0xffffff, leaf: 0x8a8a7a, leaf2: 0xa8a898, bloom: 0xc9a04a, bloom2: 0x6b6b6b, wall: 0xd9c29a, roof: 0x6b4f2a, trim: 0xc9a04a, glass: 0xf7ebd0 },
   light: { soil: 0xfdf2d2, soil2: 0xf6e3ad, rock: 0xfff8e8, rockLit: 0xffffff, rockDark: 0xe2c98a, glow: 0xffd77a, glowHot: 0xffffff, leaf: 0x8fd06a, leaf2: 0xb5e27a, bloom: 0xffffff, bloom2: 0xff9fb4, wall: 0xfff8e1, roof: 0xffd77a, trim: 0xb89558, glass: 0x7fd8ff },
+  // Parte II · Oleada 1: NÁCAR PRISMÁTICO (pearl white, sky prism, lilac, sea-glass)
+  crystal: { soil: 0xefeafb, soil2: 0xe2daf5, rock: 0xb79cff, rockLit: 0xe8deff, rockDark: 0x7e66c9, glow: 0x8fd3ff, glowHot: 0xffffff, leaf: 0x6fe0c8, leaf2: 0xa8f0e0, bloom: 0xffd6f0, bloom2: 0x8fd3ff, wall: 0xf7f2ff, roof: 0xb79cff, trim: 0x6fe0c8, glass: 0x8fd3ff },
 };
 export function pal(el: string): Pal {
   return PAL[el] ?? PAL.fire;

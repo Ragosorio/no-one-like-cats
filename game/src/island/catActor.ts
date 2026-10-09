@@ -11,6 +11,7 @@ import { isoToScreen } from './iso';
 import { emptyBoxArt } from './buildingArt';
 import { chatter } from './chatter/director';
 import { G } from '../state/game';
+import { catSlug } from '../state/sys/forms';
 import { glowTexture, sparkTexture } from '../art/textures';
 import { mutationOverlay, syncMutationOverlay } from '../panels/collection/art';
 import { mutationLook } from '../state/ext/collection';
@@ -110,6 +111,8 @@ export class CatActor extends Container {
   private mutScale = 1;
   private mutFx: { ring: Graphics; parts: { s: Sprite; t: number; vx: number; vy: number }[]; acc: number; kind: string | null } | null = null;
   private holo: { root: Container; sheen: Sprite; mask: Sprite; t: number; sparks: { s: Sprite; t: number }[] } | null = null;
+  /** painting slug it was built with (IslandScene rebuilds the actor when the cat switches form) */
+  readonly slug: string;
   /** layer for Zzz/bubbles (world fx) */
   constructor(
     public catUid: string,
@@ -119,7 +122,10 @@ export class CatActor extends Container {
   ) {
     super();
     this.area = area;
-    this.cat = new IslandCat(slugOf(species), BASE);
+    // the painting of THIS cat (its active form, if any): state/sys/forms.ts catSlug
+    const own = G.s.cats.find((c) => c.uid === catUid);
+    this.slug = own ? catSlug(own) : slugOf(species);
+    this.cat = new IslandCat(this.slug, BASE);
     applyCatTint(this.cat.sprite, species);
     const ts = catDef(species).art.tint?.scale;
     if (ts) this.cat.baseScale *= ts;
@@ -408,6 +414,13 @@ export class CatActor extends Container {
 
   happy() {
     this.cat.hop();
+  }
+
+  /** stand right here now (a FORM switch rebuilds the actor where the old one was) */
+  teleport(gx: number, gy: number) {
+    this.gx = gx;
+    this.gy = gy;
+    this.place();
   }
 
   private place() {

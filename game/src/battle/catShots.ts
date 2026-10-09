@@ -2,6 +2,7 @@
 import { CatDef, ShotSpec, catDef } from '../data/content';
 import { BattleCatDef, ElementId, Limitation, ShotDef, StatusId, Trajectory } from './types';
 import { CELL } from './ship';
+import { applyForm, formUltKey } from '../data/rupturas/formas';
 
 export const SIM_ELEMENT: Record<string, ElementId> = {
   fire: 'fire',
@@ -18,6 +19,8 @@ export const SIM_ELEMENT: Record<string, ElementId> = {
   shadow: 'shadow',
   sound: 'sound',
   time: 'time',
+  // Parte II · Oleada 1 (battle/cristal.ts)
+  crystal: 'crystal',
 };
 const STATUS: Record<string, StatusId> = {
   ardiendo: 'burning',
@@ -26,6 +29,8 @@ const STATUS: Record<string, StatusId> = {
   cargado: 'charged',
   maldito: 'cursed',
   congelado: 'frozen',
+  // Cristal: PRISMA (the next foe hit of another element there refracts — battle/cristal.ts)
+  prisma: 'prism',
 };
 const TRAJ: Record<string, Trajectory> = {
   bola_rebote: 'bounce',
@@ -74,6 +79,12 @@ export function shotFromSpec(s: ShotSpec, level: number): ShotDef {
   const status = s.status ? STATUS[s.status] : undefined;
   const statuses = status ? [{ id: status, turns: Math.max(1, s.statusTurns || 2) }] : [];
   if (s.element === 'water' && !statuses.length) statuses.push({ id: 'wet', turns: 2 });
+  // every Cristal shot cuts PRISMA where it lands; Nv20 "Talla Brillante": the prism lasts 1 turn more
+  if (s.element === 'crystal') {
+    let pr = statuses.find((x) => x.id === 'prism');
+    if (!pr) statuses.push((pr = { id: 'prism', turns: 2 }));
+    if (level >= 20) pr.turns += 1;
+  }
   return {
     id: s.name,
     name: s.name,
@@ -138,10 +149,14 @@ export interface CatBattleInput {
   dmgMul: number;
   /** hp multiplier (catShare) */
   hpMul: number;
+  /** active FORM id (state/sys/forms.ts activeFormId: already checked unlocked); absent = original */
+  form?: string;
 }
 
 export function battleCatFrom(i: CatBattleInput, roleHp: number): BattleCatDef {
-  const def = catDef(i.species);
+  // a FORM fights as its own kit: painting, added elements, shot/ultimate overrides (data/rupturas/formas.ts)
+  const def = applyForm(catDef(i.species), i.form);
+  const ultKey = formUltKey(i.species, i.form);
   const shot = shotFromSpec(def.combat.shot, i.level);
   const ult = ultFromDef(def, i.level);
   // ★5 of the multiverse legendaries (content star5): "se puede usar 2 veces por batalla"
@@ -164,5 +179,6 @@ export function battleCatFrom(i: CatBattleInput, roleHp: number): BattleCatDef {
     shields: lim === 'shields' ? 3 : undefined,
     passive: def.combat.passive,
     reload: def.combat.recarga ?? 0,
+    ...(ultKey ? { ultKey } : {}),
   };
 }

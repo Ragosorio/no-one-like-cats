@@ -20,6 +20,11 @@ export interface GoalHandler {
 
 const one = (k: string) => () => [k];
 
+/** a species id without its rarity prefix: `c_canelo` → `canelo` (ids are unique without it) */
+export const bareSpecies = (species: string) => species.replace(/^[a-z]_/, '');
+/** counter of the battles a species finished with ITS shot (H38): `canelo_final_blow` */
+export const finalBlowKey = (species: string) => `${bareSpecies(species)}_final_blow`;
+
 export const GOAL_HANDLERS: Record<string, GoalHandler> = {
   // ---- counters
   tap_cat: { how: 'counter', counters: one('tap_cat'), owner: 'isla (state/ext/island.ts)' },
@@ -46,6 +51,10 @@ export const GOAL_HANDLERS: Record<string, GoalHandler> = {
   assign_worker: { how: 'counter', counters: one('workers_assigned'), owner: 'isla (state/sys/workforce.ts)' },
   inherit_trait: { how: 'counter', counters: one('inherit_trait'), owner: 'colección (Resonancia, M3)' },
   secret_rumors: { how: 'counter', counters: one('secret_rumors'), owner: 'isla (state/sys/secrets.ts)' },
+  // Parte II (H37): victories with that species in the crew (campaign, errands, story, duels and the Podio)
+  wins_with_species: { how: 'counter', counters: (g) => [`wins_with_${g.species}`], owner: 'combate (state/sys/campaign.ts countCrewWins)' },
+  // Parte II (H38 «¡A BABOR!»): that species' shot was the last one to hurt the foe before a win (`canelo_final_blow`)
+  final_blow: { how: 'counter', counters: (g) => [finalBlowKey(String(g.species))], owner: 'combate (battle/sim.ts finalBlow → campaign.ts countCrewWins)' },
   // ---- flags / mixed
   event_complete: {
     how: 'mixed',

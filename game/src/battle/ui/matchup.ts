@@ -59,7 +59,7 @@ export function shotRule(s: ShotDef): string {
   if (s.statuses?.length) bits.push(`deja ${s.statuses.map((x) => STATUS_ES[x.id] ?? x.id).join(' + ')}`);
   return bits.join(' · ');
 }
-const STATUS_ES: Record<string, string> = { burning: 'Ardiendo', wet: 'Mojado', frozen: 'Congelado', charged: 'Cargado', rooted: 'Enraizado', cursed: 'Maldito', steam: 'Vapor', voided: 'Vacío' };
+const STATUS_ES: Record<string, string> = { burning: 'Ardiendo', wet: 'Mojado', frozen: 'Congelado', charged: 'Cargado', rooted: 'Enraizado', cursed: 'Maldito', steam: 'Vapor', voided: 'Vacío', prism: 'Prisma' };
 
 /** field / boss rules that matter for this shot (short, honest) */
 export function fieldNotes(b: Battle, s: ShotDef): string[] {

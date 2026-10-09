@@ -15,6 +15,7 @@ import { registerPatch } from '../patches';
 import { accessoryMods } from './accessories';
 import { rankDmgBonus } from './ranks';
 import { adopt } from './cats';
+import { countCrewWins } from './campaign';
 import { defaultPodio, PodioCatState, PodioState } from '../../podio/types';
 import { powerLevels, powersOf } from '../../podio/powers';
 import { RivalDef, league, rival } from '../../podio/ladder';
@@ -324,6 +325,8 @@ export interface PodioLoot {
   bout: number;
   /** the champion's prize cat (first win over a VACÍO league champion): a Heroico or a Divino */
   prize: { species: string; isNew: boolean; orbs: number } | null;
+  /** a win by K.O. (the rival's HP hit 0), not a judges' decision: it's this cat's final blow (H38) */
+  ko: boolean;
 }
 
 // ------------------------------------------------------------------ champion prizes (Heroicos / Divinos)
@@ -421,7 +424,11 @@ export function duelOutlook(c: OwnedCat, lg: number, bout: number, won = true): 
   };
 }
 
-export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, perfect: boolean): PodioLoot {
+/**
+ * Pay a finished duel. `ko` = it ended by K.O. of the rival (Duel.koBy === 0), not by the judges: in a 1-vs-1
+ * the knock-out is always this cat's final blow, so it counts `<species>_final_blow` (H38 «¡A BABOR!»).
+ */
+export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, perfect: boolean, ko = false): PodioLoot {
   const p = ps();
   const R = PB.rewards;
   const o = duelOutlook(c, lg, bout, won);
@@ -465,6 +472,9 @@ export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, p
     p.stats.wins++;
     if (perfect) p.stats.perfects++;
     G.count('feature_podio_win');
+    // a Podio win counts as a win with that cat aboard (Parte II H37 «Canelo quiere el timón»);
+    // a K.O. is its final blow (H38 «¡A BABOR!»); a judges' decision isn't
+    countCrewWins([c.uid], ko ? c.uid : undefined);
     if (!replay) {
       if (champion) {
         if (!p.champions.includes(lg)) p.champions.push(lg);
@@ -498,6 +508,7 @@ export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, p
     xp,
     league: lg,
     bout,
+    ko: won && ko,
   };
 }
 

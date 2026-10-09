@@ -20,6 +20,31 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-14-nivel-100',
+    date: '2026-10-14',
+    title: 'Nivel 100 (y pantallas que ya caben)',
+    luzterna: '¿Tus gatos se quedaron en nivel 50 viendo cómo el Podio los rebasaba? Ya no. Ahora las estrellas sirven para algo más que presumir.',
+    items: [
+      { tag: 'NUEVO', text: 'Los gatos ya pasan del nivel 50: cada ★ desde la segunda les sube el tope +10 (★2 = 60, ★3 = 70… ★6 = 100). El tope lo ves en su ficha.' },
+      { tag: 'BALANCE', text: 'Arriba del 50 cada nivel cuesta más comida pero da menos de golpe: crecer sigue valiendo la pena sin romper la economía. Hasta el 50 todo da exactamente lo mismo que antes.' },
+      { tag: 'BALANCE', text: 'Los rivales del Podio siguen creciendo contigo: con gatos de nivel 70–100 ya se le puede ganar a las ligas más altas.' },
+      { tag: 'ARREGLO', text: 'Familias del Catdex, Grimorio (ahora con sus 19 sinergias), barcos de la preparación de batalla, Reino, construir hábitat y otras pantallas ya no se salen por abajo ni por los lados.' },
+    ],
+  },
+  {
+    id: '2026-10-14-la-marea-imposible',
+    date: '2026-10-14',
+    title: 'PARTE II · La Marea Imposible',
+    luzterna: 'Creíste que habías conquistado el mar. Yo también. Luego las estrellas empezaron a caerse… para arriba. No me veas así, yo solo vivo aquí.',
+    items: [
+      { tag: 'NUEVO', text: 'Empieza la PARTE II: «La Era de las Rupturas». Se abre cuando terminas la Parte I (después de «Fin»). Si todavía no llegas, no te spoileamos nada: termina tu historia primero.' },
+      { tag: 'NUEVO', text: 'Once misiones de historia, cinco batallas y una hoja nueva en tu carta: el MAR DE LAS RUPTURAS. Las islas de ahí se visitan en 3D, con tus gatos, de día y de noche.' },
+      { tag: 'NUEVO', text: 'Elemento nuevo: CRISTAL. Doce gatos nuevos, dos primordiales y uno secreto que nunca está en un solo lugar.' },
+      { tag: 'NUEVO', text: 'Canelo puede EVOLUCIONAR. No te asustes: sigue siendo Canelo, y puedes regresarlo a su forma de siempre cuando quieras desde su ficha.' },
+      { tag: 'CAMBIO', text: 'Tu isla, tus gatos y tu partida no cambian. La Parte II solo agrega.' },
+    ],
+  },
+  {
     id: '2026-10-13-orbes-a-precio-justo',
     date: '2026-10-13',
     title: 'Orbes a precio justo',

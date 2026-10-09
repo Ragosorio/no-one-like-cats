@@ -1,0 +1,1379 @@
+{
+  "$comment": "Parte II · Oleada 1 — elemento Cristal y especies del Lote D. Se fusiona sobre content.json (solo agrega). Ver docs/part-ii/12-puente-oleada-1.md. Reglas de combate del Cristal: battle/cristal.ts. materialMult lo dobla content.ts dentro de materials[].mult (los arreglos con id no se pueden fusionar por dentro).",
+  "elements": [
+    {
+      "id": "crystal",
+      "name": "Cristal",
+      "emoji": "",
+      "order": 15,
+      "unlock": "chapter2:H39",
+      "discovery": "Isla Nácar (H39): al vencer a la capitana Prismarina, el nácar de la isla se queda contigo. Trae a Brillito.",
+      "dimension": "NÁCAR PRISMÁTICO (madreperla + vidrio de mar)",
+      "palette": [
+        "#B79CFF",
+        "#F7F2FF",
+        "#8FD3FF",
+        "#6FE0C8"
+      ],
+      "verb": "Redirigir",
+      "shotArchetype": "bola_rebote",
+      "shotRule": "Canica de nácar que REBOTA una vez. Lo que toca queda en PRISMA 2 turnos: el próximo golpe de OTRO elemento ahí se REFRACTA y se parte en 2 esquirlas (×0.75) que saltan a las celdas sanas más cercanas (la Luz lo vuelve ESPECTRO: ×1.25 y 3 esquirlas). Cada tiro de un gato de Cristal que cae en el barco rival levanta una FACETA en el suyo: el próximo proyectil enemigo que aterrice ahí se REDIRIGE (la faceta frena 40% y le regresa una esquirla al gato que disparó).",
+      "midFlight": "destello: por un instante el tiro se ve en siete lugares a la vez. Solo uno es de verdad.",
+      "status": "prisma",
+      "beats": "light",
+      "beatenBy": "earth",
+      "levelUpgrades": {
+        "10": {
+          "name": "Pulido",
+          "effect": "+25% radio."
+        },
+        "20": {
+          "name": "Talla Brillante",
+          "effect": "El Prisma dura 1 turno más."
+        }
+      },
+      "habitatBiome": null,
+      "particle": "shard",
+      "onomatopoeia": [
+        "¡TIIIN!",
+        "¡KRISH!"
+      ],
+      "sfxLayer": "copa de cristal + campanita de viento"
+    }
+  ],
+  "affinity": {
+    "crystal": {
+      "light": 1.5,
+      "sound": 1.5,
+      "earth": 0.75,
+      "nature": 0.75
+    },
+    "light": {
+      "crystal": 0.75
+    },
+    "sound": {
+      "crystal": 0.75
+    },
+    "earth": {
+      "crystal": 1.5
+    },
+    "nature": {
+      "crystal": 1.5
+    }
+  },
+  "materialMult": {
+    "crystal": {
+      "wood": 1,
+      "canvas": 1.25,
+      "iron": 0.75,
+      "stone": 1,
+      "crystal": 1.25,
+      "bone": 1,
+      "void": 0.75
+    }
+  },
+  "statuses": [
+    {
+      "id": "prisma",
+      "name": "Prisma",
+      "icon": "prisma",
+      "target": "celda",
+      "turns": 2,
+      "effect": "Cristal: el próximo golpe de OTRO elemento en esa celda se REFRACTA (una vez por disparo): se parte en 2 esquirlas (×0.75) que saltan a las celdas sanas más cercanas, y el Prisma que tocó la explosión se rompe. La Luz lo vuelve ESPECTRO (×1.25 y 3 esquirlas). Nv20: dura 1 turno más."
+    },
+    {
+      "id": "faceta",
+      "name": "Faceta",
+      "icon": "espejo",
+      "target": "barco",
+      "turns": 1,
+      "effect": "Cristal: cada tiro de un gato de Cristal que cae en el barco rival levanta una faceta de nácar en el suyo. El próximo proyectil enemigo que aterriza en ese barco se REDIRIGE: la faceta frena 40% y le regresa una esquirla (×0.15) al gato que disparó. Se apaga al empezar tu siguiente turno."
+    }
+  ],
+  "reactions": [
+    {
+      "id": "refraccion",
+      "name": "Refracción",
+      "trigger": {
+        "status": "prisma",
+        "by": "cualquier elemento menos crystal"
+      },
+      "effect": "El golpe se parte: la celda lo recibe y 2 esquirlas (×0.75) saltan a las celdas sanas más cercanas que la explosión no tocó. Una vez por disparo; la explosión rompe todo el Prisma que tocó.",
+      "mult": 1,
+      "axis": "redirigir",
+      "grimoire": "Le pegas a un cristal y el golpe sale por dos lados. Física de secundaria, daño de universidad."
+    },
+    {
+      "id": "espectro",
+      "name": "Espectro",
+      "trigger": {
+        "status": "prisma",
+        "by": "light"
+      },
+      "effect": "Luz sobre el Prisma: ×1.25 y 3 esquirlas de colores a las celdas sanas más cercanas.",
+      "mult": 1.25,
+      "axis": "redirigir",
+      "grimoire": "Entra luz blanca, sale un arcoíris de daño. Como la portada de ese disco que tu tío pone en las carnes asadas."
+    },
+    {
+      "id": "reflejo",
+      "name": "Reflejo",
+      "trigger": {
+        "status": "faceta",
+        "by": "cualquiera"
+      },
+      "effect": "El proyectil enemigo choca con la faceta: pega solo 60% y una esquirla (×0.15) le regresa al gato que lo disparó.",
+      "mult": 0.6,
+      "axis": "redirigir",
+      "grimoire": "Te dispararon. Les dijiste «no, gracias». Se lo devolviste. Educación ante todo."
+    }
+  ],
+  "catdexSets": [
+    {
+      "id": "set_crystal",
+      "name": "Joyero de Nácar",
+      "cats": [
+        "c_brillito",
+        "r_facetas",
+        "r_espejito",
+        "e_prismarina",
+        "l_madrenacar"
+      ],
+      "rule": "Tus Prismas duran +1 turno."
+    },
+    {
+      "id": "set_biblioteca",
+      "name": "Biblioteca a la Deriva",
+      "cats": [
+        "c_marcapaginas",
+        "r_tintero",
+        "e_archivista",
+        "l_bibliotecario"
+      ],
+      "rule": "Tus gatos de Magia dejan Maldito 1 turno más."
+    }
+  ],
+  "cats": [
+    {
+      "id": "c_brillito",
+      "name": "Brillito",
+      "epithet": "el Brillo de Bolsillo",
+      "art": {
+        "slug": "brillito_crystal_cat",
+        "tint": null,
+        "aura": [
+          "#f7f2ff",
+          "#8fd3ff",
+          "#b79cff"
+        ]
+      },
+      "elements": [
+        "crystal"
+      ],
+      "rarity": "common",
+      "primordial": false,
+      "secret": false,
+      "role": "soporte",
+      "worker": "banker",
+      "trait": "presumido",
+      "battleForm": {
+        "name": "BRILLITO — PEARL SPARKLE FORM",
+        "cry": "SPARKLE SPARKLE!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+        "powerBase": "balance:rarities.power_base.common",
+        "foodMult": "balance:rarities.food_mult.common",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.soporte.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Canica de Nácar",
+          "cry": null,
+          "archetype": "bola_rebote",
+          "element": "crystal",
+          "dmg": 45,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 1,
+          "pierce": 0,
+          "status": "prisma",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Canica de nácar que rebota una vez antes de explotar. Deja PRISMA 2 turnos: el próximo golpe de OTRO elemento en esas celdas se REFRACTA y se parte en 2 esquirlas. Si cae en el barco rival, levanta una FACETA en el tuyo."
+        },
+        "ultimate": {
+          "name": "SPARKLE SPARKLE! (キラキラ)",
+          "effect": "Tres canicas de nácar en abanico. Cada una deja Prisma donde cae.",
+          "dmg": 40,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Vanidad útil: los gatos de los camarotes vecinos al suyo apuntan con +10% de vista previa (para que lo vean brillar).",
+        "star3": "★3: su canica explota 15% más grande.",
+        "star5": "★5: Prisma dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Te lo regala Prismarina al ganar en Isla Nácar (H39). Después: Resonancia con al menos un padre de Cristal (Común).",
+        "balanceSource": "resonance"
+      },
+      "hint": "Si algo brilla en tu isla y no es el oro, es él. Si es el oro, también es él: se acostó encima.",
+      "lore": "Se vio en un charco una vez y no se ha recuperado. Les cobra a los demás gatos por peinarse en su reflejo. Está ahorrando para un espejo más grande.",
+      "balanceName": "Brillito"
+    },
+    {
+      "id": "r_facetas",
+      "name": "Facetas",
+      "epithet": "la Geoda Gruñona",
+      "art": {
+        "slug": "facetas_geode_cat",
+        "tint": null,
+        "aura": [
+          "#b79cff",
+          "#a07a52",
+          "#f7f2ff"
+        ]
+      },
+      "elements": [
+        "crystal",
+        "earth"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "tanque",
+      "worker": null,
+      "trait": "gloton",
+      "battleForm": {
+        "name": "FACETAS — GEODE FORTRESS FORM",
+        "cry": "GEODE FORTRESS!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.tanque.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Geodazo",
+          "cry": null,
+          "archetype": "roca",
+          "element": "crystal",
+          "dmg": 45,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "prisma",
+          "statusTurns": 2,
+          "gravityMul": 1.3,
+          "speedMul": 0.9,
+          "special": "Una geoda pesada que perfora 2 capas y se abre al caer. Deja PRISMA 2 turnos: el próximo golpe de OTRO elemento en esas celdas se REFRACTA y se parte en 2 esquirlas. Si cae en el barco rival, levanta una FACETA en el tuyo."
+        },
+        "ultimate": {
+          "name": "GEODE FORTRESS! (晶洞の砦)",
+          "effect": "Una geoda enorme que perfora 4 capas y deja Prisma en todo lo que parte.",
+          "dmg": 50,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Corteza de roca: −15% de daño de Tierra recibido. Dice que es genética. Es mal carácter.",
+        "star3": "★3: el Geodazo perfora 1 capa más.",
+        "star5": "★5: Prisma dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Cristal y uno de Tierra.",
+        "balanceSource": "resonance"
+      },
+      "hint": "Por fuera, una piedra fea. Por dentro… también, pero brilla.",
+      "lore": "Se comió una geoda entera porque pensó que era pan. Ahora es una geoda con patas. No se arrepiente de nada, excepto de no haberle puesto mantequilla.",
+      "balanceName": "Facetas"
+    },
+    {
+      "id": "r_espejito",
+      "name": "Espejito",
+      "epithet": "el que Te Devuelve la Mirada",
+      "art": {
+        "slug": "espejito_mirror_cat",
+        "tint": null,
+        "aura": [
+          "#f7f2ff",
+          "#ffd77a",
+          "#8fd3ff"
+        ]
+      },
+      "elements": [
+        "crystal",
+        "light"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "controlador",
+      "worker": null,
+      "trait": "chismoso",
+      "battleForm": {
+        "name": "ESPEJITO — MIRROR MIRROR FORM",
+        "cry": "MIRROR MIRROR!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.controlador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Reflejo Directo",
+          "cry": null,
+          "archetype": "haz",
+          "element": "crystal",
+          "dmg": 45,
+          "radius": 0.9,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 2,
+          "status": "prisma",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un reflejo casi recto que no le hace caso al viento y atraviesa 2 celdas en línea. Deja PRISMA 2 turnos: el próximo golpe de OTRO elemento en esas celdas se REFRACTA y se parte en 2 esquirlas. Si cae en el barco rival, levanta una FACETA en el tuyo."
+        },
+        "ultimate": {
+          "name": "MIRROR MIRROR! (鏡よ鏡)",
+          "effect": "Un reflejo más ancho que atraviesa 2 celdas en línea y deja Prisma.",
+          "dmg": 45,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Chismoso de oficio: ves la vida de los gatos enemigos cuyos camarotes cruza su reflejo.",
+        "star3": "★3: atraviesa 3 celdas.",
+        "star5": "★5: Prisma dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Cristal y uno de Luz.",
+        "balanceSource": "resonance"
+      },
+      "hint": "Ahí está, en el espejo. Detrás de ti. Ah, no, eres tú. Ah, no, sí es él.",
+      "lore": "Vive en un espejo de mano y sale cuando alguien se ve bonito. Sale muy poco. Le cuenta a todo el mundo lo que ve en los reflejos, sobre todo lo que no debería.",
+      "balanceName": "Espejito"
+    },
+    {
+      "id": "e_prismarina",
+      "name": "Prismarina",
+      "epithet": "la Capitana de Vidrio de Mar",
+      "art": {
+        "slug": "prismarina_seaglass_cat",
+        "tint": null,
+        "aura": [
+          "#6fe0c8",
+          "#8fd3ff",
+          "#f7f2ff"
+        ]
+      },
+      "elements": [
+        "crystal",
+        "water"
+      ],
+      "rarity": "epic",
+      "primordial": false,
+      "secret": false,
+      "role": "francotirador",
+      "worker": null,
+      "trait": "bravucon",
+      "battleForm": {
+        "name": "PRISMARINA — SEA GLASS CAPTAIN FORM",
+        "cry": "SEA GLASS HARPOON!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+        "powerBase": "balance:rarities.power_base.epic",
+        "foodMult": "balance:rarities.food_mult.epic",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.francotirador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Arpón de Vidrio de Mar",
+          "cry": null,
+          "archetype": "rayo",
+          "element": "crystal",
+          "dmg": 90,
+          "radius": 1.0,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 1,
+          "status": "prisma",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Arpón casi recto y rapidísimo que perfora 1 capa. Deja PRISMA 2 turnos: el próximo golpe de OTRO elemento en esas celdas se REFRACTA y se parte en 2 esquirlas. Si cae en el barco rival, levanta una FACETA en el tuyo."
+        },
+        "ultimate": {
+          "name": "SEA GLASS HARPOON! (海硝子の銛)",
+          "effect": "Un arpón de vidrio de mar que casi no cae: perfora 1 capa, deja Prisma y levanta una Faceta en tu barco.",
+          "dmg": 110,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Ojo de vidrio: +15% de daño a gatos enemigos Expuestos.",
+        "star3": "★3: el arpón perfora 2 capas.",
+        "star5": "★5: Prisma dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Cristal y uno de Agua, ambos padres Nv15+.",
+        "balanceSource": "resonance",
+        "minParentLevel": 15
+      },
+      "hint": "La capitana de Isla Nácar. El mar la limó durante cien años y quedó afiladísima.",
+      "lore": "Era una botella rota. El mar la pulió cien años hasta dejarla redondita y brillante. Ella dice que fue paciencia. El mar dice que fue terquedad.",
+      "balanceName": "Prismarina"
+    },
+    {
+      "id": "l_madrenacar",
+      "name": "Madre Nácar",
+      "epithet": "la que Recuerda Todo",
+      "art": {
+        "slug": "madrenacar_pearl_cat",
+        "tint": null,
+        "aura": [
+          "#f7f2ff",
+          "#b79cff",
+          "#6fe0c8"
+        ]
+      },
+      "elements": [
+        "crystal"
+      ],
+      "rarity": "legendary",
+      "primordial": true,
+      "secret": false,
+      "role": "invocador",
+      "worker": null,
+      "trait": "leal",
+      "battleForm": {
+        "name": "MADRE NÁCAR — MOTHER OF PEARL FORM",
+        "cry": "MIRROR OF MEMORIES!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+        "powerBase": "balance:rarities.power_base.legendary",
+        "foodMult": "balance:rarities.food_mult.legendary",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.invocador.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Perla Madre",
+          "cry": null,
+          "archetype": "bola_rebote",
+          "element": "crystal",
+          "dmg": 85,
+          "radius": 1.8,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 1,
+          "pierce": 0,
+          "status": "prisma",
+          "statusTurns": 3,
+          "gravityMul": 1.1,
+          "speedMul": 1,
+          "special": "Una perla enorme que rebota una vez. Deja PRISMA 3 turnos: el próximo golpe de OTRO elemento ahí se REFRACTA y se parte en 2 esquirlas. Si cae en el barco rival, levanta una FACETA en el tuyo."
+        },
+        "ultimate": {
+          "name": "MIRROR OF MEMORIES! (記憶の鏡)",
+          "effect": "Los cristales recuerdan: repite exactamente el último disparo de tu tripulación y luego suelta 3 perlas en abanico (×1.5 si nadie ha disparado todavía). Levanta una FACETA de nácar en tu barco. Tope 35%; jefes 15%.",
+          "dmg": 0,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Origen del Cristal: tus gatos Cristal +10%.",
+        "star3": "★3: su Perla Madre explota 20% más grande.",
+        "star5": "★5: la memoria repite con ×1.25."
+      },
+      "obtain": {
+        "source": "ruptura:H40",
+        "how": "Isla Nácar (H40): se queda contigo cuando le ganas. Duplicados: dos padres que compartan Cristal, Nv20+ (después de tenerla).",
+        "balanceSource": "ruptura:H40",
+        "minParentLevel": 20
+      },
+      "hint": "Se acuerda de todo lo que reflejó. De TODO. Incluido lo que hiciste el martes.",
+      "lore": "Es la madre de todos los cristales del mar. Guarda en sus perlas cada cosa que vio reflejada, y vio muchas. Algunas no te las va a contar. Otras sí, en la cena, enfrente de todos.",
+      "balanceName": "Madre Nacar"
+    },
+    {
+      "id": "s_refracta",
+      "name": "Refracta",
+      "epithet": "la que Parte la Luz",
+      "art": {
+        "slug": "refracta_prism_cat",
+        "tint": null,
+        "aura": [
+          "#b79cff",
+          "#8fd3ff",
+          "#ff8fb1"
+        ]
+      },
+      "elements": [
+        "crystal",
+        "cosmic"
+      ],
+      "rarity": "epic",
+      "primordial": false,
+      "secret": true,
+      "role": "asediador",
+      "worker": null,
+      "trait": "curioso",
+      "battleForm": {
+        "name": "REFRACTA — FULL SPECTRUM FORM",
+        "cry": "TOTAL REFRACTION!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+        "powerBase": "balance:rarities.power_base.epic",
+        "foodMult": "balance:rarities.food_mult.epic",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.asediador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Haz Partido",
+          "cry": null,
+          "archetype": "bola_rebote",
+          "element": "crystal",
+          "dmg": 50,
+          "radius": 1.1,
+          "projectiles": 2,
+          "spreadDeg": 8,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "prisma",
+          "statusTurns": 3,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "El tiro se parte en 2 esquirlas en abanico (refracción de fábrica). Deja PRISMA 3 turnos: el próximo golpe de OTRO elemento ahí se vuelve a partir. Si cae en el barco rival, levanta una FACETA en el tuyo."
+        },
+        "ultimate": {
+          "name": "TOTAL REFRACTION! (全反射)",
+          "effect": "Un prisma se abre sobre su barco y parte la luz en 5 rayos que atraviesan 6 filas cada uno (primero por sus camarotes: el gato de adentro recibe el destello). Deja Prisma y al rival DESLUMBRADO su próximo turno: sin críticos y sus cañones apuntan a ciegas. Una vez por batalla. Tope 35%; jefes 15%.",
+          "dmg": 110,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Espectro completo: tus golpes de Luz sobre el Prisma hacen +10%.",
+        "star3": "★3: su ultimate baja 6 rayos.",
+        "star5": "★5: Total Refraction se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "secret",
+        "how": "Resonancia: los padres tienen que juntar Cristal, Luz y Cósmico entre los dos (por ejemplo Espejito + un gato de Cósmico), ambos Nv20+ → sale en la fila ??? de la tabla."
+      },
+      "hint": "Un prisma, un rayo de luz y un pedazo de cielo. Junta a los tres en el Santuario y que ellos se entiendan.",
+      "lore": "Un rayo de luz le pegó en la frente y salió partido en siete colores. Le gustó tanto que ahora se lo hace a todo: a los barcos, a la sopa, a tus planes."
+    },
+    {
+      "id": "c_marcapaginas",
+      "name": "Marcapáginas",
+      "epithet": "el que Nunca Pierde el Hilo",
+      "art": {
+        "slug": "marcapaginas_bookmark_cat",
+        "tint": null,
+        "aura": [
+          "#8f6b93",
+          "#f0e6d0",
+          "#c8102e"
+        ]
+      },
+      "elements": [
+        "magic"
+      ],
+      "rarity": "common",
+      "primordial": false,
+      "secret": false,
+      "role": "artillero",
+      "worker": null,
+      "trait": "perezoso",
+      "battleForm": {
+        "name": "MARCAPÁGINAS — DOG-EAR FORM",
+        "cry": "PAGE TURNER!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+        "powerBase": "balance:rarities.power_base.common",
+        "foodMult": "balance:rarities.food_mult.common",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.artillero.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Separador Volador",
+          "cry": null,
+          "archetype": "runa",
+          "element": "magic",
+          "dmg": 50,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "maldito",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un separador que busca su página (sigue al blanco). Deja Maldito: el siguiente golpe ahí entra ×1.5."
+        },
+        "ultimate": {
+          "name": "PAGE TURNER! (頁送り)",
+          "effect": "Tres separadores que buscan su página y dejan Maldito.",
+          "dmg": 45,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Punto de lectura: si falla un tiro, su siguiente tiro hace +15% (ya sabe dónde se quedó).",
+        "star3": "★3: Maldito dura 2 turnos.",
+        "star5": "★5: su ultimate lanza 4 separadores."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Lo encuentras entre las páginas de la Biblioteca a la Deriva (H34). Después: Resonancia con al menos un padre de Magia (Común).",
+        "balanceSource": "resonance"
+      },
+      "hint": "Vive entre la página 212 y la 213 de un libro que nadie ha terminado.",
+      "lore": "Se metió en un libro para no perder el hilo y lleva ahí cuarenta años. Dice que ya casi lo termina. Va en la página 213. De 900.",
+      "balanceName": "Marcapaginas"
+    },
+    {
+      "id": "r_tintero",
+      "name": "Tintero",
+      "epithet": "el Manchón",
+      "art": {
+        "slug": "tintero_ink_cat",
+        "tint": null,
+        "aura": [
+          "#231626",
+          "#3569a3",
+          "#f0e6d0"
+        ]
+      },
+      "elements": [
+        "shadow",
+        "water"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "controlador",
+      "worker": null,
+      "trait": "travieso",
+      "battleForm": {
+        "name": "TINTERO — INK BLOT FORM",
+        "cry": "INK BLOT!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.controlador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Mancha de Tinta",
+          "cry": null,
+          "archetype": "sombra",
+          "element": "shadow",
+          "dmg": 55,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "mojado",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un chorro de tinta que no se ve volar. Al caer, PUÑALADA al gato enemigo más cercano (ignora sus escudos) y deja Mojado."
+        },
+        "ultimate": {
+          "name": "INK BLOT! (墨染め)",
+          "effect": "Tres manchas invisibles en abanico: la primera que cae apuñala por la espalda al gato más cercano. Mojado 2.",
+          "dmg": 50,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Firma ilegible: los gatos enemigos que le pegan quedan con la pata manchada (−10% de vista previa su próximo turno).",
+        "star3": "★3: Mojado dura 3 turnos.",
+        "star5": "★5: su puñalada hace +20%."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Sombra y uno de Agua.",
+        "balanceSource": "resonance"
+      },
+      "hint": "Donde pisa queda una huella negra. Donde se sienta, una mancha. Donde duerme, un poema horrible.",
+      "lore": "Se cayó en el tintero del Archivo y no salió igual. Ahora firma todo lo que toca: el piso, las paredes, tu cara mientras duermes.",
+      "balanceName": "Tintero"
+    },
+    {
+      "id": "e_archivista",
+      "name": "Archivista",
+      "epithet": "la que Todo lo Cataloga",
+      "art": {
+        "slug": "archivista_scholar_cat",
+        "tint": null,
+        "aura": [
+          "#8f6b93",
+          "#3569a3",
+          "#f7f2ff"
+        ]
+      },
+      "elements": [
+        "magic",
+        "water"
+      ],
+      "rarity": "epic",
+      "primordial": false,
+      "secret": false,
+      "role": "soporte",
+      "worker": "builder",
+      "trait": "dormilon",
+      "battleForm": {
+        "name": "ARCHIVISTA — CROSS REFERENCE FORM",
+        "cry": "CROSS REFERENCE!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+        "powerBase": "balance:rarities.power_base.epic",
+        "foodMult": "balance:rarities.food_mult.epic",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.soporte.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Ficha Empapada",
+          "cry": null,
+          "archetype": "runa",
+          "element": "magic",
+          "dmg": 66,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "maldito",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una ficha de catálogo que busca su blanco sola. Deja Maldito: el siguiente golpe ahí entra ×1.5 y se revela la vida exacta."
+        },
+        "ultimate": {
+          "name": "CROSS REFERENCE! (相互参照)",
+          "effect": "Tres fichas que se buscan solas y dejan Maldito en lo que tocan.",
+          "dmg": 55,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Fichero: tus gatos de Magia empiezan la batalla con +10 de medidor.",
+        "star3": "★3: Maldito dura 2 turnos.",
+        "star5": "★5: su ultimate lanza 4 fichas."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Magia y uno de Agua, ambos padres Nv15+.",
+        "balanceSource": "resonance",
+        "minParentLevel": 15
+      },
+      "hint": "Si no está catalogado, no existe. Tú, por ejemplo, todavía no existes.",
+      "lore": "Capitana de la Biblioteca a la Deriva. Catalogó todos los libros del Archivo, luego los peces, luego las olas. Ahora te está catalogando a ti. Vas en «Varios».",
+      "balanceName": "Archivista"
+    },
+    {
+      "id": "l_bibliotecario",
+      "name": "El Bibliotecario Ahogado",
+      "epithet": "el que Pide Silencio",
+      "art": {
+        "slug": "bibliotecario_drowned_cat",
+        "tint": null,
+        "aura": [
+          "#172b35",
+          "#3569a3",
+          "#8f6b93"
+        ]
+      },
+      "elements": [
+        "water",
+        "magic"
+      ],
+      "rarity": "legendary",
+      "primordial": true,
+      "secret": false,
+      "role": "demoledor",
+      "worker": null,
+      "trait": "rencoroso",
+      "battleForm": {
+        "name": "EL BIBLIOTECARIO — DROWNED ARCHIVE FORM",
+        "cry": "SHHH… THE END!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+        "powerBase": "balance:rarities.power_base.legendary",
+        "foodMult": "balance:rarities.food_mult.legendary",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.demoledor.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Tomo Hundido",
+          "cry": null,
+          "archetype": "roca",
+          "element": "water",
+          "dmg": 90,
+          "radius": 1.8,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "mojado",
+          "statusTurns": 2,
+          "gravityMul": 1.4,
+          "speedMul": 0.9,
+          "special": "Un libro empapado que pesa como un ancla: perfora 2 capas y abre brecha si cae bajo la línea de flotación."
+        },
+        "ultimate": {
+          "name": "SHHH… THE END! (静粛に)",
+          "effect": "Shhh. Escribe «FIN» en 3 módulos a la vez: revientan 2 turnos después si él sigue en pie.",
+          "dmg": 150,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Silencio en la sala: los gatos de Sonido enemigos hacen −15% contra su barco.",
+        "star3": "★3: su Tomo Hundido perfora 1 capa más.",
+        "star5": "★5: los módulos con FIN también quedan Mojados."
+      },
+      "obtain": {
+        "source": "ruptura:H35",
+        "how": "La Biblioteca a la Deriva (H35): se queda contigo cuando le ganas. Duplicados: dos padres que compartan Agua, con Magia entre los dos, Nv20+ (después de tenerlo).",
+        "balanceSource": "ruptura:H35",
+        "minParentLevel": 20
+      },
+      "hint": "Shhh.",
+      "lore": "Era el bibliotecario del Archivo. Cuando se hundió, no quiso dejar ni un libro atrás, así que se hundió con todos. Odia el ruido, el agua y a ti. En ese orden. Bueno: a ti primero.",
+      "balanceName": "Bibliotecario"
+    },
+    {
+      "id": "c_espumita",
+      "name": "Espumita",
+      "epithet": "la Burbujeante",
+      "art": {
+        "slug": "espumita_foam_cat",
+        "tint": null,
+        "aura": [
+          "#e8f8ff",
+          "#7fd8ff",
+          "#3569a3"
+        ]
+      },
+      "elements": [
+        "water"
+      ],
+      "rarity": "common",
+      "primordial": false,
+      "secret": false,
+      "role": "asediador",
+      "worker": "farmer",
+      "trait": "impaciente",
+      "battleForm": {
+        "name": "ESPUMITA — FOAM PARTY FORM",
+        "cry": "FOAM PARTY!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+        "powerBase": "balance:rarities.power_base.common",
+        "foodMult": "balance:rarities.food_mult.common",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.asediador.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Ola de Espuma",
+          "cry": null,
+          "archetype": "torpedo",
+          "element": "water",
+          "dmg": 45,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "mojado",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Torpedo de espuma: entra al agua y corre por debajo de la línea de flotación. Deja Mojado."
+        },
+        "ultimate": {
+          "name": "FOAM PARTY! (泡祭り)",
+          "effect": "Un torpedo de espuma más grande que entra por debajo de la línea de flotación. Mojado 2.",
+          "dmg": 40,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Fiesta de espuma: apaga Ardiendo en su camarote y en los vecinos al inicio de tu turno.",
+        "star3": "★3: Mojado dura 3 turnos.",
+        "star5": "★5: su torpedo abre brecha más fácil (+25% bajo el agua)."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Se sube a tu barco después de La Fe de Erratas (H41). Después: Resonancia con al menos un padre de Agua (Común).",
+        "balanceSource": "resonance"
+      },
+      "hint": "Nació de una ola que chocó contra algo demasiado perfecto.",
+      "lore": "Nació de la espuma de una ola que reventó contra un barco blanco perfecto. Desde entonces su pasatiempo es ensuciar cosas perfectas. Tu barco no corre peligro.",
+      "balanceName": "Espumita"
+    },
+    {
+      "id": "r_farolillo",
+      "name": "Farolillo",
+      "epithet": "el Pescador de Luces",
+      "art": {
+        "slug": "farolillo_angler_cat",
+        "tint": null,
+        "aura": [
+          "#ffd77a",
+          "#172b35",
+          "#7fd8ff"
+        ]
+      },
+      "elements": [
+        "light",
+        "water"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "francotirador",
+      "worker": null,
+      "trait": "miedoso",
+      "battleForm": {
+        "name": "FAROLILLO — ANGLER LURE FORM",
+        "cry": "ANGLER LURE!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.francotirador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Señuelo de Luz",
+          "cry": null,
+          "archetype": "haz",
+          "element": "light",
+          "dmg": 60,
+          "radius": 0.9,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 2,
+          "status": "cegado",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Rayo casi recto desde su farolito que no le hace caso al viento y atraviesa 2 celdas en línea. Deja Cegado al barco rival: su próxima vista previa se encoge al 30%."
+        },
+        "ultimate": {
+          "name": "ANGLER LURE! (提灯の誘い)",
+          "effect": "Un haz más ancho desde su farolito: atraviesa 2 celdas en línea y deja Cegado.",
+          "dmg": 60,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Señuelo: los gatos enemigos que lo tienen de blanco apuntan con −10% de vista previa.",
+        "star3": "★3: atraviesa 3 celdas.",
+        "star5": "★5: Cegado dura 2 turnos."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Luz y uno de Agua.",
+        "balanceSource": "resonance"
+      },
+      "hint": "Prende su farolito en lo más hondo del mar. No para pescar: le da miedo la oscuridad.",
+      "lore": "Vivía en el fondo del mar, donde nunca llega el sol. Se hizo su propia lucecita para no estar solo. Los peces se acercan a ver qué es. Él los saluda. Luego se los come, pero los saluda.",
+      "balanceName": "Farolillo"
+    }
+  ],
+  "resonanceRecipes": [
+    {
+      "id": "rec_crystal_crystal_low",
+      "parents": [
+        "crystal",
+        "crystal"
+      ],
+      "scenario": "padres Nv<15",
+      "assumptions": "Calculado con oddsFor (state/sys/resonance.ts): padres de rareza común salvo que se diga, sin pity, todos los elementos descubiertos y Madre Nácar / el Bibliotecario ya registrados (antes de tenerlos no entran a ningún pozo).",
+      "results": [
+        {
+          "cat": "c_brillito",
+          "name": "Brillito",
+          "rarity": "common",
+          "pct": 100
+        }
+      ],
+      "secretPct": 0,
+      "secretCandidates": 0
+    },
+    {
+      "id": "rec_crystal_crystal_high",
+      "parents": [
+        "crystal",
+        "crystal"
+      ],
+      "scenario": "padres Nv20+ (Madre Nácar + Brillito)",
+      "assumptions": "Calculado con oddsFor (state/sys/resonance.ts): padres de rareza común salvo que se diga, sin pity, todos los elementos descubiertos y Madre Nácar / el Bibliotecario ya registrados (antes de tenerlos no entran a ningún pozo).",
+      "results": [
+        {
+          "cat": "c_brillito",
+          "name": "Brillito",
+          "rarity": "common",
+          "pct": 91.67
+        },
+        {
+          "cat": "l_madrenacar",
+          "name": "Madre Nácar",
+          "rarity": "legendary",
+          "pct": 8.33
+        }
+      ],
+      "secretPct": 0,
+      "secretCandidates": 0
+    },
+    {
+      "id": "rec_crystal_earth",
+      "parents": [
+        "crystal",
+        "earth"
+      ],
+      "scenario": "padres Nv<15",
+      "assumptions": "Calculado con oddsFor (state/sys/resonance.ts): padres de rareza común salvo que se diga, sin pity, todos los elementos descubiertos y Madre Nácar / el Bibliotecario ya registrados (antes de tenerlos no entran a ningún pozo).",
+      "results": [
+        {
+          "cat": "r_facetas",
+          "name": "Facetas",
+          "rarity": "rare",
+          "pct": 35.09
+        },
+        {
+          "cat": "c_terron",
+          "name": "Terrón",
+          "rarity": "common",
+          "pct": 21.44
+        },
+        {
+          "cat": "c_guijarro",
+          "name": "Guijarro",
+          "rarity": "common",
+          "pct": 21.44
+        },
+        {
+          "cat": "c_brillito",
+          "name": "Brillito",
+          "rarity": "common",
+          "pct": 21.44
+        }
+      ],
+      "secretPct": 0.58,
+      "secretCandidates": 1
+    },
+    {
+      "id": "rec_crystal_light",
+      "parents": [
+        "crystal",
+        "light"
+      ],
+      "scenario": "padres Nv<15",
+      "assumptions": "Calculado con oddsFor (state/sys/resonance.ts): padres de rareza común salvo que se diga, sin pity, todos los elementos descubiertos y Madre Nácar / el Bibliotecario ya registrados (antes de tenerlos no entran a ningún pozo).",
+      "results": [
+        {
+          "cat": "c_destello",
+          "name": "Destello",
+          "rarity": "common",
+          "pct": 32.16
+        },
+        {
+          "cat": "c_brillito",
+          "name": "Brillito",
+          "rarity": "common",
+          "pct": 32.16
+        },
+        {
+          "cat": "r_vitral",
+          "name": "Vitral",
+          "rarity": "rare",
+          "pct": 17.54
+        },
+        {
+          "cat": "r_espejito",
+          "name": "Espejito",
+          "rarity": "rare",
+          "pct": 17.54
+        }
+      ],
+      "secretPct": 0.58,
+      "secretCandidates": 2
+    },
+    {
+      "id": "rec_crystal_water_high",
+      "parents": [
+        "crystal",
+        "water"
+      ],
+      "scenario": "padres Nv15+",
+      "assumptions": "Calculado con oddsFor (state/sys/resonance.ts): padres de rareza común salvo que se diga, sin pity, todos los elementos descubiertos y Madre Nácar / el Bibliotecario ya registrados (antes de tenerlos no entran a ningún pozo).",
+      "results": [
+        {
+          "cat": "c_gelatino",
+          "name": "Gelatino",
+          "rarity": "common",
+          "pct": 20.68
+        },
+        {
+          "cat": "c_burbujas",
+          "name": "Burbujas",
+          "rarity": "common",
+          "pct": 20.68
+        },
+        {
+          "cat": "c_brillito",
+          "name": "Brillito",
+          "rarity": "common",
+          "pct": 20.68
+        },
+        {
+          "cat": "c_espumita",
+          "name": "Espumita",
+          "rarity": "common",
+          "pct": 20.68
+        },
+        {
+          "cat": "e_prismarina",
+          "name": "Prismarina",
+          "rarity": "epic",
+          "pct": 16.54
+        }
+      ],
+      "secretPct": 0.75,
+      "secretCandidates": 1
+    },
+    {
+      "id": "rec_crystal_light_cosmic",
+      "parents": [
+        "crystal",
+        "cosmic"
+      ],
+      "scenario": "Espejito + un Cósmico, Nv20+ (receta secreta de Refracta)",
+      "assumptions": "Calculado con oddsFor (state/sys/resonance.ts): padres de rareza común salvo que se diga, sin pity, todos los elementos descubiertos y Madre Nácar / el Bibliotecario ya registrados (antes de tenerlos no entran a ningún pozo).",
+      "results": [
+        {
+          "cat": "r_vitral",
+          "name": "Vitral",
+          "rarity": "rare",
+          "pct": 15.23
+        },
+        {
+          "cat": "r_espejito",
+          "name": "Espejito",
+          "rarity": "rare",
+          "pct": 15.23
+        },
+        {
+          "cat": "c_cometin",
+          "name": "Cometín",
+          "rarity": "common",
+          "pct": 13.96
+        },
+        {
+          "cat": "c_lunita",
+          "name": "Lunita",
+          "rarity": "common",
+          "pct": 13.96
+        },
+        {
+          "cat": "c_destello",
+          "name": "Destello",
+          "rarity": "common",
+          "pct": 13.96
+        },
+        {
+          "cat": "c_brillito",
+          "name": "Brillito",
+          "rarity": "common",
+          "pct": 13.96
+        },
+        {
+          "cat": "e_faro",
+          "name": "Faro",
+          "rarity": "epic",
+          "pct": 13.2
+        }
+      ],
+      "secretPct": 0.51,
+      "secretCandidates": 3
+    },
+    {
+      "id": "rec_magic_water_high",
+      "parents": [
+        "magic",
+        "water"
+      ],
+      "scenario": "padres Nv15+",
+      "assumptions": "Calculado con oddsFor (state/sys/resonance.ts): padres de rareza común salvo que se diga, sin pity, todos los elementos descubiertos y Madre Nácar / el Bibliotecario ya registrados (antes de tenerlos no entran a ningún pozo).",
+      "results": [
+        {
+          "cat": "r_mareaenc",
+          "name": "Marea Encantada",
+          "rarity": "rare",
+          "pct": 31.09
+        },
+        {
+          "cat": "e_archivista",
+          "name": "Archivista",
+          "rarity": "epic",
+          "pct": 11.4
+        },
+        {
+          "cat": "c_gelatino",
+          "name": "Gelatino",
+          "rarity": "common",
+          "pct": 9.5
+        },
+        {
+          "cat": "c_burbujas",
+          "name": "Burbujas",
+          "rarity": "common",
+          "pct": 9.5
+        },
+        {
+          "cat": "c_linterna",
+          "name": "Linterna Espíritu",
+          "rarity": "common",
+          "pct": 9.5
+        },
+        {
+          "cat": "c_caramelo",
+          "name": "Caramelo Alquimista",
+          "rarity": "common",
+          "pct": 9.5
+        },
+        {
+          "cat": "c_marcapaginas",
+          "name": "Marcapáginas",
+          "rarity": "common",
+          "pct": 9.5
+        },
+        {
+          "cat": "c_espumita",
+          "name": "Espumita",
+          "rarity": "common",
+          "pct": 9.5
+        }
+      ],
+      "secretPct": 0.52,
+      "secretCandidates": 2
+    }
+  ],
+  "secretRecipes": [
+    {
+      "cat": "s_refracta",
+      "condition": "Unión de padres cubre Cristal, Luz y Cósmico; ambos Nv20+.",
+      "bucket": "secret",
+      "altRoute": ""
+    }
+  ]
+}

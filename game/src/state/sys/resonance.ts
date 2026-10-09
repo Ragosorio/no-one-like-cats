@@ -27,6 +27,14 @@ export interface OddsTable {
 }
 
 const subset = (els: string[], U: Set<string>) => els.every((e) => U.has(e));
+/**
+ * Parte II: a primordial the story hands you (`obtain.source` 'ruptura:<mission>', e.g. the Bibliotecario at H34)
+ * only resonates as a DUPLICATE: until you got the original it stays out of every pool (the table, the '???'
+ * bucket and the casino), so nobody breeds it before its chapter.
+ */
+export function storyLocked(c: CatDef) {
+  return c.obtain.source.startsWith('ruptura:') && G.s.catdex[c.id] !== 'registered';
+}
 
 export function oddsFor(aUid: string, bUid: string): OddsTable {
   const a = getCat(aUid)!;
@@ -40,7 +48,7 @@ export function oddsFor(aUid: string, bUid: string): OddsTable {
   const pool: Record<Bucket, string[]> = { common: [], rare: [], epic: [], legendary: [], secret: [] };
   const missing: string[] = [];
   for (const c of CATS) {
-    if (c.secret || c.rarity === 'mythic' || c.rarity === 'heroic' || c.rarity === 'divine') continue;
+    if (c.secret || c.rarity === 'mythic' || c.rarity === 'heroic' || c.rarity === 'divine' || storyLocked(c)) continue;
     if (!subset(c.elements, U)) {
       continue;
     }
@@ -61,7 +69,7 @@ export function oddsFor(aUid: string, bUid: string): OddsTable {
       if (secretConditionMet(c, a.species, b.species, a.level, b.level, a.stars, b.stars, U)) pool.secret.push(c.id);
       continue;
     }
-    if ((c.rarity === 'epic' || (c.rarity === 'legendary' && c.primordial)) && subset(c.elements, disc) && subset(c.elements, U)) {
+    if ((c.rarity === 'epic' || (c.rarity === 'legendary' && c.primordial)) && !storyLocked(c) && subset(c.elements, disc) && subset(c.elements, U)) {
       if (!pool.epic.includes(c.id) && !pool.legendary.includes(c.id)) pool.secret.push(c.id);
     }
   }
@@ -106,6 +114,9 @@ function secretShape(id: string, sa: string, sb: string, U: Set<string>): boolea
       return U.has('fire') && U.has('water') && U.has('nature');
     case 's_eclipse':
       return (sa === 'r_solar' && db.elements.includes('cosmic')) || (sb === 'r_solar' && da.elements.includes('cosmic'));
+    // Parte II · Oleada 1: a prism (Cristal), a light and a piece of sky
+    case 's_refracta':
+      return U.has('crystal') && U.has('light') && U.has('cosmic');
     default:
       return false;
   }
@@ -117,6 +128,7 @@ const SECRET_NEED: Record<string, string> = {
   s_sonata: 'los dos a Nv30+',
   s_lumen: 'los dos con ★3+',
   s_eclipse: 'uno de los dos a Nv20+',
+  s_refracta: 'los dos a Nv20+',
 };
 export interface SecretClue {
   species: string;
@@ -194,6 +206,8 @@ function secretConditionMet(c: CatDef, sa: string, sb: string, la: number, lb: n
       return (sa === 'r_solar' && db.elements.includes('cosmic')) || (sb === 'r_solar' && da.elements.includes('cosmic'))
         ? la >= 20 || lb >= 20
         : false;
+    case 's_refracta':
+      return U.has('crystal') && U.has('light') && U.has('cosmic') && la >= 20 && lb >= 20;
     default:
       return false;
   }

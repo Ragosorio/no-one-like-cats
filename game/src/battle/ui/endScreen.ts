@@ -168,7 +168,9 @@ export function playBattleEnd(layer: Container, o: EndOpts): Promise<void> {
     m.position.set(220, H - 230);
     bottom.addChild(m);
     tl.from(m, { y: H + 260, duration: 0.45, ease: 'back.out(1.6)' }, landed + 0.05);
-    tl.from(st.scale, { x: 2.4, y: 2.4, alpha: 0, duration: 0.25, ease: 'back.out(3)' }, landed + 0.4);
+    // scale and alpha live on different objects (alpha on the ObservablePoint warned after every battle)
+    tl.from(st.scale, { x: 2.4, y: 2.4, duration: 0.25, ease: 'back.out(3)' }, landed + 0.4);
+    tl.from(st, { alpha: 0, duration: 0.25 }, landed + 0.4);
     if (!calm && won) tl.to(m, { y: H - 250, yoyo: true, repeat: 3, duration: 0.18, ease: 'sine.inOut' }, landed + 0.5);
   }
 

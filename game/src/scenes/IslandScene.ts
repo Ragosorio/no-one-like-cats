@@ -57,10 +57,13 @@ import { preloadCats, elementFx, catTexture } from '../art/catArt';
 import { STORY_BATTLES } from '../state/sys/storyBattles';
 import { startStoryBattle } from '../app/storyFlow';
 import { slugOf } from '../art/tint';
+import { catSlug } from '../state/sys/forms';
+import { partIIOpen, regionForGoal, tapFaro } from '../state/sys/rupturas';
+import { FARO_CALL, FARO_LUZTERNA, FARO_PART_I } from '../ui/story/rupturasScript';
 import { glowTexture } from '../art/textures';
 import { floatText, onomatopoeia, sparkles, flash, Shaker } from '../fx/juice';
 import { Particles } from '../fx/particles';
-import { goMap } from '../app/flow';
+import { goMap, goRegion } from '../app/flow';
 import { openSanctuary } from '../panels/Sanctuary';
 import { openShipyard } from '../panels/Shipyard';
 import { openAltar } from '../panels/Altar';
@@ -106,6 +109,14 @@ function devTap(lx: number, ly: number, holdMs = 40) {
   });
 }
 
+/** what the faro says when tapped: the sea before «Fin»; Luzterna (who lives there now) after it */
+let faroLine = 0;
+function faroText() {
+  if (!partIIOpen()) return FARO_PART_I;
+  if (G.s.missions.active.includes('H31')) return FARO_CALL;
+  return FARO_LUZTERNA[faroLine++ % FARO_LUZTERNA.length];
+}
+
 export class IslandScene extends Scene {
   private sea = new SeaView();
   private worldRoot = new Container();
@@ -139,6 +150,8 @@ export class IslandScene extends Scene {
   private altar!: { c: Container; orbs: Graphics[]; anchor: { x: number; y: number } };
   private mesa!: Container;
   private beam!: Sprite;
+  /** the faro's lamp (world coords): Parte II H31 points at it */
+  private faroAt: { x: number; y: number } | null = null;
   private homeBox!: Container;
   private nameTag: TagBubble | null = null;
   private loadingSlugs = new Set<string>();
@@ -193,7 +206,7 @@ export class IslandScene extends Scene {
     this.buildPlots();
     this.redrawTerrain(true);
     // cats (textures first)
-    const slugs = [...new Set([...G.s.cats.map((c) => slugOf(c.species)), 'canelo_cozy_cat', 'margarita_daisy_cat'])];
+    const slugs = [...new Set([...G.s.cats.map((c) => catSlug(c)), 'canelo_cozy_cat', 'margarita_daisy_cat'])];
     preloadCats(slugs).then(() => {
       if (this.destroyed) return;
       this.ready = true;
@@ -222,6 +235,10 @@ export class IslandScene extends Scene {
         if (r.key === 'gold') this.plots.forEach((p) => p.refreshPrice());
       }),
       G.on('catLevel', () => this.syncCats()),
+      // a cat switched FORM in its sheet: its island painting follows (state/sys/forms.ts)
+      G.on('cat', (e) => {
+        if (e.why === 'form') this.syncCats();
+      }),
       islandBus.on('autoHarvest', (p) => this.autoHarvestFx(p.farm, p.food)),
     );
     (globalThis as unknown as { __island: IslandScene }).__island = this;
@@ -428,9 +445,13 @@ export class IslandScene extends Scene {
     this.beam.position.set(lpos.x + lh.lamp.x, lpos.y + lh.lamp.y);
     this.beam.blendMode = 'add';
     this.wfx.addChild(this.beam);
+    this.faroAt = { x: lpos.x + lh.lamp.x, y: lpos.y + lh.lamp.y };
     this.clickable(lh.c, () => {
       sfx('pop', 0.8);
-      floatText(this.wfx, lpos.x, lpos.y - 200, 'El faro mira al Primer Mar…', { size: 26, color: C.paper, font: F.ui, rise: 50, dur: 1.6 });
+      // after «Fin» Luzterna lives up there (she hung her lantern in YOUR faro); H31 waits for this tap
+      tapFaro();
+      floatText(this.wfx, lpos.x, lpos.y - 200, faroText(), { size: 26, color: C.paper, font: F.ui, rise: 50, dur: 1.8 });
+      if (G.s.missions.active.includes('H31')) checkMissions();
     });
     // ---- Banco del Reino (KL15): fenced lot before, neoclassical bank after
     {
@@ -569,6 +590,8 @@ export class IslandScene extends Scene {
     return { x0: s.gx + s.w - 1.5, y0: s.gy + s.h - 1.25, w: 0.7, h: 0.5 };
   }
 
+  /** where a cat stood when it switched form (its new actor appears right there) */
+  private formSpots = new Map<string, { gx: number; gy: number }>();
   private syncCats() {
     if (!this.ready) return;
     const seen = new Set<string>();
@@ -579,9 +602,17 @@ export class IslandScene extends Scene {
       const h = c.habitat ? G.s.habitats.find((x) => x.id === c.habitat) : null;
       const area = (h && this.habitatArea(h)) || ha;
       let a = this.cats.get(c.uid);
+      // switched FORM: rebuild its actor with the new painting (same spot, same home)
+      if (a && a.slug !== catSlug(c)) {
+        const at = { gx: a.gx, gy: a.gy };
+        a.destroy();
+        this.cats.delete(c.uid);
+        this.formSpots.set(c.uid, at);
+        a = undefined;
+      }
       if (!a) {
         // new cat (e.g. from the Sanctuary): load its painting first, never show a white box
-        const slug = slugOf(c.species);
+        const slug = catSlug(c);
         if (catTexture(slug) === Texture.WHITE) {
           if (!this.loadingSlugs.has(slug)) {
             this.loadingSlugs.add(slug);
@@ -593,6 +624,12 @@ export class IslandScene extends Scene {
           continue;
         }
         a = new CatActor(c.uid, c.species, area, this.wfx);
+        const spot = this.formSpots.get(c.uid);
+        if (spot) {
+          this.formSpots.delete(c.uid);
+          a.teleport(spot.gx, spot.gy);
+          a.happy();
+        }
         this.objects.addChild(a);
         this.cats.set(c.uid, a);
         a.on('pointertap', () => {
@@ -1033,7 +1070,10 @@ export class IslandScene extends Scene {
       return;
     }
     const sp = SPECIALS[battleId];
-    await preloadCats([...sp.enemyCats.map((x) => slugOf(x)), ...crew().map((u) => slugOf(G.s.cats.find((c) => c.uid === u)?.species ?? 'c_canelo'))]);
+    await preloadCats([...sp.enemyCats.map((x) => slugOf(x)), ...crew().map((u) => {
+      const c = G.s.cats.find((x) => x.uid === u);
+      return c ? catSlug(c) : slugOf('c_canelo');
+    })]);
     if (this.destroyed) return;
     const m = new Modal('Duelo de Gatos', 1240, 660, { band: 0x1f4a2a, subtitle: secretInfo(n).name });
     // the guardian vs your first two crew cats
@@ -1147,6 +1187,12 @@ export class IslandScene extends Scene {
   /** "IR" on a pinned mission */
   private goToGoal(m: MissionDef) {
     const g = m.goal as Record<string, unknown> & { type: string };
+    // Parte II: what happens on a 3D island (landing, Canelo's page, Nácar's beam puzzle) takes you there
+    const reg = regionForGoal(g);
+    if (reg) {
+      void goRegion(reg);
+      return;
+    }
     switch (g.type) {
       case 'tap_cat': {
         const c = G.s.cats.find((x) => x.species === 'c_canelo') ?? G.s.cats[0];
@@ -1294,9 +1340,20 @@ export class IslandScene extends Scene {
         } else if (g.feature === 'crop_repeat' || g.feature === 'auto_harvest') openDock();
         else if (g.feature === 'resonance_queue') openSanctuary();
         else if (g.feature === 'podio_win') void import('../panels/podio/open').then((p) => p.openPodio());
+        // Parte II: H31 «tap the faro» · H32 «open REGISTRO 000 in the Catdex»
+        else if (g.feature === 'faro' && this.faroAt) {
+          this.cam.lookAt(this.faroAt.x, this.faroAt.y + 160, true, 0.95);
+          this.pointAt(this.faroAt.x, this.faroAt.y - 40);
+        } else if (g.feature === 'registro000') void openCatdex();
         else openMissions();
         return;
       }
+      // Parte II H37: any win counts (campaign, encargos, story, duels, Podio) while that cat sails with you ·
+      // H38: a battle that Canelo finishes himself
+      case 'wins_with_species':
+      case 'final_blow':
+        goMap();
+        return;
       case 'secret_rumors':
         // clues come from seating a pair shaped like a secret recipe (and from island secrets)
         toast('Pistas de gatos secretos', { sub: 'Lee la PISTA de cada "???" en el Catdex y sienta una pareja parecida en la Resonancia: el secreto se asoma aunque falte nivel.', color: C.lilac, dur: 7 });

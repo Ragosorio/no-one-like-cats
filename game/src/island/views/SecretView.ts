@@ -15,7 +15,8 @@ import { C, F } from '../../ui/theme';
 import { sfx } from '../../core/audio';
 import { floatText, onomatopoeia, sparkles } from '../../fx/juice';
 import { IslandCat, catTexture } from '../../art/catArt';
-import { slugOf, applyCatTint } from '../../art/tint';
+import { applyCatTint } from '../../art/tint';
+import { catSlug } from '../../state/sys/forms';
 
 export interface SecretCallbacks {
   /** T3 discovery (the scene shows the card + rewards) */
@@ -232,7 +233,7 @@ export class SecretView {
       return;
     }
     this.busy = true;
-    const slug = slugOf(cat.species);
+    const slug = catSlug(cat);
     const ok = catTexture(slug) !== Texture.WHITE;
     const actor = new IslandCat(ok ? slug : 'canelo_cozy_cat', 96);
     if (ok) applyCatTint(actor.sprite, cat.species);

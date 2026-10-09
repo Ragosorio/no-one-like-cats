@@ -9,6 +9,8 @@
  */
 import { gtxt } from '../../ui/gender';
 import { settings } from '../../core/settings';
+import { folioRevealed } from '../../state/sys/rupturas';
+import { REGISTRO_CHAT, REGISTRO_CHAT_CHANCE, REGISTRO_CHAT_COLOR, REGISTRO_CHAT_USER } from '../../ui/story/rupturasScript';
 
 export type Ev =
   | 'enter'
@@ -267,6 +269,14 @@ export function hostLine(ev: Ev): string {
   const l = pickFresh(H[ev]);
   return gtxt(settings.sinFiltro && l.sf ? l.sf : l.t);
 }
+/** Parte II (from H32): `registro_000` writes ONE odd line per session, rarely, and never answers */
+let registroSpoke = false;
+function registroLine() {
+  if (registroSpoke || !folioRevealed() || Math.random() >= REGISTRO_CHAT_CHANCE) return null;
+  registroSpoke = true;
+  return { user: REGISTRO_CHAT_USER, color: REGISTRO_CHAT_COLOR, msg: REGISTRO_CHAT[Math.floor(Math.random() * REGISTRO_CHAT.length)] };
+}
+
 export function chatLines(ev: Ev, n = 2): { user: string; color: number; msg: string }[] {
   const list = CHAT[ev];
   if (!list?.length) return [];
@@ -275,5 +285,7 @@ export function chatLines(ev: Ev, n = 2): { user: string; color: number; msg: st
     const [user, color] = CHAT_USERS[Math.floor(Math.random() * CHAT_USERS.length)];
     out.push({ user, color, msg: gtxt(pickFresh(list)) });
   }
+  const odd = registroLine();
+  if (odd) out[out.length - 1] = odd;
   return out;
 }

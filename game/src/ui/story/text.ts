@@ -117,6 +117,14 @@ const SPEAKERS: Record<string, Speaker> = {
   CRONOS: { id: 'cronos', name: 'CRONOS', kind: 'cat', slug: 'cronos_astrolabe_cat', band: 0x6b4f2a, bandText: 0xe0b77a, box: 0xd9c29a, pitch: 0.7, treat: 'rival' },
   ÁUREA: { id: 'aurea', name: 'ÁUREA', kind: 'cat', slug: 'aurea_halo_cat', band: 0xb89558, bandText: 0xfff8e1, box: 0xfff8e1, pitch: 1.2, treat: 'rival' },
   'TUS GATOS': { id: 'cats', name: 'TUS GATOS', kind: 'cat', slug: 'canelo_cozy_cat', band: C.pink, bandText: C.ink, box: C.paper, pitch: 1.1, treat: 'ally' },
+  // Parte II · Oleada 1 «La Marea Imposible» (state/sys/rupturas.ts). The Corrector and the Catdex have no face.
+  ARCHIVISTA: { id: 'archivista', name: 'LA ARCHIVISTA', kind: 'cat', slug: 'archivista_scholar_cat', band: 0x2b3a55, bandText: 0xf2e6c9, box: 0xf2ead8, pitch: 1.05, treat: 'enemy' },
+  BIBLIOTECARIO: { id: 'bibliotecario', name: 'EL BIBLIOTECARIO AHOGADO', kind: 'cat', slug: 'bibliotecario_drowned_cat', band: 0x0e3a4a, bandText: 0x9fe0d4, box: 0xdcecea, pitch: 0.5, treat: 'boss' },
+  PRISMARINA: { id: 'prismarina', name: 'PRISMARINA', kind: 'cat', slug: 'prismarina_seaglass_cat', band: 0x5ec7c2, bandText: C.ink, box: 0xe8fbf9, pitch: 1.25, treat: 'rival' },
+  'MADRE NÁCAR': { id: 'madrenacar', name: 'MADRE NÁCAR', kind: 'cat', slug: 'madrenacar_pearl_cat', band: 0xd9c8ff, bandText: C.ink, box: 0xf7f0ff, pitch: 0.75, treat: 'boss' },
+  // perfect white tag; the box stays dark because system lines are printed in paper ink
+  CORRECTOR: { id: 'corrector', name: 'EL CORRECTOR', kind: 'system', band: 0xffffff, bandText: C.ink, box: 0x3a4048, pitch: 1 },
+  CATDEX: { id: 'catdex', name: 'CATDEX', kind: 'system', band: C.paper, bandText: C.ink, box: C.ink, pitch: 1.5 },
 };
 
 export function speaker(id: string): Speaker {

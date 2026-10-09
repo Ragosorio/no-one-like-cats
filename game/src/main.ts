@@ -31,6 +31,7 @@ import { bootGame, newGame } from './state';
 import { goBattle, goIsland, goMap, goTitle } from './app/flow';
 import { mountMicroOverlay } from './ui/micro/MicroOverlay';
 import { initStory } from './app/story';
+import { initForms } from './app/formsFlow';
 import { applyAudioSettings } from './panels/Settings';
 import { preloadElementIcons } from './ui/elementIcon';
 import './state/sys/micro';
@@ -51,7 +52,7 @@ async function loadFonts() {
  * ?scene=dev is the LABORATORIO hub that lists every lab; ?dev=1 adds a LAB button to the title.
  */
 async function route(scene: string | null, fresh: boolean) {
-  const needsState = ['island', 'map'].includes(scene ?? '');
+  const needsState = ['island', 'map', 'region'].includes(scene ?? '');
   if (needsState) {
     // &new=1 wipes the live save: dev server only (on the public site it would cost a player their island)
     if (fresh && import.meta.env.DEV) newGame();
@@ -96,6 +97,12 @@ async function route(scene: string | null, fresh: boolean) {
       const { FxLab } = await import('./scenes/FxLab');
       return scenes.go(new FxLab(), 'none');
     }
+    case 'region': {
+      // dev only: ?scene=region&region=paginas|nacar|reflejo (Parte II 3D regions)
+      if (!import.meta.env.DEV) return goTitle();
+      const { goRegion } = await import('./app/flow');
+      return goRegion(new URLSearchParams(location.search).get('region') ?? 'paginas');
+    }
     default:
       return goTitle();
   }
@@ -113,6 +120,7 @@ async function boot() {
   mountMicroOverlay();
   applyAudioSettings();
   initStory();
+  initForms(); // Parte II forms: the reveal when one unlocks (app/formsFlow.ts)
   window.addEventListener('pointerdown', () => audio.unlock());
   // the economy clock runs whenever a save is loaded (island, map, battles…)
   // dev: ?speed=4 runs the economy clock 4× faster (pacing tests); battles stay real-time
@@ -132,6 +140,8 @@ async function boot() {
     const gsap = (await import('gsap')).default;
     (window as unknown as { __gsap: typeof gsap; __scenes: typeof scenes }).__gsap = gsap;
     (window as unknown as { __scenes: typeof scenes }).__scenes = scenes;
+    // __overflow(): lists texts/controls leaking out of the open panel + overlapping texts
+    void import('./dev/overflowAudit').then((m) => m.installOverflowAudit());
     // ?realtime=1: animations follow wall-clock even when the tab is throttled (testing)
     if (q.get('realtime') === '1') gsap.ticker.lagSmoothing(0);
     // ?save=post-boss1: load a fixture from game/test-saves/ into the save slot, then continue without the param

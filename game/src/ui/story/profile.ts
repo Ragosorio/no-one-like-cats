@@ -18,9 +18,10 @@ import { say, Line } from '../dialog';
 import { gtxt } from '../gender';
 import { clean } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
-import { promptName } from './nameCat';
+import { folio000Line, promptName } from './nameCat';
 import { destroyDeep } from './tweens';
 import { screenRect } from '../screen';
+import { folioRevealed } from '../../state/sys/rupturas';
 
 type Gender = 'm' | 'f' | 'x';
 
@@ -32,7 +33,7 @@ export interface ChoiceOpt<T> {
 }
 
 /** Swiss poster with a big two-line question and 2–3 chunky answers. */
-export async function choicePrompt<T>(layer: Container, o: { title1: string; title2: string; sub: string; tag: string; options: ChoiceOpt<T>[] }): Promise<T> {
+export async function choicePrompt<T>(layer: Container, o: { title1: string; title2: string; sub: string; tag: string; options: ChoiceOpt<T>[]; folio000?: boolean }): Promise<T> {
   await preloadStoryArt();
   return new Promise((resolve) => {
     const root = new Container();
@@ -66,8 +67,14 @@ export async function choicePrompt<T>(layer: Container, o: { title1: string; tit
     t1.position.set(110, 30);
     t2.position.set(110, 132);
     const sub = txt(clean(o.sub), { fontFamily: F.ui, fontWeight: '700', fontSize: 24, fill: C.ink, wordWrap: true, wordWrapWidth: 720, lineHeight: 32 });
-    sub.position.set(116, 270);
+    sub.position.set(116, Math.max(270, t2.y + t2.height + 14));
     panel.addChild(t1, t2, sub);
+    // Parte II (from H32): the crew register has a line above yours that nobody filled
+    if (o.folio000) {
+      const f = folio000Line();
+      f.position.set(116, Math.max(sub.y + sub.height + 18, 400));
+      panel.addChild(f);
+    }
     const lz = new LuzternaPortrait(380, 0.92);
     lz.position.set(PW - 170, PH - 20);
     lz.scale.x = -1;
@@ -126,6 +133,7 @@ export async function askPlayerProfile(layer: Container, o: { intro?: Line[]; fr
       title2: 'LLAMAS?',
       sub: 'Para el acta del Diario del Mar. Y para gritarlo bien fuerte cuando hagas algo épico. O muy tonto.',
       tag: 'REGISTRO DE TRIPULACIÓN · FOLIO 001',
+      folio000: folioRevealed(),
       suggestions: NAMES,
       ok: 'ASÍ ME LLAMO',
       keep: prev?.name ? `SEGUIR COMO "${prev.name.toUpperCase().slice(0, 10)}"` : 'CAPI ESTÁ BIEN',
@@ -140,6 +148,7 @@ export async function askPlayerProfile(layer: Container, o: { intro?: Line[]; fr
     title2: 'O CHICA?',
     sub: 'Es para hablarte bonito. Bueno, para hablarte. Lo de bonito ya veremos.',
     tag: 'REGISTRO DE TRIPULACIÓN · CASILLA 2',
+    folio000: folioRevealed(),
     options: [
       { label: 'CHICO', value: 'm', color: C.megaBlue, text: C.paper },
       { label: 'CHICA', value: 'f', color: C.pinkHot, text: C.ink },

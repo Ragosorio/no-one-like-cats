@@ -833,6 +833,8 @@ export function eligibleCats(): CatDef[] {
     const src = c.obtain?.source ?? '';
     if (src.startsWith('heroic') || src.startsWith('podio') || c.rarity === 'heroic' || c.rarity === 'divine') return false;
     if (src.startsWith('boss:') && bosses < Number(src.split(':')[1])) return false;
+    // Parte II: the story's primordials (Bibliotecario, Madre Nácar) only after you got the original (resonance.ts storyLocked)
+    if (src.startsWith('ruptura:') && G.s.catdex[c.id] !== 'registered') return false;
     return c.elements.every((e) => G.s.elements.includes(e));
   });
 }

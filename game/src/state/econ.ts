@@ -13,21 +13,64 @@ export type XpAction = Exclude<keyof typeof B.kingdom.xp_rewards_pct_of_bar, 'ha
 export const BAL = B;
 
 // ---------------------------------------------------------------- cats
+/**
+ * Levels 51–100 (balance cats.beyond_50, docs/part-ii/16-niveles-100.md). Up to Nv50 every curve below is the
+ * original one — same expression, same floats — so a save that never passes Nv50 keeps its exact numbers.
+ * Past Nv50 the per-level growth is softer (gold ×1.04, power ×1.03; feed jumps once, then ×1.13 per level).
+ */
+const X = B.cats.beyond_50;
+/** a per-level multiplier: `lo`^(level−1) up to Nv50, then ×`hi` per level above it */
+function levelCurve(lo: number, hi: number, level: number) {
+  if (level <= X.from) return Math.pow(lo, level - 1);
+  return Math.pow(lo, X.from - 1) * Math.pow(hi, level - X.from);
+}
 export function catGoldPerSec(r: RarityId, level: number, stars: number) {
-  return B.rarities.gold_base_per_s[r] * Math.pow(B.cats.gold_per_level, level - 1) * starMult(stars);
+  return B.rarities.gold_base_per_s[r] * levelCurve(B.cats.gold_per_level, X.gold_per_level, level) * starMult(stars);
 }
 export function catPower(r: RarityId, level: number, stars: number) {
-  return B.rarities.power_base[r] * Math.pow(B.cats.power_per_level, level - 1) * starMult(stars);
+  return B.rarities.power_base[r] * levelCurve(B.cats.power_per_level, X.power_per_level, level) * starMult(stars);
+}
+/**
+ * The inverse of catPower: the (fractional) level at which a cat of that rarity and stars reaches `power`.
+ * Below the Nv50 power it is the original 1.07 curve; above it, the softer one. Not clamped (callers round
+ * and clamp: the Podio ladder shows rivals between Nv1 and Nv100).
+ */
+export function catLevelForPower(r: RarityId, stars: number, power: number) {
+  const at50 = catPower(r, X.from, stars);
+  if (power <= at50) return 1 + Math.log(power / catPower(r, 1, stars)) / Math.log(B.cats.power_per_level);
+  return X.from + Math.log(power / at50) / Math.log(X.power_per_level);
 }
 export function starMult(stars: number) {
   return B.cats.stars.mult[Math.max(0, Math.min(5, stars - 1))];
 }
-/** food to go from level → level+1 */
+/** food to go from level → level+1 (below Nv50: the original curve; from 50→51 on: a feast, then ×1.13 per level) */
 export function feedCost(level: number, r: RarityId) {
-  return Math.ceil(B.cats.feed_cost_base * Math.pow(B.cats.feed_cost_growth, level - 1) * B.rarities.food_mult[r]);
+  if (level < X.from) return Math.ceil(B.cats.feed_cost_base * Math.pow(B.cats.feed_cost_growth, level - 1) * B.rarities.food_mult[r]);
+  return Math.ceil(B.cats.feed_cost_base * Math.pow(B.cats.feed_cost_growth, X.from - 1) * X.feed_wall * Math.pow(X.feed_cost_growth, level - X.from) * B.rarities.food_mult[r]);
 }
+/** the Reino part of the level cap, the same for every cat: Reino + 5, up to 50 (the early gate) */
 export function catLevelCap(kl: number) {
   return Math.min(B.kingdom.level_cap_cats, kl + 5);
+}
+/**
+ * A cat's own level cap. While the Reino gate is below 50 it is the whole story (Reino + 5); once it reaches 50,
+ * each star from ★2 opens 10 more levels: ★1 50 · ★2 60 · ★3 70 · ★4 80 · ★5 90 · ★6 100 (never past max_level).
+ */
+export function catLevelCapFor(kl: number, stars: number) {
+  const reino = catLevelCap(kl);
+  if (reino < B.kingdom.level_cap_cats) return reino;
+  const s = Math.max(1, Math.min(B.cats.stars.max, Math.floor(stars) || 1));
+  return Math.min(X.max_level, reino + X.cap_per_star * (s - 1));
+}
+/** the highest level any cat can reach (★max, Reino gate open) */
+export function catLevelMax() {
+  return X.max_level;
+}
+/** total food to feed a cat from level `from` to level `to` (whole levels, paid as 4 bites like cats.feed) */
+export function feedCostRange(from: number, to: number, r: RarityId) {
+  let sum = 0;
+  for (let l = Math.max(1, from); l < to; l++) sum += 4 * Math.ceil(feedCost(l, r) / 4);
+  return sum;
 }
 /** orbs needed to go from `stars` to stars+1 */
 export function starOrbs(r: RarityId, stars: number) {

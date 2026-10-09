@@ -10,6 +10,8 @@ import { applyCatTint, slugOf } from '../../art/tint';
 import { ELEMENT_NAME } from '../../data/elementsMeta';
 import { elementIcon } from '../../ui/elementIcon';
 import { CAT_BY_ID } from '../../data/content';
+import { G } from '../../state/game';
+import { catSlug } from '../../state/sys/forms';
 import { fmt } from '../../core/format';
 
 /** DIARIO DEL MAR palette */
@@ -151,7 +153,9 @@ export function doubleRule(w: number, color: number = C.ink, thick = 3) {
 }
 
 export async function ensureCats(species: string[]) {
-  const slugs = [...new Set(species.map((s) => slugOf(s)))];
+  // owned cats of these species may show up in a FORM (state/sys/forms.ts): their painting too
+  const forms = G.s.cats.filter((c) => c.form && species.includes(c.species)).map((c) => catSlug(c));
+  const slugs = [...new Set([...species.map((s) => slugOf(s)), ...forms])];
   try {
     await preloadCats(slugs);
   } catch {
@@ -160,7 +164,7 @@ export async function ensureCats(species: string[]) {
 }
 
 /** circular cat portrait with element ring (call ensureCats first) */
-export function catPortrait(species: string, size = 96, o: { ring?: number; bg?: number; grayscale?: boolean } = {}): Container {
+export function catPortrait(species: string, size = 96, o: { ring?: number; bg?: number; grayscale?: boolean; slug?: string } = {}): Container {
   const c = new Container();
   const def = CAT_BY_ID.get(species);
   const el = def?.elements[0] ?? 'fire';
@@ -172,7 +176,8 @@ export function catPortrait(species: string, size = 96, o: { ring?: number; bg?:
   dots.alpha = 0.35;
   const dm = new Graphics().circle(0, 0, r - 3).fill(0xffffff);
   dots.mask = dm;
-  const sp = new Sprite(catTexture(slugOf(species)));
+  // an owned cat's own painting (its FORM: pass catSlug(c)) or the species'
+  const sp = new Sprite(catTexture(o.slug ?? slugOf(species)));
   sp.anchor.set(0.5, 0.42);
   const s = (size * 1.18) / Math.max(1, sp.texture.width);
   sp.scale.set(s);

@@ -7,6 +7,7 @@ import gsap from 'gsap';
 import { ComicFilter, InkFilter } from '../fx/filters';
 import { glowTexture, sparkTexture, dotTexture } from './textures';
 import { C } from '../ui/theme';
+import { resolveFormSlug } from '../data/rupturas/formas';
 
 /** Visual identity per element: aura colors + accent. Keys are element ids. */
 export const ELEMENT_FX: Record<string, { main: number; accent: number; dark: number; particle: 'ember' | 'bubble' | 'leaf' | 'spark' | 'shard' | 'star' | 'rock' | 'wisp' | 'rune' | 'glitch' }> = {
@@ -27,6 +28,8 @@ export const ELEMENT_FX: Record<string, { main: number; accent: number; dark: nu
   sound: { main: 0xff2e88, accent: 0xffd400, dark: 0x231626, particle: 'spark' },
   time: { main: 0xe0b77a, accent: 0xd9c29a, dark: 0x6b4f2a, particle: 'rune' },
   shadow: { main: 0x5a4a78, accent: 0xc8102e, dark: 0x0d110f, particle: 'wisp' },
+  // Parte II · Oleada 1: NÁCAR PRISMÁTICO (pearl white, sky prism, lilac, sea-glass)
+  crystal: { main: 0x8fd3ff, accent: 0xf7f2ff, dark: 0x5b4a8a, particle: 'shard' },
 };
 
 export function elementFx(el: string) {
@@ -92,6 +95,9 @@ const missingArt = new Set<string>();
 /** the painting actually drawn for `slug` (itself once its art + rig exist; else its stand-in) */
 export function artSlug(slug: string): string {
   if (catRig(slug)) return slug;
+  // a FORM whose painting isn't in this build yet draws the original's, untinted (data/rupturas/formas.ts)
+  const base = resolveFormSlug(slug, (x) => !!catRig(x));
+  if (base !== slug) return artSlug(base);
   const s = STAND_IN[slug];
   if (s) return s[0];
   return missingArt.has(slug) ? FALLBACK_SLUG : slug;

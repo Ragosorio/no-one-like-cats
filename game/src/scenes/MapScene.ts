@@ -2,6 +2,9 @@
  * Sea map / stage selection — DIARIO DEL MAR: an engraved nautical chart printed on aged newspaper.
  * 6 zones as islands, 9 stages each along a dotted route (elite shield at 5, boss skull at 9),
  * future zones under "???" fog. Tap a stage → clipping card with honest odds and loot.
+ * Parte II: the «MAR DE LAS RUPTURAS» — a sheet glued to the chart's right edge that nobody remembers
+ * gluing, with the 3D islands (src/regions) in a fresher, misaligned ink. Only drawn when an island's flag
+ * is set (state/sys/rupturas.ts mapRegions); tapping one travels there (app/flow goRegion).
  */
 import { Container, Graphics, Sprite, TilingSprite } from 'pixi.js';
 import { STORY_BATTLES } from '../state/sys/storyBattles';
@@ -63,6 +66,9 @@ import {
 import { StageCard } from '../panels/campaign/StageCard';
 import { sparkles } from '../fx/juice';
 import { screenRect } from '../ui/screen';
+import { MapRegion, mapRegions, regionForGoal } from '../state/sys/rupturas';
+import { beatSeen, markBeat } from '../state/ext/story';
+import type { RegionId } from '../regions';
 
 const BOX_W = 600;
 const BOX_H = 400;
@@ -92,6 +98,18 @@ const CHART_TOP = 150;
 /** screen area not covered by the HUD (pins left, clocks right, action bar bottom) */
 const SAFE = { x0: 400, x1: 1610, y0: 110, y1: 950 };
 const FOG_LINES = ['', '', 'Aquí hay gárgolas (dicen)', 'Aquí llueve para arriba', 'Aquí se hunden las bibliotecas', 'Aquí caen estrellas', 'Aquí no hay nada. NADA.'];
+/** the chart's drawn width (camera bounds) */
+const CHART_W = 1896;
+/** Parte II: the glued sheet «MAR DE LAS RUPTURAS» (chart coords: right past the frame, taped over the seam) */
+const RS = { x: 1898, y: 168, w: 560, h: 870 };
+/** the fresher ink of things that «always were there», and its misregistered shadow */
+const FRESH = 0x2c4fb8;
+const MISREG = 0x8a5cd6;
+/** where each island sits on the sheet (sheet coords) + its land tint */
+const RS_ISLE: Partial<Record<RegionId, { p: Pt; land: number; seed: number }>> = {
+  paginas: { p: [276, 318], land: 0xe9ddc2, seed: 41 },
+  nacar: { p: [318, 690], land: 0xe4dcf2, seed: 77 },
+};
 
 function zonePt(zone: number, p: Pt): Pt {
   const b = ZONE_BOX[zone];
@@ -188,6 +206,12 @@ export class MapScene extends Scene {
   private t = 0;
   private fogs = new Map<number, Container>();
   private markerMoving = false;
+  /** drawn width of the chart (grows with the Parte II sheet) */
+  private chartW = CHART_W;
+  /** Parte II islands on the chart (empty without Parte II) */
+  private rupturas: MapRegion[] = [];
+  /** last time a drag actually panned (a drag release must not open a 3D island) */
+  private pannedAt = -1e9;
 
   override enter() {
     // ---------- paper & chart
@@ -204,6 +228,7 @@ export class MapScene extends Scene {
     this.buildErrandPins();
     this.buildFog();
     this.drawRoutes();
+    this.buildRupturas();
     // vignette on top of the chart
     const vig = new Sprite(vignetteTexture());
     vig.width = W;
@@ -220,7 +245,10 @@ export class MapScene extends Scene {
       // story battles (Heraldo, Grieta, Barco del Vacío, Patito…) launch straight from their mission
       onGoal: (m) => {
         const g = m.goal as { battle?: unknown; type?: string };
-        if (typeof g.battle === 'string' && g.battle in STORY_BATTLES) void startStoryBattle(g.battle);
+        // Parte II: landing, Canelo's page, Nácar's beam puzzle… happen on a 3D island: go there
+        const reg = regionForGoal(m.goal);
+        if (reg) void import('../app/flow').then((fl) => fl.goRegion(reg));
+        else if (typeof g.battle === 'string' && g.battle in STORY_BATTLES) void startStoryBattle(g.battle);
         else if (g.type === 'void_fragments') void import('../ui/fragmentsPanel').then((f) => f.openFragments());
         // «Continuará»: the ending plays on the island
         else if (g.type === 'watch') void import('../app/flow').then((fl) => fl.goIsland()).then(() => import('../app/story')).then((st) => st.playChapterEnding(m.id));
@@ -234,7 +262,10 @@ export class MapScene extends Scene {
     this.refresh();
     const f = frontier();
     const focus = campaignMemo.justUnlocked ? Number(campaignMemo.justCleared?.split('-')[0] ?? f.zone) : f.zone;
-    this.focusZone(focus, false);
+    // Parte II: while the story waits on one of its islands, the chart opens there (not after a campaign win)
+    const calling = campaignMemo.justCleared ? undefined : this.rupturas.find((r) => r.call);
+    if (calling) this.focusIsle(calling.id, false);
+    else this.focusZone(focus, false);
     window.addEventListener('wheel', this.onWheel, { passive: false });
     this.introAnim();
   }
@@ -253,7 +284,7 @@ export class MapScene extends Scene {
     const s = this.cam.s;
     // allow panning past the chart edges when zoomed so every zone can reach the safe area
     const m = s > 1.05 ? 300 : 12;
-    const minX = W - 1896 * s - m;
+    const minX = W - this.chartW * s - m;
     const maxX = -24 * s + m;
     const minY = H - 1066 * s - m;
     const maxY = 100 - CHART_TOP * s + m;
@@ -307,6 +338,7 @@ export class MapScene extends Scene {
         this.closeCard();
       }
       if (this.drag.moved) {
+        this.pannedAt = performance.now();
         gsap.killTweensOf(this.cam);
         this.cam.x = this.drag.cx + dx;
         this.cam.y = this.drag.cy + dy;
@@ -610,6 +642,210 @@ export class MapScene extends Scene {
       gsap.to(badge.scale, { x: 1.18, y: 1.18, yoyo: true, repeat: -1, duration: 0.5, ease: 'sine.inOut' });
     }
     this.addChild(err);
+  }
+
+  // ------------------------------------------------------------------ Parte II: MAR DE LAS RUPTURAS
+  /** chart coords of a Parte II island (the sheet's tilt is tiny: ignored) */
+  private islePos(id: RegionId): Pt {
+    const p = RS_ISLE[id]?.p ?? [RS.w / 2, RS.h / 2];
+    return [RS.x + p[0], RS.y + p[1]];
+  }
+
+  focusIsle(id: RegionId, animate = true, s = ZOOM_IN) {
+    const [x, y] = this.islePos(id);
+    this.focusOn(x, y, animate, s);
+  }
+
+  /**
+   * The sheet glued to the chart's right edge: fresher paper, a torn edge, tape over the seam, and the
+   * islands that «always were there» in a fresher ink printed slightly out of register. Nothing at all
+   * without Parte II (no island flag set): the chart stays exactly as it was.
+   */
+  private buildRupturas() {
+    this.rupturas = mapRegions().filter((r) => !!RS_ISLE[r.id]);
+    if (!this.rupturas.length) return;
+    this.chartW = RS.x + RS.w + 24;
+    const sheet = new Container();
+    sheet.position.set(RS.x, RS.y);
+    // printed slightly out of square: somebody glued it in a hurry
+    sheet.rotation = 0.009;
+    const { w, h } = RS;
+    // torn right edge (the left one is glued under the tape)
+    const shape: number[] = [0, 0];
+    const n = 44;
+    for (let i = 0; i <= n; i++) shape.push(w - 10 + (hash1(i * 7.31) - 0.5) * 16 + (i % 2 ? 3 : -2), (i / n) * h);
+    shape.push(0, h);
+    const shadow = new Graphics().poly(shape).fill({ color: C.ink, alpha: 0.2 });
+    shadow.position.set(8, 10);
+    const base = new Graphics().poly(shape).fill(0xf2e9d2);
+    const tex = new TilingSprite({ texture: paperTexture(0xf2e9d2, 512, 1.2), width: w + 20, height: h });
+    const mask = new Graphics().poly(shape).fill(0xffffff);
+    tex.mask = mask;
+    const edge = new Graphics().poly(shape).stroke({ width: 1.5, color: P.agedEdge, alpha: 0.7 });
+    sheet.addChild(shadow, base, tex, mask, edge);
+    // its own frame, in the fresh ink
+    const fr = new Graphics();
+    fr.rect(36, 16, w - 66, h - 32).stroke({ width: 3, color: FRESH });
+    fr.rect(44, 24, w - 82, h - 48).stroke({ width: 1.2, color: FRESH, alpha: 0.8 });
+    for (let i = 1; i < 4; i++) fr.moveTo(44, (h / 4) * i).lineTo(w - 38, (h / 4) * i);
+    fr.stroke({ width: 1, color: FRESH, alpha: 0.12 });
+    const wg = new Graphics();
+    for (let i = 0; i < 16; i++) waves(wg, 60 + hash1(i * 4.7 + 3) * (w - 160), 170 + hash1(i * 9.1 + 5) * (h - 260), 26 + hash1(i) * 30, FRESH, 0.22);
+    sheet.addChild(fr, wg);
+    // title (and its misregistered ghost)
+    const ttl = (fill: number) => txt('Mar de las Rupturas', { fontFamily: F.news, fontSize: 44, fill });
+    const ghost = ttl(MISREG);
+    ghost.anchor.set(0.5, 0);
+    ghost.alpha = 0.35;
+    ghost.position.set(w / 2 + 4 + 2.5, 44 - 2);
+    const title = ttl(FRESH);
+    title.anchor.set(0.5, 0);
+    title.position.set(w / 2 + 4, 44);
+    const sub = txt('Hoja añadida · nadie recuerda haberla pegado', { fontFamily: F.serif, fontStyle: 'italic', fontSize: 15, fill: FRESH });
+    sub.anchor.set(0.5, 0);
+    sub.position.set(w / 2 + 4, 102);
+    sheet.addChild(ghost, title, sub);
+    // the Archive's correction: the old print says there's nothing here; fresh ink disagrees
+    const old = txt('Mar abierto. Aquí no hay nada.', { fontFamily: F.serif, fontStyle: 'italic', fontSize: 17, fill: P.blue });
+    old.anchor.set(0.5);
+    old.position.set(w / 2 + 4, 482);
+    old.alpha = 0.8;
+    const strike = new Graphics()
+      .moveTo(-old.width / 2 - 6, 2)
+      .lineTo(old.width / 2 + 6, -3)
+      .stroke({ width: 2.5, color: FRESH, cap: 'round' });
+    strike.position.copyFrom(old.position);
+    const fix = txt('Siempre estuvo aquí.', { fontFamily: F.brush, fontSize: 21, fill: FRESH });
+    fix.anchor.set(0.5);
+    fix.rotation = -0.05;
+    fix.position.set(w / 2 + 22, 514);
+    sheet.addChild(old, strike, fix);
+    // the strip you can see from the whole-chart view (CARTA): what's beyond, and that you can drag there
+    const tab = txt('MAR DE LAS RUPTURAS', { fontFamily: F.poster, fontSize: 17, fill: FRESH, letterSpacing: 3 });
+    tab.anchor.set(0.5);
+    tab.rotation = -Math.PI / 2;
+    tab.position.set(18, h / 2 - 20);
+    const arrow = new Graphics().poly([-6, -9, 7, 0, -6, 9]).fill(FRESH);
+    arrow.position.set(16, h / 2 + 100);
+    sheet.addChild(tab, arrow);
+    gsap.to(arrow, { x: 21, yoyo: true, repeat: -1, duration: 0.6, ease: 'sine.inOut' });
+    // the islands
+    for (const r of this.rupturas) sheet.addChild(this.ruptureIsle(r));
+    // tape over the seam, glued to the old chart
+    const tape = new Container();
+    for (const [ty, rot] of [
+      [70, -0.22],
+      [h - 36, 0.18],
+    ] as const) {
+      const t = new Graphics().rect(-34, -13, 68, 26).fill({ color: 0xf6e6a8, alpha: 0.6 }).stroke({ width: 1, color: P.agedEdge, alpha: 0.4 });
+      t.position.set(2, ty);
+      t.rotation = rot;
+      tape.addChild(t);
+    }
+    sheet.addChild(tape);
+    this.chart.addChild(sheet);
+  }
+
+  /** one island of the sheet: fresh ink out of register, its name, a red «!» when the story waits there */
+  private ruptureIsle(r: MapRegion): Container {
+    const def = RS_ISLE[r.id]!;
+    const [cx, cy] = def.p;
+    const c = new Container();
+    c.position.set(cx, cy);
+    const g = new Graphics();
+    const poly = islandPoly(0, 0, r.id === 'nacar' ? 70 : 92, r.id === 'nacar' ? 62 : 56, def.seed);
+    // the misregistered print: the same coast a hair off, in another ink
+    const reg = new Graphics();
+    drawIsland(reg, poly, 0, 0, { land: def.land, ink: MISREG, rings: 2, hatch: false });
+    reg.position.set(3.5, -2.5);
+    reg.alpha = 0.35;
+    drawIsland(g, poly, 0, 0, { land: def.land, ink: FRESH, rings: 4 });
+    const d = new Graphics();
+    if (r.id === 'paginas') {
+      // drifting pages and an open book washed ashore
+      for (let i = 0; i < 6; i++) {
+        const px = (hash1(i * 3.3 + 1) - 0.5) * 120;
+        const py = (hash1(i * 5.7 + 2) - 0.5) * 70;
+        const a = (hash1(i * 2.1) - 0.5) * 0.9;
+        const ca = Math.cos(a);
+        const sa = Math.sin(a);
+        const pt = (x: number, y: number) => [px + x * ca - y * sa, py + x * sa + y * ca];
+        d.poly([...pt(-9, -12), ...pt(9, -12), ...pt(9, 12), ...pt(-9, 12)]).fill(0xfbf6e8).stroke({ width: 1.6, color: FRESH });
+        d.moveTo(...(pt(-5, -5) as [number, number])).lineTo(...(pt(5, -5) as [number, number]));
+        d.moveTo(...(pt(-5, 1) as [number, number])).lineTo(...(pt(5, 1) as [number, number]));
+        d.stroke({ width: 1, color: FRESH, alpha: 0.7 });
+      }
+      d.poly([-30, 6, 0, 14, 0, -10, -30, -16]).fill(0xfbf6e8).stroke({ width: 2.2, color: FRESH, join: 'round' });
+      d.poly([30, 6, 0, 14, 0, -10, 30, -16]).fill(0xf3ead2).stroke({ width: 2.2, color: FRESH, join: 'round' });
+    } else {
+      // the nacre mountain: facets that catch the light
+      d.poly([-46, 26, -12, -52, 8, 26]).fill(0xf4efff).stroke({ width: 2.4, color: FRESH, join: 'round' });
+      d.poly([-12, -52, 8, 26, 40, 26, 14, -24]).fill(0xd9ccf5).stroke({ width: 2.4, color: FRESH, join: 'round' });
+      d.moveTo(-12, -52).lineTo(-20, 26).stroke({ width: 1.2, color: FRESH, alpha: 0.6 });
+      d.moveTo(-60, -40).lineTo(-26, -20).moveTo(-62, -30).lineTo(-28, -12).stroke({ width: 1.5, color: 0xd99a2b, alpha: 0.8 });
+    }
+    c.addChild(reg, g, d);
+    // the name, on a ribbon like the bosses' (fresh ink)
+    const nm = txt(r.name, { fontFamily: F.brush, fontSize: 17, fill: FRESH });
+    nm.anchor.set(0.5);
+    const rw = nm.width + 28;
+    const rib = new Container();
+    rib.addChild(
+      new Graphics()
+        .poly([-rw / 2 - 12, -2, -rw / 2, -13, rw / 2, -13, rw / 2 + 12, -2, rw / 2, 13, -rw / 2, 13])
+        .fill(0xf7f0dc)
+        .stroke({ width: 2, color: FRESH, join: 'round' }),
+      nm,
+    );
+    rib.position.set(0, (r.id === 'nacar' ? 62 : 56) + 34);
+    rib.rotation = -0.025;
+    c.addChild(rib);
+    // the story waits here: a red pin that bobs (like an open errand)
+    if (r.call) {
+      const pin = new Container();
+      const pg = new Graphics().circle(0, 0, 17).fill(C.red).stroke({ width: 3, color: C.ink });
+      const ex = txt('!', { fontFamily: F.poster, fontSize: 26, fill: C.paper });
+      ex.anchor.set(0.5);
+      pin.addChild(pg, ex);
+      pin.position.set(r.id === 'nacar' ? 62 : 82, -50);
+      c.addChild(pin);
+      gsap.to(pin.scale, { x: 1.18, y: 1.18, yoyo: true, repeat: -1, duration: 0.5, ease: 'sine.inOut' });
+    }
+    c.eventMode = 'static';
+    c.cursor = 'pointer';
+    c.hitArea = { contains: (x: number, y: number) => (x * x) / (130 * 130) + (y * y) / (110 * 110) < 1 };
+    c.on('pointerover', () => {
+      gsap.to(c.scale, { x: 1.06, y: 1.06, duration: 0.14, ease: 'back.out(3)' });
+      sfx('hover');
+    });
+    c.on('pointerout', () => gsap.to(c.scale, { x: 1, y: 1, duration: 0.16 }));
+    c.on('pointertap', (e) => {
+      e.stopPropagation();
+      if (performance.now() - this.pannedAt < 250) return;
+      this.closeCard();
+      sfx('paper');
+      gsap.fromTo(c.scale, { x: 0.94, y: 0.94 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
+      void import('../app/flow').then((fl) => fl.goRegion(r.id));
+    });
+    // first time on the chart: the fresh ink soaks in
+    const seenKey = `carta_${r.id}`;
+    if (!beatSeen(seenKey)) {
+      markBeat(seenKey);
+      G.save();
+      gsap.from(c, { alpha: 0, duration: 1.1, delay: 0.5, ease: 'power2.in' });
+      gsap.from(c.scale, { x: 1.3, y: 1.3, duration: 1.1, delay: 0.5, ease: 'power3.out' });
+      gsap.delayedCall(1.4, () => {
+        if (c.destroyed) return;
+        sfx('reveal');
+        sparkles(c, 0, 0, FRESH, 18, 150);
+        const st = stamp('¡NUEVA ISLA!', C.red, 24, -0.1);
+        st.position.set(0, -92);
+        c.addChild(st);
+        gsap.from(st.scale, { x: 2.2, y: 2.2, duration: 0.18, ease: 'power3.in' });
+        gsap.to(st, { alpha: 0, delay: 2.6, duration: 0.5, onComplete: () => st.destroy({ children: true }) });
+      });
+    }
+    return c;
   }
 
   // ------------------------------------------------------------------ errands (Encargos)

@@ -285,7 +285,17 @@
     "power_per_level": 1.07,
     "feed_cost_base": 6,
     "feed_cost_growth": 1.27,
-    "level_cap_formula": "min(kingdom.level_cap_cats, kingdom_level + 5)",
+    "level_cap_formula": "min(kingdom.level_cap_cats, kingdom_level + 5); con ese tope en 50, cada gato: 50 + beyond_50.cap_per_star x (estrellas - 1), max beyond_50.max_level",
+    "beyond_50": {
+      "_note": "Niveles 51-100 (docs/part-ii/16-niveles-100.md). Hasta Nv50 todo sale de las curvas de arriba, identico. Desde Nv50: oro x gold_per_level y poder x power_per_level por nivel (10 niveles de poder = x1.34, casi una liga del Podio x1.32). Comida: subir de 50 a 51 cuesta feed_wall x la curva vieja y cada nivel siguiente x feed_cost_growth.",
+      "from": 50,
+      "max_level": 100,
+      "cap_per_star": 10,
+      "gold_per_level": 1.04,
+      "power_per_level": 1.03,
+      "feed_wall": 40,
+      "feed_cost_growth": 1.13
+    },
     "stars": {
       "max": 6,
       "mult": [

@@ -751,7 +751,8 @@ export class PodioScene extends Scene {
       this.fx.banner('¡IMPECABLE!', C.yellow, H * 0.3, 80, 0.9);
       await this.wait(0.6);
     }
-    const loot = applyDuel(cat, r.league, r.bout, won, perfect);
+    // a K.O. (not the judges, not a forfeit) is the cat's final blow: H38 «¡A BABOR!» counts it
+    const loot = applyDuel(cat, r.league, r.bout, won, perfect, won && this.duel!.koBy === 0);
     this.duel = null;
     if (run !== this.runId || this.destroyed) return;
     // a VACÍO champion's prize: the cat joins (reveal) and, the first time, Luzterna explains what it is

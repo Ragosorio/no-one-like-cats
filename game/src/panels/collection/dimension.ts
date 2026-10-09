@@ -8,7 +8,7 @@ import { Container, Graphics } from 'pixi.js';
 import { C, F } from '../../ui/theme';
 import { ELEMENT_BY_ID } from '../../data/content';
 
-export type Pattern = 'flames' | 'waves' | 'watercolor' | 'woodcut' | 'krackle' | 'tarot' | 'glitch' | 'aurora' | 'riso' | 'kagee' | 'sepia' | 'vitral' | 'static';
+export type Pattern = 'flames' | 'waves' | 'watercolor' | 'woodcut' | 'krackle' | 'tarot' | 'glitch' | 'aurora' | 'riso' | 'kagee' | 'sepia' | 'vitral' | 'static' | 'nacar';
 export interface Dimension {
   id: string;
   name: string;
@@ -43,6 +43,8 @@ const D: Record<string, Omit<Dimension, 'id' | 'sound'>> = {
   time: { name: 'DAGUERROTIPO', bg: 0x3a2a16, mid: 0x6b4f2a, accent: 0xe0b77a, hi: 0xd9c29a, ink: 0xf4e6c6, font: F.serif, pattern: 'sepia', word: '時' },
   light: { name: 'VITRAL', bg: 0xfff8e1, mid: 0xffd77a, accent: 0xe8879a, hi: 0x7fd8ff, ink: 0xffffff, font: F.heavy, pattern: 'vitral', word: '光' },
   void: { name: 'NOIR INVERTIDO', bg: 0xf2f2f0, mid: 0x231626, accent: 0xff2e88, hi: 0xffffff, ink: 0x0d110f, font: F.glitch, pattern: 'static', word: '虚' },
+  // Parte II · Oleada 1
+  crystal: { name: 'NÁCAR PRISMÁTICO', bg: 0xf7f2ff, mid: 0xb79cff, accent: 0x8fd3ff, hi: 0x6fe0c8, ink: 0x2e2450, font: F.serif, pattern: 'nacar', word: '晶' },
 };
 
 export function dimensionOf(el: string): Dimension {
@@ -372,6 +374,34 @@ export function dimensionBackground(dim: Dimension, w: number, h: number, seed =
       p.rect(20, 20, w - 40, h - 40).stroke({ width: 6, color: 0x0d110f, alpha: 0.9 });
       break;
     }
+    case 'nacar': {
+      // mother-of-pearl: wavy iridescent strata, a prism splitting a white beam, cut-gem glints (all inside w×h)
+      const cols = [0xf7f2ff, 0x8fd3ff, 0xb79cff, 0x6fe0c8, 0xffd6f0];
+      const bands = 22;
+      for (let i = 0; i < bands; i++) {
+        const y = (i + 0.5) * (h / bands);
+        const amp = 6 + r() * 14;
+        const ph = r() * 6;
+        const fq = 1.5 + r() * 2;
+        const pts: number[] = [];
+        for (let x = 0; x <= w; x += 20) pts.push(x, Math.max(12, Math.min(h - 12, y + Math.sin((x / w) * Math.PI * fq + ph) * amp)));
+        p.poly(pts, false).stroke({ width: 8 + r() * 10, color: cols[i % cols.length], alpha: 0.3 + r() * 0.25, join: 'round' });
+      }
+      const px = w * 0.55;
+      const py = h * 0.38;
+      p.moveTo(24, py + 50).lineTo(px, py).stroke({ width: 12, color: 0xffffff, alpha: 0.85 });
+      [0xff8fb1, 0xffd77a, 0x6fe0c8, 0x8fd3ff, 0xb79cff].forEach((col, k) => p.moveTo(px, py).lineTo(w - 24, Math.max(24, Math.min(h - 24, py - 120 + k * 60))).stroke({ width: 9, color: col, alpha: 0.75 }));
+      p.poly([px - 56, py + 44, px, py - 56, px + 56, py + 44]).fill({ color: 0xffffff, alpha: 0.85 }).stroke({ width: 5, color: dim.ink, join: 'round' });
+      p.moveTo(px - 26, py + 18).lineTo(px - 6, py - 22).stroke({ width: 4, color: dim.accent, cap: 'round' });
+      for (let i = 0; i < 44; i++) {
+        const x = 24 + r() * (w - 48);
+        const y = 24 + r() * (h - 48);
+        const s = 3 + r() * 7;
+        p.poly([x, y - s * 1.4, x + s, y, x, y + s * 1.4, x - s, y]).fill({ color: cols[i % cols.length], alpha: 0.9 });
+      }
+      p.rect(18, 18, w - 36, h - 36).stroke({ width: 6, color: dim.mid }).rect(30, 30, w - 60, h - 60).stroke({ width: 2, color: dim.accent });
+      break;
+    }
   }
   return c;
 }
@@ -460,6 +490,14 @@ export function projectileArt(el: string, size = 28, upgraded = false): Graphics
       g.circle(0, 0, s).fill(0x0d110f).stroke({ width: 3, color: 0xffffff });
       for (let k = 0; k < 7; k++) g.rect((Math.random() - 0.5) * s * 1.2, (Math.random() - 0.5) * s * 1.2, s * 0.3, 2).fill({ color: 0xffffff, alpha: 0.8 });
       break;
+    case 'crystal':
+      // a cut nacre marble: pearl body, sky / lilac / sea-glass facets
+      g.poly([0, -s * 1.1, s * 0.9, -s * 0.45, s * 0.9, s * 0.5, 0, s * 1.1, -s * 0.9, s * 0.5, -s * 0.9, -s * 0.45]).fill(dim.bg).stroke({ width: 4, color: C.ink, join: 'miter' });
+      g.poly([0, -s * 1.1, s * 0.9, -s * 0.45, 0, 0]).fill(dim.accent);
+      g.poly([-s * 0.9, s * 0.5, 0, s * 1.1, 0, 0]).fill(dim.mid);
+      g.poly([s * 0.9, s * 0.5, 0, s * 1.1, 0, 0]).fill(dim.hi);
+      g.moveTo(-s * 0.45, -s * 0.6).lineTo(-s * 0.15, -s * 0.82).stroke({ width: 2.5, color: 0xffffff, cap: 'round' });
+      break;
     default:
       g.circle(0, 0, s).fill(dim.accent).stroke({ width: 4, color: C.ink });
       g.circle(s * 0.15, -s * 0.1, s * 0.55).fill(dim.hi);
@@ -519,6 +557,13 @@ export function trailBit(el: string, upgraded = false): Graphics {
     case 'void': {
       const k = Math.random();
       g.rect(-s * 0.5, -s * 0.3, s, s * 0.6).fill(k < 0.45 ? 0x0d110f : k < 0.8 ? 0xffffff : dim.accent);
+      break;
+    }
+    case 'crystal': {
+      // nacre chips: a tiny diamond in one of the four nacre colours
+      const k = Math.random();
+      g.poly([0, -s * 0.8, s * 0.5, 0, 0, s * 0.8, -s * 0.5, 0]).fill(k < 0.3 ? dim.bg : k < 0.55 ? dim.accent : k < 0.8 ? dim.mid : dim.hi);
+      g.rotation = Math.random() * 6;
       break;
     }
     default:

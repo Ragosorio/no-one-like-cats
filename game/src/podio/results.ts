@@ -16,7 +16,8 @@ import { halftoneTexture } from '../art/textures';
 import { sparkles } from '../fx/juice';
 import { catPortrait, tickUp } from '../panels/campaign/common';
 import { G, OwnedCat } from '../state/game';
-import { PodioLoot, league, xpNeed, nextCapLevel } from '../state/sys/podio';
+import { PodioLoot, league, xpNeed } from '../state/sys/podio';
+import { podioCapAdvice } from './lobby';
 import { SLOT_LABEL, powersOf } from './powers';
 import { LOSS_QUIPS, WIN_QUIPS, pick } from './lines';
 import PB from '../data/podio.json';
@@ -48,9 +49,13 @@ export class PodioResults extends Container {
     const title = txt(won ? (loot.firstChampion ? '¡CAMPEÓN!' : '¡VICTORIA!') : 'DERROTA', { fontFamily: F.poster, fontSize: 110, fill: C.paper, stroke: { color: C.ink, width: 12, join: 'round' }, letterSpacing: 4 });
     title.anchor.set(0, 0.5);
     title.position.set(40, 80);
-    const sub = txt(won ? `${cat.name.toUpperCase()} venció a ${rivalName}` : `${rivalName} se llevó este round`, { fontFamily: F.bebas, fontSize: 30, fill: C.paper, letterSpacing: 2 });
+    // «noqueó al Pescadero», never «a El Pescadero»
+    const toRival = /^el\s/i.test(rivalName) ? `al ${rivalName.slice(3)}` : `a ${rivalName}`;
+    const how = loot.ko ? 'noqueó' : 'le ganó por decisión';
+    const sub = txt(won ? `${cat.name.toUpperCase()} ${how} ${toRival}` : `${rivalName} se llevó este round`, { fontFamily: F.bebas, fontSize: 30, fill: C.paper, letterSpacing: 2 });
     sub.anchor.set(1, 0.5);
     sub.position.set(cw - 34, 112);
+    if (sub.width > 540) sub.scale.set(540 / sub.width);
     const quip = txt(pick(won ? WIN_QUIPS : LOSS_QUIPS), { fontFamily: F.ui, fontStyle: 'italic', fontSize: 20, fill: C.paper });
     quip.anchor.set(1, 0.5);
     quip.position.set(cw - 34, 62);
@@ -149,7 +154,7 @@ export class PodioResults extends Container {
     if (won && loot.kind === 'first') notes.push([`1ª VICTORIA DE ${cat.name.toUpperCase()} CONTRA ESTE RIVAL: XP COMPLETA${loot.catchup > 1.01 ? ` · x${loot.catchup.toFixed(1)} POR IR ATRÁS` : ''}`, C.pinkHot]);
     else if (won && loot.catchup > 1.01) notes.push([`PONERSE AL DÍA: XP x${loot.catchup.toFixed(1)} (va atrás de tu mejor gato del Podio)`, C.pinkHot]);
     if (xp.toBank > 0) notes.push([`+${fmt(xp.toBank)} XP GUARDADA: entra sola cuando ${cat.name} suba su tope en la isla.`, C.plum]);
-    else if (xp.capped) notes.push([`TOPE: alimenta a ${cat.name} hasta NV ${nextCapLevel(cat)} (o súbelo de estrella) para que siga creciendo aquí.`, C.plum]);
+    else if (xp.capped) notes.push([`TOPE: ${podioCapAdvice(cat)} para que siga creciendo aquí.`, C.plum]);
     if (loot.leagueUp) notes.unshift([`¡ASCIENDES A ${league(loot.league + 1).name}!`, C.pinkHot]);
     if (loot.prize) {
       const pd = catDef(loot.prize.species);

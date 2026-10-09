@@ -46,6 +46,9 @@
  *                                               the core holds at 1 hp); cats in that half stunned; breaches flood
  * Per-turn effects of the divines that stay (horizon / sun) run in ultTicks() at the start of the owner's turn.
  *
+ * FORMS (a cat's switchable manifestation points its ultimate here via BattleCatDef.ultKey):
+ *   canelo_almirante ¡A BABOR!              his barrage + every crewmate fires its own shot along his aim (×0.3)
+ *
  * LEGENDARIOS DEL MULTIVERSO (Parte 2, the six primordials of the new elements) — 35% cap, bosses 15%;
  * ★5 = twice per battle (content star5, battle/catShots.ts):
  *   l_boreas     AURORA ZERO            3 icicles (×0.7) + the aurora freezes EVERY enemy cannon (no volley next turn)
@@ -62,6 +65,14 @@
  *                                       never repaired; the core and the cells holding the ship together stay at 1 hp),
  *                                       and it eats every shield: bubble, shield, cat shields, spare lives; ★3 3 columns
  *   l_cronos     ETERNAL SECOND         TIME STOP (multiverso.ts) with its set piece: sepia, the clock stops
+ *
+ * PARTE II · OLEADA 1 (La Marea Imposible) — they reuse signatures that already exist (same caps, same set pieces):
+ *   l_madrenacar    MIRROR OF MEMORIES   "los cristales recuerdan": Lumen's replay of your crew's last shot, then
+ *                                         her own fan of 3 pearls (×1.5 when there's nothing to remember), and a
+ *                                         nacre FACET goes up on her ship (battle/cristal.ts)
+ *   l_bibliotecario SHHH… THE END        Merlina's FIN on 3 modules (the book closes 2 turns later if he stands)
+ *   s_refracta      TOTAL REFRACTION     Áurea's fan of 5 rays from above (here the prism splits a Cristal shot:
+ *                                         the rays cut PRISMA), the crossed cabins' cats are struck, DESLUMBRADOS
  */
 import type { Battle, BattleEvent, ShotPath, PathPoint } from './sim';
 import { CAT_K, DMG_K } from './sim';
@@ -70,6 +81,7 @@ import type { Cell } from './ship';
 import type { CatState, ElementId, ShotDef } from './types';
 import type { ShipModel } from './ship';
 import { p2Blind, p2CanStop, p2Deaf, p2Heard, p2Night, p2SetNight } from './multiverso';
+import { crRaiseFacet } from './cristal';
 
 export interface UltCtx {
   side: 0 | 1;
@@ -83,6 +95,9 @@ export interface UltCtx {
   events: BattleEvent[];
 }
 export type UltFn = (b: Battle, o: UltCtx) => ShotPath[];
+
+/** ¡A BABOR!: each crewmate's shot along Canelo Almirante's aim hits at this fraction (calibrated: tests/forms.test.ts) */
+export const BABOR_MATE = 0.3;
 
 /** structure an ultimate may erase in one go (fraction of the victim's starting structure; bosses: 15% in sim.fire) */
 export function ultBudgetFrac(catId: string, stars = 1) {
@@ -422,6 +437,23 @@ export const ULTS: Record<string, UltFn> = {
     b.sides[o.side].buffs.empower = 1;
     o.events.push({ k: 'ultfx', fx: 'eclipse', side: enemy, x: 960, y: 220, path: 0, at: 0 });
     return normal(b, o);
+  },
+
+  // ------------------------------------------------------------------ FORMS (data/rupturas/formas.ts)
+  // ¡A BABOR! (Canelo Almirante): leadership, not brute force. His own barrage, then every crewmate still
+  // standing fires ITS OWN shot along HIS aim (same muzzle, angle and pull: Lumen's replay mechanic), weaker.
+  // Deterministic (no rng), inside the same ultimate budget (35% / bosses 15%) as every other ultimate.
+  canelo_almirante(b, o) {
+    const paths = normal(b, o);
+    o.events.push({ k: 'ultfx', fx: 'flash', side: o.side, x: o.origin.x, y: o.origin.y, path: 0, at: 0 });
+    for (const m of b.sides[o.side].cats) {
+      if (m === o.cat || m.ko || m.stunned > 0 || b.isFlying(m)) continue;
+      const shot: ShotDef = { ...m.def.shot, power: m.def.shot.power * BABOR_MATE };
+      const ps = b.buildPaths(shot, o.origin, o.angle, o.power, o.wind, o.side);
+      b.resolvePaths(o.side, shot, m.def.atk, ps, o.events, paths.length);
+      paths.push(...ps);
+    }
+    return paths;
   },
 
   // ================================================================== HEROICOS
@@ -926,6 +958,27 @@ export const ULTS: Record<string, UltFn> = {
     o.events.push({ k: 'ultfx', fx: 'timestop', side: enemy, x: ctr.x, y: ctr.y, n: p2CanStop(b, enemy) ? 1 : 0, path: 0, at: 0 });
     return normal(b, o);
   },
+
+  // ================================================================== PARTE II · OLEADA 1
+  // ------------------------------------------------------------------ the crystals remember
+  l_madrenacar(b, o) {
+    // what the crystals remember: your crew's last shot, exactly (Lumen's replay)…
+    const memory = b.lastShot[o.side] ? ULTS.s_lumen(b, o) : [];
+    // …then her own pearls (stronger when there's nothing to remember yet)
+    const pearl: ShotDef = memory.length ? o.shot : { ...o.shot, power: o.shot.power * 1.5 };
+    const pearls = b.buildPaths(pearl, o.origin, o.angle, o.power, o.wind, o.side);
+    b.resolvePaths(o.side, pearl, o.atk, pearls, o.events, memory.length);
+    crRaiseFacet(b, o.side, o.events);
+    return [...memory, ...pearls];
+  },
+  // ------------------------------------------------------------------ shhh… FIN
+  l_bibliotecario(b, o) {
+    return ULTS.l_merlina(b, o);
+  },
+  // ------------------------------------------------------------------ the prism opens
+  s_refracta(b, o) {
+    return ULTS.l_aurea(b, o);
+  },
 };
 
 /**
@@ -971,6 +1024,13 @@ export function ultWorth(b: Battle, c: CatState): boolean {
     case 'l_cronos':
       // TIME STOP can't be chained: wait until it can land on a crew that would shoot
       return p2CanStop(b, enemy) && alive.some((k) => k.stunned <= 1);
+    // ---- Parte II · Oleada 1
+    case 'l_madrenacar':
+      // best with a shot to remember (her crew already fired once), or once the fight drags on
+      return !!b.lastShot[c.side] || b.turn >= 3;
+    case 's_refracta':
+      // once per battle: wait for cabins to strike (or for the fight to drag on)
+      return alive.length >= 2 || b.turn >= 5;
     default:
       return true;
   }

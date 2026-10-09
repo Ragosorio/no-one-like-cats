@@ -82,6 +82,8 @@ export interface AutoResult {
   phaseTurns?: number[];
   /** CATACLISMOS (balance scripts): times it landed / was cancelled, and the share of your structure it took */
   cata?: { casts: number; stops: number; dmg: number };
+  /** wins only: the player cat whose shot was the last to hurt the foe (same rule as the screen: sim.finalBlow) */
+  finalBlow?: string;
 }
 
 /** play a whole battle AI vs AI (player side uses `playerProfile`) */
@@ -150,5 +152,5 @@ export function* autoBattleSteps(spec: BattleSpec, playerProfile: AiProfile = DI
   }
   notePhase();
   const cata = b.cata ? { casts: b.cata.casts, stops: b.cata.stops, dmg: cataDmg / Math.max(1, b.sides[0].ship.initialMax?.[0] ?? 1) } : undefined;
-  return { won: b.winner === 0, turns: b.turn, reason: b.reason, kos, hullLost: 1 - b.hullPct(0), bossPhase: b.boss?.phase, phaseTurns, cata };
+  return { won: b.winner === 0, turns: b.turn, reason: b.reason, kos, hullLost: 1 - b.hullPct(0), bossPhase: b.boss?.phase, phaseTurns, cata, finalBlow: b.winner === 0 ? b.finalBlow ?? undefined : undefined };
 }

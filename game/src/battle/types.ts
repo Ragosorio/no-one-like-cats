@@ -16,9 +16,11 @@ export type ElementId =
   | 'shadow'
   | 'sound'
   | 'time'
+  // Parte II · Oleada 1 (battle/cristal.ts)
+  | 'crystal'
   | 'neutral';
 
-export type StatusId = 'wet' | 'burning' | 'frozen' | 'charged' | 'rooted' | 'cursed' | 'voided' | 'steam';
+export type StatusId = 'wet' | 'burning' | 'frozen' | 'charged' | 'rooted' | 'cursed' | 'voided' | 'steam' | 'prism';
 
 export type Trajectory =
   | 'ballistic' // normal arc
@@ -96,6 +98,8 @@ export interface BattleCatDef {
   reload?: number;
   /** initial ultimate meter for this cat (traits: Dormilón) */
   ultStart?: number;
+  /** sim effect of its ultimate (battle/ults.ts ULTS) when it isn't the species' own: a FORM's (data/rupturas/formas.ts) */
+  ultKey?: string;
 }
 
 export interface CatState {

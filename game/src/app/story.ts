@@ -28,17 +28,19 @@ import { askPlayerProfile } from '../ui/story/profile';
 import { zoneCard } from '../ui/story/zoneCard';
 import { BOSS_INTRO, BOSS_OUTRO, ELITE_WARN, ZONE_INTRO, RAIJIN_INTRO, RAIJIN_OUTRO, HERALDO_INTRO, HERALDO_OUTRO, GRIETA_INTRO, GRIETA_OUTRO, VACIO_INTRO, VACIO_OUTRO, PATITO_INTRO, PATITO_OUTRO, MAREA_FINAL, UNKNOWN_END, NOCTIS_JOINS, SECRET_JOINS } from '../ui/story/script';
 import { speciesCount } from '../state/sys/cats';
+import { BAL } from '../state/econ';
 import { startMareaFinal } from '../state/sys/island';
 import { gtxt } from '../ui/gender';
 import { isCleared, zoneUnlocked } from '../state/sys/campaign';
 import { darkSky } from '../ui/story/effects';
 import { applyAudioSettings, openSettings } from '../panels/Settings';
 import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
-import { goIsland, goTitle } from './flow';
+import { goIsland, goRegion, goTitle } from './flow';
 import { PODIO_INTRO, HEROICO_INTRO, DIVINO_INTRO } from '../podio/lines';
 import { CASINO_INTRO } from '../panels/casino/intro';
 import { GRIETAS_EXPLAIN, MULTI_INTRO, MULTI_OUTRO } from '../ui/story/grietasScript';
 import { FINAL_EPILOGUE, FINAL_INTRO, FINAL_OUTRO } from '../ui/story/finaleScript';
+import { RUPTURAS_COVERED, RUPTURAS_ON_DONE, RUPTURAS_ON_NEW } from '../ui/story/rupturasScript';
 
 // ------------------------------------------------------------------ beat plan (M1: b01–b11 · M2: zones 2–3)
 interface BeatRef {
@@ -52,16 +54,20 @@ interface BeatRef {
   /** lines written in ui/story/script.ts instead of content.story */
   custom?: Line[];
   /** non-dialog beat: the player profile prompt (name + gender), the Marea Final, the credits roll,
-   *  or a cat that joins (`reveal`) */
-  special?: 'profile' | 'marea' | 'credits' | 'reveal';
+   *  a cat that joins (`reveal`), or a trip to a Parte II 3D region (`region`: e.g. H31's cinematic) */
+  special?: 'profile' | 'marea' | 'credits' | 'reveal' | 'region';
+  /** for special 'region': the region id (src/regions/index.ts) */
+  region?: string;
   /** for special 'reveal': the species that joins after the lines */
   species?: string;
   /** for special 'credits': the end of the whole story instead of Chapter 1 */
   edition?: 'final';
   /** zone arrival card before the lines (and the map pans to that zone) */
   card?: number;
-  /** only plays on this screen */
-  onlyOn?: 'map' | 'island';
+  /** only plays on this screen ('region' = inside a Parte II 3D region) */
+  onlyOn?: 'map' | 'island' | 'region';
+  /** may ALSO play inside a 3D region (island / map otherwise): Parte II arrival beats */
+  inRegion?: boolean;
 }
 /** beats that open when a mission APPEARS */
 const ON_NEW: Record<string, BeatRef[]> = {
@@ -95,6 +101,8 @@ const ON_NEW: Record<string, BeatRef[]> = {
   H28: [{ beat: 'grieta_void_intro', custom: MULTI_INTRO.void, effect: 'darkSky', delay: 2 }],
   // EL ARCHIVO RASGADO: the six grietas won → the end of the story (state/sys/finale.ts)
   H29: [{ beat: 'final_intro', custom: FINAL_INTRO, effect: 'darkSky', delay: 3 }],
+  // Parte II · Oleada 1 «La Marea Imposible» (H31–H41, after «Fin»): lines in data/rupturas/historia.json
+  ...RUPTURAS_ON_NEW,
 };
 /** beats that play when a mission is COMPLETED */
 const ON_DONE: Record<string, BeatRef[]> = {
@@ -135,6 +143,8 @@ const ON_DONE: Record<string, BeatRef[]> = {
     { beat: 'b30_creditos', special: 'credits', edition: 'final', delay: 1 },
   ],
   H30: [{ beat: 'final_epilogue', custom: FINAL_EPILOGUE, delay: 1 }],
+  // Parte II · Oleada 1: after each step (the battle's cat / element reveal already played)
+  ...RUPTURAS_ON_DONE,
 };
 
 /** beats that fire when a condition becomes true (checked while calm on island/map) */
@@ -165,7 +175,7 @@ function catRarity(species: string) {
   return CONTENT.cats.find((c) => c.id === species)?.rarity;
 }
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
-const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28', 'H29', 'H30']);
+const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28', 'H29', 'H30', ...RUPTURAS_COVERED]);
 
 interface QueuedBeat {
   key: string;
@@ -190,14 +200,21 @@ let IslandCls: (abstract new (...a: never[]) => unknown) | null = null;
 let MapCls: (abstract new (...a: never[]) => unknown) | null = null;
 
 // ------------------------------------------------------------------ helpers
-function where(): 'island' | 'map' | 'battle' | 'other' {
+function where(): 'island' | 'map' | 'battle' | 'region' | 'other' {
   const c = scenes.current;
   if (!c) return 'other';
   const n = c.constructor.name;
   if ((IslandCls && c instanceof IslandCls) || n === 'IslandScene') return 'island';
   if ((MapCls && c instanceof MapCls) || n === 'MapScene') return 'map';
+  // Parte II 3D regions (scenes/RegionScene: `regionId`). Duck-typed: importing it here would pull three.js at boot
+  if (typeof (c as { regionId?: unknown }).regionId === 'string' || n === 'RegionScene') return 'region';
   if (/Battle/.test(n)) return 'battle';
   return 'other';
+}
+/** a queued beat may play here (inside a 3D region only the beats written for it: never Part I's) */
+function fits(ref: BeatRef, here: ReturnType<typeof where>) {
+  if (here === 'region') return ref.onlyOn === 'region' || !!ref.inRegion;
+  return !ref.onlyOn || ref.onlyOn === here;
 }
 function transitioning() {
   return !!(scenes as unknown as { busy?: boolean }).busy;
@@ -324,13 +341,21 @@ function canBeat() {
   // completed-mission panels go first, then the beat
   return canPanel() && !busy && !panelShowing && done.length === 0;
 }
+/** calm inside a Parte II 3D region: its own beats may play (the mission panels wait for the island / map) */
+function canRegionBeat() {
+  return where() === 'region' && !transitioning() && !dialogActive() && !introRunning && !overlayBlocked() && !busy && !panelShowing;
+}
 
 /** Luzterna calls you "grumete" until Boss 1, "Capi" afterwards; Canelo keeps the name you gave him. */
 function personalize(sp: string, text: string) {
   // dialog boxes are plain text: element badge tokens ({fire}…) only render in iconText
-  let t = gtxt(text).replace(/\{(fire|water|nature|earth|storm|magic|cosmic|void|unknown)\}\s?/g, '');
+  let t = gtxt(text).replace(/\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void|crystal|unknown)\}\s?/g, '');
   const c = firstCat();
-  if (c && c.species === 'c_canelo' && c.name && c.name !== 'Canelo') t = t.replace(/\bCanelo\b/g, c.name);
+  if (c && c.species === 'c_canelo' && c.name && c.name !== 'Canelo') {
+    t = t.replace(/\bCanelo\b/g, c.name);
+    // Parte II: his page in capitals (H36) — the form's name «CANELO ALMIRANTE» stays as the form is called
+    t = t.replace(/\bCANELO\b(?! ALMIRANTE)/g, c.name.toUpperCase());
+  }
   if (sp.toUpperCase() === 'LUZTERNA' && G.s.campaign.bossesDefeated >= 1) t = t.replace(/\bgrumete\b/g, 'Capi');
   return t;
 }
@@ -417,7 +442,7 @@ async function pump() {
       for (const u of ms.unlocks) (u.changesRules ? rules : lines).push(u.text);
     }
     const cap = CONTENT.kingdomMilestones.find((x) => x.kl === top)?.catLevelCap;
-    if (cap) lines.unshift(`Tope de nivel de gato: ${cap}`);
+    if (cap) lines.unshift(cap >= BAL.kingdom.level_cap_cats ? `Tope de nivel de gato: ${cap} (+${BAL.cats.beyond_50.cap_per_star} por ★ desde la ★2)` : `Tope de nivel de gato: ${cap}`);
     kingdomBanner(storyLayer(), top, lines);
     if (rules.length) {
       busy = true;
@@ -455,9 +480,9 @@ async function pump() {
     }
   }
   // blocking beats
-  if (beats.length && canBeat()) {
+  if (beats.length && (canBeat() || canRegionBeat())) {
     const here = where();
-    const i = beats.findIndex((q) => now >= q.notBefore && (!q.ref.onlyOn || q.ref.onlyOn === here));
+    const i = beats.findIndex((q) => now >= q.notBefore && fits(q.ref, here));
     if (i >= 0) {
       const q = beats.splice(i, 1)[0];
       await playBeat(q);
@@ -465,7 +490,7 @@ async function pump() {
     }
   }
   // features: first use (over its panel) beats first appearance (when calm, spaced out)
-  if (canBeat() && !beats.some((q) => q.notBefore <= now && (!q.ref.onlyOn || q.ref.onlyOn === where()))) {
+  if (canBeat() && !beats.some((q) => q.notBefore <= now && fits(q.ref, where()))) {
     const used = featureInUse(now);
     const f = used ?? featureAppeared(now);
     if (f) {
@@ -507,6 +532,23 @@ async function playBeat(q: QueuedBeat) {
       G.save();
     } finally {
       busy = false;
+    }
+    return;
+  }
+  if (q.ref.special === 'region' && q.ref.region) {
+    // Parte II: travel to a 3D region (H31's «el reflejo» cinematic comes back to the island by itself).
+    // Marked BEFORE leaving: a reload mid-cinematic never replays it.
+    markBeat(q.key);
+    G.save();
+    busy = true;
+    try {
+      await goRegion(q.ref.region).catch(async (e) => {
+        console.warn('[story] region', q.ref.region, e);
+        await goIsland();
+      });
+    } finally {
+      busy = false;
+      lastBlockEnd = performance.now();
     }
     return;
   }

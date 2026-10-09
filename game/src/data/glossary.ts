@@ -224,9 +224,9 @@ export const GLOSSARY: GlossEntry[] = [
     id: 'nivel',
     term: 'Nivel y ¡ÑAM!',
     group: 'gatos',
-    what: 'Cada gato tiene nivel. Sube alimentándolo con pescaditos: 4 mordidas (¡ÑAM!) = 1 nivel. El tope de nivel es tu Reino + 5.',
-    why: 'Más nivel = más oro por segundo y más poder. Y en ciertos niveles (10, 20…) su disparo CAMBIA: no es «+27 de ataque», es «ahora su bola de pelo explota».',
-    how: 'Toca a un gato › mantén ¡ÑAM!. Si llegó al tope, sube tu Reino. En Reino 6 aparece «Alimentar hasta Nv X».',
+    what: 'Cada gato tiene nivel. Sube alimentándolo con pescaditos: 4 mordidas (¡ÑAM!) = 1 nivel. El tope es tu Reino + 5 hasta Nv 50; de ahí, cada gato sube su propio tope con estrellas: +10 por cada ★ desde la ★2 (★2 = 60, ★3 = 70… ★6 = 100, el máximo).',
+    why: 'Más nivel = más oro por segundo y más poder. Y en ciertos niveles (10, 20…) su disparo CAMBIA: no es «+27 de ataque», es «ahora su bola de pelo explota». Pasando el 50 cada nivel rinde menos (y cuesta un banquete), pero es lo que te sube en el Podio: unos 10 niveles por liga.',
+    how: 'Toca a un gato › mantén ¡ÑAM!. Si llegó al tope: antes del 50, sube tu Reino; después, súbele una ★ en el Altar de Almas. En Reino 6 aparece «Alimentar hasta Nv X».',
     where: 'Panel del gato (toca a cualquier gato en la isla)',
   },
   {
@@ -555,7 +555,7 @@ export const GLOSSARY: GlossEntry[] = [
     term: 'Reino (nivel de tu isla)',
     group: 'reino',
     what: 'El nivel de tu cuenta: el escudo con número de arriba a la izquierda. Su barra se llena con casi todo: construir, ganar batallas, cumplir misiones, descubrir gatos, subir estrellas, limpiar terreno.',
-    why: 'Cada nivel de Reino sube +1 el tope de nivel de tus gatos, da Ronroneo, abre misiones, recetas, tiers de hábitat, terreno y automatizaciones. «Llega a Reino 3» = sigue jugando normal hasta llenar la barra.',
+    why: 'Cada nivel de Reino sube +1 el tope de nivel de tus gatos (hasta 50; más arriba lo suben sus estrellas), da Ronroneo, abre misiones, recetas, tiers de hábitat, terreno y automatizaciones. «Llega a Reino 3» = sigue jugando normal hasta llenar la barra.',
     how: 'No se compra: se juega. Toca el escudo para ver el camino de hitos y qué te da el siguiente nivel.',
     where: 'Arriba a la izquierda (escudo REINO)',
     quip: 'Ya aprendiste esto; toma, ahora preocúpate por cosas más interesantes.',
@@ -647,6 +647,18 @@ export const GLOSSARY: GlossEntry[] = [
     where: 'Tienda › hábitat de Vacío · Santuario',
     quip: 'Lo que borra Nadie, no lo arregla nadie.',
     gate: { element: 'void' },
+  },
+  // Parte II · Oleada 1 (battle/cristal.ts)
+  {
+    id: 'el_crystal',
+    term: 'Cristal',
+    group: 'gatos',
+    what: 'En barcos: canica de nácar que rebota una vez. Lo que toca queda en PRISMA: el próximo golpe de OTRO elemento ahí se REFRACTA y se parte en 2 esquirlas que saltan a las celdas sanas más cercanas (con {light} Luz es ESPECTRO: ×1.25 y 3 esquirlas). Cada tiro de un gato de Cristal que cae levanta una FACETA en tu barco: el próximo proyectil enemigo que aterrice pierde 40% y una esquirla le vuelve a quien disparó. En el Podio, su Técnica PRISM SHARD! puede dejarlo QUEBRADO.',
+    why: 'Le pega ×1.5 a {light} Luz y a {sound} Sonido (les rebota las ondas). Recibe ×1.5 de {earth} Tierra y de {nature} Naturaleza (las raíces parten la piedra… y el cristal).',
+    how: 'Gana en Isla Nácar y Brillito se queda; Madre Nácar llega después. Hábitat de Cristal en la Tienda y Resonancia con un padre de Cristal: los raros y épicos salen cruzándolo con Tierra, Luz o Agua.',
+    where: 'Tienda › hábitat de Cristal · Santuario',
+    quip: 'Te disparan, lo devuelves. Se llama educación.',
+    gate: { element: 'crystal' },
   },
 ];
 

@@ -327,6 +327,27 @@ function elementFeature(el: string, g: Graphics, c: Container, x: number, y: num
         for (let k = 0; k < 16; k++) snow.rect(x - 24 + Math.random() * 46, y - 7 + Math.random() * 14, 2 + Math.random() * 4, 1.5).fill({ color: 0xffffff, alpha: 0.4 + Math.random() * 0.6 });
       };
     }
+    case 'crystal': {
+      // Parte II: a split geode on the path, lined with nacre crystals; a facet catches the light and winks
+      g.ellipse(x, y, 30, 12).fill(0x7e66c9).stroke(INK);
+      g.ellipse(x, y - 1, 23, 8).fill(0xe8deff).stroke({ width: 1.5, color: C.ink });
+      const cols = [0xb79cff, 0x8fd3ff, 0x6fe0c8, 0xffd6f0, 0xb79cff];
+      cols.forEach((col, k) => {
+        const cx = x - 16 + k * 8;
+        const h = 12 + ((k * 7) % 3) * 6;
+        g.poly([cx - 3.5, y, cx - 2, y - h * 0.75, cx, y - h, cx + 2, y - h * 0.75, cx + 3.5, y]).fill(col).stroke({ width: 1.5, color: C.ink });
+      });
+      const wink = new Graphics().star(0, 0, 4, 7, 1.6).fill(0xffffff).stroke({ width: 1, color: C.ink });
+      wink.position.set(x + 4, y - 22);
+      c.addChild(wink);
+      const gl = glow(c, x, y - 8, fx.main, 0.4, 0.6);
+      return (t) => {
+        const s = stepped(t);
+        gl.alpha = 0.3 + Math.sin(s * 1.6) * 0.15;
+        wink.visible = (s * 0.5) % 1 < 0.25;
+        wink.rotation = s;
+      };
+    }
     default: {
       g.poly([x - 8, y, x - 11, y - 18, x - 4, y - 30, x, y - 14]).fill(fx.main).stroke(THIN);
       g.poly([x, y, x + 3, y - 34, x + 9, y - 40, x + 12, y - 18, x + 8, y]).fill(fx.accent).stroke(THIN);

@@ -2,11 +2,14 @@
 import { G, OwnedCat } from '../game';
 import { accessoryMods } from './accessories';
 import { podioCatMods } from '../../podio/mods';
+import { activeFormId } from './forms';
+import { formPowMul } from '../../data/rupturas/formas';
 import { CATS, CONTENT, catDef, ROLE_BY_ID } from '../../data/content';
 import {
   BAL,
   catGoldPerSec,
   catLevelCap,
+  catLevelCapFor,
   catPower,
   discoveryGems,
   duplicateOrbs,
@@ -77,8 +80,33 @@ export function adopt(
   return { cat: c, isNew, orbs: 0 };
 }
 
-export function levelCap() {
+/**
+ * This cat's level cap (econ.catLevelCapFor): Reino + 5 while that's below 50; then 50 + 10 per star from ★2
+ * (★6 → Nv100). Per cat: feeding, «Alimentar hasta Nv X» and every cap text read this.
+ */
+export function levelCap(c: Pick<OwnedCat, 'stars'>) {
+  return catLevelCapFor(G.s.kl, c.stars);
+}
+/** the Reino part of the cap, the same for every cat (Reino + 5, max 50): texts about the Reino itself */
+export function reinoLevelCap() {
   return catLevelCap(G.s.kl);
+}
+/** why a cat's cap is where it is, and what raises it */
+export interface CapInfo {
+  cap: number;
+  /** 'reino': the Reino gate (Reino + 5) is the limit · 'stars': its stars are · 'max': Nv100, nothing above */
+  why: 'reino' | 'stars' | 'max';
+  /** the cap after one more star (only when why = 'stars') */
+  nextStarCap: number | null;
+  /** extra levels each star opens past Nv50 */
+  perStar: number;
+}
+export function levelCapInfo(c: Pick<OwnedCat, 'stars'>): CapInfo {
+  const cap = levelCap(c);
+  const perStar = BAL.cats.beyond_50.cap_per_star;
+  if (reinoLevelCap() < BAL.kingdom.level_cap_cats) return { cap, why: 'reino', nextStarCap: null, perStar };
+  if (cap >= BAL.cats.beyond_50.max_level || c.stars >= BAL.cats.stars.max) return { cap, why: 'max', nextStarCap: null, perStar };
+  return { cap, why: 'stars', nextStarCap: catLevelCapFor(G.s.kl, c.stars + 1), perStar };
 }
 
 /** cost in food of ONE bite (1/4 of the level cost) */
@@ -88,7 +116,7 @@ export function biteCost(c: OwnedCat) {
 
 /** Feed one bite. Returns 'bite' | 'level' | 'cap' | 'poor'. */
 export function feed(c: OwnedCat): 'bite' | 'level' | 'cap' | 'poor' {
-  if (c.level >= levelCap()) return 'cap';
+  if (c.level >= levelCap(c)) return 'cap';
   const cost = biteCost(c);
   if (G.s.food < cost) return 'poor';
   G.add('food', -cost, 'feed');
@@ -110,7 +138,7 @@ export function feed(c: OwnedCat): 'bite' | 'level' | 'cap' | 'poor' {
 export function feedTo(c: OwnedCat, target: number) {
   let gained = 0;
   let guard = 0;
-  while (c.level < Math.min(target, levelCap()) && guard++ < 4000) {
+  while (c.level < Math.min(target, levelCap(c)) && guard++ < 4000) {
     const r = feed(c);
     if (r === 'level') gained++;
     if (r === 'poor' || r === 'cap') break;
@@ -123,7 +151,8 @@ export function catGold(c: OwnedCat) {
   return catGoldPerSec(def.rarity, c.level, c.stars) * (def.economy.goldMod ?? 1) * accessoryMods(c).goldMul * podioCatMods(c).goldMul;
 }
 export function catPow(c: OwnedCat) {
-  return catPower(catDef(c.species).rarity, c.level, c.stars);
+  // an active FORM adds a modest bump (data/rupturas/formas.ts powMul); the original is ×1
+  return catPower(catDef(c.species).rarity, c.level, c.stars) * formPowMul(c.species, activeFormId(c));
 }
 export function catHpBase(c: OwnedCat) {
   const def = catDef(c.species);

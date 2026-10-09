@@ -13,7 +13,7 @@ const browser = await puppeteer.launch({
   executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   headless: 'new',
   userDataDir: process.env.PROFILE_DIR ?? "/tmp/nolc-rupturas-profile",
-  args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader', '--window-size=1600,900'],
+  args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader', '--window-size=1600,900', '--disable-gpu-vsync', '--disable-frame-rate-limit'],
   defaultViewport: { width: 1600, height: 900 },
   protocolTimeout: 600000,
 });

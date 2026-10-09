@@ -98,6 +98,8 @@ const SHOT_STATUS: Record<string, StatusId> = {
   congelado: 'freeze',
   cegado: 'blind',
   vacio: 'crack',
+  // Parte II · Cristal: the prism leaves a crack in the guard
+  prisma: 'crack',
 };
 
 const SHOT_KIND: Record<string, PowerKind> = {
@@ -146,6 +148,8 @@ const TECH: Record<string, TechDef> = {
   sound: { name: 'SONIC BOOM! (音撃)', cry: '¡SÚBELE!', mult: 1.3, kind: 'beam', pierce: true, status: { id: 'stun', turns: 1, chance: 0.4 }, desc: 'La onda atraviesa el escudo y puede ATURDIRLO.' },
   time: { name: 'REWIND CLAW! (巻戻し)', cry: '¡OTRA VEZ, DESDE EL PRINCIPIO!', mult: 1.25, kind: 'slash', rewind: true, desc: 'Se cura la mitad de lo que pega y a veces se roba un turno extra.' },
   void: { name: 'NULL BITE! (虚無)', cry: '…', mult: 1.4, kind: 'crush', erase: true, desc: 'Se come su escudo y le BORRA 8% de la vida máxima. Para siempre.' },
+  // Parte II · Oleada 1
+  crystal: { name: 'PRISM SHARD! (分光)', cry: '¡MÍRATE, PERO DE LADO!', mult: 1.4, kind: 'beam', status: { id: 'crack', turns: 2, chance: 0.6 }, desc: 'Una esquirla de nácar refractada: puede dejarlo QUEBRADO (recibe +30%).' },
 };
 
 interface StyleDef {
@@ -173,7 +177,7 @@ const STYLE: Record<string, StyleDef> = {
 
 /** status an element applies when a power needs "its element's status" */
 export function elementStatus(el: string): StatusId {
-  return ({ fire: 'burn', water: 'soak', nature: 'root', earth: 'crack', storm: 'shock', magic: 'curse', cosmic: 'crack', ice: 'freeze', light: 'blind', shadow: 'curse', sound: 'shock', time: 'crack', void: 'crack' } as Record<string, StatusId>)[el] ?? 'burn';
+  return ({ fire: 'burn', water: 'soak', nature: 'root', earth: 'crack', storm: 'shock', magic: 'curse', cosmic: 'crack', ice: 'freeze', light: 'blind', shadow: 'curse', sound: 'shock', time: 'crack', void: 'crack', crystal: 'crack' } as Record<string, StatusId>)[el] ?? 'burn';
 }
 
 /** the 4 power cards of a species */
@@ -233,6 +237,8 @@ const SIGNATURE: Record<string, Partial<PowerDef> & { desc: string }> = {
   l_headliner: { kind: 'beam', mult: 2.2, pierce: true, status: { id: 'stun', turns: 1, chance: 1 }, desc: 'Un acorde que atraviesa cualquier escudo y lo ATURDE (si no acaba de estarlo).' },
   l_nadie: { kind: 'crush', mult: 2.2, erase: true, pierce: true, desc: 'Nadie lo ve venir: se come su escudo y le BORRA 8% de la vida máxima para siempre.' },
   l_cronos: { kind: 'ult', mult: 1.9, rewind: true, status: { id: 'stun', turns: 1, chance: 1 }, desc: 'TIME STOP: pierde su próximo turno, y Cronos se cura la mitad de lo que pega.' },
+  // Parte II · Oleada 1: the Cristal primordial
+  l_madrenacar: { kind: 'orb', mult: 1.9, selfShield: 0.3, status: { id: 'crack', turns: 2, chance: 1 }, desc: 'Lo encierra en nácar (QUEBRADO 2 turnos) y levanta una faceta: escudo de 30% de su vida.' },
 };
 
 function ult(d: CatDef): PowerDef {

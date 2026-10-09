@@ -14,7 +14,7 @@ import { registerPatch } from '../patches';
 import { catDef } from '../../data/content';
 import { adopt, cat as getCat } from './cats';
 import { crew, shipPower } from './ship';
-import { buildSiege } from './campaign';
+import { buildSiege, countCrewWins } from './campaign';
 import { absStage, battleGold, battleScrap } from '../econ';
 import { STORY_SHIPS } from '../../battle/shipgen';
 import type { BattleResult, BattleSpec } from '../../scenes/BattleScene';
@@ -222,6 +222,8 @@ export function applyStoryResult(id: string, r: BattleResult): StoryLoot {
     G.bump('victory');
     G.xp('victory');
     G.count('wins');
+    // a damage-graded fight (Barco del Vacío) can pass without sinking anyone: no final blow then
+    countCrewWins(crew(), r.won ? r.finalBlow : undefined);
   } else {
     G.s.stats.defeats++;
     G.purr('defeat', 'combat');

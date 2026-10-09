@@ -581,6 +581,32 @@ function elementProp(el: string): { c: Container; tick?: Tick } {
       };
       break;
     }
+    case 'crystal': {
+      // a little prism on a nacre shell: a white beam goes in, a fan of colours comes out (and sweeps)
+      g.moveTo(-14, 0).quadraticCurveTo(0, -12, 14, 0).closePath().fill(0xf7f2ff).stroke(THIN);
+      for (const dx of [-7, 0, 7]) g.moveTo(0, -1).lineTo(dx, -7).stroke({ width: 1.2, color: 0xb79cff });
+      const fan = new Graphics();
+      [0xff8fb1, 0xffd77a, 0x6fe0c8, 0x8fd3ff, 0xb79cff].forEach((col, k) => fan.moveTo(0, 0).lineTo(46, -16 + k * 8).stroke({ width: 3, color: col, alpha: 0.7 }));
+      fan.position.set(4, -24);
+      fan.blendMode = 'add';
+      c.addChild(fan);
+      const prism = new Graphics().poly([-11, -10, 0, -36, 11, -10]).fill({ color: 0xffffff, alpha: 0.95 }).stroke(INK);
+      prism.moveTo(-5, -14).lineTo(-1, -28).stroke({ width: 2, color: 0x8fd3ff, cap: 'round' });
+      c.addChild(prism);
+      const gl = new Sprite(glowTexture());
+      gl.anchor.set(0.5);
+      gl.tint = 0x8fd3ff;
+      gl.alpha = 0.45;
+      gl.scale.set(0.5);
+      gl.y = -22;
+      c.addChildAt(gl, 0);
+      tick = (t) => {
+        const a = Math.sin(stepped(t) * 1.1);
+        fan.rotation = a * 0.25;
+        fan.alpha = 0.55 + Math.abs(a) * 0.35;
+      };
+      break;
+    }
     default: {
       g.poly([-8, 0, -11, -18, -4, -30, 0, -14]).fill(fx.main).stroke(THIN);
       g.poly([0, 0, 3, -34, 9, -40, 12, -18, 8, 0]).fill(fx.accent).stroke(THIN);
@@ -763,6 +789,7 @@ function trims(el: string) {
     time: { roof: 0x6b4f2a, glass: 0xe0b77a, stone: 0xd9c29a, banner: 0x1c3a51 },
     light: { roof: 0xffd77a, glass: 0x7fd8ff, stone: 0xfff8e1, banner: 0xe8879a },
     void: { roof: 0x0d110f, glass: 0xffffff, stone: 0xd9d9d6, banner: 0xff2e88 },
+    crystal: { roof: 0xb79cff, glass: 0x8fd3ff, stone: 0xf7f2ff, banner: 0x6fe0c8 },
   };
   return { fx, ...(map[el] ?? map.fire) };
 }
@@ -820,6 +847,11 @@ function topper(g: Graphics, x: number, y: number, el: string, s = 1) {
       g.circle(x, y - 9 * s, 7 * s).fill(0x0d110f).stroke({ width: 2, color: 0xffffff });
       g.ellipse(x, y - 9 * s, 12 * s, 3.5 * s).stroke({ width: 2, color: 0xff2e88 });
       break;
+    case 'crystal':
+      g.poly([x, y - 20 * s, x + 7 * s, y - 12 * s, x, y, x - 7 * s, y - 12 * s]).fill(0xf7f2ff).stroke(THIN);
+      g.poly([x, y - 20 * s, x + 7 * s, y - 12 * s, x, y - 12 * s]).fill(0x8fd3ff);
+      g.poly([x - 7 * s, y - 12 * s, x, y, x, y - 12 * s]).fill(0xb79cff);
+      break;
     default:
       g.star(x, y - 9 * s, 5, 9 * s, 4 * s).fill(fx.accent).stroke(THIN);
   }
@@ -839,7 +871,7 @@ function glowAt(c: Container, x: number, y: number, tint: number, alpha = 0.4, s
 /** Tier 4 · Casita de Coral: bulbous coral dome + side bulb + turret, sea-weed, element turret/topper */
 function casitaCoral(g: Graphics, c: Container, el: string) {
   const t = trims(el);
-  const CORAL: Record<string, number> = { earth: 0xf2b48a, storm: 0xc9b6e8, ice: 0xcfe9ff, sound: 0xffb3d4, shadow: 0xd9cfc0, time: 0xe8d2a8, light: 0xfff0c2, void: 0xe2e2e0 };
+  const CORAL: Record<string, number> = { earth: 0xf2b48a, storm: 0xc9b6e8, ice: 0xcfe9ff, sound: 0xffb3d4, shadow: 0xd9cfc0, time: 0xe8d2a8, light: 0xfff0c2, void: 0xe2e2e0, crystal: 0xece4ff };
   const coral = CORAL[el] ?? 0xff9fb4;
   const coralD = shade(coral, 0.82);
   g.ellipse(0, 8, 62, 22).fill(0xf2dca8).stroke(INK);

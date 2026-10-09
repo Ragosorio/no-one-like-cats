@@ -1,0 +1,333 @@
+{
+  "$comment": "Parte II · Oleada 1 — misiones H31–H41 y beats de La Marea Imposible. Se fusiona sobre content.json (solo agrega). Ver docs/part-ii/12-puente-oleada-1.md. Los ganchos (cuándo suena cada parte de cada beat) viven en ui/story/rupturasScript.ts; las batallas y las islas 3D (flags region:<id>) en state/sys/rupturas.ts.",
+  "missions": [
+    {
+      "id": "H31",
+      "chain": "historia",
+      "title": "Las estrellas caen hacia arriba",
+      "goal": { "type": "use_feature", "feature": "faro", "text": "Toca el faro de tu isla: Luzterna quiere enseñarte algo desde arriba." },
+      "trigger": "mission:H30",
+      "purpose": "story",
+      "reward": { "std": true },
+      "unlocks": [],
+      "line": "Las estrellas se están cayendo. Para arriba.",
+      "why": "Parte II · Oleada 1. Luzterna vio algo raro desde su faro. Sube a verlo (toca el faro de tu isla).",
+      "estTime": "~1:00"
+    },
+    {
+      "id": "H32",
+      "chain": "historia",
+      "title": "REGISTRO 000",
+      "goal": { "type": "use_feature", "feature": "registro000", "text": "Abre el Catdex y toca la ficha REGISTRO 000 (está antes del Nº01)." },
+      "trigger": "mission:H31",
+      "purpose": "story",
+      "reward": { "std": true, "gems": 2 },
+      "unlocks": [],
+      "line": "El Catdex tiene una ficha que nadie escribió.",
+      "why": "Antes del gato número uno apareció una ficha nueva. Ni Luzterna ni tú la escribieron.",
+      "estTime": "~0:30"
+    },
+    {
+      "id": "H33",
+      "chain": "historia",
+      "title": "La Isla de las Páginas Hundidas",
+      "goal": { "type": "use_feature", "feature": "region_paginas", "text": "Abre la CARTA y toca la isla nueva del Mar de las Rupturas para desembarcar." },
+      "trigger": "mission:H32",
+      "purpose": "story",
+      "reward": { "std": true },
+      "unlocks": [],
+      "line": "Una isla que siempre estuvo ahí. Qué raro que nunca la vimos.",
+      "why": "La isla del reflejo existe y ya está en tu carta, en una hoja que nadie pegó. Desembarca y camina entre libros mojados.",
+      "estTime": "~1:30"
+    },
+    {
+      "id": "H34",
+      "chain": "historia",
+      "title": "La Biblioteca a la Deriva",
+      "goal": { "type": "win_battle", "battle": "ruptura_paginas", "text": "Vence a la Archivista: toca su marca roja en la isla (o esta misión)." },
+      "trigger": "mission:H33",
+      "purpose": "story",
+      "reward": { "std": false, "gems": 2 },
+      "unlocks": [],
+      "line": "Una biblioteca que flota. Y que cobra multa.",
+      "why": "La Archivista dice que su isla está en el catálogo «desde siempre». Con fecha de ayer. Véncela y Marcapáginas se une a tu isla.",
+      "estTime": "~6:30"
+    },
+    {
+      "id": "H35",
+      "chain": "historia",
+      "title": "Shhh",
+      "goal": { "type": "win_battle", "battle": "ruptura_bibliotecario", "text": "Toca esta misión para entrar a la Sala de Lectura y vencer al Bibliotecario Ahogado." },
+      "trigger": "mission:H34",
+      "purpose": "story",
+      "reward": { "std": false, "gems": 5 },
+      "unlocks": [],
+      "line": "Shhh.",
+      "why": "El dueño de la biblioteca odia el ruido. Véncelo: se une a tu isla y te explica qué está pasando con el Archivo.",
+      "estTime": "~7:00"
+    },
+    {
+      "id": "H36",
+      "chain": "historia",
+      "title": "La página de Canelo",
+      "goal": { "type": "use_feature", "feature": "pagina_canelo", "text": "Vuelve a la Isla de las Páginas Hundidas y lee la página que flota con el nombre de Canelo." },
+      "trigger": "mission:H35",
+      "purpose": "story",
+      "reward": { "std": true },
+      "unlocks": [],
+      "line": "Hay una página con el nombre de Canelo. Y él ya se enteró.",
+      "why": "Una página suelta cuenta una vida de Canelo que nunca pasó. Ve a leerla: está en la isla de los libros (en la CARTA).",
+      "estTime": "~1:30"
+    },
+    {
+      "id": "H37",
+      "chain": "historia",
+      "title": "Canelo quiere el timón",
+      "goal": { "type": "wins_with_species", "species": "c_canelo", "n": 3, "text": "Gana 3 batallas con Canelo en la tripulación (campaña, encargos, historia, duelos o el Podio)." },
+      "trigger": "mission:H36",
+      "purpose": "story",
+      "reward": { "std": true },
+      "unlocks": [],
+      "line": "Canelo se subió al timón. Nadie le dio el timón.",
+      "why": "Canelo leyó que en otra vida fue almirante y ya se lo creyó. Llévalo contigo y gana 3 batallas, las que sean.",
+      "estTime": "~5:00"
+    },
+    {
+      "id": "H38",
+      "chain": "historia",
+      "title": "¡A BABOR!",
+      "goal": { "type": "final_blow", "species": "c_canelo", "n": 1, "text": "Que Canelo dé el GOLPE FINAL: gana una batalla donde su tiro sea el último que le pega al rival." },
+      "trigger": "mission:H37",
+      "purpose": "story",
+      "reward": { "std": true, "gems": 3 },
+      "unlocks": ["forma:canelo_almirante"],
+      "line": "Los almirantes no ganan batallas: las terminan.",
+      "why": "A la página de Canelo le falta la última línea. Bájale la vida al rival y guárdale el remate a él: estrena forma, CANELO ALMIRANTE.",
+      "estTime": "~4:00"
+    },
+    {
+      "id": "H39",
+      "chain": "historia",
+      "title": "Isla Nácar",
+      "goal": { "type": "win_battle", "battle": "ruptura_nacar", "text": "Ve a Isla Nácar (en la CARTA), lleva la luz hasta el monte y vence a Prismarina." },
+      "trigger": "mission:H38",
+      "purpose": "story",
+      "reward": { "std": false },
+      "unlocks": [],
+      "line": "Una montaña de cristal que refleja cosas que no existen.",
+      "why": "Ahí vive un elemento que no existía. Acomoda los espejos de la isla y vence a Prismarina: te llevas el CRISTAL, a Brillito y 20 cristales de Cristal.",
+      "estTime": "~8:00"
+    },
+    {
+      "id": "H40",
+      "chain": "historia",
+      "title": "Madre Nácar",
+      "goal": { "type": "win_battle", "battle": "ruptura_madrenacar", "text": "Toca esta misión para bajar a la Caverna que Recuerda y vencer a Madre Nácar." },
+      "trigger": "mission:H39",
+      "purpose": "story",
+      "reward": { "std": false, "gems": 5 },
+      "unlocks": [],
+      "line": "Los cristales se acuerdan de todo. Hasta de lo que tú no.",
+      "why": "La primordial del Cristal guarda reflejos de cosas que pasaron… y de otras que no. Véncela y se une a tu isla.",
+      "estTime": "~7:30"
+    },
+    {
+      "id": "H41",
+      "chain": "historia",
+      "title": "La letra en el margen",
+      "goal": { "type": "win_battle", "battle": "ruptura_corrector", "text": "Toca esta misión para enfrentar a La Fe de Erratas y vencer al Corrector." },
+      "trigger": "mission:H40",
+      "purpose": "story",
+      "reward": { "std": false, "gems": 10 },
+      "unlocks": ["oleada1_fin"],
+      "line": "Un barco blanco. Demasiado blanco.",
+      "why": "Llegó el primer Corrector: viene a «arreglar» tu isla. Véncelo para cerrar la Oleada 1 (y Espumita se baja de su barco).",
+      "estTime": "~8:00"
+    }
+  ],
+  "story": {
+    "beats": [
+      {
+        "id": "b31_estrellas",
+        "time": "tras H30 «Fin»",
+        "trigger": "H31",
+        "style": "NOIR OCEÁNICO (de noche) → cinemática 3D «el reflejo»",
+        "title": "Las estrellas caen hacia arriba",
+        "lines": [
+          ["SISTEMA", "(Es de noche. Tu isla duerme. Una estrella se despega del mar… y sube.)"],
+          ["LUZTERNA", "Capi. Capi. Despierta. No, no es una pesadilla: las estrellas se están cayendo… para ARRIBA."],
+          ["LUZTERNA", "¿Ves? Otra. Y otra. Como burbujas de refresco, pero de cielo."],
+          ["LUZTERNA", "Sube al faro, que desde arriba se ve mejor. Y no hagas ruido: los gatos duermen. …Bueno, siempre duermen."],
+          ["SISTEMA", "(La linterna gira sola dentro del faro. Por primera vez, su haz sale hacia afuera.)"],
+          ["LUZTERNA", "Mi linterna alumbra para afuera de la caja, Capi. Y el mar está reflejando una isla que no está ahí."],
+          ["LUZTERNA", "Y mira para dónde apunta el Faro del Primer Mar. El que se prendió solo. El que «no apuntaba a casa»."],
+          ["LUZTERNA", "Justo ahí. Siempre apuntó ahí. …Odio cuando las cosas raras empiezan a tener sentido."]
+        ]
+      },
+      {
+        "id": "b32_registro",
+        "time": "tras H31",
+        "trigger": "H32",
+        "style": "CATDEX (glitch)",
+        "title": "REGISTRO 000",
+        "lines": [
+          ["SISTEMA", "NEW ENTRY DETECTED — REGISTRO 000"],
+          ["CATDEX", "REGISTRO 000 · AUTOR: — · FECHA: —"],
+          ["LUZTERNA", "¿Y eso? El Catdex agregó una ficha solito. ANTES del número uno. Eso no se puede: yo inventé ese orden."],
+          ["LUZTERNA", "Ábrela, Capi. Antes de que se borre… o de que alguien le escriba más. No sé qué me da más miedo."],
+          ["LUZTERNA", "Esa ficha no la escribí yo. Y tú tampoco, Capi: tu letra es horrible."],
+          ["CAPTION", "La estática del Barco del Vacío vuelve a la pantalla. Esta vez se queda quieta y se deja leer: F · O · L · I · O."],
+          ["LUZTERNA", "FOLIO. La palabra que nadie podía leer era FOLIO. Alguien nos está archivando, Capi. Tú eres el folio 001. ¿Y el 000?"],
+          ["PERIÓDICO", "¡EXTRA! ¿QUIÉN ES EL CUARTO GATO DE LA FOTO?"]
+        ]
+      },
+      {
+        "id": "b33_paginas",
+        "time": "tras H32 (a) · al desembarcar (b)",
+        "trigger": "H33",
+        "style": "TINTA Y PAPEL MOJADO",
+        "title": "La Isla de las Páginas Hundidas",
+        "lines": [
+          ["CAPTION", "Amanece. Donde ayer había mar hay una isla de libros mojados. Las gaviotas actúan como si siempre hubiera estado ahí."],
+          ["LUZTERNA", "La Isla de las Páginas Hundidas. Según el mapa, siempre estuvo aquí. Según yo, el mapa está mintiendo."],
+          ["LUZTERNA", "Abre la CARTA, Capi. Tiene una hoja pegada en la orilla que nadie pegó, con una isla en tinta fresquita. Tócala y vamos."],
+          ["CAPTION", "Tus gatos bajan del barco. El suelo cruje como papel viejo. Porque ES papel viejo."],
+          ["LUZTERNA", "Huele a biblioteca mojada. O sea, a perro mojado con lentes."],
+          ["LUZTERNA", "Y todo está escrito: las piedras, los árboles, hasta las olas traen letra chiquita. Alguien anotó esta isla con mucho cariño… y con mucha prisa."]
+        ]
+      },
+      {
+        "id": "b34_biblioteca",
+        "time": "al desembarcar (a) · tras vencer a la Archivista (b)",
+        "trigger": "H34",
+        "style": "TINTA Y PAPEL MOJADO",
+        "title": "La Biblioteca a la Deriva",
+        "lines": [
+          ["ARCHIVISTA", "Silencio en la sala. Esta isla figura en el catálogo desde siempre, capitana. Lo dice la ficha. Con fecha de ayer."],
+          ["LUZTERNA", "¿«Desde siempre» con fecha de ayer? Vamos a pedir esa ficha prestada, Capi. A cañonazos. Toca su marca roja… o la misión fijada, que es lo mismo pero sin caminar."],
+          ["ARCHIVISTA", "Devuelvan los libros antes de que se hundan… Ah. Ya me hundí yo."],
+          ["LUZTERNA", "¿Oíste cómo dijo «desde siempre»? Como si alguien se lo hubiera dictado. Y nadie dicta tan bonito sin ensayar."],
+          ["LUZTERNA", "El gatito que salió de entre las páginas es Marcapáginas: marca dónde te quedaste. Útil… por si alguien te reescribe. Que no. Ojalá."]
+        ]
+      },
+      {
+        "id": "b35_shhh",
+        "time": "tras H34",
+        "trigger": "H35",
+        "style": "BIBLIOTECA AHOGADA",
+        "title": "Shhh",
+        "lines": [
+          ["CAPTION", "Al fondo de la biblioteca, bajo tres metros de agua, alguien pasa una página."],
+          ["BIBLIOTECARIO", "Shhh."],
+          ["LUZTERNA", "¿Me acaba de callar? ¿A MÍ? Estoy muerta, tengo derecho a hacer ruido."],
+          ["LUZTERNA", "Es un primordial, Capi: uno que se ahogó leyendo. Toca la misión fijada. Y hazle mucho, MUCHO ruido."],
+          ["BIBLIOTECARIO", "Distraxia era el olvido del Archivo, niño. Mientras ella borraba, la tinta se secaba. Ahora nadie borra… y alguien está escribiendo."],
+          ["LUZTERNA", "¿O sea que al salvar el Archivo le quitamos la goma de borrar? ¿Y ahora cualquiera le escribe encima?"],
+          ["BIBLIOTECARIO", "Cualquiera no. Alguien. Estas islas no se descubren, capitana: se escriben. Con fecha de antes, para que nadie pregunte."],
+          ["BIBLIOTECARIO", "Hay notas en los márgenes de tu página. Con una letra que no es de nadie que conozcas."],
+          ["LUZTERNA", "«Algo viene detrás de ti», dijo Distraxia. No era amenaza, Capi. Era aviso. Ella sabía qué pasaba si dejaba de borrar."],
+          ["BIBLIOTECARIO", "Me quedo en tu isla. Aquí al menos hay silencio. …Ah, no. Tienes gatos."],
+          ["LUZTERNA", "Bienvenido. Las croquetas crujen. Acostúmbrate."]
+        ]
+      },
+      {
+        "id": "b36_pagina_canelo",
+        "time": "tras H35 (a) · al leer la página (b)",
+        "trigger": "H36",
+        "style": "TINTA Y PAPEL MOJADO (Eco)",
+        "title": "La página de Canelo",
+        "lines": [
+          ["CAPTION", "En la Isla de las Páginas Hundidas flota una página suelta. No se moja. No se hunde. Y tiene un nombre escrito con letra bonita."],
+          ["LUZTERNA", "Capi, esa página dice «Canelo». NUESTRO Canelo. Ve a leerla antes de que él se entere… o peor: antes de que se la coma."],
+          ["CAPTION", "«CANELO, ALMIRANTE DE LA FLOTA GATUNA. Hundió 40 barcos. Nunca se bajó del timón.»"],
+          ["LUZTERNA", "Capi… esto nunca pasó."],
+          ["LUZTERNA", "Es un ECO: otra vida que el mismo gato pudo tener. Misma panza, otro destino. Alguien la escribió… y la dejó en borrador."],
+          ["CAPTION", "Canelo se sienta encima de la página. No piensa bajarse. Ni por croquetas. …Bueno, por croquetas tal vez."]
+        ]
+      },
+      {
+        "id": "b37_timon",
+        "time": "tras H36",
+        "trigger": "H37",
+        "style": "COZY (en cubierta)",
+        "title": "Canelo quiere el timón",
+        "lines": [
+          ["CAPTION", "Canelo se trajo la página al barco. Se subió al timón con todo y página. Nadie le dio permiso. Nadie se atreve a bajarlo."],
+          ["LUZTERNA", "Dice que si en otra vida fue almirante, en esta también. Lo dijo con la boca llena, pero lo dijo."],
+          ["LUZTERNA", "Llévalo en la tripulación y gana 3 batallas: campaña, encargos, historia, duelos o el Podio. Si aguanta el timón, hablamos de rangos."],
+          ["LUZTERNA", "Tres victorias y no se ha bajado del timón. Ni para comer: come AHÍ. Hay migajas en la brújula."],
+          ["LUZTERNA", "Pero la página no se completa: le falta la última línea. Los almirantes no ganan batallas, Capi. Las TERMINAN."]
+        ]
+      },
+      {
+        "id": "b38_a_babor",
+        "time": "tras H37 (a) · el golpe final de Canelo (b)",
+        "trigger": "H38",
+        "style": "COZY → ANIME INFERNO",
+        "title": "¡A BABOR!",
+        "lines": [
+          ["LUZTERNA", "Plan: bájale la vida al rival y guárdale el remate a Canelo. Que SU tiro sea el último que le pegue. Él solo quiere la foto."],
+          ["LUZTERNA", "Los cañones del barco siguen su tiro, así que esos no le roban la foto. Otro gato disparando después de él, sí. Ojo."],
+          ["CAPTION", "La página de Canelo se completa sola: «…y el último cañonazo fue suyo.» La tinta brilla. Y se seca."],
+          ["CAPTION", "Canelo se acomoda un sombrero que no tenía hace un segundo. Le queda. Le queda MUY bien."],
+          ["LUZTERNA", "¡A BABOR! …Nadie sabe dónde queda babor. Igual funciona."],
+          ["LUZTERNA", "Sigue siendo el mismo gato impaciente. Ahora con sombrero."],
+          ["LUZTERNA", "Su Eco y él ya son la misma página: CANELO ALMIRANTE. Cámbiale la forma en su ficha cuando quieras. Y no, no se le quita lo glotón."]
+        ]
+      },
+      {
+        "id": "b39_nacar",
+        "time": "tras H38",
+        "trigger": "H39",
+        "style": "NÁCAR PRISMÁTICO",
+        "title": "Isla Nácar",
+        "lines": [
+          ["CAPTION", "Detrás de la biblioteca el mar se vuelve espejo. Una montaña de nácar refleja tu barco… con una vela de más."],
+          ["LUZTERNA", "Isla Nácar: ya salió en la CARTA, en la hoja que nadie pegó. Todo ahí refleja, hasta lo que no está. Mi linterna rebota en cada piedra y me da una jaqueca de muerta."],
+          ["PRISMARINA", "¡Alto! Este cristal no se toca: se mira. Y si lo miras mucho… te mira de vuelta."],
+          ["LUZTERNA", "Su barco solo aparece si la luz llega hasta el monte, Capi. Acomoda los espejos. Y no te veas mucho en ellos: yo ya no salgo y no me quejo."],
+          ["PRISMARINA", "Está bien, está bien. Llévate un poco de brillo. Igual el cristal se acuerda de todo."],
+          ["LUZTERNA", "CRISTAL: no pega, REDIRIGE. Sus tiros rebotan y sus barreras refractan lo que les tiras."],
+          ["LUZTERNA", "Le pega ×1.5 a la Luz y al Sonido. La Tierra lo rompe ×1.5: piedra contra vidrio, de toda la vida."],
+          ["LUZTERNA", "Hábitat de Cristal en la TIENDA. ¿Más gatos de Cristal? Pon a Brillito en la Resonancia con quien quieras."]
+        ]
+      },
+      {
+        "id": "b40_madrenacar",
+        "time": "tras H39",
+        "trigger": "H40",
+        "style": "NÁCAR PRISMÁTICO (caverna)",
+        "title": "Madre Nácar",
+        "lines": [
+          ["CAPTION", "En el fondo de Isla Nácar hay una caverna donde cada cristal muestra una escena distinta. Ninguna es de hoy."],
+          ["MADRE NÁCAR", "Bienvenidos. Ya los había visto llegar. Varias veces. En una ni siquiera venían."],
+          ["LUZTERNA", "Es la primordial del Cristal, Capi. Habla como abuela que ya se sabe el chisme. Toca la misión fijada."],
+          ["MADRE NÁCAR", "Los cristales recordamos todo lo que reflejamos. Mira este. ¿Ves al gato en las rocas? Tú tampoco lo viste la primera vez."],
+          ["CAPTION", "En el cristal: los peñascos frente a tu isla, de noche. Un gato sentado, mirando hacia acá. Parpadeas y ya no está."],
+          ["MADRE NÁCAR", "Y este otro es tu isla. Sin gatos. Sin faro. Como si nunca hubieras llegado. No te asustes: es un reflejo. Por ahora."],
+          ["LUZTERNA", "Ya. Tápalo. Me quedo con el del gato misterioso, que es menos deprimente. Y tú, abuela, te vienes con nosotros."]
+        ]
+      },
+      {
+        "id": "b41_corrector",
+        "time": "tras H40",
+        "trigger": "H41",
+        "style": "BLANCO PERFECTO",
+        "title": "La letra en el margen",
+        "lines": [
+          ["CAPTION", "Un barco blanco perfecto atraca sin hacer olas. Su tripulación ronronea al mismo tiempo. Todos. Siempre."],
+          ["CORRECTOR", "Su isla tiene demasiadas contradicciones, {g:Capitán|Capitana|Capitane}. Gatos que no obedecen. Una farera muerta que habla. Las vamos a corregir."],
+          ["LUZTERNA", "¿Corregirnos? Sobre mi cadáver. …Ah, verdad."],
+          ["LUZTERNA", "Y trae un Canelo que SÍ obedece. Qué asco. El nuestro es almirante y no obedece ni a su sombrero. Toca la misión fijada, Capi: vamos a llenarle el barco de errores."],
+          ["CORRECTOR", "Error de redacción en la batalla. Se tomará nota. Volveremos con la versión corregida."],
+          ["CAPTION", "En el casco blanco queda una firma a mano: «—N.»"],
+          ["LUZTERNA", "«—N.». Como la carta. No era de Nadie ni de Noctis: era N de Normal. Qué nombre tan aburrido para un villano."],
+          ["LUZTERNA", "Y Espumita se bajó de su barco. Dice que allá todo estaba demasiado limpio. Un gato con criterio."],
+          ["LUZTERNA", "Vienen más, Capi. Muchos barcos blancos. Y allá arriba, detrás de las nubes, algo se está despertando."],
+          ["CORRECTOR", "Su isla tiene demasiadas contradicciones, {g:Capitán|Capitana|Capitane}. Las vamos a corregir."],
+          ["CAPTION", "CONTINUARÁ: EL CIELO DESPIERTA"]
+        ]
+      }
+    ]
+  }
+}

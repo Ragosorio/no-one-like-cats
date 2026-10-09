@@ -71,6 +71,8 @@ const CAPTION: Record<string, string> = {
   cosmic: 'Una estrella cayó al mar. No la empujaste tú. Pero ahora te sigue.',
   // Parte 2: Grietas del Multiverso
   ...GRIETA_CAPTION,
+  // Parte II · Oleada 1: Isla Nácar (H39)
+  crystal: 'Ganaste en Isla Nácar y el nácar te eligió. Ahora todo lo que te disparen puede rebotar. Y todo lo que tú dispares, también.',
 };
 
 /** T4 element discovery (+ the primordial that came with it), outside the Results screen */
@@ -103,6 +105,8 @@ export async function revealCat(species: string) {
     caption: cd.lore,
     subtitle: `${cd.epithet} · ${cd.battleForm.cry}`,
     duplicateOrbs: r.isNew ? undefined : r.orbs,
+    // a story reward, not a Resonancia (it used to read «RESONANCIA Nº 001»)
+    kicker: 'RECOMPENSA DE LA HISTORIA',
   });
   G.save();
 }

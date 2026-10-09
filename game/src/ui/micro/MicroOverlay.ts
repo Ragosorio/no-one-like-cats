@@ -13,6 +13,7 @@ import { IslandScene } from '../../scenes/IslandScene';
 import { catTexture, preloadCats } from '../../art/catArt';
 import { SilhouetteFilter } from '../../fx/filters';
 import { fmt } from '../../core/format';
+import { Modal } from '../modal';
 
 let root: Container;
 let banner: Container | null = null;
@@ -37,6 +38,11 @@ export function mountMicroOverlay() {
   Ticker.shared.add(tick);
 }
 
+function panelOpen() {
+  for (const ch of scenes.overlayLayer.children) if (ch instanceof Modal && ch.visible && !ch.destroyed) return true;
+  return false;
+}
+
 function onIsland() {
   return scenes.current instanceof IslandScene;
 }
@@ -44,7 +50,9 @@ function onIsland() {
 function tick(tk: Ticker) {
   setMicroAllowed(onIsland());
   const m = currentMicro();
-  root.visible = onIsland();
+  // the microevent lives above the panels (fxLayer): hide it while a panel is open, or the stray cat's
+  // silhouette walks across the Catdex
+  root.visible = onIsland() && !panelOpen();
   if (!m || !clockTxt) return;
   const s = Math.ceil(m.leftMs / 1000);
   clockTxt.text = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;

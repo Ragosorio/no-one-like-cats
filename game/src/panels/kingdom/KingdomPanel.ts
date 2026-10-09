@@ -9,6 +9,7 @@
 import { Container, FederatedPointerEvent, Graphics, Text, TilingSprite } from 'pixi.js';
 import gsap from 'gsap';
 import { Modal } from '../../ui/modal';
+import { fitLine } from '../../ui/fit';
 import { C, F } from '../../ui/theme';
 import { txt, Bar, dotGrid, crosses, Button } from '../../ui/widgets';
 import { setSimulacro, simulacroOn, simulacroStats } from '../../state/sys/simulacro';
@@ -88,7 +89,13 @@ function msAt(kl: number): Milestone | undefined {
   return MS.find((m) => m.kl === kl);
 }
 function catCapAt(kl: number) {
-  return msAt(kl)?.catLevelCap ?? kl + 5;
+  return msAt(kl)?.catLevelCap ?? Math.min(BAL.kingdom.level_cap_cats, kl + 5);
+}
+/** «50 (+10 por ★ desde la ★2, hasta 100)» once the Reino gate is open (econ.catLevelCapFor) */
+function catCapText(kl: number) {
+  const cap = catCapAt(kl);
+  const X = BAL.cats.beyond_50;
+  return cap >= BAL.kingdom.level_cap_cats ? `${cap} (+${X.cap_per_star} por ★ desde la ★2, hasta ${X.max_level})` : String(cap);
 }
 function isStar(m: Milestone | undefined) {
   return !!m?.unlocks.some((u) => u.changesRules);
@@ -191,14 +198,14 @@ class KingdomView {
     c.addChild(bt, bar, nx);
     const lines: string[] = [];
     if (!max) {
-      lines.push(`Tope de nivel de gato: ${catCapAt(kl)} → ${catCapAt(kl + 1)} al subir`);
+      lines.push(catCapAt(kl + 1) > catCapAt(kl) ? `Tope de nivel de gato: ${catCapAt(kl)} → ${catCapAt(kl + 1)} al subir` : `Tope de nivel de gato: ${catCapText(kl)}`);
       lines.push(`+${BAL.ronroneo.base_min.level_up} min de Ronroneo · misiones nuevas · presagios`);
       const every = BAL.kingdom.milestone_gems_every;
       const nextGem = Math.ceil((kl + 1) / every) * every;
       lines.push(`Cada ${every} niveles: +${BAL.kingdom.milestone_gems} Ojos de Gato (próximo: Reino ${nextGem})`);
-    } else lines.push('Ya no hay más barra. Solo gloria y gatos.');
+    } else lines.push('Ya no hay más barra. Solo gloria y gatos.', `Tope de nivel de gato: ${catCapText(kl)}`);
     lines.forEach((l, i) => {
-      const t = label(`• ${l}`, 19, C.ink);
+      const t = fitLine(label(`• ${l}`, 19, C.ink), 572);
       t.position.set(x0, 116 + i * 30);
       c.addChild(t);
     });
@@ -259,7 +266,7 @@ class KingdomView {
     if (left > 0) gsap.fromTo(st.scale, { x: 1.6, y: 1.6 }, { x: 1, y: 1, duration: 0.2, ease: 'power3.in', onComplete: () => sfx('hit', 1.2) });
     const items = ms?.unlocks ?? [];
     let yy = y + 6;
-    const capT = label(`Tope de nivel de gato: ${catCapAt(kl)}`, 18, C.inkBlue);
+    const capT = fitLine(label(`Tope de nivel de gato: ${catCapText(kl)}`, 18, C.inkBlue), w - 60);
     capT.position.set(24, yy);
     d.addChild(capT);
     yy += 30;
@@ -436,7 +443,9 @@ class KingdomView {
         tr.addChild(boat);
         gsap.to(boat, { y: boat.y - 6, rotation: 0.06, yoyo: true, repeat: -1, duration: 0.9, ease: 'sine.inOut' });
         const yah = stamp('ESTÁS AQUÍ', C.pinkHot, 18, -0.06);
-        yah.position.set(x(k) + 92, lineY - r - 40);
+        // right of the boat, or left of it near the end of the road (at Reino 50 it ran past the frame)
+        const right = x(k) + 92 + yah.width / 2 < x(CAP) + 80;
+        yah.position.set(x(k) + (right ? 92 : -92), lineY - r - 40);
         tr.addChild(yah);
       }
     }
@@ -524,7 +533,10 @@ class KingdomView {
     const cols = 8;
     const gap = 10;
     const cw = (this.m.innerW - gap * (cols - 1)) / cols;
-    const ch = 140;
+    // cards share whatever height is left under the header (two rows used to fall off the panel's bottom)
+    const rows = Math.ceil(AUTO.length / cols);
+    const avail = this.m.innerH - (y0 + 62) - 8;
+    const ch = Math.max(104, Math.min(140, Math.floor((avail - gap * (rows - 1)) / rows)));
     const nextA = AUTO.find((a) => a.kl > kl);
     AUTO.forEach((a, i) => {
       const col = i % cols;

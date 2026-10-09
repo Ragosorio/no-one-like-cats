@@ -58,6 +58,8 @@ export interface OwnedCat {
   kos?: number;
   /** gacha-exclusive foil variant ("Holo"): boosted stats + foil shader */
   holo?: boolean;
+  /** active FORM (evolution as a switchable manifestation, data/rupturas/formas.ts); absent = original */
+  form?: string;
 }
 
 export interface Habitat {
@@ -174,7 +176,7 @@ export interface GameEvents extends Record<string, unknown> {
   catAdded: { cat: OwnedCat; isNew: boolean; orbs: number };
   catLevel: { cat: OwnedCat; level: number };
   /** anything a screen shows about ONE owned cat changed (level, stars, home, name) — panels re-read it */
-  cat: { uid: string; why: 'level' | 'stars' | 'home' | 'name' };
+  cat: { uid: string; why: 'level' | 'stars' | 'home' | 'name' | 'form' };
   klUp: { kl: number };
   purr: { minutes: number; applied: { timer: Timer | null; minutes: number }[]; source: string };
   mission: { id: string; kind: 'new' | 'progress' | 'done' };

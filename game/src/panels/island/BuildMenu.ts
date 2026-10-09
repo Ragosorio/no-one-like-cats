@@ -20,6 +20,7 @@ import { fmt, fmtDuration } from '../../core/format';
 import { sfx } from '../../core/audio';
 import { catPortrait, mix, wrapText } from './ui';
 import { habitatHouse } from '../../island/buildingArt';
+import { ScrollBox } from '../collection/ui';
 
 export function openBuildMenu() {
   const els = G.s.elements;
@@ -38,6 +39,12 @@ export function openBuildMenu() {
     b.position.set(0, intro.height + 8);
     m.body.addChild(b);
   }
+  // 13 elements = 4 rows of 426 px: more than any screen. The cards live in a masked scroller
+  // (wheel / drag / bar); the top pad keeps the hover lift and the shadow inside the mask
+  const top = Math.max(72, intro.height + 14 + (blocker ? 30 : 0));
+  const list = new ScrollBox(m.innerW, m.innerH - top + 14, C.ink);
+  list.y = top;
+  m.body.addChild(list);
   els.forEach((el, i) => {
     const fx = elementFx(el);
     const card = new Container();
@@ -94,12 +101,13 @@ export function openBuildMenu() {
     card.addChild(face);
     const cx = i % cols;
     const cy = Math.floor(i / cols);
-    card.position.set(cx * (cardW + 24), 92 + cy * (ch + 26));
+    card.position.set(cx * (cardW + 24), 10 + cy * (ch + 26));
     card.eventMode = 'static';
     card.cursor = blk ? 'not-allowed' : 'pointer';
     card.on('pointerover', () => gsap.to(face, { y: -6, duration: 0.12 }));
     card.on('pointerout', () => gsap.to(face, { y: 0, duration: 0.15 }));
     card.on('pointertap', () => {
+      if (list.wasDrag) return;
       const b = buildBlocker(el);
       if (b) {
         sfx('error');
@@ -119,8 +127,9 @@ export function openBuildMenu() {
       sfx('coin', 0.7);
       toast(`¡A construir! Hábitat de ${ELEMENT_NAME[el]}`, { sub: 'Los gatos se mudan solos al terminar la obra.', icon: 'clock' });
     });
-    m.body.addChild(card);
+    list.content.addChild(card);
   });
+  list.setContentHeight(10 + rows * (400 + 26));
   m.open();
   return m;
 }

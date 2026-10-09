@@ -1,6 +1,6 @@
 # 10 · Estado de implementación: Parte II (bitácora para continuar)
 
-**Última actualización:** 2026-10-09, primera sesión de la Parte II.
+**Última actualización:** 2026-10-09 (§2g: pendientes de la Oleada 1 cerrados).
 **Rama:** `main`. Hay cambios **sin commit y sin push** (no se pidió publicar).
 
 Leyenda: **IMPLEMENTADO** = código que corre y está verificado · **PROTOTIPADO** = corre, pero es del slice y no del juego real · **PLANIFICADO** = diseñado en 05/07/08 · **NO INICIADO**.
@@ -83,6 +83,96 @@ En la barra inferior están la hora, la velocidad del día, el clima, ZARPAR y C
 - **Repo de arte:** `Ragosorio/nolc-arte` (público, Pages por Actions), en https://ragosorio.github.io/nolc-arte/. 86 SVG completos, con el manifest `tree:<hash>`. Revisa cada 6 h y solo publica si `cats-svg` cambió.
 - **Variable** `NOLC_ART_BASE_FULL=https://ragosorio.github.io/nolc-arte/` en el repo del juego. **dist: 690 MB → 102 MB.** Para revertir: `gh variable delete NOLC_ART_BASE_FULL -R Ragosorio/no-one-like-cats` y redesplegar.
 - **Codex:** el **Lote D** (14 gatos de la Oleada 1) ya está en `~/Desktop/No one - raster (fuera del repo)/arte-nuevo/`: manifest, prompts compilados, PROGRESO, la rareza `Evolución` y el lote `d` en las herramientas. Respaldo previo en `_respaldos/2026-10-09-antes-lote-d/`. La orden para Codex es «Haz el lote D». Cuando el dueño apruebe los PNG, Claude los convierte a SVG + rig + `content.json` (elemento Cristal incluido) y ahí se ven en el juego.
+
+
+## 2e. El puente en el juego real: Oleada 1 «La Marea Imposible» (2026-10-09, noche) — SIN PUBLICAR
+
+**Decisión del dueño:** no se agrega ninguna vista. La Parte II entra al juego de siempre después de H30 «Fin». Diseño y contratos en `12-puente-oleada-1.md`; guion completo H31–H62 en `13-guion-parte-ii.md`.
+
+| Pieza | Estado | Dónde | Verificación |
+|---|---|---|---|
+| Fusión de contenido solo-agregar (Parte II en archivos propios) | IMPLEMENTADO | `data/mergeContent.ts`, `data/rupturas/{especies,historia}.json`, `content.ts` | Tests: no puede pisar la Parte I ni reusar ids |
+| **Arte Lote D**: 14 SVG completos + 14 lite + 14 rigs | IMPLEMENTADO | `public/cats-svg/**`, `catRigs.json`, MAI `exports/game-rigs` | Lab catlive (ojos, orejas, cola). Dudas menores: aro de anteojos de Archivista, fantasmas de Refracta |
+| **Elemento Cristal**: afinidad (×1.5 contra Luz y Sonido; Tierra y Naturaleza le pegan ×1.5), PRISMA/REFRACCIÓN/FACETA, bioma de nácar, ícono, 12 especies, recetas, Refracta secreta, Madre Nácar y Bibliotecario bloqueados hasta la historia | IMPLEMENTADO | `battle/cristal.ts` + hooks; `especies.json`; `resonance.ts`… | `tests/crystal.test.ts` (22). La familia Cristal pierde ~90 % contra la familia Fuego en barco de madera: **revisar balance** |
+| **Historia H31–H38** + 8 beats + 5 batallas (`ruptura_*`) + parche + REGISTRO 000 (Catdex, folio, Diario, chat del casino) + meta `wins_with_species` | IMPLEMENTADO | `historia.json`, `state/sys/rupturas.ts`, `ui/story/rupturasScript.ts`, `story.ts`, `text.ts`, `Catdex.ts` + `collection/registro000.ts`… | `tests/rupturasStory.test.ts` (8); verify-missions 135 OK; batallas con sims (30–32/32 victorias); headless hasta la batalla de Páginas |
+| **Formas**: Canelo Almirante (+Agua, Poder ×1.12, ulti «¡A BABOR!»), Astral sellada | IMPLEMENTADO | `data/rupturas/formas.ts`, `state/sys/forms.ts`, `app/formsFlow.ts`, `catSlug()`, CatPanel | `tests/forms.test.ts` (16); paridad sim/estimación |
+| NOVEDADES «PARTE II · La Marea Imposible» (sin spoilers) | IMPLEMENTADO | `data/updates.ts` | — |
+| Integración | VERIFICADO | — | 171/171 tests, typecheck, build OK sin raster. Headless: `post-finale` recibe H31 y el beat de Luzterna; `late-game` no recibe nada |
+
+**Pendientes conocidos:**
+- Las victorias de duelo y Podio no cuentan para H37.
+- No existe la regla del Bibliotecario de «Sonido le pega doble».
+- `nameCat.ts` sigue mostrando solo FOLIO 001.
+- Balance Cristal contra Fuego.
+- Al publicar, las 14 pinturas completas nuevas deben llegar al sitio de arte: el deploy solo avisa y el cron las sube en ≤ 6 h, o se corre `publish.yml` a mano.
+
+
+## 2f. Islas 3D, arco de Canelo, balance y regla del Sonido (2026-10-10) — SIN PUBLICAR
+
+**Pedido del dueño:** balancear, mejorar las misiones de Canelo, implementar la regla del Sonido, islas nuevas en 3D con todo lo que se habló, y solo en la Parte II. Las animaciones de Archivista y Refracta quedan como están por ahora.
+
+| Pieza | Estado | Dónde | Verificación |
+|---|---|---|---|
+| **Motor de regiones 3D dentro del juego** | IMPLEMENTADO | `engine/world/World3D.ts`, `scenes/RegionScene.ts`, `regions/{index,types,shapes,life}.ts`, `app/flow.ts goRegion`, `core/App.ts` (Pixi `backgroundAlpha: 0.999` para que el 3D se vea debajo) | `three` y las regiones **no se cargan en la portada** (0 chunks 3D de 117 JS, en el build de producción). La Parte I se ve idéntica (capturas de la carta). Entrar y salir de las regiones 3–7 veces sin fugas de GPU |
+| **Cinemática «El reflejo»** (H31): de noche, la isla de libros existe solo reflejada en el agua | IMPLEMENTADO | `regions/reflejo.ts` | Capturas |
+| **Isla de las Páginas Hundidas** | IMPLEMENTADO | `regions/paginas.ts` + `regions/paginas/*` | Ver abajo |
+| **Isla Nácar** | IMPLEMENTADO | `regions/nacar.ts` + `regions/nacar/*` | Ver abajo |
+| **Carta: «Mar de las Rupturas»** (hoja pegada; «Aquí no hay nada» tachado y corregido a «Siempre estuvo aquí»; las islas aparecen con su flag `region:<id>`; «!» de misión) | IMPLEMENTADO | `scenes/MapScene.ts` | Captura: sin Parte II, la carta queda igual |
+| **Oleada 1 renumerada H31–H41 con el arco de Canelo**: H36 la página de su Eco, H37 3 victorias en cualquier modo, H38 Canelo da el golpe final (`final_blow`, determinista en pantalla y estimación) | IMPLEMENTADO | `historia.json`, `rupturas.ts`, `rupturasScript.ts`, `battle/sim.ts`, `campaign.ts`, `podio.ts` | Tests; E2E: entrar a Páginas completa H33 y activa H34 |
+| **Balance de Cristal**: 75 % → 56 % de victorias promedio | IMPLEMENTADO | `battle/cristal.ts`, `especies.json` | `docs/part-ii/15-balance-cristal.md`, `scripts/balance-crystal.ts` |
+| **Regla del Sonido / RUIDO** (Bibliotecario) | IMPLEMENTADO | `battle/ruido.ts` | Tests de paridad; sims 31/32 y 32/32 |
+| Correcciones del motor: mapa de sombras al cambiar de calidad, región que se libera si sales a medio cargar, casas y orillas para los gatos, arnés sin tope de 30 FPS | IMPLEMENTADO | `World3D.ts`, `RegionScene.ts`, `scripts/headless-shot.mjs` | — |
+
+**Detalle de Cristal:**
+- La causa era la faceta reflectora, no debilidad: con ella apagada, Cristal caía a 33–42 %.
+- Contra 12 de 13 familias queda dentro del rango normal de la Parte I. Sonido es la excepción a propósito (×1.5).
+- Contra Fuego en barco de madera pierde (16 %), como casi todas las familias de la Parte I. Con un gato de Agua en la tripulación sube a 33–42 %.
+
+**Integración:** 200/200 tests, typecheck limpio, `verify-missions` 138 OK y build OK.
+
+**Pendiente:**
+- Animación del aro de los anteojos de Archivista y de los fantasmas de Refracta (el dueño dice «lo vemos luego»).
+- Las victorias del Podio no cuentan para H38 (no distingue K.O. de decisión).
+- `nameCat.ts` sigue mostrando solo FOLIO 001.
+- **Publicar requiere autorización** y subir el arte nuevo a `nolc-arte`.
+
+
+## 2g. Pendientes cerrados (2026-10-09) — SIN PUBLICAR
+
+Objetivo del dueño: cero pendientes de la Oleada 1 antes de publicar.
+
+| Pendiente | Cómo se cerró | Dónde | Verificación |
+|---|---|---|---|
+| **El Podio no distinguía K.O. de decisión** (H38) | El duelo dice cómo terminó: `finish` (`'ko'` o `'decision'`) y `koBy`. En un 1 contra 1, todo el daño que recibe el rival es del gato del jugador (golpes, quemadura, raíz, invocación), así que su K.O. es el golpe final. La decisión de los jueces y rendirse no cuentan. `applyDuel(…, ko)` suma `canelo_final_blow` y la tarjeta dice «noqueó al…» o «le ganó por decisión a…». Los duelos de isla ya usaban `sim.finalBlow`. | `podio/engine.ts`, `state/sys/podio.ts` (`applyDuel`, `PodioLoot.ko`), `scenes/PodioScene.ts`, `podio/results.ts` | 2 tests nuevos (motor determinista; K.O., decisión y derrota). Headless: 4 duelos de Canelo cumplen H37 y H38 en el Podio |
+| **`nameCat.ts` solo mostraba FOLIO 001** | Desde H32, arriba de «FOLIO 001 · NOMBRE» aparece «FOLIO 000 — ~~vacante~~». Usa el mismo helper que el cartel de género (`folio000Line`, ahora en `nameCat.ts`) | `ui/story/nameCat.ts`, `ui/story/profile.ts` | Captura headless (Ajustes › Tu perfil › Cambiar) |
+| **El aro de los anteojos de Archivista se doblaba al parpadear** | **Párpado elíptico**: 5º valor opcional en la caja del ojo (`lid`, en px). Solo baja la franja fina pintada justo encima del contorno del ojo, así que el aro queda rígido y el párpado se cierra igual. Es opcional: los demás rigs no cambian y el snapshot de paridad sigue igual | `art/puppetCore.ts`, `data/catRigs.json` y MAI `exports/game-rigs/archivista_scholar_cat.rig.json` | Lab catlive headless: el diff abierto/cerrado cae solo dentro de los lentes. Parpadeo y sueño revisados a tamaño de juego |
+| **Los fantasmas de Refracta se movían con la cabeza y la cola** | `pins`: elipses que ni la cabeza, ni las orejas, ni la cola arrastran. Van sobre las caras de los fantasmas, lejos de la cabeza real. La oreja derecha es más estrecha (`halfWidth` 36 → 22). Antes, la cola arrastraba la cara magenta y la oreja cian giraba con la oreja real | `art/puppetCore.ts`, `catRigs.json` y MAI `refracta_prism_cat.rig.json`; el overlay de `CatLiveLab` dibuja pins y párpados | Diffs de pose (mirar, oreja, cola, feliz): las caras de los fantasmas quedan quietas |
+| Mapa de suplentes (`STAND_IN`) en `rupturas.ts` | Borrado: las 12 especies existen. El test exige que exista cada especie de tripulación y de premio | `state/sys/rupturas.ts`, `tests/rupturasStory.test.ts` | — |
+| La revelación de premios de historia decía «RESONANCIA Nº 001» | Ahora dice «RECOMPENSA DE LA HISTORIA» | `app/storyFlow.ts` | Captura headless |
+| TODO, FIXME, placeholder o stub en archivos de la Parte II | No quedaba ninguno | `regions/`, `RegionScene`, `rupturas.ts`, `formsFlow`, `forms.ts`, `data/rupturas` | grep |
+
+**Recorrido completo de la Oleada 1** (headless, juego real, fixture `post-finale`), sin bloqueos:
+1. H31: tocar el faro y ver la cinemática «el reflejo».
+2. H32: abrir la ficha REGISTRO 000 en el Catdex.
+3. H33: abrir la carta, ver la hoja «Mar de las Rupturas» y entrar a Páginas.
+4. H34 y H35: batallas jugadas con la IA del juego del lado del jugador.
+5. H36: la página de Canelo.
+6. H37 y H38: en el Podio, ganando por K.O.
+7. Revelación de Canelo Almirante.
+8. H39: puzle del haz (un clic real y luego `__nacar.solve()`) y su batalla.
+9. H40 y H41.
+10. Cierre: «CONTINUARÁ: EL CIELO DESPIERTA».
+
+**Pruebas:** 215/215, typecheck limpio y `verify-missions --all` con 138 OK.
+
+**Sigue abierto:**
+- **Publicar:** necesita la autorización del dueño, y hay que subir las pinturas nuevas a `nolc-arte`.
+- **Detalles de la Parte I vistos en el recorrido** (no son de la Parte II):
+  - La revelación del primordial de un jefe en `ResultsScene` también dice «RESONANCIA Nº 001».
+  - Después de cada batalla aparece el aviso de gsap «Invalid property alpha set to 0».
+  - En ventanas que no son 16:9, los carteles de SET COMPLETO dejan franjas sin cubrir a los lados.
+  - La silueta del GATO CALLEJERO se dibuja encima del panel del Catdex.
+  - En el cartel «¿CÓMO TE LLAMAS?», el título toca el subtítulo.
 
 ## 3. Resultados verificados del slice (headless, M4, Alta, 1600×900)
 

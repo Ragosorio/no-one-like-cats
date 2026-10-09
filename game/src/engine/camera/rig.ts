@@ -29,6 +29,8 @@ export class CameraRig {
   private keys = new Set<string>();
   private drag: { btn: number; x: number; y: number } | null = null;
   private moved = 0;
+  /** pointer over HUD UI → the camera ignores it (HUD canvas stacked on top of the 3D canvas) */
+  ignore: ((clientX: number, clientY: number) => boolean) | null = null;
   /** fired on a click that was not a drag (screen px) */
   onClick: ((x: number, y: number) => void) | null = null;
   private off: (() => void)[] = [];
@@ -46,6 +48,7 @@ export class CameraRig {
     };
     on(dom, 'contextmenu', (e) => e.preventDefault());
     on(dom, 'pointerdown', (e) => {
+      if (this.ignore?.(e.clientX, e.clientY)) return;
       this.drag = { btn: e.button, x: e.clientX, y: e.clientY };
       this.moved = 0;
       dom.setPointerCapture(e.pointerId);
@@ -65,13 +68,17 @@ export class CameraRig {
       if (this.moved > 8) this.follow = null;
     });
     on(dom, 'pointerup', (e) => {
-      if (this.drag && this.moved < 5 && this.drag.btn === 0) this.onClick?.(e.clientX, e.clientY);
+      if (this.drag && this.moved < 5 && this.drag.btn === 0) {
+        const r = dom.getBoundingClientRect();
+        this.onClick?.(e.clientX - r.left, e.clientY - r.top);
+      }
       this.drag = null;
     });
     on(
       dom,
       'wheel',
       (e) => {
+        if (this.ignore?.(e.clientX, e.clientY)) return;
         e.preventDefault();
         this.goal.dist = THREE.MathUtils.clamp(this.goal.dist * Math.exp(e.deltaY * 0.0012), this.limits.minDist, this.limits.maxDist);
       },

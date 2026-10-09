@@ -14,6 +14,7 @@ import { CONTENT, catDef } from '../../data/content';
 import { G } from '../game';
 import { crew, layoutOf, mk } from './ship';
 import { cat as getCat } from './cats';
+import { activeFormId } from './forms';
 import type { BattleSpec } from '../../scenes/BattleScene';
 import { p2EnemyNotes } from '../../battle/multiverso';
 import { bpCells, cataLines } from '../../battle/cataclysm';
@@ -44,7 +45,7 @@ function signature(key: string) {
   const c = crew()
     .map((u) => {
       const k = getCat(u);
-      return k ? `${k.species}:${k.level}:${k.stars}` : u;
+      return k ? `${k.species}:${k.level}:${k.stars}${k.form ? `:${activeFormId(k) ?? ''}` : ''}` : u;
     })
     .join(',');
   const lay = layoutOf()
@@ -134,7 +135,7 @@ export function hiddenRules(spec: BattleSpec): string[] {
     ['Su', spec.enemy.cats],
   ] as const) {
     for (const c of cats) {
-      const note = BIG_ULT[c.catId];
+      const note = BIG_ULT[c.ultKey ?? c.catId];
       if (note) out.push(`${who} ${c.name}: ${note} La simulación la usa cuando le conviene.`);
     }
   }
@@ -173,7 +174,13 @@ const BIG_ULT: Record<string, string> = {
   l_medianoche: 'LEGENDARIO. Su ulti apuñala a TODOS los gatos rivales y trae la medianoche: 2 turnos más, todos los tiros de su lado son invisibles y cada uno apuñala al gato más cercano (tope 35%, jefes 15%).',
   l_headliner: 'LEGENDARIO. Su ulti suelta ondas que cruzan el barco de lado a lado y ATURDE a todos los gatos rivales (no a los de Sonido ni a los SORDOS) (tope 35%, jefes 15%).',
   l_nadie: 'LEGENDARIO. Su ulti BORRA una franja vertical de 2 columnas (no se repara; el núcleo aguanta en 1) y se come todos los escudos, burbujas y vidas extra (tope 35%, jefes 15%).',
+  // FORMS (data/rupturas/formas.ts): keyed by BattleCatDef.ultKey
+  canelo_almirante: 'FORMA ALMIRANTE. ¡A BABOR!: su andanada y cada gato de su tripulación dispara su propio tiro por donde él apunta (al 30%; tope 35%, jefes 15%).',
   l_cronos: 'LEGENDARIO. Su ulti es TIME STOP: los gatos rivales pierden su próximo turno (sus cañones sí disparan; no se encadena) y repara su barco al pegar (tope 35%, jefes 15%).',
+  // Parte II · Oleada 1 (battle/ults.ts reuses existing signatures)
+  l_madrenacar: 'LEGENDARIO. Su ulti repite exactamente el último disparo de su tripulación, suelta 3 perlas y levanta una FACETA en su barco: tu próximo proyectil pierde 40% (tope 35%, jefes 15%).',
+  l_bibliotecario: 'LEGENDARIO. Su ulti escribe FIN en 3 módulos: revientan 2 turnos después si él sigue en pie (tope 35%, jefes 15%).',
+  s_refracta: 'SECRETO. Su ulti parte la luz en 5 rayos que atraviesan 6 filas, golpea a los gatos de los camarotes que cruza y te deja DESLUMBRADO un turno. Una vez por batalla (tope 35%, jefes 15%).',
 };
 
 const LOSS_TIP: Record<string, string> = {

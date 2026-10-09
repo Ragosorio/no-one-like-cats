@@ -5,6 +5,8 @@ import { Rng } from '../core/rng';
 import { ShotDef } from './types';
 import { ultWorth } from './ults';
 import { p2AimNoise, p2ShotValue } from './multiverso';
+import { crShotValue } from './cristal';
+import { nzShotValue } from './ruido';
 import { sealValue } from './cataclysm';
 
 export type Personality = 'clumsy' | 'sniper' | 'tuner' | 'calculator' | 'avenger' | 'looter' | 'demolisher' | 'elementalist';
@@ -183,6 +185,10 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
         if (score > 0 && (pers === 'elementalist' || pers === 'calculator')) score *= reactionBonus(b, paths, enemy, s.shot);
         // Parte 2: the AI plays the new elements on purpose (waves through cabins, ice on cannons…)
         if (score > 0) score *= p2ShotValue(b, side, s.shot, paths);
+        // Parte II: Cristal combos (land on PRISMA with another element; keep a facet up)
+        if (score > 0) score *= crShotValue(b, side, s.shot, paths);
+        // H34: Sonido at the Bibliotecario hits ×2 (a bit less tempting when it's the hit that wakes him)
+        if (score > 0) score *= nzShotValue(b, side, s.shot);
         if (score > 0) {
           const end = paths[0].points[paths[0].points.length - 1];
           options.push({ shooter: s.id, ult: s.ult, shot: s.shot, angle, power, score, tx: end.x, ty: end.y });

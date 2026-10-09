@@ -4,7 +4,8 @@
  */
 import { Container, Graphics, TilingSprite } from 'pixi.js';
 import gsap from 'gsap';
-import { W, H } from '../../core/App';
+import { W, H, game } from '../../core/App';
+import { followView } from '../../ui/screen';
 import { C, F } from '../../ui/theme';
 import { txt, poster } from '../../ui/widgets';
 import { sfx } from '../../core/audio';
@@ -40,8 +41,19 @@ export async function playSetPoster(layer: Container, set: SetPosterInfo): Promi
     const dots = new TilingSprite({ texture: halftoneTexture(C.ink, 12, 2), width: W, height: H });
     dots.alpha = 0.07;
     const circle = new Graphics().circle(W - 360, 330, 300).fill(C.pink);
-    const band = new Graphics().rect(0, 0, W, 210).fill(C.ink);
-    const stripe = new Graphics().rect(0, 210, W, 26).fill(dim.accent);
+    const band = new Graphics();
+    const stripe = new Graphics();
+    // paper, band and stripe cover the REAL screen (on 16:10 / 4:3 the box-sized poster left the
+    // island showing above and below it)
+    followView(bg, (v) => {
+      for (const t of [bg, dots]) {
+        t.position.set(v.x, v.y);
+        t.width = v.w;
+        t.height = v.h;
+      }
+      band.clear().rect(v.x, v.y, v.w, 210 - v.y).fill(C.ink);
+      stripe.clear().rect(v.x, 210, v.w, 26).fill(dim.accent);
+    });
     root.addChild(bg, dots, circle, band, stripe);
     const kicker = txt('CATDEX · SET COMPLETO', { fontFamily: F.ui, fontWeight: '700', fontSize: 24, fill: C.yellow, letterSpacing: 8 });
     kicker.position.set(70, 26);
@@ -89,12 +101,18 @@ export async function playSetPoster(layer: Container, set: SetPosterInfo): Promi
     // ticker tape at the bottom
     const tape = new Container();
     tape.position.set(0, H - 130);
-    const tg = new Graphics().rect(0, 0, W, 64).fill(dim.accent).rect(0, 0, W, 64).stroke({ width: 5, color: C.ink });
+    const v = game.view;
+    const tg = new Graphics()
+      .rect(v.x - 20, 0, v.w + 40, 64)
+      .fill(dim.accent)
+      .rect(v.x - 20, 0, v.w + 40, 64)
+      .stroke({ width: 5, color: C.ink });
     tape.addChild(tg);
     const line = new Container();
+    line.x = v.x;
     const unit = `SET COMPLETO · ${set.name.toUpperCase()} · REGLA NUEVA · `;
     let lx = 0;
-    while (lx < W * 2.2) {
+    while (lx < (v.w + 80) * 2.2) {
       const t = txt(unit, { fontFamily: F.poster, fontSize: 40, fill: C.paper, stroke: { color: C.ink, width: 6, join: 'round' } });
       t.position.set(lx, 8);
       line.addChild(t);
@@ -104,7 +122,7 @@ export async function playSetPoster(layer: Container, set: SetPosterInfo): Promi
     tape.rotation = -0.012;
     root.addChild(tape);
     gsap.from(tape, { x: -W, duration: 0.3, ease: 'power3.out', delay: 0.2 });
-    gsap.to(line, { x: -lx / 2, duration: 14, ease: 'none', repeat: -1 });
+    gsap.to(line, { x: line.x - lx / 2, duration: 14, ease: 'none', repeat: -1 });
     // big stamp
     tl.call(
       () => {

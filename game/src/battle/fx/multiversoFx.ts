@@ -41,6 +41,14 @@ export function p2Projectile(shot: ShotDef, core: Graphics, fx: Fx): boolean {
     case 'shadow':
       core.circle(0, 0, 12).fill(0x0d110f).stroke({ width: 3, color: 0xc8102e });
       return true;
+    case 'crystal':
+      // Parte II · Cristal (battle/cristal.ts): a cut nacre marble, pearl facets with a sky / lilac / sea-glass glint
+      core.poly([0, -15, 12, -6, 12, 7, 0, 15, -12, 7, -12, -6]).fill(0xf7f2ff).stroke({ width: 4, color: C.ink, join: 'miter' });
+      core.poly([0, -15, 12, -6, 0, 0]).fill(0x8fd3ff);
+      core.poly([-12, 7, 0, 15, 0, 0]).fill(0xb79cff);
+      core.poly([12, 7, 0, 15, 0, 0]).fill(0x6fe0c8);
+      core.moveTo(-6, -8).lineTo(-2, -11).stroke({ width: 2, color: 0xffffff, cap: 'round' });
+      return true;
   }
   return false;
 }
@@ -84,4 +92,6 @@ export const P2_ONO: Record<string, [string, number]> = {
   shadow: ['¡SHK!', 0xc8102e],
   sound: ['¡BWOOOM!', 0xff2e88],
   time: ['¡TIC-TAC!', 0xe0b77a],
+  // Parte II · Oleada 1
+  crystal: ['¡TIIIN!', 0x8fd3ff],
 };

@@ -444,6 +444,8 @@ const ENEMY_NOTE: Record<string, string> = {
   sound: 'El rival trae Sonido: su onda atraviesa paredes y aturde a los gatos que cruza.',
   time: 'El rival trae Tiempo: repara su barco al pegarte y su ultimate te quita un turno.',
   void: 'El rival trae Vacío: lo que borra no se repara y se come tus escudos.',
+  // Parte II · Oleada 1 (rules in battle/cristal.ts)
+  crystal: 'El rival trae Cristal: lo que te pega queda en PRISMA (su siguiente golpe de otro elemento ahí se parte en esquirlas) y cada tiro suyo que cae levanta una FACETA: tu próximo proyectil pierde 40% y una esquirla le vuelve a quien disparó.',
 };
 /** one line per multiverse element in the enemy crew (the sims already play it; this says WHY) */
 export function p2EnemyNotes(enemyElements: string[]): string[] {

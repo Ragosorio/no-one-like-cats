@@ -1,5 +1,6 @@
 /**
- * What cats do on the home island when nobody is looking (Rupturas vertical slice).
+ * What cats do when nobody is looking — the shared ambient-life activities of every Parte II region
+ * (and of the Rupturas vertical slice).
  * Activities for the engine's LifeDirector. Personality = traits + element tags, e.g.
  * - fire cats love the lava and visit the snow just to watch it steam;
  * - water cats LOVE the rain (everyone else runs for cover) and swim off the beach;
@@ -8,7 +9,6 @@
  */
 import * as THREE from 'three';
 import type { Activity, Agent, LifeWorld } from '../engine/life/director';
-import { walkable } from './island';
 
 export interface Spots {
   home: Record<string, THREE.Vector3>;
@@ -31,7 +31,7 @@ function randomWalkable(w: LifeWorld, around: THREE.Vector3, r: number) {
     const d = Math.sqrt(Math.random()) * r;
     const x = around.x + Math.cos(ang) * d;
     const z = around.z + Math.sin(ang) * d;
-    if (walkable(x, z) && !w.obstacles.some((o) => Math.hypot(x - o.x, z - o.z) < o.r + 0.3)) return v(x, w.groundAt(x, z), z);
+    if (w.walkable(x, z) && !w.obstacles.some((o) => Math.hypot(x - o.x, z - o.z) < o.r + 0.3)) return v(x, w.groundAt(x, z), z);
   }
   return around.clone();
 }
@@ -324,7 +324,7 @@ export function activities(spots: Spots): Activity[] {
           a.mem.phase = 'back';
         }
       } else {
-        if (a.arrived || walkable(a.pos.x, a.pos.z)) {
+        if (a.arrived || w.walkable(a.pos.x, a.pos.z)) {
           a.swimming = false;
           a.cat.lift = 0;
           w.fx.splash?.(a.pos);

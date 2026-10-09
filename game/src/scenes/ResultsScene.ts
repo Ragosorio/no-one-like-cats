@@ -25,6 +25,7 @@ import { CAT_BY_ID, CONTENT, ELEMENT_BY_ID, ZONES, catDef, zoneBoss } from '../d
 import { frontier, stageInfo, winChance, claimBossCat } from '../state/sys/campaign';
 import { crew } from '../state/sys/ship';
 import { cat as getCat } from '../state/sys/cats';
+import { catSlug } from '../state/sys/forms';
 import { LastBattle, resonancesWith, stageKind } from '../state/ext/campaign';
 import { activeMissions, evalGoal } from '../state/sys/missions';
 import { VictoryNews, NewsLootRow } from '../fx/sequences/victoryNews';
@@ -37,6 +38,8 @@ import { koRank, KO_RANKS } from '../state/sys/ranks';
 import { BOSS_NEWS, HEADLINES, reactionKey } from '../ui/story/script';
 import { sparkles } from '../fx/juice';
 import { followView, screenRect } from '../ui/screen';
+import { folioRevealed } from '../state/sys/rupturas';
+import { REGISTRO_CAPTION, REGISTRO_CAPTION_CHANCE } from '../ui/story/rupturasScript';
 
 const QUIPS = ['Testigos: «fue precioso».', 'Un pescado que pasaba lo grabó todo.', 'Se reportan sardinas voladoras en la zona.', 'El capitán enemigo pidió a su mamá.', 'Nadie esperaba tanta violencia de tan poquito gato.'];
 const CAPTIONS = ['FOTO: un pescado que pasaba por ahí.', 'FOTO: archivo del Diario. El fotógrafo sigue mojado.', 'FOTO: cortesía de una gaviota con cámara.'];
@@ -46,6 +49,8 @@ const BIOME: Record<string, string> = { cliff: 'ACANTILADO', volcano: 'VOLCÁN',
 const DISCOVERY_CAPTION: Record<string, string> = {
   earth: 'Un fósil VIVO en la bodega de un pirata. Él no sabía lo que tenía. Tú sí.',
   storm: 'La tormenta ya no es de la Gárgola. Ahora ronronea para ti. Y hace ruido.',
+  // Parte II · Oleada 1 (normally revealed by storyFlow after Isla Nácar; same line if it ever comes from Results)
+  crystal: 'Ganaste en Isla Nácar y el nácar te eligió. Ahora todo lo que te disparen puede rebotar. Y todo lo que tú dispares, también.',
 };
 
 function pick<T>(a: T[]): T {
@@ -216,11 +221,13 @@ export class ResultsScene extends Scene {
       kicker,
       teaser,
       sub,
-      caption: pick(CAPTIONS),
+      // Parte II (from H32): sometimes the archive photo has one cat too many
+      caption: folioRevealed() && Math.random() < REGISTRO_CAPTION_CHANCE ? REGISTRO_CAPTION : pick(CAPTIONS),
       edition: `AÑO I · Nº ${String(G.s.stats.victories).padStart(4, '0')}`,
       place: `${ZONES[z - 1]?.name.toUpperCase() ?? 'EL MAR'} · ${date}`,
       photo: this.photo,
       mvpSpecies: mvp?.species ?? null,
+      mvpSlug: mvp ? catSlug(mvp) : undefined,
       rows,
       golden: loot.golden,
       perfect: L.result.perfect,
@@ -463,6 +470,8 @@ export class ResultsScene extends Scene {
         species: sp,
         caption: cd.lore,
         subtitle: `${cd.epithet} · ${cd.battleForm.cry}`,
+        // a boss reward, not a Resonancia (it used to read «RESONANCIA Nº 001»)
+        kicker: 'SE UNE A TU TRIPULACIÓN',
       });
       G.save();
     } else music.play('island');

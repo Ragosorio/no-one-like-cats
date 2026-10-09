@@ -87,6 +87,9 @@ export function stageElements(zone: number, stage: number): string[] {
   return [...set];
 }
 
+/** content.json keeps designer notes like "(balance: 'Leviatan Almirante')" inside some names: never show them */
+export const playerName = (s: string) => s.replace(/\s*\(balance[^)]*\)/gi, '').trim();
+
 /** captain / headline data for cards & pre-battle */
 export function stageCaptain(zone: number, stage: number): { name: string; line: string | null; personality: string } {
   const sd = stageInfo(zone, stage);
@@ -94,7 +97,7 @@ export function stageCaptain(zone: number, stage: number): { name: string; line:
   const pers = sd?.personality ?? 'torpe';
   if (kind === 'boss') {
     const b = zoneBoss(zone);
-    return { name: b ? `${b.name} — ${b.title}` : sd?.name ?? 'Jefe', line: b?.lines.intro ?? null, personality: b?.ai.personality ?? pers };
+    return { name: b ? `${b.name} — ${playerName(b.title)}` : sd?.name ?? 'Jefe', line: b?.lines.intro ?? null, personality: b?.ai.personality ?? pers };
   }
   if (stageKey(zone, stage) === '1-1') return { name: 'El Patito Pirata', line: '¡Cuac! ¡Esta es mi bahía! ¡Cuac!', personality: pers };
   if (kind === 'elite') {

@@ -10,7 +10,7 @@ import { plate } from '../buildingArt';
 import type { RegionPlan } from '../layout';
 import type { IslandCtx } from './ctx';
 import { IslandCat, catTexture } from '../../art/catArt';
-import { slugOf } from '../../art/tint';
+import { catSlug } from '../../state/sys/forms';
 import { txt } from '../../ui/widgets';
 import { C, F } from '../../ui/theme';
 import { onomatopoeia } from '../../fx/juice';
@@ -197,7 +197,7 @@ export class ExpansionView {
     this.ctx.objects.addChild(sign);
     this.props.push(sign);
     // the crew: your own cats in hard hats (2 hammering, 1 hauling rubble to the pile)
-    const owned = [...new Set(G.s.cats.map((c) => slugOf(c.species)))].filter((sl) => catTexture(sl) !== Texture.WHITE);
+    const owned = [...new Set(G.s.cats.map((c) => catSlug(c)))].filter((sl) => catTexture(sl) !== Texture.WHITE);
     const slugs = owned.length >= 3 ? owned.slice(0, 3) : ['canelo_cozy_cat', 'margarita_daisy_cat', owned[0] ?? 'canelo_cozy_cat'];
     const spots = [
       { gx: cg.gx - 1.0, gy: cg.gy + 1.0, job: 'hammer' as const },

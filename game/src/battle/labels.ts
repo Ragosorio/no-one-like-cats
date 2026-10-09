@@ -65,6 +65,10 @@ export const REACTION_INFO: Record<string, ReactionInfo> = {
   'NOTA ALTA': { ono: '¡IIIIING!', color: 0xff2e88, desc: 'Una nota revienta el hielo ×2', els: ['sound', 'ice'] },
   'ARCOÍRIS': { ono: '¡SHIIIN!', color: 0xffd77a, desc: 'Luz sobre lo Mojado: Cegado +1 turno', els: ['light', 'water'] },
   ACELERAR: { ono: '¡TIC-TAC!', color: 0xe0b77a, desc: 'Lo que iba a arder, arde ya ×1.5', els: ['time', 'fire'] },
+  // Parte II · Oleada 1 (battle/cristal.ts)
+  'REFRACCIÓN': { ono: '¡TIIIN!', color: 0x8fd3ff, desc: 'Golpe sobre el Prisma: se parte en 2 esquirlas ×0.75', els: ['crystal'] },
+  ESPECTRO: { ono: '¡SHIIIN!', color: 0xb79cff, desc: 'Luz sobre el Prisma ×1.25: 3 esquirlas de colores', els: ['crystal', 'light'] },
+  REFLEJO: { ono: '¡KLIIING!', color: 0x6fe0c8, desc: 'La faceta frena 40% y le regresa una esquirla', els: ['crystal'] },
   '¡SANTABÁRBARA!': { ono: '¡KABOOM!', color: 0xff6a1a, desc: 'Pólvora: explosión en cadena', els: ['fire'] },
   '¡PARARRAYOS!': { ono: '¡ZAP!', color: 0xffe14a, desc: 'El pararrayos se tragó tu rayo', els: ['storm'] },
 };

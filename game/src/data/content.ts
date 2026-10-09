@@ -2,7 +2,19 @@
  * Typed access to src/data/content.json (generated from research/04-gdd + 04-content.json).
  * Numbers that say "balance:..." are resolved from balance.json via BAL.
  */
-import raw from './content.json';
+import base from './content.json';
+import { mergeContent } from './mergeContent';
+// Parte II — La Era de las Rupturas: its content lives in its own modules and is merged on load, so
+// Part I's content.json stays untouched (append-only: arrays concatenate, objects merge by key).
+import rupturasEspecies from './rupturas/especies.json';
+import rupturasHistoria from './rupturas/historia.json';
+
+const raw = mergeContent(base as unknown as Record<string, unknown>, rupturasEspecies as Record<string, unknown>, rupturasHistoria as Record<string, unknown>);
+// materials[] is an id-keyed array, so a module can't reach into a material's `mult`: a new element brings its hull
+// multipliers as `materialMult[element][material]` (rupturas/especies.json) and they're folded in here — only where
+// Part I has no value (append-only, like the merge)
+for (const [el, row] of Object.entries((raw as { materialMult?: Record<string, Record<string, number>> }).materialMult ?? {}))
+  for (const m of (raw as { materials: { id: string; mult: Record<string, number> }[] }).materials) if (row[m.id] !== undefined) m.mult[el] ??= row[m.id];
 import type { RarityId } from '../state/econ';
 
 export interface ShotSpec {

@@ -6,7 +6,8 @@ import { txt } from '../../ui/widgets';
 import { icon, IconKind } from '../../ui/icons';
 import { fmt } from '../../core/format';
 import { catTexture } from '../../art/catArt';
-import { applyCatTint, slugOf } from '../../art/tint';
+import { applyCatTint } from '../../art/tint';
+import { catSlug } from '../../state/sys/forms';
 import { catDef } from '../../data/content';
 import { ELEMENT_NAME } from '../../data/elementsMeta';
 import { elementIcon } from '../../ui/elementIcon';
@@ -72,7 +73,7 @@ export function catPortrait(c: OwnedCat, size = 150, opts: { name?: boolean; lev
   bg.rect(0, 0, size, size).fill(mix(elementFx(def.elements[0]).main, C.paper, 0.72)).stroke({ width: 4, color: rar.color, alignment: 1 });
   bg.rect(0, 0, size, size).stroke({ width: 2, color: C.ink, alignment: 0 });
   box.addChild(bg);
-  const sp = new Sprite(catTexture(slugOf(c.species)));
+  const sp = new Sprite(catTexture(catSlug(c)));
   sp.anchor.set(0.5, 0.92);
   const s = (size * 0.86) / Math.max(1, sp.texture.width);
   sp.scale.set(s);

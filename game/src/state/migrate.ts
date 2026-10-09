@@ -105,6 +105,9 @@ export function normalize(raw: AnyState, defaults: GameState): GameState {
     if (c.mutation === undefined) c.mutation = null;
     if (typeof c.trait !== 'string') c.trait = '';
     if (typeof c.name !== 'string' || !c.name) c.name = String(c.species ?? 'Gato');
+    // FORMS (optional, absent = original): only a malformed value is dropped; an unknown id is kept
+    // (a newer build's form) and simply draws/fights as the original (state/sys/forms.ts)
+    if (c.form !== undefined && (typeof c.form !== 'string' || !c.form)) delete c.form;
   }
   // two cats with the same uid would make one of them unclickable forever
   const seen = new Set<string>();

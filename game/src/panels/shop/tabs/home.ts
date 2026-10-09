@@ -68,7 +68,10 @@ export function renderHome(ctx: ShopCtx) {
     const vig = new Container();
     vig.position.set(tw * 0.75, th * 0.5);
     vig.scale.set(Math.min(1, th / 470));
-    face.addChild(vig);
+    // the vignette stays on its card (the Cofres rays used to spin out past the Tienda's frame)
+    const vm = new Graphics().rect(0, 0, tw, th).fill(0xffffff);
+    vig.mask = vm;
+    face.addChild(vig, vm);
     ticks.push(vignette(wn.id, vig, th));
     // title band
     const band = new Graphics().rect(0, 0, tw * 0.52, 78).fill(C.ink);

@@ -4,7 +4,7 @@
  * Named leagues 1–8, then "LIGA DEL VACÍO II, III…" forever (the curve keeps climbing).
  */
 import { CATS, CatDef } from '../data/content';
-import { BAL, RarityId, catPower } from '../state/econ';
+import { BAL, RarityId, catLevelForPower, catLevelMax } from '../state/econ';
 import PB from '../data/podio.json';
 
 export interface LeagueDef {
@@ -124,9 +124,10 @@ export function rival(lg: number, bout: number, islandSeed: number, elements: st
   const def = (prizeId && CATS.find((c) => c.id === prizeId)) || pool[seed % pool.length];
   const power = boutPower(lg, bout);
   const stars = Math.min(BAL.cats.stars.max, 1 + Math.floor((lg - 1) / 2) + (champion ? 1 : 0));
-  // level that gives that power with those stars (econ.catPower)
-  const base = catPower(def.rarity, 1, stars);
-  const level = Math.max(1, Math.min(60, Math.round(1 + Math.log(power / base) / Math.log(BAL.cats.power_per_level))));
+  // the level a cat of that rarity and stars needs for that power (the inverse of econ.catPower, so past Nv50
+  // it follows the softer curve: ~10 levels per league), shown between Nv1 and Nv100. Display only: the duel
+  // uses `power`.
+  const level = Math.max(1, Math.min(catLevelMax(), Math.round(catLevelForPower(def.rarity, stars, power))));
   const podioLvl = Math.max(1, Math.min(PB.levels.max, 1 + Math.round(lg * 1.6 + bout * 0.4) - 1 + (champion ? 2 : 0)));
   const trainer = champion ? CHAMPS[(lg - 1) % CHAMPS.length] : TRAINERS[(seed >>> 3) % TRAINERS.length];
   const taunt = champion ? CHAMP_TAUNTS[(seed >>> 5) % CHAMP_TAUNTS.length] : TAUNTS[(seed >>> 5) % TAUNTS.length];
