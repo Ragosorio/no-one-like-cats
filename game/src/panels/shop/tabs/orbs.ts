@@ -12,7 +12,7 @@ import { catDef } from '../../../data/content';
 import { elementFx } from '../../../art/catArt';
 import { glowTexture } from '../../../art/textures';
 import { buyPrisma, prismaPrice, prismaShopLeft, starMax } from '../../../state/sys/cats';
-import { ORB_PACK, ORB_PACK_GEMS, buyOrbsGems, buyOrbsGold, isNew, markSeen, orbGemsLeft, orbOffer, orbSpecies } from '../../../state/sys/shop';
+import { ORB_HEAT_MAX_MULT, ORB_HEAT_STEP, ORB_PACK, ORB_PACK_GEMS, buyOrbsGems, buyOrbsGold, isNew, markSeen, orbGemsLeft, orbOffer, orbSpecies } from '../../../state/sys/shop';
 import { catPortrait, mix } from '../../island/ui';
 import type { ShopCtx } from '../ctx';
 import { block, Btn, chip, fit, newSeal, para, Scroller, t } from '../ui';
@@ -31,7 +31,7 @@ export function renderOrbs(ctx: ShopCtx) {
   const ht = t('ORBES DE ALMA', 54, C.ink, F.poster);
   ht.position.set(22, 4);
   const hp = para(
-    `Uno por especie: suben estrellas en el Altar. Con oro son una comodidad CARA (sube +${Math.round(15)}% por orbe comprado de esa especie); con gemas, paquetes de ${ORB_PACK} por ${ORB_PACK_GEMS} que comparten el tope de compras de la Prisma (${BAL.orbs.prisma_gem_purchases_per_boss} por jefe derrotado). Lo normal sigue siendo jugar: duplicados, victorias, jefes y expediciones.`,
+    `Uno por especie: suben estrellas en el Altar. Con oro: cada paquete seguido de la misma especie sube +${Math.round(ORB_HEAT_STEP * 100)}% (tope ×${ORB_HEAT_MAX_MULT}) y se enfría un paquete por hora; con gemas, paquetes de ${ORB_PACK} por ${ORB_PACK_GEMS} que comparten el tope de compras de la Prisma (${BAL.orbs.prisma_gem_purchases_per_boss} por jefe derrotado). Lo normal sigue siendo jugar: duplicados, victorias, jefes y expediciones.`,
     880,
     16,
   );

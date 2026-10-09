@@ -20,6 +20,18 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-13-orbes-a-precio-justo',
+    date: '2026-10-13',
+    title: 'Orbes a precio justo',
+    luzterna: 'El tendero cobraba los orbes como si fueran pedazos de luna. Le expliqué la diferencia. Con el remo. Ya entendió.',
+    items: [
+      { tag: 'BALANCE', text: 'Los orbes con oro ya no se duplican de precio en cada compra. Cada paquete seguido de la misma especie sube un poquito (+15%) y nunca pasa de ×3.' },
+      { tag: 'BALANCE', text: 'El precio se enfría solo: un paquete por cada hora que pasa, juegues o no. Vuelve otro día y está como nuevo. No hay que volver a ninguna hora.' },
+      { tag: 'BALANCE', text: 'Entre más grande tu isla, menos minutos de ingreso cuesta un paquete: unos 30 al principio, unos 15 a media aventura y menos de 10 en islas gigantes. Tus Doblones por fin compran estrellas.' },
+      { tag: 'CAMBIO', text: 'Lo que ya compraste no te persigue: todas tus especies empiezan con el precio frío. No se te quitó nada.' },
+    ],
+  },
+  {
     id: '2026-10-12-eterno-sin-frenos',
     date: '2026-10-12',
     title: 'ETERNO sin frenos',

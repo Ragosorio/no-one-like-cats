@@ -19,9 +19,15 @@
  *  ORBES      · Gemas: paquete de ORB_PACK orbes de una especie tuya por ORB_PACK_GEMS (1.6/orbe, la
  *               Prisma comodín cuesta `BAL.orbs.prisma_gem_price`=2). Comparte el tope de compras con
  *               gemas de la Prisma (`prisma_gem_purchases_per_boss` por jefe) → no rompe la compuerta.
- *             · Oro: ORB_GOLD_MIN min de ingreso por orbe × ORB_GOLD_GROWTH^(orbes ya comprados con oro
- *               de esa especie). Sube rápido a propósito: es una comodidad cara, no una ruta (las
- *               compuertas viven en la escala chica, GDD 08 P3).
+ *             · Oro (2026-10, docs/part-ii/06-economia-orbes.md): un paquete "frío" cuesta
+ *               `orbPackMinutes(ingreso)` minutos de ingreso = ORB_PACK_MIN × (ingreso/ORB_INCOME_PIVOT)^(ORB_INCOME_EXP−1)
+ *               entre ORB_PACK_MIN_FLOOR y ORB_PACK_MIN_CEIL → en oro escala con ingreso^0.85 (una isla
+ *               enorme no convierte los orbes en un hoyo negro). Encima, el "calor" de esa especie:
+ *               × (1 + ORB_HEAT_STEP·calor), tope ×ORB_HEAT_MAX_MULT. Cada paquete suma 1 de calor y se
+ *               enfría ORB_HEAT_COOL_PER_H paquetes por hora real (ext.shop.orbHeat). Comprar en racha sale
+ *               caro (como mucho ×3), volver otro día sale normal; no hay que volver a ninguna hora.
+ *               `goldOrbs` sigue contando los orbes comprados con oro (estadística de por vida; ya no
+ *               mueve el precio).
  *  GATOS      solo Comunes de elementos descubiertos que AÚN no tienes, a CAT_MIN min de ingreso
  *             (piso: 2 hábitats nuevos). Se adoptan con `free:true` → registran Catdex pero NO dan las
  *             gemas de especie nueva (comprar no es descubrir). Los duplicados siguen saliendo de la
@@ -40,16 +46,30 @@ import { EXPANSIONS } from '../../data/content';
 // ---------------------------------------------------------------- tunables (documented above)
 export const ORB_PACK = 5;
 export const ORB_PACK_GEMS = 8;
-export const ORB_GOLD_MIN = 5;
-export const ORB_GOLD_GROWTH = 1.15;
+/** minutes of income a cold pack costs at ORB_INCOME_PIVOT gold/s (old curve: 33.7 min at any income) */
+export const ORB_PACK_MIN = 33;
+export const ORB_INCOME_PIVOT = 10;
+/** gold price ∝ income^ORB_INCOME_EXP (minutes of income shrink slowly as the island grows) */
+export const ORB_INCOME_EXP = 0.85;
+/** a cold pack never costs more than this many minutes of income, nor less than the floor */
+export const ORB_PACK_MIN_CEIL = 30;
+export const ORB_PACK_MIN_FLOOR = 3;
+/** per-species heat: +ORB_HEAT_STEP per pack in a row, capped at ×ORB_HEAT_MAX_MULT, cools by real time */
+export const ORB_HEAT_STEP = 0.15;
+export const ORB_HEAT_MAX_MULT = 3;
+export const ORB_HEAT_COOL_PER_H = 1;
+/** heat never stored above the cap (so a big spree cools down in ~13 h, not days) */
+export const ORB_HEAT_MAX = (ORB_HEAT_MAX_MULT - 1) / ORB_HEAT_STEP;
 export const CAT_MIN = 45;
 
 // ---------------------------------------------------------------- scratch state (G.s.ext.shop)
 export interface ShopState {
   /** ids the player already saw in the shop (for the ¡NUEVO! stamps) */
   seen: string[];
-  /** orbs bought with gold per species (price growth) */
+  /** orbs bought with gold per species (lifetime stat; until 2026-10 it drove the price) */
   goldOrbs: Record<string, number>;
+  /** per-species price heat: `h` packs at time `at` (ms, real clock); cools ORB_HEAT_COOL_PER_H per hour */
+  orbHeat?: Record<string, { h: number; at: number }>;
   /** decor ids that already paid their Reino XP (first purchase only) */
   xpGiven: string[];
   /** running receipt number (juice) */
@@ -183,12 +203,28 @@ export function orbSpecies(): string[] {
   }
   return out;
 }
-export function orbGoldPrice(species: string, n = ORB_PACK) {
-  const k = shopState().goldOrbs[species] ?? 0;
-  const per = incomePerSec() * 60 * ORB_GOLD_MIN;
-  let sum = 0;
-  for (let i = 0; i < n; i++) sum += per * Math.pow(ORB_GOLD_GROWTH, k + i);
-  return nicePrice(Math.max(BAL.habitats.new_habitat_cost_base, sum));
+/** minutes of income a cold pack costs: softer than linear in income, between floor and ceiling */
+export function orbPackMinutes(income: number) {
+  const m = ORB_PACK_MIN * Math.pow(Math.max(1e-9, income) / ORB_INCOME_PIVOT, ORB_INCOME_EXP - 1);
+  return Math.min(ORB_PACK_MIN_CEIL, Math.max(ORB_PACK_MIN_FLOOR, m));
+}
+/** price multiplier for `heat` packs bought recently (1 → ORB_HEAT_MAX_MULT) */
+export function orbHeatMult(heat: number) {
+  return Math.min(ORB_HEAT_MAX_MULT, 1 + ORB_HEAT_STEP * Math.max(0, heat));
+}
+/** pure price of one pack (ORB_PACK orbs) for an island making `income` gold/s with `heat` */
+export function orbPackPrice(income: number, heat = 0) {
+  return nicePrice(Math.max(BAL.habitats.new_habitat_cost_base, income * 60 * orbPackMinutes(income) * orbHeatMult(heat)));
+}
+/** current heat of a species (read-only: never writes the save) */
+export function orbHeat(species: string, now = Date.now()) {
+  const e = shopState().orbHeat?.[species];
+  if (!e || !Number.isFinite(e.h) || e.h <= 0) return 0;
+  const hours = Number.isFinite(e.at) ? Math.max(0, now - e.at) / 3_600_000 : Infinity;
+  return Math.max(0, Math.min(ORB_HEAT_MAX, e.h) - hours * ORB_HEAT_COOL_PER_H);
+}
+export function orbGoldPrice(species: string, now = Date.now()) {
+  return orbPackPrice(incomePerSec(), orbHeat(species, now));
 }
 /** gem orbs left (shared with the Altar's Prisma purchases: prisma_gem_purchases_per_boss per boss) */
 export function orbGemsLeft() {
@@ -201,10 +237,12 @@ export function orbOffer(species: string): OrbOffer {
 }
 export function buyOrbsGold(species: string) {
   if (!ownsSpecies(species)) return 0;
-  const price = orbGoldPrice(species);
+  const now = Date.now();
+  const price = orbGoldPrice(species, now);
   if (!G.spend({ gold: price })) return 0;
   const s = shopState();
   s.goldOrbs[species] = (s.goldOrbs[species] ?? 0) + ORB_PACK;
+  (s.orbHeat ??= {})[species] = { h: Math.min(ORB_HEAT_MAX, orbHeat(species, now) + 1), at: now };
   G.addOrbs(species, ORB_PACK);
   G.count('shop_buy');
   G.count('shop_orbs', ORB_PACK);
