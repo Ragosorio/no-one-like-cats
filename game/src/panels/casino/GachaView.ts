@@ -410,6 +410,10 @@ export class GachaView extends Container implements CasinoView, AutoHost {
   autoBalance() {
     return this.pay === 'tickets' ? tickets() : G.s.gems;
   }
+  autoStake() {
+    const n = this.mode === 'normal' ? this.n : 1;
+    return { cur: this.pay === 'tickets' ? ('tickets' as const) : ('gems' as const), amount: pullCost(this.b, n, this.pay, this.mode) };
+  }
   autoName() {
     return `PORTAL · ${this.mode === 'normal' ? `x${this.n}` : MODES[this.mode].name}`;
   }

@@ -353,6 +353,9 @@ export class RouletteView extends Container implements CasinoView, AutoHost {
   autoBalance() {
     return balanceOf(this.cur);
   }
+  autoStake() {
+    return { cur: this.cur, amount: this.stake() };
+  }
   autoName() {
     return `RULETA · ${betLabel(this.bet)}`;
   }

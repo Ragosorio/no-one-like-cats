@@ -57,14 +57,14 @@ export interface CasinoState {
 }
 
 /**
- * Animation speed of the auto-play (2026-10 overhaul): the player picks x1 · x2 · x10. ETERNO is not a speed but a
+ * Animation speed of the auto-play (2026-10 overhaul): the player picks x1 · x10 · x20. ETERNO is not a speed but a
  * session (state/sys/casino/eterno.ts) that ramps the speed continuously, so views accept any number ≥ 1.
  *   ≥ 4   "fast": shorter banners, no host chatter
  *   ≥ 10  results-first: the reels/wheel still move but every banner is skipped (results stay readable)
  *   ≥ INSTANT_SPEED (only reached by ETERNO): the result is placed instantly
  */
 export type AutoSpeed = number;
-export const AUTO_SPEEDS = [1, 2, 10] as const;
+export const AUTO_SPEEDS = [1, 10, 20] as const;
 export type AutoSpeedChoice = (typeof AUTO_SPEEDS)[number];
 export const INSTANT_SPEED = 25;
 export interface AutoPrefs {
@@ -79,11 +79,11 @@ export interface AutoPrefs {
   stopNew: boolean;
   /** stop if the balance drops below this % of what you had when you pressed AUTO (0 = never) */
   floorPct: number;
-  /** prefs schema: 2 = x1/x2/x10 speeds + "until you stop" defaults (2026-10 overhaul) */
+  /** prefs schema: 2 = x1/x2/x10 + "until you stop" defaults · 3 = x1/x10/x20 speeds */
   v?: number;
 }
 /** continuous play by default: a prize never ends the run (stop conditions are opt-in), the balance floor stays on */
-export const AUTO_DEFAULT: AutoPrefs = { speed: 2, rounds: 0, stopBig: false, stopLegend: false, stopNew: false, floorPct: 50, v: 2 };
+export const AUTO_DEFAULT: AutoPrefs = { speed: 10, rounds: 0, stopBig: false, stopLegend: false, stopNew: false, floorPct: 50, v: 3 };
 export interface CasinoPrefs {
   tab?: string;
   slot?: { cur?: Cur; tier?: Partial<Record<Cur, number>> };
@@ -128,21 +128,23 @@ export function autoPrefs(): AutoPrefs {
   return p.auto;
 }
 /**
- * Saved auto-play prefs → current schema. Old speeds x4 / TURBO (99) become x10; the old defaults (25 rounds,
+ * Saved auto-play prefs → current schema. Old speeds x2 / x4 become x10, TURBO (99) x20; the old defaults (25 rounds,
  * stop on any big win / legendary) become "until you stop" once — a player who picked other values keeps them.
  */
 export function migrateAutoPrefs(old: Partial<AutoPrefs> | Record<string, unknown> | undefined): AutoPrefs {
   const o = { ...AUTO_DEFAULT, ...((old ?? {}) as Partial<AutoPrefs>) };
   const sp = Number((old as Partial<AutoPrefs> | undefined)?.speed ?? AUTO_DEFAULT.speed);
-  o.speed = sp === 1 || sp === 2 ? sp : sp > 2 ? 10 : AUTO_DEFAULT.speed;
-  if ((old as Partial<AutoPrefs> | undefined)?.v !== 2 && old) {
+  // x1 stays; the old x2 / x4 become x10; TURBO and anything faster becomes x20
+  o.speed = sp === 1 ? 1 : sp === 20 || sp > 20 ? 20 : sp >= 2 ? 10 : AUTO_DEFAULT.speed;
+  const ov = (old as Partial<AutoPrefs> | undefined)?.v;
+  if (ov !== 2 && ov !== 3 && old) {
     if (o.rounds === 25) o.rounds = 0;
     if (o.stopBig === true) o.stopBig = false;
     if (o.stopLegend === true) o.stopLegend = false;
   }
   if (![0, 10, 25, 50, 100].includes(o.rounds)) o.rounds = 0;
   if (![0, 25, 50, 75].includes(o.floorPct)) o.floorPct = 50;
-  o.v = 2;
+  o.v = 3;
   return o;
 }
 function stat(k: string, n = 1) {

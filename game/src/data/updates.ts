@@ -20,6 +20,18 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-12-eterno-sin-frenos',
+    date: '2026-10-12',
+    title: 'ETERNO sin frenos',
+    luzterna: 'Madame Noir le quitó los frenos a la máquina. Y le puso más suerte. Y más fuego. Yo me voy a esconder detrás del faro.',
+    items: [
+      { tag: 'CAMBIO', text: 'MODO ETERNO dura 40 segundos y funciona en TODAS las mesas. Los primeros 20 s la máquina acelera (a tope a los 15 s) y todavía la puedes enfriar.' },
+      { tag: 'NUEVO', text: 'Los últimos 20 s: SIN FRENOS. Todas las tiradas ganan, gratis, y van a tu BOTÍN, que se duplica cada 4 segundos (×2, ×4, ×8, ×16).' },
+      { tag: 'NUEVO', text: 'Si ganas el 50/50: TODO lo tuyo ×2 (oro, gemas, pescaditos, boletos y fichas) + el botín + un gato especial. Mítico ahora 25%. Si pierdes: todo a 0, botín incluido.' },
+      { tag: 'CAMBIO', text: 'Piloto automático: x1, x10 y x20 (antes x1, x2 y x10). Más tiradas, más lluvia de monedas.' },
+    ],
+  },
+  {
     id: '2026-10-11-el-baul',
     date: '2026-10-11',
     title: 'El Baúl: tu isla ya no se pierde',

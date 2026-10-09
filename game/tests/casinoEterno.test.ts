@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { G, newGame } from '../src/state';
 import { cs } from '../src/state/sys/casino';
 import { CATS } from '../src/data/content';
-import { AT_RISK, ETERNO, atRisk, eternoPrize, eternoRoll, eternoState, eternoWins, resolveEterno, settleAbandoned, startEterno, stopEterno } from '../src/state/sys/casino/eterno';
+import { AT_RISK, ETERNO, addLuck, atRisk, doublePot, eternoPrize, eternoRoll, eternoState, eternoWins, lockEterno, luckyMult, resolveEterno, settleAbandoned, startEterno, stopEterno } from '../src/state/sys/casino/eterno';
 
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
 /** a save with a bit of everything, so "nothing else is touched" means something */
@@ -62,24 +62,60 @@ describe('MODO ETERNO: resolveEterno', { timeout: 120_000 }, () => {
     expect(AT_RISK).toEqual(['gold', 'gems', 'food', 'tickets', 'chips']);
   });
 
-  it('WIN: keeps every balance and grants ONE legendary / mythic / HOLO cat', () => {
+  it('WIN: every balance at risk ×2, the botín added, and ONE legendary / mythic / HOLO cat', () => {
     const before = clone(G.s);
     const cats0 = G.s.cats.length;
     const s = startEterno('roulette');
+    lockEterno(s.id, 'chips');
+    addLuck(s.id, 100);
+    doublePot(s.id);
+    doublePot(s.id); // botín 400
     const r = resolveEterno(s.id, 0.1)!;
     expect(r.record.r).toBe('win');
+    expect(r.record.before).toEqual({ gold: 123456.75, gems: 77, food: 9999, tickets: 42, chips: 3210 });
+    // ×2 (a NEW cat may add its usual discovery gift on top, so ≥)
+    expect(G.s.gold).toBeGreaterThanOrEqual(123456.75 * 2);
+    expect(G.s.gems).toBeGreaterThanOrEqual(154);
+    expect(G.s.food).toBeGreaterThanOrEqual(9999 * 2);
+    expect(cs().tickets).toBeGreaterThanOrEqual(84);
+    expect(r.record.after!.chips).toBe(3210 * 2 + 400);
+    expect(r.record.pot).toMatchObject({ cur: 'chips', amount: 400, doublings: 2 });
     const p = r.record.prize!;
     expect(p.kind).toBe('cat');
     const def = CATS.find((c) => c.id === p.ref)!;
     expect(['legendary', 'mythic']).toContain(def.rarity);
-    // nothing is taken (a NEW cat may add its usual discovery gift on top)
-    expect(G.s.gold).toBeGreaterThanOrEqual(before.gold);
-    expect(G.s.gems).toBeGreaterThanOrEqual(before.gems);
-    expect(G.s.food).toBeGreaterThanOrEqual(before.food);
-    expect(cs().tickets).toBeGreaterThanOrEqual(42);
-    expect(cs().chips).toBeGreaterThanOrEqual(3210);
-    // the cat arrived (new cat, holo upgrade or orbs for a duplicate)
     expect(G.s.cats.length + Object.values(G.s.orbs).reduce((a, b) => a + b, 0)).toBeGreaterThan(cats0 + Object.values(before.orbs).reduce((a, b) => a + b, 0) - 1);
+  });
+
+  it('LOSS with a botín: everything at risk to 0 and the botín is gone', () => {
+    const s = startEterno('plinko');
+    lockEterno(s.id, 'gold');
+    addLuck(s.id, 5000);
+    const r = resolveEterno(s.id, 0.9)!;
+    expect(r.record.r).toBe('loss');
+    expect(r.record.pot!.amount).toBe(5000);
+    expect(atRisk()).toEqual({ gold: 0, gems: 0, food: 0, tickets: 0, chips: 0 });
+  });
+
+  it('past the lock there is no ENFRIAR, and leaving does not escape the 50/50', () => {
+    const s = startEterno('dice');
+    lockEterno(s.id, 'chips');
+    expect(stopEterno(s.id)).toBeNull();
+    expect(eternoState().open?.locked).toBe(true);
+    G.s = clone(G.s); // reload mid-luck
+    const rec = settleAbandoned()!;
+    expect(['win', 'loss']).toContain(rec.r);
+    expect(eternoState().open).toBeNull();
+    expect(resolveEterno(s.id, 0.1)!.applied).toBe(false);
+  });
+
+  it('timeline and luck: 40 s, lock at 20, top speed at 15, mythic 25%, every lucky round wins', () => {
+    expect(ETERNO.seconds).toBe(40);
+    expect(ETERNO.lockAt).toBe(20);
+    expect(ETERNO.rampSeconds).toBe(15);
+    expect(ETERNO.reward.mythic).toBe(0.25);
+    expect(ETERNO.reward.legendary + ETERNO.reward.holo + ETERNO.reward.mythic).toBeCloseTo(1);
+    for (let i = 0; i < 2000; i++) expect(luckyMult()).toBeGreaterThanOrEqual(ETERNO.luck.mult[0]);
   });
 
   it('the special reward is never heroic, divine or a Podio cat (5k draws)', () => {

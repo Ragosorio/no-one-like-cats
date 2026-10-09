@@ -219,6 +219,9 @@ export abstract class MiniGame extends Container implements CasinoView, AutoHost
   autoBalance() {
     return balanceOf(this.cur);
   }
+  autoStake() {
+    return { cur: this.cur, amount: this.stake };
+  }
   autoName() {
     return `${this.cfg.title} · ${this.curName(this.stake)}`;
   }

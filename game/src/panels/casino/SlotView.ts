@@ -413,6 +413,9 @@ export class SlotView extends Container implements CasinoView, AutoHost {
   autoBalance() {
     return balanceOf(this.cur);
   }
+  autoStake() {
+    return { cur: this.cur, amount: this.stake() };
+  }
   autoName() {
     return `TRAGAMICHIS · ${this.cur === 'chips' ? `${this.stake()} FICHAS` : `${fmt(this.stake())} ORO`}`;
   }

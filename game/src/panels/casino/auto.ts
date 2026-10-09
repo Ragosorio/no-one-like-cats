@@ -1,8 +1,8 @@
 /**
  * PILOTO AUTOMÁTICO (casino agent): auto-play for the Tragamichis, the Ruleta and the Portal.
  *   - start / stop from the left column; Space also stops it.
- *   - speeds x1 · x2 · x10 (x10 = results-first: every banner is skipped but each result stays readable).
- *   - ETERNO (button next to the speeds): the 20-second overheating session (panels/casino/eterno.ts).
+ *   - speeds x1 · x10 · x20 (x10 / x20 = results-first: banners are skipped, every win still pops and pays out).
+ *   - ETERNO (button next to the speeds): the 40-second session (panels/casino/eterno.ts).
  *   - plays "until you stop" by default: a prize never ends the run. Optional stop conditions (saved in the game):
  *     big win, legendary+, new cat, balance below X% of the start (on by default), after N rounds.
  *     Running out of money always stops it. Every round is paid.
@@ -35,6 +35,8 @@ export interface AutoHost {
   autoBalance(): number;
   /** "TRAGAMICHIS · 30 FICHAS" */
   autoName(): string;
+  /** what one round bets, and in what (MODO ETERNO pays LA SUERTE ETERNA in it) */
+  autoStake(): { cur: 'gold' | 'gems' | 'chips' | 'tickets'; amount: number };
   /** the run ended (rebuild anything skipped while it ran) */
   onAutoStop?(): void;
 }
@@ -272,7 +274,7 @@ export function openAutoRules() {
   row('PARAR EN LEGENDARIO', 'Legendario, HOLO o mítico (Portal y gatos de la Tragamichis).', toggle('stopLegend'));
   row('PARAR EN GATO NUEVO', 'Cualquier gato que todavía no tenías.', toggle('stopNew'));
   const n = T(
-    'Velocidades: x1 juega todo · x2 acelera · x10 va rapidísimo pero cada resultado se ve (solo se detiene a enseñarte gatos legendarios nuevos). Si te quedas sin saldo, se para solo. Espacio también lo para. ETERNO no es una velocidad: es una sesión de 20 segundos con 50/50 final (te pide confirmación).',
+    'Velocidades: x1 juega todo con calma · x10 va rapidísimo · x20 es lluvia de tiradas: cada premio igual brinca y suena (solo se detiene a enseñarte gatos legendarios nuevos). Si te quedas sin saldo, se para solo. Espacio también lo para. ETERNO no es una velocidad: es una sesión de 40 segundos con 50/50 final (te pide confirmación).',
     17,
     C.ink,
   );

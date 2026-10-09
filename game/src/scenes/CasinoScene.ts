@@ -2,7 +2,7 @@
  * CASINO "EL GATO NEGRO" — the neon-glitch dimension of the multiverse (casino agent).
  * Tables come from panels/casino/games/registry.ts (grouped, scrollable left nav): Tragamichis, Ruleta, Plinko,
  * Duelo de Dados, Mayor o Menor, Bingo Exprés, Rasca y Gana, Cajas Misteriosas, Portal, La Caja, Accesorios.
- * Owns MODO ETERNO (panels/casino/eterno.ts): the 20-second overheating session over the current table.
+ * Owns MODO ETERNO (panels/casino/eterno.ts): the 40-second session over the current table (20 s to cool it, 20 s of luck).
  * Entered via panels/casino/open.ts (openCasino / openGacha). Leaves to the island with goIsland().
  * Owns the PILOTO AUTOMÁTICO (panels/casino/auto.ts, left column) and the LA CASA TE DEBE meter (top bar).
  * Remembers the last tab you played (saved with the stakes in G.s.casino.prefs).
@@ -107,8 +107,17 @@ export class CasinoScene extends Scene {
         }, 3600);
       }
       if (ab) {
-        this.bubble.say('La máquina del ETERNO se apagó sola cuando te fuiste: no hubo 50/50, no perdiste ni ganaste nada.', 'MODO ETERNO', CP.cyan);
-        this.host.talk(1600);
+        // past the lock there's no escape: the 50/50 was drawn now, with the saved botín
+        const msg =
+          ab.r === 'win'
+            ? `La máquina del ETERNO explotó mientras no estabas… y GANASTE: todo lo tuyo ×2${ab.pot?.amount ? ' + el botín' : ''}${ab.prize ? ` + ${ab.prize.label}` : ''}.`
+            : ab.r === 'loss'
+              ? 'La máquina del ETERNO explotó mientras no estabas… y la moneda cayó del otro lado: oro, gemas, pescaditos, boletos y fichas en 0.'
+              : 'La máquina del ETERNO se apagó sola cuando te fuiste (antes de quedarse sin frenos): no hubo 50/50, no perdiste ni ganaste nada.';
+        this.bubble.say(msg, 'MODO ETERNO', ab.r === 'loss' ? 0xff3b1f : ab.r === 'win' ? CP.yellow : CP.cyan);
+        this.host.talk(2200);
+        if (ab.r === 'win' && ab.prize) void import('../panels/casino/prizes').then((pz) => pz.revealCats(this.topLayer, [{ ...ab.prize!, isNew: ab.prize!.isNew ?? true }], { only: () => true }));
+        this.refresh();
       }
     }, 650);
   }

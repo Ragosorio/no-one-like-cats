@@ -1,13 +1,14 @@
 /**
  * MODO ETERNO — presentation + runner (rules live in state/sys/casino/eterno.ts).
  *
- *   openEternoConfirm()  the deliberate confirmation: lists EXACTLY what is at risk with the current amounts and what
- *                        can be won; the button must be held down ~1.6 s.
- *   EternoRun.run()      20 s of normal paid rounds on the current table, faster and faster, while the machine
- *                        overheats (lights, casing vibration, steam, sparks, temperature gauge, rising pitch/tempo).
- *                        At 20 s: resolveEterno() is applied and saved FIRST, then the explosion, a short pause and
- *                        the win (gold) or loss (ash) sequence present the stored result. ENFRIAR stops it before
- *                        the 20 s: no 50/50, no special reward.
+ *   openEternoConfirm()  the deliberate confirmation: what's at risk (current amounts), what can be won, the two
+ *                        phases; the button must be held down ~1.6 s.
+ *   EternoRun.run()      0–20 s  CALENTANDO: normal paid rounds on the current table, top speed at 15 s, the
+ *                                 machine overheats; ENFRIAR stops it (no 50/50, no reward).
+ *                        20–40 s SIN FRENOS · LA SUERTE ETERNA: no stopping; every round is a WIN that goes into
+ *                                 the BOTÍN, and the botín DOUBLES every 4 s (×2 ×4 ×8 ×16) with a big slam.
+ *                        40 s    resolveEterno() is applied and SAVED first; then the explosion, the coin and the
+ *                                 win (every balance ×2 + botín + cat) or loss (all to 0) sequence.
  * Respects settings.reduceMotion (no vibration, light shake, few particles) and reduceFlashes.
  * Every tween / ticker / timer it creates is killed in cleanup(); the layers it adds are destroyed.
  */
@@ -17,21 +18,22 @@ import { W, H } from '../../core/App';
 import { audio, sfx } from '../../core/audio';
 import { settings } from '../../core/settings';
 import { fmt } from '../../core/format';
+import { G } from '../../state/game';
 import { Modal } from '../../ui/modal';
 import { C, F } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { screenRect } from '../../ui/screen';
 import { glowTexture, sparkTexture } from '../../art/textures';
 import { Particles } from '../../fx/particles';
-import { flash, onomatopoeia, sparkles } from '../../fx/juice';
-import { AT_RISK, AT_RISK_NAME, ETERNO, EternoField, atRisk, eternoRoll, resolveEterno, startEterno, stopEterno } from '../../state/sys/casino/eterno';
+import { flash, floatText, onomatopoeia, sparkles } from '../../fx/juice';
+import { AT_RISK, AT_RISK_NAME, ETERNO, EternoField, EternoRecord, addLuck, atRisk, doublePot, eternoRoll, eternoState, lockEterno, luckyMult, resolveEterno, startEterno, stopEterno } from '../../state/sys/casino/eterno';
 import type { Granted } from '../../state/sys/casino';
 import type { AutoHost } from './auto';
 import { gapFor } from './auto';
 import type { CasinoCtx } from './ctx';
 import type { Ev } from './lines';
 import { CP, CButton, ChatFeed, Marquee, curIcon, heading, label, neon } from './kit';
-import { coinRain } from './fx';
+import { coinFountain, coinRain, stamp } from './fx';
 import { revealCats } from './prizes';
 import { csfx } from './sfx';
 
@@ -40,7 +42,7 @@ const HUD = { x: 1446, y: 676, w: 440, h: 360 };
 
 // ------------------------------------------------------------------ confirmation
 export function openEternoConfirm(onConfirm: () => void) {
-  const m = new Modal('Modo ETERNO', 1240, 860, { subtitle: '20 SEGUNDOS · 50/50 · LÉELO TODO', band: 0x2a0a0a });
+  const m = new Modal('Modo ETERNO', 1240, 940, { subtitle: `${ETERNO.seconds} SEGUNDOS · 50/50 · LÉELO TODO`, band: 0x2a0a0a });
   const b = m.body;
   const T = (s: string, size = 22, fill: number = C.ink, extra: Record<string, unknown> = {}) =>
     txt(s, { fontFamily: F.ui, fontWeight: '700', fontSize: size, fill, wordWrap: true, wordWrapWidth: 1170, lineHeight: size + 7, ...extra });
@@ -50,13 +52,14 @@ export function openEternoConfirm(onConfirm: () => void) {
     b.addChild(t);
     y += t.height + gap;
   };
-  add(T('La máquina juega sola 20 segundos, cada vez más rápido. Cada tirada se paga y se cobra como siempre. Se sobrecalienta y, a los 20 segundos, EXPLOTA.'));
-  add(T('Al explotar: volado 50/50 honesto (azar criptográfico; nadie lo mueve, ni la casa).', 22, C.inkBlue));
+  add(T(`0–${ETERNO.lockAt} s · CALENTANDO: la máquina juega sola, cada vez más rápido (a tope en ${ETERNO.rampSeconds} s). Cada tirada se paga y se cobra como siempre. Aquí todavía la puedes ENFRIAR.`, 21));
+  add(T(`${ETERNO.lockAt}–${ETERNO.seconds} s · SIN FRENOS: ya no se puede parar. LA SUERTE ETERNA: TODAS las tiradas ganan (gratis) y van a tu BOTÍN, que se DUPLICA cada ${ETERNO.doubleEvery} s (×2, ×4, ×8, ×16…).`, 21, 0x9a3a00));
+  add(T(`A los ${ETERNO.seconds} s EXPLOTA: volado 50/50 honesto (azar criptográfico; nadie lo mueve, ni la casa).`, 21, C.inkBlue));
   // win box
   const win = new Container();
   const wb = new Graphics();
   const wt = T(
-    `SI GANAS: te quedas con todo y te llevas 1 gato especial: legendario (${Math.round(ETERNO.reward.legendary * 100)}%), legendario HOLO (${Math.round(ETERNO.reward.holo * 100)}%) o mítico (${Math.round(ETERNO.reward.mythic * 100)}%; si aún no puedes tener uno, legendario HOLO).`,
+    `SI GANAS: TODO lo tuyo se multiplica ×${ETERNO.winMultiplier} (oro, gemas, pescaditos, boletos y fichas), te llevas el BOTÍN entero y 1 gato especial: legendario (${Math.round(ETERNO.reward.legendary * 100)}%), legendario HOLO (${Math.round(ETERNO.reward.holo * 100)}%) o MÍTICO (${Math.round(ETERNO.reward.mythic * 100)}%; si aún no puedes tener uno, legendario HOLO).`,
     22,
     C.ink,
     { wordWrapWidth: 1130 },
@@ -69,7 +72,7 @@ export function openEternoConfirm(onConfirm: () => void) {
   const r = atRisk();
   const risk = new Container();
   const rb = new Graphics();
-  const rt = T('SI PIERDES, te quedas en 0 de (lo que tengas al explotar):', 24, CP.paper, { wordWrapWidth: 1130 });
+  const rt = T('SI PIERDES, te quedas en 0 de esto (y el botín se va):', 24, CP.paper, { wordWrapWidth: 1130 });
   rt.position.set(18, 12);
   risk.addChild(rb, rt);
   let ry = 12 + rt.height + 10;
@@ -91,7 +94,7 @@ export function openEternoConfirm(onConfirm: () => void) {
   ry += safe.height + 14;
   rb.rect(0, 0, 1170, ry).fill(0x8a1010).stroke({ width: 4, color: C.ink, alignment: 1 });
   add(risk, 14);
-  add(T('¿Te arrepientes a medio camino? ENFRÍALA antes de los 20 s: no hay 50/50 y tampoco premio especial. Si cierras el juego antes de la explosión, cuenta como enfriarla.', 19, C.inkBlue), 18);
+  add(T(`¿Te arrepientes? ENFRÍALA antes de los ${ETERNO.lockAt} s: no hay 50/50 ni premio. Después ya no hay salida: si cierras el juego, el volado se tira cuando vuelvas al casino.`, 19, C.inkBlue), 18);
   // hold to confirm
   const hold = new Container();
   const W0 = 560;
@@ -201,13 +204,31 @@ export class EternoRun {
   private ticking = false;
   private resolveCool: (() => void) | null = null;
   private reduce = settings.reduceMotion;
+  // LA SUERTE ETERNA (20–40 s)
+  private locked = false;
+  private potBox = new Container();
+  private potT!: Text;
+  private potMulT!: Text;
+  private potShown = 0;
+  private potCur: EternoField = 'chips';
 
   constructor(private env: EternoEnv) {}
 
   stop(why: 'user' | 'gone') {
     if (this.finished || this.stopped) return;
-    if (this.elapsed() >= ETERNO.seconds) return; // too late: it's exploding
+    if (why === 'user' && (this.locked || this.elapsed() >= ETERNO.lockAt)) {
+      // SIN FRENOS: no way out any more
+      sfx('error');
+      return;
+    }
     this.stopped = why;
+    if (why === 'gone' && this.locked) {
+      // the scene is going away past the lock: the session stays open (locked) and its 50/50 is drawn on return
+      this.ticking = false;
+      Ticker.shared.remove(this.tick, this);
+      this.resolveCool?.();
+      return;
+    }
     if (why === 'gone') {
       // the scene is going away: record the stop now and stop touching its objects
       this.ticking = false;
@@ -221,9 +242,9 @@ export class EternoRun {
     return this.t0 ? (performance.now() - this.t0) / 1000 : 0;
   }
 
-  /** the speed curve: x2 → x60 (past INSTANT_SPEED in the last seconds) */
+  /** the speed curve: x2 → x60, top speed at ETERNO.rampSeconds (past INSTANT_SPEED near the top) */
   static speedAt(t: number) {
-    const k = Math.max(0, Math.min(1, t / ETERNO.seconds));
+    const k = Math.max(0, Math.min(1, t / ETERNO.rampSeconds));
     return 2 + 58 * Math.pow(k, 2.2);
   }
 
@@ -241,17 +262,18 @@ export class EternoRun {
     this.ticking = true;
     Ticker.shared.add(this.tick, this);
     try {
-      while (!this.stopped && this.elapsed() < ETERNO.seconds) {
+      // ---- 0–20 s: CALENTANDO (paid rounds, ENFRIAR allowed)
+      while (!this.stopped && this.elapsed() < ETERNO.lockAt) {
         const h = this.env.host();
         if (!h) {
           this.stopped = 'gone';
           break;
         }
         const sp = EternoRun.speedAt(this.elapsed());
-        const out = await Promise.race([h.autoStep(sp), this.until(ETERNO.seconds * 1000 + 8000).then(() => ({ ok: true }))]);
+        const out = await Promise.race([h.autoStep(sp), this.until(ETERNO.lockAt * 1000 + 6000).then(() => ({ ok: true }))]);
         if (this.stopped) break;
         if (!out.ok) {
-          // no balance for another round: the machine keeps overheating anyway (ENFRIAR is always there)
+          // no balance for another round: the machine keeps overheating anyway (ENFRIAR is there until the lock)
           this.statT.text = 'SIN SALDO PARA OTRA TIRADA · LA MÁQUINA SIGUE CALENTÁNDOSE';
           await this.sleepOrStop(250);
           continue;
@@ -259,8 +281,15 @@ export class EternoRun {
         this.rounds++;
         await this.sleepOrStop(gapFor(sp));
       }
+      // ---- 20–40 s: SIN FRENOS · LA SUERTE ETERNA
+      if (!this.stopped) await this.luckyPhase();
     } catch (e) {
       console.warn('[casino] ETERNO loop', e);
+    }
+    if (this.stopped === 'gone' && this.locked) {
+      // left past the lock: nothing is drawn here; the casino draws it on return (settleAbandoned)
+      this.cleanup();
+      return;
     }
     if (this.stopped) {
       stopEterno(this.id, 'stop');
@@ -279,10 +308,135 @@ export class EternoRun {
     }
     await this.explode();
     await this.pause(res.record.r === 'win');
-    if (res.record.r === 'win') await this.winSeq(res.record.prize ?? null);
-    else await this.lossSeq(res.record.lost ?? atRisk());
+    if (res.record.r === 'win') await this.winSeq(res.record);
+    else await this.lossSeq(res.record.lost ?? atRisk(), res.record.pot);
     ctx.unfreeze();
     this.cleanup();
+  }
+
+  // ---------------------------------------------------------------- LA SUERTE ETERNA
+  private async luckyPhase() {
+    const h = this.env.host();
+    const st = h?.autoStake() ?? { cur: 'chips' as const, amount: 10 };
+    this.potCur = st.cur;
+    const stake = Math.max(1, st.amount);
+    lockEterno(this.id, st.cur);
+    this.locked = true;
+    this.coolBtn.disabled = true;
+    this.coolBtn.setText('SIN FRENOS', 'YA NO SE PUEDE ENFRIAR');
+    await this.lockSlam();
+    this.showPot();
+    let nextDouble = ETERNO.lockAt + ETERNO.doubleEvery;
+    while (!this.stopped && this.elapsed() < ETERNO.seconds) {
+      const t = this.elapsed();
+      if (t >= nextDouble && nextDouble < ETERNO.seconds) {
+        nextDouble += ETERNO.doubleEvery;
+        doublePot(this.id);
+        await this.doubleSlam();
+        continue;
+      }
+      const m = luckyMult();
+      const won = this.potCur === 'gold' ? stake * m : Math.max(1, Math.round(stake * m));
+      addLuck(this.id, won);
+      this.rounds++;
+      this.luckyFx(won, m);
+      // a touch faster as the end nears
+      const k = (t - ETERNO.lockAt) / (ETERNO.seconds - ETERNO.lockAt);
+      await this.sleepOrStop(1000 / (ETERNO.luck.perSecond * (1 + k)));
+    }
+    if (!this.stopped) G.save();
+  }
+
+  private potAmount() {
+    return eternoState().open?.pot?.amount ?? 0;
+  }
+  private potDoublings() {
+    return eternoState().open?.pot?.doublings ?? 0;
+  }
+
+  /** "SIN FRENOS": the cool button dies, a red slam, the luck starts */
+  private async lockSlam() {
+    sfx('bigboom');
+    flash(this.env.hud, 0xff3b1f, this.reduce ? 0.25 : 0.7, 0.35);
+    this.env.ctx.shake(this.reduce ? 0.15 : 0.6);
+    const cx = AREA.x + AREA.w / 2;
+    const t1 = stamp(this.env.hud, cx, AREA.y + 330, '¡SIN FRENOS!', 0xff3b1f, 130, -0.06);
+    const t2 = stamp(this.env.hud, cx, AREA.y + 470, 'LA SUERTE ETERNA', CP.yellow, 86, 0.04);
+    this.env.bubble('Ya no se puede parar. Ahora TODO gana… y se duplica. Ojalá la moneda te quiera.', 'MODO ETERNO', CP.yellow);
+    this.env.chatEv('eternoHot', 4);
+    await this.wait(1100);
+    gsap.to([t1, t2], { alpha: 0, duration: 0.3, onComplete: () => [t1, t2].forEach((t) => !t.destroyed && t.destroy()) });
+  }
+
+  /** the botín banner over the table */
+  private showPot() {
+    const b = this.potBox;
+    b.position.set(AREA.x + AREA.w / 2, AREA.y + 70);
+    const W0 = 720;
+    const bg = new Graphics().roundRect(-W0 / 2 + 8, 8, W0, 150, 14).fill(CP.ink).roundRect(-W0 / 2, 0, W0, 150, 14).fill(0x2a1a00).stroke({ width: 5, color: CP.yellow });
+    const lbl = label('BOTÍN ETERNO · TODO GANA', 18, CP.yellow, { letterSpacing: 3 });
+    lbl.anchor.set(0.5, 0);
+    lbl.position.set(0, 10);
+    const ic = curIcon(this.potCur, 54);
+    ic.position.set(-W0 / 2 + 60, 92);
+    this.potT = txt('0', { fontFamily: F.poster, fontSize: 84, fill: CP.yellow, stroke: { color: CP.ink, width: 8, join: 'round' } });
+    this.potT.anchor.set(0.5, 0.5);
+    this.potT.position.set(10, 92);
+    this.potMulT = neon('x1', 54, 0xff3b1f);
+    this.potMulT.anchor.set(1, 0.5);
+    this.potMulT.position.set(W0 / 2 - 22, 92);
+    b.addChild(bg, lbl, ic, this.potT, this.potMulT);
+    this.env.hud.addChild(b);
+    gsap.from(b, { y: b.y - 220, duration: 0.45, ease: 'back.out(1.7)' });
+  }
+  private drawPot() {
+    if (!this.potT || this.potT.destroyed) return;
+    this.potT.text = fmt(this.potShown);
+    const maxW = 470;
+    this.potT.scale.set(this.potT.width / this.potT.scale.x > maxW ? maxW / (this.potT.width / this.potT.scale.x) : 1);
+  }
+
+  /** one lucky round: coins out of the table, a floating +X, the botín counts up */
+  private luckyFx(won: number, mult: number) {
+    const cx = AREA.x + 160 + Math.random() * (AREA.w - 320);
+    const cy = AREA.y + 380 + Math.random() * 380;
+    const jackpot = mult >= ETERNO.luck.jackpotMult[0];
+    floatText(this.env.hud, cx, cy, `+${fmt(won)}`, { color: jackpot ? 0xff3b1f : CP.yellow, size: jackpot ? 84 : 52, rise: 120, dur: 0.8 });
+    if (!this.reduce) coinFountain(this.env.ctx.particles, cx, cy, this.potCur, jackpot ? 26 : 8, jackpot ? 1.2 : 0.8);
+    if (jackpot) {
+      csfx.jackpot();
+      onomatopoeia(this.env.hud, cx, cy - 120, '¡JACKPOT!', { size: 110, color: 0xff3b1f });
+      this.env.ctx.marquee.burst(900, 'rainbow');
+    } else csfx.coin(1 + Math.random() * 0.6);
+    const to = this.potAmount();
+    gsap.to(this, { potShown: to, duration: 0.25, ease: 'power1.out', onUpdate: () => this.drawPot() });
+    if (this.potT && !this.potT.destroyed) gsap.fromTo(this.potT.scale, { x: this.potT.scale.x * 1.08, y: this.potT.scale.y * 1.08 }, { x: this.potT.scale.x, y: this.potT.scale.y, duration: 0.18 });
+  }
+
+  /** ×2: the botín doubles with a slam, a rising chord, a coin storm */
+  private async doubleSlam() {
+    const n = this.potDoublings();
+    const mul = 2 ** n;
+    const cx = AREA.x + AREA.w / 2;
+    const cy = AREA.y + AREA.h * 0.45;
+    sfx('levelup');
+    if (!audio.muted && audio.ctx) for (let i = 0; i < 3; i++) audio.voice({ wave: 'square', freq: 330 * 2 ** (n / 4) * [1, 1.26, 1.5][i], dur: 0.35, vol: 0.06, delay: i * 0.06 });
+    flash(this.env.hud, 0xffc94a, this.reduce ? 0.2 : 0.55, 0.3);
+    this.env.ctx.shake(this.reduce ? 0.12 : 0.45);
+    const big = neon('x2', this.reduce ? 260 : 360, CP.yellow);
+    big.anchor.set(0.5);
+    big.position.set(cx, cy);
+    this.env.hud.addChild(big);
+    gsap.fromTo(big.scale, { x: 3, y: 3 }, { x: 1, y: 1, duration: 0.35, ease: 'back.out(2)' });
+    gsap.to(big, { alpha: 0, delay: 0.75, duration: 0.25, onComplete: () => !big.destroyed && big.destroy() });
+    if (!this.reduce) coinRain(this.env.ctx.particles, this.potCur, 30 + n * 12, AREA.x, AREA.x + AREA.w);
+    if (this.potMulT && !this.potMulT.destroyed) {
+      this.potMulT.text = `x${mul}`;
+      gsap.fromTo(this.potMulT.scale, { x: 1.8, y: 1.8 }, { x: 1, y: 1, duration: 0.4, ease: 'back.out(3)' });
+    }
+    gsap.to(this, { potShown: this.potAmount(), duration: 0.6, ease: 'power2.out', onUpdate: () => this.drawPot() });
+    this.env.chatEv('winBig', 2);
+    await this.wait(700);
   }
 
   // ---------------------------------------------------------------- visuals
@@ -313,7 +467,7 @@ export class EternoRun {
     this.stateT = heading('TIBIA', 30, CP.cyan);
     this.stateT.anchor.set(1, 0);
     this.stateT.position.set(HUD.w - 18, 14);
-    this.timerT = txt('20.0', { fontFamily: F.poster, fontSize: 80, fill: CP.paper });
+    this.timerT = txt(ETERNO.seconds.toFixed(1), { fontFamily: F.poster, fontSize: 80, fill: CP.paper });
     this.timerT.position.set(18, 50);
     const sLbl = label('SEGUNDOS PARA REVENTAR', 14, CP.softPink, { letterSpacing: 2 });
     sLbl.position.set(20, 150);
@@ -323,7 +477,7 @@ export class EternoRun {
     this.gauge.position.set(18, 178);
     this.statT = label('', 15, CP.paper, { wordWrap: true, wordWrapWidth: HUD.w - 36 });
     this.statT.position.set(18, 212);
-    this.coolBtn = new CButton('ENFRIAR Y SALIR', () => this.stop('user'), { w: HUD.w - 44, h: 70, color: CP.cyan, size: 30, sub: 'SIN 50/50 · SIN PREMIO ESPECIAL' });
+    this.coolBtn = new CButton('ENFRIAR Y SALIR', () => this.stop('user'), { w: HUD.w - 44, h: 70, color: CP.cyan, size: 30, sub: `SOLO ANTES DE LOS ${ETERNO.lockAt} s · SIN 50/50 · SIN PREMIO` });
     this.coolBtn.position.set(18, HUD.h - 94);
     hd.addChild(bg, title, this.stateT, this.timerT, sLbl, this.tempT, this.gauge, this.statT, this.coolBtn);
     this.env.hud.addChild(hd);
@@ -357,7 +511,8 @@ export class EternoRun {
     }
     const bal = this.env.host()?.autoBalance() ?? this.startBal;
     const d = bal - this.startBal;
-    if (!this.statT.text.startsWith('SIN SALDO')) this.statT.text = `${this.rounds} tiradas · saldo ${d >= 0 ? '+' : '−'}${fmt(Math.abs(d))} · velocidad x${Math.round(EternoRun.speedAt(t))}`;
+    if (this.locked) this.statT.text = `SIN FRENOS · ${this.rounds} tiradas · el botín va x${2 ** this.potDoublings()} · explota en ${left.toFixed(0)} s`;
+    else if (!this.statT.text.startsWith('SIN SALDO')) this.statT.text = `${this.rounds} tiradas · saldo ${d >= 0 ? '+' : '−'}${fmt(Math.abs(d))} · velocidad x${Math.round(EternoRun.speedAt(t))} · enfriar: ${Math.max(0, ETERNO.lockAt - t).toFixed(0)} s`;
     // casing: tint, border lights, vibration
     this.heatTint.alpha = (0.06 + 0.42 * k * k) * (0.75 + 0.25 * Math.sin(t * (6 + 20 * k)));
     const b = this.border.clear();
@@ -417,7 +572,7 @@ export class EternoRun {
       this.env.say('eternoHot');
       this.env.chatEv('eternoHot', 3);
     }
-    if (k >= 1) this.coolBtn.disabled = true;
+    if (t >= ETERNO.lockAt) this.coolBtn.disabled = true;
   }
 
   private until(ms: number) {
@@ -536,12 +691,15 @@ export class EternoRun {
     gsap.to(layer, { alpha: 0, duration: 0.3, onComplete: () => layer.destroy({ children: true }) });
   }
 
-  private async winSeq(prize: Granted | null) {
+  private async winSeq(rec: EternoRecord) {
     const { ctx } = this.env;
+    const prize: Granted | null = rec.prize ?? null;
+    const before = rec.before ?? atRisk();
+    const after = rec.after ?? atRisk();
     const layer = new Container();
     this.env.hud.addChild(layer);
     const glow = screenRect(0x2a1a00);
-    glow.alpha = 0.85;
+    glow.alpha = 0.88;
     layer.addChild(glow);
     const rays = new Graphics();
     for (let i = 0; i < 28; i++) {
@@ -554,33 +712,73 @@ export class EternoRun {
     if (!this.reduce) gsap.to(rays, { rotation: Math.PI, duration: 10, ease: 'none', repeat: -1 });
     flash(layer, 0xffc94a, 0.8, 0.5);
     csfx.jackpot();
-    const t1 = neon('¡GANASTE EL ETERNO!', 120, 0xffc94a);
+    const t1 = neon('¡GANASTE EL ETERNO!', 110, 0xffc94a);
     t1.anchor.set(0.5);
-    t1.position.set(W / 2, H / 2 - 120);
+    t1.position.set(W / 2, 140);
     if (t1.width > W - 120) t1.scale.set((W - 120) / t1.width);
-    const t2 = heading(prize ? `TE QUEDAS CON TODO + ${prize.label}` : 'TE QUEDAS CON TODO', 48, CP.paper);
+    const t2 = heading(`TODO LO TUYO x${ETERNO.winMultiplier}${rec.pot?.amount ? ' + EL BOTÍN' : ''}${prize ? ' + UN GATO' : ''}`, 46, CP.paper);
     t2.anchor.set(0.5);
-    t2.position.set(W / 2, H / 2 + 20);
+    t2.position.set(W / 2, 250);
     if (t2.width > W - 160) t2.scale.set((W - 160) / t2.width);
     layer.addChild(t1, t2);
     gsap.from(t1.scale, { x: 0, y: 0, duration: 0.5, ease: 'back.out(2)' });
     gsap.from(t2, { alpha: 0, y: t2.y + 40, duration: 0.4, delay: 0.3 });
     const p = new Particles();
     layer.addChild(p);
-    coinRain(p, 'gold', this.reduce ? 20 : 70);
-    sparkles(layer, W / 2, H / 2 - 120, 0xffc94a, 30, 500);
+    coinRain(p, 'gold', this.reduce ? 20 : 80);
+    sparkles(layer, W / 2, 140, 0xffc94a, 30, 500);
     this.env.say('eternoWin');
     this.env.chatEv('eternoWin', 4);
     this.restoreView();
     ctx.unfreeze();
-    await this.wait(2600);
+    await this.wait(900);
+    // every balance counts up from what you had to ×2 (+ the botín in its currency)
+    const rows: { t: Text; k: EternoField; from: number; to: number }[] = [];
+    AT_RISK.forEach((k, i) => {
+      const row = new Container();
+      const ic = curIcon(k === 'food' ? 'food' : k, 44);
+      ic.position.set(0, 28);
+      const t = txt(`${AT_RISK_NAME[k]}: ${fmt(before[k])}`, { fontFamily: F.poster, fontSize: 50, fill: CP.paper, stroke: { color: CP.ink, width: 6, join: 'round' } });
+      t.position.set(40, 0);
+      const extra = rec.pot && rec.pot.cur === k && rec.pot.amount ? `  x${ETERNO.winMultiplier} + BOTÍN` : `  x${ETERNO.winMultiplier}`;
+      const tag = txt(extra, { fontFamily: F.poster, fontSize: 34, fill: CP.yellow });
+      tag.position.set(560, 12);
+      row.addChild(ic, t, tag);
+      row.position.set(W / 2 - 420, 330 + i * 78);
+      row.alpha = 0;
+      layer.addChild(row);
+      rows.push({ t, k, from: before[k], to: after[k] });
+      gsap.to(row, { alpha: 1, duration: 0.2, delay: i * 0.1 });
+    });
+    await this.wait(700);
+    for (const r of rows) {
+      const o = { v: r.from };
+      gsap.to(o, {
+        v: r.to,
+        duration: 0.9,
+        ease: 'power2.out',
+        onUpdate: () => {
+          if (!r.t.destroyed) r.t.text = `${AT_RISK_NAME[r.k]}: ${fmt(o.v)}`;
+        },
+        onComplete: () => {
+          if (r.t.destroyed) return;
+          r.t.style.fill = CP.yellow;
+          gsap.fromTo(r.t.scale, { x: 1.15, y: 1.15 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
+          if (!this.reduce) coinFountain(p, W / 2 + 200, r.t.parent!.y + 30, r.k === 'food' ? 'food' : r.k, 14, 1);
+          csfx.coin(1.2);
+        },
+      });
+      await this.wait(260);
+    }
+    await this.wait(1200);
+    await this.tapToContinue(layer, 760);
     gsap.killTweensOf(rays);
     gsap.to(layer, { alpha: 0, duration: 0.3, onComplete: () => layer.destroy({ children: true }) });
     await this.wait(320);
     if (prize) await revealCats(this.env.hud, [{ ...prize, isNew: prize.isNew ?? true }], { only: () => true });
   }
 
-  private async lossSeq(lost: Record<EternoField, number>) {
+  private async lossSeq(lost: Record<EternoField, number>, pot?: { cur: EternoField; amount: number; doublings: number }) {
     const { ctx } = this.env;
     const layer = new Container();
     this.env.hud.addChild(layer);
@@ -599,7 +797,7 @@ export class EternoRun {
     gsap.to(stampT, { alpha: 1, duration: 0.1, delay: 0.4 });
     gsap.to(stampT.scale, { x: 1, y: 1, duration: 0.3, delay: 0.4, ease: 'back.out(2)', onComplete: () => this.env.ctx.shake(this.reduce ? 0.15 : 0.5) });
     // the five balances, ticking down one by one
-    const rows: { t: Text; v: number; k: EternoField }[] = [];
+    const rows: { t: Text; v: number; k: EternoField; name?: string }[] = [];
     AT_RISK.forEach((k, i) => {
       const row = new Container();
       const ic = curIcon(k === 'food' ? 'food' : k, 40);
@@ -613,6 +811,19 @@ export class EternoRun {
       rows.push({ t, v: lost[k], k });
       gsap.to(row, { alpha: 1, duration: 0.2, delay: 0.9 + i * 0.12 });
     });
+    if (pot?.amount) {
+      const pr = new Container();
+      const ic = curIcon(pot.cur === 'food' ? 'food' : pot.cur, 40);
+      ic.position.set(0, 24);
+      const pt = txt(`BOTÍN x${2 ** pot.doublings}: ${fmt(pot.amount)}`, { fontFamily: F.poster, fontSize: 44, fill: 0xbdbdbd });
+      pt.position.set(36, 0);
+      pr.addChild(ic, pt);
+      pr.position.set(W / 2 - 260, 400 + AT_RISK.length * 66);
+      pr.alpha = 0;
+      layer.addChild(pr);
+      rows.push({ t: pt, v: pot.amount, k: pot.cur, name: `BOTÍN x${2 ** pot.doublings}` });
+      gsap.to(pr, { alpha: 1, duration: 0.2, delay: 0.9 + AT_RISK.length * 0.12 });
+    }
     this.env.say('eternoLoss');
     this.env.chatEv('eternoLoss', 4);
     await this.wait(1500);
@@ -624,7 +835,7 @@ export class EternoRun {
         duration: 0.55,
         ease: 'power2.in',
         onUpdate: () => {
-          if (!r.t.destroyed) r.t.text = `${AT_RISK_NAME[r.k]}: ${fmt(o.v)}`;
+          if (!r.t.destroyed) r.t.text = `${r.name ?? AT_RISK_NAME[r.k]}: ${fmt(o.v)}`;
         },
         onComplete: () => {
           if (r.t.destroyed) return;
@@ -645,10 +856,10 @@ export class EternoRun {
     await this.wait(700);
     const safe = label('Tus gatos, barcos, hábitats y progreso siguen intactos. Las fichas y boletos se vuelven a ganar peleando.', 26, CP.paper, { wordWrap: true, wordWrapWidth: 1100, align: 'center' });
     safe.anchor.set(0.5, 0);
-    safe.position.set(W / 2, 760);
+    safe.position.set(W / 2, pot?.amount ? 830 : 760);
     layer.addChild(safe);
     gsap.from(safe, { alpha: 0, duration: 0.4 });
-    await this.tapToContinue(layer, 860);
+    await this.tapToContinue(layer, pot?.amount ? 920 : 860);
     this.restoreView();
     gsap.to(layer, { alpha: 0, duration: 0.3, onComplete: () => layer.destroy({ children: true }) });
     await this.wait(320);
@@ -689,6 +900,8 @@ export class EternoRun {
     this.env.marquee.speed = 1;
     for (const s of this.steam) gsap.killTweensOf(s);
     gsap.killTweensOf(this.heatTint);
+    gsap.killTweensOf(this);
+    if (!this.potBox.destroyed) this.potBox.destroy({ children: true });
     if (!this.heat.destroyed) this.heat.destroy({ children: true });
     if (!this.hud.destroyed) {
       const hd = this.hud;

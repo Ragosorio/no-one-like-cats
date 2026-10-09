@@ -267,16 +267,18 @@ describe('fichas: no silent clamp', () => {
 
 describe('auto-play prefs migration', () => {
   beforeEach(() => newGame());
-  it('x4 / TURBO → x10; old defaults (25 rounds, stop on prizes) → until you stop', () => {
+  it('x2 / x4 → x10, TURBO → x20; old defaults (25 rounds, stop on prizes) → until you stop', () => {
     expect(migrateAutoPrefs({ speed: 4 as never, rounds: 25, stopBig: true, stopLegend: true, stopNew: false, floorPct: 50 }).speed).toBe(10);
+    expect(migrateAutoPrefs({ speed: 2 as never, rounds: 0, v: 2 }).speed).toBe(10);
+    expect(migrateAutoPrefs({ speed: 1, rounds: 0, v: 2 }).speed).toBe(1);
     const t = migrateAutoPrefs({ speed: 99 as never, rounds: 25, stopBig: true, stopLegend: true, stopNew: true, floorPct: 25 });
-    expect(t).toMatchObject({ speed: 10, rounds: 0, stopBig: false, stopLegend: false, stopNew: true, floorPct: 25, v: 2 });
+    expect(t).toMatchObject({ speed: 20, rounds: 0, stopBig: false, stopLegend: false, stopNew: true, floorPct: 25, v: 3 });
     // a player's own choice survives (only the old defaults are migrated)
     expect(migrateAutoPrefs({ speed: 1, rounds: 50 }).rounds).toBe(50);
     // already migrated: untouched
-    expect(migrateAutoPrefs({ speed: 2, rounds: 25, stopBig: true, v: 2 })).toMatchObject({ rounds: 25, stopBig: true });
+    expect(migrateAutoPrefs({ speed: 10, rounds: 25, stopBig: true, v: 2 })).toMatchObject({ rounds: 25, stopBig: true });
     prefs().auto = { speed: 99 as never, rounds: 25, stopBig: true, stopLegend: true, stopNew: false, floorPct: 50 };
-    expect(autoPrefs().speed).toBe(10);
+    expect(autoPrefs().speed).toBe(20);
     expect(autoPrefs().rounds).toBe(0);
   });
 });
