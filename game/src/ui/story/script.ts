@@ -352,3 +352,20 @@ export const NOCTIS_JOINS: Line[] = [
   ['NOCTIS', 'Me debes una. Y un camarote con vista al mar.'],
   ['LUZTERNA', 'Capítulo 1 completo, {name}. Tu isla seguirá produciendo. Nos vemos en el próximo mar.'],
 ];
+
+// ------------------------------------------------------------------ secret cats that arrive on their own ("a la segura")
+export const SECRET_JOINS: Record<'s_maneki' | 's_lumen' | 's_eclipse', Line[]> = {
+  s_maneki: [
+    ['SISTEMA', '(El décimo callejero no se va. Se sienta. Levanta una pata. Y no la baja.)'],
+    ['LUZTERNA', 'Diez callejeros rescatados. El décimo no vino a comer: vino a cobrar. Eso es un Maneki, {name}.'],
+    ['LUZTERNA', 'Dicen que trae suerte. Yo digo que trae calculadora.'],
+  ],
+  s_lumen: [
+    ['SISTEMA', '(Un flash. Otro flash. Alguien está fotografiando tu Catdex.)'],
+    ['LUZTERNA', 'Cuarenta especies, {name}. Tu colección ya vale la pena retratarse… y la fotógrafa se quedó a vivir.'],
+  ],
+  s_eclipse: [
+    ['SISTEMA', '(El sol y la luna pelearon del mismo lado. El cielo no supo qué hacer y se apagó un ratito.)'],
+    ['LUZTERNA', 'Solar y Lunita en la misma cubierta. Ganaron… y algo bajó del eclipse a felicitarlos.'],
+  ],
+};

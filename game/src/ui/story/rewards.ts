@@ -22,6 +22,7 @@ import { LuzternaPortrait, preloadStoryArt } from './portrait';
 import { onomatopoeia, sparkles } from '../../fx/juice';
 import { destroyDeep, settle } from './tweens';
 import { onTapInside } from '../dialog';
+import { screenRect } from '../screen';
 
 const CHAIN: Record<MissionDef['chain'], { name: string; color: number; text: number }> = {
   historia: { name: 'HISTORIA', color: C.pinkHot, text: C.ink },
@@ -304,7 +305,7 @@ export async function milestonePoster(layer: Container, kl: number, rules: strin
   const root = new Container();
   root.label = 'milestone';
   layer.addChild(root);
-  const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.55 });
+  const dim = screenRect({ color: C.ink, alpha: 0.55 });
   dim.eventMode = 'static';
   root.addChild(dim);
   const PW = 1300;

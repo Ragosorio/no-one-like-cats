@@ -1293,13 +1293,30 @@ export class IslandScene extends Scene {
           if (c) openCatPanel(c.uid);
         } else if (g.feature === 'crop_repeat' || g.feature === 'auto_harvest') openDock();
         else if (g.feature === 'resonance_queue') openSanctuary();
+        else if (g.feature === 'podio_win') void import('../panels/podio/open').then((p) => p.openPodio());
         else openMissions();
         return;
       }
+      case 'secret_rumors':
+        // clues come from seating a pair shaped like a secret recipe (and from island secrets)
+        toast('Pistas de gatos secretos', { sub: 'Lee la PISTA de cada "???" en el Catdex y sienta una pareja parecida en la Resonancia: el secreto se asoma aunque falte nivel.', color: C.lilac, dur: 7 });
+        this.focusSpot(this.plan.home.sanctuary, 0.85);
+        this.bag.add(gsap.delayedCall(0.6, () => openSanctuary()));
+        return;
+      case 'gambit_play':
+        void import('../panels/casino/open').then((c) => c.openCasino());
+        return;
+      case 'micro_complete':
+      case 'event_complete':
+        toast('Los microeventos llegan solos', { sub: 'Mientras juegas en la isla aparece uno cada 6–10 min con reloj rojo (pez dorado, callejero, lluvia…). Tócalo cuando salga.', dur: 7 });
+        return;
+      case 'reach_kl':
+        void import('../panels/kingdom/KingdomPanel').then((k) => k.openKingdomPanel());
+        return;
       case 'watch':
         // «Continuará»: play the ending now instead of waiting for a calm moment
         void import('../app/story').then((st) => {
-          if (!st.playChapterEnding()) openMissions();
+          if (!st.playChapterEnding(m.id)) openMissions();
         });
         return;
       case 'void_fragments':
@@ -1309,7 +1326,6 @@ export class IslandScene extends Scene {
         // Simulacro (and any switchable automation) lives in the Reino panel
         void import('../panels/kingdom/KingdomPanel').then((k) => k.openKingdomPanel());
         return;
-      case 'reach_kl':
       default:
         openMissions();
     }

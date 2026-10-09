@@ -26,7 +26,8 @@ import { promptCatName } from '../ui/story/nameCat';
 import { offlineReport } from '../ui/story/offline';
 import { askPlayerProfile } from '../ui/story/profile';
 import { zoneCard } from '../ui/story/zoneCard';
-import { BOSS_INTRO, BOSS_OUTRO, ELITE_WARN, ZONE_INTRO, RAIJIN_INTRO, RAIJIN_OUTRO, HERALDO_INTRO, HERALDO_OUTRO, GRIETA_INTRO, GRIETA_OUTRO, VACIO_INTRO, VACIO_OUTRO, PATITO_INTRO, PATITO_OUTRO, MAREA_FINAL, UNKNOWN_END, NOCTIS_JOINS } from '../ui/story/script';
+import { BOSS_INTRO, BOSS_OUTRO, ELITE_WARN, ZONE_INTRO, RAIJIN_INTRO, RAIJIN_OUTRO, HERALDO_INTRO, HERALDO_OUTRO, GRIETA_INTRO, GRIETA_OUTRO, VACIO_INTRO, VACIO_OUTRO, PATITO_INTRO, PATITO_OUTRO, MAREA_FINAL, UNKNOWN_END, NOCTIS_JOINS, SECRET_JOINS } from '../ui/story/script';
+import { speciesCount } from '../state/sys/cats';
 import { startMareaFinal } from '../state/sys/island';
 import { gtxt } from '../ui/gender';
 import { isCleared, zoneUnlocked } from '../state/sys/campaign';
@@ -37,6 +38,7 @@ import { goIsland, goTitle } from './flow';
 import { PODIO_INTRO, HEROICO_INTRO, DIVINO_INTRO } from '../podio/lines';
 import { CASINO_INTRO } from '../panels/casino/intro';
 import { GRIETAS_EXPLAIN, MULTI_INTRO, MULTI_OUTRO } from '../ui/story/grietasScript';
+import { FINAL_EPILOGUE, FINAL_INTRO, FINAL_OUTRO } from '../ui/story/finaleScript';
 
 // ------------------------------------------------------------------ beat plan (M1: b01–b11 · M2: zones 2–3)
 interface BeatRef {
@@ -54,6 +56,8 @@ interface BeatRef {
   special?: 'profile' | 'marea' | 'credits' | 'reveal';
   /** for special 'reveal': the species that joins after the lines */
   species?: string;
+  /** for special 'credits': the end of the whole story instead of Chapter 1 */
+  edition?: 'final';
   /** zone arrival card before the lines (and the map pans to that zone) */
   card?: number;
   /** only plays on this screen */
@@ -89,6 +93,8 @@ const ON_NEW: Record<string, BeatRef[]> = {
   H26: [{ beat: 'grieta_time_intro', custom: MULTI_INTRO.time, delay: 2 }],
   H27: [{ beat: 'grieta_light_intro', custom: MULTI_INTRO.light, delay: 2 }],
   H28: [{ beat: 'grieta_void_intro', custom: MULTI_INTRO.void, effect: 'darkSky', delay: 2 }],
+  // EL ARCHIVO RASGADO: the six grietas won → the end of the story (state/sys/finale.ts)
+  H29: [{ beat: 'final_intro', custom: FINAL_INTRO, effect: 'darkSky', delay: 3 }],
 };
 /** beats that play when a mission is COMPLETED */
 const ON_DONE: Record<string, BeatRef[]> = {
@@ -123,6 +129,12 @@ const ON_DONE: Record<string, BeatRef[]> = {
   H26: [{ beat: 'grieta_time_outro', custom: MULTI_OUTRO.time, delay: 1.5 }],
   H27: [{ beat: 'grieta_light_outro', custom: MULTI_OUTRO.light, delay: 1.5 }],
   H28: [{ beat: 'grieta_void_outro', custom: MULTI_OUTRO.void, delay: 1.5 }],
+  // Distraxia beaten → what really happened → the final credits (completes H30 'watch')
+  H29: [
+    { beat: 'final_outro', custom: FINAL_OUTRO, delay: 1.5 },
+    { beat: 'b30_creditos', special: 'credits', edition: 'final', delay: 1 },
+  ],
+  H30: [{ beat: 'final_epilogue', custom: FINAL_EPILOGUE, delay: 1 }],
 };
 
 /** beats that fire when a condition becomes true (checked while calm on island/map) */
@@ -143,12 +155,17 @@ const WHEN: { key: string; cond: () => boolean; ref: BeatRef }[] = [
   // that got them from the update patch
   { key: 'heroico_intro', cond: () => G.s.cats.some((c) => catRarity(c.species) === 'heroic'), ref: { beat: 'heroico_intro', custom: HEROICO_INTRO, onlyOn: 'island', delay: 2 } },
   { key: 'divino_intro', cond: () => G.s.cats.some((c) => catRarity(c.species) === 'divine'), ref: { beat: 'divino_intro', custom: DIVINO_INTRO, onlyOn: 'island', delay: 2 } },
+  // secret cats' sure routes (the Catdex promises them; until 2026-10-08 none of them existed)
+  { key: 'secret_maneki_strays', cond: () => (G.s.counters.strays ?? 0) >= 10 && !owns('s_maneki'), ref: { beat: 'secret_maneki_strays', custom: SECRET_JOINS.s_maneki, special: 'reveal', species: 's_maneki', onlyOn: 'island', delay: 2 } },
+  { key: 'secret_lumen_40', cond: () => speciesCount() >= 40 && !owns('s_lumen'), ref: { beat: 'secret_lumen_40', custom: SECRET_JOINS.s_lumen, special: 'reveal', species: 's_lumen', onlyOn: 'island', delay: 2 } },
+  { key: 'secret_eclipse_duo', cond: () => (G.s.counters.eclipse_duo_win ?? 0) >= 1 && !owns('s_eclipse'), ref: { beat: 'secret_eclipse_duo', custom: SECRET_JOINS.s_eclipse, special: 'reveal', species: 's_eclipse', delay: 2 } },
 ];
+const owns = (species: string) => G.s.cats.some((c) => c.species === species);
 function catRarity(species: string) {
   return CONTENT.cats.find((c) => c.id === species)?.rarity;
 }
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
-const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28']);
+const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28', 'H29', 'H30']);
 
 interface QueuedBeat {
   key: string;
@@ -485,7 +502,7 @@ async function playBeat(q: QueuedBeat) {
     busy = true;
     try {
       const { playCredits } = await import('../ui/story/credits');
-      await playCredits(storyLayer());
+      await playCredits(storyLayer(), { final: q.ref.edition === 'final' });
       markBeat(q.key);
       G.save();
     } finally {
@@ -624,10 +641,12 @@ function resetQueues() {
 }
 
 /** mission H22 «Continuará»: its IR button plays the chapter ending (if it hasn't played yet) right now */
-export function playChapterEnding() {
-  if (beatSeen('b25_creditos')) return false;
+/** the 'watch' missions: H22 (Chapter 1 ending) and H30 (the end of the whole story) */
+export function playChapterEnding(missionId = 'H22') {
+  const final = missionId === 'H30';
+  if (beatSeen(final ? 'b30_creditos' : 'b25_creditos')) return false;
   // straight to the front of the line: the player asked for it (older catch-up beats wait)
-  const refs = (ON_DONE.H21 ?? []).map((r) => ({ ...r, delay: 0 }));
+  const refs = ((final ? ON_DONE.H29 : ON_DONE.H21) ?? []).map((r) => ({ ...r, delay: 0 }));
   for (const r of [...refs].reverse()) {
     const key = keyOf(r);
     const i = beats.findIndex((q) => q.key === key);

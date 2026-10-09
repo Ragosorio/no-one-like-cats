@@ -16,6 +16,7 @@ import { onomatopoeia, sparkles } from '../../fx/juice';
 import { clean } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
 import { destroyDeep } from './tweens';
+import { screenRect } from '../screen';
 
 const SUGGEST = ['Michi', 'Don Gato', 'Pelusa', 'Tostada', 'Sr. Bigotes', 'Nacho'];
 
@@ -57,7 +58,7 @@ export async function promptName(layer: Container, o: NamePromptOpts): Promise<s
   return new Promise((resolve) => {
     const root = new Container();
     layer.addChild(root);
-    const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.65 });
+    const dim = screenRect({ color: C.ink, alpha: 0.65 });
     dim.eventMode = 'static';
     root.addChild(dim);
 

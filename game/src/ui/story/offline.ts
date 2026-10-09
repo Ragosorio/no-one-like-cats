@@ -17,6 +17,7 @@ import type { OfflineSummary } from '../../state/ext/story';
 import { clean, loadingTip, sysMsg, tone } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
 import { destroyDeep, settle } from './tweens';
+import { screenRect } from '../screen';
 
 export async function offlineReport(layer: Container, s: OfflineSummary, opts: { canCollectAll: boolean; onCollectAll?: () => number }): Promise<void> {
   await Promise.all([preloadCats(['canelo_cozy_cat']), preloadStoryArt()]);
@@ -24,7 +25,7 @@ export async function offlineReport(layer: Container, s: OfflineSummary, opts: {
     const root = new Container();
     root.label = 'offlineReport';
     layer.addChild(root);
-    const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.7 });
+    const dim = screenRect({ color: C.ink, alpha: 0.7 });
     dim.eventMode = 'static';
     root.addChild(dim);
     const PW = 1500;

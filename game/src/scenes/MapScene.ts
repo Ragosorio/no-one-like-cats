@@ -62,6 +62,7 @@ import {
 } from '../panels/campaign/chartArt';
 import { StageCard } from '../panels/campaign/StageCard';
 import { sparkles } from '../fx/juice';
+import { screenRect } from '../ui/screen';
 
 const BOX_W = 600;
 const BOX_H = 400;
@@ -191,7 +192,7 @@ export class MapScene extends Scene {
   override enter() {
     // ---------- paper & chart
     const paper = new TilingSprite({ texture: paperTexture(P.aged, 512, 1.5), width: W, height: H });
-    const blocker = new Graphics().rect(0, 0, W, H).fill({ color: 0xffffff, alpha: 0.001 });
+    const blocker = screenRect({ color: 0xffffff, alpha: 0.001 });
     blocker.eventMode = 'static';
     this.setupPan(blocker);
     this.chart.eventMode = 'static';
@@ -222,7 +223,7 @@ export class MapScene extends Scene {
         if (typeof g.battle === 'string' && g.battle in STORY_BATTLES) void startStoryBattle(g.battle);
         else if (g.type === 'void_fragments') void import('../ui/fragmentsPanel').then((f) => f.openFragments());
         // «Continuará»: the ending plays on the island
-        else if (g.type === 'watch') void import('../app/flow').then((fl) => fl.goIsland()).then(() => import('../app/story')).then((st) => st.playChapterEnding());
+        else if (g.type === 'watch') void import('../app/flow').then((fl) => fl.goIsland()).then(() => import('../app/story')).then((st) => st.playChapterEnding(m.id));
         else void import('../panels/Missions').then((x) => x.openMissions());
       },
     });

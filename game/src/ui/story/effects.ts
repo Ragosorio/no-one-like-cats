@@ -10,6 +10,7 @@ import { settings } from '../../core/settings';
 import { C } from '../theme';
 import { glowTexture } from '../../art/textures';
 import { destroyDeep } from './tweens';
+import { screenRect } from '../screen';
 
 /** Distraxia passes overhead: the screen darkens, eyes in the fog, the music cuts. */
 export function darkSky(layer: Container, ms = 1600): Promise<void> {
@@ -17,7 +18,7 @@ export function darkSky(layer: Container, ms = 1600): Promise<void> {
     const root = new Container();
     root.label = 'darkSky';
     layer.addChild(root);
-    const shade = new Graphics().rect(0, 0, W, H).fill(0x0b0714);
+    const shade = screenRect(0x0b0714);
     shade.alpha = 0;
     root.addChild(shade);
     const fog = new Container();

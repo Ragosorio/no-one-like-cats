@@ -20,6 +20,7 @@ import { clean } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
 import { promptName } from './nameCat';
 import { destroyDeep } from './tweens';
+import { screenRect } from '../screen';
 
 type Gender = 'm' | 'f' | 'x';
 
@@ -36,7 +37,7 @@ export async function choicePrompt<T>(layer: Container, o: { title1: string; tit
   return new Promise((resolve) => {
     const root = new Container();
     layer.addChild(root);
-    const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.65 });
+    const dim = screenRect({ color: C.ink, alpha: 0.65 });
     dim.eventMode = 'static';
     root.addChild(dim);
     const PW = 1180;

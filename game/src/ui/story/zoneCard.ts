@@ -17,6 +17,7 @@ import { destroyDeep, settle } from './tweens';
 import { ZONE_CARDS } from './script';
 import { P, clipping, doubleRule, stamp } from '../../panels/campaign/common';
 import { bossEmblem, cliffFace, compassRose, gargoyle, rocks, stormCloud, tentacle, tower, waterfall, waves, whirl } from '../../panels/campaign/chartArt';
+import { screenRect } from '../screen';
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI'];
 
@@ -25,7 +26,7 @@ export async function zoneCard(layer: Container, zone: number): Promise<void> {
   if (!def) return;
   const root = new Container();
   layer.addChild(root);
-  const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.55 });
+  const dim = screenRect({ color: C.ink, alpha: 0.55 });
   dim.eventMode = 'static';
   root.addChild(dim);
   const PW = 1240;

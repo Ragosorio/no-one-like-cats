@@ -23,7 +23,7 @@ export const MAI_REPO = 'https://github.com/Ragosorio/MAI-SVG';
 
 type Block = { kind: 'head' | 'title' | 'sub' | 'body' | 'small' | 'gap' | 'link'; text?: string; url?: string };
 
-function stats(): Block[] {
+function stats(final = false): Block[] {
   const s = G.s;
   const best = [...s.habitats].sort((a, b) => b.tier - a.tier)[0];
   const lastHab = best ? habitatTier(best.tier).name : 'una caja de cartón';
@@ -33,7 +33,7 @@ function stats(): Block[] {
   const moment = mvp?.moments?.length ? mvp.moments[mvp.moments.length - 1] : 'Cuando el pato hizo ¡cuac!';
   return [
     { kind: 'head', text: 'EL DIARIO DEL MAR' },
-    { kind: 'sub', text: 'EDICIÓN ESPECIAL: TU CAPÍTULO 1' },
+    { kind: 'sub', text: final ? 'EDICIÓN DEFINITIVA: TU HISTORIA COMPLETA' : 'EDICIÓN ESPECIAL: TU CAPÍTULO 1' },
     { kind: 'gap' },
     { kind: 'body', text: `Tu primer hábitat era una caja de cartón. El mejor que tienes hoy es: ${lastHab}.` },
     { kind: 'body', text: `Tu primer gato lanzaba bolas de pelo. Hoy ${mvpName} borra medio barco (${fmt(mvp?.kos ?? 0)} K.O.).` },
@@ -83,7 +83,8 @@ const ROLL: Block[] = [
 ];
 
 /** plays until it ends or the player closes it */
-export async function playCredits(layer: Container, o: { withStats?: boolean } = {}): Promise<void> {
+/** `final`: the end of the whole story (EL ARCHIVO RASGADO), not just Chapter 1 */
+export async function playCredits(layer: Container, o: { withStats?: boolean; final?: boolean } = {}): Promise<void> {
   const crewSlugs = crew()
     .map((u) => G.s.cats.find((c) => c.uid === u)?.species)
     .filter((x): x is string => !!x)
@@ -105,7 +106,8 @@ export async function playCredits(layer: Container, o: { withStats?: boolean } =
     root.addChild(rules);
 
     let y = H * 0.85;
-    const blocks = o.withStats === false ? ROLL : [...stats(), ...ROLL];
+    const roll = o.final ? ROLL.map((b) => (b.text === 'CAPÍTULO 1 — EL PRIMER MAR' ? { ...b, text: 'EL PRIMER MAR · LAS GRIETAS · EL ARCHIVO' } : b)) : ROLL;
+    const blocks = o.withStats === false ? roll : [...stats(!!o.final), ...roll];
     for (const b of blocks) {
       if (b.kind === 'gap') {
         y += 70;

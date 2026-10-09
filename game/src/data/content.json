@@ -5603,9 +5603,9 @@
    },
    "obtain": {
     "source": "secret",
-    "how": "Ruta A: Resonancia cuya unión incluya Tormenta y Cósmico mientras hay un Evento Flash activo → bucket '???'. Ruta B: microevento 'Error 404' (tras descubrir Cósmico): atrapa 5 glitches en 60 s → duelo → se une."
+    "how": "Resonancia cuya unión incluya Tormenta y Cósmico, ambos padres Nv25+ → bucket '???'."
    },
-   "hint": "Algo se mueve entre píxeles cuando el cielo se rompe.",
+   "hint": "Algo se mueve entre píxeles cuando la tormenta y las estrellas chocan con fuerza.",
    "lore": "Apareció dentro de un error de interfaz y decidió quedarse. No reportes el bug."
   },
   {
@@ -5909,7 +5909,7 @@
    },
    "obtain": {
     "source": "secret",
-    "how": "Ruta A (CHARLA): Resonancia con Solar + cualquier padre de Cósmico, uno de ellos Nv20+ → bucket '???'. Ruta B: gana una batalla con Solar y Lunita en la tripulación durante el evento Estrella Fugaz."
+    "how": "Ruta A (CHARLA): Resonancia con Solar + cualquier padre de Cósmico, uno de ellos Nv20+ → bucket '???'. Ruta B: gana una batalla con Solar y Lunita en la misma tripulación: llega sola."
    },
    "hint": "Dicen que aparece cuando un gato de sol y uno de luna pelean del mismo lado.",
    "lore": "La luna se puso enfrente del sol y se quedó ahí. A propósito."
@@ -11396,9 +11396,9 @@
   },
   {
    "cat": "s_caos",
-   "condition": "Unión de padres incluye Tormenta y Cósmico, con un Evento Flash activo.",
+   "condition": "Unión de padres incluye Tormenta y Cósmico; ambos Nv25+.",
    "bucket": "secret",
-   "altRoute": "Microevento Error 404."
+   "altRoute": ""
   },
   {
    "cat": "s_sonata",
@@ -11416,7 +11416,7 @@
    "cat": "s_eclipse",
    "condition": "Uno de los padres es Solar (r_solar) y el otro tiene Cósmico; uno de los dos Nv20+ (CHARLA).",
    "bucket": "secret",
-   "altRoute": "Ganar con Solar y Lunita a bordo durante Estrella Fugaz."
+   "altRoute": "Ganar una batalla con Solar y Lunita a bordo."
   },
   {
    "cat": "s_noctis",
@@ -16684,7 +16684,7 @@
    "goal": {
     "type": "secret_rumors",
     "count": 3,
-    "text": "Encuentra pistas de 3 gatos secretos '???' (se ven en el Catdex)."
+    "text": "Encuentra pistas de 3 gatos secretos '???'. Lee las pistas selladas del Catdex y sienta en la Resonancia una pareja parecida: aunque no alcance, el gato se asoma como RUMOR."
    },
    "trigger": "mission:E15",
    "purpose": "open",
@@ -17001,6 +17001,50 @@
    "line": "Alguien toca la puerta del cielo. Dice que es Nadie.",
    "why": "El último elemento: el Vacío y NADIE, el gato del título. Lo que borra no se repara.",
    "estTime": "~7:30"
+  },
+  {
+   "id": "H29",
+   "chain": "historia",
+   "title": "Lo que el Archivo olvidó",
+   "goal": {
+    "type": "win_battle",
+    "battle": "final_archivo",
+    "text": "Toca esta misión para entrar al Archivo Rasgado y vencer a Distraxia."
+   },
+   "trigger": "mission:H23&mission:H24&mission:H25&mission:H26&mission:H27&mission:H28",
+   "purpose": "story",
+   "reward": {
+    "std": true,
+    "gems": 5
+   },
+   "unlocks": [
+    "story:archivo"
+   ],
+   "line": "Las seis grietas se abrieron hacia arriba. Detrás hay estantes.",
+   "why": "La última pelea de la historia: Distraxia, la niebla que borró el Archivo. Cada Fragmento del Vacío que tengas la debilita.",
+   "estTime": "~9:00"
+  },
+  {
+   "id": "H30",
+   "chain": "historia",
+   "title": "Fin",
+   "goal": {
+    "type": "watch",
+    "beat": "b30_creditos",
+    "text": "Mira cómo termina."
+   },
+   "trigger": "mission:H29",
+   "purpose": "story",
+   "reward": {
+    "std": false,
+    "gems": 5
+   },
+   "unlocks": [
+    "story:fin"
+   ],
+   "line": "Luzterna por fin suelta la linterna.",
+   "why": "El final de la historia principal. Tu isla, tus gatos y todo lo demás siguen aquí.",
+   "estTime": "~6:00"
   },
   {
    "id": "K33",
