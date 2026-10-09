@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NO ONE LIKE CATS · Parte II — La Era de las Rupturas (vertical slice)</title>
+    <meta name="theme-color" content="#16122a" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <style>
+      :root {
+        --ink: #16122a;
+        --paper: #fff6e6;
+        --pink: #ff3d8b;
+        --gold: #ffd23f;
+        --glass: rgba(22, 18, 42, 0.72);
+        --line: rgba(255, 246, 230, 0.16);
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #0d0b18; color: var(--paper); font: 500 14px/1.35 'Space Grotesk', system-ui, sans-serif; }
+      #world { position: fixed; inset: 0; display: block; outline: none; cursor: grab; }
+      #world:active { cursor: grabbing; }
+      .panel { position: fixed; background: var(--glass); backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 14px; }
+      h1 { font: 400 30px/1 'Bangers', system-ui; letter-spacing: 1px; margin: 0; color: var(--paper); text-shadow: 3px 3px 0 var(--pink); }
+      #title { left: 16px; top: 14px; padding: 12px 16px 10px; max-width: min(520px, calc(100vw - 32px)); }
+      #title small { display: block; margin-top: 6px; opacity: 0.75; font-size: 12px; }
+      #title b { color: var(--gold); font-weight: 700; }
+      #bar { left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; padding: 10px 12px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 32px); }
+      .grp { display: flex; gap: 6px; align-items: center; padding: 0 6px; border-right: 1px solid var(--line); }
+      .grp:last-child { border-right: 0; }
+      button, select { font: 700 13px 'Space Grotesk', system-ui; color: var(--paper); background: rgba(255, 255, 255, 0.07); border: 1px solid var(--line); border-radius: 9px; padding: 7px 11px; cursor: pointer; }
+      button:hover { background: rgba(255, 255, 255, 0.16); }
+      button.on { background: var(--paper); color: var(--ink); }
+      button.big { font: 400 20px 'Bangers', system-ui; letter-spacing: 1px; padding: 6px 14px; background: var(--pink); border-color: transparent; color: #fff; box-shadow: 0 3px 0 #a81c58; }
+      button.big.alt { background: #6a4cff; box-shadow: 0 3px 0 #3b2aa0; }
+      button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+      #clock { font: 400 24px 'Bangers', system-ui; min-width: 64px; text-align: center; color: var(--gold); }
+      input[type='range'] { accent-color: var(--gold); width: 150px; }
+      select option { color: #111; }
+      #hud { right: 16px; top: 14px; padding: 8px 10px; font: 500 11px/1.45 ui-monospace, Menlo, monospace; white-space: pre; color: #cfe8ff; pointer-events: none; }
+      #settingsBtn { position: fixed; right: 16px; bottom: 14px; }
+      #settings { right: 16px; bottom: 64px; padding: 12px 14px; display: none; flex-direction: column; gap: 9px; min-width: 260px; }
+      #settings.open { display: flex; }
+      #settings label { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+      #tierNote { font-size: 11px; opacity: 0.7; min-height: 14px; }
+      #card { left: 16px; top: 50%; transform: translate(-120%, -50%); transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.2, 1.2); width: 300px; padding: 14px 16px; }
+      #card.open { transform: translate(0, -50%); }
+      #cardName { font: 400 32px/1 'Bangers', system-ui; color: var(--gold); }
+      #cardMeta { font-size: 12px; opacity: 0.8; margin: 6px 0 10px; }
+      #cardDoing { font-weight: 700; margin-bottom: 10px; }
+      .need { font-size: 11px; margin: 4px 0; }
+      .need span { display: block; opacity: 0.75; }
+      .need i { display: block; height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--pink), var(--gold)); margin-top: 2px; transition: width 0.5s; }
+      .ecos { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+      .ecos span { font-size: 11px; letter-spacing: 1px; opacity: 0.8; }
+      .ecos i { opacity: 0.6; }
+      .ecos div { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+      .ecos button { padding: 4px 8px; font-size: 11px; }
+      .x { position: absolute; right: 8px; top: 8px; padding: 2px 8px; }
+      #toasts { position: fixed; top: 110px; left: 16px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; max-width: min(440px, calc(100vw - 32px)); }
+      .toast { background: var(--paper); color: var(--ink); padding: 9px 13px; border-radius: 10px; font-weight: 700; box-shadow: 3px 3px 0 var(--pink); animation: tin 0.35s cubic-bezier(0.2, 0.9, 0.2, 1.3); transition: opacity 0.6s, transform 0.6s; }
+      .toast.out { opacity: 0; transform: translateX(-20px); }
+      @keyframes tin { from { opacity: 0; transform: translateX(-30px) scale(0.9); } }
+      .dmg { position: fixed; left: 0; top: 0; font: 400 34px 'Bangers', system-ui; color: #fff; -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill; text-shadow: 3px 3px 0 var(--pink); pointer-events: none; white-space: nowrap; }
+      .dmg.big { font-size: 64px; color: var(--gold); }
+      #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+      #registro { left: 50%; top: 50%; transform: translate(-50%, -50%) scale(0.9); opacity: 0; pointer-events: none; transition: 0.3s; width: min(420px, calc(100vw - 32px)); padding: 22px; background: #0b0b10; border-color: #fff3; font: 500 14px/1.6 ui-monospace, Menlo, monospace; }
+      #registro.open { opacity: 1; transform: translate(-50%, -50%); pointer-events: auto; }
+      #registro h2 { font: 400 34px 'Bangers', system-ui; letter-spacing: 3px; margin: 0 0 10px; color: #fff; animation: jit 0.12s steps(2) infinite; }
+      @keyframes jit { 50% { transform: translate(1px, -1px); text-shadow: -2px 0 #0ff, 2px 0 #f0f; } }
+      #registro p { margin: 4px 0; }
+      #registro em { color: #9fd8ff; font-style: normal; }
+      #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: #0d0b18; transition: opacity 0.8s; z-index: 5; }
+      #loading.done { opacity: 0; pointer-events: none; }
+      #loading .track { width: 260px; height: 8px; border-radius: 4px; background: #ffffff1a; overflow: hidden; }
+      #loadbar { height: 100%; width: 0; background: linear-gradient(90deg, var(--pink), var(--gold)); transition: width 0.3s; }
+      #help { right: 16px; top: 82px; padding: 8px 10px; font-size: 11px; opacity: 0.8; max-width: 230px; }
+      .crease { position: fixed; left: 0; top: 0; display: none; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; cursor: pointer; padding: 8px; }
+      .crease.show { display: flex; }
+      .crease svg { width: 120px; height: 60px; overflow: visible; }
+      .crease path { fill: none; stroke: #fff6d0; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px #ffe08a) drop-shadow(0 0 14px #ffd23f); animation: creasePulse 1.4s ease-in-out infinite; }
+      .crease span { font: 400 20px 'Permanent Marker', cursive; color: #3b2418; background: #fff6e6cc; padding: 0 8px; border-radius: 6px; }
+      @keyframes creasePulse { 50% { stroke-width: 7; opacity: 0.7; } }
+      @media (prefers-reduced-motion: reduce) { .crease path { animation: none; } }
+      .margin-note { position: fixed; left: 0; top: 0; pointer-events: none; opacity: 0; font: 400 22px/1.15 'Permanent Marker', cursive; color: #3b2418; text-align: center; white-space: nowrap; text-shadow: 0 1px 0 #fff8; }
+      .margin-note s { text-decoration-thickness: 3px; color: #7a2d2d; }
+      body.page #hud { opacity: 0.4; }
+      body.photo .panel, body.photo #settingsBtn, body.photo #toasts { display: none !important; }
+      @media (max-width: 760px) { #help, #hud { display: none; } h1 { font-size: 22px; } }
+      @media (prefers-reduced-motion: reduce) { .toast, #card { animation: none; transition: none; } }
+    </style>
+  </head>
+  <body>
+    <canvas id="world" tabindex="0" aria-label="Isla en 2.5D. Arrastra para orbitar, rueda para acercar, clic en un gato para seguirlo."></canvas>
+    <div id="flash"></div>
+
+    <div id="title" class="panel">
+      <h1>PARTE II — LA ERA DE LAS RUPTURAS</h1>
+      <small id="islandInfo"><b>Vertical slice</b> · isla de demostración. Si abres esta página donde juegas, verás TUS gatos (solo lectura: nada se guarda).</small>
+    </div>
+
+    <div id="hud" class="panel">cargando…</div>
+    <div id="help" class="panel">Arrastrar: orbitar · Shift/clic der: mover · Rueda: zoom · WASD/QE · Clic en un gato: seguirlo · F3: rendimiento · H: modo foto</div>
+
+    <div id="toasts" aria-live="polite"></div>
+
+    <div id="card" class="panel" role="dialog" aria-label="Gato seleccionado">
+      <button class="x" id="cardClose" aria-label="Cerrar">×</button>
+      <div id="cardName"></div>
+      <div id="cardMeta"></div>
+      <div id="cardDoing"></div>
+      <div id="cardNeeds"></div>
+      <div class="ecos" id="cardEcos">
+        <span>ECOS DE VIDA <i>(vista previa)</i></span>
+        <div>
+          <button data-lens="0" class="on">Original</button><button data-lens="1">Cristal</button><button data-lens="2">Oro</button>
+          <button data-lens="3">Tinta</button><button data-lens="4">Acuarela</button><button data-lens="5">Holo</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="registro" class="panel" role="dialog" aria-label="Registro 000">
+      <button class="x" id="registroClose" aria-label="Cerrar">×</button>
+      <h2>REGISTRO 000</h2>
+      <p>Especie: <em>desconocida</em></p>
+      <p>Elemento: <em>ninguno</em></p>
+      <p>Rareza: <em>no aplicable</em></p>
+      <p>Estado: <em>observando</em></p>
+      <p style="opacity: 0.6; margin-top: 12px">El Catdex no recuerda haber escrito esta ficha.</p>
+    </div>
+
+    <div id="bar" class="panel">
+      <div class="grp">
+        <button id="timeplay" aria-label="Pausar o reanudar el tiempo">❚❚</button>
+        <span id="clock">17:00</span>
+        <input id="hour" type="range" min="0" max="24" step="0.05" value="17" aria-label="Hora del día" />
+        <select id="speed" aria-label="Duración del día">
+          <option value="120">día: 2 min</option>
+          <option value="300" selected>día: 5 min</option>
+          <option value="900">día: 15 min</option>
+        </select>
+      </div>
+      <div class="grp">
+        <button data-sky="despejado" class="on">Despejado</button>
+        <button data-sky="lluvia">Lluvia</button>
+        <button data-sky="tormenta">Tormenta</button>
+      </div>
+      <div class="grp">
+        <button id="viewBtn" title="Tecla V">VER LA PÁGINA</button>
+        <button id="home">Isla</button>
+        <button id="sail" class="big">ZARPAR</button>
+        <button id="ability" class="big alt">COLAPSO ESTELAR</button>
+      </div>
+    </div>
+
+    <button id="settingsBtn" aria-label="Ajustes gráficos">Ajustes</button>
+    <div id="settings" class="panel">
+      <label>Calidad
+        <select id="quality">
+          <option value="bajo">Baja</option>
+          <option value="medio">Media</option>
+          <option value="alto">Alta</option>
+          <option value="ultra">Ultra</option>
+        </select>
+      </label>
+      <label>Bajar calidad sola si se traba <input id="autoq" type="checkbox" /></label>
+      <label>Reducir movimiento y destellos <input id="reduced" type="checkbox" /></label>
+      <label>Intensidad de efectos <input id="fxamt" type="range" min="0.2" max="1.5" step="0.1" /></label>
+      <div id="tierNote"></div>
+    </div>
+
+    <div id="loading">
+      <h1>NO ONE LIKE CATS</h1>
+      <div class="track"><div id="loadbar"></div></div>
+      <small style="opacity: 0.6">Despertando gatos que no quieren despertar…</small>
+    </div>
+
+    <script type="module" src="/src/rupturas/main.ts"></script>
+  </body>
+</html>

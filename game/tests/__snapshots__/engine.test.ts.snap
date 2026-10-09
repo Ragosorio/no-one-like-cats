@@ -1,0 +1,3 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`puppet brain regression > deforms exactly as before for a seeded run (2D island, battle and 3D share this) 1`] = `"-2289468.30"`;
