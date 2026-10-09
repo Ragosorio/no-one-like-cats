@@ -321,23 +321,26 @@ export function openSettings(..._args: unknown[]) {
       void import('../app/story').then((s) => s.replayPrologue());
     }, { w: 250, h: 64, size: 28, color: C.paper });
     replay.position.set(0, 52);
+    // three buttons share the second row, sized from the column's real width
+    const row2W = Math.floor((W2 - 24 - 6) / 3);
     const credits = new Button('CRÉDITOS', () => {
       m.close();
       void Promise.all([import('../ui/story/credits'), import('../ui/dialog')]).then(([c, d]) => c.playCredits(d.storyLayer()));
-    }, { w: 200, h: 64, size: 28, color: C.yellow });
-    credits.position.set(262, 52);
+    }, { w: row2W, h: 64, size: 26, color: C.yellow });
+    // second row, after NOVEDADES / RESPALDOS (on the first row it hid under BORRAR PARTIDA)
+    credits.position.set(2 * (row2W + 12), 134);
     const del = new Button('BORRAR PARTIDA', () => step1(), { w: 270, h: 64, size: 28, color: C.red, textColor: C.paper });
-    del.position.set(W2 - 280, 52);
+    del.position.set(262, 52);
     const news = new Button('NOVEDADES', () => {
       m.close();
       void import('../ui/updatesPanel').then((u) => u.openUpdates(true));
-    }, { w: 250, h: 64, size: 28, color: C.pink });
+    }, { w: row2W, h: 64, size: 26, color: C.pink });
     news.position.set(0, 134);
     const backups = new Button('RESPALDOS', () => {
       m.close();
       void import('../ui/backupsPanel').then((u) => u.openBackups());
-    }, { w: 200, h: 64, size: 28, color: C.mint });
-    backups.position.set(262, 134);
+    }, { w: row2W, h: 64, size: 26, color: C.mint });
+    backups.position.set(row2W + 12, 134);
     zone.addChild(replay, credits, del, news, backups);
   };
   const step1 = () => {

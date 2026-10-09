@@ -82,7 +82,7 @@ export function catPortrait(c: OwnedCat, size = 150, opts: { name?: boolean; lev
   sp.mask = mask;
   box.addChild(mask, sp);
   if (opts.level !== false) {
-    const lv = txt(`NV ${c.level}`, { fontFamily: F.poster, fontSize: Math.round(size * 0.15), fill: C.paper });
+    const lv = txt(`NV ${c.level}`, { fontFamily: F.poster, fontSize: Math.max(14, Math.round(size * 0.15)), fill: C.paper });
     const lb = new Graphics().rect(0, 0, lv.width + 12, lv.height + 2).fill(C.ink);
     lv.position.set(6, 1);
     const lc = new Container();

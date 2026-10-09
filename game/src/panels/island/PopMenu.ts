@@ -6,6 +6,7 @@ import { scenes } from '../../core/scenes';
 import { C, F } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { sfx } from '../../core/audio';
+import { screenRect } from '../../ui/screen';
 
 export interface PopItem {
   label: string;
@@ -27,7 +28,7 @@ export function openPopMenu(globalPos: { x: number; y: number }, title: string, 
   closePopMenu();
   const layer = scenes.overlayLayer;
   const root = new Container();
-  const catcher = new Graphics().rect(0, 0, W, H).fill({ color: 0, alpha: 0.001 });
+  const catcher = screenRect({ color: 0, alpha: 0.001 });
   catcher.eventMode = 'static';
   catcher.on('pointerdown', () => closePopMenu());
   root.addChild(catcher);

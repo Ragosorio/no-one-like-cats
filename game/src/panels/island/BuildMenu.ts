@@ -61,7 +61,7 @@ export function openBuildMenu() {
     if (homeless.length) {
       const tag = new Graphics().rect(0, 0, cardW - 24, 36).fill(C.red).stroke({ width: 3, color: C.ink });
       tag.position.set(12, 222);
-      const tt = txt(`¡${homeless.map((c) => c.name).join(', ')} necesita casa!`, { fontFamily: F.bebas, fontSize: 22, fill: C.paper, letterSpacing: 1 });
+      const tt = txt(homeless.length === 1 ? `¡${homeless[0].name} necesita casa!` : `¡${homeless.length} gatos necesitan casa!`, { fontFamily: F.bebas, fontSize: 22, fill: C.paper, letterSpacing: 1 });
       tt.position.set(22, 227);
       if (tt.width > cardW - 44) tt.scale.set((cardW - 44) / tt.width);
       face.addChild(tag, tt);

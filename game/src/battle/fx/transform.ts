@@ -11,6 +11,7 @@ import { InkFilter } from '../../fx/filters';
 import { sfx } from '../../core/audio';
 import { speedLines } from '../../fx/juice';
 import { settings } from '../../core/settings';
+import { screenRect } from '../../ui/screen';
 
 export interface TransformInput {
   slug: string;
@@ -34,7 +35,7 @@ export function playTransform(layer: Container, i: TransformInput): Promise<void
     const root = new Container();
     layer.addChild(root);
     const fx = elementFx(i.element === 'storm' ? 'electric' : i.element);
-    const dim = new Graphics().rect(0, 0, W, H).fill(C.ink);
+    const dim = screenRect(C.ink);
     root.addChild(dim);
     const tl = gsap.timeline({ onComplete: done });
     let finished = false;

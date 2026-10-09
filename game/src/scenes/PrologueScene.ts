@@ -26,6 +26,7 @@ import { preloadStoryArt } from '../ui/story/portrait';
 import { BEAT_BY_ID } from '../data/content';
 import { clean, loadingTip } from '../ui/story/text';
 import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
+import { paintScreen, screenRect } from '../ui/screen';
 
 const WATER_Y = 800;
 const ARCA_WATER = 872;
@@ -115,7 +116,7 @@ export class PrologueScene extends Scene {
 
   override async enter() {
     music.play('tension');
-    const black = new Graphics().rect(0, 0, W, H).fill(C.chaos);
+    const black = screenRect(C.chaos);
     this.addChild(black);
     const loading = txt(loadingTip(), { fontFamily: F.ui, fontWeight: '700', fontSize: 24, fill: C.cyan, align: 'center', wordWrap: true, wordWrapWidth: 1100 });
     loading.anchor.set(0.5);
@@ -481,7 +482,7 @@ export class PrologueScene extends Scene {
   // 1 · caption "EN ALGÚN MOMENTO DEL FUTURO…"
   private async caption() {
     const layer = new Container();
-    const bg = new Graphics().rect(0, 0, W, H).fill(C.chaos);
+    const bg = screenRect(C.chaos);
     layer.addChild(bg);
     const scan = new TilingSprite({ texture: halftoneTexture(C.violet, 8, 1.6), width: W, height: H });
     scan.alpha = 0.12;
@@ -585,7 +586,7 @@ export class PrologueScene extends Scene {
     return new Promise((resolve) => {
       const ui = new Container();
       this.ui.addChild(ui);
-      const dark = new Graphics().rect(0, 0, W, H).fill(C.ink);
+      const dark = screenRect(C.ink);
       dark.alpha = 0;
       this.fxLayer.addChild(dark);
       const cx = W / 2 + 120;
@@ -633,7 +634,7 @@ export class PrologueScene extends Scene {
       let fullAt = 0;
       let chargeSfx = 0;
       let idle = 0;
-      const hit = new Graphics().rect(0, 0, W, H).fill({ color: 0xffffff, alpha: 0.001 });
+      const hit = screenRect({ color: 0xffffff, alpha: 0.001 });
       hit.eventMode = 'static';
       hit.cursor = 'pointer';
       ui.addChildAt(hit, 0);
@@ -758,7 +759,7 @@ export class PrologueScene extends Scene {
   private async cutIn() {
     const L = new Container();
     this.ui.addChild(L);
-    const black = new Graphics().rect(0, 0, W, H).fill(C.ink);
+    const black = screenRect(C.ink);
     L.addChild(black);
     // slanted band (wrapped so it can open from the middle)
     const bandWrap = new Container();
@@ -946,13 +947,13 @@ export class PrologueScene extends Scene {
     const frames = !settings.reduceFlashes;
     if (frames) {
       // frame A: white page, black silhouettes
-      this.impactBg.clear().rect(0, 0, W, H).fill(0xffffff);
+      paintScreen(this.impactBg, 0xffffff);
       this.impactBg.visible = true;
       this.sky.visible = false;
       this.world.filters = [new SilhouetteFilter(C.ink, 1)];
       await realWait(80);
       // frame B: manga negative
-      this.impactBg.clear().rect(0, 0, W, H).fill(C.ink);
+      paintScreen(this.impactBg, C.ink);
       this.world.filters = [new InkFilter({ threshold: 0.35, invert: true })];
       await realWait(80);
       // frame C: black + white starburst
@@ -1105,7 +1106,7 @@ export class PrologueScene extends Scene {
     for (let i = 0; i < 3; i++) {
       const tintL = new Container();
       const m = new Graphics().poly(polysScreen[i]).fill(0xffffff);
-      const col = new Graphics().rect(0, 0, W, H).fill(tints[i]);
+      const col = screenRect(tints[i]);
       col.alpha = 0.32;
       col.blendMode = 'multiply';
       const ht = new TilingSprite({ texture: halftoneTexture(tints[i], 12, 3), width: W, height: H });

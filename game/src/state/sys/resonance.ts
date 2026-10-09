@@ -87,6 +87,96 @@ export function oddsFor(aUid: string, bUid: string): OddsTable {
   return { rows, secret: pool.secret, missing, timeRange: [Math.min(...times), Math.max(...times)] };
 }
 
+/**
+ * A secret recipe has a SHAPE (which parents: elements, jobs, species) and a THRESHOLD (levels, stars).
+ * A pair with the right shape always leaves a clue (the cat becomes a RUMOR and the table says what's
+ * missing); the threshold opens the '???' bucket. Nobody has to guess blind.
+ */
+function secretShape(id: string, sa: string, sb: string, U: Set<string>): boolean {
+  const da = catDef(sa);
+  const db = catDef(sb);
+  switch (id) {
+    case 's_maneki':
+      return da.worker === 'banker' && db.worker === 'banker';
+    case 's_caos':
+      return U.has('storm') && U.has('cosmic');
+    case 's_sonata':
+      return U.has('magic') && U.has('cosmic') && U.has('storm');
+    case 's_lumen':
+      return U.has('fire') && U.has('water') && U.has('nature');
+    case 's_eclipse':
+      return (sa === 'r_solar' && db.elements.includes('cosmic')) || (sb === 'r_solar' && da.elements.includes('cosmic'));
+    default:
+      return false;
+  }
+}
+/** what the threshold asks for, in the player's words */
+const SECRET_NEED: Record<string, string> = {
+  s_maneki: 'los dos banqueros a Nv15+',
+  s_caos: 'los dos a Nv25+',
+  s_sonata: 'los dos a Nv30+',
+  s_lumen: 'los dos con ★3+',
+  s_eclipse: 'uno de los dos a Nv20+',
+};
+export interface SecretClue {
+  species: string;
+  /** the threshold is met too: the '???' bucket is in the table */
+  ready: boolean;
+  need: string;
+}
+/** secret cats this pair is "close to" (right shape), and whether the pair already qualifies */
+export function secretClues(aUid: string, bUid: string): SecretClue[] {
+  const a = getCat(aUid);
+  const b = getCat(bUid);
+  if (!a || !b) return [];
+  const U = new Set([...catDef(a.species).elements, ...catDef(b.species).elements]);
+  const out: SecretClue[] = [];
+  for (const c of CATS) {
+    if (!c.secret || !secretShape(c.id, a.species, b.species, U)) continue;
+    out.push({ species: c.id, ready: secretConditionMet(c, a.species, b.species, a.level, b.level, a.stars, b.stars, U), need: SECRET_NEED[c.id] ?? '' });
+  }
+  return out;
+}
+// ---------------------------------------------------------------- crossing history (Santuario › CRUCES)
+const HISTORY_CAP = 40;
+const samePair = (h: { a: string; b: string }, a: string, b: string) => (h.a === a && h.b === b) || (h.a === b && h.b === a);
+/** newest first, one row per pair (with how many times it was crossed); favorites are never trimmed */
+export function recordCross(a: string, b: string, result: string, isNew: boolean) {
+  const st = collState();
+  const old = (st.history ?? []).find((h) => samePair(h, a, b));
+  const row = { a, b, result, isNew, at: G.s.playMs, n: (old?.n ?? 1) + (old ? 1 : 0), fav: old?.fav };
+  const rest = (st.history ?? []).filter((h) => !samePair(h, a, b));
+  const keep = [row, ...rest];
+  const favs = keep.filter((h) => h.fav);
+  const others = keep.filter((h) => !h.fav).slice(0, Math.max(0, HISTORY_CAP - favs.length));
+  st.history = keep.filter((h) => h.fav || others.includes(h));
+}
+export function toggleFavCross(a: string, b: string) {
+  const h = (collState().history ?? []).find((x) => samePair(x, a, b));
+  if (h) h.fav = !h.fav;
+  return !!h?.fav;
+}
+/** pairs you can cross again right now (both cats still yours, alive and free), favorites first */
+export function crossHistory() {
+  return (collState().history ?? []).filter((h) => getCat(h.a) && getCat(h.b)).sort((x, y) => Number(!!y.fav) - Number(!!x.fav));
+}
+
+/** Seat a pair on the cushions: every secret it is close to becomes a RUMOR. Returns the new ones. */
+export function noteSecretClues(aUid: string, bUid: string): string[] {
+  const fresh: string[] = [];
+  for (const k of secretClues(aUid, bUid)) {
+    if (G.s.catdex[k.species]) continue;
+    G.s.catdex[k.species] = 'rumor';
+    G.count('secret_rumors');
+    fresh.push(k.species);
+  }
+  return fresh;
+}
+/** secret cats whose clue you hold (a rumor) or that you already registered — mission E18 reads this */
+export function secretCluesFound() {
+  return CATS.filter((c) => c.secret && (G.s.catdex[c.id] === 'rumor' || G.s.catdex[c.id] === 'registered')).length;
+}
+
 function secretConditionMet(c: CatDef, sa: string, sb: string, la: number, lb: number, stA: number, stB: number, U: Set<string>) {
   const da = catDef(sa);
   const db = catDef(sb);
@@ -94,7 +184,8 @@ function secretConditionMet(c: CatDef, sa: string, sb: string, la: number, lb: n
     case 's_maneki':
       return da.worker === 'banker' && db.worker === 'banker' && la >= 15 && lb >= 15;
     case 's_caos':
-      return U.has('storm') && U.has('cosmic') && G.has('flash_active');
+      // was "with a Flash Event active": that event never existed, so Pixel Glitch could not be bred
+      return U.has('storm') && U.has('cosmic') && la >= 25 && lb >= 25;
     case 's_sonata':
       return U.has('magic') && U.has('cosmic') && U.has('storm') && la >= 30 && lb >= 30;
     case 's_lumen':
@@ -266,7 +357,7 @@ export function reveal(jobId: string): RevealOutcome | null {
   const isNew = G.s.catdex[job.result] !== 'registered';
   const tr = rollTrait(job.result, [getCat(job.a), getCat(job.b)]);
   const st = collState();
-  st.history = [{ a: job.a, b: job.b, result: job.result, isNew, at: G.s.playMs }, ...(st.history ?? []).filter((h) => !((h.a === job.a && h.b === job.b) || (h.a === job.b && h.b === job.a)))].slice(0, 6);
+  recordCross(job.a, job.b, job.result, isNew);
   G.xp('hatch', job.rarity);
   G.count('resonance_hatch');
   if (!isNew && job.mutation) {

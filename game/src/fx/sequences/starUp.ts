@@ -22,6 +22,7 @@ import { CatCard } from '../../panels/collection/CatCard';
 import { Odometer, killTree } from '../../panels/collection/ui';
 import { variantSprite } from '../../panels/collection/art';
 import { dimensionBackground, dimensionOf, projectileArt, trailBit, Dimension } from '../../panels/collection/dimension';
+import { screenRect } from '../../ui/screen';
 
 export interface StarUpOpts {
   species: string;
@@ -67,7 +68,7 @@ export function playStarUp(layer: Container, o: StarUpOpts): Promise<void> {
     // ------------------------------------------------------------ editorial stage
     const stage = new Container();
     root.addChild(stage);
-    const dim0 = new Graphics().rect(0, 0, W, H).fill(C.ink);
+    const dim0 = screenRect(C.ink);
     const dots = new TilingSprite({ texture: halftoneTexture(C.paper, 14, 1.6), width: W, height: H });
     dots.alpha = 0.05;
     const cx = W / 2 - 300;

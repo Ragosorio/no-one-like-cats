@@ -52,6 +52,7 @@ export function lazyPanelExists(path: string) {
 import { card, coinPitch, heatColor, pressable } from './parts';
 import { glyph } from './glyphs';
 import { TimerColumn } from './TimerColumn';
+import { setGoalRoute } from '../../panels/Missions';
 import { MissionPins } from './MissionPins';
 import { ActionBar } from './ActionBar';
 import { TweenBag } from './tweenBag';
@@ -186,6 +187,8 @@ export class Hud extends Container {
     // ---------------------------------------------------------------- timers, pins, actions
     this.timers.position.set(W - 268 - 24, 104);
     this.pins = new MissionPins((m) => (this.opts.onGoal ? this.opts.onGoal(m) : openMissions()));
+    // the Missions panel's IR buttons use the same route as the pins of the screen you're on
+    if (this.opts.onGoal) setGoalRoute(this.opts.onGoal);
     this.pins.position.set(24, 262);
     const u = () => hudUnlocks();
     this.actions = new ActionBar([

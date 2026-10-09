@@ -18,6 +18,7 @@ import { elementFx } from '../../art/catArt';
 import { boat } from './chartArt';
 import type { IconKind } from '../../ui/icons';
 import type { BattleResult } from '../../scenes/BattleScene';
+import { screenRect } from '../../ui/screen';
 
 export function playQuickAssault(zone: number, stage: number): Promise<void> {
   return new Promise((resolve) => {
@@ -26,7 +27,7 @@ export function playQuickAssault(zone: number, stage: number): Promise<void> {
     const loot = last.loot;
     const root = new Container();
     scenes.overlayLayer.addChild(root);
-    const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.72 });
+    const dim = screenRect({ color: C.ink, alpha: 0.72 });
     root.addChild(dim);
     const pw = 1380;
     const ph = 640;

@@ -3,6 +3,7 @@ import '../island/safety';
 import { Container, Graphics } from 'pixi.js';
 import gsap from 'gsap';
 import { Modal } from '../ui/modal';
+import { scenes } from '../core/scenes';
 import { C, F } from '../ui/theme';
 import { txt } from '../ui/widgets';
 import { icon, IconKind } from '../ui/icons';
@@ -17,6 +18,12 @@ import { bar, wrapText } from './island/ui';
 import { openGlossary, openMissionHelp, whatIsThisButton } from '../ui/story/glossary';
 
 const CHAINS: MissionDef['chain'][] = ['historia', 'capitan', 'criador', 'explorador'];
+
+/** where IR takes a mission (set by the island / map HUD: same route as the pinned missions) */
+let goalRoute: ((m: MissionDef) => void) | null = null;
+export function setGoalRoute(fn: (m: MissionDef) => void) {
+  goalRoute = fn;
+}
 
 export function openMissions(..._args: unknown[]) {
   const m = new Modal('Misiones', 1720, 940, { subtitle: 'Sin diarias. Sin presión. Solo tu progreso.' });
@@ -65,8 +72,23 @@ function column(chain: MissionDef['chain'], w: number, h: number, rerender: () =
     c.addChild(msg);
     y += msg.height + 20;
   }
-  for (const mi of active.slice(0, 2)) {
-    const card = missionCard(mi, w - 24, rerender);
+  // cards must fit the column: the second one goes compact (title, goal, progress) or becomes a "+n" line
+  const shown = active.slice(0, 2);
+  for (let k = 0; k < shown.length; k++) {
+    const mi = shown[k];
+    let card = missionCard(mi, w - 24, rerender);
+    if (k > 0 && y + card.height > h - 20) {
+      card.destroy({ children: true });
+      card = missionCard(mi, w - 24, rerender, true);
+    }
+    if (k > 0 && y + card.height > h - 20) {
+      card.destroy({ children: true });
+      const more = wrapText(`+${active.length - k} misión(es) más de esta cadena: completa la de arriba o fíjala desde el HUD.`, w - 32, 15, F.ui, C.ink, { fontStyle: 'italic' });
+      more.position.set(16, y);
+      c.addChild(more);
+      y += more.height + 12;
+      break;
+    }
     card.position.set(12, y);
     c.addChild(card);
     y += card.height + 16;
@@ -92,12 +114,12 @@ function column(chain: MissionDef['chain'], w: number, h: number, rerender: () =
   return c;
 }
 
-function missionCard(mi: MissionDef, w: number, rerender: () => void) {
+function missionCard(mi: MissionDef, w: number, rerender: () => void, compact = false) {
   const meta = CHAIN_META[mi.chain];
   const card = new Container();
   const pinned = G.s.missions.pinned.includes(mi.id);
   const inner = new Container();
-  const title = txt(mi.title, { fontFamily: F.poster, fontSize: 28, fill: C.ink, wordWrap: true, wordWrapWidth: w - 90 });
+  const title = txt(mi.title, { fontFamily: F.poster, fontSize: 28, fill: C.ink, wordWrap: true, wordWrapWidth: w - 170 });
   title.position.set(16, 14);
   inner.addChild(title);
   let y = 14 + title.height + 6;
@@ -106,17 +128,19 @@ function missionCard(mi: MissionDef, w: number, rerender: () => void) {
   inner.addChild(goal);
   y += goal.height + 6;
   // what it's for (content.json › missions[].why) + the glossary for its jargon
-  if (mi.why) {
+  if (mi.why && !compact) {
     const why = wrapText(`Para qué: ${mi.why}`, w - 32, 14, F.ui, C.ink, { fontStyle: 'italic' });
     why.alpha = 0.85;
     why.position.set(16, y);
     inner.addChild(why);
     y += why.height + 6;
   }
-  const help = whatIsThisButton(() => openMissionHelp(mi));
-  help.position.set(16, y);
-  inner.addChild(help);
-  y += 42;
+  if (!compact) {
+    const help = whatIsThisButton(() => openMissionHelp(mi));
+    help.position.set(16, y);
+    inner.addChild(help);
+    y += 42;
+  }
   const e = evalGoal(mi);
   const cur = Math.min(e.cur, e.need);
   const pb = bar(w - 120, 18, e.need ? cur / e.need : 0, meta.color);
@@ -125,6 +149,11 @@ function missionCard(mi: MissionDef, w: number, rerender: () => void) {
   pt.position.set(w - 96, y - 2);
   inner.addChild(pb, pt);
   y += 34;
+  if (compact) {
+    const bg0 = new Graphics().rect(6, 6, w, y).fill(C.ink).rect(0, 0, w, y).fill(0xf6efe2).stroke({ width: 3, color: C.ink, alignment: 1 });
+    card.addChild(bg0, inner);
+    return card;
+  }
   // reward
   const rl = txt('PREMIO', { fontFamily: F.bebas, fontSize: 18, fill: C.ink, letterSpacing: 2 });
   rl.position.set(16, y);
@@ -184,6 +213,24 @@ function missionCard(mi: MissionDef, w: number, rerender: () => void) {
     rerender();
   });
   card.addChild(pinB);
+  // IR: straight to where this mission is done (closes the panel first)
+  if (goalRoute) {
+    const go = new Container();
+    const gl = txt('IR', { fontFamily: F.poster, fontSize: 26, fill: C.paper });
+    gl.anchor.set(0.5);
+    gl.position.set(32, 20);
+    go.addChild(new Graphics().rect(0, 0, 64, 40).fill(meta.color).stroke({ width: 3, color: C.ink }), gl);
+    go.position.set(w - 148, 12);
+    go.eventMode = 'static';
+    go.cursor = 'pointer';
+    go.on('pointertap', () => {
+      sfx('click');
+      const route = goalRoute;
+      for (const ch of [...scenes.overlayLayer.children]) if (ch instanceof Modal && !ch.closed) ch.close();
+      if (route) window.setTimeout(() => route(mi), 220);
+    });
+    card.addChild(go);
+  }
   return card;
 }
 

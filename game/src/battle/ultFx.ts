@@ -16,6 +16,7 @@ import type { Shaker } from '../fx/juice';
 import type { BattleEvent, Battle } from './sim';
 import type { BattleCat } from '../art/catArt';
 import { CELL } from './ship';
+import { screenRect } from '../ui/screen';
 
 const INK = 0x171317;
 type UltEv = Extract<BattleEvent, { k: 'ultfx' }>;
@@ -159,7 +160,7 @@ export async function preUlt(ctx: UltCtx, e: UltEv) {
   switch (e.fx) {
     case 'sun': {
       banner(ctx, '¡EL SOL SE CAE!', 0xffd400, 'STELLAR DECREE: STARFALL');
-      const glow = new Graphics().rect(0, 0, 1920, 1080).fill(0xffb02e);
+      const glow = screenRect(0xffb02e);
       glow.alpha = 0;
       ctx.overlay.addChildAt(glow, 0);
       gsap.to(glow, { alpha: 0.28, duration: 0.5, yoyo: true, repeat: 1, onComplete: () => glow.destroy() });

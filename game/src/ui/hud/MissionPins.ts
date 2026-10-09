@@ -43,7 +43,15 @@ class PinCard extends Container {
     // the card is tiny: the parenthetical how-to lives in MISIONES and in «?»
     const goal = txt(m.goal.text.replace(/\s*\([^)]*\)/g, ''), { fontFamily: F.ui, fontSize: 15, fill: C.ink, wordWrap: true, wordWrapWidth: W - 128, lineHeight: 17 });
     goal.position.set(42, 38);
-    if (goal.height > 36) goal.scale.set(36 / goal.height);
+    // two lines at a readable size, ending in «…» (scaling a 3-line goal to fit made it ~9 px)
+    if (goal.height > 36) {
+      const full = goal.text;
+      let n = full.length;
+      while (n > 8 && goal.height > 36) {
+        n -= 4;
+        goal.text = full.slice(0, n).trimEnd() + '…';
+      }
+    }
     this.bar.position.set(42, H - 16);
     this.prog = txt('', { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink });
     this.prog.anchor.set(1, 0.5);

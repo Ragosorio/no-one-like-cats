@@ -32,6 +32,7 @@ import {
 import { P, catPortrait, elKey, elName, elNameCap, elementBadge, ensureCats, label, resChip, stamp, clearChildren } from './common';
 import { shipPreview } from './shipArt';
 import { CrewPicker } from './CrewPicker';
+import { FightContext, hullOf } from '../../state/ext/matchup';
 import { SilhouetteFilter } from '../../fx/filters';
 import { catTexture, elementFx, preloadCats, livingCat } from '../../art/catArt';
 import type { ShipBlueprint } from '../../battle/ship';
@@ -81,7 +82,9 @@ class PreBattleView {
   ) {
     if (!crew().length) autoCrew();
     this.buildEnemy();
-    this.picker = new CrewPicker(G.s.ship.active, { width: 844, slotH: 196, rosterSize: 72, rosterRows: 1, onChange: () => this.rebuildPower() });
+    // what this fight is made of: enemy cats' elements + the hull material most of it is built from
+    const ctx: FightContext = { enemyElements: stageElements(zone, stage), hull: hullOf(enemyBp) };
+    this.picker = new CrewPicker(G.s.ship.active, { width: 844, slotH: 196, rosterSize: 72, rosterRows: 1, ctx, onChange: () => this.rebuildPower() });
     this.picker.position.set(900, 330);
     m.body.addChild(this.shipBox, this.power, this.picker);
     this.buildShip();
@@ -159,6 +162,9 @@ class PreBattleView {
     nm.position.set(26, 14);
     const fac = txt(`${FACTION[z].name} · ${prettyArchetype(z, s)} · Zona ${ROMAN[z]}`, { fontFamily: F.bebas, fontSize: 26, fill: C.mint, letterSpacing: 1 });
     fac.position.set(28, nm.y + nm.height);
+    // a dark plate: the enemy ship's mast used to run right through this line
+    fac.style.stroke = { color: 0x0d110f, width: 5 };
+    fac.style.dropShadow = { color: 0x0d110f, alpha: 0.8, blur: 4, distance: 0, angle: 0 };
     b.addChild(nm, fac);
     if (kind !== 'normal') {
       const st = stamp(KIND_LABEL[kind], kind === 'boss' ? C.red : C.yellow, 30, 0.08);

@@ -71,6 +71,7 @@ export class Button extends Container {
     this.caption = txt(text, { fontFamily: o.font ?? F.poster, fontSize: o.size ?? 34, fill: o.textColor ?? C.ink, align: 'center' });
     this.caption.anchor.set(0.5);
     this.caption.position.set(w / 2, h / 2);
+    fitCaption(this.caption, w - 18, h - 8);
     this.face.addChild(this.bg, this.caption);
     this.addChild(this.shadowG, this.face);
     this.eventMode = 'static';
@@ -233,3 +234,18 @@ export function hitArea(c: Container, w: number, h: number) {
 }
 
 export { Sprite };
+
+/** a button label never spills out of its button: shrink a little, then wrap to two lines */
+function fitCaption(t: Text, maxW: number, maxH: number) {
+  if (t.width <= maxW) return;
+  const k = maxW / t.width;
+  if (k >= 0.72) {
+    t.scale.set(k);
+    return;
+  }
+  t.style.wordWrap = true;
+  t.style.wordWrapWidth = maxW / 0.9;
+  t.style.lineHeight = Number(t.style.fontSize) * 0.95;
+  const k2 = Math.min(0.9, maxW / t.width, maxH / t.height);
+  t.scale.set(Math.max(0.5, k2));
+}

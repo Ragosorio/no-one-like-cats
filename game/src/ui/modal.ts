@@ -17,6 +17,15 @@ export class Modal extends Container {
   private dim: Graphics;
   onClose?: () => void;
   closed = false;
+  private offs: (() => unknown)[] = [];
+  /** keep a subscription (e.g. `G.on(...)`) alive exactly as long as this modal */
+  listen(off: () => unknown) {
+    this.offs.push(off);
+    return this;
+  }
+  private dropListeners() {
+    for (const off of this.offs.splice(0)) off();
+  }
   constructor(
     title: string,
     public w = 1400,
@@ -54,6 +63,7 @@ export class Modal extends Container {
     this.body.position.set(28, 108);
     this.panel.addChild(this.body);
     this.addChild(this.dim, this.panel);
+    this.once('destroyed', () => this.dropListeners());
   }
 
   /** phones: the poster grows to fill the screen (same layout, just bigger); centered in the real screen */
@@ -82,6 +92,7 @@ export class Modal extends Container {
   close() {
     if (this.closed) return;
     this.closed = true;
+    this.dropListeners();
     window.removeEventListener('keydown', this.esc);
     sfx('paper');
     gsap.to(this.panel, { y: this.panel.y + 40, alpha: 0, duration: 0.18 });
@@ -107,7 +118,17 @@ const toastLayer = () => scenes.fxLayer;
 let toastY = 0;
 
 /** Slide-in banner near the top. Non-blocking (T1 feedback). */
+/** toasts on screen by content: the same message again refreshes the one showing (no stacks of clones) */
+const live = new Map<string, { c: Container; fade: gsap.core.Tween }>();
+
 export function toast(text: string, o: { icon?: IconKind; color?: number; sub?: string; dur?: number } = {}) {
+  const key = `${text}\u0000${o.sub ?? ''}`;
+  const same = live.get(key);
+  if (same && !same.c.destroyed) {
+    same.fade.restart(true);
+    gsap.fromTo(same.c.scale, { x: 1.06, y: 1.06 }, { x: 1, y: 1, duration: 0.25, ease: 'back.out(3)' });
+    return;
+  }
   const c = new Container();
   const t = txt(text, { fontFamily: F.poster, fontSize: 30, fill: C.ink });
   let x0 = 18;
@@ -121,11 +142,11 @@ export function toast(text: string, o: { icon?: IconKind; color?: number; sub?: 
   let w = x0 + t.width + 22;
   let h = 60;
   if (o.sub) {
-    const s = txt(o.sub, { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: C.ink });
+    const s = txt(o.sub, { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: C.ink, wordWrap: true, wordWrapWidth: 1100, lineHeight: 20 });
     s.position.set(x0, 46);
     c.addChild(s);
     w = Math.max(w, x0 + s.width + 22);
-    h = 76;
+    h = 56 + s.height;
   }
   const bg = new Graphics().rect(6, 6, w, h).fill(C.ink).rect(0, 0, w, h).fill(o.color ?? C.yellow).stroke({ width: 4, color: C.ink });
   c.addChildAt(bg, 0);
@@ -135,15 +156,19 @@ export function toast(text: string, o: { icon?: IconKind; color?: number; sub?: 
   c.position.set(W / 2 - w / 2, y);
   c.rotation = -0.015;
   toastLayer().addChild(c);
+  c.pivot.set(w / 2, h / 2);
+  c.position.set(W / 2, y + h / 2);
   gsap.from(c, { x: c.x + 80, alpha: 0, duration: 0.22, ease: 'back.out(2)' });
-  gsap.to(c, {
+  const fade = gsap.to(c, {
     alpha: 0,
-    y: y - 20,
+    y: y + h / 2 - 20,
     delay: o.dur ?? 2.2,
     duration: 0.3,
     onComplete: () => {
+      live.delete(key);
       c.destroy({ children: true });
       toastY = Math.max(0, toastY - (h + 14));
     },
   });
+  live.set(key, { c, fade });
 }

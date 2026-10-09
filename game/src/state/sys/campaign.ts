@@ -594,6 +594,9 @@ export function applyResult(zone: number, stage: number, r: BattleResult): Loot 
     if (r.perfect) G.xp('perfect_extra');
     G.count('wins');
     G.count(`wins_zone_${zone}`);
+    // Eclipse's sure route: a win with the sun (Solar) and the moon (Lunita) on the same deck
+    const sp = new Set(crew().map((u) => getCat(u)?.species));
+    if (sp.has('r_solar') && sp.has('c_lunita')) G.count('eclipse_duo_win');
     if (r.perfect) G.count('wins_perfect');
     if (r.reason === 'sunk') G.count('wins_sink');
     if (r.reason === 'core') G.count('wins_core');

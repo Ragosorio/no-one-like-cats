@@ -15,6 +15,7 @@ import './sys/simulacro';
 import './sys/storyBattles'; // registers the Fragmentos retro patch before any save loads
 import './sys/podio';
 import './sys/grietas';
+import './sys/finale'; // EL ARCHIVO RASGADO (H29–H30), after the grietas register theirs
 import { markAllPatched } from './patches';
 import { UPDATE_IDS } from '../data/updates';
 

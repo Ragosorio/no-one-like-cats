@@ -18,6 +18,7 @@ import { CatCard } from '../../panels/collection/CatCard';
 import { dnaIcon, killTree } from '../../panels/collection/ui';
 import { elementIcon } from '../../ui/elementIcon';
 import { rainbowTile } from '../../panels/collection/printTextures';
+import { screenRect } from '../../ui/screen';
 
 export interface RevealOpts {
   slug: string;
@@ -792,7 +793,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       circle.tint = 0xffffff;
       blockA.tint = 0xe8c46a;
       if (!settings.reduceFlashes) {
-        const white = new Graphics().rect(0, 0, W, H).fill(0xffffff);
+        const white = screenRect(0xffffff);
         root.addChild(white);
         gsap.to(white, { alpha: 0, duration: 1.1, ease: 'power2.out', onComplete: () => white.destroy() });
       }

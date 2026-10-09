@@ -4,10 +4,10 @@
  * impact frame and the world is reprinted in the element palette → giant poster "TIERRA" + badge →
  * resonance web with a "NUEVAS RESONANCIAS 0→N" counter → stamps → back to the world.
  */
-import { ColorMatrixFilter, Container, Graphics, Sprite, Text, TilingSprite } from 'pixi.js';
+import { CanvasTextMetrics, ColorMatrixFilter, Container, Graphics, Sprite, Text, TextStyle, TilingSprite } from 'pixi.js';
 import { CRTFilter, GlitchFilter, RGBSplitFilter } from 'pixi-filters';
 import gsap from 'gsap';
-import { W, H } from '../../core/App';
+import { W, H, game } from '../../core/App';
 import { C, F } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { halftoneTexture, hatchTexture } from '../../art/textures';
@@ -17,10 +17,11 @@ import { sfx } from '../../core/audio';
 import { music } from '../../core/music';
 import { settings } from '../../core/settings';
 import { Shaker, flash, sparkles } from '../juice';
-import { ELEMENT_BY_ID, ELEMENTS } from '../../data/content';
+import { CATS, ELEMENT_BY_ID, ELEMENTS } from '../../data/content';
 import { ELEMENT_NAME } from '../../data/elementsMeta';
 import { elementIcon } from '../../ui/elementIcon';
 import { killTree } from '../../panels/campaign/common';
+import { screenRect } from '../../ui/screen';
 
 export interface ElementDiscoveryOpts {
   element: string;
@@ -88,7 +89,7 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
     const tone = duotone(dark, light);
     if (world) world.filters = [dim, tone];
     const dimState = { b: 1 };
-    const veil = new Graphics().rect(0, 0, W, H).fill(0x05060a);
+    const veil = screenRect(0x05060a);
     veil.alpha = 0;
     root.addChild(veil);
 
@@ -105,7 +106,7 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
       }
     }
     const dimension = new Container();
-    const dimBg = new Graphics().rect(0, 0, W, H).fill(main);
+    const dimBg = screenRect(main);
     const hatch = new TilingSprite({ texture: hatchTexture(dark, 9, 2), width: W, height: H });
     hatch.alpha = 0.35;
     const dots = new TilingSprite({ texture: halftoneTexture(accent, 14, 3), width: W, height: H });
@@ -182,7 +183,7 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
     const capBg = new Graphics();
     cap.position.set(W / 2, H - 130);
     capBg.rect(W / 2 - cap.width / 2 - 26, H - 130 - cap.height / 2 - 14, cap.width + 52, cap.height + 28).fill(light).stroke({ width: 5, color: dark });
-    const posterBg = new Graphics().rect(0, 0, W, H).fill(light);
+    const posterBg = screenRect(light);
     const posterDots = new TilingSprite({ texture: halftoneTexture(main, 16, 3.4), width: W, height: H });
     posterDots.alpha = 0.25;
     poster.addChild(posterBg, posterDots, blockA, blockB, big, circle, emo, tag, capBg, cap);
@@ -201,13 +202,15 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
     const all = ELEMENTS.filter((e) => e.id !== el && (known.includes(e.id) || !/^(grieta|chapter)/.test(e.unlock)))
       .sort((a, b) => a.order - b.order)
       .map((e) => e.id);
-    const center = { x: W / 2, y: H / 2 + 50 };
+    // the web sits a bit higher and flatter than the box center: the stamps live in their own strip below
+    const center = { x: W / 2, y: H / 2 + 20 };
     const nodes: Container[] = [];
     const links = new Graphics();
     const ghostLinks = new Graphics();
     web.addChild(ghostLinks, links);
+    // nodes at equal ARC LENGTH on the ellipse (equal angles crowd the left/right ends: labels overlapped)
+    const spots = ellipseSpots(all.length, 600, 268);
     all.forEach((k, i) => {
-      const a = (i / Math.max(1, all.length)) * Math.PI * 2 - Math.PI / 2;
       const isKnown = known.includes(k);
       const n = new Container();
       const kf = elementFx(k === 'storm' ? 'electric' : k);
@@ -219,9 +222,21 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
       l.y = 66;
       n.addChild(g, e, l);
       n.alpha = isKnown ? 1 : 0.55;
-      n.position.set(center.x + Math.cos(a) * 520, center.y + Math.sin(a) * 300);
+      n.position.set(center.x + spots[i].x, center.y + spots[i].y);
       n.scale.set(0);
       (n as Container & { known?: boolean }).known = isKnown;
+      // species that need BOTH elements: what this pair newly opens (highlighted one by one)
+      const pairN = isKnown ? CATS.filter((c) => c.elements.includes(el) && c.elements.includes(k)).length : 0;
+      if (pairN > 0) {
+        const bdg = new Container();
+        const bt = txt(`+${pairN}`, { fontFamily: F.poster, fontSize: 30, fill: dark });
+        bt.anchor.set(0.5);
+        bdg.addChild(new Graphics().circle(0, 0, 26).fill(accent).stroke({ width: 4, color: dark }), bt);
+        bdg.position.set(48, -46);
+        bdg.scale.set(0);
+        n.addChild(bdg);
+        (n as Container & { badge?: Container }).badge = bdg;
+      }
       web.addChild(n);
       nodes.push(n);
     });
@@ -350,7 +365,7 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
     tl.to(poster, { alpha: 0, duration: 0.3 }, 4.6);
     tl.to(web, { alpha: 1, duration: 0.2 }, 4.6);
     tl.call(() => {
-      const bg = new Graphics().rect(0, 0, W, H).fill(light);
+      const bg = screenRect(light);
       const d = new TilingSprite({ texture: halftoneTexture(main, 18, 2.4), width: W, height: H });
       d.alpha = 0.2;
       web.addChildAt(d, 0);
@@ -365,40 +380,79 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
     nodes.forEach((n, i) => {
       tl.to(n.scale, { x: 1, y: 1, duration: 0.25, ease: 'back.out(3)' }, 4.85 + i * 0.03);
     });
-    const linkP = { t: 0 };
-    tl.to(linkP, {
-      t: 1,
-      duration: 0.9,
-      ease: 'power2.out',
-      onUpdate: () => {
-        links.clear();
-        for (const n of nodes) {
-          if (!(n as Container & { known?: boolean }).known) continue;
-          links.moveTo(center.x, center.y).lineTo(center.x + (n.x - center.x) * linkP.t, center.y + (n.y - center.y) * linkP.t);
-        }
-        links.stroke({ width: 8, color: main, alpha: 1 });
-      },
-    }, 5.0);
-    const cnt = { n: 0 };
-    let lastN = -1;
-    tl.to(cnt, {
-      n: o.resonances,
-      duration: 1.3,
-      ease: 'power2.inOut',
-      onUpdate: () => {
-        const k = Math.round(cnt.n);
-        if (k !== lastN) {
-          lastN = k;
+    // one connection at a time: a spark runs hub → element, the element flares, its +N pops, the counter
+    // climbs; then energy keeps flowing along every link until the sequence ends
+    const knownNodes = nodes.filter((n) => (n as Container & { known?: boolean }).known);
+    const lit: Container[] = [];
+    const spark = new Graphics().circle(0, 0, 14).fill(0xffffff).stroke({ width: 4, color: main });
+    spark.visible = false;
+    web.addChild(spark);
+    const step = Math.min(0.22, 1.5 / Math.max(1, knownNodes.length));
+    const drawLinks = (partial?: { n: Container; t: number }) => {
+      links.clear();
+      for (const n of lit) links.moveTo(center.x, center.y).lineTo(n.x, n.y);
+      if (partial) links.moveTo(center.x, center.y).lineTo(center.x + (partial.n.x - center.x) * partial.t, center.y + (partial.n.y - center.y) * partial.t);
+      links.stroke({ width: 8, color: main, alpha: 1 });
+    };
+    knownNodes.forEach((n, i) => {
+      const t0 = 5.0 + i * step;
+      const p = { t: 0 };
+      tl.to(p, {
+        t: 1,
+        duration: step * 0.9,
+        ease: 'power1.in',
+        onStart: () => (spark.visible = true),
+        onUpdate: () => {
+          drawLinks({ n, t: p.t });
+          spark.position.set(center.x + (n.x - center.x) * p.t, center.y + (n.y - center.y) * p.t);
+        },
+        onComplete: () => {
+          lit.push(n);
+          drawLinks();
+          spark.visible = false;
+          sfx('pop', 1 + (i / Math.max(1, knownNodes.length)) * 1.2);
+          const ring = new Graphics().circle(0, 0, 60).stroke({ width: 8, color: accent });
+          ring.position.copyFrom(n.position);
+          web.addChild(ring);
+          gsap.to(ring.scale, { x: 1.9, y: 1.9, duration: 0.45, ease: 'power2.out' });
+          gsap.to(ring, { alpha: 0, duration: 0.45, onComplete: () => ring.destroy() });
+          gsap.fromTo(n.scale, { x: 1.25, y: 1.25 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
+          const bdg = (n as Container & { badge?: Container }).badge;
+          if (bdg) gsap.to(bdg.scale, { x: 1, y: 1, duration: 0.3, ease: 'back.out(4)' });
+          const k = Math.round((o.resonances * (i + 1)) / knownNodes.length);
           counter.text = `NUEVAS RESONANCIAS: ${k}`;
-          sfx('pop', 1 + ((k % 12) / 12) * 1.0);
-        }
-      },
-      onComplete: () => {
-        gsap.fromTo(counter.scale, { x: 1.2, y: 1.2 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
-        sparkles(web, hub.x, hub.y, accent, 20, 260);
-      },
-    }, 5.0);
+          gsap.fromTo(counter.scale, { x: 1.08, y: 1.08 }, { x: 1, y: 1, duration: 0.2 });
+        },
+      }, t0);
+    });
+    const webDone = 5.0 + knownNodes.length * step + 0.05;
+    tl.call(() => {
+      counter.text = `NUEVAS RESONANCIAS: ${o.resonances}`;
+      gsap.fromTo(counter.scale, { x: 1.2, y: 1.2 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
+      sparkles(web, hub.x, hub.y, accent, 20, 260);
+      // living web: pulses travel every link outward, the hub breathes
+      if (!reduce) {
+        const flow = new Graphics();
+        web.addChildAt(flow, web.getChildIndex(links) + 1);
+        let ft = 0;
+        const flowTick = (_t: number, dt: number) => {
+          if (flow.destroyed) return gsap.ticker.remove(flowTick);
+          ft += dt / 1000;
+          flow.clear();
+          for (const n of lit) for (let q = 0; q < 3; q++) {
+            const u = (ft * 0.7 + q / 3) % 1;
+            flow.circle(center.x + (n.x - center.x) * u, center.y + (n.y - center.y) * u, 6 + 4 * Math.sin(u * Math.PI)).fill({ color: 0xffffff, alpha: 0.9 * Math.sin(u * Math.PI) });
+          }
+        };
+        gsap.ticker.add(flowTick);
+        gsap.to(hub.scale, { x: 1.06, y: 1.06, yoyo: true, repeat: -1, duration: 0.6, ease: 'sine.inOut' });
+      }
+    }, [], webDone);
     // 6600–7500: stamps
+    // one layout for the whole strip (side by side when ALL fit the real screen, stacked otherwise)
+    const stampW = o.stamps.map((s) => CanvasTextMetrics.measureText(s, new TextStyle({ fontFamily: F.poster, fontSize: 48, letterSpacing: 2 })).width + 48);
+    const sv = game.view;
+    const sideBySide = o.stamps.length > 1 && stampW.reduce((a, b) => a + b + 30, 0) <= sv.w - 80;
     o.stamps.forEach((s, i) => {
       tl.call(() => {
         const c = new Container();
@@ -411,15 +465,23 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
           .rect(-t.width / 2 - 16, -t.height / 2, t.width + 32, t.height)
           .stroke({ width: 2, color: C.red });
         c.addChild(b, t);
-        c.position.set(W / 2 + (i % 2 ? 300 : -300), H - 150 + (i % 2) * 40);
-        c.rotation = (i % 2 ? 0.06 : -0.06);
+        // a strip at the bottom: side by side when they fit the real screen, stacked otherwise
+        const n = o.stamps.length;
+        if (c.width > sv.w - 80) c.scale.set((sv.w - 80) / c.width);
+        if (sideBySide) {
+          const total = stampW.reduce((a, b) => a + b + 30, -30);
+          const x0 = W / 2 - total / 2 + stampW.slice(0, i).reduce((a, b) => a + b + 30, 0) + stampW[i] / 2;
+          c.position.set(x0, H - 70);
+        } else c.position.set(W / 2, H - 70 - (n - 1 - i) * 78);
+        c.rotation = i % 2 ? 0.035 : -0.035;
+        const sx = c.scale.x;
         stampLayer.addChild(c);
-        gsap.from(c.scale, { x: 2.4, y: 2.4, duration: 0.16, ease: 'power3.in' });
+        gsap.from(c.scale, { x: sx * 2.4, y: sx * 2.4, duration: 0.16, ease: 'power3.in' });
         sfx('hit', 0.8 + i * 0.1);
         shaker.add(0.15);
-      }, [], 6.6 + i * 0.3);
+      }, [], Math.max(6.6, webDone + 0.5) + i * 0.3);
     });
-    const tEnd = 6.6 + o.stamps.length * 0.3 + 0.9;
+    const tEnd = Math.max(6.6, webDone + 0.5) + o.stamps.length * 0.3 + 1.2;
     let finished = false;
     const finish = () => {
       if (finished) return;
@@ -450,4 +512,25 @@ export async function playElementDiscovery(layer: Container, o: ElementDiscovery
       if (tl.time() > 2) tl.timeScale(5);
     });
   });
+}
+
+/** n points spread at equal arc length around an ellipse (rx, ry), starting at the top, clockwise */
+function ellipseSpots(n: number, rx: number, ry: number) {
+  const steps = 720;
+  const pts: { x: number; y: number; d: number }[] = [];
+  let d = 0;
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * Math.PI * 2 - Math.PI / 2;
+    const p = { x: Math.cos(a) * rx, y: Math.sin(a) * ry, d: 0 };
+    if (i) d += Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y);
+    p.d = d;
+    pts.push(p);
+  }
+  const out: { x: number; y: number }[] = [];
+  for (let k = 0; k < n; k++) {
+    const target = (k / Math.max(1, n)) * d;
+    const p = pts.find((q) => q.d >= target) ?? pts[0];
+    out.push({ x: p.x, y: p.y });
+  }
+  return out;
 }

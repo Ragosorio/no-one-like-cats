@@ -40,6 +40,8 @@ import { p2Feats, p2Night } from '../battle/multiverso';
 import { settings } from '../core/settings';
 import { fmt } from '../core/format';
 import { G } from '../state/game';
+import { screenRect } from '../ui/screen';
+import { playBattleEnd, EndRow } from '../battle/ui/endScreen';
 
 export const WATER_Y = SIM_WATER_Y;
 
@@ -560,8 +562,11 @@ export class BattleScene extends Scene {
       fontSize: 16,
       fill: C.paper,
     });
-    hint.position.set(W - hint.width - 30, H - 34);
-    this.ui.addChild(hint);
+    // a slim plate above the crew bar, anchored to the real bottom-right (it used to run into the cards)
+    const hintBox = new Container();
+    const hintBg = new Graphics();
+    hintBox.addChild(hintBg, hint);
+    this.ui.addChild(hintBox);
     if (isTouch()) hint.text = 'ARRASTRA PARA APUNTAR · SUELTA PARA DISPARAR · TOCA UNA CARTA PARA ELEGIR GATO';
     // phones / wide screens: the crew cards stick to the real bottom-left corner and grow; the top bar
     // to the real top (never wider than the screen)
@@ -585,6 +590,9 @@ export class BattleScene extends Scene {
       top.scale.set(Math.min(k, v.w / W));
       top.position.set(v.x + v.w / 2, v.y);
       hint.visible = k === 1;
+      hintBg.clear().roundRect(-10, -4, hint.width + 20, hint.height + 8, 6).fill({ color: C.ink, alpha: 0.55 });
+      hintBox.visible = hint.visible;
+      hintBox.position.set(v.x + v.w - hint.width - 30, v.y + v.h - 175 * k);
     };
     lay();
     const off = game.onView(lay);
@@ -867,7 +875,7 @@ export class BattleScene extends Scene {
   async introCard(I: BattleIntro) {
     const layer = new Container();
     this.overlay.addChild(layer);
-    const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.88 });
+    const dim = screenRect({ color: C.ink, alpha: 0.88 });
     const shape = [0, 210, W, 120, W, 820, 0, 910];
     const band = new Graphics().poly(shape).fill(I.color).stroke({ width: 10, color: C.ink });
     const dots = new TilingSprite({ texture: halftoneTexture(0x000000, 14, 3), width: W, height: H });
@@ -1217,7 +1225,7 @@ export class BattleScene extends Scene {
     const fx = elementFx(c.def.elements[0]);
     const layer = new Container();
     this.overlay.addChild(layer);
-    const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.75 });
+    const dim = screenRect({ color: C.ink, alpha: 0.75 });
     const band = new Graphics().rect(-300, -170, W + 600, 340).fill(fx.main).stroke({ width: 8, color: C.ink });
     band.rotation = -0.12;
     band.position.set(W / 2, H / 2);
@@ -2300,14 +2308,6 @@ export class BattleScene extends Scene {
     this.rain?.setOn(false);
     this.celebrate(won);
     await this.sinkSequence(won ? 1 : 0);
-    const layer = new Container();
-    this.overlay.addChild(layer);
-    const dim = new Graphics().rect(0, 0, W, H).fill({ color: won ? C.paper : C.oceanNoir, alpha: 0.92 });
-    const circle = new Graphics().circle(0, 0, 300).fill(won ? C.pink : C.river);
-    circle.position.set(W / 2, H / 2);
-    const title = poster(won ? '¡VICTORIA!' : 'DERROTA', 220, won ? C.ink : C.paper, { letterSpacing: -4 });
-    title.anchor.set(0.5);
-    title.position.set(W / 2, H / 2 - 40);
     const reasonTxt =
       this.sim.reason === 'retreat'
         ? 'SE FUE… PERO SE ACUERDA DE TI'
@@ -2322,47 +2322,28 @@ export class BattleScene extends Scene {
           : won
             ? 'BARCO ENEMIGO HUNDIDO'
             : 'TE HUNDIERON, CAPI';
-    const sub = txt(reasonTxt, { fontFamily: F.poster, fontSize: 44, fill: won ? C.pinkHot : C.yellow });
-    sub.anchor.set(0.5);
-    sub.position.set(W / 2, H / 2 + 100);
-    const hint = txt('CLIC PARA CONTINUAR', { fontFamily: F.poster, fontSize: 28, fill: won ? C.ink : C.paper });
-    hint.anchor.set(0.5);
-    hint.position.set(W / 2, H - 80);
-    layer.addChild(dim, circle, title, sub, hint);
     // K.O. ranks reached in this battle + repair clock
-    const stamps = new Container();
-    let sy = 0;
+    const rows: EndRow[] = [];
     for (const [uid, n] of Object.entries(this.kos)) {
       const owned = G.s.cats.find((c) => c.uid === uid);
       if (!owned) continue;
       const before = koRank(owned.kos ?? 0);
       const after = koRank((owned.kos ?? 0) + n);
       const up = after.tier > before.tier;
-      const line = up ? `${owned.name.toUpperCase()}: ¡RANGO ${after.name.toUpperCase()}! (+2 ORBES)` : `${owned.name.toUpperCase()}: +${n} K.O.`;
-      const t = txt(line, { fontFamily: F.poster, fontSize: up ? 30 : 22, fill: up ? C.yellow : won ? C.ink : C.paper, stroke: up ? { color: C.ink, width: 6 } : undefined });
-      t.position.set(0, sy);
-      sy += t.height + 4;
-      stamps.addChild(t);
+      rows.push({ name: owned.name, text: up ? `¡RANGO ${after.name.toUpperCase()}! (+2 ORBES)` : `+${n} K.O.`, big: up });
     }
     const lost = 1 - this.sim.hullPct(0);
+    let repair: string | null = null;
     if (this.spec.mode !== 'duel' && (lost > 0.005 || !won)) {
       const secs = Math.round(Math.max(won ? 0 : 30, lost * 100) * 0.6);
-      const t = txt(`REPARACIÓN DEL BARCO: ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')} (reloj verde)`, { fontFamily: F.ui, fontWeight: '700', fontSize: 20, fill: won ? C.ink : C.paper });
-      t.position.set(0, sy + 10);
-      stamps.addChild(t);
+      repair = `REPARACIÓN DEL BARCO: ${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')} (reloj verde)`;
     }
-    stamps.position.set(60, H - 80 - stamps.height);
-    layer.addChild(stamps);
-    sfx(won ? 'fanfare' : 'sting');
-    gsap.from(circle.scale, { x: 0, y: 0, duration: 0.4, ease: 'back.out(2)' });
-    gsap.from(title.scale, { x: 2.5, y: 2.5, duration: 0.3, ease: 'back.out(2)', delay: 0.1 });
-    gsap.from(stamps, { x: -500, duration: 0.4, delay: 0.4, ease: 'power3.out' });
-    if (won) sparkles(layer, W / 2, H / 2 - 40, C.yellow, 24, 500);
-    gsap.to(hint, { alpha: 0.3, yoyo: true, repeat: -1, duration: 0.6 });
-    await wait(600);
-    layer.eventMode = 'static';
-    layer.hitArea = { contains: () => true };
-    layer.once('pointertap', () => {
+    const mvpUid = [...this.dmgBy.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    const mvpCat = mvpUid ? G.s.cats.find((c) => c.uid === mvpUid) : undefined;
+    const layer = new Container();
+    this.overlay.addChild(layer);
+    await playBattleEnd(layer, { won, reason: reasonTxt, rows, repair, mvp: mvpCat ? { species: mvpCat.species, name: mvpCat.name } : null });
+    {
       const result: BattleResult = {
         won,
         reason: this.sim.reason,
@@ -2371,7 +2352,7 @@ export class BattleScene extends Scene {
         damageDealt: this.stats.damageDealt,
         catsLost: this.stats.catsLost,
         perfect: won && this.stats.catsLost === 0,
-        mvp: [...this.dmgBy.entries()].sort((a, b) => b[1] - a[1])[0]?.[0],
+        mvp: mvpUid,
         kos: { ...this.kos },
         hullLost: this.spec.mode === 'duel' ? 0 : lost,
         reactions: [...this.reactions],
@@ -2380,14 +2361,14 @@ export class BattleScene extends Scene {
       // Parte 2 feats (congelar, cegar, apuñalar, aturdir, rebobinar, borrar) → counters for missions/stats
       for (const [k, n] of Object.entries(p2Feats(this.sim))) if (n > 0) G.count(k, n);
       this.spec.onEnd(result);
-    });
+    }
   }
 
   /** EL PRIMER MAR: Astra Prima's STELLAR DECREE: STARFALL, the same shot as the prologue */
   private async finale() {
     const layer = new Container();
     this.overlay.addChild(layer);
-    const dim = new Graphics().rect(0, 0, W, H).fill({ color: 0x05030a, alpha: 0.9 });
+    const dim = screenRect({ color: 0x05030a, alpha: 0.9 });
     layer.addChild(dim);
     const astra = CAT_BY_ID.get('l_astraprima');
     if (astra) {

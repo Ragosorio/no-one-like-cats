@@ -6,6 +6,7 @@ import { G } from '../game';
 import { CATS, MISSIONS, MISSION_BY_ID, MissionDef, catDef } from '../../data/content';
 import { BAL } from '../econ';
 import { speciesCount, setsCompleted, cat as getCat } from './cats';
+import { secretCluesFound } from './resonance';
 import { mk, crew, crewSize } from './ship';
 import { isCleared, stageUnlocked } from './campaign';
 import { KO_RANKS } from './ranks';
@@ -124,7 +125,8 @@ export function evalGoal(m: MissionDef): GoalEval {
     }
     case 'secret_rumors':
       // total rumors found so far (clues found before the mission appeared count too)
-      return { cur: counter('secret_rumors'), need: n('count', 3) };
+      // clues held right now (rumors + secret cats already registered): every route counts, old saves too
+      return { cur: Math.max(counter('secret_rumors'), secretCluesFound()), need: n('count', 3) };
     case 'element_species':
       return { cur: CATS.filter((c) => c.elements.includes(String(g.element)) && G.s.catdex[c.id] === 'registered').length, need: n('count', 2) };
     case 'use_automation':

@@ -15,6 +15,8 @@ import { P, catPortrait, clickable, elTok, label, clearChildren } from './common
 import { iconText } from '../../ui/elementIcon';
 import { toast } from '../../ui/modal';
 import { catBusy } from '../../state/sys/workforce';
+import { catMatchup, FightContext } from '../../state/ext/matchup';
+import { openCrewSelect, suggestCrew } from './CrewSelect';
 
 export interface CrewPickerOpts {
   width: number;
@@ -25,6 +27,8 @@ export interface CrewPickerOpts {
   rosterRows?: number;
   dark?: boolean;
   onChange?: () => void;
+  /** the fight this crew is for (Pre-batalla): shows ▲/▼ matchups and weights SUGERIR */
+  ctx?: FightContext | null;
 }
 
 export class CrewPicker extends Container {
@@ -54,12 +58,11 @@ export class CrewPicker extends Container {
     const cl = label(`TRIPULACIÓN (${cur.length}/${n}) — toca un camarote y luego un gato`, 14, sub, { letterSpacing: 1 });
     this.addChild(cl);
     const sug = new Button('SUGERIR', () => {
-      setCrew(shipId, []);
-      autoCrew(shipId);
+      const why = suggestCrew(shipId, this.o.ctx);
       this.selected = -1;
       sfx('pop');
       this.changed();
-      toast('Tripulación sugerida: los más fuertes al frente', { icon: 'paw' });
+      toast('Tripulación sugerida', { icon: 'paw', sub: why });
     }, { w: 160, h: 42, size: 22, color: C.mint });
     sug.position.set(W0 - 166, -14);
     this.addChild(sug);
@@ -73,7 +76,7 @@ export class CrewPicker extends Container {
       const fill = sel ? C.yellow : c ? C.paper : this.o.dark ? 0x2a3a5a : 0xd9cdb8;
       const bg = new Graphics().rect(5, 5, slotW, slotH).fill(C.ink).rect(0, 0, slotW, slotH).fill(fill).stroke({ width: sel ? 5 : 3, color: C.ink });
       slot.addChild(bg);
-      const cab = label(`CAMAROTE ${i + 1}`, 11, c || sel ? P.blue : sub, { letterSpacing: 2 });
+      const cab = label(`CAMAROTE ${i + 1}`, 13, c || sel ? P.blue : sub, { letterSpacing: 2 });
       cab.position.set(8, 6);
       slot.addChild(cab);
       if (c) {
@@ -86,7 +89,7 @@ export class CrewPicker extends Container {
         nm.position.set(slotW / 2, 30 + ps + 2);
         if (nm.width > slotW - 10) nm.scale.set((slotW - 10) / nm.width);
         const info = iconText(`Nv ${c.level} · ${'★'.repeat(c.stars)} ${d0.elements.map((e) => elTok(e)).join('')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink });
-        info.position.set(slotW / 2 - info.width / 2, nm.y + 24);
+        info.position.set(slotW / 2 - info.width / 2, nm.y + nm.height + 2);
         const rc = new Graphics().rect(0, slotH - 7, slotW, 7).fill(RARITY[d0.rarity]?.color ?? C.ink);
         slot.addChild(p, nm, info, rc);
       } else {
@@ -115,7 +118,14 @@ export class CrewPicker extends Container {
     const rl = label('TUS GATOS', 14, sub, { letterSpacing: 3 });
     rl.position.set(0, ry);
     this.addChild(rl);
-    ry += 22;
+    // the full roster (search, filters, matchups, every cat): never limited to what fits here
+    const all = new Button(`VER TODOS (${G.s.cats.length})`, () => {
+      sfx('click');
+      openCrewSelect(this.shipId, this.o.ctx ?? null, () => this.changed());
+    }, { w: 220, h: 32, size: 18, color: this.o.dark ? C.mint : C.yellow });
+    all.position.set(W0 - 226, ry - 8);
+    this.addChild(all);
+    ry += 30;
     const size = this.o.rosterSize ?? 70;
     const per = Math.max(1, Math.floor((W0 + 16) / (size + 16)));
     const rows = this.o.rosterRows ?? 2;
@@ -136,6 +146,18 @@ export class CrewPicker extends Container {
         p.alpha = 0.55;
       }
       cc.addChild(p);
+      if (this.o.ctx && !busy) {
+        const mu = catMatchup(c.species, this.o.ctx);
+        if (mu.verdict !== 'neutral') {
+          const up = mu.verdict === 'ventaja';
+          const tri = new Graphics();
+          if (up) tri.poly([0, 12, 8, 0, 16, 12]);
+          else tri.poly([0, 0, 16, 0, 8, 12]);
+          tri.fill(up ? 0x2e8a52 : C.red).stroke({ width: 2, color: C.ink });
+          tri.position.set(size - 18, size - 16);
+          cc.addChild(tri);
+        }
+      }
       const lv = label(`Nv${c.level}`, 12, C.paper);
       const lb = new Graphics().roundRect(-4, -2, lv.width + 8, lv.height + 4, 4).fill(C.ink);
       const lvc = new Container();
@@ -176,7 +198,7 @@ export class CrewPicker extends Container {
       this.addChild(cc);
     });
     if (cats.length > per * rows) {
-      const more = label(`+${cats.length - per * rows} gatos más (los más fuertes primero)`, 14, sub);
+      const more = label(`+${cats.length - per * rows} gatos más: toca VER TODOS para buscarlos y filtrarlos`, 14, sub);
       more.position.set(0, ry + rows * (size + 12));
       this.addChild(more);
     }

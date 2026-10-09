@@ -9,7 +9,7 @@
  * typewriter text (click = finish line, click again = next), CAPTION boxes, SISTEMA cards and the
  * PERIÓDICO front page. Text passes through the tone filter (Ajustes › Tono: Familiar).
  */
-import { CanvasTextMetrics, Container, Graphics, Sprite, Text, TextStyle, Texture, TilingSprite } from 'pixi.js';
+import { CanvasTextMetrics, Container, FillGradient, Graphics, Sprite, Text, TextStyle, Texture, TilingSprite } from 'pixi.js';
 import gsap from 'gsap';
 import { W, H, game } from '../core/App';
 import { scenes } from '../core/scenes';
@@ -22,6 +22,7 @@ import { InkFilter } from '../fx/filters';
 import { clean, isDirection, speaker, Speaker } from './story/text';
 import { LuzternaPortrait, makePortrait, Portrait, preloadStoryArt } from './story/portrait';
 import { destroyDeep, settle } from './story/tweens';
+import { followView, screenRect } from './screen';
 
 export type Line = [speaker: string, text: string];
 
@@ -247,32 +248,69 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
   const needSlugs = [...new Set(lines.map(([s]) => speaker(s).slug).filter((s): s is string => !!s))];
   await preloadStoryArt(needSlugs);
   _blocking++;
+  // a corner tip already on screen would sit right under the speech box: it waits until we're done
+  const parkedTip = tipShowing;
+  if (parkedTip) parkedTip.visible = false;
   const layer = opts.layer ?? toTop();
   const root = new Container();
   root.label = 'dialog';
   layer.addChild(root);
-  const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: opts.dim ?? 0.3 });
+  const dim = screenRect({ color: C.ink, alpha: opts.dim ?? 0.3 });
   dim.eventMode = 'static';
   root.addChild(dim);
   dim.alpha = 0;
   gsap.to(dim, { alpha: 1, duration: 0.25 });
-  let bars: Graphics[] = [];
-  if (opts.cinematic) {
-    bars = [new Graphics().rect(0, 0, W, 78).fill(C.ink), new Graphics().rect(0, 0, W, 78).fill(C.ink)];
-    bars[0].y = -80;
-    bars[1].y = H;
-    root.addChild(...bars);
-    gsap.to(bars[0], { y: 0, duration: 0.35, ease: 'power3.out' });
-    gsap.to(bars[1], { y: H - 78, duration: 0.35, ease: 'power3.out' });
-  }
-  const portraitLayer = new Container();
   const top = opts.position === 'top';
+  // a soft ink gradient behind the speech box keeps the text legible over any scene
+  const shade = new Graphics();
+  shade.alpha = 0;
+  root.addChild(shade);
+  gsap.to(shade, { alpha: 1, duration: 0.35 });
+  // letterbox bars live on the REAL screen edges (game.view), never on the 1920×1080 box
+  const BAR = 78;
+  let bars: Graphics[] = [];
+  let barsIn = 0;
+  if (opts.cinematic) {
+    bars = [new Graphics(), new Graphics()];
+    root.addChild(...bars);
+    gsap.to({ k: 0 }, { k: 1, duration: 0.4, ease: 'power3.out', onUpdate() { barsIn = this.targets()[0].k; place(); } });
+  }
+  // everything designed against the box bottom (or top) rides on the real screen edge
+  const anchor = new Container();
+  const capAnchor = new Container();
+  const portraitLayer = new Container();
   const BX = top ? BOX_TOP : BOX_BOTTOM;
   const box = new SpeechBox(BX);
   const cap = new CaptionBox();
   box.visible = false;
   cap.visible = false;
-  root.addChild(portraitLayer, box, cap);
+  anchor.addChild(portraitLayer, box);
+  capAnchor.addChild(cap);
+  root.addChild(anchor, capAnchor);
+  function place() {
+    if (root.destroyed) return;
+    const v = game.view;
+    anchor.y = top ? v.y : v.y + v.h - H;
+    capAnchor.y = v.y + (bars.length ? BAR * barsIn : 0);
+    for (let i = 0; i < bars.length; i++) {
+      bars[i].clear().rect(v.x, 0, v.w, BAR + 4).fill(C.ink);
+      bars[i].y = i === 0 ? v.y - BAR - 4 + (BAR + 4) * barsIn : v.y + v.h - (BAR + 4) * barsIn;
+    }
+    const sh = top ? 420 : 520;
+    shade.clear().rect(v.x, top ? v.y : v.y + v.h - sh, v.w, sh).fill(
+      new FillGradient({
+        type: 'linear',
+        start: { x: 0, y: top ? 1 : 0 },
+        end: { x: 0, y: top ? 0 : 1 },
+        colorStops: [
+          { offset: 0, color: 'rgba(23,19,23,0)' },
+          { offset: 1, color: 'rgba(23,19,23,0.55)' },
+        ],
+        textureSpace: 'local',
+      }),
+    );
+  }
+  followView(root, place);
 
   let skipAll = false;
   let advance: (() => void) | null = null;
@@ -312,7 +350,7 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
       skipAll = true;
       tapNext();
     });
-    root.addChild(skip);
+    anchor.addChild(skip);
   }
 
   let portrait: Portrait | null = null;
@@ -386,16 +424,15 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
   cancelers.delete(cancel);
   window.removeEventListener('keydown', onKey);
   _blocking--;
+  if (parkedTip && !parkedTip.destroyed) parkedTip.visible = true;
   if (root.destroyed) return;
   root.eventMode = 'none';
   await settle((done) => {
     const tl = gsap.timeline({ onComplete: done });
     tl.to([box, cap, portraitLayer], { alpha: 0, duration: 0.2 }, 0);
     tl.to(dim, { alpha: 0, duration: 0.25 }, 0);
-    if (bars.length) {
-      tl.to(bars[0], { y: -80, duration: 0.25 }, 0);
-      tl.to(bars[1], { y: H, duration: 0.25 }, 0);
-    }
+    tl.to(shade, { alpha: 0, duration: 0.25 }, 0);
+    if (bars.length) tl.to({ k: barsIn }, { k: 0, duration: 0.25, onUpdate() { barsIn = this.targets()[0].k; place(); } }, 0);
   }, 700);
   destroyDeep(root);
 
@@ -508,7 +545,8 @@ async function nextTip() {
     port.position.set(80, 46);
     c.addChild(port);
   }
-  c.position.set(TIP_POS.x, TIP_POS.y);
+  // bottom-left of the REAL screen (on 16:10 the box bottom floats above it)
+  c.position.set(TIP_POS.x + Math.max(0, game.view.x + 0), TIP_POS.y + (game.view.y + game.view.h - H));
   // click-through: a tip must never eat the click meant for the world under it (map stages, buildings…).
   // Tapping the bubble/portrait still finishes the line or dismisses it — the click also reaches the game.
   c.eventMode = 'none';
@@ -595,7 +633,7 @@ export async function newspaper(headline: string, o: NewsOpts = {}): Promise<voi
   const layer = o.layer ?? toTop();
   const root = new Container();
   layer.addChild(root);
-  const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.75 });
+  const dim = screenRect({ color: C.ink, alpha: 0.75 });
   dim.eventMode = 'static';
   root.addChild(dim);
   const PW = 1260;

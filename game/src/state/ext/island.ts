@@ -65,6 +65,7 @@ export function renameCat(c: OwnedCat, name: string) {
   G.count('name_cat');
   checkMissions();
   G.emit('changed', undefined);
+  G.emit('cat', { uid: c.uid, why: 'name' });
   return true;
 }
 

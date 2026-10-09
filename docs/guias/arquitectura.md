@@ -442,3 +442,23 @@ Plataformas, rendimiento y por qué elegimos este motor: [MOTOR-Y-PLATAFORMAS.md
 
 Y si algo de esta guía ya no coincide con el código, el código gana y la guía merece un arreglo. Bienvenida
 la corrección: es lo más parecido a darle de comer a un gato.
+
+---
+
+## Piezas nuevas (2026-10-08)
+
+- **Pantalla real**: `ui/screen.ts` (`screenRect`, `followView`, `paintScreen`). Todo lo que cubre "toda la
+  pantalla" usa `game.view`, nunca `rect(0, 0, W, H)`.
+- **Paneles reactivos**: `G.emit('cat', { uid, why })` cuando cambia un gato (nivel, estrellas, casa, nombre);
+  `Modal.listen(G.on(...))` mantiene la suscripción viva lo que dure el modal.
+- **Buscar gatos**: `state/ext/catQuery.ts` (lógica pura, sin tildes) + `ui/catFilterBar.ts` + `ui/searchField.ts`.
+- **Ventajas por pelea**: `state/ext/matchup.ts`; selector completo `panels/campaign/CrewSelect.ts`.
+- **Final de la historia**: `state/sys/finale.ts` (H29/H30) + `ui/story/finaleScript.ts`.
+- **Victoria/derrota**: `battle/ui/endScreen.ts`.
+- **Casino**: registro de juegos en `panels/casino/games/registry.ts`, reglas en `state/sys/casino/*`
+  (ETERNO en `eterno.ts`, resolución idempotente).
+- **Hábitats**: biomas en `island/habitats/`, tamaño por tier en `balance.json › habitats.tiers[].footprint`.
+- **Rendimiento**: `core/pixiFixes.ts` (Pixi v8 no destruía el contexto de `Graphics` con `destroy({children})`;
+  se importa primero en `main.ts`), `art/rasterCache.ts` (caché del navegador de gatos rasterizados, por build),
+  `workers/estimate.worker.ts` (la ESTIMACIÓN fuera del hilo principal), `core/sliced.ts` (trabajo por cuadros).
+- **Pruebas**: `npm test` (vitest, `game/tests/`).

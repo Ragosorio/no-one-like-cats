@@ -277,6 +277,10 @@ class ShipyardPanel {
     const cw = combatWeight(shipId);
     const det = label(`= ×${bs.mult.toFixed(2)} · (módulos ${fmt(slotPower(shipId))} + tripulación ${fmt(Math.max(0, crewPow))})${cw !== 1 ? ` · en combate ×${cw}: su casco gigante ya pelea solo` : ''}`, 15, C.ink);
     det.position.set(x, 48);
+    // never under the right column: wrap to the header's width (2 lines at most, then shrink)
+    det.style.wordWrap = true;
+    det.style.wordWrapWidth = CW - x;
+    if (det.height > 40) det.scale.set(40 / det.height);
     ph.addChild(l, v, q, det);
     // ship name, right-aligned, as a poster word
     const nm = txt(shipName(shipId).toUpperCase(), { fontFamily: F.poster, fontSize: 34, fill: C.ink });

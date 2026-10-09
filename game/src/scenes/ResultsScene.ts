@@ -36,6 +36,7 @@ import { openShipyard } from '../panels/Shipyard';
 import { koRank, KO_RANKS } from '../state/sys/ranks';
 import { BOSS_NEWS, HEADLINES, reactionKey } from '../ui/story/script';
 import { sparkles } from '../fx/juice';
+import { followView, screenRect } from '../ui/screen';
 
 const QUIPS = ['Testigos: «fue precioso».', 'Un pescado que pasaba lo grabó todo.', 'Se reportan sardinas voladoras en la zona.', 'El capitán enemigo pidió a su mamá.', 'Nadie esperaba tanta violencia de tan poquito gato.'];
 const CAPTIONS = ['FOTO: un pescado que pasaba por ahí.', 'FOTO: archivo del Diario. El fotógrafo sigue mojado.', 'FOTO: cortesía de una gaviota con cámara.'];
@@ -126,9 +127,14 @@ export class ResultsScene extends Scene {
     const boss = kind === 'boss' ? zoneBoss(z) : undefined;
 
     // background: Swiss poster in ink blue
-    const bg = new Graphics().rect(0, 0, W, H).fill(C.inkBlue);
+    const bg = screenRect(C.inkBlue);
     const dots = new TilingSprite({ texture: halftoneTexture(0x000000, 12, 2.4), width: W, height: H });
     dots.alpha = 0.22;
+    followView(dots, (v) => {
+      dots.position.set(v.x, v.y);
+      dots.width = v.w;
+      dots.height = v.h;
+    });
     const circle = new Graphics().circle(0, 0, 470).fill(L.loot.golden ? C.gold : C.pink);
     circle.position.set(1600, 330);
     const dg = dotGrid(3, 6, 20, 3, C.paper);
@@ -532,9 +538,16 @@ export class ResultsScene extends Scene {
     const boss = kind === 'boss' ? zoneBoss(z) : undefined;
     // noir background + grain
     const g = new Graphics();
-    for (let i = 0; i < 16; i++) g.rect(0, (i * H) / 16, W, H / 16 + 1).fill(lerp(0x0d110f, 0x1c3a51, i / 15));
     const dots = new TilingSprite({ texture: halftoneTexture(0x000000, 10, 2), width: W, height: H });
     dots.alpha = 0.3;
+    // the noir gradient covers the REAL screen (on 16:10 the box-sized one left cream bands)
+    followView(g, (v) => {
+      g.clear();
+      for (let i = 0; i < 16; i++) g.rect(v.x, v.y + (i * v.h) / 16, v.w, v.h / 16 + 1).fill(lerp(0x0d110f, 0x1c3a51, i / 15));
+      dots.position.set(v.x, v.y);
+      dots.width = v.w;
+      dots.height = v.h;
+    });
     this.world.addChild(g, dots);
     this.film = new OldFilmFilter({ sepia: 0, noise: 0.22, noiseSize: 1.2, scratch: 0.6, scratchDensity: 0.4, vignetting: 0.32, vignettingAlpha: 0.9 });
     this.world.filters = [this.film];

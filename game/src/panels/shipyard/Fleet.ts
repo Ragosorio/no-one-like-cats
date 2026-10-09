@@ -2,7 +2,7 @@
  * FLOTA column: every ship with its illustration (baked anime renderer), role, "RECOMENDADO PARA",
  * crew/cannon/shield/artifact counts and the obvious action (ZARPA / USAR ESTE / COMPRAR / requisito).
  */
-import { Container, Graphics } from 'pixi.js';
+import { Container, Graphics, Text } from 'pixi.js';
 import gsap from 'gsap';
 import { C, F } from '../../ui/theme';
 import { txt, Button } from '../../ui/widgets';
@@ -111,6 +111,9 @@ function buildCard(c: Container, id: string, o: FleetOpts) {
     rl.position.set(14, ry);
     const rt = label(rec, 11.5, fg, { wordWrap: true, wordWrapWidth: w - 168, fontWeight: '700', lineHeight: 13 });
     rt.position.set(12, ry + 21);
+    // two lines max inside the card (long ones, like the Bajel's, used to spill below it)
+    const room = h - (ry + 21) - 6;
+    if (rt.height > room) clampLines(rt, room);
     c.addChild(hl, rl, rt);
   }
   // action
@@ -148,4 +151,18 @@ function buildCard(c: Container, id: string, o: FleetOpts) {
     c.addChild(lk, lt);
     c.alpha = 0.85;
   }
+}
+
+/** cut a wrapped Text to the lines that fit `maxH`, ending in an ellipsis */
+function clampLines(t: Text, maxH: number) {
+  const full = t.text;
+  let lo = 0;
+  let hi = full.length;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    t.text = full.slice(0, mid).trimEnd() + '…';
+    if (t.height <= maxH) lo = mid;
+    else hi = mid - 1;
+  }
+  t.text = full.slice(0, lo).trimEnd() + '…';
 }

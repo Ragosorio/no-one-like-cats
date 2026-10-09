@@ -17,7 +17,7 @@ import { checkMissions } from '../state/sys/missions';
 import { BAL } from '../state/econ';
 import { elColor, printRarity, rarityRank, starCapNote, starInfo, StarInfo, starMissing, starRoadmap, starTitle, starUnlockText } from '../state/ext/collection';
 import { CatCard, fitText } from './collection/CatCard';
-import { ensureCatArt, portrait } from './collection/art';
+import { ensureArtFor, portrait } from './collection/art';
 import { ScrollBox, chip, clearChildren, guardModal, okMark, prismaGem } from './collection/ui';
 import { icon } from '../ui/icons';
 import { playStarUp } from '../fx/sequences/starUp';
@@ -31,7 +31,7 @@ let current: AltarView | null = null;
 
 /** Open the Altar of Souls (optionally preselecting a cat uid). */
 export async function openAltar(uid?: string) {
-  await ensureCatArt();
+  await ensureArtFor(G.s.cats.map((c) => c.species));
   if (current && !current.modal.closed) current.modal.close();
   current = new AltarView(typeof uid === 'string' ? uid : undefined);
   return current;
@@ -266,10 +266,13 @@ class AltarView {
       const big = poster(`★${st.star}`, 40, st.state === 'locked' ? 0x8a8070 : C.ink);
       big.position.set(10, 0);
       const lv = txt(st.state === 'done' ? 'ACTIVA' : `NV ${st.minLevel}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: st.state === 'done' ? C.green : st.state === 'next' ? C.pinkHot : C.ink });
-      lv.anchor.set(1, 0);
-      lv.position.set(tw - 8, 10);
+      // the tag goes right of ★N when the tile is wide enough, else under it (it used to sit on the digit)
+      if (big.width + lv.width + 26 <= tw) {
+        lv.anchor.set(1, 0);
+        lv.position.set(tw - 8, 10);
+      } else lv.position.set(10, 42);
       const tt = txt(st.title, { fontFamily: F.poster, fontSize: 17, fill: C.ink, wordWrap: true, wordWrapWidth: tw - 16, lineHeight: 19 });
-      tt.position.set(10, 54);
+      tt.position.set(10, big.width + lv.width + 26 <= tw ? 54 : 60);
       fitText(tt, tw - 16);
       t.addChild(g, big, lv, tt);
       if (st.state === 'locked') t.alpha = 0.8;

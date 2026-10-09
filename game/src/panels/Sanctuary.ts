@@ -8,6 +8,8 @@
 import { Container, FederatedPointerEvent, Graphics, Sprite, Text, Ticker } from 'pixi.js';
 import gsap from 'gsap';
 import { Modal, toast } from '../ui/modal';
+import { CatFilterBar } from '../ui/catFilterBar';
+import { queryCats } from '../state/ext/catQuery';
 import { C, F, RARITY } from '../ui/theme';
 import { txt, poster } from '../ui/widgets';
 import { icon } from '../ui/icons';
@@ -28,6 +30,10 @@ import {
   mutationOdds,
   MUTATION_RULES,
   oddsFor,
+  noteSecretClues,
+  crossHistory,
+  toggleFavCross,
+  secretClues,
   queuedCats,
   queueKl,
   queueUnlocked,
@@ -59,7 +65,7 @@ import {
   tutorialPair,
 } from '../state/ext/collection';
 import { resonanceQueue } from '../state/sys/workforce';
-import { ensureCatArt, portrait, variantSprite } from './collection/art';
+import { ensureArtFor, portrait, variantSprite } from './collection/art';
 import { ScrollBox, GlitchText, clearChildren, guardModal, destroyTree, elIcons, dnaIcon, killTree } from './collection/ui';
 import { fitText, rarityColor, rarityName } from './collection/CatCard';
 import { playCatReveal, RevealResult } from '../fx/sequences/catReveal';
@@ -98,7 +104,7 @@ let current: SanctuaryView | null = null;
 
 /** Open the Resonance Sanctuary. */
 export async function openSanctuary() {
-  await ensureCatArt();
+  await ensureArtFor(G.s.cats.map((c) => c.species));
   if (current && !current.modal.closed) return current;
   current = new SanctuaryView();
   return current;
@@ -106,7 +112,7 @@ export async function openSanctuary() {
 
 /** Reveal every finished resonance in sequence (for other screens). Returns how many. */
 export async function revealReady(): Promise<number> {
-  await ensureCatArt();
+  await ensureArtFor(G.s.cats.map((c) => c.species));
   let n = 0;
   for (const job of [...readyJobs()]) {
     const r = await revealJob(job.id, false);
@@ -260,7 +266,7 @@ class SanctuaryView {
       const c = new Container();
       c.position.set(x, 0);
       const g = new Graphics().roundRect(0, 0, w, 62, 8).fill({ color: P.plum, alpha: 0.65 }).stroke({ width: 1.5, color: P.gold, alpha: 0.8 });
-      const l = ui(label, 11, P.lilac);
+      const l = ui(label, 13, P.lilac);
       l.position.set(12, 6);
       c.addChild(g, l);
       h.addChild(c);
@@ -358,17 +364,37 @@ class SanctuaryView {
     const h = serif('Tus gatos', 34, P.goldHi, { italic: true, bold: true });
     h.position.set(0, -10);
     const s = ui('toca uno (o arrástralo) para sentarlo en un cojín', 14, P.lilac, false);
-    s.position.set(2, 36);
+    s.position.set(170, 22);
     b.addChild(h, s);
-    this.listBox = new ScrollBox(430, IH - 70, P.gold);
-    this.listBox.y = 66;
+    // search / element chips / sort (shared component, state/ext/catQuery.ts)
+    this.filter = new CatFilterBar(430, {
+      cats: G.s.cats,
+      sorts: ['power', 'level', 'rarity', 'stars', 'recent', 'name'],
+      theme: { field: P.linen, ink: P.ink, on: P.goldHi, onText: P.ink, off: P.plum, border: P.ink },
+      onChange: () => this.refreshList(),
+    });
+    this.filter.y = 44;
+    b.addChild(this.filter);
+    const top = 44 + this.filter.barHeight + 10;
+    this.listBox = new ScrollBox(430, IH - top, P.gold);
+    this.listBox.y = top;
     b.addChild(this.listBox);
   }
+  private filter!: CatFilterBar;
 
   refreshList() {
     const box = this.listBox;
     clearChildren(box.content);
-    const rows = pickerCats();
+    // filtered + sorted by the bar; cats that can't sit (resonating / queued) sink to the bottom
+    const order = new Map(queryCats(this.filter.q).map((c, i) => [c.uid, i]));
+    const rows = pickerCats()
+      .filter((r) => order.has(r.cat.uid))
+      .sort((a, b) => Number(a.busy || a.queued) - Number(b.busy || b.queued) || order.get(a.cat.uid)! - order.get(b.cat.uid)!);
+    if (!rows.length) {
+      const e = serif(G.s.cats.length ? 'Ningún gato con ese filtro.' : 'Aún no tienes gatos.', 22, P.lilac, { italic: true });
+      e.position.set(16, 16);
+      box.content.addChild(e);
+    }
     rows.forEach(({ cat, def, busy, queued }, i) => {
       const r = new Container();
       r.y = i * 92;
@@ -767,6 +793,13 @@ class SanctuaryView {
       return;
     }
     const table = oddsFor(this.sel[0], this.sel[1]);
+    // a pair shaped like a secret recipe leaves a clue, even if it doesn't qualify yet (mission E18)
+    const fresh = noteSecretClues(this.sel[0], this.sel[1]);
+    if (fresh.length) {
+      sfx('reveal');
+      toast('¡RUMOR! Un gato secreto se asomó', { sub: `${fresh.map((sp) => catDef(sp).name).join(' · ')}: mira "Condiciones que faltan" o su página en el Catdex.`, color: C.lilac });
+      checkMissions();
+    }
     const hy = 14;
     const hd = [
       ['RESULTADO', 60],
@@ -865,7 +898,10 @@ class SanctuaryView {
       box.addChild(s);
       return;
     }
-    const list = table.missing.map((m) => missingDetail(m, this.sel[0]!, this.sel[1]!));
+    const clues = secretClues(this.sel[0]!, this.sel[1]!).map((k) =>
+      k.ready ? `SECRETO ${catDef(k.species).name.toUpperCase()}: esta pareja ya puede sacarlo (fila ???).` : `SECRETO ${catDef(k.species).name.toUpperCase()} reacciona a esta pareja: falta ${k.need}.`,
+    );
+    const list = [...clues, ...table.missing.map((m) => missingDetail(m, this.sel[0]!, this.sel[1]!))];
     if (!list.length) {
       const s = serif('Nada te falta. Que decida el destino.', 19, P.mint, { italic: true });
       s.position.set(18, 48);
@@ -894,19 +930,19 @@ class SanctuaryView {
     }
   }
 
-  /** ÚLTIMOS CRUCES + REPETIR */
+  /** CRUCES: every pair you crossed (favorites first), REPETIR in one tap, LLENAR fills every free slot */
   private drawHistory() {
     const box = this.historyBox;
     clearChildren(box);
     const w = 340;
     const h = IH - 700;
     box.addChild(new Graphics().roundRect(0, 0, w, h, 12).fill({ color: P.ink, alpha: 0.6 }).stroke({ width: 2, color: P.gold, alpha: 0.8 }));
-    const t = serif('Últimos cruces', 22, P.goldHi, { italic: true, bold: true });
+    const hist = crossHistory();
+    const t = serif(hist.length ? `Cruces (${hist.length})` : 'Cruces', 22, P.goldHi, { italic: true, bold: true });
     t.position.set(16, 6);
     box.addChild(t);
-    const hist = (collState().history ?? []).filter((x) => getCat(x.a) && getCat(x.b)).slice(0, 3);
     if (!hist.length) {
-      const s = ui('Aquí quedan tus parejas para repetirlas con un toque.', 14, P.lilac, false);
+      const s = ui('Aquí quedan todas tus parejas para repetirlas con un toque. Marca con ★ tus favoritas.', 14, P.lilac, false);
       s.style.wordWrap = true;
       s.style.wordWrapWidth = w - 30;
       s.position.set(18, 46);
@@ -915,35 +951,96 @@ class SanctuaryView {
     }
     const busy = busyCats();
     const queued = queuedCats();
+    const isFree = (x: { a: string; b: string }) => !busy.has(x.a) && !busy.has(x.b) && !queued.has(x.a) && !queued.has(x.b);
+    // LLENAR: as many free, non-overlapping pairs as there are free slots
+    const slots = Math.max(0, freeSlots());
+    const plan = fillPlan(hist.filter(isFree), slots);
+    if (slots > 0 && plan.length) {
+      const fill = smallBtn(`LLENAR ${plan.length}`, P.mint, () => this.fillSlots(), 120, 34);
+      fill.position.set(w - 132, 8);
+      box.addChild(fill);
+    }
+    const sb = new ScrollBox(w - 12, h - 50, P.gold);
+    sb.position.set(6, 46);
+    box.addChild(sb);
+    const RH = 52;
     hist.forEach((x, i) => {
-      const y = 42 + i * 52;
       const row = new Container();
-      row.position.set(12, y);
+      row.position.set(4, i * RH);
+      const star = serif(x.fav ? '★' : '☆', 26, x.fav ? P.goldHi : P.lilac, { bold: true });
+      star.position.set(0, 8);
+      star.eventMode = 'static';
+      star.cursor = 'pointer';
+      star.on('pointertap', (e) => {
+        e.stopPropagation();
+        if (sb.wasDrag) return;
+        sfx('tick');
+        toggleFavCross(x.a, x.b);
+        this.drawHistory();
+      });
+      row.addChild(star);
       const a = getCat(x.a)!;
       const b = getCat(x.b)!;
       for (const [k, c] of [a, b].entries()) {
-        const ring = new Graphics().circle(20 + k * 30, 22, 19).fill(P.linen).stroke({ width: 2, color: P.gold });
-        const m = new Graphics().circle(20 + k * 30, 22, 17).fill(0xffffff);
+        const cx = 44 + k * 30;
+        const ring = new Graphics().circle(cx, 24, 19).fill(P.linen).stroke({ width: 2, color: P.gold });
+        const m = new Graphics().circle(cx, 24, 17).fill(0xffffff);
         const p = portrait(c.species, 44, 'color');
-        p.position.set(20 + k * 30, 25);
+        p.position.set(cx, 27);
         p.mask = m;
         row.addChild(ring, p, m);
       }
       const ar = ui('→', 16, P.lilac);
-      ar.position.set(78, 12);
-      const rs = new Graphics().circle(112, 22, 19).fill(P.linen).stroke({ width: 2, color: RARITY[printRarity(x.result)].color === C.ink ? P.goldHi : RARITY[printRarity(x.result)].color });
-      const rm = new Graphics().circle(112, 22, 17).fill(0xffffff);
+      ar.position.set(98, 14);
+      const rc = RARITY[printRarity(x.result)].color === C.ink ? P.goldHi : RARITY[printRarity(x.result)].color;
+      const rs = new Graphics().circle(132, 24, 19).fill(P.linen).stroke({ width: 2, color: rc });
+      const rm = new Graphics().circle(132, 24, 17).fill(0xffffff);
       const rp = portrait(x.result, 44, 'color');
-      rp.position.set(112, 25);
+      rp.position.set(132, 27);
       rp.mask = rm;
       row.addChild(ar, rs, rp, rm);
-      const free = !busy.has(x.a) && !busy.has(x.b) && !queued.has(x.a) && !queued.has(x.b);
-      const btn = smallBtn(free ? 'REPETIR' : 'OCUPADOS', free ? P.goldHi : P.orchid, () => this.repeat(x.a, x.b), 150, 40);
-      btn.position.set(w - 24 - 150, 2);
+      if ((x.n ?? 1) > 1) {
+        const n = ui(`×${x.n}`, 12, P.lilac);
+        n.position.set(154, 30);
+        row.addChild(n);
+      }
+      const free = isFree(x);
+      const btn = smallBtn(free ? 'REPETIR' : 'OCUPADOS', free ? P.goldHi : P.orchid, () => !sb.wasDrag && this.repeat(x.a, x.b), 118, 38);
+      btn.position.set(w - 26 - 118, 5);
       if (!free) btn.alpha = 0.55;
       row.addChild(btn);
-      box.addChild(row);
+      // the names, on hover (the portraits are tiny)
+      row.eventMode = 'static';
+      row.on('pointerover', () => this.caption(`${a.name} + ${b.name} → ${catDef(x.result).name}${x.n && x.n > 1 ? ` · cruzados ${x.n} veces` : ''}`));
+      sb.content.addChild(row);
     });
+    sb.setContentHeight(hist.length * RH);
+  }
+
+  /** start every planned pair (one per free slot) — "repeat my breeding round" */
+  private fillSlots() {
+    const busy = busyCats();
+    const queued = queuedCats();
+    const plan = fillPlan(
+      crossHistory().filter((x) => !busy.has(x.a) && !busy.has(x.b) && !queued.has(x.a) && !queued.has(x.b)),
+      Math.max(0, freeSlots()),
+    );
+    let started = 0;
+    for (const p of plan) {
+      const r = repeatCross(p.a, p.b);
+      if (r.r === 'started') started++;
+    }
+    if (!started) {
+      sfx('error');
+      return;
+    }
+    checkMissions();
+    sfx('whoosh');
+    sfx('charge');
+    this.portal.burst();
+    toast(`${started} cruce${started > 1 ? 's' : ''} en marcha`, { sub: 'Tus parejas de siempre ya están en las ranuras.', color: P.mint });
+    this.popTotal();
+    this.refreshAll();
   }
 
   private repeat(a: string, b: string) {
@@ -1631,4 +1728,18 @@ class Portal extends Container {
   stop() {
     this.stopped = true;
   }
+}
+
+/** up to `slots` pairs from the history that don't share a cat (favorites first, then most recent) */
+function fillPlan(pairs: { a: string; b: string }[], slots: number) {
+  const used = new Set<string>();
+  const out: { a: string; b: string }[] = [];
+  for (const p of pairs) {
+    if (out.length >= slots) break;
+    if (used.has(p.a) || used.has(p.b)) continue;
+    used.add(p.a);
+    used.add(p.b);
+    out.push(p);
+  }
+  return out;
 }

@@ -397,13 +397,16 @@ export function openErrandDetail(id: string, board?: Modal) {
     if (!shipOk && rule.ships) {
       const owned = rule.ships.filter((s) => G.s.ship.owned.includes(s));
       if (owned.length) {
+        // share the room left of ¡ZARPAR! (two ships used to push the second button under it)
+        const room = m.innerW - 260 - 24 - x0;
+        const bw = Math.min(340, (room - (owned.length - 1) * 16) / owned.length);
         owned.forEach((s, i) => {
           const btn = new Button(`CAMBIAR A ${shipName(s).toUpperCase()}`, () => {
             setActiveShip(s);
             sfx('levelup');
             draw();
-          }, { w: 340, h: 70, size: 26, color: C.yellow });
-          btn.position.set(x0 + i * 356, by);
+          }, { w: bw, h: 70, size: bw < 300 ? 20 : 26, color: C.yellow });
+          btn.position.set(x0 + i * (bw + 16), by);
           b.addChild(btn);
         });
       } else {

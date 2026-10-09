@@ -220,9 +220,10 @@ export function renderBuildings(ctx: ShopCtx) {
   big.position.set(20, 24);
   big.alpha = 0.9;
   poster.addChild(big);
-  const pc = new Graphics().circle(cw - 70, ch - 90, 60).fill(C.pink);
+  // the decorative circle sits up in the corner, clear of the small print
+  const pc = new Graphics().circle(cw - 70, ch - 170, 60).fill(C.pink);
   poster.addChildAt(pc, 0);
-  const nt = para(`Precios = balance (gems.sinks): constructor ${S.builder.cost}, ranura ${S.resonance_slot.cost}, reloj ${S.purr_cap_plus50.cost} Ojos de Gato. Máximo 1 de cada uno. Las gemas solo se ganan jugando.`, cw - 40, 14);
+  const nt = para(`Constructor extra: ${S.builder.cost} · ranura de Resonancia: ${S.resonance_slot.cost} · reloj de Ronroneo: ${S.purr_cap_plus50.cost} Ojos de Gato. Uno de cada uno. Las gemas solo se ganan jugando.`, cw - 40, 14);
   nt.alpha = 0.7;
   nt.position.set(20, ch - nt.height - 18);
   poster.addChild(nt);

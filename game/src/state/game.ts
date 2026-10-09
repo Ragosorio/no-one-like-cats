@@ -5,6 +5,7 @@
  */
 import { Emitter } from '../core/events';
 import { readSave, writeSave, wipeSave, backupBeforeMigration } from '../core/save';
+import { snapshot } from '../core/vault';
 import { SAVE_VERSION, migrate, normalize } from './migrate';
 import { defaultPodio, type PodioState } from '../podio/types';
 import {
@@ -172,6 +173,8 @@ export interface GameEvents extends Record<string, unknown> {
   timerProgress: Timer;
   catAdded: { cat: OwnedCat; isNew: boolean; orbs: number };
   catLevel: { cat: OwnedCat; level: number };
+  /** anything a screen shows about ONE owned cat changed (level, stars, home, name) — panels re-read it */
+  cat: { uid: string; why: 'level' | 'stars' | 'home' | 'name' };
   klUp: { kl: number };
   purr: { minutes: number; applied: { timer: Timer | null; minutes: number }[]; source: string };
   mission: { id: string; kind: 'new' | 'progress' | 'done' };
@@ -181,6 +184,8 @@ export interface GameEvents extends Record<string, unknown> {
   beat: { id: string };
   changed: undefined;
   saved: undefined;
+  /** this window stopped saving: the save on disk is ahead (an old tab / old copy) */
+  stale: undefined;
 }
 
 export function defaultState(): GameState {
@@ -282,13 +287,26 @@ class Game {
   afterLoad: (() => void)[] = [];
   /** set right before a reload that replaced the save on disk (restore/import): don't write the old one back */
   saveLocked = false;
+  /** another window of the game holds the save (core/vault + main.ts writer lock): this one must not write */
+  otherWindow = false;
+  /** the save on disk has MORE play time than this window (an old tab / old copy): never overwrite it */
+  staleWindow = false;
   save() {
-    if (this.newerSave || this.saveLocked) return;
+    if (this.newerSave || this.saveLocked || this.otherWindow || this.staleWindow) return;
+    // anti-overwrite: if what's on disk was played longer than what we hold, someone else is ahead of us
+    const disk = readSave<GameState>();
+    if (disk?.state && !disk.recovered && (disk.state.playMs ?? 0) > this.s.playMs + 120_000) {
+      this.staleWindow = true;
+      this.bus.emit('stale', undefined);
+      return;
+    }
     this.s.savedAt = Date.now();
     writeSave(this.s, SAVE_VERSION, BUILD_ID);
     this.bus.emit('saved', undefined);
   }
   reset() {
+    // the island goes to the history (Ajustes › RESPALDOS) before it's wiped: "nueva partida" is undoable
+    void snapshot('antes de borrar');
     wipeSave();
     this.s = defaultState();
   }

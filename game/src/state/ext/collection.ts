@@ -71,6 +71,10 @@ export function dexCount() {
 export function ownedOf(species: string): OwnedCat | undefined {
   return G.s.cats.filter((c) => c.species === species).sort((a, b) => b.stars - a.stars || b.level - a.level)[0];
 }
+/** every cat you own of a species, best first (same order ownedOf picks from) */
+export function ownedAll(species: string): OwnedCat[] {
+  return G.s.cats.filter((c) => c.species === species).sort((a, b) => b.stars - a.stars || b.level - a.level || a.uid.localeCompare(b.uid));
+}
 export function roleName(def: CatDef) {
   return ROLE_BY_ID.get(def.role)?.name ?? def.role;
 }

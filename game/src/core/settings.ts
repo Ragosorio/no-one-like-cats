@@ -12,11 +12,26 @@ export const settings = {
 const KEY = 'nolc-settings';
 
 export function loadSettings() {
+  let saved = false;
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) Object.assign(settings, JSON.parse(raw));
+    if (raw) {
+      Object.assign(settings, JSON.parse(raw));
+      saved = true;
+    }
   } catch {
     /* storage unavailable */
+  }
+  // first run: follow the system's "reduce motion" (the player can still change it in Ajustes)
+  if (!saved) {
+    try {
+      if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        settings.reduceMotion = true;
+        settings.reduceFlashes = true;
+      }
+    } catch {
+      /* no matchMedia */
+    }
   }
 }
 

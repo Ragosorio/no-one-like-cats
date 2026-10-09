@@ -5,6 +5,7 @@ import { txt } from '../ui/widgets';
 import { W, H } from '../core/App';
 import { sparkTexture } from '../art/textures';
 import { settings } from '../core/settings';
+import { screenRect } from '../ui/screen';
 
 /** Trauma-based screen shake applied to a target container. */
 export class Shaker {
@@ -64,7 +65,7 @@ export const time = {
 /** Fullscreen flash */
 export function flash(layer: Container, color: number = C.white, alpha = 0.8, dur = 0.25) {
   if (settings.reduceFlashes) alpha *= 0.3;
-  const g = new Graphics().rect(0, 0, W, H).fill(color);
+  const g = screenRect(color);
   g.alpha = alpha;
   layer.addChild(g);
   gsap.to(g, { alpha: 0, duration: dur, ease: 'power2.out', onComplete: () => g.destroy() });

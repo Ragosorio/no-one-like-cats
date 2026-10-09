@@ -7,6 +7,7 @@
 import '../island/safety';
 import { Container, Graphics, Sprite, Text, Texture, Ticker, TilingSprite } from 'pixi.js';
 import gsap from 'gsap';
+import { fitBlock, fitLine } from '../ui/fit';
 import { Modal, toast } from '../ui/modal';
 import { scenes } from '../core/scenes';
 import { game } from '../core/App';
@@ -37,6 +38,9 @@ import { openAltar } from './Altar';
 import { TweenBag } from '../ui/hud/tweenBag';
 
 const NYAMS = ['¡ÑAM!', '¡ÑOM!', '¡ÑAM ÑAM!', '¡GULP!', '¡MMM!'];
+/** level numeral: center x and max width inside the NIVEL block */
+const LV_CX = 84;
+const LV_MAXW = 140;
 const WORKER_NAME: Record<string, string> = { banker: 'Banquero', farmer: 'Granjero', builder: 'Constructor', voyager: 'Viajero' };
 
 export function openCatPanel(uid: string) {
@@ -74,6 +78,8 @@ class CatPanel {
   goldText!: Text;
   feedToText!: Text;
   feedTarget = 0;
+  private lvBase = 1;
+  private lvPopping = false;
   starsBox = new Container();
   private holdTimer: number | null = null;
   private holdDelay = 250;
@@ -99,6 +105,12 @@ class CatPanel {
       if (!this.m.closed) killTree(this.starsBox);
       origClose();
     };
+    // the same cat changed somewhere else (another panel, an expedition, a patch): show it now
+    this.m.listen(
+      G.on('cat', (e) => {
+        if (e.uid === this.uid && !this.m.closed) this.refresh(false);
+      }),
+    );
     this.m.onClose = () => {
       Ticker.shared.remove(this.tick);
       this.stopHold();
@@ -205,8 +217,10 @@ class CatPanel {
     lb.addChild(lbg);
     const nvl = txt('NIVEL', { fontFamily: F.bebas, fontSize: 24, fill: C.ink, letterSpacing: 3 });
     nvl.position.set(20, 12);
+    // centered so the level-up pop grows in place instead of spilling over "tope Nv" and the ÑAM bar
     this.lvText = txt(String(c.level), { fontFamily: F.poster, fontSize: 96, fill: C.ink });
-    this.lvText.position.set(18, 30);
+    this.lvText.anchor.set(0.5, 0.5);
+    this.lvText.position.set(LV_CX, 94);
     this.capText = txt('', { fontFamily: F.heavy, fontSize: 20, fill: C.ink });
     this.capText.position.set(20, 160);
     lb.addChild(nvl, this.lvText, this.capText);
@@ -310,9 +324,9 @@ class CatPanel {
       const tt = txt(t, { fontFamily: F.poster, fontSize: 20, fill: C.ink });
       tt.position.set(24, 28);
       if (tt.width > cw - 36) tt.scale.set((cw - 36) / tt.width);
-      const dt = txt(d, { fontFamily: F.ui, fontSize: 13, fill: C.ink, wordWrap: true, wordWrapWidth: cw - 36, lineHeight: 16 });
+      // re-wrap at a smaller size before shrinking the whole block (long ultimates used to turn into ant text)
+      const dt = fitBlock(d, cw - 36, chh - 58, { fontFamily: F.ui, fill: C.ink }, [15, 14, 13, 12, 11]);
       dt.position.set(24, 54);
-      if (dt.height > chh - 58) dt.scale.set((chh - 58) / dt.height);
       cc.addChild(g, kt, tt, dt);
       cc.position.set(x0 + (i % 2) * (cw + 16), y + Math.floor(i / 2) * (chh + 12));
       body.addChild(cc);
@@ -586,16 +600,17 @@ class CatPanel {
     killTree(b);
     b.removeChildren().forEach((x) => x.destroy({ children: true }));
     for (let i = 0; i < 6; i++) {
-      const s = icon('star', 34, i < c.stars ? C.yellow : C.paperDark);
-      s.position.set(20 + i * 38, 22);
+      const s = icon('star', 30, i < c.stars ? C.yellow : C.paperDark);
+      s.position.set(18 + i * 33, 22);
       b.addChild(s);
     }
     const orbs = G.s.orbs[c.species] ?? 0;
     const need = c.stars < 6 ? starNeed(c) : 0;
     const oi = icon('orb', 30, elementFx(catDef(c.species).elements[0]).main);
-    oi.position.set(266, 22);
+    oi.position.set(232, 22);
     const ot = txt(c.stars < 6 ? `${fmt(orbs)} / ${fmt(need)} orbes` : `${fmt(orbs)} orbes · ★ máx.`, { fontFamily: F.heavy, fontSize: 20, fill: C.ink });
-    ot.position.set(288, 9);
+    ot.position.set(252, 9);
+    fitLine(ot, 410 - 10 - 252); // never under the ALTAR button
     b.addChild(oi, ot);
     const altarOn = hudUnlocks().altar;
     const usePrisma = collState().usePrisma !== false;
@@ -634,6 +649,8 @@ class CatPanel {
     const c = this.c;
     if (!c || this.lvText.destroyed) return;
     this.lvText.text = String(c.level);
+    this.lvBase = Math.min(1, LV_MAXW / Math.max(1, this.lvText.width / Math.abs(this.lvText.scale.x || 1)));
+    if (!this.lvPopping) this.lvText.scale.set(this.lvBase);
     const cap = levelCap();
     this.capText.text = c.level >= cap ? `TOPE Nv ${cap} (sube tu Reino)` : `tope Nv ${cap}`;
     this.capText.style.fill = c.level >= cap ? C.red : C.ink;
@@ -783,7 +800,8 @@ class CatPanel {
   private levelUp(level: number, before: number, quiet: boolean) {
     const p = this.m.panel;
     const lp = p.toLocal(this.lvText.getGlobalPosition());
-    this.bag.fromTo(this.lvText.scale, { x: 1.5, y: 1.5 }, { x: 1, y: 1, duration: 0.4, ease: 'back.out(3)' });
+    this.lvPopping = true;
+    this.bag.fromTo(this.lvText.scale, { x: this.lvBase * 1.35, y: this.lvBase * 1.35 }, { x: this.lvBase, y: this.lvBase, duration: 0.4, ease: 'back.out(3)', onComplete: () => (this.lvPopping = false) });
     this.islandCat?.hop();
     this.islandCat?.scale.set(catLevelScale(level));
     if (quiet) {

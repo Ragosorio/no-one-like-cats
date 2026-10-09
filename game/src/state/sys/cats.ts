@@ -100,6 +100,7 @@ export function feed(c: OwnedCat): 'bite' | 'level' | 'cap' | 'poor' {
     G.count('cat_levels');
     G.recalc();
     G.emit('catLevel', { cat: c, level: c.level });
+    G.emit('cat', { uid: c.uid, why: 'level' });
     return 'level';
   }
   return 'bite';
@@ -158,6 +159,7 @@ export function starUp(c: OwnedCat, usePrisma = true) {
   G.count('star_ups');
   G.count(`star_up_${c.stars}`);
   G.recalc();
+  G.emit('cat', { uid: c.uid, why: 'stars' });
   return true;
 }
 
@@ -214,7 +216,8 @@ export interface CollState {
   /** Altar preference */
   usePrisma?: boolean;
   /** recent crosses (newest first) for REPETIR CRUCE */
-  history?: { a: string; b: string; result: string; isNew: boolean; at: number }[];
+  /** every distinct pair crossed (newest first, favorites never trimmed): Santuario › CRUCES */
+  history?: { a: string; b: string; result: string; isNew: boolean; at: number; n?: number; fav?: boolean }[];
 }
 export function collState(): CollState {
   const ext = (G.s.ext ??= {});

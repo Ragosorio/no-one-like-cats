@@ -3,7 +3,7 @@
  * 4 estados (sellada / silueta / rumor / registrada), filtros, ficha de detalle,
  * pestañas Sets y Grimorio de Sinergias.
  */
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics, Text, Texture } from 'pixi.js';
 import gsap from 'gsap';
 import { Modal } from '../ui/modal';
 import { C, F } from '../ui/theme';
@@ -28,6 +28,7 @@ import {
   mutationLook,
   mutationShort,
   ownedOf,
+  ownedAll,
   obtainText,
   possibleParents,
   printRarity,
@@ -39,11 +40,18 @@ import {
   workerName,
 } from '../state/ext/collection';
 import { CatCard, rarityColor, rarityName, fitText } from './collection/CatCard';
-import { ensureCatArt, portrait } from './collection/art';
+import { ensureArtFor, portrait } from './collection/art';
+import { catTexture } from '../art/catArt';
 import { ScrollBox, chip, elBadge, GlitchText, Tab, clickable, clearChildren, guardModal, destroyTree, killTree, iconChip, prismaGem } from './collection/ui';
 import { elementIcon, iconText } from '../ui/elementIcon';
 import { playCatReveal } from '../fx/sequences/catReveal';
 import { slugOf } from '../art/tint';
+import { catWhere, fold } from '../state/ext/catQuery';
+import { SearchField } from '../ui/searchField';
+import { runSliced } from '../core/sliced';
+import { openCatPanel } from './CatPanel';
+import { openHabitatPanel } from './island/HabitatPanel';
+import { openHomeless } from './island/HomelessPanel';
 
 type TabId = 'cats' | 'sets' | 'grimorio';
 
@@ -56,7 +64,8 @@ let current: CatdexView | null = null;
 
 /** Open the Catdex (optionally straight to a species' detail or a tab). */
 export async function openCatdex(species?: string, tab: TabId = 'cats') {
-  await ensureCatArt();
+  // the first screenful of cards (+ the detail's cat) before opening; the rest streams in behind
+  await ensureArtFor([...(species ? [species] : []), ...CATS.slice(0, 33).map((c) => c.id)]);
   if (current && !current.modal.closed) current.modal.close();
   checkSets();
   const sets = takeSetCelebrations();
@@ -78,6 +87,10 @@ class CatdexView {
   private stFilter: 'registered' | 'rumor' | 'unknown' | null = null;
   private grid?: ScrollBox;
   private list: string[] = [];
+  private detailSpecies: string | null = null;
+  private search = '';
+  /** chosen instance per species (you can own several of one species) */
+  private instance = new Map<string, number>();
 
   constructor(tab: TabId) {
     this.tab = tab;
@@ -106,6 +119,13 @@ class CatdexView {
     m.onClose = () => {
       if (current === this) current = null;
     };
+    // a cat shown here was fed / starred / moved in a panel stacked on top: the sheet follows
+    m.listen(
+      G.on('cat', (e) => {
+        if (m.closed || !this.detail || !this.detailSpecies) return;
+        if (G.s.cats.find((c) => c.uid === e.uid)?.species === this.detailSpecies) this.showDetail(this.detailSpecies, false);
+      }),
+    );
   }
 
   // ------------------------------------------------------------ header
@@ -129,23 +149,33 @@ class CatdexView {
     const el = txt('ELEMENTOS', { fontFamily: F.ui, fontWeight: '700', fontSize: 14, fill: C.ink, letterSpacing: 4 });
     el.position.set(ex, 2);
     h.addChild(el);
-    dexElements().forEach((e, i) => {
-      const x = ex + 34 + i * 92;
-      const y = 70;
+    // the badges live between the counter and the tabs (x 380 → 1100): one row while they fit,
+    // two rows once the Grietas bring the 13 elements (it used to run under the tabs)
+    const els = dexElements();
+    const rows = els.length > 8 ? 2 : 1;
+    const cols = Math.ceil(els.length / rows);
+    const span = 1100 - ex - 34;
+    const step = Math.min(92, span / Math.max(1, cols - 1 || 1));
+    const R = rows === 2 ? 25 : 32;
+    els.forEach((e, i) => {
+      const x = ex + 34 + (i % cols) * step;
+      const y = rows === 2 ? 52 + Math.floor(i / cols) * 74 : 70;
+      const nmSize = rows === 2 ? 10 : 12;
       if (isElementKnown(e.id)) {
-        const b = elBadge(e.id, 32);
+        const b = elBadge(e.id, R);
         b.position.set(x, y);
-        const nm = txt(e.name.toUpperCase(), { fontFamily: F.ui, fontWeight: '700', fontSize: 12, fill: C.ink, letterSpacing: 1 });
+        const nm = txt(e.name.toUpperCase(), { fontFamily: F.ui, fontWeight: '700', fontSize: nmSize, fill: C.ink, letterSpacing: 1 });
         nm.anchor.set(0.5, 0);
-        nm.position.set(x, y + 40);
+        nm.position.set(x, y + R + 6);
+        if (nm.width > step - 4) nm.scale.set((step - 4) / nm.width);
         h.addChild(b, nm);
       } else {
-        const d = new Graphics().circle(x, y, 32).fill(C.ink).stroke({ width: 3, color: C.ink });
-        const g = new GlitchText('???', { fontFamily: F.glitch, fontSize: 24, fill: C.paper }, 3);
+        const d = new Graphics().circle(x, y, R).fill(C.ink).stroke({ width: 3, color: C.ink });
+        const g = new GlitchText('???', { fontFamily: F.glitch, fontSize: R * 0.75, fill: C.paper }, 3);
         g.position.set(x, y);
-        const nm = txt('¿?', { fontFamily: F.ui, fontWeight: '700', fontSize: 12, fill: 0x8a8070 });
+        const nm = txt('¿?', { fontFamily: F.ui, fontWeight: '700', fontSize: nmSize, fill: 0x8a8070 });
         nm.anchor.set(0.5, 0);
-        nm.position.set(x, y + 40);
+        nm.position.set(x, y + R + 6);
         h.addChild(d, g, nm);
       }
     });
@@ -205,9 +235,21 @@ class CatdexView {
       x += c.width + 8;
     };
     add(mk('TODOS', this.elFilter === null, () => this.filter(null, this.rarFilter)));
-    for (const e of dexElements()) {
-      if (!isElementKnown(e.id)) continue;
-      add(mk(e.name.toUpperCase(), this.elFilter === e.id, () => this.filter(e.id, this.rarFilter), elColor(e.id) === 0xffd400 ? C.ink : elColor(e.id), e.id));
+    const knownEls = dexElements().filter((e) => isElementKnown(e.id));
+    // with many elements the chips go icon-only (same filter, a third of the width)
+    const iconOnly = knownEls.length > 7;
+    for (const e of knownEls) {
+      const col = elColor(e.id) === 0xffd400 ? C.ink : elColor(e.id);
+      if (iconOnly) {
+        const active = this.elFilter === e.id;
+        const c = new Container();
+        c.addChild(new Graphics().rect(0, 0, 34, 30).fill(active ? col : C.paper).stroke({ width: active ? 3 : 2, color: C.ink, alignment: 1 }));
+        const ic = elementIcon(e.id, 24);
+        ic.position.set(17, 15);
+        c.addChild(ic);
+        clickable(c, () => this.filter(e.id, this.rarFilter), { lift: 2 });
+        add(c);
+      } else add(mk(e.name.toUpperCase(), this.elFilter === e.id, () => this.filter(e.id, this.rarFilter), col, e.id));
     }
     x += 26;
     const lab3 = txt('ESTADO', { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.ink, letterSpacing: 3 });
@@ -221,6 +263,14 @@ class CatdexView {
       ['unknown', '???', C.violet],
     ];
     for (const [k, label, col] of sts) add(mk(label, this.stFilter === k, () => this.filterSt(k), col));
+    // search by name (only names you know: registered, rumors, or the name you gave your cat)
+    const sf = new SearchField(Math.max(240, Math.min(380, IW - x - 10)), 34, { field: 0xf6efe2, ink: C.ink, border: C.ink }, (v) => {
+      this.search = v;
+      this.buildGrid();
+    }, 'Buscar en el Catdex…');
+    if (this.search) sf.setValue(this.search);
+    sf.position.set(IW - sf.fw - 4, -2);
+    filters.addChild(sf);
     // second row: rarity
     x = 0;
     const row2 = 40;
@@ -241,12 +291,23 @@ class CatdexView {
       const col = r === 'secret' ? C.violet : r === 'common' ? 0x6d6356 : rarityColor(r);
       add2(mk(name, this.rarFilter === r, () => this.filter(this.elFilter, r), col));
     }
-    const shown = CATS.filter((c) => this.passes(c.id)).length;
-    const cnt = txt(`${shown} CARTAS`, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.pinkHot, letterSpacing: 2 });
-    cnt.position.set(x + 14, row2 + 6);
-    filters.addChild(cnt);
+    this.countText = txt('', { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: C.pinkHot, letterSpacing: 2 });
+    this.countText.position.set(x + 14, row2 + 6);
+    filters.addChild(this.countText);
+    this.buildGrid();
+  }
 
-    // grid
+  private countText: Text | null = null;
+  /** the card grid alone (search typing rebuilds just this, never the filters or the input) */
+  private buildGrid() {
+    const p = this.page;
+    if (this.grid) {
+      killTree(this.grid);
+      this.grid.destroy({ children: true });
+      this.grid = undefined;
+    }
+    const shown = CATS.filter((c) => this.passes(c.id)).length;
+    if (this.countText && !this.countText.destroyed) this.countText.text = `${shown} CARTAS`;
     const top = 280;
     const grid = new ScrollBox(IW, IH - top, C.ink);
     grid.y = top;
@@ -257,14 +318,39 @@ class CatdexView {
     const ch = 198;
     const gap = (IW - 10 - cols * cw) / (cols - 1);
     this.list = CATS.filter((c) => this.passes(c.id)).map((c) => c.id);
+    // cards stream in a few per frame (each one rasterizes its cat): the panel opens at once and never freezes
+    const jobs: (() => void)[] = [];
     this.list.forEach((id, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const slot = new Graphics().rect(0, 0, cw, ch).fill({ color: C.ink, alpha: 0.06 }).stroke({ width: 2, color: C.ink, alpha: 0.15 });
+      slot.position.set(col * (cw + gap), 12 + row * (ch + 22));
+      grid.content.addChild(slot);
+      jobs.push(() => {
+        if (slot.destroyed) return;
+        if (catTexture(slugOf(id)) === Texture.WHITE) return false; // its painting is still on the way
+        const holder = this.makeCard(id, i, cw, ch, col, grid);
+        holder.position.copyFrom(slot.position);
+        grid.content.addChildAt(holder, grid.content.getChildIndex(slot));
+        slot.destroy();
+      });
+    });
+    runSliced(jobs, grid, 10);
+    const rows = Math.ceil(this.list.length / cols);
+    grid.setContentHeight(12 + rows * (ch + 22) + 10);
+    if (!this.list.length) {
+      const e = poster('NADA POR AQUÍ. TODAVÍA.', 60, C.ink);
+      e.position.set(40, 60);
+      grid.content.addChild(e);
+    }
+  }
+
+  private makeCard(id: string, i: number, cw: number, ch: number, col: number, grid: ScrollBox) {
+    {
       const owned = ownedOf(id);
       const card = new CatCard(id, { w: cw, h: ch, stars: owned?.stars, level: owned?.level, mutation: owned?.mutation, holo: !!owned?.holo });
       const holder = new Container();
       holder.addChild(card);
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      holder.position.set(col * (cw + gap), 12 + row * (ch + 22));
       const num = txt(`Nº${String(CATS.findIndex((c) => c.id === id) + 1).padStart(2, '0')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 11, fill: 0x7d7264 });
       num.position.set(2, ch + 3);
       holder.addChild(num);
@@ -280,22 +366,21 @@ class CatdexView {
         sfx('paper');
         this.showDetail(id);
       });
-      grid.content.addChild(holder);
       card.alpha = 0;
-      gsap.fromTo(card, { alpha: 0, y: 30 }, { alpha: 1, y: 0, duration: 0.3, delay: Math.min(0.6, i * 0.012), ease: 'back.out(1.6)' });
-    });
-    const rows = Math.ceil(this.list.length / cols);
-    grid.setContentHeight(12 + rows * (ch + 22) + 10);
-    if (!this.list.length) {
-      const e = poster('NADA POR AQUÍ. TODAVÍA.', 60, C.ink);
-      e.position.set(40, 60);
-      grid.content.addChild(e);
+      gsap.fromTo(card, { alpha: 0, y: 30 }, { alpha: 1, y: 0, duration: 0.3, delay: Math.min(0.25, (i % 11) * 0.02), ease: 'back.out(1.6)' });
+      return holder;
     }
   }
 
   private passes(id: string) {
     const d = catDef(id);
     const st = dexStatus(id);
+    if (this.search) {
+      const known = st === 'registered' || st === 'rumor';
+      const mine = G.s.cats.filter((c) => c.species === id).map((c) => c.name).join(' ');
+      const hay = fold(`${known ? `${d.name} ${d.epithet}` : ''} ${mine}`);
+      if (!fold(this.search).split(' ').every((w) => hay.includes(w))) return false;
+    }
     if (this.elFilter && !d.elements.includes(this.elFilter)) return false;
     if (this.stFilter === 'registered' && st !== 'registered') return false;
     if (this.stFilter === 'rumor' && st !== 'rumor') return false;
@@ -330,11 +415,15 @@ class CatdexView {
         this.showDetail(next, false);
       },
       onReplay: () => this.replay(species),
-      onAltar: (uid) => {
-        this.modal.close();
-        void import('./Altar').then((m) => m.openAltar(uid));
+      // panels open ON TOP of the Catdex: closing them brings you right back here
+      onAltar: (uid) => void import('./Altar').then((m) => m.openAltar(uid)),
+      instance: this.instance.get(species) ?? 0,
+      onInstance: (i) => {
+        this.instance.set(species, i);
+        this.showDetail(species, false);
       },
     });
+    this.detailSpecies = species;
     this.detail = d;
     this.modal.body.addChild(d);
     if (animate) gsap.from(d, { x: IW + 60, duration: 0.32, ease: 'power3.out' });
@@ -529,6 +618,9 @@ interface DetailHooks {
   onNav: (dir: 1 | -1) => void;
   onReplay: () => void;
   onAltar: (uid: string) => void;
+  /** which of your cats of this species the strip shows (when you own more than one) */
+  instance: number;
+  onInstance: (i: number) => void;
 }
 
 class DetailSheet extends Container {
@@ -640,7 +732,6 @@ class DetailSheet extends Container {
 
   private registeredInfo(species: string, X: number, top: number, RW: number, hooks: DetailHooks) {
     const def = catDef(species);
-    const owned = ownedOf(species);
     const colW = (RW - 40) / 2;
     // stats strip
     const stats: [string, string][] = [
@@ -684,27 +775,60 @@ class DetailSheet extends Container {
     yB = this.section('CÓMO SE OBTIENE', obtainText(def), XB, yB, colW, { color: C.ink, size: 18 });
     yB = this.section('LORE', def.lore, XB, yB, colW, { italic: true, color: C.ink, size: 22 });
 
-    // owner strip
+    // owner strip: YOUR cat (not the species) — where it lives, and straight to its panels
     const yo = IH - 96;
+    const mine = ownedAll(species);
+    const owned = mine[Math.min(hooks.instance, mine.length - 1)];
     if (owned) {
       const need = starNeed(owned);
       const have = G.s.orbs[species] ?? 0;
-      const strip = new Graphics().rect(X, yo, colW, 84).fill(C.ink);
+      const strip = new Graphics().rect(X, yo - 30, colW, 114).fill(C.ink);
       const t1 = poster(`TU ${owned.name.toUpperCase()} · NV ${owned.level}`, 32, C.paper);
-      t1.position.set(X + 14, yo + 2);
-      fitText(t1, colW - 28);
+      t1.position.set(X + 14, yo - 28);
       const stars = '★'.repeat(owned.stars) + '☆'.repeat(Math.max(0, 6 - owned.stars));
       const t2 = txt(`${stars}   ORBES ${have}/${need}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.yellow, letterSpacing: 1 });
-      t2.position.set(X + 14, yo + 50);
-      this.addChild(strip, t1, t2);
+      t2.position.set(X + 14, yo + 18);
+      const where = catWhere(owned.uid);
+      const t3 = txt(where.label, { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: where.habitatId ? C.mint : 0xff8a80 });
+      t3.position.set(X + 14, yo + 50);
+      fitText(t3, colW - 28);
+      this.addChild(strip, t1, t2, t3);
+      // more than one of this species: pick which one
+      if (mine.length > 1) {
+        const sel = new Container();
+        const lt = txt(`${hooks.instance + 1}/${mine.length}`, { fontFamily: F.poster, fontSize: 24, fill: C.paper });
+        const pv = new Button('‹', () => hooks.onInstance((hooks.instance - 1 + mine.length) % mine.length), { w: 40, h: 36, size: 24, color: C.paper });
+        const nx = new Button('›', () => hooks.onInstance((hooks.instance + 1) % mine.length), { w: 40, h: 36, size: 24, color: C.paper });
+        lt.position.set(48, 2);
+        nx.position.set(56 + lt.width, 0);
+        sel.addChild(pv, lt, nx);
+        sel.position.set(X + colW - sel.width - 10, yo - 22);
+        this.addChild(sel);
+        fitText(t1, colW - sel.width - 40);
+      } else fitText(t1, colW - 28);
+      // actions: the cat (feed / evolve), its home, the Altar, the reveal
+      let bx = XB;
+      const add = (b: Container, w: number) => {
+        b.position.set(bx, yo + 12);
+        this.addChild(b);
+        bx += w + 10;
+      };
+      add(new Button('VER GATO', () => openCatPanel(owned.uid), { w: 170, h: 60, size: 26, color: C.pinkHot, textColor: C.paper }), 170);
+      if (where.habitatId) add(new Button('HÁBITAT', () => openHabitatPanel(where.habitatId!), { w: 150, h: 60, size: 26, color: C.mint }), 150);
+      else add(new Button('DARLE CASA', () => openHomeless(owned.uid), { w: 170, h: 60, size: 22, color: C.yellow }), 170);
       const can = canStarUp(owned, collState().usePrisma !== false);
-      const alt = new Button(can ? '¡ALTAR!' : 'ALTAR', () => hooks.onAltar(owned.uid), { w: 170, h: 60, size: 28, color: can ? C.pinkHot : C.paper, textColor: can ? C.paper : C.ink });
-      alt.position.set(XB, yo + 12);
-      this.addChild(alt);
+      add(new Button(can ? '¡ALTAR!' : 'ALTAR', () => hooks.onAltar(owned.uid), { w: 130, h: 60, size: 26, color: can ? C.pinkHot : C.paper, textColor: can ? C.paper : C.ink }), 130);
+      const rep = new Button('REVELACIÓN', hooks.onReplay, { w: 170, h: 60, size: 22, color: C.pink });
+      if (bx + 170 <= X + RW) add(rep, 170);
+      else {
+        rep.position.set(XB, yo - 54);
+        this.addChild(rep);
+      }
+    } else {
+      const rep = new Button('VER REVELACIÓN', hooks.onReplay, { w: 260, h: 60, size: 26, color: C.pink });
+      rep.position.set(XB, yo + 12);
+      this.addChild(rep);
     }
-    const rep = new Button('VER REVELACIÓN', hooks.onReplay, { w: 260, h: 60, size: 26, color: C.pink });
-    rep.position.set(owned ? XB + 190 : XB, yo + 12);
-    this.addChild(rep);
   }
 
   private rumorInfo(species: string, X: number, top: number, RW: number) {
