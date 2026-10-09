@@ -17,3 +17,7 @@ __pycache__/
 *.gif
 *.avif
 *.bmp
+
+# player saves (El Baúl exports) never go to the public repo
+*.nocat
+mi-isla*.txt
