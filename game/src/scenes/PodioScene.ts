@@ -28,7 +28,7 @@ import { Lobby } from '../podio/lobby';
 import { PodioResults } from '../podio/results';
 import { PowerDef, STATUS_DESC, STATUS_NAME } from '../podio/powers';
 import { KO_WORDS, SKIP_TEXT, START, pick } from '../podio/lines';
-import { SPEEDS, aiSkill, applyDuel, league, playerFighter, ps, rivalAt, rivalFighter } from '../state/sys/podio';
+import { SPEEDS, aiSkill, applyDuel, league, nextBout, playerFighter, ps, reachable, rivalAt, rivalFighter } from '../state/sys/podio';
 import type { RivalDef } from '../podio/ladder';
 
 const CAT_SIZE = 400;
@@ -127,19 +127,28 @@ export class PodioScene extends Scene {
   }
 
   // ================================================================== LOBBY
-  showLobby() {
+  /** the ladder; `at` = a rival of a past league being browsed (rematches), default your frontier */
+  showLobby(at?: { lg: number; bout: number }) {
     this.clearAll();
     const p = ps();
-    const r = rivalAt(p.league, p.bout);
-    this.setArena(r.def.elements[0], league(p.league).name, league(p.league).color);
+    const lg = at && reachable(at.lg, at.bout) ? at.lg : p.league;
+    const bout = at && reachable(at.lg, at.bout) ? at.bout : p.bout;
+    const r = rivalAt(lg, bout);
+    this.setArena(r.def.elements[0], league(lg).name, league(lg).color);
     const dim = new Graphics().rect(-400, -200, W + 800, H + 400).fill({ color: C.ink, alpha: 0.35 });
     this.ui.addChild(dim);
-    void ensureCats([r.species, ...[0, 1, 2, 3, 4].map((i) => rivalAt(p.league, i).species)]).then(() => {
+    void ensureCats([r.species, ...[0, 1, 2, 3, 4].map((i) => rivalAt(lg, i).species)]).then(() => {
       if (this.destroyed || this.duel) return;
       this.lobby?.destroy({ children: true });
       this.lobby = new Lobby({
-        onFight: (uid, lg, bout) => void this.startDuel(uid, lg, bout),
+        lg,
+        bout,
+        onFight: (uid, flg, fbout) => void this.startDuel(uid, flg, fbout),
         onExit: () => void goIsland(),
+        onBrowse: (rv) => {
+          if (this.destroyed || this.duel) return;
+          this.setArena(rv.def.elements[0], league(rv.league).name, league(rv.league).color);
+        },
       });
       this.ui.addChild(this.lobby);
     });
@@ -748,13 +757,19 @@ export class PodioScene extends Scene {
     // a VACÍO champion's prize: the cat joins (reveal) and, the first time, Luzterna explains what it is
     if (loot.prize) await this.showPrize(loot.prize);
     if (run !== this.runId || this.destroyed) return;
+    const after = () => {
+      const p = ps();
+      if (!won) return { lg: r.league, bout: r.bout };
+      return loot.kind === 'frontier' ? { lg: p.league, bout: p.bout } : nextBout(r.league, r.bout);
+    };
     this.results = new PodioResults(loot, cat, `${r.trainer} (${r.def.name})`, {
+      // after a win: the next rival of the league you were in (a rematch run through an old league keeps
+      // going there; a frontier win goes on to your new frontier). After a loss: the same rival.
       onNext: () => {
-        const p = ps();
-        if (won) void this.startDuel(cat.uid, p.league, p.bout);
-        else void this.startDuel(cat.uid, r.league, r.bout);
+        const to = after();
+        void this.startDuel(cat.uid, to.lg, to.bout);
       },
-      onLobby: () => this.showLobby(),
+      onLobby: () => this.showLobby(after()),
       onIsland: () => void goIsland(),
     });
     this.top.addChild(this.results);

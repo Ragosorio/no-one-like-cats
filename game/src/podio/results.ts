@@ -146,7 +146,10 @@ export class PodioResults extends Container {
     const pw = powersOf(cat.species);
     for (const s of xp.unlocked) notes.push([`¡NUEVO PODER! ${SLOT_LABEL[s]}: ${pw[s].name}`, C.red]);
     for (const s of xp.powerUps) notes.push([`${SLOT_LABEL[s]} sube de nivel: ${pw[s].name}`, C.inkBlue]);
-    if (xp.capped) notes.push([`TOPE: alimenta a ${cat.name} hasta NV ${nextCapLevel(cat)} (o súbelo de estrella) para que siga creciendo aquí.`, C.plum]);
+    if (won && loot.kind === 'first') notes.push([`1ª VICTORIA DE ${cat.name.toUpperCase()} CONTRA ESTE RIVAL: XP COMPLETA${loot.catchup > 1.01 ? ` · x${loot.catchup.toFixed(1)} POR IR ATRÁS` : ''}`, C.pinkHot]);
+    else if (won && loot.catchup > 1.01) notes.push([`PONERSE AL DÍA: XP x${loot.catchup.toFixed(1)} (va atrás de tu mejor gato del Podio)`, C.pinkHot]);
+    if (xp.toBank > 0) notes.push([`+${fmt(xp.toBank)} XP GUARDADA: entra sola cuando ${cat.name} suba su tope en la isla.`, C.plum]);
+    else if (xp.capped) notes.push([`TOPE: alimenta a ${cat.name} hasta NV ${nextCapLevel(cat)} (o súbelo de estrella) para que siga creciendo aquí.`, C.plum]);
     if (loot.leagueUp) notes.unshift([`¡ASCIENDES A ${league(loot.league + 1).name}!`, C.pinkHot]);
     if (loot.prize) {
       const pd = catDef(loot.prize.species);
@@ -163,7 +166,7 @@ export class PodioResults extends Container {
     // ---- stamp
     const stamp = new Container();
     const sg = new Graphics().roundRect(-170, -62, 340, 124, 16).stroke({ width: 10, color: won ? C.red : C.inkBlue });
-    const stt = txt(won ? (loot.replay ? 'REVANCHA' : 'GANADO') : 'NOQUEADO', { fontFamily: F.poster, fontSize: 64, fill: won ? C.red : C.inkBlue, letterSpacing: 4 });
+    const stt = txt(won ? (loot.kind === 'repeat' ? 'REVANCHA' : loot.kind === 'first' ? '¡1ª VEZ!' : 'GANADO') : 'NOQUEADO', { fontFamily: F.poster, fontSize: 64, fill: won ? C.red : C.inkBlue, letterSpacing: 4 });
     stt.anchor.set(0.5);
     stamp.addChild(sg, stt);
     stamp.position.set(170, 640);

@@ -23,6 +23,9 @@ import type { FighterInit } from '../../podio/engine';
 export const PODIO_FLAG = 'podio_unlocked';
 export const SPEEDS = [0.5, 1, 2, 4] as const;
 
+/** PodioState objects whose cats already got their first-win ledger (old saves derive it once per load) */
+const ledgersReady = new WeakSet<PodioState>();
+
 export function ps(): PodioState {
   G.s.podio ??= defaultPodio();
   const p = G.s.podio;
@@ -32,6 +35,10 @@ export function ps(): PodioState {
   if (!SPEEDS.includes(p.speed as (typeof SPEEDS)[number])) p.speed = 1;
   p.league = Math.max(1, Math.floor(p.league || 1));
   p.bout = Math.max(0, Math.min(PB.ladder.bouts_per_league - 1, Math.floor(p.bout || 0)));
+  if (!ledgersReady.has(p)) {
+    ledgersReady.add(p);
+    for (const st of Object.values(p.cats)) if (st && typeof st === 'object') normalizeCat(st, p);
+  }
   return p;
 }
 
@@ -42,11 +49,11 @@ export function podioUnlocked() {
 // ------------------------------------------------------------------ per-cat podio level
 export function catState(uid: string): PodioCatState {
   const p = ps();
-  return (p.cats[uid] ??= { xp: 0, lvl: 1, wins: 0, losses: 0 });
+  return (p.cats[uid] ??= { xp: 0, lvl: 1, wins: 0, losses: 0, beaten: {}, bank: 0 });
 }
 /** read-only view (doesn't create an entry for cats that never fought) */
 export function peekCat(uid: string): PodioCatState {
-  return ps().cats[uid] ?? { xp: 0, lvl: 1, wins: 0, losses: 0 };
+  return ps().cats[uid] ?? { xp: 0, lvl: 1, wins: 0, losses: 0, beaten: {}, bank: 0 };
 }
 export function peekLevel(uid: string) {
   return ps().cats[uid]?.lvl ?? 1;
@@ -75,28 +82,123 @@ export interface XpGain {
   /** slots unlocked by this gain */
   unlocked: number[];
   capped: boolean;
+  /** XP waiting in the cat's bank after this gain (first-win XP over the cap) */
+  banked: number;
+  /** of `gained`, how much went to the bank instead of the bar */
+  toBank: number;
 }
 
-export function addPodioXp(c: OwnedCat, n: number): XpGain {
+/**
+ * Give podio XP to a cat. At the level cap the bar fills but doesn't overflow; the overflow is LOST unless
+ * `keep` (first-win XP: a cat must never burn its one-time catch-up XP because it was capped), which goes
+ * to `bank` and flows in when the cap rises. Whatever was already banked is always kept.
+ */
+export function addPodioXp(c: OwnedCat, n: number, keep = false): XpGain {
   const st = catState(c.uid);
   const before = st.lvl;
   const xpBefore = st.xp;
   const lvBefore = powerLevels(before);
   const cap = levelCap(c);
-  st.xp += Math.round(n);
+  const gained = Math.max(0, Math.round(n));
+  const bankBefore = Math.max(0, Math.floor(st.bank ?? 0));
+  st.xp += gained + bankBefore;
+  st.bank = 0;
   while (st.lvl < cap && st.xp >= xpNeed(st.lvl)) {
     st.xp -= xpNeed(st.lvl);
     st.lvl++;
   }
   // at the cap the bar fills but doesn't overflow (feed the cat on the island to raise the cap)
   const capped = st.lvl >= cap && st.lvl < PB.levels.max;
-  if (st.lvl >= cap) st.xp = Math.min(st.xp, xpNeed(st.lvl) - 1);
+  let over = 0;
   if (st.lvl >= PB.levels.max) st.xp = 0;
+  else if (st.lvl >= cap && st.xp > xpNeed(st.lvl) - 1) {
+    over = st.xp - (xpNeed(st.lvl) - 1);
+    st.xp = xpNeed(st.lvl) - 1;
+  }
+  st.bank = Math.min(over, bankBefore + (keep ? gained : 0));
   const lvAfter = powerLevels(st.lvl);
   const powerUps = [0, 1, 2, 3].filter((i) => lvAfter[i] > lvBefore[i] && lvBefore[i] > 0);
   const unlocked = [0, 1, 2, 3].filter((i) => lvAfter[i] > 0 && lvBefore[i] === 0);
   if (st.lvl > before) G.recalc(); // island gold bonus changed
-  return { before, after: st.lvl, xpBefore, xpAfter: st.xp, gained: Math.round(n), powerUps, unlocked, capped };
+  return { before, after: st.lvl, xpBefore, xpAfter: st.xp, gained, powerUps, unlocked, capped, banked: st.bank, toBank: Math.max(0, st.bank - bankBefore) };
+}
+
+/** a cat whose cap rose (fed / starred on the island) takes its banked XP. True if it changed anything. */
+export function settleBank(c: OwnedCat): boolean {
+  const st = ps().cats[c.uid];
+  if (!st || !(st.bank! > 0) || st.lvl >= levelCap(c)) return false;
+  const lvl = st.lvl;
+  const bank = st.bank;
+  addPodioXp(c, 0);
+  return st.lvl !== lvl || st.bank !== bank;
+}
+
+// ------------------------------------------------------------------ per-cat first wins (catch-up)
+const BOUTS = PB.ladder.bouts_per_league;
+/** XP a win over (lg) pays before multipliers */
+export function winXp(lg: number) {
+  return PB.xp.win + PB.xp.win_per_league * (lg - 1);
+}
+/** did THIS cat already beat that rival? */
+export function catBeat(uid: string, lg: number, bout: number) {
+  const m = ps().cats[uid]?.beaten?.[String(lg)] ?? 0;
+  return (m & (1 << bout)) !== 0;
+}
+function markBeat(st: PodioCatState, lg: number, bout: number) {
+  st.beaten ??= {};
+  st.beaten[String(lg)] = (st.beaten[String(lg)] ?? 0) | (1 << bout);
+}
+/** a rival you can pick in the lobby: anything already beaten by the account, plus the frontier */
+export function reachable(lg: number, bout: number) {
+  const p = ps();
+  return lg >= 1 && bout >= 0 && bout < BOUTS && (lg < p.league || (lg === p.league && bout <= p.bout));
+}
+/** rivals this cat can still beat for the first time (full XP + orbs), easiest first */
+export function pendingFor(uid: string): { lg: number; bout: number }[] {
+  const p = ps();
+  const out: { lg: number; bout: number }[] = [];
+  for (let lg = 1; lg <= p.league; lg++) for (let b = 0; b < BOUTS; b++) if (reachable(lg, b) && !catBeat(uid, lg, b)) out.push({ lg, bout: b });
+  return out;
+}
+/** the rival after this one in its league (then the next league); never past the frontier */
+export function nextBout(lg: number, bout: number): { lg: number; bout: number } {
+  const n = bout + 1 < BOUTS ? { lg, bout: bout + 1 } : { lg: lg + 1, bout: 0 };
+  if (reachable(n.lg, n.bout)) return n;
+  const p = ps();
+  return { lg: p.league, bout: p.bout };
+}
+
+/**
+ * Old saves have no ledger: credit the cat with the rivals its XP already paid for, easiest first
+ * (all its lifetime XP counted as first-win XP). Conservative for the economy (no double first-win XP for
+ * the cats that climbed the ladder) and never worse than the old rules (every rival was a replay before).
+ */
+function normalizeCat(st: PodioCatState, p: PodioState) {
+  st.bank = Math.max(0, Math.floor(Number(st.bank) || 0));
+  if (st.beaten && typeof st.beaten === 'object') return;
+  st.beaten = {};
+  let budget = Math.max(0, Number(st.xp) || 0);
+  for (let l = 1; l < Math.max(1, Math.floor(st.lvl || 1)); l++) budget += xpNeed(l);
+  if (budget <= 0) return;
+  for (let lg = 1; lg <= p.league; lg++) {
+    for (let b = 0; b < BOUTS; b++) {
+      if (lg === p.league && b >= p.bout) return; // never beaten by anyone
+      const cost = winXp(lg);
+      if (budget < cost) return;
+      budget -= cost;
+      markBeat(st, lg, b);
+    }
+  }
+}
+
+/** catch-up: a cat far below your best Podio cat learns faster (x1 for the best, up to catchup_max) */
+export function catchupMult(uid: string) {
+  const p = ps();
+  const owned = new Set(G.s.cats.map((c) => c.uid));
+  let best = 1;
+  for (const [u, st] of Object.entries(p.cats)) if (owned.has(u)) best = Math.max(best, st.lvl || 1);
+  const gap = Math.max(0, best - (p.cats[uid]?.lvl ?? 1));
+  return Math.min(PB.xp.catchup_max, 1 + PB.xp.catchup_per_level * gap);
 }
 
 // ------------------------------------------------------------------ fighters
@@ -120,6 +222,7 @@ export function catPodioHp(c: OwnedCat) {
 }
 
 export function playerFighter(c: OwnedCat): FighterInit {
+  settleBank(c);
   const def = catDef(c.species);
   // Catdex sets of the Podio's prizes: Salón de la Fama (+10% damage) · Los Rotos del Cielo (ULTI meter at half)
   const S = PB.sets;
@@ -193,8 +296,19 @@ export function aiSkill(lg: number, champion: boolean) {
 }
 
 // ------------------------------------------------------------------ rewards
+/**
+ * What a win means: `frontier` = the account's next unbeaten rival (ladder advances, gems, prizes);
+ * `first` = already beaten by the account but never by THIS cat (full XP + first-win orbs);
+ * `repeat` = this cat already beat it (reduced XP, orbs only near the frontier).
+ */
+export type WinKind = 'frontier' | 'first' | 'repeat';
+
 export interface PodioLoot {
   won: boolean;
+  /** what a win over this rival meant for this cat (set for losses too: what it would have been) */
+  kind: WinKind;
+  /** XP multiplier from catch-up (1 = none) */
+  catchup: number;
   replay: boolean;
   champion: boolean;
   firstChampion: boolean;
@@ -239,21 +353,83 @@ function grantPrize(species: string) {
   return { species, isNew: r.isNew, orbs: r.orbs };
 }
 
+export function winKind(uid: string, lg: number, bout: number): WinKind {
+  return !isReplay(lg, bout) ? 'frontier' : catBeat(uid, lg, bout) ? 'repeat' : 'first';
+}
+
+/** the rewards of a duel, without rolling or applying anything (the lobby shows exactly this) */
+export interface DuelOutlook {
+  kind: WinKind;
+  champion: boolean;
+  firstChampion: boolean;
+  gold: number;
+  food: number;
+  /** guaranteed gems (first champion win) */
+  gems: number;
+  /** chance of +1 gem (frontier wins only) */
+  gemChance: number;
+  orbs: number;
+  xp: number;
+  /** first-win XP is kept in the bank when the cat is capped */
+  keepXp: boolean;
+  catchup: number;
+  prize: string | null;
+  /** the cat can't grow right now (level cap) */
+  capped: boolean;
+}
+
+export function duelOutlook(c: OwnedCat, lg: number, bout: number, won = true): DuelOutlook {
+  const p = ps();
+  const R = PB.rewards;
+  const X = PB.xp;
+  const kind = winKind(c.uid, lg, bout);
+  const champion = bout >= BOUTS - 1;
+  const firstChampion = won && champion && kind === 'frontier' && !p.champions.includes(lg);
+  const mult = !won ? R.loss_mult : kind === 'frontier' ? 1 : R.replay_mult;
+  // rematches of old leagues pay a shrinking slice of your income (no farming League 1 for frontier money)
+  const stale = kind === 'frontier' ? 1 : Math.pow(R.replay_league_decay, Math.max(0, p.league - lg));
+  const growth = Math.pow(R.gold_league_growth, lg - 1);
+  const dbl = firstChampion ? 2 : 1;
+  const gold = Math.round(Math.max(R.gold_min * growth, G.goldPerSec * R.gold_income_seconds * stale) * G.s.momentum * mult * dbl);
+  const food = Math.round(Math.max(R.food_min * growth, G.foodPerSec * R.food_income_seconds * stale) * mult * dbl);
+  const orbs = !won
+    ? 0
+    : firstChampion
+      ? R.orbs_champion
+      : kind !== 'repeat'
+        ? R.orbs_win // frontier, or this cat's first win over a rival the account already beat
+        : lg >= p.league - R.replay_orb_window
+          ? R.orbs_replay
+          : 0;
+  const catchup = won ? catchupMult(c.uid) : 1;
+  const xp = Math.round(won ? winXp(lg) * (kind === 'repeat' ? X.replay_mult : 1) * catchup : X.loss);
+  const st = peekCat(c.uid);
+  return {
+    kind,
+    champion,
+    firstChampion,
+    gold,
+    food,
+    gems: firstChampion ? R.champion_gems : 0,
+    gemChance: won && kind === 'frontier' ? R.gem_chance_frontier : 0,
+    orbs,
+    xp,
+    keepXp: won && kind !== 'repeat',
+    catchup,
+    prize: firstChampion ? championPrize(lg) : null,
+    capped: st.lvl >= levelCap(c) && st.lvl < PB.levels.max,
+  };
+}
+
 export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, perfect: boolean): PodioLoot {
   const p = ps();
   const R = PB.rewards;
-  const replay = isReplay(lg, bout);
-  const champion = bout >= PB.ladder.bouts_per_league - 1;
-  const firstChampion = won && champion && !replay && !p.champions.includes(lg);
-  const m = G.s.momentum;
-  const mult = !won ? R.loss_mult : replay ? R.replay_mult : 1;
-  const growth = Math.pow(R.gold_league_growth, lg - 1);
-  const gold = Math.round(Math.max(R.gold_min * growth, G.goldPerSec * R.gold_income_seconds) * m * mult * (firstChampion ? 2 : 1));
-  const food = Math.round(Math.max(R.food_min * growth, G.foodPerSec * R.food_income_seconds) * mult * (firstChampion ? 2 : 1));
-  let gems = 0;
-  if (won && !replay && Math.random() < R.gem_chance_frontier) gems += 1;
-  if (firstChampion) gems += R.champion_gems;
-  const orbN = !won ? 0 : firstChampion ? R.orbs_champion : replay ? R.orbs_replay : R.orbs_win;
+  const o = duelOutlook(c, lg, bout, won);
+  const replay = o.kind !== 'frontier';
+  const { champion, firstChampion, gold, food } = o;
+  let gems = o.gems;
+  if (o.gemChance && Math.random() < o.gemChance) gems += 1;
+  const orbN = o.orbs;
   // Ronroneo: half to your vault, half rushes the running clocks (G.purr does the split; a full
   // vault with no clocks running overflows into gold, like everywhere else)
   let vault = 0;
@@ -272,10 +448,8 @@ export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, p
   } finally {
     off();
   }
-  // xp for the cat (+ kingdom xp)
-  const X = PB.xp;
-  const xpN = won ? (X.win + X.win_per_league * (lg - 1)) * (replay ? X.replay_mult : 1) : X.loss;
-  const xp = addPodioXp(c, xpN);
+  // xp for the cat (+ kingdom xp); first-win XP over the cap waits in the bank
+  const xp = addPodioXp(c, o.xp, o.keepXp);
   G.xp(won ? 'victory' : 'defeat', undefined, R.kingdom_xp_mult * (replay ? 0.5 : 1));
   if (won) G.bump('victory');
   if (gold) G.add('gold', gold, 'podio');
@@ -287,6 +461,7 @@ export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, p
   let leagueUp = false;
   if (won) {
     st.wins++;
+    markBeat(st, lg, bout);
     p.stats.wins++;
     if (perfect) p.stats.perfects++;
     G.count('feature_podio_win');
@@ -304,12 +479,13 @@ export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, p
     p.stats.losses++;
   }
   G.count('podio_duels');
-  const prizeId = firstChampion ? championPrize(lg) : null;
-  const prize = prizeId ? grantPrize(prizeId) : null;
+  const prize = o.prize ? grantPrize(o.prize) : null;
   G.save();
   return {
     prize,
     won,
+    kind: o.kind,
+    catchup: o.catchup,
     replay,
     champion,
     firstChampion,
@@ -348,6 +524,12 @@ G.tickers.push((dt) => {
   if (acc < 1000) return;
   acc = 0;
   if (!G.has(PODIO_FLAG) && G.s.campaign.bossesDefeated >= PB.unlock.boss && G.s.cats.length) G.flag('podio_unlocked');
+  // banked first-win XP flows in as soon as the island raises a cat's cap
+  const cats = G.s.podio?.cats;
+  if (cats) for (const [uid, st] of Object.entries(cats)) if (st?.bank && st.bank > 0) {
+    const c = G.s.cats.find((x) => x.uid === uid);
+    if (c) settleBank(c);
+  }
 });
 
 // ------------------------------------------------------------------ Heroicos / Divinos for saves that already crowned those champions

@@ -29,7 +29,15 @@
     "cap_per_cat_levels": 3,
     "cap_per_star": 1
   },
-  "xp": { "win": 40, "win_per_league": 10, "replay_mult": 0.6, "loss": 12 },
+  "xp": {
+    "_note": "first win of EACH cat over each rival pays full XP (catch-up); repeats replay_mult. catchup: wins of a cat below your best Podio cat get x(1 + per_level * gap), up to max",
+    "win": 40,
+    "win_per_league": 10,
+    "replay_mult": 0.6,
+    "loss": 12,
+    "catchup_per_level": 0.1,
+    "catchup_max": 2
+  },
   "rewards": {
     "gold_income_seconds": 30,
     "gold_min": 40,
@@ -42,6 +50,9 @@
     "gem_chance_frontier": 0.04,
     "champion_gems": 2,
     "replay_mult": 0.4,
+    "_replay_note": "rematches of past leagues: income-scaled gold/food x replay_league_decay per league behind your frontier; a REPEAT win (that cat already beat that rival) pays orbs_replay only within replay_orb_window leagues of the frontier",
+    "replay_league_decay": 0.75,
+    "replay_orb_window": 1,
     "loss_mult": 0.25,
     "kingdom_xp_mult": 0.5
   },

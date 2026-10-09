@@ -13,7 +13,7 @@ import { applyCatTint } from '../art/tint';
 import { sfx } from '../core/audio';
 import { fmt } from '../core/format';
 import { G, OwnedCat } from '../state/game';
-import { catPortrait } from '../panels/campaign/common';
+import { catPortrait, ensureCats } from '../panels/campaign/common';
 import { catDef, ELEMENT_BY_ID } from '../data/content';
 import PB from '../data/podio.json';
 import { PowerDef, SLOT_LABEL, SLOT_UNLOCK, powerLevels, powersOf } from './powers';
@@ -21,11 +21,36 @@ import { effMult } from './engine';
 import { elColor } from './fx';
 import { podioCatMods } from './mods';
 import { RivalDef } from './ladder';
-import { catPodioPower, championPrize, isReplay, nextPrize, peekCat, peekLevel, league, levelCap, nextCapLevel, ps, rivalAt, suggestCats, xpNeed } from '../state/sys/podio';
+import {
+  DuelOutlook,
+  catBeat,
+  catPodioPower,
+  championPrize,
+  duelOutlook,
+  isReplay,
+  nextPrize,
+  peekCat,
+  peekLevel,
+  league,
+  levelCap,
+  nextCapLevel,
+  pendingFor,
+  ps,
+  reachable,
+  rivalAt,
+  settleBank,
+  suggestCats,
+  xpNeed,
+} from '../state/sys/podio';
 
 export interface LobbyOpts {
   onFight: (uid: string, lg: number, bout: number) => void;
   onExit: () => void;
+  /** open on this rival (a past league being browsed); default: your frontier */
+  lg?: number;
+  bout?: number;
+  /** the browsed league changed (the scene repaints the arena) */
+  onBrowse?: (r: RivalDef) => void;
 }
 
 const DM = PB.stats.display_mul;
@@ -71,6 +96,10 @@ export class Lobby extends Container {
     const p = ps();
     this.lg = p.league;
     this.bout = p.bout;
+    if (o.lg !== undefined && o.bout !== undefined && reachable(o.lg, o.bout)) {
+      this.lg = o.lg;
+      this.bout = o.bout;
+    }
     const owned = G.s.cats;
     const r = rivalAt(this.lg, this.bout);
     this.selUid = owned.some((c) => c.uid === p.pick) ? p.pick : suggestCats(r)[0]?.uid ?? owned[0]?.uid ?? '';
@@ -94,6 +123,7 @@ export class Lobby extends Container {
     }
     const r = this.rival;
     const cat = this.cat;
+    if (cat) settleBank(cat);
     this.buildTop();
     this.buildLadder();
     if (cat) this.buildMine(cat, r);
@@ -129,6 +159,59 @@ export class Lobby extends Container {
     }
   }
 
+  // ------------------------------------------------------------------ league browser
+  /** go to another league (rematches): its first rival THIS cat hasn't beaten, else the champion */
+  private browse(lg: number, bout?: number) {
+    const p = ps();
+    lg = Math.max(1, Math.min(p.league, lg));
+    if (bout === undefined) {
+      const uid = this.selUid;
+      const open: number[] = [];
+      for (let b = 0; b < PB.ladder.bouts_per_league; b++) if (reachable(lg, b) && !catBeat(uid, lg, b)) open.push(b);
+      bout = open[0] ?? (lg === p.league ? p.bout : PB.ladder.bouts_per_league - 1);
+    }
+    if (!reachable(lg, bout)) return;
+    const changed = lg !== this.lg;
+    this.lg = lg;
+    this.bout = bout;
+    const sp = [0, 1, 2, 3, 4].map((i) => rivalAt(lg, i).species);
+    void ensureCats(sp).then(() => {
+      if (this.destroyed) return;
+      if (changed) this.o.onBrowse?.(this.rival);
+      this.build();
+    });
+  }
+
+  private arrow(dir: -1 | 1, enabled: boolean, label: string) {
+    const b = new Container();
+    const w = 44;
+    const h = 92;
+    const g = new Graphics()
+      .rect(5, 5, w, h)
+      .fill(C.ink)
+      .rect(0, 0, w, h)
+      .fill(enabled ? C.yellow : C.paperDark)
+      .stroke({ width: 4, color: C.ink, alignment: 1 });
+    const tri = new Graphics()
+      .poly(dir < 0 ? [w * 0.66, h * 0.3, w * 0.3, h * 0.5, w * 0.66, h * 0.7] : [w * 0.34, h * 0.3, w * 0.7, h * 0.5, w * 0.34, h * 0.7])
+      .fill(enabled ? C.ink : C.plum);
+    b.addChild(g, tri);
+    const t = txt(label, { fontFamily: F.bebas, fontSize: 18, fill: enabled ? C.paper : C.plum, letterSpacing: 1, stroke: { color: C.ink, width: 4 } });
+    t.anchor.set(0.5, 0);
+    t.position.set(w / 2, h + 6);
+    b.addChild(t);
+    if (!enabled) b.alpha = 0.55;
+    else {
+      b.eventMode = 'static';
+      b.cursor = 'pointer';
+      b.on('pointertap', () => {
+        sfx('click');
+        this.browse(this.lg + dir);
+      });
+    }
+    return b;
+  }
+
   // ------------------------------------------------------------------ ladder
   private buildLadder() {
     const p = ps();
@@ -137,10 +220,12 @@ export class Lobby extends Container {
     const gap = 128;
     const line = new Graphics().moveTo(0, 0).lineTo(gap * (n - 1), 0).stroke({ width: 8, color: C.ink });
     c.addChild(line);
+    const uid = this.selUid;
     for (let i = 0; i < n; i++) {
       const rv = rivalAt(this.lg, i);
-      const beaten = this.lg < p.league || i < p.bout;
+      const beaten = isReplay(this.lg, i);
       const current = this.lg === p.league && i === p.bout;
+      const mine = catBeat(uid, this.lg, i);
       const sel = i === this.bout;
       const champ = i === n - 1;
       const size = champ ? 96 : 80;
@@ -153,10 +238,21 @@ export class Lobby extends Container {
         q.anchor.set(0.5);
         node.addChild(veil, q);
       }
-      if (beaten) {
+      if (mine) {
+        // THIS cat already beat it
         const tick = new Graphics().circle(size / 2 - 8, -size / 2 + 8, 16).fill(C.green).stroke({ width: 3, color: C.ink });
         tick.moveTo(size / 2 - 16, -size / 2 + 8).lineTo(size / 2 - 10, -size / 2 + 14).lineTo(size / 2, -size / 2 + 2).stroke({ width: 4, color: C.paper });
         node.addChild(tick);
+      } else if (beaten || current) {
+        // first win still pending for this cat: full XP + orbs
+        const tag = new Container();
+        const tt = txt('+XP', { fontFamily: F.bebas, fontSize: 18, fill: C.paper, letterSpacing: 1 });
+        tt.anchor.set(0.5);
+        const tg = new Graphics().roundRect(-tt.width / 2 - 7, -12, tt.width + 14, 24, 6).fill(C.pinkHot).stroke({ width: 3, color: C.ink });
+        tag.addChild(tg, tt);
+        tag.position.set(size / 2 - 6, -size / 2 + 6);
+        tag.rotation = 0.12;
+        node.addChild(tag);
       }
       if (champ) {
         const crown = new Graphics().poly([-26, -size / 2 - 4, -26, -size / 2 - 30, -13, -size / 2 - 16, 0, -size / 2 - 34, 13, -size / 2 - 16, 26, -size / 2 - 30, 26, -size / 2 - 4]).fill(C.yellow).stroke({ width: 3, color: C.ink });
@@ -188,6 +284,17 @@ export class Lobby extends Container {
       }
       if (sel) gsap.to(node.scale, { x: 1.08, y: 1.08, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
       c.addChild(node);
+    }
+    // ◀ ▶ league browser: every past league can be rematched (catch-up for cats obtained later)
+    if (this.lg > 1) {
+      const prev = this.arrow(-1, true, `LIGA ${this.lg - 1}`);
+      prev.position.set(-gap / 2 - 35, -46);
+      c.addChild(prev);
+    }
+    if (this.lg < p.league) {
+      const next = this.arrow(1, true, `LIGA ${this.lg + 1}`);
+      next.position.set(gap * (n - 1) + gap / 2 + 2, -46);
+      c.addChild(next);
     }
     c.position.set(W / 2 - (gap * (n - 1)) / 2, 168);
     this.body.addChild(c);
@@ -233,11 +340,17 @@ export class Lobby extends Container {
     xt.anchor.set(0.5);
     xt.position.set(pw - 168, 162);
     c.addChild(pl, bar, xt);
+    const bank = st.bank ?? 0;
     const capT = txt(
-      st.lvl >= cap && !max ? `TOPE ALCANZADO: sube a ${cat.name} a NV ${nextCapLevel(cat)} en la isla (o una estrella) para seguir creciendo.` : `Tope actual: Podio NV ${cap} (sube con el nivel y las estrellas del gato).`,
+      bank > 0
+        ? `TOPE: sube a ${cat.name} a NV ${nextCapLevel(cat)} en la isla (o una estrella). Tiene ${fmt(bank)} XP GUARDADA que entra sola al subir el tope.`
+        : st.lvl >= cap && !max
+          ? `TOPE ALCANZADO: sube a ${cat.name} a NV ${nextCapLevel(cat)} en la isla (o una estrella) para seguir creciendo.`
+          : `Tope actual: Podio NV ${cap} (sube con el nivel y las estrellas del gato).`,
       { fontFamily: F.ui, fontSize: 17, fill: st.lvl >= cap && !max ? C.red : C.plum, wordWrap: true, wordWrapWidth: pw - 36, fontWeight: '700' },
     );
     capT.position.set(18, 180);
+    if (capT.height > 44) capT.scale.set(44 / capT.height);
     c.addChild(capT);
     // 4 powers
     const lv = powerLevels(st.lvl);
@@ -292,11 +405,23 @@ export class Lobby extends Container {
   private buildRival(r: RivalDef) {
     const pw = 560;
     const c = new Container();
-    const replay = isReplay(this.lg, this.bout);
+    const cat = this.cat;
+    const out = cat ? duelOutlook(cat, this.lg, this.bout) : null;
+    const kind = out?.kind ?? (isReplay(this.lg, this.bout) ? 'repeat' : 'frontier');
     c.addChild(panel(pw, 610, r.champion ? 0xfff0c8 : C.paper));
-    const head = new Graphics().rect(0, 0, pw, 46).fill(r.champion ? C.red : C.ink);
-    const ht = txt(r.champion ? 'CAMPEÓN DE LA LIGA' : replay ? 'REVANCHA (PAGA MENOS)' : `RIVAL ${this.bout + 1} DE ${PB.ladder.bouts_per_league}`, { fontFamily: F.bebas, fontSize: 28, fill: C.yellow, letterSpacing: 4 });
+    const head = new Graphics().rect(0, 0, pw, 46).fill(kind === 'first' ? C.pinkHot : r.champion ? C.red : C.ink);
+    const who = cat ? cat.name.toUpperCase() : 'TU GATO';
+    const title =
+      kind === 'first'
+        ? `${r.champion ? 'CAMPEÓN' : `RIVAL ${this.bout + 1}`} · PRIMERA VEZ DE ${who}`
+        : kind === 'repeat'
+          ? `${r.champion ? 'CAMPEÓN' : `RIVAL ${this.bout + 1}`} · REVANCHA`
+          : r.champion
+            ? 'CAMPEÓN DE LA LIGA'
+            : `RIVAL ${this.bout + 1} DE ${PB.ladder.bouts_per_league}`;
+    const ht = txt(title, { fontFamily: F.bebas, fontSize: 28, fill: C.yellow, letterSpacing: 3, stroke: { color: C.ink, width: 4 } });
     ht.position.set(18, 8);
+    if (ht.width > pw - 36) ht.scale.set((pw - 36) / ht.width);
     c.addChild(head, ht);
     const tr = txt(r.trainer, { fontFamily: F.bebas, fontSize: 24, fill: C.plum, letterSpacing: 2 });
     tr.position.set(18, 52);
@@ -324,12 +449,12 @@ export class Lobby extends Container {
     pwT.position.set(pw - 22, 130);
     c.addChild(pwT);
     this.powerRows(c, powersOf(r.species), powerLevels(r.podioLvl), 226, pw);
-    // what you get
-    const R = PB.rewards;
-    const catPrize = r.champion && !ps().champions.includes(this.lg) && !replay ? championPrize(this.lg) : null;
-    const prize = r.champion && !ps().champions.includes(this.lg) && !replay ? `PREMIO: ${catPrize ? `¡${catDef(catPrize).name.toUpperCase()} (${RARITY[catDef(catPrize).rarity].name}) SE UNE A TU ISLA! Y ` : ''}Doblones x2, Pescaditos x2, ${R.champion_gems} Ojos de Gato, ${R.orbs_champion} orbes y Ronroneo extra. Ascenso de liga.` : replay ? `PREMIO DE REVANCHA: menos oro, ${R.orbs_replay} orbe y XP de Podio.` : `PREMIO: Doblones, Pescaditos, ${R.orbs_win} orbes de tu gato, Ronroneo y XP de Podio.`;
-    const pt = txt(prize, { fontFamily: F.ui, fontWeight: '700', fontSize: 17, fill: C.inkBlue, wordWrap: true, wordWrapWidth: pw - 36 });
-    pt.position.set(18, 560);
+    // what a win gives THIS cat (first time for it vs repeat), exactly what applyDuel will pay
+    const box = new Graphics().rect(14, 550, pw - 28, 50).fill(kind === 'first' ? 0xffe3ef : kind === 'repeat' ? C.paperDark : C.linen).stroke({ width: 2, color: C.ink });
+    c.addChild(box);
+    const pt = txt(out && cat ? rewardLine(out, cat, this.lg) : '', { fontFamily: F.ui, fontWeight: '700', fontSize: 17, fill: C.inkBlue, wordWrap: true, wordWrapWidth: pw - 52, lineHeight: 19 });
+    pt.position.set(26, 554);
+    if (pt.height > 42) pt.scale.set(42 / pt.height);
     c.addChild(pt);
     c.position.set(W - 30 - pw, 118);
     this.body.addChild(c);
@@ -387,6 +512,29 @@ export class Lobby extends Container {
     const t = txt('ELIGE A TU GATO · los primeros tienen ventaja contra este rival', { fontFamily: F.bebas, fontSize: 22, fill: C.paper, letterSpacing: 2 });
     t.position.set(16, 6);
     c.addChild(t);
+    const sel = this.cat;
+    if (sel) {
+      const p = ps();
+      const past = pendingFor(sel.uid).filter((x) => isReplay(x.lg, x.bout));
+      const label = past.length
+        ? `${sel.name.toUpperCase()}: ${past.length} RIVAL${past.length > 1 ? 'ES' : ''} SIN VENCER (XP COMPLETA)  ·  IR AL PRIMERO ›`
+        : `${sel.name.toUpperCase()} YA LE GANÓ A TODOS LOS DE ATRÁS  ·  IR A TU LIGA ›`;
+      const chip = new Container();
+      const ct = txt(label, { fontFamily: F.bebas, fontSize: 20, fill: past.length ? C.paper : C.ink, letterSpacing: 1 });
+      ct.position.set(10, 1);
+      const maxW = 1460 - t.width - 60;
+      if (ct.width > maxW - 20) ct.scale.set((maxW - 20) / ct.width);
+      chip.addChild(new Graphics().rect(0, 0, ct.width + 20, 26).fill(past.length ? C.pinkHot : C.yellow).stroke({ width: 2, color: C.paper }), ct);
+      chip.position.set(1460 - 12 - ct.width - 20, 5);
+      chip.eventMode = 'static';
+      chip.cursor = 'pointer';
+      chip.on('pointertap', () => {
+        sfx('click');
+        const to = past[0] ?? { lg: p.league, bout: p.bout };
+        this.browse(to.lg, to.bout);
+      });
+      c.addChild(chip);
+    }
     list.slice(this.page * per, this.page * per + per).forEach((cat, i) => {
       const def = catDef(cat.species);
       const card = new Container();
@@ -407,6 +555,16 @@ export class Lobby extends Container {
         b.position.set(136, 20 + k * 28);
         card.addChild(b);
       });
+      if (!catBeat(cat.uid, this.lg, this.bout)) {
+        // this cat has never beaten this rival: full XP + orbs
+        const tag = new Container();
+        const tt = txt('+XP', { fontFamily: F.bebas, fontSize: 18, fill: C.paper, letterSpacing: 1 });
+        tt.anchor.set(0.5);
+        tag.addChild(new Graphics().roundRect(-tt.width / 2 - 6, -11, tt.width + 12, 22, 5).fill(C.pinkHot).stroke({ width: 2, color: C.ink }), tt);
+        tag.position.set(26, 16);
+        tag.rotation = -0.12;
+        card.addChild(tag);
+      }
       const adv = matchup(def.elements, r.def.elements);
       const weak = matchup(r.def.elements, def.elements);
       if (adv > 1.01 || weak > 1.01) {
@@ -457,6 +615,24 @@ export class Lobby extends Container {
     kill(this);
     super.destroy(o);
   }
+}
+
+/** the "if you win" line of the rival card: exactly what applyDuel pays this cat */
+function rewardLine(o: DuelOutlook, cat: OwnedCat, lg: number): string {
+  const name = cat.name;
+  const mult = o.catchup > 1.01 ? ` (x${o.catchup.toFixed(1)} por ir atrás)` : '';
+  const orbs = o.orbs ? `${o.orbs} orbe${o.orbs > 1 ? 's' : ''} de ${name}` : 'sin orbes (liga vieja)';
+  const cap = o.capped ? (o.keepXp ? ' En su tope: la XP se guarda.' : ' En su tope: no sube.') : '';
+  if (o.kind === 'frontier') {
+    if (o.firstChampion) {
+      const pz = o.prize ? `¡${catDef(o.prize).name.toUpperCase()} (${RARITY[catDef(o.prize).rarity].name}) A TU ISLA! ` : '';
+      return `SI GANAS: ${pz}Botín x2, ${o.gems} Ojos de Gato, ${o.orbs} orbes, +${o.xp} XP y subes de liga.`;
+    }
+    return `SI GANAS: +${o.xp} XP de Podio${mult}, ${orbs}, Doblones, Pescaditos y Ronroneo. Avanzas en la liga.${cap}`;
+  }
+  const done = o.champion && championPrize(lg) ? ' Su premio ya es tuyo.' : '';
+  if (o.kind === 'first') return `SI GANAS: XP COMPLETA +${o.xp}${mult}, ${orbs} y oro de revancha.${cap ? '' : ' Una vez por gato.'}${done}${cap}`;
+  return `SI GANAS: +${o.xp} XP de revancha${mult}, ${orbs} y poco oro. Un gato que no le ha ganado sacaría XP completa.${cap}`;
 }
 
 void ELEMENT_BY_ID;

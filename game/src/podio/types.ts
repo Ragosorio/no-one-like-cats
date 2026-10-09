@@ -9,6 +9,14 @@ export interface PodioCatState {
   lvl: number;
   wins: number;
   losses: number;
+  /**
+   * Rivals THIS cat has beaten: league -> bitmask of bouts (bit b = bout b). The first time a cat beats a
+   * rival it earns full XP + first-win orbs (catch-up for cats obtained late); account-unique prizes live
+   * in PodioState.champions. Missing on old saves: state/sys/podio.ts derives it from the cat's XP.
+   */
+  beaten?: Record<string, number>;
+  /** first-win XP that didn't fit under the level cap; flows in by itself when the cap rises */
+  bank?: number;
 }
 
 export interface PodioState {
