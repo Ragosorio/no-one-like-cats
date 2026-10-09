@@ -4,9 +4,12 @@
  * decorations of `G.s.decor.placed`, hides the natural shrubs under them, lets you tap one to
  * MOVER / GUARDAR / VENDER, and runs the "colocación" mode for the shop:
  *   · decor   → ghost follows the pointer, free tiles light up, tap = place (and pay if buying)
- *   · habitat → (free placement, Dragon City style) a 3×3 ghost of the habitat: tap where you want it
- *               (it turns green/red), tap again or press ¡AQUÍ! to buy/move it there. Touch-friendly:
- *               nothing is placed on the first tap. Same rules as the island system (placement.ts).
+ *   · habitat → (free placement, Dragon City style) a ghost of the habitat at its real yard size
+ *               (3×3 new, 4×4/5×5 at higher tiers): tap where you want it (it turns green/red), tap
+ *               again or press ¡AQUÍ! to buy/move it there. Touch-friendly: nothing is placed on the
+ *               first tap. Same rules as the island system (placement.ts).
+ *               `upgrade: true` = "MOVER Y MEJORAR": the ghost is the NEXT tier at its bigger size,
+ *               starting on the nearest spot where it fits; confirming moves it there and starts the upgrade.
  */
 import { Container, FederatedPointerEvent, Graphics, Rectangle, Text, Ticker } from 'pixi.js';
 import gsap from 'gsap';
@@ -19,9 +22,10 @@ import { txt } from '../../ui/widgets';
 import { icon } from '../../ui/icons';
 import { toast } from '../../ui/modal';
 import { G } from '../../state/game';
-import { HOME, habitat, habitatCost, moveHabitat, regionsUnlocked } from '../../state/sys/island';
+import { HOME, habitat, habitatCost, moveHabitat, nextHabitatSize, regionsUnlocked, upgradeBlocker, upgradeHabitat } from '../../state/sys/island';
 import { buildBlocker, buildHabitatAt, regionLook } from '../../state/ext/island';
-import { checkHabitatSpot, habitatTiles, HAB_SIZE, nearestHabitatSpot, ownedRegions, staticBlocked, tileFreeForDecor } from '../placement';
+import { checkHabitatSpot, habitatFullSize, habitatTiles, HAB_SIZE, nearestHabitatSpot, ownedRegions, staticBlocked, tileFreeForDecor, upgradeRoom } from '../placement';
+import { BAL } from '../../state/econ';
 import { habitatParts } from '../buildingArt';
 import type { Tick } from '../habitatTiers';
 import {
@@ -66,7 +70,15 @@ export interface DecorHost {
   habitatGhost?: (id: string | null) => void;
 }
 
-export type PlaceReq = { kind: 'decor'; id: string; buy?: boolean; moveUid?: string } | { kind: 'habitat'; element: string; moveId?: string };
+export type PlaceReq = { kind: 'decor'; id: string; buy?: boolean; moveUid?: string } | { kind: 'habitat'; element: string; moveId?: string; upgrade?: boolean };
+type HabReq = { element: string; moveId?: string; upgrade?: boolean };
+
+/** the yard side a habitat placement needs (new: 3×3; moving: its full yard; MOVER Y MEJORAR: the next tier's) */
+function reqSize(req: HabReq) {
+  const h = req.moveId ? habitat(req.moveId) : null;
+  if (!h) return HAB_SIZE;
+  return req.upgrade ? nextHabitatSize(h) : habitatFullSize(h);
+}
 
 let active: DecorLayer | null = null;
 
@@ -398,10 +410,11 @@ class DecorLayer {
   }
 
   // ================================================================ habitat placement (free, 3×3)
-  private startHabitatPlacement(req: { element: string; moveId?: string }) {
+  private startHabitatPlacement(req: HabReq) {
     const moving = req.moveId ? habitat(req.moveId) : null;
+    const size = reqSize(req);
     this.drawHabitatGrid(req.moveId);
-    const parts = habitatParts(req.element, moving ? moving.tier : 1, HAB_SIZE, HAB_SIZE);
+    const parts = habitatParts(req.element, moving ? moving.tier + (req.upgrade ? 1 : 0) : 1, size, size);
     const c = new Container();
     c.addChild(parts.ground, parts.back, parts.front);
     c.alpha = 0.85;
@@ -409,15 +422,23 @@ class DecorLayer {
     this.habGhost = { c, tick: parts.tick ?? null };
     if (moving) this.host.habitatGhost?.(moving.id);
     // first spot: where it stands (moving) or the free spot nearest to what the camera is looking at
-    let start: { x: number; y: number } | null = moving && Number.isFinite(moving.gx) ? { x: moving.gx, y: moving.gy } : null;
+    const half = Math.floor(size / 2);
+    let start: { x: number; y: number } | null = null;
+    if (moving && req.upgrade) {
+      // MOVER Y MEJORAR: where it grows in place, else the nearest spot of the new size
+      const room = upgradeRoom(moving);
+      const at = room.at ?? room.elsewhere;
+      if (at) start = { x: at.gx, y: at.gy };
+    }
+    if (!start && moving && Number.isFinite(moving.gx)) start = { x: moving.gx, y: moving.gy };
     if (!start) {
       const cc = this.host.cam.center;
       const t = worldToTile(cc.x, cc.y);
-      const near = nearestHabitatSpot(t.x - 1, t.y - 1, req.moveId) ?? nearestHabitatSpot(undefined, undefined, req.moveId);
-      start = near ? { x: near.gx, y: near.gy } : { x: t.x - 1, y: t.y - 1 };
+      const near = nearestHabitatSpot(t.x - half, t.y - half, req.moveId, size) ?? nearestHabitatSpot(undefined, undefined, req.moveId, size);
+      start = near ? { x: near.gx, y: near.gy } : { x: t.x - half, y: t.y - half };
     }
     this.habAt = start;
-    const s = isoToScreen(start.x + 1, start.y + 1);
+    const s = isoToScreen(start.x + size / 2 - 0.5, start.y + size / 2 - 0.5);
     this.host.cam.lookAt(s.x, s.y - 40, true, Math.max(this.host.cam.zoom, 0.75));
   }
 
@@ -447,11 +468,12 @@ class DecorLayer {
     const req = this.req;
     if (!req || req.kind !== 'habitat' || !this.habAt || !this.hover) return;
     const at = this.habAt;
-    const chk = checkHabitatSpot(at.x, at.y, req.moveId);
+    const size = reqSize(req);
+    const chk = checkHabitatSpot(at.x, at.y, req.moveId, size);
     this.habOk = chk.ok;
     const h = this.hover;
     h.clear();
-    diamond(h, at.x, at.y, HAB_SIZE, 0.02);
+    diamond(h, at.x, at.y, size, 0.02);
     h.fill({ color: chk.ok ? C.green : C.red, alpha: 0.45 }).stroke({ width: 6, color: chk.ok ? 0xffffff : C.ink });
     if (this.habGhost) {
       const s = isoToScreen(at.x, at.y);
@@ -459,23 +481,49 @@ class DecorLayer {
       this.habGhost.c.alpha = chk.ok ? 0.9 : 0.5;
     }
     if (this.habWhy && !this.habWhy.destroyed) {
-      this.habWhy.text = chk.ok ? (req.moveId ? 'Toca ¡AQUÍ! (o el mismo lugar otra vez) para moverlo' : 'Toca ¡AQUÍ! (o el mismo lugar otra vez) para construir') : `No cabe: ${chk.reason.toLowerCase()}`;
+      this.habWhy.text = chk.ok
+        ? req.upgrade
+          ? `Toca ¡AQUÍ! para moverlo y mejorarlo (ocupa ${size}×${size})`
+          : req.moveId
+            ? 'Toca ¡AQUÍ! (o el mismo lugar otra vez) para moverlo'
+            : 'Toca ¡AQUÍ! (o el mismo lugar otra vez) para construir'
+        : `No cabe (${size}×${size}): ${chk.reason.toLowerCase()}`;
       this.habWhy.style.fill = chk.ok ? C.ink : C.red;
     }
     if (this.confirmBtn) this.confirmBtn.alpha = chk.ok ? 1 : 0.45;
   }
 
-  private commitHabitat(req: { element: string; moveId?: string }) {
+  private commitHabitat(req: HabReq) {
     const at = this.habAt;
     if (!at) return;
-    const chk = checkHabitatSpot(at.x, at.y, req.moveId);
+    const size = reqSize(req);
+    const chk = checkHabitatSpot(at.x, at.y, req.moveId, size);
     if (!chk.ok) {
       sfx('error');
       if (this.habGhost) gsap.fromTo(this.habGhost.c, { x: this.habGhost.c.x - 10 }, { x: this.habGhost.c.x, duration: 0.3, ease: 'elastic.out(1,0.3)' });
-      toast('Ahí no cabe', { sub: chk.reason, color: C.paper });
+      toast('Ahí no cabe', { sub: `Necesita ${size}×${size}. ${chk.reason}`, color: C.paper });
       return;
     }
-    const ctr = isoToScreen(at.x + 1, at.y + 1);
+    const ctr = isoToScreen(at.x + size / 2 - 0.5, at.y + size / 2 - 0.5);
+    if (req.moveId && req.upgrade) {
+      const h = habitat(req.moveId);
+      const why = h ? upgradeBlocker(h) : 'Ese hábitat ya no existe';
+      if (!h || why || !upgradeHabitat(h, { gx: at.x, gy: at.y })) {
+        sfx('error');
+        toast(why ?? 'No se pudo mejorar', { color: C.paper });
+        return;
+      }
+      this.payFx(ctr.x, ctr.y - 40, 'gold');
+      sfx('whoosh');
+      onomatopoeia(this.host.wfx, ctr.x, ctr.y - 140, '¡A MEJORAR!', { size: 76, color: elementFx(req.element).accent });
+      this.dust(ctr.x, ctr.y, size);
+      const next = BAL.habitats.tiers[h.tier];
+      toast(`¡Obra en marcha! ${next?.name ?? ''}`, { icon: 'clock', sub: `Se mudó y su terreno nuevo (${size}×${size}) ya está reservado. Ronroneo acelera la obra.` });
+      this.endPlacement(true);
+      this.host.sync?.();
+      this.sync();
+      return;
+    }
     if (req.moveId) {
       if (!moveHabitat(req.moveId, at.x, at.y)) {
         sfx('error');
@@ -483,7 +531,7 @@ class DecorLayer {
       }
       sfx('hit', 1.2);
       onomatopoeia(this.host.wfx, ctr.x, ctr.y - 120, '¡TOC!', { size: 64, color: C.paper });
-      this.dust(ctr.x, ctr.y, 3);
+      this.dust(ctr.x, ctr.y, size);
       this.endPlacement(true);
       this.host.sync?.();
       this.sync();
@@ -530,7 +578,8 @@ class DecorLayer {
       // the pointer is the footprint's center tile; touch only moves the ghost on a tap
       if (!tap && e.pointerType !== 'mouse') return;
       const t = worldToTile(p.x, p.y);
-      const at = { x: t.x - 1, y: t.y - 1 };
+      const half = Math.floor(reqSize(req) / 2);
+      const at = { x: t.x - half, y: t.y - half };
       if (tap && this.habAt && this.habAt.x === at.x && this.habAt.y === at.y) {
         this.commitHabitat(req);
         return;
@@ -689,9 +738,15 @@ class DecorLayer {
       if (req.buy) priceLine = { kind: d.cur === 'gems' ? 'gem' : 'gold', v: decorPrice(d) };
     } else {
       const nm = `HÁBITAT DE ${(ELEMENT_NAME[req.element] ?? req.element).toUpperCase()}`;
-      title = req.moveId ? `MOVIENDO: ${nm}` : nm;
-      sub = 'Toca dónde lo quieres · arrastra para mover la cámara · ESC cancela';
+      const size = reqSize(req);
+      title = req.upgrade ? `MOVER Y MEJORAR: ${nm}` : req.moveId ? `MOVIENDO: ${nm}` : nm;
+      sub = `${req.upgrade ? `Su tier nuevo ocupa ${size}×${size}: elige dónde` : size > HAB_SIZE ? `Ocupa ${size}×${size}: toca dónde lo quieres` : 'Toca dónde lo quieres'} · arrastra para mover la cámara · ESC cancela`;
       if (!req.moveId) priceLine = { kind: 'gold', v: habitatCost(req.element) };
+      else if (req.upgrade) {
+        const h = habitat(req.moveId);
+        const next = h ? BAL.habitats.tiers[h.tier] : undefined;
+        if (next) priceLine = { kind: 'gold', v: next.cost };
+      }
     }
     const tt = txt(title, { fontFamily: F.poster, fontSize: 38, fill: C.ink });
     tt.position.set(26, 8);

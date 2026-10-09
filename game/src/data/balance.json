@@ -1241,7 +1241,8 @@
         "buffer_min": 30,
         "cost": 0,
         "crystals": 0,
-        "build_s": 10
+        "build_s": 10,
+        "footprint": 3
       },
       {
         "tier": 2,
@@ -1252,7 +1253,8 @@
         "buffer_min": 40,
         "cost": 700,
         "crystals": 0,
-        "build_s": 30
+        "build_s": 30,
+        "footprint": 3
       },
       {
         "tier": 3,
@@ -1263,7 +1265,8 @@
         "buffer_min": 50,
         "cost": 12000,
         "crystals": 0,
-        "build_s": 90
+        "build_s": 90,
+        "footprint": 3
       },
       {
         "tier": 4,
@@ -1274,7 +1277,8 @@
         "buffer_min": 60,
         "cost": 200000,
         "crystals": 0,
-        "build_s": 240
+        "build_s": 240,
+        "footprint": 4
       },
       {
         "tier": 5,
@@ -1285,7 +1289,8 @@
         "buffer_min": 75,
         "cost": 3000000.0,
         "crystals": 2,
-        "build_s": 420
+        "build_s": 420,
+        "footprint": 4
       },
       {
         "tier": 6,
@@ -1296,7 +1301,8 @@
         "buffer_min": 90,
         "cost": 40000000.0,
         "crystals": 3,
-        "build_s": 720
+        "build_s": 720,
+        "footprint": 4
       },
       {
         "tier": 7,
@@ -1307,7 +1313,8 @@
         "buffer_min": 105,
         "cost": 300000000.0,
         "crystals": 5,
-        "build_s": 1200
+        "build_s": 1200,
+        "footprint": 5
       },
       {
         "tier": 8,
@@ -1318,7 +1325,8 @@
         "buffer_min": 120,
         "cost": 2000000000.0,
         "crystals": 7,
-        "build_s": 1800
+        "build_s": 1800,
+        "footprint": 5
       },
       {
         "tier": 9,
@@ -1329,7 +1337,8 @@
         "buffer_min": 150,
         "cost": 15000000000.0,
         "crystals": 9,
-        "build_s": 2700
+        "build_s": 2700,
+        "footprint": 5
       },
       {
         "tier": 10,
@@ -1340,7 +1349,8 @@
         "buffer_min": 180,
         "cost": 100000000000.0,
         "crystals": 12,
-        "build_s": 3600
+        "build_s": 3600,
+        "footprint": 5
       }
     ],
     "legacy": {
@@ -1399,7 +1409,7 @@
       ]
     },
     "placement": {
-      "note": "Habitats libres (estilo Dragon City): se compran en la Tienda y se colocan donde quepan (huella 3x3). Precio = cost_base * growth^(min(N,late_from)-1) * growth_late^max(0,N-late_from) * element_copy^(mismo elemento), N = habitats que ya tienes.",
+      "note": "Habitats libres (estilo Dragon City): se compran en la Tienda y se colocan donde quepan (huella 3x3 al comprar; crece con el tier segun tiers[].footprint: 4x4 desde el tier 4, 5x5 desde el tier 7). Precio = cost_base * growth^(min(N,late_from)-1) * growth_late^max(0,N-late_from) * element_copy^(mismo elemento), N = habitats que ya tienes.",
       "footprint": 3,
       "cost_base": 60,
       "growth": 3.0,

@@ -11,6 +11,10 @@ import { glowTexture } from '../art/textures';
 import { elementIcon } from '../ui/elementIcon';
 import { DROP, shade, mixColor } from './terrain';
 import { TIER_FENCE, Tick, anclaDimensional, nucleoCelestial, santuarioArcano, tronoMultiversal, wallEdge, yardForTier } from './habitatTiers';
+import { settings } from '../core/settings';
+import { pal, rng, hashStr } from './habitats/kit';
+import { Ambient } from './habitats/ambient';
+import { drawBiome } from './habitats/biomes';
 
 const INK = { width: 3, color: C.ink, join: 'round' as const, cap: 'round' as const };
 const THIN = { width: 2, color: C.ink, join: 'round' as const, cap: 'round' as const };
@@ -81,6 +85,15 @@ export interface HabitatParts {
   roof: { x: number; y: number };
   /** tier fx animation (lanterns, motes, beams…) — call every frame with the time in seconds */
   tick?: Tick;
+  /** the yard's gold was just collected: a short element burst (particles, glows, a ring) */
+  react?: () => void;
+  /** tile (gx = gy) where the house stands — cats keep off it */
+  houseTile: number;
+}
+
+/** where the house stands in an N×N yard (back corner; bigger yards push it in so the biome fits behind) */
+export function houseTileFor(N: number, tier: number) {
+  return N <= 3 ? (tier >= 7 ? 0.3 : 0.15) : N === 4 ? 0.55 : 0.85;
 }
 
 function fenceEdge(g: Graphics, a: { gx: number; gy: number }, b: { gx: number; gy: number }, color: number, gapAt = -1) {
@@ -113,30 +126,68 @@ function fenceEdge(g: Graphics, a: { gx: number; gy: number }, b: { gx: number; 
 
 export function habitatParts(element: string, tier: number, fw = 3, fh = 3, building = false): HabitatParts {
   const fx = elementFx(element);
+  const T = Math.max(1, Math.min(10, Math.round(tier) || 1));
+  const N = Math.max(1, Math.min(fw, fh));
+  const pl = pal(element);
   const ground = new Container();
   const back = new Container();
   const front = new Container();
-  // ---- ground: soft tinted soil + inner path
+  const ht = houseTileFor(N, T);
+  // ---- ground: the element's floor (soil + biome materials) + inner path
   const gg = new Graphics();
-  const soil = mixColor(fx.main, 0xede4d6, 0.62);
-  footprint(gg, fw, fh, soil, 0.95, 0.04);
-  const inner = mixColor(fx.main, 0xffffff, 0.75);
+  footprint(gg, fw, fh, building ? mixColor(fx.main, 0xede4d6, 0.62) : pl.soil, 0.95, 0.04);
+  const inner = building ? mixColor(fx.main, 0xffffff, 0.75) : pl.soil2;
   const a = P(0.25, 0.25);
   const b = P(fw - 1.25, 0.25);
   const c = P(fw - 1.25, fh - 1.25);
   const d = P(0.25, fh - 1.25);
-  gg.poly([a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y]).fill({ color: inner, alpha: 0.55 });
+  gg.poly([a.x, a.y, b.x, b.y, c.x, c.y, d.x, d.y]).fill({ color: inner, alpha: building ? 0.55 : 0.4 });
+  ground.addChild(gg);
+  // ---- the element biome (materials, structures, ambient life) — grows with the tier stage
+  const stage = (T <= 3 ? 0 : T <= 6 ? 1 : T <= 9 ? 2 : 3) as 0 | 1 | 2 | 3;
+  const houseScale = (building ? 1 : 1 + (T - 1) * 0.03) * (N === 4 ? 1.12 : N >= 5 ? 1.22 : 1);
+  const hp = P(ht, ht);
+  const house = habitatHouse(element, T);
+  const roofY = hp.y + house.top * houseScale;
+  const amb = new Ambient(rng(hashStr(`${element}:${T}:${N}`)));
+  const bio = building
+    ? null
+    : {
+        el: element,
+        tier: T,
+        stage,
+        N,
+        pal: pl,
+        r: rng(hashStr(`${element}/${T}/${N}`)),
+        gnd: new Graphics(),
+        bk: new Graphics(),
+        crown: new Graphics(),
+        fr: new Graphics(),
+        gFx: new Container(),
+        bFx: new Container(),
+        cFx: new Container(),
+        fFx: new Container(),
+        amb,
+        ticks: [] as Tick[],
+        house: hp,
+        roofY,
+      };
+  if (bio) {
+    drawBiome(bio);
+    ground.addChild(bio.gnd, bio.gFx);
+  }
   // stepping stones to the gate
+  const stones = new Graphics();
   for (let k = 0; k < 3; k++) {
     const p = P(0.6 + k * 0.45, fh - 0.9 + k * 0.18);
-    gg.ellipse(p.x, p.y, 10, 5).fill(0xf7f0e2).stroke({ width: 2, color: C.ink, alpha: 0.6 });
+    stones.ellipse(p.x, p.y, 10, 5).fill(building ? 0xf7f0e2 : pl.rockLit).stroke({ width: 2, color: C.ink, alpha: 0.6 });
   }
-  ground.addChild(gg);
+  ground.addChild(stones);
   // a yarn ball to chase
   if (!building) {
     const yb = new Graphics();
     const yp = P(fw - 1.6, fh - 1.3);
-    const col = [0xff7ab8, 0xe8879a, 0xa7e8d7, 0xffc94a][(element.length + tier) % 4];
+    const col = [0xff7ab8, 0xe8879a, 0xa7e8d7, 0xffc94a][(element.length + T) % 4];
     yb.moveTo(yp.x + 8, yp.y + 2).quadraticCurveTo(yp.x + 30, yp.y + 14, yp.x + 46, yp.y + 2).stroke({ width: 2, color: col });
     yb.circle(yp.x, yp.y - 6, 9).fill(col).stroke({ width: 2.5, color: C.ink });
     yb.moveTo(yp.x - 6, yp.y - 10).quadraticCurveTo(yp.x, yp.y - 2, yp.x + 6, yp.y - 11).stroke({ width: 1.5, color: C.ink, alpha: 0.6 });
@@ -148,16 +199,25 @@ export function habitatParts(element: string, tier: number, fw = 3, fh = 3, buil
     bw.ellipse(bp.x, bp.y, 14, 6).fill(C.red).stroke({ width: 2.5, color: C.ink });
     bw.ellipse(bp.x, bp.y - 2, 10, 3.5).fill(0x7fd8ff);
     ground.addChild(bw);
+    // the collect ring (hidden until gold is collected)
+    const ring = new Graphics();
+    const ctr = centerOf(fw, fh);
+    ring.ellipse(0, 0, N * 64, N * 32).stroke({ width: 6, color: fx.accent, alpha: 0.9 }).ellipse(0, 0, N * 52, N * 26).stroke({ width: 3, color: 0xffffff, alpha: 0.8 });
+    ring.position.set(ctr.x, ctr.y);
+    ground.addChild(ring);
+    amb.setRing(ring);
   }
   if (building) {
     const dg = new Graphics();
     dashedPoly(dg, [P(-0.45, -0.45), P(fw - 0.55, -0.45), P(fw - 0.55, fh - 0.55), P(-0.45, fh - 0.55)]);
     ground.addChild(dg);
   }
+  // ---- behind the fence: the biome backdrop and the tall pieces rising behind the house
+  if (bio) back.addChild(bio.bk, bio.bFx, bio.crown, bio.cFx);
   // ---- fences (T5+: a low stone wall with caps)
-  const fcol = TIER_FENCE[Math.min(TIER_FENCE.length - 1, tier)];
-  const wall = tier >= 5 && !building;
-  const cap = tier >= 10 ? 0xffd36a : C.gold;
+  const fcol = TIER_FENCE[Math.min(TIER_FENCE.length - 1, T)];
+  const wall = T >= 5 && !building;
+  const cap = T >= 10 ? 0xffd36a : C.gold;
   const edge = (g: Graphics, a: { gx: number; gy: number }, b: { gx: number; gy: number }, gap = -1) => (wall ? wallEdge(g, a, b, fcol, cap, gap) : fenceEdge(g, a, b, fcol, gap));
   const fb = new Graphics();
   edge(fb, { gx: -0.45, gy: -0.45 }, { gx: fw - 0.55, gy: -0.45 });
@@ -178,10 +238,10 @@ export function habitatParts(element: string, tier: number, fw = 3, fh = 3, buil
   // tier badge under the sign (so the level reads from across the island)
   if (!building) {
     const tb = new Graphics();
-    const tw = tier >= 10 ? 34 : 28;
+    const tw = T >= 10 ? 34 : 28;
     tb.roundRect(-tw / 2 + 2, -8, tw, 20, 6).fill(C.ink);
-    tb.roundRect(-tw / 2, -10, tw, 20, 6).fill(tier >= 8 ? 0xffd36a : tier >= 5 ? C.yellow : C.paper).stroke(THIN);
-    const tt = txt(String(Math.max(1, tier)), { fontFamily: F.heavy, fontSize: 14, fill: C.ink });
+    tb.roundRect(-tw / 2, -10, tw, 20, 6).fill(T >= 8 ? 0xffd36a : T >= 5 ? C.yellow : C.paper).stroke(THIN);
+    const tt = txt(String(T), { fontFamily: F.heavy, fontSize: 14, fill: C.ink });
     tt.anchor.set(0.5);
     tt.position.set(0, 0);
     const badge = new Container();
@@ -191,13 +251,10 @@ export function habitatParts(element: string, tier: number, fw = 3, fh = 3, buil
   }
   sign.position.set(sp.x + 4, sp.y);
   front.addChild(sign);
-  // ---- house at the back corner (grows a little with every tier)
-  const house = habitatHouse(element, Math.max(1, tier));
-  // big houses (T7+) sit a bit further into the yard so they never spill over the neighbours
-  const hp = !building && tier >= 7 ? P(0.3, 0.3) : P(0.15, 0.15);
-  const hs = building ? 1 : 1 + (Math.max(1, tier) - 1) * 0.03;
+  if (bio) front.addChild(bio.fr, bio.fFx);
+  // ---- house at the back corner (grows with every tier and with the yard)
   house.c.position.set(hp.x, hp.y);
-  house.c.scale.set(hs);
+  house.c.scale.set(houseScale);
   back.addChild(house.c);
   // element prop on the right corner
   const prop = elementProp(element);
@@ -205,16 +262,30 @@ export function habitatParts(element: string, tier: number, fw = 3, fh = 3, buil
   prop.c.position.set(pp.x, pp.y);
   back.addChild(prop.c);
   // ---- tier ornaments (cumulative): pots, bunting, feature, banners, arch, runes, beam, rocks, halo
-  const yard = building ? null : yardForTier(element, tier, fw, fh, ground, back, front);
-  const propTick = building ? undefined : prop.tick;
+  const yard = building ? null : yardForTier(element, T, fw, fh, ground, back, front, { x: hp.x, y: hp.y, roofY });
+  if (bio) front.addChild(amb.layer);
+  const parts: Tick[] = [];
+  if (yard) parts.push(yard);
+  if (!building && prop.tick) parts.push(prop.tick);
+  if (bio) parts.push(...bio.ticks);
+  let frozen = false;
   const tick: Tick | undefined =
-    yard && propTick
-      ? (t) => {
-          yard(t);
-          propTick(t);
-        }
-      : (yard ?? propTick);
-  return { ground, back, front, roof: { x: hp.x, y: hp.y + house.top * hs }, tick };
+    building && !parts.length
+      ? undefined
+      : (t) => {
+          if (settings.reduceMotion) {
+            // still life: draw every animated piece once, then only the (static) glows + collect ring
+            if (!frozen) {
+              frozen = true;
+              for (const f of parts) f(0);
+            }
+          } else {
+            frozen = false;
+            for (const f of parts) f(t);
+          }
+          if (bio) amb.tick(t);
+        };
+  return { ground, back, front, roof: { x: hp.x, y: roofY }, tick, react: bio ? () => amb.react() : undefined, houseTile: ht };
 }
 
 const stepped = (t: number) => Math.floor(t * 12) / 12;

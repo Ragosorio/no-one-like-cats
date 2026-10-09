@@ -18,7 +18,19 @@ import {
   newHabitatCost,
 } from '../econ';
 import { catGold, cat as getCat, speciesCount } from './cats';
-import { checkHabitatSpot, ensureHabitatPositions, hasHabitatSpace, nearestHabitatSpot } from '../../island/placement';
+import {
+  checkHabitatSpot,
+  ensureHabitatPositions,
+  forgetHabitat,
+  growAfterUpgrade,
+  hasHabitatSpace,
+  isCompact,
+  nearestHabitatSpot,
+  regionAt,
+  settleHabitatAt,
+  tierFootprint,
+  upgradeRoom,
+} from '../../island/placement';
 import { LEGACY_PLOTS } from '../migrate';
 import { registerPatch } from '../patches';
 import { legacyHabitatCost } from '../econ';
@@ -146,11 +158,10 @@ export function buildHabitat(element: string, at?: { gx: number; gy: number }): 
 export function moveHabitat(id: string, gx: number, gy: number) {
   const h = habitat(id);
   if (!h) return false;
+  // its full yard (a compact old habitat grows into it wherever you put it)
   const chk = checkHabitatSpot(gx, gy, id);
   if (!chk.ok) return false;
-  h.gx = Math.round(gx);
-  h.gy = Math.round(gy);
-  h.region = chk.region;
+  settleHabitatAt(h, gx, gy, chk.region);
   G.count('habitats_moved');
   return true;
 }
@@ -184,28 +195,62 @@ export function sellHabitat(id: string): { gold: number; homeless: string[] } | 
   }
   G.s.habitats = G.s.habitats.filter((x) => x.id !== id);
   delete fishMap()[id];
+  forgetHabitat(id);
   G.add('gold', value, 'habitat_sell');
   G.count('habitats_sold');
   autoHouse();
   G.recalc();
   return { gold: value, homeless: cats.filter((u) => !getCat(u)?.habitat) };
 }
-export function canUpgradeHabitat(h: Habitat) {
+/** everything an upgrade needs EXCEPT room for the bigger yard (null = ok, else why not, in Spanish) */
+export function upgradeBlocker(h: Habitat): string | null {
   const next = BAL.habitats.tiers[h.tier];
-  if (!next || h.busy) return false;
-  if (G.s.kl < next.kl) return false;
-  if ((G.s.crystals[h.element] ?? 0) < next.crystals) return false;
-  return G.s.gold >= next.cost && buildersBusy() < builders();
+  if (!next) return 'Tier máximo';
+  if (h.busy) return 'Está en obra: espera a que terminen.';
+  if (G.s.kl < next.kl) return `Necesitas Reino ${next.kl}`;
+  if ((G.s.crystals[h.element] ?? 0) < next.crystals) return 'Faltan cristales';
+  if (G.s.gold < next.cost) return `Te faltan ${fmt(next.cost - G.s.gold)} Doblones`;
+  if (buildersBusy() >= builders()) return 'Tus constructores están ocupados';
+  return null;
 }
-export function upgradeHabitat(h: Habitat) {
+/** the next tier's yard side (it grows at some tiers: balance.json habitats.tiers[].footprint) */
+export function nextHabitatSize(h: Habitat) {
+  return Math.max(tierFootprint(h.tier), tierFootprint(h.tier + 1));
+}
+/**
+ * Can it be upgraded right now? `at` = a new top-left tile ("MOVER Y MEJORAR"); without it the yard
+ * must grow in place (any direction) — the tiles it needs are reserved while the upgrade runs.
+ */
+export function canUpgradeHabitat(h: Habitat, at?: { gx: number; gy: number }) {
+  if (upgradeBlocker(h)) return false;
+  if (at) return checkHabitatSpot(at.gx, at.gy, h.id, nextHabitatSize(h)).ok;
+  return !!upgradeRoom(h).at;
+}
+export function upgradeHabitat(h: Habitat, at?: { gx: number; gy: number }) {
   const next = BAL.habitats.tiers[h.tier];
-  if (!next || !canUpgradeHabitat(h)) return false;
+  if (!next || !canUpgradeHabitat(h, at)) return false;
+  const size = nextHabitatSize(h);
+  let spot: { gx: number; gy: number; region: string };
+  if (at) {
+    const chk = checkHabitatSpot(at.gx, at.gy, h.id, size);
+    if (!chk.ok) return false;
+    spot = { gx: Math.round(at.gx), gy: Math.round(at.gy), region: chk.region };
+  } else {
+    const room = upgradeRoom(h);
+    if (!room.at) return false;
+    spot = { ...room.at, region: h.region };
+  }
+  const moved = at && (spot.gx !== h.gx || spot.gy !== h.gy);
   G.spend({ gold: next.cost });
   if (next.crystals) G.s.crystals[h.element] -= next.crystals;
+  // the bigger yard is staked out now (reserved while the timer runs: nobody can build on it)
+  settleHabitatAt(h, spot.gx, spot.gy, regionAt(spot.gx, spot.gy) ?? spot.region);
   h.busy = true;
   G.startTimer('habitat_upgrade', h.id, next.build_s * 1000 * buildTimeMul(), `Mejorando a ${next.name}`, 'mission', { tier: next.tier });
+  if (moved) G.count('habitats_moved');
   return true;
 }
+
 /** move a cat into a habitat (element rule + capacity) */
 export function canHouse(h: Habitat, species: string) {
   return catDef(species).elements.includes(h.element) && h.cats.length < habitatCapacity(h);
@@ -220,6 +265,7 @@ export function house(catUid: string, h: Habitat) {
   h.cats.push(catUid);
   c.habitat = h.id;
   G.recalc();
+  G.emit('cat', { uid: catUid, why: 'home' });
   return true;
 }
 /** auto-house homeless cats where possible */
@@ -407,6 +453,8 @@ G.onTimer('habitat_upgrade', (t) => {
   if (!h) return;
   h.busy = false;
   h.tier = (t.data?.tier as number) ?? h.tier + 1;
+  // an old compact habitat (no room when the update landed) grows now if its neighbours allow it
+  if (isCompact(h)) growAfterUpgrade(h);
   G.xp('build_done', undefined, 1 + h.tier * 0.2);
   G.count(`habitat_tier_${h.tier}`);
   autoHouse();
@@ -640,5 +688,21 @@ registerPatch({
     autoHouse();
     const moved = before - G.s.cats.filter((c) => !c.habitat).length;
     if (moved > 0) return `Tus hábitats ahora tienen más espacio: ${moved === 1 ? '1 gato sin casa se mudó' : `${moved} gatos sin casa se mudaron`} solo${moved === 1 ? '' : 's'}.`;
+  },
+});
+
+// ---------------------------------------------------------------- 2026-10 · habitats that grow
+registerPatch({
+  id: '2026-10-habitats-crecen',
+  why: 'Los hábitats ocupan más terreno con el tier (4×4 desde T4, 5×5 desde T7). ensureHabitatPositions (afterLoad, corre antes que los parches) ya hizo crecer en su lugar a los que tenían espacio y dejó compactos (su 3×3 de siempre, G.s.ext.habFoot) a los que no; nada se mueve lejos ni se borra. Aquí solo se avisa.',
+  run() {
+    const big = G.s.habitats.filter((h) => tierFootprint(h.tier) > tierFootprint(1));
+    if (!big.length) return;
+    const compact = big.filter(isCompact).length;
+    const grown = big.length - compact;
+    let note = 'Tus hábitats ahora crecen al mejorarlos: 4×4 desde el tier 4 y 5×5 desde el tier 7, con más decoración y efectos.';
+    if (grown) note += ` ${grown === 1 ? 'Uno de los tuyos ya ocupa' : `${grown} de los tuyos ya ocupan`} su terreno nuevo.`;
+    if (compact) note += ` ${compact === 1 ? '1 se quedó' : `${compact} se quedaron`} de su tamaño de antes porque no había espacio alrededor: ${compact === 1 ? 'produce' : 'producen'} igual, y si ${compact === 1 ? 'lo mueves' : 'los mueves'} a un lugar amplio, ${compact === 1 ? 'crece' : 'crecen'}.`;
+    return note;
   },
 });

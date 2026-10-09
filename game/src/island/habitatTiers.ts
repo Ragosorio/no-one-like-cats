@@ -13,6 +13,7 @@ import { elementFx } from '../art/catArt';
 import { glowTexture } from '../art/textures';
 import { P, isoBoxAt } from './buildingArt';
 import { shade, mixColor } from './terrain';
+import { pal } from './habitats/kit';
 
 const INK = { width: 3, color: C.ink, join: 'round' as const, cap: 'round' as const };
 const THIN = { width: 2, color: C.ink, join: 'round' as const, cap: 'round' as const };
@@ -221,11 +222,14 @@ function elementFeature(el: string, g: Graphics, c: Container, x: number, y: num
       g.rect(x + 28, y - 2, 4, 6).fill(0x2a2433);
       g.circle(x + 22, y - 44, 4).fill(0xc8102e);
       glow(c, x, y - 26, 0xffd9a0, 0.35, 0.8);
-      const cat = new Graphics();
-      cat.ellipse(0, 0, 14, 8).fill({ color: 0x0d110f, alpha: 0.85 });
-      cat.circle(12, -8, 7).fill({ color: 0x0d110f, alpha: 0.85 });
-      cat.poly([7, -12, 8, -21, 13, -14]).fill({ color: 0x0d110f, alpha: 0.85 });
-      cat.poly([14, -14, 19, -20, 18, -10]).fill({ color: 0x0d110f, alpha: 0.85 });
+      // (a Container: Pixi v8 leaf Graphics must not hold children)
+      const cat = new Container();
+      const body = new Graphics();
+      body.ellipse(0, 0, 14, 8).fill({ color: 0x0d110f, alpha: 0.85 });
+      body.circle(12, -8, 7).fill({ color: 0x0d110f, alpha: 0.85 });
+      body.poly([7, -12, 8, -21, 13, -14]).fill({ color: 0x0d110f, alpha: 0.85 });
+      body.poly([14, -14, 19, -20, 18, -10]).fill({ color: 0x0d110f, alpha: 0.85 });
+      cat.addChild(body);
       const tail = new Graphics().moveTo(0, 0).quadraticCurveTo(-8, -4, -6, -16).stroke({ width: 3.5, color: 0x0d110f, alpha: 0.85, cap: 'round' });
       tail.position.set(-12, 0);
       cat.addChild(tail);
@@ -335,9 +339,11 @@ function elementFeature(el: string, g: Graphics, c: Container, x: number, y: num
  * Yard ornaments for a tier (cumulative). `ground` = flat decals, `back` = behind the house line,
  * `front` = in front of the cats. Returns an animation tick (or null).
  */
-export function yardForTier(el: string, tier: number, fw: number, fh: number, ground: Container, back: Container, front: Container): Tick | null {
+export function yardForTier(el: string, tier: number, fw: number, fh: number, ground: Container, back: Container, front: Container, house: { x: number; y: number; roofY: number } = { ...P(0.15, 0.15), roofY: -150 }): Tick | null {
   if (tier < 2) return null;
   const fx = elementFx(el);
+  /** ornaments scale with the yard (3×3 → 4×4 → 5×5) */
+  const K = Math.min(fw, fh) / 3;
   const ticks: Tick[] = [];
   const gg = new Graphics();
   const bg = new Graphics();
@@ -359,8 +365,12 @@ export function yardForTier(el: string, tier: number, fw: number, fh: number, gr
     const p = P(gx, gy);
     for (let k = -1; k <= 1; k++) gg.moveTo(p.x + k * 5, p.y).lineTo(p.x + k * 7, p.y - 9 - Math.abs(k) * -2).stroke({ width: 2.5, color: 0x5f9e4a, cap: 'round' });
   }
+  // the gate posts stand around the gap in the front fence (segment 4 of fw·3)
+  const segs = Math.round(fw * 3);
   const gate = (f: number) => P(-0.45 + (fw - 0.1) * f, fh - 0.55);
-  for (const f of [2 / 9, 6 / 9]) {
+  const gA = 2 / segs;
+  const gB = 6 / segs;
+  for (const f of [gA, gB]) {
     const p = gate(f);
     fg.poly([p.x - 9, p.y + 4, p.x - 7, p.y - 10, p.x + 7, p.y - 10, p.x + 9, p.y + 4]).fill(0xc4683e).stroke(THIN);
     fg.circle(p.x - 4, p.y - 15, 5).fill(fx.main).stroke({ width: 1.5, color: C.ink });
@@ -401,13 +411,17 @@ export function yardForTier(el: string, tier: number, fw: number, fh: number, gr
   ticks.push((t) => lanterns.forEach((l, i) => (l.alpha = 0.38 + Math.sin(stepped(t) * 3 + i * 2) * 0.1)));
   if (tier < 4) return run(ticks);
 
-  // ---------------------------------------------------------------- T4: paved path + element feature
-  for (let k = 0; k < 4; k++) {
-    const p = P(0.35 + k * 0.3, fh - 1.3 + k * 0.25);
+  // ---------------------------------------------------------------- T4: paved path (gate → house) + element feature
+  const pathN = Math.round(fw) + 1;
+  for (let k = 0; k < pathN; k++) {
+    const f = (k + 0.5) / pathN;
+    // house tile from its px position (x = (gx-gy)·64, y = (gx+gy)·32)
+    const hg = (house.x / 64 + house.y / 32) / 2;
+    const p = P(0.75 + (hg + 0.35 - 0.75) * f, fh - 0.7 + (hg + 1.3 - (fh - 0.7)) * f);
     const q = [P(-0.13, -0.13), P(0.13, -0.13), P(0.13, 0.13), P(-0.13, 0.13)].map((d) => ({ x: p.x + d.x, y: p.y + d.y }));
     gg.poly(q.flatMap((v) => [v.x, v.y])).fill(k % 2 ? 0xe6dccb : 0xd6cab4).stroke({ width: 2, color: C.ink, alpha: 0.6 });
   }
-  const fp = P(-0.1, 1.15);
+  const fp = P(-0.1, fh <= 3 ? 1.15 : fh * 0.42);
   const featTick = elementFeature(el, bg, backFx, fp.x, fp.y);
   if (featTick) ticks.push(featTick);
   if (tier < 5) return run(ticks);
@@ -428,8 +442,8 @@ export function yardForTier(el: string, tier: number, fw: number, fh: number, gr
 
   // ---------------------------------------------------------------- T6: gate arch with the element emblem
   {
-    const a = gate(2 / 9);
-    const b = gate(6 / 9);
+    const a = gate(gA);
+    const b = gate(gB);
     const H = 78;
     const col = tier >= 10 ? 0xffd36a : shade(fx.main, 0.85);
     fg.rect(a.x - 5, a.y - H, 10, H).fill(col).stroke(THIN);
@@ -449,11 +463,11 @@ export function yardForTier(el: string, tier: number, fw: number, fh: number, gr
   {
     const ctr = P(fw / 2 - 0.5, fh / 2 - 0.5);
     const ring = new Graphics();
-    ring.ellipse(0, 0, 118, 56).stroke({ width: 3, color: fx.accent, alpha: 0.8 });
-    ring.ellipse(0, 0, 100, 47).stroke({ width: 2, color: fx.main, alpha: 0.7 });
-    for (let k = 0; k < 10; k++) {
-      const a = (k / 10) * Math.PI * 2;
-      ring.star(Math.cos(a) * 109, Math.sin(a) * 51.5, 4, 5, 2).fill(fx.accent);
+    ring.ellipse(0, 0, 118 * K, 56 * K).stroke({ width: 3, color: fx.accent, alpha: 0.8 });
+    ring.ellipse(0, 0, 100 * K, 47 * K).stroke({ width: 2, color: fx.main, alpha: 0.7 });
+    for (let k = 0; k < Math.round(10 * K); k++) {
+      const a = (k / Math.round(10 * K)) * Math.PI * 2;
+      ring.star(Math.cos(a) * 109 * K, Math.sin(a) * 51.5 * K, 4, 5, 2).fill(fx.accent);
     }
     ring.position.set(ctr.x, ctr.y);
     ground.addChild(ring);
@@ -464,13 +478,12 @@ export function yardForTier(el: string, tier: number, fw: number, fh: number, gr
       frontFx.addChild(m);
       motes.push(m);
     }
-    const house = P(0.15, 0.15);
     ticks.push((t) => {
       const s = stepped(t);
       ring.alpha = 0.6 + Math.sin(s * 2) * 0.25;
       motes.forEach((m, i) => {
         const a = s * 1.4 + (i * Math.PI * 2) / 3;
-        m.position.set(house.x + Math.cos(a) * 70, house.y - 80 + Math.sin(a) * 22 + Math.sin(s * 3 + i) * 4);
+        m.position.set(house.x + Math.cos(a) * 70 * K, house.y - 80 * K + Math.sin(a) * 22 * K + Math.sin(s * 3 + i) * 4);
         m.alpha = Math.sin(a) > -0.2 ? 1 : 0.55;
       });
     });
@@ -479,15 +492,15 @@ export function yardForTier(el: string, tier: number, fw: number, fh: number, gr
 
   // ---------------------------------------------------------------- T8: aura + light beam + crystal spires
   {
-    const ctr = P(0.15, 0.15);
-    const aura = new Graphics().ellipse(0, 0, 92, 42).fill({ color: fx.accent, alpha: 0.28 });
+    const ctr = house;
+    const aura = new Graphics().ellipse(0, 0, 92 * K, 42 * K).fill({ color: fx.accent, alpha: 0.28 });
     aura.position.set(ctr.x, ctr.y + 6);
     ground.addChildAt(aura, 0);
     const beam = new Sprite(glowTexture());
     beam.anchor.set(0.5, 1);
     beam.tint = fx.accent;
     beam.blendMode = 'add';
-    beam.scale.set(0.5, 2.6);
+    beam.scale.set(0.5 * K, 2.6 * K);
     beam.position.set(ctr.x, ctr.y - 60);
     beam.alpha = 0.35;
     backFx.addChildAt(beam, 0);
@@ -529,7 +542,7 @@ export function yardForTier(el: string, tier: number, fw: number, fh: number, gr
 
   // ---------------------------------------------------------------- T10: golden halo with stars
   {
-    const h = P(0.15, 0.15);
+    const h = { x: house.x, y: house.roofY + 250 - 30 };
     const halo = new Graphics();
     halo.ellipse(0, 0, 54, 14).stroke({ width: 8, color: C.ink });
     halo.ellipse(0, 0, 54, 14).stroke({ width: 4, color: 0xffd36a });
@@ -571,8 +584,10 @@ function topper(g: Graphics, x: number, y: number, el: string, s = 1) {
 /** T7 · Santuario Arcano: rune obelisk temple with floating book-shelves and arched door */
 export function santuarioArcano(g: Graphics, c: Container, el: string) {
   const fx = elementFx(el);
-  isoBoxAt(g, -0.65, -0.65, 1.4, 1.4, 12, 0x6d5a80, 0.02);
-  const body = isoBoxAt(g, -0.48, -0.48, 1.05, 1.05, 64, 0x5c3d5b, 0.04, 12);
+  // element materials (basalt for fire, ice for ice, marble for light…)
+  const m = pal(el);
+  isoBoxAt(g, -0.65, -0.65, 1.4, 1.4, 12, m.rock, 0.02);
+  const body = isoBoxAt(g, -0.48, -0.48, 1.05, 1.05, 64, m.wall, 0.04, 12);
   // rune bands
   for (const h of [34, 58]) {
     g.moveTo(body.left.x, body.left.y - h).lineTo(body.bottom.x, body.bottom.y - h).lineTo(body.right.x, body.right.y - h).stroke({ width: 4, color: C.gold });
@@ -587,8 +602,8 @@ export function santuarioArcano(g: Graphics, c: Container, el: string) {
   glow(c, dl.x, dl.y - 20, fx.accent, 0.35, 0.4);
   // pyramid roof + obelisk
   const apex = { x: body.tT.x, y: body.tT.y + (body.tB.y - body.tT.y) / 2 - 50 };
-  g.poly([body.tL.x, body.tL.y, body.tB.x, body.tB.y, apex.x, apex.y]).fill(0x8a5cff).stroke(INK);
-  g.poly([body.tB.x, body.tB.y, body.tR.x, body.tR.y, apex.x, apex.y]).fill(shade(0x8a5cff, 0.7)).stroke(INK);
+  g.poly([body.tL.x, body.tL.y, body.tB.x, body.tB.y, apex.x, apex.y]).fill(m.roof).stroke(INK);
+  g.poly([body.tB.x, body.tB.y, body.tR.x, body.tR.y, apex.x, apex.y]).fill(shade(m.roof, 0.7)).stroke(INK);
   g.poly([apex.x - 6, apex.y + 8, apex.x - 4, apex.y - 40, apex.x, apex.y - 50, apex.x + 4, apex.y - 40, apex.x + 6, apex.y + 8]).fill(C.gold).stroke(THIN);
   topper(g, apex.x, apex.y - 50, el, 0.9);
   glow(c, apex.x, apex.y - 58, fx.main, 0.45, 0.6);
@@ -598,9 +613,10 @@ export function santuarioArcano(g: Graphics, c: Container, el: string) {
 /** T8 · Núcleo Celestial: stepped dais, crystal pillars and a ringed core orb */
 export function nucleoCelestial(g: Graphics, c: Container, el: string) {
   const fx = elementFx(el);
-  isoBoxAt(g, -0.7, -0.7, 1.5, 1.5, 10, 0x372347, 0.02);
-  isoBoxAt(g, -0.58, -0.58, 1.25, 1.25, 10, 0x4a3362, 0.03, 10);
-  const top = isoBoxAt(g, -0.5, -0.5, 1.1, 1.1, 10, 0x231626, 0.04, 20);
+  const m = pal(el);
+  isoBoxAt(g, -0.7, -0.7, 1.5, 1.5, 10, m.rockDark, 0.02);
+  isoBoxAt(g, -0.58, -0.58, 1.25, 1.25, 10, m.rock, 0.03, 10);
+  const top = isoBoxAt(g, -0.5, -0.5, 1.1, 1.1, 10, m.wall, 0.04, 20);
   for (const p of [top.tL, top.tR, top.tB]) {
     g.poly([p.x - 7, p.y, p.x - 5, p.y - 46, p.x, p.y - 58, p.x + 5, p.y - 46, p.x + 7, p.y]).fill(fx.accent).stroke(THIN);
     g.poly([p.x - 5, p.y - 46, p.x, p.y - 58, p.x, p.y]).fill({ color: 0xffffff, alpha: 0.35 });
@@ -618,8 +634,9 @@ export function nucleoCelestial(g: Graphics, c: Container, el: string) {
 /** T9 · Ancla Dimensional: a floating chunk of island anchored by a giant chain + portal ring */
 export function anclaDimensional(g: Graphics, c: Container, el: string) {
   const fx = elementFx(el);
+  const m = pal(el);
   // anchor post + chain
-  isoBoxAt(g, -0.4, -0.4, 0.8, 0.8, 22, 0x6d5a80, 0.04);
+  isoBoxAt(g, -0.4, -0.4, 0.8, 0.8, 22, m.rock, 0.04);
   for (let k = 0; k < 6; k++) {
     const y = -30 - k * 14;
     g.ellipse(k % 2 ? 2 : -2, y, 6, 9).stroke({ width: 6, color: C.ink });
@@ -627,12 +644,12 @@ export function anclaDimensional(g: Graphics, c: Container, el: string) {
   }
   // floating island chunk
   const fy = -130;
-  g.poly([-62, fy, 0, fy - 28, 62, fy, 0, fy + 28]).fill(mixColor(fx.main, 0x7a9a5a, 0.4)).stroke(INK);
-  g.poly([-62, fy, 0, fy + 28, 62, fy, 40, fy + 40, 0, fy + 70, -36, fy + 42]).fill(0x6d5a80).stroke(INK);
-  g.poly([0, fy + 28, 0, fy + 70, -36, fy + 42, -62, fy]).fill(shade(0x6d5a80, 0.75)).stroke(INK);
+  g.poly([-62, fy, 0, fy - 28, 62, fy, 0, fy + 28]).fill(mixColor(m.soil, 0x7a9a5a, 0.25)).stroke(INK);
+  g.poly([-62, fy, 0, fy + 28, 62, fy, 40, fy + 40, 0, fy + 70, -36, fy + 42]).fill(m.rock).stroke(INK);
+  g.poly([0, fy + 28, 0, fy + 70, -36, fy + 42, -62, fy]).fill(shade(m.rock, 0.75)).stroke(INK);
   // little temple on the chunk
-  const b = isoBoxAt(g, -0.25, -0.25, 0.5, 0.5, 34, 0xede4d6, 0.02, -fy);
-  g.poly([b.tL.x - 6, b.tL.y, b.tB.x, b.tB.y + 4, b.tR.x + 6, b.tR.y, b.tT.x, b.tT.y - 26]).fill(fx.main).stroke(INK);
+  const b = isoBoxAt(g, -0.25, -0.25, 0.5, 0.5, 34, m.wall, 0.02, -fy);
+  g.poly([b.tL.x - 6, b.tL.y, b.tB.x, b.tB.y + 4, b.tR.x + 6, b.tR.y, b.tT.x, b.tT.y - 26]).fill(m.roof === 0x0d110f ? fx.main : m.roof).stroke(INK);
   topper(g, b.tT.x, b.tT.y - 26, el, 0.8);
   // portal ring behind
   const ring = new Graphics();
@@ -649,7 +666,7 @@ export function tronoMultiversal(g: Graphics, c: Container, el: string) {
   const fx = elementFx(el);
   isoBoxAt(g, -0.7, -0.7, 1.5, 1.5, 12, 0xd9b07a, 0.02);
   isoBoxAt(g, -0.6, -0.6, 1.3, 1.3, 12, 0xffd36a, 0.02, 12);
-  const body = isoBoxAt(g, -0.5, -0.5, 1.1, 1.1, 60, 0xfff3d6, 0.03, 24);
+  const body = isoBoxAt(g, -0.5, -0.5, 1.1, 1.1, 60, mixColor(0xfff3d6, pal(el).wall, 0.25), 0.03, 24);
   // throne back (tall spires)
   for (const [x, h, w] of [
     [-34, 120, 12],

@@ -1,7 +1,9 @@
 /**
- * Habitat panel: the tier's yard (animated), cats (one slot per place — the next tier's extra places
- * show as locked slots), gold/s, buffer bar, upgrade (what grows: capacity, gold, buffer — cost, time,
- * Reino, crystals — and a preview of the next tier), and MOVER / VENDER (free placement).
+ * Habitat panel: the tier's yard (animated, at its real size), cats (one slot per place — the next
+ * tier's extra places show as locked slots), gold/s, buffer bar, upgrade (what grows: capacity, gold,
+ * buffer, LAND — cost, time, Reino, crystals — a preview of the next tier and of the extra ground it
+ * needs), and MOVER / VENDER (free placement). No room to grow in place → "MOVER Y MEJORAR" (placement
+ * mode with the bigger ghost on the nearest free spot) or, with no land left, a pointer to expansions.
  */
 import { Container, Graphics, Ticker } from 'pixi.js';
 import gsap from 'gsap';
@@ -17,6 +19,7 @@ import {
   canSellHabitat,
   canUpgradeHabitat,
   collectHabitat,
+  upgradeBlocker,
   habitat,
   habitatCap,
   habitatCapacity,
@@ -42,6 +45,8 @@ import { sfx } from '../../core/audio';
 import { habitatHouse, habitatParts } from '../../island/buildingArt';
 import type { Tick } from '../../island/habitatTiers';
 import { requestPlacement } from '../../island/decor/DecorLayer';
+import { habitatSize, isCompact, upgradeRoom } from '../../island/placement';
+import { centerOf } from '../../island/buildingArt';
 import { islandHooks } from '../../island/hooks';
 import { bar, catPortrait, costTag, elementChip, heading, mix, wrapText } from './ui';
 import { openCatPanel } from '../CatPanel';
@@ -59,6 +64,7 @@ export function openHabitatPanel(hid: string) {
   m.body.addChild(content);
   let live: (() => void) | null = null;
   let artTicks: Tick[] = [];
+  let yardReact: (() => void) | null = null;
   let clock = 0;
 
   const render = () => {
@@ -75,11 +81,15 @@ export function openHabitatPanel(hid: string) {
     const lbg = new Graphics().rect(0, 0, 420, m.innerH - 10).fill(mix(fx.main, C.paper, 0.8)).stroke({ width: 3, color: C.ink, alignment: 1 });
     left.addChild(lbg);
     const yard = new Container();
-    const parts = habitatParts(h.element, Math.max(1, h.tier), 3, 3, false);
+    // the yard at its real size (3×3 → 4×4 → 5×5), fitted to the column
+    const N = habitatSize(h);
+    const parts = habitatParts(h.element, Math.max(1, h.tier), N, N, false);
     yard.addChild(parts.ground, parts.back, parts.front);
     if (parts.tick) artTicks.push(parts.tick);
-    yard.scale.set(0.86);
-    yard.position.set(210, 168);
+    yardReact = parts.react ?? null;
+    const ys = 0.86 * (3 / N) ** 0.75;
+    yard.scale.set(ys);
+    yard.position.set(210, 168 + 64 * 0.86 - centerOf(N, N).y * ys + (N - 3) * 22);
     const ym = new Graphics().rect(0, 0, 420, m.innerH - 10).fill(0xffffff);
     left.addChild(ym, yard);
     yard.mask = ym;
@@ -88,7 +98,8 @@ export function openHabitatPanel(hid: string) {
     const tierTag = txt(tier.name.toUpperCase(), { fontFamily: F.poster, fontSize: 30, fill: C.ink });
     tierTag.position.set(14, 50);
     left.addChild(tierTag);
-    const capTag = txt(`x${tier.mult} oro · ${tier.capacity} gatos · búfer ${tier.buffer_min} min`, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: C.ink });
+    const capTag = txt(`x${tier.mult} oro · ${tier.capacity} gatos · búfer ${tier.buffer_min} min · terreno ${N}×${N}${isCompact(h) ? ' (compacto)' : ''}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: isCompact(h) ? C.red : C.ink });
+    if (capTag.width > 396) capTag.scale.set(396 / capTag.width);
     capTag.position.set(14, 88);
     left.addChild(capTag);
     const rateL = txt('ORO/S', { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 2 });
@@ -115,7 +126,7 @@ export function openHabitatPanel(hid: string) {
     }
     const bufBg = new Graphics().rect(6, 476, 408, 98).fill({ color: C.paper, alpha: 0.85 });
     left.addChild(bufBg);
-    const bufL = txt(bankUnlocked() ? 'BÚFER · el Banco del Reino deposita el oro solo' : 'BÚFER', { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 2 });
+    const bufL = txt(bankUnlocked() ? 'BÚFER · el Banco lo deposita solo' : 'BÚFER', { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 1 });
     bufL.position.set(14, 480);
     left.addChild(bufL);
     const barC = new Container();
@@ -130,6 +141,7 @@ export function openHabitatPanel(hid: string) {
       const got = collectHabitat(hh);
       if (got.gold > 0 || got.food > 0) {
         checkMissions();
+        yardReact?.();
         sfx('coin', 1.2);
         if (got.gold > 0) floatText(m.panel, 14 + 120 + 28, 108 + 600, `+${fmt(got.gold)}`, { color: C.yellow, size: 44 });
         if (got.food > 0) {
@@ -364,24 +376,29 @@ export function openHabitatPanel(hid: string) {
       content.addChild(nl);
       // what grows (before → after), capacity first and loudest
       let gx = ux + 20;
-      const grow = (label: string, from: string, to: string, hot: boolean) => {
+      const room = upgradeRoom(h);
+      const grows = room.to > room.from;
+      const grow = (label: string, from: string, to: string, hot: boolean, bad = false) => {
         const c = new Container();
-        const w = 150;
-        const g = new Graphics().rect(4, 4, w, 70).fill(C.ink).rect(0, 0, w, 70).fill(hot ? C.mint : 0xf6efe2).stroke({ width: 3, color: C.ink });
+        const w = grows ? 118 : 150;
+        const g = new Graphics().rect(4, 4, w, 70).fill(C.ink).rect(0, 0, w, 70).fill(bad ? 0xffc2c2 : hot ? C.mint : 0xf6efe2).stroke({ width: 3, color: C.ink });
         const l = txt(label, { fontFamily: F.bebas, fontSize: 18, fill: C.ink, letterSpacing: 1 });
         l.position.set(10, 4);
         const v = txt(`${from} → ${to}`, { fontFamily: F.heavy, fontSize: 24, fill: C.ink });
         v.position.set(10, 30);
         if (v.width > w - 16) v.scale.set((w - 16) / v.width);
+        if (l.width > w - 14) l.scale.set((w - 14) / l.width);
         c.addChild(g, l, v);
         c.position.set(gx, uy + 56);
         content.addChild(c);
-        gx += w + 10;
+        gx += w + 8;
       };
       const more = next.capacity - tier.capacity;
       grow(more > 0 ? `CAPACIDAD (+${more} GATO${more > 1 ? 'S' : ''})` : 'CAPACIDAD', `${tier.capacity}`, `${next.capacity}`, more > 0);
       grow('ORO', `x${tier.mult}`, `x${next.mult}`, false);
       grow('BÚFER', `${tier.buffer_min}m`, `${next.buffer_min}m`, false);
+      // the yard grows at some tiers: the land it needs (green = fits here, red = no room around it)
+      if (grows) grow(room.at ? 'TERRENO (CRECE)' : 'TERRENO (NO CABE)', `${room.from}×${room.from}`, `${room.to}×${room.to}`, true, !room.at);
       let cx = ux + 20;
       const costs: Container[] = [];
       costs.push(costTag('gold', next.cost, G.s.gold >= next.cost, 26));
@@ -393,6 +410,8 @@ export function openHabitatPanel(hid: string) {
       tv.position.set(36, 0);
       tm.addChild(ti, tv);
       costs.push(tm);
+      // the land it needs: current yard + the extra ring (green = fits in place, red = no room around it)
+      if (room.to > room.from || isCompact(h)) costs.push(landDiagram(room.from, room.to, !!room.at));
       for (const c of costs) {
         c.position.set(cx, uy + 146);
         content.addChild(c);
@@ -401,6 +420,7 @@ export function openHabitatPanel(hid: string) {
       // next tier preview
       const pv = new Container();
       const pbg = new Graphics().circle(0, 0, 60).fill(mix(fx.main, C.paper, 0.7)).stroke({ width: 3, color: C.ink });
+      if (grows) pv.scale.set(0.8);
       const nh = habitatHouse(h.element, next.tier).c;
       nh.scale.set(next.tier >= 9 ? 0.34 : next.tier >= 6 ? 0.42 : 0.5);
       nh.position.set(0, 38);
@@ -411,9 +431,11 @@ export function openHabitatPanel(hid: string) {
       pl.anchor.set(0.5, 0);
       pl.position.set(0, 52);
       pv.addChild(pbg, pm, nh, plb, pl);
-      pv.position.set(m.innerW - 334, uy + 96);
+      pv.position.set(m.innerW - (grows ? 316 : 334), uy + 96);
       content.addChild(pv);
       let reason: string | null = null;
+      // room for the bigger yard: in place (any direction) or MOVER Y MEJORAR (or no land left)
+      const noRoom = !upgradeBlocker(h) && !room.at;
       if (G.s.kl < next.kl) reason = `Necesitas Reino ${next.kl}`;
       else if ((G.s.crystals[h.element] ?? 0) < next.crystals) {
         // where they really come from: Parte 2 elements have no campaign zone (expeditions + casino)
@@ -422,6 +444,42 @@ export function openHabitatPanel(hid: string) {
       }
       else if (G.s.gold < next.cost) reason = `Te faltan ${fmt(next.cost - G.s.gold)} Doblones`;
       else if (buildersBusy() >= builders()) reason = 'Tus constructores están ocupados';
+      if (noRoom) {
+        const mvUp = new Button(room.elsewhere ? 'MOVER Y MEJORAR' : 'SIN TERRENO', () => {
+          if (!room.elsewhere) {
+            sfx('error');
+            toast(`No hay ${room.to}×${room.to} libre en tu isla`, { sub: 'Limpia una expansión (Tienda › Edificios), o vende/mueve un hábitat o decoración.', color: C.paper });
+            return;
+          }
+          m.close();
+          if (!requestPlacement({ kind: 'habitat', element: h.element, moveId: hid, upgrade: true }, () => openHabitatPanel(hid))) toast('Ve a tu isla para moverlo', { color: C.paper });
+        }, { w: 250, h: 70, size: room.elsewhere ? 26 : 30, color: room.elsewhere ? C.mint : C.paperDark });
+        mvUp.position.set(m.innerW - 262, uy + 60);
+        content.addChild(mvUp);
+        const why = txt(
+          room.elsewhere
+            ? `No cabe aquí (${room.to}×${room.to}): ${(room.reason ?? '').replace(/ \(.*\)$/, '').toLowerCase()} alrededor. MOVER Y MEJORAR lo lleva al lugar libre más cercano.`
+            : `No hay ${room.to}×${room.to} libre: limpia una expansión, o vende/mueve un hábitat o decoración.`,
+          { fontFamily: F.ui, fontWeight: '700', fontSize: 14, fill: C.red, wordWrap: true, wordWrapWidth: m.innerW - ux - 300, lineHeight: 17 },
+        );
+        why.position.set(ux + 20, uy + 180);
+        content.addChild(why);
+        if (!room.elsewhere) {
+          const ex = new Button('EXPANSIONES', () => {
+            m.close();
+            void import('../shop/Shop').then((mm) => mm.openShop('edificios'));
+          }, { w: 250, h: 46, size: 22, color: C.yellow });
+          ex.position.set(m.innerW - 262, uy + 140);
+          content.addChild(ex);
+        }
+        live = refreshLive;
+        return;
+      }
+      if (!reason && room.to > room.from) {
+        const grows = txt(`Su terreno crece a ${room.to}×${room.to} aquí mismo (se reserva durante la obra)`, { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: C.green });
+        grows.position.set(ux + 20, uy + 190);
+        content.addChild(grows);
+      }
       const b = new Button(reason ? 'MEJORAR' : '¡MEJORAR!', () => {
         const hh = habitat(hid);
         if (!hh || !canUpgradeHabitat(hh)) {
@@ -446,6 +504,20 @@ export function openHabitatPanel(hid: string) {
     }
   };
   render();
+  // a cat of this habitat was fed / starred / renamed / moved in another panel on top: redraw now
+  // (once per frame, however many bites a "hold to feed" chain fires)
+  let dirty = false;
+  const touch = (uid: string, force = false) => {
+    const h = habitat(hid);
+    if (!h || dirty || !(force || h.cats.includes(uid) || G.s.cats.some((c) => c.uid === uid && c.habitat === hid))) return;
+    dirty = true;
+    requestAnimationFrame(() => {
+      dirty = false;
+      if (!m.closed && !content.destroyed) render();
+    });
+  };
+  m.listen(G.on('cat', (e) => (e.why === 'home' ? touch(habitat(hid)?.cats[0] ?? e.uid, true) : touch(e.uid))));
+  m.listen(G.on('catAdded', (e) => e.cat && touch(e.cat.uid)));
   let acc = 0;
   const tick = (tk: Ticker) => {
     if (content.destroyed) {
@@ -464,6 +536,30 @@ export function openHabitatPanel(hid: string) {
   m.onClose = () => Ticker.shared.remove(tick);
   m.open();
   return m;
+}
+
+/** tiny iso diagram of the land an upgrade needs: the yard now (filled) + the extra ring */
+function landDiagram(from: number, to: number, fits: boolean): Container {
+  const c = new Container();
+  const t = 9; // half tile width (px)
+  const P = (x: number, y: number) => ({ x: 14 + (x - y) * t + to * t, y: 2 + (x + y) * t * 0.5 });
+  const g = new Graphics();
+  const off = Math.floor((to - from) / 2);
+  for (let y = 0; y < to; y++)
+    for (let x = 0; x < to; x++) {
+      const inner = x >= off && y >= off && x < off + from && y < off + from;
+      const a = P(x, y);
+      const b = P(x + 1, y);
+      const cc = P(x + 1, y + 1);
+      const d = P(x, y + 1);
+      g.poly([a.x, a.y, b.x, b.y, cc.x, cc.y, d.x, d.y]).fill(inner ? C.paperDark : fits ? C.mint : 0xffb3b3).stroke({ width: 1.2, color: C.ink, alpha: inner ? 0.5 : 0.9 });
+    }
+  const l = txt(to > from ? `+${to * to - from * from} casillas` : `${to}×${to}`, { fontFamily: F.heavy, fontSize: 17, fill: fits ? C.ink : C.red });
+  l.position.set(28 + to * t * 2, 4);
+  const l2 = txt(fits ? 'TERRENO NUEVO' : 'NO CABE AQUÍ', { fontFamily: F.bebas, fontSize: 15, fill: C.ink, letterSpacing: 1 });
+  l2.position.set(28 + to * t * 2, -12);
+  c.addChild(g, l, l2);
+  return c;
 }
 
 function dashedRect(g: Graphics, w: number, h: number) {

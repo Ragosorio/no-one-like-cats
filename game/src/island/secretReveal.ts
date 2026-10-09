@@ -18,6 +18,7 @@ import type { SecretReward } from '../state/sys/secrets';
 import { iconText } from '../ui/elementIcon';
 import { shrineArt, fossilWallArt, forgeArt, bottleArt, iceBlockArt, laterSecretArt } from './landmarks';
 import { centerOf } from './buildingArt';
+import { screenRect } from '../ui/screen';
 
 /** the landmark, in its "solved" state, framed inside the poster's pink circle */
 function landmarkFor(n: number) {
@@ -67,7 +68,7 @@ export function showSecretReveal(n: number, reward: SecretReward, onClose?: () =
   const layer = scenes.overlayLayer;
   const root = new Container();
   layer.addChild(root);
-  const dim = new Graphics().rect(0, 0, W, H).fill({ color: C.ink, alpha: 0.78 });
+  const dim = screenRect({ color: C.ink, alpha: 0.78 });
   dim.eventMode = 'static';
   root.addChild(dim);
   speedLines(root, W / 2, H / 2, C.paper, 56, 0.6);
