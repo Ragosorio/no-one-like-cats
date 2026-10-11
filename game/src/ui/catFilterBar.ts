@@ -11,9 +11,9 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import { sfx } from '../core/audio';
 import { OwnedCat } from '../state/game';
-import { CatQuery, CatSort, elementsAmong, SORT_LABEL } from '../state/ext/catQuery';
+import { CatQuery, CatSort, elementsAmong, SORT_LABEL, tiersAmong } from '../state/ext/catQuery';
 import { elementIcon } from './elementIcon';
-import { C, F } from './theme';
+import { C, F, RARITY } from './theme';
 import { txt } from './widgets';
 import { SearchField } from './searchField';
 
@@ -36,6 +36,8 @@ export interface FilterBarOpts {
   initial?: CatQuery;
   theme?: FilterTheme;
   placeholder?: string;
+  /** a second chip row: one chip per rarity tier present among `cats` (COMÚN … DIVINO, PRIMORDIAL) */
+  tiers?: boolean;
 }
 
 const ROW = 44;
@@ -56,7 +58,7 @@ export class CatFilterBar extends Container {
     super();
     this.theme = o.theme ?? PAPER_THEME;
     this.sorts = o.sorts ?? ['power', 'level', 'rarity', 'stars', 'recent', 'name'];
-    this.q = { text: '', elements: [], sort: this.sorts[0], ...o.initial };
+    this.q = { text: '', elements: [], tiers: [], sort: this.sorts[0], ...o.initial };
     this.build();
   }
 
@@ -67,7 +69,7 @@ export class CatFilterBar extends Container {
   }
 
   private changed() {
-    this.o.onChange({ ...this.q, elements: [...(this.q.elements ?? [])] });
+    this.o.onChange({ ...this.q, elements: [...(this.q.elements ?? [])], tiers: [...(this.q.tiers ?? [])] });
   }
 
   private build() {
@@ -180,7 +182,53 @@ export class CatFilterBar extends Container {
       });
       this.chips.addChild(c);
     }
+    if (this.o.tiers) y = this.drawTierChips(y + CHIP + 6);
     this.barHeight = ROW + 8 + y + CHIP;
+  }
+
+  /** RAREZA row (opt-in): TODAS + one labelled chip per tier, in the tier's colour; any of the selected */
+  private drawTierChips(y0: number): number {
+    const t = this.theme;
+    const tiers = tiersAmong(this.o.cats);
+    this.q.tiers = (this.q.tiers ?? []).filter((r) => tiers.includes(r));
+    const sel = new Set(this.q.tiers);
+    let x = 0;
+    let y = y0;
+    const chip = (label: string, on: boolean, color: number | null, tap: () => void) => {
+      const c = new Container();
+      const tt = txt(label, { fontFamily: F.bebas, fontSize: 19, fill: on ? t.onText : t.ink, letterSpacing: 1 });
+      const w = tt.width + (color === null ? 20 : 30);
+      const g = new Graphics().rect(0, 0, w, CHIP).fill(on ? (color ?? t.on) : t.off).stroke({ width: on ? 3 : 2, color: t.border, alignment: 1 });
+      if (color !== null && !on) g.rect(2, 2, 7, CHIP - 4).fill(color);
+      tt.position.set(color === null ? 10 : 17, 9);
+      c.addChild(g, tt);
+      if (x > 0 && x + w > this.bw) {
+        x = 0;
+        y += CHIP + 6;
+      }
+      c.position.set(x, y);
+      x += w + 6;
+      c.eventMode = 'static';
+      c.cursor = 'pointer';
+      c.on('pointertap', () => {
+        sfx('tick');
+        tap();
+        this.drawChips();
+        this.changed();
+      });
+      this.chips.addChild(c);
+    };
+    chip('TODAS', !sel.size, null, () => (this.q.tiers = []));
+    for (const r of tiers) {
+      const meta = RARITY[r as keyof typeof RARITY];
+      chip(meta?.name ?? r.toUpperCase(), sel.has(r), meta?.color ?? C.ink, () => {
+        const cur = new Set(this.q.tiers ?? []);
+        if (cur.has(r)) cur.delete(r);
+        else cur.add(r);
+        this.q.tiers = [...cur];
+      });
+    }
+    return y;
   }
 
 }

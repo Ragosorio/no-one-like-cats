@@ -32,6 +32,8 @@ export interface CatQuery {
   /** cats having ANY of these elements (empty = all) */
   elements?: string[];
   rarities?: RarityId[];
+  /** cats in ANY of these tiers (empty = all): a rarity id, or 'primordial' for the primordials (catTier) */
+  tiers?: string[];
   minLevel?: number;
   place?: CatPlace;
   sort?: CatSort;
@@ -49,6 +51,17 @@ export function fold(s: string) {
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/** the tier a player reads on the card: the primordials are their own (they're legendary underneath) */
+export function catTier(def: CatDef): string {
+  return def.primordial ? 'primordial' : def.rarity;
+}
+/** tiers present among these cats, lowest → highest (the RAREZA filter chips) */
+export function tiersAmong(cats: OwnedCat[]): string[] {
+  const set = new Set(cats.map((c) => catTier(catDef(c.species))));
+  const rank = (t: string) => (t === 'primordial' ? (BAL.rarities.order as string[]).indexOf('legendary') + 0.5 : (BAL.rarities.order as string[]).indexOf(t));
+  return [...set].sort((a, b) => rank(a) - rank(b));
 }
 
 export function rarityRankOf(def: CatDef) {
@@ -100,6 +113,7 @@ function matches(c: OwnedCat, def: CatDef, q: CatQuery, needle: string) {
   }
   if (q.elements?.length && !def.elements.some((e) => q.elements!.includes(e))) return false;
   if (q.rarities?.length && !q.rarities.includes(def.rarity as RarityId)) return false;
+  if (q.tiers?.length && !q.tiers.includes(catTier(def))) return false;
   if (q.minLevel && c.level < q.minLevel) return false;
   switch (q.place ?? 'any') {
     case 'home':

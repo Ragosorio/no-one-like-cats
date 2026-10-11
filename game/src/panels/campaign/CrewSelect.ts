@@ -82,7 +82,7 @@ class CrewSelect {
     const b = this.m.body;
     b.addChild(this.cabins, this.summary);
     // filters
-    this.bar = new CatFilterBar(760, { cats: G.s.cats, onChange: () => this.drawList(), placeholder: 'Buscar por nombre…' });
+    this.bar = new CatFilterBar(760, { cats: G.s.cats, onChange: () => this.drawList(), placeholder: 'Buscar por nombre…', tiers: true });
     this.bar.position.set(0, 236);
     b.addChild(this.bar);
     this.extraBox.position.set(780, 236);
