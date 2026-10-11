@@ -9,6 +9,11 @@
       "paths": 7837,
       "premultipliedRgbMae": 10.308
     },
+    "almohadon_pillow_cat": {
+      "bytes": 1009479,
+      "paths": 9410,
+      "premultipliedRgbMae": 7.1007
+    },
     "arcanito_lantern_cat": {
       "bytes": 1076836,
       "paths": 10702,
@@ -49,10 +54,20 @@
       "paths": 11860,
       "premultipliedRgbMae": 12.6269
     },
+    "bisagra_hinge_cat": {
+      "bytes": 986445,
+      "paths": 10105,
+      "premultipliedRgbMae": 8.636
+    },
     "boreas_aurora_cat": {
       "bytes": 1186428,
       "paths": 11216,
       "premultipliedRgbMae": 11.4393
+    },
+    "brecha_crowbar_cat": {
+      "bytes": 1185547,
+      "paths": 12087,
+      "premultipliedRgbMae": 9.1034
     },
     "brillito_crystal_cat": {
       "bytes": 959451,
@@ -89,6 +104,11 @@
       "paths": 11196,
       "premultipliedRgbMae": 6.4437
     },
+    "cascada_upfall_cat": {
+      "bytes": 1274131,
+      "paths": 13097,
+      "premultipliedRgbMae": 10.6363
+    },
     "chispa_sparkler_cat": {
       "bytes": 1038752,
       "paths": 10579,
@@ -98,6 +118,11 @@
       "bytes": 1046409,
       "paths": 10464,
       "premultipliedRgbMae": 10.3831
+    },
+    "contrapeso_counterweight_cat": {
+      "bytes": 1177119,
+      "paths": 11623,
+      "premultipliedRgbMae": 6.5527
     },
     "copito_snowball_cat": {
       "bytes": 1113369,
@@ -139,6 +164,11 @@
       "paths": 10026,
       "premultipliedRgbMae": 11.9624
     },
+    "duermevela_dreamcaptain_cat": {
+      "bytes": 1216782,
+      "paths": 12287,
+      "premultipliedRgbMae": 8.9215
+    },
     "eclipse_corona_cat": {
       "bytes": 1157498,
       "paths": 11339,
@@ -148,6 +178,11 @@
       "bytes": 1159396,
       "paths": 11598,
       "premultipliedRgbMae": 13.7793
+    },
+    "escafandra_fishbowl_cat": {
+      "bytes": 968881,
+      "paths": 9443,
+      "premultipliedRgbMae": 11.6675
     },
     "escarcha_frost_cat": {
       "bytes": 1120663,
@@ -194,10 +229,20 @@
       "paths": 12642,
       "premultipliedRgbMae": 13.1677
     },
+    "globito_balloon_cat": {
+      "bytes": 912213,
+      "paths": 8879,
+      "premultipliedRgbMae": 7.8403
+    },
     "golem_moss_cat": {
       "bytes": 1271389,
       "paths": 11806,
       "premultipliedRgbMae": 11.8463
+    },
+    "grafitera_spray_cat": {
+      "bytes": 1063908,
+      "paths": 10594,
+      "premultipliedRgbMae": 8.7142
     },
     "granbigote_sumo_cat": {
       "bytes": 1181266,
@@ -213,6 +258,11 @@
       "bytes": 1220849,
       "paths": 11382,
       "premultipliedRgbMae": 11.4608
+    },
+    "helice_propeller_cat": {
+      "bytes": 931248,
+      "paths": 9449,
+      "premultipliedRgbMae": 11.342
     },
     "horizonte_blackhole_cat": {
       "bytes": 1261572,
@@ -238,6 +288,11 @@
       "bytes": 1008827,
       "paths": 11057,
       "premultipliedRgbMae": 8.8883
+    },
+    "jonas_whale_cat": {
+      "bytes": 1298405,
+      "paths": 12822,
+      "premultipliedRgbMae": 10.0872
     },
     "kage_ninja_cat": {
       "bytes": 1104789,
@@ -274,6 +329,11 @@
       "paths": 10522,
       "premultipliedRgbMae": 9.6873
     },
+    "manzanita_apple_cat": {
+      "bytes": 1247035,
+      "paths": 13801,
+      "premultipliedRgbMae": 9.5444
+    },
     "marcapaginas_bookmark_cat": {
       "bytes": 805333,
       "paths": 8213,
@@ -288,6 +348,11 @@
       "bytes": 1037437,
       "paths": 10107,
       "premultipliedRgbMae": 6.484
+    },
+    "masamadre_mass_cat": {
+      "bytes": 1333384,
+      "paths": 13052,
+      "premultipliedRgbMae": 8.5211
     },
     "masquerade_phantom_cat": {
       "bytes": 844519,
@@ -374,6 +439,21 @@
       "paths": 10801,
       "premultipliedRgbMae": 10.8911
     },
+    "platillo_saucer_cat": {
+      "bytes": 719938,
+      "paths": 6973,
+      "premultipliedRgbMae": 11.6106
+    },
+    "plomito_plumb_cat": {
+      "bytes": 1153634,
+      "paths": 11010,
+      "premultipliedRgbMae": 6.586
+    },
+    "polvillo_dust_cat": {
+      "bytes": 956801,
+      "paths": 9579,
+      "premultipliedRgbMae": 7.315
+    },
     "prism_crystal_cat": {
       "bytes": 786940,
       "paths": 8283,
@@ -383,6 +463,11 @@
       "bytes": 1145454,
       "paths": 11483,
       "premultipliedRgbMae": 10.0524
+    },
+    "quizas_maybe_cat": {
+      "bytes": 982027,
+      "paths": 10414,
+      "premultipliedRgbMae": 6.972
     },
     "raizvieja_bark_cat": {
       "bytes": 1124926,
@@ -404,10 +489,20 @@
       "paths": 14907,
       "premultipliedRgbMae": 10.4996
     },
+    "ronron_purr_cat": {
+      "bytes": 940000,
+      "paths": 9923,
+      "premultipliedRgbMae": 8.138
+    },
     "sakura_whisper_cat": {
       "bytes": 955281,
       "paths": 9174,
       "premultipliedRgbMae": 5.0882
+    },
+    "satelito_dish_cat": {
+      "bytes": 786618,
+      "paths": 8379,
+      "premultipliedRgbMae": 6.9177
     },
     "selene_moonlit_cat": {
       "bytes": 1080357,
@@ -428,6 +523,11 @@
       "bytes": 1184581,
       "paths": 12092,
       "premultipliedRgbMae": 7.1635
+    },
+    "sonambulo_sleepwalker_cat": {
+      "bytes": 851678,
+      "paths": 8807,
+      "premultipliedRgbMae": 9.5099
     },
     "sonata_prima_cat": {
       "bytes": 1183260,
@@ -454,10 +554,20 @@
       "paths": 12480,
       "premultipliedRgbMae": 12.0061
     },
+    "tachon_strikeout_cat": {
+      "bytes": 952682,
+      "paths": 9831,
+      "premultipliedRgbMae": 7.8694
+    },
     "tamborin_drum_cat": {
       "bytes": 950537,
       "paths": 9866,
       "premultipliedRgbMae": 9.0681
+    },
+    "tanquecito_fuel_cat": {
+      "bytes": 877920,
+      "paths": 8570,
+      "premultipliedRgbMae": 7.9935
     },
     "tempano_iceplate_cat": {
       "bytes": 1214778,

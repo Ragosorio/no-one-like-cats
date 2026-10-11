@@ -7,6 +7,10 @@
       "bytesIn": 5624711,
       "bytesOut": 4104639
     },
+    "almohadon_pillow_cat": {
+      "bytesIn": 9520634,
+      "bytesOut": 6881525
+    },
     "arcanito_lantern_cat": {
       "bytesIn": 10158955,
       "bytesOut": 7355414
@@ -39,9 +43,17 @@
       "bytesIn": 10360058,
       "bytesOut": 7489751
     },
+    "bisagra_hinge_cat": {
+      "bytesIn": 11146044,
+      "bytesOut": 8056312
+    },
     "boreas_aurora_cat": {
       "bytesIn": 10180573,
       "bytesOut": 7348457
+    },
+    "brecha_crowbar_cat": {
+      "bytesIn": 11547493,
+      "bytesOut": 8339906
     },
     "brillito_crystal_cat": {
       "bytesIn": 8961829,
@@ -71,6 +83,10 @@
       "bytesIn": 11840605,
       "bytesOut": 8596776
     },
+    "cascada_upfall_cat": {
+      "bytesIn": 11911928,
+      "bytesOut": 8630677
+    },
     "chispa_sparkler_cat": {
       "bytesIn": 9724983,
       "bytesOut": 7026120
@@ -78,6 +94,10 @@
     "cometin_stardust_cat": {
       "bytesIn": 9951950,
       "bytesOut": 7173047
+    },
+    "contrapeso_counterweight_cat": {
+      "bytesIn": 11991020,
+      "bytesOut": 8713743
     },
     "copito_snowball_cat": {
       "bytesIn": 9570410,
@@ -111,6 +131,10 @@
       "bytesIn": 9272630,
       "bytesOut": 6768635
     },
+    "duermevela_dreamcaptain_cat": {
+      "bytesIn": 11331292,
+      "bytesOut": 8190907
+    },
     "eclipse_corona_cat": {
       "bytesIn": 11461876,
       "bytesOut": 8325796
@@ -118,6 +142,10 @@
     "ecomudo_static_cat": {
       "bytesIn": 11438387,
       "bytesOut": 8203914
+    },
+    "escafandra_fishbowl_cat": {
+      "bytesIn": 9220238,
+      "bytesOut": 6751479
     },
     "escarcha_frost_cat": {
       "bytesIn": 10372042,
@@ -155,9 +183,17 @@
       "bytesIn": 12253533,
       "bytesOut": 8811060
     },
+    "globito_balloon_cat": {
+      "bytesIn": 8871586,
+      "bytesOut": 6435441
+    },
     "golem_moss_cat": {
       "bytesIn": 12911313,
       "bytesOut": 9326374
+    },
+    "grafitera_spray_cat": {
+      "bytesIn": 10162714,
+      "bytesOut": 7360087
     },
     "granbigote_sumo_cat": {
       "bytesIn": 11011221,
@@ -170,6 +206,10 @@
     "headliner_rock_cat": {
       "bytesIn": 11258506,
       "bytesOut": 8277400
+    },
+    "helice_propeller_cat": {
+      "bytesIn": 8775315,
+      "bytesOut": 6388437
     },
     "horizonte_blackhole_cat": {
       "bytesIn": 12087253,
@@ -190,6 +230,10 @@
     "jelly_aquatic_cat": {
       "bytesIn": 7655299,
       "bytesOut": 5540596
+    },
+    "jonas_whale_cat": {
+      "bytesIn": 13015407,
+      "bytesOut": 9411463
     },
     "kage_ninja_cat": {
       "bytesIn": 10679109,
@@ -219,6 +263,10 @@
       "bytesIn": 10368977,
       "bytesOut": 7545414
     },
+    "manzanita_apple_cat": {
+      "bytesIn": 10911719,
+      "bytesOut": 7850502
+    },
     "marcapaginas_bookmark_cat": {
       "bytesIn": 8102974,
       "bytesOut": 5854545
@@ -230,6 +278,10 @@
     "margarita_daisy_cat": {
       "bytesIn": 10021958,
       "bytesOut": 7230561
+    },
+    "masamadre_mass_cat": {
+      "bytesIn": 13275463,
+      "bytesOut": 9621541
     },
     "masquerade_phantom_cat": {
       "bytesIn": 6703144,
@@ -299,6 +351,18 @@
       "bytesIn": 9569592,
       "bytesOut": 6951976
     },
+    "platillo_saucer_cat": {
+      "bytesIn": 6516305,
+      "bytesOut": 4752657
+    },
+    "plomito_plumb_cat": {
+      "bytesIn": 11803340,
+      "bytesOut": 8578799
+    },
+    "polvillo_dust_cat": {
+      "bytesIn": 10330779,
+      "bytesOut": 7407755
+    },
     "prism_crystal_cat": {
       "bytesIn": 6199074,
       "bytesOut": 4496906
@@ -306,6 +370,10 @@
     "prismarina_seaglass_cat": {
       "bytesIn": 10593937,
       "bytesOut": 7619784
+    },
+    "quizas_maybe_cat": {
+      "bytesIn": 9351557,
+      "bytesOut": 6641688
     },
     "raizvieja_bark_cat": {
       "bytesIn": 11354515,
@@ -323,9 +391,17 @@
       "bytesIn": 13871502,
       "bytesOut": 10046250
     },
+    "ronron_purr_cat": {
+      "bytesIn": 8334172,
+      "bytesOut": 6015528
+    },
     "sakura_whisper_cat": {
       "bytesIn": 7983379,
       "bytesOut": 5732281
+    },
+    "satelito_dish_cat": {
+      "bytesIn": 7332145,
+      "bytesOut": 5278497
     },
     "selene_moonlit_cat": {
       "bytesIn": 11185746,
@@ -342,6 +418,10 @@
     "sombrita_shadow_cat": {
       "bytesIn": 10529268,
       "bytesOut": 7655475
+    },
+    "sonambulo_sleepwalker_cat": {
+      "bytesIn": 7989016,
+      "bytesOut": 5760690
     },
     "sonata_prima_cat": {
       "bytesIn": 11010967,
@@ -363,9 +443,17 @@
       "bytesIn": 11274393,
       "bytesOut": 8219055
     },
+    "tachon_strikeout_cat": {
+      "bytesIn": 9169364,
+      "bytesOut": 6596741
+    },
     "tamborin_drum_cat": {
       "bytesIn": 7241362,
       "bytesOut": 5234555
+    },
+    "tanquecito_fuel_cat": {
+      "bytesIn": 8553309,
+      "bytesOut": 6166160
     },
     "tempano_iceplate_cat": {
       "bytesIn": 10734909,
