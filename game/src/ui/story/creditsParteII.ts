@@ -110,7 +110,7 @@ export function creditsData(): CreditsData {
       `Canciones en tu FONOTECA: ${songs.filter((x) => x.inFonoteca).length}/${SONGS.length}.`,
       `Última hora: ${caneloName} sigue dormido encima de una página. Nadie se atreve a moverlo.`,
     ],
-    thanks: ['A quien terminó la Parte I y volvió por más.', 'A mi familia, a mi hermana y a mi cuñado Manu.', 'A cada gato que se durmió encima de algo importante.'],
+    thanks: ['A quien terminó la Parte I y volvió por más.', 'A mi familia.', 'A cada gato que se durmió encima de algo importante.'],
     links: [
       { text: 'github.com/Ragosorio/no-one-like-cats', url: REPO },
       { text: 'MAI SVG: github.com/Ragosorio/MAI-SVG', url: MAI_REPO },

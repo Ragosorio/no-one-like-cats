@@ -51,8 +51,6 @@ const ROLL: Block[] = [
   { kind: 'gap' },
   { kind: 'sub', text: 'GRACIAS' },
   { kind: 'body', text: 'A mi familia, que inspiró este juego.' },
-  { kind: 'body', text: 'A mi hermana.' },
-  { kind: 'body', text: 'A mi cuñado Manu.' },
   { kind: 'body', text: 'A quienes lo probaron primero y me dijeron la verdad.' },
   { kind: 'body', text: 'A todas las personas a las que les gustan los gatos.' },
   { kind: 'small', text: '(Y a las que no, también: ya llegarán.)' },
