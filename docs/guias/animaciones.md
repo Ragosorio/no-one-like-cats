@@ -13,6 +13,7 @@ Guías hermanas: [agregar-gato.md](agregar-gato.md) · [agregar-elemento.md](agr
 | Archivo | Qué hace |
 |---|---|
 | `game/src/art/livingCat.ts` | `CatPuppet`: la pintura sobre una malla deformable ("Live2D-lite"). Emociones (`CatEmote`), actos espontáneos, caminar, dormir, viento. También `ART`, `catRig()`. |
+| `game/src/art/temperament.ts` + `game/src/art/intent.ts` | Animaciones con propósito: temperamento por rasgo, peso por rareza, primordiales solemnes, repertorio de Canelo; intents (anticipación → acción → asentamiento) sobre la capa aditiva `PuppetBrain.pose`. Ver `docs/part-ii/31-animaciones-con-proposito.md`. |
 | `game/src/art/catArt.ts` | `livingCat()` (fábrica del puppet), `IslandCat`, `BattleCat`, `preloadCats`, carga de SVG lite/full, `ELEMENT_FX` (colores por elemento). |
 | `game/src/data/catRigs.json` | Un rig por gato (cabeza, cuello, orejas, ojos, cola, flotantes). Es un JSON de una sola línea. |
 | `game/public/cats-svg/lite/<slug>.svg` | Versión ligera de cada gato (la que espera todo el juego). |

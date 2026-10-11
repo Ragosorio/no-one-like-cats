@@ -166,6 +166,37 @@ La campaña (poder fijo por etapa) y los encargos se vuelven más fáciles, como
 
 **Paridad con el estimador:** el worker recibe el `BattleSpec` que arma el hilo principal, y todo el poder sale de `econ.catPower`, que es una sola implementación.
 
+## 4b. Jefes de la Parte II más allá de Nv50 (BALANCE-JEFES, 2026-10-10)
+
+Detalle completo en el doc 27 §Balance de jefes. En corto:
+
+- Cada batalla de la Parte II tiene una **banda** (`StoryBattleDef.band`):
+  - `historia` ×1;
+  - `jefe` ×1,1 (H49, H57, H62);
+  - `final` ×1,56 (H63), que además tiene PUERTAS CERRADAS: ninguna onda cruza más de una pared, de ningún lado.
+  
+  La banda multiplica el Poder enemigo a todo nivel: es el piso, para que un jefe nunca sea un trámite. La Parte I no tiene banda y queda idéntica bit a bit a cualquier nivel.
+- **Todos los gatos enemigos pelean:** el barco de cada batalla de la Parte II tiene un camarote por gato que lista (`catrooms`). Antes, 13 batallas perdían su 4.º gato. Con ellos a bordo se volvió a ajustar cada batalla (doc 27).
+- **Pasando Nv50, el enemigo te sigue** (`state/sys/storyScale.ts`):
+  - su nivel ya no se topa en 50: es el nivel medio de tu tripulación (+2 en jefes, +5 en el final), hasta 100;
+  - en jefes y final, sus gatos llevan la ★ que ese nivel pide, con máximo ★5 (+8 % de vida por ★, ulti doble a ★5; la ★6 es solo tuya);
+  - su Poder sigue el tuyo como siempre (`over` = 0: tus ★ no mueven una pelea que va por razón de Poder).
+- **A Nv ≤ 50, el término de nivel es la identidad** (prueba). Las 12 batallas `historia` dan la misma pelea a cualquier nivel, salvo el número que se muestra. Todas quedan en 85–93 % de promedio entre las dos tripulaciones; H51 se queda en 100 %, a propósito.
+
+| batalla | antes (todo nivel) | Nv30 | Nv50 | Nv60 | Nv80 | Nv100 | legend Nv50 / 60 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| H49 Masa Madre | 100 | 73 | 73 | 69 | 64 | 64 | 80 / 80 |
+| H57 Leviatán | 97 | 80 | 80 | 75 | 69 | 64 | 81 / 75 |
+| H62 Correctores | 97 | 81 | 81 | 78 | 69 | 69 | 84 / 81 |
+| H63 El Umbral | 100 | 69 | 69 | 67 | 67 | 73 | 86 / 81 |
+
+- **Columnas de nivel:** tripulación de historia (Raijin, Ignis, Abisa, Madre Nácar, Masa Madre, Jonás, Brecha) en el Bastión, a ★3, ★3, ★3, ★4 y ★6.
+- **Última columna:** la tripulación del fixture (7 legendarios de la Parte I).
+- 64 semillas por celda, sin SINCRO.
+- **H63:** con la tripulación solo de la Parte II («p2»), 47 % a Nv50 y a Nv60. El promedio de las tres tripulaciones es 65–67 %.
+
+La tabla de §4 (post-finale a Nv50/70/100) sigue valiendo para la Parte I. Para la Parte II, los números son los de arriba.
+
 ## 5. Interfaz
 
 - **Panel del gato.** El bloque de nivel tiene una columna izquierda de 154 px:

@@ -106,6 +106,44 @@ En la barra inferior están la hora, la velocidad del día, el clima, ZARPAR y C
 - Balance Cristal contra Fuego.
 - Al publicar, las 14 pinturas completas nuevas deben llegar al sitio de arte: el deploy solo avisa y el cron las sube en ≤ 6 h, o se corre `publish.yml` a mano.
 
+### Lotes E y G: arte de las Oleadas 2 y 4 (2026-10-10) — SIN PUBLICAR
+
+| Pieza | Estado | Dónde | Verificación |
+|---|---|---|---|
+| **Lote E** (8, Gravedad) y **Lote G** (7, El Umbral): 15 SVG completos + 15 lite + 15 rigs, con los slugs de `especies-o2.json` / `especies-o4.json` | IMPLEMENTADO | `public/cats-svg/**` (manifiestos solo ganan entradas), `catRigs.json` (solo claves nuevas), MAI `exports/game-rigs` | Cada SVG contra su PNG (colores, ojos, orejas, cola, accesorios); compactación píxel idéntica; lab catlive a 450 y 900 px |
+| Fin de los suplentes teñidos de E y G | IMPLEMENTADO | `art/catArt.ts` (`STAND_IN`: se quitaron las 15 entradas; las del Lote F siguen) | Revelación, Catdex, isla, batalla y Podio con una partida de prueba |
+
+- **Trazado:** Hélice, Ronrón y Quizás se colapsaban en silueta con lanczos3 (MAE 88–130). Se rehicieron reduciendo con `mitchell` (MAE 5,6–8,0). El lite de Bisagra se trazó a 224 px, porque a 240 colapsaba y el reintento caía en 256.
+- **Flotantes:** Globito, Manzanita y Almohadón flotan con un flotante de cuerpo entero. La piedrita de Globito se queda en el suelo y el cordel se estira.
+- **Pins:** aureola de Ronrón, contrapeso, hombro de la capa y piedras de Contrapeso, anillo y campanita de Masa Madre, almohada de Almohadón, borla de Sonámbulo, estrella del gorro y barquito de Duermevela, regla de Tachón, candados y capa de Bisagra, caja y planetas de Quizás, dije de Cascada, y cuello de la capa de Globito.
+- **Colas:** varias puntas se acortaron para que no arrastren cachetes, bufandas ni anillos con viento máximo + feliz (Plomito, Masa Madre, Globito, Almohadón, Duermevela, Cascada, Quizás, Bisagra).
+- **Pendiente:** las 15 pinturas completas deben llegar a `nolc-arte` al publicar.
+
+### Lote F: arte de la Oleada 3 (2026-10-10) — SIN PUBLICAR
+
+Los 7 gatos (Satélito, Tanquecito, Escafandra, Grafitera, Brecha, Jonás y Platillo) ya están en el juego.
+
+- **Archivos:** 7 SVG completos (4,8 a 9,4 MB, 48 MB en total) y 7 lite (720 KB a 1,3 MB), más 7 rigs en `catRigs.json` y en MAI `exports/game-rigs`.
+- **Trazado:** ninguno se colapsó con lanczos3 (error 6,2–10,0). Los lite pasaron a 240 px.
+- **Suplentes:** se quitaron de `STAND_IN`. `tests/rupturasO3.test.ts` ahora exige rig y SVG para cada especie, y que no tenga suplente.
+- **Pins:**
+  - el minisatélite de Satélito;
+  - el tanque y las toberas de Tanquecito;
+  - la llave inglesa de Escafandra;
+  - la lata y la capucha de Grafitera;
+  - la garra, la palanca y la hombrera de Brecha;
+  - la tetera y el báculo de Jonás;
+  - el platillo de Platillo.
+- **Flotante de cuerpo entero:** Platillo flota completo, con el rayo y la vaca, como Almohadón.
+- **Verificado:**
+  - laboratorio catlive a 450 y 900 px;
+  - revelación;
+  - Catdex;
+  - batalla con los 7;
+  - Puerto Cometa: Escafandra atiende el Taller con su arte real.
+- **Nota:** el resplandor del rayo de Platillo queda en bandas más planas que en el PNG. El color y la opacidad son los mismos (el rayo del original ya es casi opaco).
+- **Pendiente:** al publicar, subir las 7 pinturas completas a `nolc-arte`. El traspaso está en `agentes/ART-F.md`.
+
 
 ## 2f. Islas 3D, arco de Canelo, balance y regla del Sonido (2026-10-10) — SIN PUBLICAR
 
