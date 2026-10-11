@@ -360,9 +360,24 @@ hay disco, `basic-pitch` mejoraría las notas del bajo y la melodía.
 
 - **Batalla** (`BattleScene`, marca `// MOMENTO:`): en el evento `fase`, si `momentoForFase(battle, faseId)` existe, la
   fase no se escenifica en el acto: espera a que aterrice el tiro (`checkBossPhase`) → `runBattleMomento` → el Momento
-  pone la fase debajo de su corte (`beforeCut`) → la batalla sigue en la capa nueva. El sim ya cambió de fase solo
-  (determinista); el estimado nunca ve nada de esto.
-- **Hush**: `hush('momento')` mientras dura. Teclas capturadas en fase de captura (Espacio no acelera la batalla debajo).
+  pone la fase debajo de su corte (`beforeCut`). El sim ya cambió de fase solo (determinista); el estimado nunca ve
+  nada de esto.
+- **El Momento TERMINA la batalla** (regla del dueño, hotfix 2026-10-10): la fase de cada Momento de batalla (H35
+  `memoria`, H44 `cielo`, H55 `glitch`, H57 `cielo`, H62 `el_plan`) lleva `endsBattle: true` (`battle/fases.ts`): al
+  entrar, el sim declara la victoria del jugador (`reason: 'momento'`), sin los efectos de la fase; la pantalla y el
+  estimado dan lo mismo. Como ya no hay pelea después, el umbral pasó al **80 %** del camino a la derrota (sin
+  disparador por turno; antes 40 %/t4, 35 %/t4, 50 %, 34 % y 50 %/t5: con ellos la pelea duraba ~2 turnos) y, si el
+  jugador gana antes por otra vía (núcleo, tripulación), la fase entra igual en ese tiro: **todo combate ganado termina
+  con su Momento** (`fasesCheck`; la victoria conserva su motivo). Balance (`balance-jefes`, 16 semillas, Nv50/Nv80):
+  antes 75–88 % de victorias en 6–13 turnos; ahora 94–100 % en 4–8. Después del corte no vuelve la música de batalla (`BattleMusic.resume(true)`), no hay cartel
+  de capa y `BattleScene` va a la victoria («¡LA PELEA ES TUYA!»). Si el jugador sale del Momento (repetición, SALIR),
+  también gana. El chip de la regla dice «GOLPE FINAL AL 80%». Pruebas: `tests/hotfixVivo.test.ts` y las de «misma
+  pelea con y sin Momento» (iguales hasta el umbral, victoria ahí).
+- **Solo suena el Momento** (hotfix 2026-10-10): `playMomento` toma `audioApi.solo(true, { key: 'momento', decks: true })`
+  antes de todo: la música que sonaba (la de batalla, la de la isla) se apaga en 0,3 s, y los buses de efectos, ambiente
+  (mar, olas, viento, loops), voces y la música procedural de la Parte I van a 0 (`core/audio.ts › solo`, nodo
+  `procGate`). La canción del Momento es una cue nueva y suena normal. Se suelta en el `finally` (0,6 s).
+- **Hush**: `hush('momento')` mientras dura (popups); el sonido lo calla el SOLO de arriba. Teclas capturadas en fase de captura (Espacio no acelera la batalla debajo).
 - **Volver a ver**: `panels/Replays.ts` lista `seenMomentos(save)` como «♪ TÍTULO».
 - **Fonoteca** (doc 18 §8): `unlocks` al completar por primera vez (si el catálogo conoce la ref y no estaba). LIKY
   FIGHT original ya se desbloquea en H38; el Momento lo asegura.

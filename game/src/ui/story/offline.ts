@@ -18,6 +18,7 @@ import { clean, loadingTip, sysMsg, tone } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
 import { destroyDeep, settle } from './tweens';
 import { screenRect } from '../screen';
+import { markToastAvoid } from '../toastAvoid';
 
 export async function offlineReport(layer: Container, s: OfflineSummary, opts: { canCollectAll: boolean; onCollectAll?: () => number }): Promise<void> {
   await Promise.all([preloadCats(['canelo_cozy_cat']), preloadStoryArt()]);
@@ -31,6 +32,7 @@ export async function offlineReport(layer: Container, s: OfflineSummary, opts: {
     const PW = 1500;
     const PH = 940;
     const page = new Container();
+    markToastAvoid(page); // toasts never cover the paper (ui/toastAvoid.ts)
     page.pivot.set(PW / 2, PH / 2);
     page.position.set(W / 2, H / 2 + 6);
     page.rotation = -0.012;

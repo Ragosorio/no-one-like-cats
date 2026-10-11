@@ -71,6 +71,15 @@ export interface FaseDef {
   effects?: string[];
   /** false = the view switches the layer but shows no banner (the battle's own rules announce it) */
   banner?: boolean;
+  /**
+   * MOMENTO ENDS THE BATTLE (owner's rule, 2026-10-10): entering this phase ENDS the fight — the watched side loses
+   * (`winner` = the other side, `reason` 'momento'). And if the player wins before its threshold (a core shot, the
+   * crew K.O.), the phase is entered anyway (fasesCheck): the Momento is always the finishing blow of a won fight. Set on the phases where a «Momento musical» plays (H35, H44, H55,
+   * H57, H62): the Momento is the climax, there is no fight after it. Deterministic data: the estimate worker reads it
+   * too, so screen and estimate still agree. The phase's env still applies (the view stages its layer under the cut);
+   * its `effects` don't run (no rules for a fight that is over) and the view shows no banner.
+   */
+  endsBattle?: boolean;
 }
 export interface FasesCfg {
   /** whose damage moves the phases (the boss side) */
@@ -190,17 +199,33 @@ function enter(b: Battle, st: FasesState, n: number, ev: BattleEvent[]) {
   const from = st.idx;
   st.idx = n;
   const ph = st.cfg.phases[n];
-  apply(b, st, ph, ev);
+  // an ending phase (endsBattle): its layer shows, but none of its one-shot rules run
+  apply(b, st, ph, ph.endsBattle ? null : ev);
   const c = b.shipCenter(st.cfg.side);
   // the view stages it (flash, banner, new backdrop) and then tells the music layer (emitFase)
   ev.push({ k: 'boss', what: 'fase', side: st.cfg.side, n, amount: from, x: c.x, y: c.y, path: -1, at: 0 });
+  if (ph.endsBattle && b.winner === null) {
+    b.winner = (1 - st.cfg.side) as 0 | 1;
+    b.reason = 'momento';
+  }
 }
 
 /** HP / turn thresholds: advance as many phases as were crossed (each one is announced). Called after every
  *  shot (fire) and at every turn start. */
 export function fasesCheck(b: Battle): BattleEvent[] {
   const st = S(b);
-  if (!st || b.winner !== null) return [];
+  if (!st) return [];
+  // the player just WON (core, crew, sinking…) before the ending phase's threshold: the Momento is the finishing blow
+  // anyway — its phase is entered (the view plays it) and the win keeps its own reason. Losing never plays it.
+  if (b.winner !== null) {
+    const fin = st.cfg.phases.findIndex((p, i) => i > st.idx && p.endsBattle);
+    if (b.winner !== st.cfg.side && fin > 0) {
+      const ev: BattleEvent[] = [];
+      enter(b, st, fin, ev);
+      return ev;
+    }
+    return [];
+  }
   const ev: BattleEvent[] = [];
   const f = fasesProgress(b, st.cfg.side);
   for (let n = st.idx + 1; n < st.cfg.phases.length; n++) {
@@ -209,6 +234,7 @@ export function fasesCheck(b: Battle): BattleEvent[] {
     const byTurn = at.turn !== undefined && b.turn >= at.turn;
     if (!byHp && !byTurn) break;
     enter(b, st, n, ev);
+    if (b.winner !== null) break;
   }
   return ev;
 }
@@ -326,7 +352,7 @@ export function fasesChips(b: Battle): [Chip[], Chip[]] {
   else if (bodies.length) e.push({ text: `COBERTURA x${bodies.length}`, color: 0xc9b38a });
   if (b.portals) e.push({ text: 'GRIETAS: EL TIRO CAMBIA DE DUEÑO', color: 0xff7ab8, hot: true });
   const next = st.cfg.phases[st.idx + 1];
-  if (next?.at?.hp !== undefined) e.push({ text: `SIGUIENTE CAPA AL ${Math.round(next.at.hp * 100)}%`, color: 0x6d6a80, ink: 0xffffff });
+  if (next?.at?.hp !== undefined) e.push({ text: `${next.endsBattle ? 'GOLPE FINAL' : 'SIGUIENTE CAPA'} AL ${Math.round(next.at.hp * 100)}%`, color: 0x6d6a80, ink: 0xffffff });
   if ((st.cfg.shield?.[0] ?? 0) > 0) p.push({ text: st.shieldLeft[0] > 0 ? `ESCUDO DE COMETA x${st.shieldLeft[0]}` : 'ESCUDO: SE RECARGA EN LA SIGUIENTE CAPA', color: st.shieldLeft[0] > 0 ? 0x9fe8ff : 0x8a95a3 });
   return [e, p];
 }

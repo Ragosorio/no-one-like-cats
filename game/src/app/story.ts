@@ -45,6 +45,7 @@ import { CASINO_INTRO } from '../panels/casino/intro';
 import { GRIETAS_EXPLAIN, MULTI_INTRO, MULTI_OUTRO } from '../ui/story/grietasScript';
 import { FINAL_EPILOGUE, FINAL_INTRO, FINAL_OUTRO } from '../ui/story/finaleScript';
 import { RUPTURAS_COVERED, RUPTURAS_ON_DONE, RUPTURAS_ON_NEW } from '../ui/story/rupturasScript';
+import { CHART_ISLANDS_TOLD, chartIslandsToTell } from '../state/sys/rupturas';
 import { O2_COVERED, O2_ON_DONE, O2_ON_NEW } from '../ui/story/rupturasScriptO2';
 import { O3_COVERED, O3_ON_DONE, O3_ON_NEW } from '../ui/story/rupturasScriptO3';
 import { O4_COVERED, O4_ON_DONE, O4_ON_NEW } from '../ui/story/rupturasScriptO4';
@@ -531,6 +532,15 @@ async function pump() {
       return;
     }
   }
+  // Parte II (hotfix 2026-10-10): the 3D islands are drawn on the CARTA, not next to yours — Luzterna says it once
+  // (a new player: when the story puts the first one there; a save after the narrative reset: once, on the island)
+  if (where() === 'island' && canBeat() && !beats.length) {
+    const isle = chartIslandsToTell();
+    if (isle) {
+      await tellChartIslands();
+      return;
+    }
+  }
   // H02 naming prompt
   if (!renamePrompted && G.s.missions.active.includes('H02') && canBeat() && !beats.some((q) => q.notBefore <= now)) {
     renamePrompted = true;
@@ -551,6 +561,23 @@ async function pump() {
       const m = MISSION_BY_ID.get(id);
       if (m && maybeTip(m)) break;
     }
+  }
+}
+
+/** CHART_ISLANDS_TOLD: where the Part II islands live (the ¡ZARPAR! button then pulses with «¡NUEVA ISLA!») */
+export const CHART_ISLANDS_LINES: Line[] = [
+  ['LUZTERNA', 'Capi, un detalle de navegación que nadie te explicó: las islas nuevas no flotan junto a la tuya.'],
+  ['LUZTERNA', 'Se dibujan solas en tu CARTA, en una hoja pegada a su orilla derecha: el MAR DE LAS RUPTURAS. Si aparecen más, también se pegan ahí, a la carta.'],
+  ['LUZTERNA', 'Toca ¡ZARPAR!, busca la tinta fresca y toca la isla para desembarcar. Las que ya conoces se quedan en la carta: vuelve cuando quieras.'],
+];
+async function tellChartIslands() {
+  busy = true;
+  try {
+    G.flag(CHART_ISLANDS_TOLD);
+    G.save();
+    await say(CHART_ISLANDS_LINES.map(([sp, t]) => [sp, personalize(sp, t)] as Line));
+  } finally {
+    busy = false;
   }
 }
 

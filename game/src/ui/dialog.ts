@@ -25,6 +25,7 @@ import { LuzternaPortrait, makePortrait, Portrait, preloadStoryArt } from './sto
 import { destroyDeep, settle } from './story/tweens';
 import { followView, screenRect } from './screen';
 import { hushed, whenCalm } from './hush';
+import { markToastAvoid } from './toastAvoid';
 
 export type Line = [speaker: string, text: string];
 
@@ -286,6 +287,9 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
   const BX = top ? BOX_TOP : BOX_BOTTOM;
   const box = new SpeechBox(BX);
   const cap = new CaptionBox();
+  // toasts never sit on the speech box or the caption card (ui/toastAvoid.ts)
+  markToastAvoid(box);
+  markToastAvoid(cap);
   box.visible = false;
   cap.visible = false;
   anchor.addChild(portraitLayer, box);
@@ -531,6 +535,7 @@ async function nextTip() {
   const bx = 196;
   const by = -bh;
   const bubble = new Container();
+  markToastAvoid(bubble);
   const g = new Graphics();
   g.rect(bx + 8, by + 8, bw, bh).fill(C.ink);
   g.poly([bx + 2, by + bh - 52, bx - 34, by + bh - 6, bx + 2, by + bh - 22]).fill(sp.box).stroke({ width: 4, color: C.ink, join: 'round' });
@@ -648,6 +653,7 @@ export async function newspaper(headline: string, o: NewsOpts = {}): Promise<voi
   const PW = 1260;
   const PH = 900;
   const page = new Container();
+  markToastAvoid(page);
   page.pivot.set(PW / 2, PH / 2);
   page.position.set(W / 2, H / 2 + 10);
   root.addChild(page);

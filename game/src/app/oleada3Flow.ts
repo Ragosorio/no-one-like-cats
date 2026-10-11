@@ -526,7 +526,7 @@ function ask(title: string, body: string, opts: { label: string; value: string; 
  *   registerFaseInterlude(M.battle, M.fase, (change) => playMomento(M.song, change))      (battle/fases.ts)
  * battle/fx/fasesFx.ts › FasesFx.stage() awaits the interlude after the flash + layer swap + emitFase and before the
  * banner, and BattleScene.checkBossPhase() awaits that staging before the next turn: the battle pauses for as long as
- * the Momento plays and resumes on the new layer. Presentation only — the sim already applied the phase, so the outcome
+ * the Momento plays (its phase ENDS the fight: FaseDef.endsBattle). Presentation only — the sim already applied the phase, so the outcome
  * (and the estimate worker) never change. `onFase` listeners are synchronous: they hear the change, they can't hold it.
  */
 // MOMENTO: te_odio (H55, before the glitch phase) — Los Disruptores: phase 1 (vacío) → Momento → GLITCH

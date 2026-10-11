@@ -250,6 +250,8 @@ export class FasesFx {
       }
       if (this.dead) return;
     }
+    // an ending phase (FaseDef.endsBattle): the fight is over — no «CAPA n» banner, the victory comes next
+    if (ph.endsBattle || this.h.sim.winner !== null) return;
     // phases whose own rules stage a banner (FASE_SELF_BANNER) don't get a second one
     if (ph.banner === false || (ph.effects ?? []).some((k) => FASE_SELF_BANNER.has(k))) return;
     sfx('sting');

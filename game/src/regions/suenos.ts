@@ -316,12 +316,15 @@ export const region: RegionDef = {
       motif('arco_pregunta');
       await say(VANE_LINES(cfg.who ?? [], likely, domEl));
     };
-    let whaleN = 0;
+    // each of her lines once, across visits (G.s.counters.suenos_ballena_lineas); then she only snores
     const whaleLore = async () => {
       if (st.busy) return;
       ctx.feature('ballena_suenos');
       snore(1.6);
-      await say(WHALE_LINES[whaleN++ % WHALE_LINES.length]);
+      const n = Math.max(0, Math.floor(Number(G.s.counters.suenos_ballena_lineas ?? 0)) || 0);
+      if (n >= WHALE_LINES.length) return;
+      G.count('suenos_ballena_lineas');
+      await say(WHALE_LINES[n]);
     };
     const capitanaLore = async () => {
       if (st.busy) return;

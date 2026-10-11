@@ -296,7 +296,9 @@ export const O2_SPECS: SkySpec[] = [
           {
             id: 'cielo',
             name: 'El cielo',
-            at: { hp: 0.35, turn: 4 },
+            // hotfix 2026-10-10: the Momento ENDS the fight → it waits for its real end (was 35 % or round 4)
+            at: { hp: 0.8 },
+            endsBattle: true,
             telegraph: 'LA FIESTA SUBE AL CIELO: todo pesa x0.7, el viento sopla por pisos y hay islotes.',
             env: { g: 0.7, layer: 'sky' },
             effects: ['skyWake'],
@@ -309,8 +311,7 @@ export const O2_SPECS: SkySpec[] = [
     hpMulX: 3,
     cata: { id: 'meteors', by: 'LAS ISLAS INVERTIDAS' },
     intro: [
-      'DOS FASES: empieza en el MAR. Al 35% de daño (o en la ronda 4) su barco sube al CIELO y tú detrás.',
-      'EL CIELO: todo pesa ×0.7, el viento sopla distinto por pisos y los ISLOTES paran los tiros. Un módulo tuyo muy roto se cae al vacío.',
+      'Se pelea en el MAR. Al 80% de daño llega el GOLPE FINAL.',
       'Sus gatos usan un elemento que todavía no conoces: GRAVEDAD. {void} Vacío y {time} Tiempo le pegan ×1.5; ella le pega ×1.5 a tu {storm} Tormenta y a tu {crystal} Cristal.',
     ],
     color: 0x3e6fd8,

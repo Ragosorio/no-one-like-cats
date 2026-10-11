@@ -218,7 +218,7 @@ describe('H62: the Momento is presentation only', () => {
     G.load();
     checkMissions();
   };
-  it('the same seeds give the same fight, shot by shot, with and without the interlude (and EL PLAN comes in most fights)', async () => {
+  it('the same seeds give the same fight, shot by shot, with and without the interlude (and EL PLAN — the end — comes in most fights)', async () => {
     await load();
     const { buildStoryBattle } = await import('../src/state/sys/storyBattles');
     const { autoBattle } = await import('../src/battle/autoplay');
@@ -251,6 +251,8 @@ describe('H62: the Momento is presentation only', () => {
     } finally {
       registerFaseInterlude('umbral_correctores', 'el_plan', hook);
     }
-    expect(withIt.filter((r) => r.reached > 0).length).toBeGreaterThanOrEqual(seeds.length - 1);
+    // owner's rule (2026-10-10): entering EL PLAN (the Momento) ENDS the fight in a victory
+    // (a won fight always ends inside EL PLAN: at its threshold or on the winning shot)
+    expect(withIt.filter((r) => r.res.won).length).toBeGreaterThanOrEqual(seeds.length - 1);
   }, 180_000);
 });

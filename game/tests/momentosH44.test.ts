@@ -52,6 +52,7 @@ describe('H44 two-phase battle', () => {
     expect(sp.rules?.fases?.phases.map((p) => p.id)).toEqual(['mar', 'cielo']);
     expect(sp.rules?.sky?.from).toBe('cielo');
     expect(sp.rules?.fases?.phases[1].effects).toContain('skyWake');
+    expect(sp.rules?.fases?.phases[1].endsBattle).toBe(true);
     expect(momentoForFase(sp.meta?.special ?? null, 'cielo')?.id).toBe('liky_fight');
     // the worker gets the spec by structured clone (minus onEnd, src/state/sys/estimate.ts): no functions in it
     const { onEnd: _drop, ...plain } = sp;
@@ -69,7 +70,7 @@ describe('H44 two-phase battle', () => {
     expect(skyState(b)?.islets ?? []).toHaveLength(0);
   });
 
-  it('the same seed replays the same two-phase battle (screen = estimate), and the sky wakes in phase 2', () => {
+  it('the same seed replays the same battle (screen = estimate); entering the sky phase (the Momento) ENDS it in a victory', () => {
     loadH44();
     const sp = buildStoryBattle('cielo_invertidas', () => undefined);
     const play = (spec: typeof sp) => {
@@ -88,14 +89,14 @@ describe('H44 two-phase battle', () => {
     const b = play(structuredClone(plain) as typeof sp);
     expect(b.res).toEqual(a.res);
     expect(b.log).toEqual(a.log);
-    // both phases happened, in order, and the sky rules came with phase 2
+    // owner's rule (2026-10-10): the LIKY FIGHT Momento ENDS the battle. The fight is a sea battle until the phase
+    // change, where the player wins (the sky layer shows under the Momento's cut; its rules never wake)
     const phases = a.log.map((l) => Number(l.split('|')[3]));
     expect(phases[0]).toBe(0);
-    expect(phases.at(-1)).toBe(1);
-    expect(a.wokeAt).toBeGreaterThan(0);
-    expect(a.log.find((l) => l.split('|')[3] === '1')!.split('|')[4]).toBe('0.7');
+    expect(a.res.won).toBe(true);
+    expect(a.wokeAt).toBe(-1);
     expect(fasesState(a.last!)!.layer).toBe('sky');
-    expect(skyState(a.last!)!.islets.length).toBeGreaterThan(0);
+    expect(skyState(a.last!)!.islets).toHaveLength(0);
   }, 240_000);
 
   it('wins stay in range with a post-finale crew (a few seeds)', () => {

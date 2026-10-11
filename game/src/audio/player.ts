@@ -653,8 +653,29 @@ export class MusicPlayer {
     for (const d of [this.cur, ...this.leaving]) {
       if (!d || d.state === 'stopping' || d.state === 'stopped') continue;
       d.volume = d.baseVolume * this.boost;
+      if (this.hushed.has(d)) continue; // a hushed deck stays silent (hushDecks)
       d.fadeTo(d.volume, this.ctx?.currentTime ?? 0, 0.25);
     }
+  }
+
+  /** decks silenced by hushDecks(true) (a Momento: the music that was playing before its song) */
+  private hushed = new Set<Deck>();
+  /**
+   * (ext) a Momento takes the music: the decks playing NOW fade to silence over `fade` s (they keep running, the
+   * director keeps its state; the Momento's own cue crossfades them away). Off: any of them still playing comes back.
+   */
+  hushDecks(on: boolean, fade = 0.3) {
+    const now = this.ctx?.currentTime ?? 0;
+    if (on) {
+      for (const d of [this.cur, ...this.leaving]) {
+        if (!d || d.state === 'stopping' || d.state === 'stopped') continue;
+        d.fadeTo(0, now, fade);
+        this.hushed.add(d);
+      }
+      return;
+    }
+    for (const d of this.hushed) if (d.state === 'playing' || d.state === 'scheduled' || d.state === 'paused') d.fadeTo(d.volume, now, fade);
+    this.hushed.clear();
   }
 
   /** (ext) pause / resume the current deck (Momentos' pause menu, a hidden tab) */

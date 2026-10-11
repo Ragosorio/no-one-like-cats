@@ -72,7 +72,7 @@ import {
 import { StageCard } from '../panels/campaign/StageCard';
 import { sparkles } from '../fx/juice';
 import { screenRect } from '../ui/screen';
-import { MapRegion, mapRegions, regionForGoal } from '../state/sys/rupturas';
+import { MapRegion, freshChartIslands, mapRegions, regionForGoal } from '../state/sys/rupturas';
 import { beatSeen, markBeat } from '../state/ext/story';
 import type { RegionId } from '../regions';
 import { MapNight } from '../island/night/mapNight';
@@ -270,6 +270,8 @@ export class MapScene extends Scene {
     this.drawRoutes();
     // the sky sheet goes first: the Rupturas sheet is glued OVER its foot; the astral strip slips UNDER the sky's top
     const underSky = this.chart.children.length;
+    // Parte II: the islands whose fresh ink the player hasn't seen yet (before the sheets mark them as seen)
+    const fresh = freshChartIslands();
     this.buildCielo();
     this.buildRupturas();
     this.buildSeam();
@@ -329,6 +331,7 @@ export class MapScene extends Scene {
     else this.focusZone(focus, false);
     window.addEventListener('wheel', this.onWheel, { passive: false });
     this.introAnim();
+    this.showFreshIslands(fresh, calling?.id);
   }
 
   override exit() {
@@ -735,6 +738,31 @@ export class MapScene extends Scene {
     if (sp) return [SKY_S.x + sp[0], SKY_S.y + sp[1]];
     const p = RS_ISLE[id]?.p ?? [RS.w / 2, RS.h / 2];
     return [RS.x + p[0], RS.y + p[1]];
+  }
+
+  /**
+   * New islands on the chart (hotfix 2026-10-10): the chart glides to the sheet where the first one is drawn and rings
+   * every new one for a few seconds; their fresh ink is then «seen» (the O4 sheet has no ink of its own: marked here).
+   */
+  private showFreshIslands(fresh: RegionId[], calling?: RegionId) {
+    const drawn = new Set<string>([...this.rupturas, ...this.cielo, ...this.astral, ...mapO4Regions()].map((r) => r.id));
+    const ids = fresh.filter((id) => drawn.has(id));
+    if (!ids.length) return;
+    for (const id of ids) {
+      if (!beatSeen(`carta_${id}`)) markBeat(`carta_${id}`);
+      const [x, y] = this.islePos(id);
+      const ring = new Graphics().circle(0, 0, 96).stroke({ width: 7, color: C.red, alpha: 0.9 }).circle(0, 0, 112).stroke({ width: 3, color: C.ink, alpha: 0.5 });
+      ring.position.set(x, y);
+      ring.eventMode = 'none';
+      this.chart.addChild(ring);
+      gsap.fromTo(ring.scale, { x: 1.25, y: 1.25 }, { x: 0.92, y: 0.92, duration: 0.7, yoyo: true, repeat: 7, ease: 'sine.inOut' });
+      gsap.to(ring, { alpha: 0, delay: 5.6, duration: 0.6, onComplete: () => ring.destroy() });
+    }
+    G.save();
+    const first = ids.includes(calling as RegionId) ? (calling as RegionId) : ids[0];
+    gsap.delayedCall(0.7, () => {
+      if (!this.destroyed) this.focusIsle(first, true);
+    });
   }
 
   focusIsle(id: RegionId, animate = true, s = ZOOM_IN) {

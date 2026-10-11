@@ -159,7 +159,10 @@ describe('Oleada 3 — data', () => {
     const lev = STORY_BATTLES.ruptura_leviatan.rules!.fases!.phases;
     expect(lev.map((p) => p.env?.layer)).toEqual(['sea', 'sky', 'astral']);
     expect(lev.map((p) => p.env?.g ?? 1)).toEqual([1, 0.7, 0.25]);
-    expect(lev[1].at?.hp).toBeLessThan(lev[2].at!.hp!);
+    // hotfix 2026-10-10: the sky phase is where the Momento plays and it ENDS the fight (endsBattle, at the fight's real
+    // end); the rift stays as data (ids are forever) but is never reached
+    expect(lev[1].endsBattle).toBe(true);
+    expect(lev[1].at?.hp).toBeGreaterThanOrEqual(0.75);
     expect(lev.slice(1).every((p) => (p.telegraph ?? '').length > 20)).toBe(true);
     expect(STORY_BATTLES.ruptura_leviatan.reward.cat).toBe('l_jonas');
     expect([...O3.ASTRAL_BATTLES].sort()).toEqual(['ruptura_disruptores', 'ruptura_estrella']);
@@ -220,7 +223,10 @@ describe('Oleada 3 — data', () => {
 });
 
 // ------------------------------------------------------------------ FASES (battle/fases.ts)
-const LEV = (): BattleSpec['rules'] => ({ fases: { side: 1, phases: STORY_BATTLES.ruptura_leviatan.rules!.fases!.phases } });
+// the generic mechanism is tested on the Leviatán's three layers WITHOUT its ending flag (and with its sky at 34 %, as
+// it was before the hotfix) (in the story the Momento of
+// its sky phase ends the fight: tested below, «an ending phase…»)
+const LEV = (): BattleSpec['rules'] => ({ fases: { side: 1, phases: STORY_BATTLES.ruptura_leviatan.rules!.fases!.phases.map(({ endsBattle: _e, ...p }) => (p.id === 'cielo' ? { ...p, at: { hp: 0.34 } } : p)) } });
 
 describe('FASES — the generic multi-phase mechanism', () => {
   it('the multi-layer boss switches gravity / wind / bodies at its HP thresholds, announced by a sim event', () => {
@@ -254,6 +260,30 @@ describe('FASES — the generic multi-phase mechanism', () => {
     const c = makeBattle(spec(['c_canelo'], ['c_canelo'], LEV()), 7);
     hurt(c, 1, 0.4);
     expect(fases(F.fasesCheck(c))).toEqual([1, 2]);
+  });
+
+  it('an ending phase (endsBattle, where a Momento plays) ends the fight: the player wins there, its effects don\'t run', () => {
+    const phases = STORY_BATTLES.ruptura_leviatan.rules!.fases!.phases;
+    expect(phases.find((p) => p.id === 'cielo')?.endsBattle).toBe(true);
+    const b = makeBattle(spec(['c_canelo', 'c_satelito'], ['c_canelo', 'c_satelito'], { fases: { side: 1, phases } }), 7);
+    hurt(b, 1, 0.4); // past the 80 % ending threshold (and the old 67 % grieta): only the ending one is entered
+    const ev = F.fasesCheck(b);
+    expect(fases(ev)).toEqual([1]);
+    expect(b.winner).toBe(0);
+    expect(b.reason).toBe('momento');
+    expect(F.fasesState(b)!.layer).toBe('sky'); // its layer still shows (the view stages it under the Momento's cut)
+    expect(F.fasesCheck(b)).toEqual([]); // over: nothing more
+    // effects of an ending phase never run (no rules for a fight that is over)
+    const fx = { id: 'fin', name: 'Fin', at: { hp: 0.1 }, effects: ['heal10'], endsBattle: true };
+    const c = makeBattle(spec(['c_canelo'], ['c_canelo'], { fases: { side: 1, phases: [{ id: 'a', name: 'A' }, fx] } }), 7);
+    hurt(c, 1, 0.8);
+    const before = c.sides[1].ship.cells().reduce((a, k) => a + k.hp, 0);
+    expect(fases(F.fasesCheck(c))).toEqual([1]);
+    expect(c.sides[1].ship.cells().reduce((a, k) => a + k.hp, 0)).toBe(before);
+    expect(c.winner).toBe(0);
+    // the chip names the threshold as the final blow
+    const d = makeBattle(spec(['c_canelo'], ['c_canelo'], { fases: { side: 1, phases } }), 7);
+    expect(F.fasesChips(d)[0].map((k) => k.text)).toContain('GOLPE FINAL AL 80%');
   });
 
   it('a turn threshold works too; a planetoid stops shots; the ESCUDO absorbs the first foe impact per phase', () => {

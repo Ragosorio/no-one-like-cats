@@ -17,6 +17,8 @@ export interface ActionDef {
   color?: number;
   visible: () => boolean;
   badge?: () => string | null;
+  /** the button breathes while this holds (Parte II: a new island waits on the CARTA) */
+  pulse?: () => boolean;
 }
 
 class ActionButton extends Container {
@@ -53,7 +55,17 @@ class ActionButton extends Container {
   get w() {
     return this.def.big ? 210 : 128;
   }
+  private pulsing: gsap.core.Tween | null = null;
   refreshBadge() {
+    const p = !!this.def.pulse?.();
+    if (p !== !!this.pulsing) {
+      if (p) this.pulsing = gsap.to(this.face.scale, { x: 1.07, y: 1.07, duration: 0.55, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+      else {
+        this.pulsing?.kill();
+        this.pulsing = null;
+        this.face.scale.set(1);
+      }
+    }
     const b = this.def.badge?.() ?? null;
     const key = b ?? '';
     if (key === this.badgeText) return;
@@ -65,10 +77,13 @@ class ActionButton extends Container {
     const bw = Math.max(34, t.width + 16);
     const g = new Graphics().roundRect(-bw / 2, -15, bw, 30, 15).fill(C.red).stroke({ width: 3, color: C.ink });
     this.badge.addChild(g, t);
-    this.badge.position.set(this.w - 10, 4);
+    // a long badge («¡NUEVA ISLA!») stays over the button instead of hanging off the screen's edge
+    this.badge.position.set(Math.min(this.w - 10, this.w + 4 - bw / 2), 4);
     gsap.fromTo(this.badge.scale, { x: 0.3, y: 0.3 }, { x: 1, y: 1, duration: 0.3, ease: 'back.out(3)' });
   }
   override destroy(o?: Parameters<Container['destroy']>[0]) {
+    this.pulsing?.kill();
+    this.pulsing = null;
     if (this.newTag) gsap.killTweensOf(this.newTag);
     gsap.killTweensOf(this.face);
     gsap.killTweensOf(this.face.scale);

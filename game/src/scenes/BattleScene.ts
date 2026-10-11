@@ -2454,6 +2454,8 @@ export class BattleScene extends Scene {
     const reasonTxt =
       this.sim.reason === 'retreat'
         ? 'SE FUE… PERO SE ACUERDA DE TI'
+        : this.sim.reason === 'momento'
+        ? '¡LA PELEA ES TUYA!'
         : this.sim.reason === 'core'
         ? won
           ? 'LE REVENTASTE EL NÚCLEO'

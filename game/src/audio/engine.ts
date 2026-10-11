@@ -111,6 +111,10 @@ export function installAudio() {
     }, undefined),
     pauseMusic: safe('pauseMusic', (p: boolean) => player.setPaused(p), undefined),
     musicBoost: safe('musicBoost', (db: number) => player.setBoost(db), undefined),
+    solo: safe('solo', (on: boolean, o?: { fade?: number; key?: string; decks?: boolean }) => {
+      const fade = o?.fade ?? 0.25;
+      if (audio.solo(o?.key ?? 'api', on, fade) && o?.decks) player.hushDecks(on, fade);
+    }, undefined),
   };
   installAudioApi(api);
 
@@ -158,6 +162,7 @@ function installDevHook() {
       ambience: ambience.status(),
       duckDb: audio.duckDb,
       boost: player.boost,
+      soloed: audio.soloed,
       gains: { ...audio.gains, muted: audio.muted },
       mem: { ...mem },
       sched: { ...player.sched.stats },

@@ -5,16 +5,18 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import gsap from 'gsap';
-import { W } from '../core/App';
+import { W, game } from '../core/App';
 import { scenes } from '../core/scenes';
 import { settings } from '../core/settings';
 import { C, F } from '../ui/theme';
 import { poster, txt } from '../ui/widgets';
 import { toast } from '../ui/modal';
 import { followView } from '../ui/screen';
+import { overlaps, toastAvoidRects } from '../ui/toastAvoid';
 import { drawCover, drawVinyl } from './cover';
 import { resolveTrack, trackById } from './catalog';
 import type { UnlockEvent } from './fonoteca';
+import { versionsToast } from './versionsToast';
 
 const queue: UnlockEvent[] = [];
 let showing = false;
@@ -23,11 +25,26 @@ export function prettyId(id: string) {
   return id.replace(/[._-]+/g, ' ').trim().toUpperCase();
 }
 
+// new VERSIONS that arrive together (a save loading, a Momento's unlocks) make ONE toast, not a pile of them
+const versions: string[] = [];
+let versionsT: ReturnType<typeof setTimeout> | null = null;
+const VERSIONS_WINDOW_MS = 700;
+function flushVersions() {
+  versionsT = null;
+  const titles = versions.splice(0);
+  if (!titles.length) return;
+  const t = versionsToast(titles);
+  toast(t.text, { icon: 'star', sub: t.sub, color: C.mint, dur: titles.length > 1 ? 3.4 : undefined });
+}
+
 export function showUnlock(e: UnlockEvent) {
   const track = trackById(e.song);
   if (!e.firstOfSong) {
     const r = resolveTrack(e.ref);
-    toast(`NUEVA VERSIÓN: ${r?.title ?? prettyId(e.ref)}`, { icon: 'star', sub: 'Ya suena en tu Fonoteca.', color: C.mint });
+    const title = r?.title ?? prettyId(e.ref);
+    if (!versions.includes(title)) versions.push(title);
+    if (versionsT) clearTimeout(versionsT);
+    versionsT = setTimeout(flushVersions, VERSIONS_WINDOW_MS);
     return;
   }
   queue.push(e);
@@ -35,7 +52,18 @@ export function showUnlock(e: UnlockEvent) {
   void track;
 }
 
-function next() {
+/** the record card's corner is covered by something being read (an open panel, a dialog): wait for it (≤ 15 s) */
+function cornerBusy(): boolean {
+  const v = game.view;
+  const zone = { x: v.x + v.w - 40 - 620, y: v.y + 168, w: 620, h: 178 };
+  return toastAvoidRects(scenes.fxLayer).some((r) => overlaps(zone, r));
+}
+function next(waited = 0) {
+  if (queue.length && waited < 15000 && cornerBusy()) {
+    showing = true;
+    window.setTimeout(() => next(waited + 500), 500);
+    return;
+  }
   const e = queue.shift();
   if (!e) {
     showing = false;

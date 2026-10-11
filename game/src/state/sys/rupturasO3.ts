@@ -472,7 +472,9 @@ export const O3_SPECS: O3Spec[] = [
       {
         id: 'glitch',
         name: 'Fase glitch',
-        at: { hp: 0.5 },
+        // hotfix 2026-10-10: the Momento ENDS the fight → it waits for its real end (was 50 %)
+        at: { hp: 0.8 },
+        endsBattle: true,
         telegraph: 'ABREN GRIETAS: un tiro que entra por una sale por la otra… y cambia de dueño.',
         env: astral({ layer: 'glitch', portals: { a: { dx: -150, up: 470 }, b: { dx: 150, up: 300 }, r: 46 } }),
       },
@@ -481,7 +483,7 @@ export const O3_SPECS: O3Spec[] = [
     cata: { id: 'moon', by: 'LOS DISRUPTORES' },
     intro: [
       'EL VACÍO: todo pesa x0.25 y no hay viento. Escombros flotando tapan el centro (se rompen).',
-      'A la mitad abren GRIETAS: lo que entra por una sale por la otra y se vuelve del otro bando. No les tires a través.',
+      'Al 80% de daño llega el GOLPE FINAL.',
       'Su tripulación es de {void} Vacío y {storm} Tormenta. {crystal} Cristal y {earth} Tierra les pegan bien.',
     ],
     color: 0xff2e88,
@@ -507,7 +509,10 @@ export const O3_SPECS: O3Spec[] = [
       {
         id: 'cielo',
         name: 'El cielo',
-        at: { hp: 0.34 },
+        // hotfix 2026-10-10: the Momento ENDS the fight → it waits for its real end (was 34 %; «grieta» below no
+        // longer comes: kept as data, ids are forever)
+        at: { hp: 0.8 },
+        endsBattle: true,
         telegraph: 'TE ARRASTRA AL CIELO: todo pesa x0.7, el viento sopla x1.6 y una nube tapa el centro.',
         env: { g: 0.7, windMul: 1.6, layer: 'sky', bodies: [{ up: 430, r: 62, hp: 0.04, look: 'cloud' }] },
       },
@@ -523,8 +528,7 @@ export const O3_SPECS: O3Spec[] = [
     astral: false,
     cata: { id: 'tide', by: 'EL LEVIATÁN' },
     intro: [
-      'TRES CAPAS: empieza en el MAR. Al 34% de daño te arrastra al CIELO (x0.7, viento x1.6). Al 67%, a la GRIETA ASTRAL (x0.25, sin viento).',
-      'Cada capa cambia cómo vuelan los tiros: mira la línea de tiro después de cada cambio.',
+      'Se pelea en el MAR. Al 80% de daño llega el GOLPE FINAL.',
       'Lo cuidan sus cadenas: una tripulación de varios mundos. Ningún elemento les pega bien a todos: mezcla.',
     ],
     color: 0x2e3a5a,

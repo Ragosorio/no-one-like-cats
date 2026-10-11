@@ -386,7 +386,8 @@ export interface SideBuffs {
   fin: { module: number; turns: number; dmg: number; by: string }[];
 }
 
-export type VictoryReason = 'core' | 'crew' | 'sunk' | 'retreat';
+/** 'momento': the fight ended on a phase with `endsBattle` (battle/fases.ts) — a «Momento musical» closes it */
+export type VictoryReason = 'core' | 'crew' | 'sunk' | 'retreat' | 'momento';
 
 /** GDD material table (content.materials): multiplier per element of the shot; 'storm' = sim 'electric' */
 export const MAT_RESIST: Record<string, Partial<Record<ElementId, number>>> = (() => {

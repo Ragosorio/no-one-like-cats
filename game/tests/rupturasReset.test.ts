@@ -278,10 +278,13 @@ describe('mid-Oleada 1 (H35 active)', () => {
     expect(snaps[0].liveBeats).toContain('carta_paginas');
     expect(G.s.beatsSeen).not.toContain('carta_paginas');
     expect(G.s.beatsSeen).toContain('b30_creditos');
-    expect(G.s.flags['region:paginas']).toBeUndefined();
+    // hotfix 2026-10-10 (owner: «haz que todas las islas aparezcan»): an island the save already had stays on the
+    // CARTA through the reset (KNOWN ISLANDS, rupturas.ts knownRegions); only this pass's visit is cleared
+    expect(G.s.flags['region:paginas']).toBe(true);
+    expect((G.s.ext?.rupturas as { known?: string[] }).known).toContain('paginas');
     expect(G.s.flags['won_ruptura_paginas']).toBeUndefined();
     expect(G.s.flags['region_visited:paginas']).toBeUndefined();
-    expect(R.mapRegions()).toEqual([]);
+    expect(R.mapRegions().map((r) => r.id)).toEqual(['paginas']);
     // page read again for free: the flag is cleared, the gold stays claimed in the ledger
     expect(G.s.flags['pagina_leida:1']).toBeFalsy();
     expect(L.rewardClaimed('pagina:1')).toBe(true);
@@ -321,7 +324,9 @@ describe('Oleada 1 finished (H41 done, Canelo Almirante, Cristal)', () => {
     expect(G.s.crystals.crystal).toBeGreaterThanOrEqual(20);
     for (const sp of ['c_marcapaginas', 'l_bibliotecario', 'c_brillito', 'l_madrenacar', 'c_espumita']) expect(G.s.cats.some((c) => c.species === sp), sp).toBe(true);
     // narrative gates: the puzzle and the golden page can be played again
-    for (const f of ['oleada1_fin', 'nacar_haz_ok', 'pagina_canelo_vista', 'region:nacar', 'region:paginas', 'won_ruptura_corrector', 'event_done_ruptura_nacar']) expect(G.s.flags[f], f).toBeUndefined();
+    for (const f of ['oleada1_fin', 'nacar_haz_ok', 'pagina_canelo_vista', 'won_ruptura_corrector', 'event_done_ruptura_nacar']) expect(G.s.flags[f], f).toBeUndefined();
+    // known islands stay on the CARTA (hotfix 2026-10-10)
+    for (const f of ['region:nacar', 'region:paginas']) expect(G.s.flags[f], f).toBe(true);
     expect(G.s.counters.feature_haz_nacar).toBe(0);
     expect(R.nacarHazOk()).toBe(false);
     expect(claimed()).toEqual(

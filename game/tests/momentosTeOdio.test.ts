@@ -169,10 +169,12 @@ describe('H55: the same battle with or without the Momento', () => {
     }) as unknown as Spec;
     const play = (sp: Spec) => {
       const log: string[] = [];
+      let last: Parameters<typeof faseIndex>[0] | null = null;
       const res = autoBattle(sp, DIFFICULTY.normal, 5555, 40, (b, side, shot) => {
+        last = b;
         log.push(`${b.turn}|${side}|${shot}|${faseIndex(b)}|${b.sides[0].ship.cells().reduce((a, c) => a + c.hp, 0)}|${b.sides[1].ship.cells().reduce((a, c) => a + c.hp, 0)}`);
       });
-      return { res, log };
+      return { res, log, fin: last ? faseIndex(last) : -1 };
     };
     const a = play(spec());
     const b = play(structuredClone(spec()));
@@ -188,11 +190,14 @@ describe('H55: the same battle with or without the Momento', () => {
     expect(b.log).toEqual(a.log);
     expect(c.res).toEqual(a.res);
     expect(c.log).toEqual(a.log);
-    // the fight really crossed into the glitch phase (where the Momento plays), once, forward
+    // the fight really crossed into the glitch phase (where the Momento plays) — and, owner's rule (2026-10-10), that
+    // ENDS it: the player wins right there (FaseDef.endsBattle), deterministically
     const phases = a.log.map((l) => Number(l.split('|')[3]));
     expect(faseIndex(makeBattle(spec(), 5555))).toBe(0);
-    expect(phases).toContain(1);
     expect([...phases].sort((x, y) => x - y)).toEqual(phases);
+    expect(a.res.won).toBe(true);
+    expect(a.fin).toBe(1);
+    expect(rules.fases!.phases.find((p) => p.id === 'glitch')?.endsBattle).toBe(true);
     expect(momentoForFase('ruptura_disruptores', 'glitch')?.id).toBe('te_odio');
   }, 240_000);
 });

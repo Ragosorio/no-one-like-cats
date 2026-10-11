@@ -29,13 +29,14 @@ export type Bus = 'master' | 'music' | 'sfx' | 'ambient' | 'voice';
 /**
  * Bus graph (docs/part-ii/19-audio-arquitectura.md):
  *
- *   procBus (Part I procedural music) ─┐
- *   music decks (src/audio/player) ────┴► musicBus ─► musicDuck ─┐
+ *   procBus (Part I procedural music) ─► procGate ─┐
+ *   music decks (src/audio/player) ────────────────┴► musicBus ─► musicDuck ─┐
  *   ambience beds ───────────────────────► ambientBus ─► ambDuck ─┤
  *   sfx voices ──────────────────────────► sfxBus ────────────────┼─► master ─► compressor ─► out
  *   voice lines ─────────────────────────► voiceBus ──────────────┘
  *
  * Bus gains = slider² (core/settings.ts). Ducks are keyed (dialog, api, stinger…): the deepest wins.
+ * SOLO (keyed, a Momento): sfxBus / ambientBus / voiceBus / procGate fade to 0, only the music decks are heard.
  */
 class AudioEngine {
   ctx: AudioContext | null = null;
@@ -46,6 +47,8 @@ class AudioEngine {
   voiceBus!: GainNode;
   /** Part I procedural music submix (core/music.ts) → musicBus; the director fades it against file music */
   procBus!: GainNode;
+  /** SOLO gate of the procedural submix (procBus → procGate → musicBus): the director owns procBus.gain */
+  procGate!: GainNode;
   musicDuck!: GainNode;
   ambDuck!: GainNode;
   private noiseBuf: AudioBuffer | null = null;
@@ -87,7 +90,8 @@ class AudioEngine {
     this.ambientBus = bus(this.ambDuck);
     this.sfxBus = bus(this.master);
     this.voiceBus = bus(this.master);
-    this.procBus = bus(this.musicBus);
+    this.procGate = bus(this.musicBus);
+    this.procBus = bus(this.procGate);
     this.applyGains(true);
     const len = ctx.sampleRate * 1;
     this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -123,21 +127,46 @@ class AudioEngine {
     this.sfxVolume = this.gains.sfx;
     this.applyGains();
   }
-  private applyGains(instant = false) {
+  private applyGains(instant = false, tc = 0.03) {
     const ctx = this.ctx;
     if (!ctx) return;
     const set = (p: AudioParam, v: number) => {
       if (instant) p.value = v;
       else {
         p.cancelScheduledValues(ctx.currentTime);
-        p.setTargetAtTime(v, ctx.currentTime, 0.03);
+        p.setTargetAtTime(v, ctx.currentTime, tc);
       }
     };
+    // SOLO (a Momento): only the music decks are heard — sfx, ambience beds, voices and the procedural submix fade out
+    const gate = this.solos.size ? 0 : 1;
     set(this.master.gain, this.muted ? 0 : this.gains.master);
     set(this.musicBus.gain, this.gains.music);
-    set(this.sfxBus.gain, this.gains.sfx);
-    set(this.ambientBus.gain, this.gains.ambient);
-    set(this.voiceBus.gain, this.gains.voice);
+    set(this.sfxBus.gain, this.gains.sfx * gate);
+    set(this.ambientBus.gain, this.gains.ambient * gate);
+    set(this.voiceBus.gain, this.gains.voice * gate);
+    set(this.procGate.gain, gate);
+  }
+
+  private solos = new Map<string, number>();
+  /**
+   * Keyed SOLO of the music decks (a Momento musical: only its song sounds). While any hold is on, the sfx bus, the
+   * ambience beds (sea, wind, loops), the voices and the procedural submix fade out over ~`fade` s; the last release
+   * brings them back the same way. Every `on` needs its `off` (same key). Never touches the player's settings.
+   * Returns true when the solo state changed (first hold on / last hold off).
+   */
+  solo(key: string, on: boolean, fade = 0.25): boolean {
+    const n = this.solos.get(key) ?? 0;
+    const was = this.solos.size > 0;
+    if (on) this.solos.set(key, n + 1);
+    else if (n <= 1) this.solos.delete(key);
+    else this.solos.set(key, n - 1);
+    const changed = was !== this.solos.size > 0;
+    if (changed) this.applyGains(false, Math.max(0.01, fade / 3));
+    return changed;
+  }
+  /** is a SOLO hold on? */
+  get soloed() {
+    return this.solos.size > 0;
   }
   bus(b: Bus): GainNode | null {
     if (!this.ctx) return null;

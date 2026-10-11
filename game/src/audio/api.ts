@@ -98,6 +98,14 @@ export interface AudioApi {
   /** (ext) play the music decks `db` louder (0 = normal). Momentos: their original sounds up front (doc 29 §6) */
   musicBoost(db: number): void;
   /**
+   * (ext) SOLO the music decks (keyed holds, default key 'api'): while on, every other sound — battle / game sfx, the
+   * ambience beds (sea, waves, wind, loops), voices, the procedural music — fades out over `fade` s (default 0.25) and
+   * comes back when the last hold is released. `decks`: the music decks playing at that moment (the battle's song,
+   * the island's) fade out too and come back on release if still playing — the NEXT cue (the Momento's song) plays
+   * normally. Momentos: only their song sounds (doc 29 §6).
+   */
+  solo(on: boolean, opts?: { fade?: number; key?: string; decks?: boolean }): void;
+  /**
    * (ext) gains (0..1) of a track's in-sync LAYERS (tracks.json `layers`, src/audio/layers.ts), by layer id; layers not
    * named are silent; null = the track's defaults. Kept per track: applies now if it plays, else when it starts.
    * e.g. setLayers('amb.suenos', { calido: 1, magia: 0.6 }, { fade: 3 }). No-op for tracks without layers.
@@ -124,6 +132,7 @@ const impl: AudioApi = {
   unprepare: noop,
   pauseMusic: noop,
   musicBoost: noop,
+  solo: noop,
   setLayers: noop,
 };
 

@@ -61,6 +61,7 @@ import {
 } from './paginas/props';
 import { drawGoldenPage } from './paginas/pageArt';
 import { BIOS, DIARIO, HOW, LOOSE, REGISTRO_CARD, REGISTRO_LINES } from './paginas/lore';
+import { looseFlag, nextPage, pagesLeft, type PageReader } from './paginas/readPages';
 
 /** the region's lens: warm paper days, sepia haze, ink-blue nights (never black: cats must read) */
 const SKY: SkyKey[] = [
@@ -481,13 +482,19 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
     const free = SPAWNS.map((_, i) => i).filter((i) => !used.has(i));
     return free[Math.floor(Math.random() * free.length)];
   };
+  // pages already read never float again (regions/paginas/readPages.ts): at most as many as are left to read
+  const reader: PageReader = { has: (f) => ctx.has(f), claimed: (k) => rewardClaimed(k) };
+  const left = () => pagesLeft(reader, LOOSE.length);
+  const startLeft = left();
   for (let i = 0; i < 3; i++) {
     const mesh = new THREE.Mesh(pageGeo, fishMat);
     mesh.frustumCulled = false;
     root.add(mesh);
     const spot = pickSpot();
-    used.add(spot);
-    fish.push({ mesh, pos: SPAWNS[spot].clone(), mark: SPAWNS[spot].clone(), base: SPAWNS[spot].clone(), state: 'idle', t: 0, spot, respawn: 0, ph: Math.random() * 6.28 });
+    const on = i < startLeft;
+    if (on) used.add(spot);
+    else mesh.visible = false;
+    fish.push({ mesh, pos: SPAWNS[spot].clone(), mark: SPAWNS[spot].clone(), base: SPAWNS[spot].clone(), state: on ? 'idle' : 'gone', t: 0, spot, respawn: on ? 0 : 1e9, ph: Math.random() * 6.28 });
   }
   const fishLights: LocalLight[] = fish.map((f) => ({ pos: f.pos, color: new THREE.Color('#ffd27a'), range: 4.5, intensity: 0.9 }));
   lights.push(...fishLights);
@@ -547,7 +554,10 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
   audioApi.setState('explore_mystery', { context: 'paginas', fade: 2.5 });
   audioApi.ambience('sea', { fade: 2 });
 
-  const nextLore = () => DIARIO.find((p) => !ctx.has(`pagina_leida:${p.n}`)) ?? null;
+  const nextLore = () => {
+    const nx = nextPage(reader, LOOSE.length, DIARIO.length);
+    return nx?.kind === 'diario' ? (DIARIO.find((p) => p.n === nx.n) ?? null) : null;
+  };
   const catchPage = async (f: Fish) => {
     if (busy || f.state !== 'idle') return;
     busy = true;
@@ -569,10 +579,16 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
         ['CAPTION', lore.page],
         ['LUZTERNA', lore.luz],
       ]);
-      const left = DIARIO.filter((p) => !ctx.has(`pagina_leida:${p.n}`)).length;
-      if (alive) ctx.toast(left ? `DIARIO PERDIDO: ${8 - left}/8` : '¡DIARIO PERDIDO COMPLETO!', left ? 'Sigue pescando párrafos: flotan por toda la isla.' : 'Luzterna ya no quiere leer más. Tú sí, ¿verdad?');
+      const unread = DIARIO.filter((p) => !ctx.has(`pagina_leida:${p.n}`) && !rewardClaimed(`pagina:${p.n}`)).length;
+      if (alive) ctx.toast(unread ? `DIARIO PERDIDO: ${DIARIO.length - unread}/${DIARIO.length}` : '¡DIARIO PERDIDO COMPLETO!', unread ? 'Sigue pescando párrafos: flotan por toda la isla.' : 'Luzterna ya no quiere leer más. Tú sí, ¿verdad?');
     } else {
-      await ctx.say(LOOSE[Math.floor(Math.random() * LOOSE.length)]);
+      // each loose page once (never the same one twice); when none is left, no page floats any more
+      const nx = nextPage(reader, LOOSE.length, DIARIO.length);
+      if (nx?.kind === 'loose') {
+        ctx.flag(looseFlag(nx.i));
+        await ctx.say(LOOSE[nx.i]);
+        if (alive && !left()) ctx.toast('NO QUEDAN PÁGINAS SUELTAS', 'Ya leíste todo lo que flotaba en la isla.');
+      }
     }
     busy = false;
   };
@@ -758,9 +774,14 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
         floatMesh.setMatrixAt(i, tmpO.matrix);
       });
       floatMesh.instanceMatrix.needsUpdate = true;
-      // fishing pages
+      // fishing pages (never more floating than there are pages left to read: the extra ones fly off)
+      let budget = left();
       fish.forEach((f, i) => {
         f.t += dt;
+        if (f.state === 'idle' && budget-- <= 0) {
+          f.state = 'caught';
+          f.t = 0;
+        }
         if (f.state === 'idle') {
           f.pos.set(f.base.x + Math.cos(t * 0.35 + f.ph) * 1.2, f.base.y + Math.sin(t * 1.3 + f.ph) * 0.35, f.base.z + Math.sin(t * 0.35 + f.ph) * 1.2);
           f.mesh.visible = true;
@@ -783,7 +804,7 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
             f.mesh.visible = false;
             used.delete(f.spot);
           }
-        } else if (f.t > f.respawn) {
+        } else if (f.t > f.respawn && budget > 0 && left() > fish.filter((o) => o.state !== 'gone').length) {
           const spot = pickSpot();
           // never pop in right in front of the camera
           if (spot !== undefined && SPAWNS[spot].distanceTo(camPos) > 14) {

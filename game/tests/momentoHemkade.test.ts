@@ -168,10 +168,12 @@ describe('H57: the same battle with or without the Momento', () => {
     }) as unknown as Spec;
     const play = (sp: Spec) => {
       const log: string[] = [];
+      let last: Parameters<typeof faseIndex>[0] | null = null;
       const res = autoBattle(sp, DIFFICULTY.normal, 5757, 40, (b, side, shot) => {
+        last = b;
         log.push(`${b.turn}|${side}|${shot}|${faseIndex(b)}|${b.field.gMul}|${b.sides[0].ship.cells().reduce((a, c) => a + c.hp, 0)}|${b.sides[1].ship.cells().reduce((a, c) => a + c.hp, 0)}`);
       });
-      return { res, log };
+      return { res, log, fin: last ? faseIndex(last) : -1 };
     };
     const a = play(spec());
     const b = play(structuredClone(spec()));
@@ -187,11 +189,13 @@ describe('H57: the same battle with or without the Momento', () => {
     expect(b.log).toEqual(a.log);
     expect(c.res).toEqual(a.res);
     expect(c.log).toEqual(a.log);
-    // the fight really crossed the sea → sky change (where the Momento plays)
+    // the fight really crossed the sea → sky change (where the Momento plays) — owner's rule 2026-10-10: it ENDS there
+    // (endsBattle: at its threshold, or on the winning shot), so a won fight finishes inside the sky phase
     const phases = a.log.map((l) => Number(l.split('|')[3]));
     const { makeBattle } = await import('../src/battle/autoplay');
     expect(faseIndex(makeBattle(spec(), 5757))).toBe(0);
-    expect(phases).toContain(1);
+    if (a.res.won) expect(a.fin).toBe(1);
+    else expect(a.fin).toBe(0); // lost before the end: the Momento never plays
     expect([...phases].sort((x, y) => x - y)).toEqual(phases);
     expect(faseInterlude(HEMKADE_HOOK.battle, HEMKADE_HOOK.fase)).toBeTypeOf('function');
   }, 240_000);

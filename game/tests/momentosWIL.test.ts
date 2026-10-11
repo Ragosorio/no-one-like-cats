@@ -166,11 +166,15 @@ describe('H35: the phase split is presentation only', () => {
       expect(p.effects).toBeUndefined();
       expect(p.banner).toBe(false);
     }
+    // owner's rule (2026-10-10): the Momento ENDS the battle — its phase is an ending one
+    expect(ph[1].endsBattle).toBe(true);
     expect(sp.rules?.noise).toBeTruthy();
     const { onEnd: _drop, ...plain } = sp;
     expect(() => structuredClone(plain)).not.toThrow();
   });
-  it('the same seeds give the same fight, shot by shot, with and without the split (and the Momento comes in most fights)', async () => {
+  // owner's rule (2026-10-10): the Momento ENDS the battle. Up to the threshold the fight is the same, shot by shot,
+  // with and without the split; at the threshold (FaseDef.endsBattle) the sim declares the player's victory
+  it('the same seeds give the same fight up to the Momento, which ends it in a deterministic victory (and comes in most fights)', async () => {
     await load();
     const { buildStoryBattle } = await import('../src/state/sys/storyBattles');
     const { autoBattle } = await import('../src/battle/autoplay');
@@ -193,9 +197,15 @@ describe('H35: the phase split is presentation only', () => {
     for (const seed of seeds) {
       const a = play(sp, seed);
       const b = play(without, seed);
-      expect(a.res).toEqual(b.res);
-      expect(a.log).toEqual(b.log);
-      if (a.reached > 0) reached++;
+      // the same fight, shot by shot, until the split…
+      expect(a.log).toEqual(b.log.slice(0, a.log.length));
+      // …where it ends: the player wins, right there (screen = estimate: same spec, same seed)
+      expect(play(structuredClone(plain) as typeof sp, seed).res).toEqual(a.res);
+      if (a.res.reason === 'momento') {
+        expect(a.res.won).toBe(true);
+        expect(a.res.turns).toBeLessThanOrEqual(b.res.turns);
+      } else expect(a.res).toEqual(b.res); // won (or lost) before the threshold: the very same fight
+      if (a.res.won) reached++; // every won fight ends on the Momento (at its threshold or on the winning shot)
     }
     expect(reached).toBeGreaterThanOrEqual(seeds.length - 1);
   }, 600_000); // 12 full fights: slow only when the machine is loaded (several agents); alone it takes ~40 s

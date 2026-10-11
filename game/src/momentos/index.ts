@@ -111,6 +111,10 @@ export async function playMomento(id: string, o: PlayMomentoOpts = {}): Promise<
     return null;
   }
   hush('momento', true);
+  // only the Momento's song is heard: the music that was playing (the battle's song), battle / game sfx, the sea, the
+  // wind, ambience loops and voices fade out now (short fade) and come back after the cut (doc 29 §6). The Momento's
+  // song is a NEW cue on the music decks: it plays normally.
+  if (!o.scrub) audioApi.solo(true, { key: 'momento', fade: 0.3, decks: true });
   let run: MomentoRun | null = null;
   let snap: Texture | null = null;
   const hidden: { c: { renderable: boolean }; was: boolean }[] = [];
@@ -183,6 +187,7 @@ export async function playMomento(id: string, o: PlayMomentoOpts = {}): Promise<
     }
     snap?.destroy(true);
     playing = null;
+    if (!o.scrub) audioApi.solo(false, { key: 'momento', fade: 0.6, decks: true });
     hush('momento', false);
   }
 }

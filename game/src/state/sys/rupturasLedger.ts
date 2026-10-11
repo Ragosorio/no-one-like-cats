@@ -29,6 +29,8 @@ export interface RupturasExt {
   claimed: Record<string, number>;
   /** the narrative reset applied to this save (rupturasReset.ts): what it moved, for support / rollback */
   reset?: { v: number; at: number; done: string[]; active: string[]; beats: string[]; flags: string[]; counters: Record<string, number> };
+  /** KNOWN ISLANDS (rupturas.ts knownRegions): region ids this save has had on its chart — they stay, reset or not */
+  known?: string[];
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);

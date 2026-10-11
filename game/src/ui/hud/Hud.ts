@@ -30,6 +30,7 @@ import { workersUnlocked } from '../../state/sys/workforce';
 import { autoHarvestOn, bankUnlocked, fishBuffer } from '../../state/sys/island';
 import { toast } from '../modal';
 import { podioUnlocked } from '../../state/sys/podio';
+import { freshChartIslands } from '../../state/sys/rupturas';
 import { fonotecaAvailable } from '../../audio/fonoteca';
 
 /** panels owned by agents that may not exist yet: resolved lazily with import.meta.glob (never a hard import) */
@@ -197,7 +198,8 @@ export class Hud extends Container {
       { id: 'catdex', label: 'CATDEX', glyph: 'book', onTap: () => openCatdex(), visible: () => u().catdex },
       { id: 'shipyard', label: 'ASTILLERO', glyph: 'anchor', onTap: () => openShipyard(), visible: () => u().shipyard },
       island
-        ? { id: 'sail', label: '¡ZARPAR!', glyph: 'ship', onTap: () => goMap(), visible: () => u().sail, big: true, color: C.pinkHot }
+        ? // Parte II: a new island is drawn on the CARTA (not next to yours): the button says so until you look
+          { id: 'sail', label: '¡ZARPAR!', glyph: 'ship', onTap: () => goMap(), visible: () => u().sail, big: true, color: C.pinkHot, badge: () => (freshChartIslands().length ? '¡NUEVA ISLA!' : null), pulse: () => freshChartIslands().length > 0 }
         : { id: 'island', label: 'ISLA', glyph: 'palm', onTap: () => goIsland(), visible: () => true, big: true, color: C.megaBlue },
       { id: 'missions', label: 'MISIONES', glyph: 'scroll', onTap: () => openMissions(), visible: () => true, badge: () => (G.s.missions.active.length ? String(G.s.missions.active.length) : null) },
       { id: 'workers', label: 'OFICIOS', glyph: 'tools', onTap: () => void import('../../panels/island/WorkersPanel').then((m) => m.openWorkers()), visible: () => island && workersUnlocked() },

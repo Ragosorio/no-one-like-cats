@@ -241,11 +241,16 @@ export class BattleMusic {
   /**
    * The Momento is over: signals that arrived meanwhile (the phase it staged: 'fase:<id>') are evaluated now, and the
    * first jump re-syncs the clock from scratch (the song playing is the Momento's, not ours). No rule fires → the plan's
-   * song comes back at its loop start on the next bar.
+   * song comes back at its loop start on the next bar. `over`: the Momento ended the fight — nothing is re-cued.
    */
-  resume() {
+  resume(over = false) {
     if (!this.suspended || this.disposed) return;
     this.suspended = false;
+    // the Momento ENDED the battle (FaseDef.endsBattle): no battle song comes back — onFinish() plays the ending
+    if (over) {
+      this.signals.length = 0;
+      return;
+    }
     this.afterSuspend = true;
     const before = this.goCalls;
     while (this.signals.length) this.evaluate({ kind: 'signal', name: this.signals.shift()! });

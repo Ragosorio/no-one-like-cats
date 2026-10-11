@@ -650,22 +650,27 @@ describe('Oleada 4 — battles', () => {
     }
   }, 240_000);
 
-  it('H62 reaches EL PLAN (the Momento\'s phase change) and the same seed replays the same fight', () => {
+  it('H62 reaches EL PLAN (the Momento\'s phase change), which ENDS the fight in a victory; the same seed replays the same fight', () => {
     loadEnv(fixture('rupturas-o4'));
     const sp = buildStoryBattle('umbral_correctores', () => undefined);
     const run = () => {
       const log: string[] = [];
       let maxFase = 0;
+      let last: Parameters<typeof F.faseIndex>[0] | null = null;
       const r = autoBattle(sp, DIFFICULTY.normal, 777, 30, (b, side, shot) => {
+        last = b;
         maxFase = Math.max(maxFase, F.faseIndex(b));
         log.push(`${b.turn}|${side}|${F.faseIndex(b)}|${shot}`);
       });
-      return { r, log, maxFase };
+      return { r, log, maxFase, fin: last ? F.faseIndex(last) : -1 };
     };
     const a = run();
     const b = run();
     expect(b.log).toEqual(a.log);
     expect(b.r).toEqual(a.r);
-    expect(a.maxFase).toBe(1);
+    // owner's rule (2026-10-10): the Momento ends the battle — EL PLAN is the last thing that happens
+    expect(sp.rules?.fases?.phases[1].endsBattle).toBe(true);
+    // a won fight always ends inside EL PLAN (the Momento is the finishing blow: at its threshold, or on the winning shot)
+    expect(a.fin).toBe(a.r.won ? 1 : 0);
   }, 240_000);
 });

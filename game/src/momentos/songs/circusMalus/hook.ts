@@ -1,6 +1,6 @@
 /**
  * The H62 interlude (Pixi side, lazy): the battle on screen hands the music and the frame to the Momento, which plays
- * between «La Corrección» and «El Plan»; the fight resumes on the next turn in the new phase. Presentation only.
+ * at «El Plan», which ENDS the fight (FaseDef.endsBattle, owner's rule 2026-10-10): the victory follows the cut.
  */
 import { scenes } from '../../../core/scenes';
 import { runBattleMomento } from '../../battle';
@@ -8,7 +8,8 @@ import { CIRCUS_MALUS } from './score';
 
 interface BattleLike {
   spec: { player: { cats: { slug: string }[] } };
-  music?: { suspend?: () => void; resume?: () => void } | null;
+  music?: { suspend?: () => void; resume?: (over?: boolean) => void } | null;
+  sim?: { winner: 0 | 1 | null };
   destroyed: boolean;
 }
 

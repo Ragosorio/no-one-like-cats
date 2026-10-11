@@ -14,7 +14,7 @@ import { game } from '../core/App';
 import { Button, txt } from '../ui/widgets';
 import { C, F } from '../ui/theme';
 import { toast } from '../ui/modal';
-import { say } from '../ui/dialog';
+import { dialogActive, say } from '../ui/dialog';
 import { G } from '../state/game';
 import { MISSION_BY_ID, CAT_BY_ID } from '../data/content';
 import { settings } from '../core/settings';
@@ -51,6 +51,9 @@ function startTier(): Tier {
   const q = (settings as unknown as { quality3d?: string }).quality3d;
   return q && (TIERS as string[]).includes(q) ? (q as Tier) : 'alto';
 }
+
+/** «Calidad 3D» was already told this session (RegionScene.tellTierDrop) */
+let tierToldThisSession = false;
 
 export class RegionScene extends Scene {
   private world: World3D | null = null;
@@ -129,7 +132,7 @@ export class RegionScene extends Scene {
       rupture: region.rupture,
       fog: region.fog,
       camera: { target: new THREE.Vector3(...cam.target), yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist, minDist: cam.minDist, maxDist: cam.maxDist, bound: cam.bound },
-      onTierDrop: (t) => toast(`Calidad 3D: ${t.toUpperCase()}`, { sub: 'La bajé para que todo vaya fluido.', dur: 2.5 }),
+      onTierDrop: (t) => this.tellTierDrop(t),
     });
     this.world = world;
     const onResize = () => world.resize();
@@ -269,9 +272,28 @@ export class RegionScene extends Scene {
   }
 
   // ------------------------------------------------------------------ HUD
+  /**
+   * «Calidad 3D: …» once per session (not on every island, not on every step down) and never in the middle of a
+   * reading: it waits for the dialog / caption to close (hotfix 2026-10-10).
+   */
+  private tellTierDrop(t: string) {
+    if (tierToldThisSession) return;
+    tierToldThisSession = true;
+    const show = (tries: number) => {
+      if (this.gone) return;
+      if (dialogActive() && tries < 60) return void window.setTimeout(() => show(tries + 1), 1000);
+      toast(`Calidad 3D: ${t.toUpperCase()}`, { sub: 'La bajé para que todo vaya fluido.', dur: 2.5 });
+    };
+    show(0);
+  }
+
+  /** the island's name plate (top-left): it steps aside while a caption / dialog is up (they sit in the same corner) */
+  private plate: Container | null = null;
+
   private drawHud(region: RegionDef) {
     const v = game.view;
     const plate = new Container();
+    this.plate = plate;
     const name = txt(region.name.toUpperCase(), { fontFamily: F.poster, fontSize: 40, fill: C.ink });
     const sub = txt(region.subtitle, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink });
     // (46 touched the poster caps: «ARCHIPIÉLAGO…» sat on its subtitle)
@@ -409,6 +431,11 @@ export class RegionScene extends Scene {
   }
 
   update(dt: number) {
+    if (this.plate && !this.plate.destroyed) {
+      const want = dialogActive() ? 0 : 1;
+      this.plate.alpha += (want - this.plate.alpha) * Math.min(1, dt * 10);
+      this.plate.visible = this.plate.alpha > 0.02;
+    }
     const w = this.world;
     if (!w) return;
     if (!this.def?.hour && !this.cine) w.hour = this.realHour();

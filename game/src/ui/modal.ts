@@ -7,6 +7,7 @@ import { sfx } from '../core/audio';
 import { scenes } from '../core/scenes';
 import { whenCalm } from './hush';
 import { icon, IconKind } from './icons';
+import { freeY, markToastAvoid, toastAvoidRects } from './toastAvoid';
 
 /**
  * Poster-style modal: dim backdrop, paper panel, title band, close button.
@@ -41,6 +42,8 @@ export class Modal extends Container {
     this.panel = new Panel(w, h, { color: opts.color ?? C.paper, offset: 14 });
     this.panel.position.set((W - w) / 2, (H - h) / 2);
     this.panel.eventMode = 'static';
+    // a toast never covers an open panel's content (ui/toastAvoid.ts)
+    markToastAvoid(this.panel);
     const band = new Graphics().rect(0, 0, w, 86).fill(opts.band ?? C.ink);
     const t = poster(title.toUpperCase(), 64, opts.bandText ?? C.paper);
     t.position.set(28, 4);
@@ -121,8 +124,10 @@ let toastY = 0;
 /** Slide-in banner near the top. Non-blocking (T1 feedback). */
 /** toasts on screen by content: the same message again refreshes the one showing (no stacks of clones) */
 const live = new Map<string, { c: Container; fade: gsap.core.Tween }>();
+/** toasts waiting for a free band of the screen (by content) */
+const waitingToasts = new Set<string>();
 
-export function toast(text: string, o: { icon?: IconKind; color?: number; sub?: string; dur?: number; force?: boolean } = {}) {
+export function toast(text: string, o: { icon?: IconKind; color?: number; sub?: string; dur?: number; force?: boolean; waited?: number } = {}) {
   const key = `${text}\u0000${o.sub ?? ''}`;
   // a scene is playing (src/ui/hush.ts): the toast waits for it to end (same message = one toast)
   if (!o.force && whenCalm(() => toast(text, o), `toast:${key}`)) return;
@@ -154,23 +159,52 @@ export function toast(text: string, o: { icon?: IconKind; color?: number; sub?: 
   const bg = new Graphics().rect(6, 6, w, h).fill(C.ink).rect(0, 0, w, h).fill(o.color ?? C.yellow).stroke({ width: 4, color: C.ink });
   c.addChildAt(bg, 0);
   c.addChild(t);
-  const y = 130 + toastY;
-  toastY += h + 14;
+  // never over what the player is reading (an open panel's body, a dialog, a caption card: ui/toastAvoid.ts): the
+  // usual spot if it's free, else a free band of the screen; none at all → wait a moment (≤ 2.4 s), then shrink to fit
+  const layer = toastLayer();
+  const rects = toastAvoidRects(layer);
+  const want = 130 + toastY;
+  let y = freeY(W / 2, w, h, want, rects, 96, H - 24);
+  let k = 1;
+  if (y === null) {
+    const waited = o.waited ?? 0;
+    if (waited < 2400) {
+      c.destroy({ children: true });
+      if (!waited && waitingToasts.has(key)) return; // the same message is already waiting
+      waitingToasts.add(key);
+      window.setTimeout(() => {
+        waitingToasts.delete(key);
+        toast(text, { ...o, waited: waited + 400 });
+      }, 400);
+      return;
+    }
+    // still no room: the widest band above / below the obstacles, scaled down
+    const topEdge = Math.min(...rects.map((r) => r.y));
+    const botEdge = Math.max(...rects.map((r) => r.y + r.h));
+    const above = topEdge - 16;
+    const below = H - 16 - botEdge;
+    const band = Math.max(above, below);
+    k = Math.max(0.5, Math.min(1, band / h));
+    y = above >= below ? Math.max(4, topEdge - 10 - h * k) : botEdge + 10;
+  }
+  const stacked = y === want;
+  if (stacked) toastY += h + 14;
   c.position.set(W / 2 - w / 2, y);
   c.rotation = -0.015;
-  toastLayer().addChild(c);
+  layer.addChild(c);
   c.pivot.set(w / 2, h / 2);
-  c.position.set(W / 2, y + h / 2);
+  c.position.set(W / 2, y + (h * k) / 2);
+  if (k < 1) c.scale.set(k);
   gsap.from(c, { x: c.x + 80, alpha: 0, duration: 0.22, ease: 'back.out(2)' });
   const fade = gsap.to(c, {
     alpha: 0,
-    y: y + h / 2 - 20,
+    y: y + (h * k) / 2 - 20,
     delay: o.dur ?? 2.2,
     duration: 0.3,
     onComplete: () => {
       live.delete(key);
       c.destroy({ children: true });
-      toastY = Math.max(0, toastY - (h + 14));
+      if (stacked) toastY = Math.max(0, toastY - (h + 14));
     },
   });
   live.set(key, { c, fade });

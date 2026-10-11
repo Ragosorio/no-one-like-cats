@@ -26,6 +26,7 @@ import { CATA_INFO, poderDe } from '../../battle/cataclysm';
 import type { CataId } from '../../battle/cataclysm';
 import type { StageRules } from '../../battle/sim';
 import { REGION_IDS, REGION_INFO, RegionId } from '../../regions';
+import { rupturasExt } from './rupturasLedger';
 
 const done = (id: string) => !!G.s?.missions?.done.includes(id);
 
@@ -79,7 +80,41 @@ export function regionBattleReady(battleId: string) {
   return battleId === 'ruptura_nacar' ? nacarHazOk() : true;
 }
 
-/** idempotent: the map flags of the islands whose mission already appeared (live, and on every load) */
+/**
+ * KNOWN ISLANDS (hotfix 2026-10-10, owner's report «la Isla Nácar no aparece»): an island this save has ever had on
+ * its chart stays there and can be entered whenever the player wants — even after the Part II narrative reset
+ * (rupturasReset.ts), which clears the `region:*` flags so the story can present them again. The record lives in
+ * `G.s.ext.rupturas.known` (optional string[] of region ids; normalized on every sync; the reset never touches it)
+ * and is rebuilt from what the save already proves: the island flags set now, the flags the reset moved
+ * (`ext.rupturas.reset.flags`: `region:<id>` / `region_visited:<id>`), a visit, or a story battle of that island
+ * already paid in the ledger (`battle:<id>`). A new player only ever knows what the story showed them.
+ * Pure data, read-only: entering an island does not advance the story (missions count from their own baseline).
+ */
+export function knownRegions(): RegionId[] {
+  const s = G.s;
+  if (!s) return [];
+  const ids = REGION_IDS as readonly string[];
+  const out = new Set<string>();
+  const ext = (s.ext as Record<string, unknown> | undefined)?.rupturas as Record<string, unknown> | undefined;
+  const add = (id: unknown) => {
+    if (typeof id === 'string' && ids.includes(id) && REGION_INFO[id as RegionId].mapFlag) out.add(id);
+  };
+  if (ext && Array.isArray(ext.known)) for (const id of ext.known) add(id);
+  const fromFlag = (f: unknown) => {
+    if (typeof f !== 'string') return;
+    if (f.startsWith('region:')) add(f.slice(7));
+    else if (f.startsWith('region_visited:')) add(f.slice(15));
+  };
+  for (const [f, on] of Object.entries(s.flags ?? {})) if (on) fromFlag(f);
+  const reset = ext && typeof ext.reset === 'object' && ext.reset ? (ext.reset as { flags?: unknown }) : null;
+  if (reset && Array.isArray(reset.flags)) for (const f of reset.flags) fromFlag(f);
+  const claimed = ext && ext.claimed && typeof ext.claimed === 'object' ? (ext.claimed as Record<string, unknown>) : null;
+  if (claimed)
+    for (const id of REGION_IDS) if (REGION_INFO[id].battles.some((b) => claimed[`battle:${b}`] !== undefined && claimed[`battle:${b}`] !== null)) add(id);
+  return REGION_IDS.filter((id) => out.has(id));
+}
+
+/** idempotent: the map flags of the islands whose mission already appeared, or that this save already knew (live, and on every load) */
 export function syncRegionFlags() {
   if (!G.s?.missions) return;
   const seen = (id: string) => G.s.missions.active.includes(id) || G.s.missions.done.includes(id);
@@ -88,6 +123,26 @@ export function syncRegionFlags() {
     if (f && m && seen(m) && !G.has(f)) G.flag(f);
   }
   if (!G.has(NACAR_HAZ_FLAG) && (G.s.counters.feature_haz_nacar ?? 0) > 0) G.flag(NACAR_HAZ_FLAG);
+  syncKnownRegions();
+}
+
+/** the KNOWN ISLANDS record (see knownRegions) is kept up to date and every known island is back on the chart */
+export function syncKnownRegions() {
+  const known = knownRegions();
+  if (!known.length) return; // a save without Parte II islands stays byte-identical
+  // the record rides in the Parte II namespace once it exists (the reset / the ledger create it); it never creates it:
+  // until then the island flags themselves are the proof
+  const root = G.s.ext as Record<string, unknown> | undefined;
+  if (root && root.rupturas && typeof root.rupturas === 'object') {
+    const ext = rupturasExt() as unknown as { known?: unknown };
+    const prev = Array.isArray(ext.known) ? ext.known : null;
+    if (!prev || prev.length !== known.length || known.some((id, i) => prev[i] !== id)) ext.known = [...known];
+  }
+  // restored, not unlocked: set quietly (no 'unlock' event: nothing new happened, the island was already yours)
+  for (const id of known) {
+    const f = REGION_INFO[id].mapFlag;
+    if (f && !G.has(f)) G.s.flags[f] = true;
+  }
 }
 G.on('mission', (p) => {
   if (p.kind !== 'progress') syncRegionFlags();
@@ -117,6 +172,34 @@ export function mapRegions(): MapRegion[] {
     const f = REGION_INFO[id].mapFlag;
     return !!f && G.has(f);
   }).map((id) => ({ id, name: REGION_INFO[id].name, call: regionCalls(id) }));
+}
+
+// ------------------------------------------------------------------ the 3D islands live on the CARTA: say so, show it
+/**
+ * Islands on the chart whose fresh ink the player hasn't seen yet (MapScene marks `carta_<id>` the first time it shows
+ * them). Drives the ¡ZARPAR! badge on the island and the chart's glide to the new island (hotfix 2026-10-10: the owner
+ * looked for the Part II islands around his own archipelago — nothing told him they are drawn on the CARTA).
+ */
+export function freshChartIslands(): RegionId[] {
+  const seen = new Set(Array.isArray(G.s?.beatsSeen) ? G.s.beatsSeen : []);
+  return mapRegions()
+    .map((r) => r.id)
+    .filter((id) => !seen.has(`carta_${id}`));
+}
+/** once per save (optional flag, never reset): Luzterna has explained where the Part II islands are */
+export const CHART_ISLANDS_TOLD = 'aviso_carta_islas';
+/**
+ * Luzterna should explain the CARTA now: there is a Part II island on the chart that this pass of the story has not
+ * visited yet (a new player when the story presents the first one; a save after the narrative reset, once, on load)
+ * and she never said it. Returns the island to point at, or null.
+ */
+export function chartIslandsToTell(): RegionId | null {
+  if (!G.s?.flags || G.has(CHART_ISLANDS_TOLD)) return null;
+  // the Part II opening (H31 the faro, H32 REGISTRO 000) plays first: the islands come into the story at H33
+  if (G.s.missions?.active?.some((id) => id === 'H31' || id === 'H32')) return null;
+  const unvisited = mapRegions().filter((r) => !G.has(`region_visited:${r.id}`));
+  if (!unvisited.length) return null;
+  return (unvisited.find((r) => r.call) ?? unvisited[0]).id;
 }
 
 /**
@@ -215,15 +298,18 @@ export const RUPTURA_SPECS: RupturaSpec[] = [
     // (¡SHHHH! ~0.3 times per fight). docs/part-ii/15-balance-cristal.md §5
     // MOMENTO: when_i_lose (H35, phase change) — TWO PHASES that are PRESENTATION ONLY (battle/fases.ts): no
     // environment, no effects, no rule changes — the WHEN I LOSE «Momento musical» (src/momentos/songs/whenILose,
-    // docs/part-ii/29 §14) plays between them through the FASES interlude hook, and the fight resumes in its final
-    // phase. tests/momentosWIL.test.ts: the same seeds give the same fight, turn by turn, with and without the split.
+    // docs/part-ii/29 §14) plays between them through the FASES interlude hook — and, owner's rule 2026-10-10, ENDS the fight there
+    // (endsBattle: the sim declares the victory when it enters «memoria»). tests/momentosWIL.test.ts: the same seeds give
+    // the same fight, turn by turn, with and without the split, up to the threshold.
     rules: {
       noise: { side: 1 },
       fases: {
         side: 1,
         phases: [
           { id: 'sala', name: 'La Sala de Lectura', banner: false },
-          { id: 'memoria', name: 'La memoria del Archivo', at: { hp: 0.4, turn: 4 }, banner: false },
+          // hotfix 2026-10-10: the Momento ENDS the fight, so it waits for the fight's real end (80 %, no turn trigger;
+          // it was 40 % or turn 4 when the fight went on after it)
+          { id: 'memoria', name: 'La memoria del Archivo', at: { hp: 0.8 }, banner: false, endsBattle: true },
         ],
       },
     },

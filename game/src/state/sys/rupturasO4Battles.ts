@@ -127,7 +127,9 @@ export const CORRECTORES_PHASES: FaseDef[] = [
   {
     id: 'el_plan',
     name: 'El Plan',
-    at: { hp: 0.5, turn: 5 },
+    // hotfix 2026-10-10: the Momento ENDS the fight → it waits for its real end (was 50 % or turn 5)
+    at: { hp: 0.8 },
+    endsBattle: true,
     telegraph: 'EL PLAN: el mundo perfecto empieza a escribirse. Corrigen más rápido y sus tiros pegan más.',
     env: { calm: true, layer: 'sky' },
     effects: ['umbral'],
@@ -139,7 +141,8 @@ export const CORRECTORES_PLAN: UmbralRules = { correct: { cells: 2, frac: 0.35 }
  * while the battle waits between the two phases (battle/fx/fasesFx.ts › FasesFx.stage awaits the interlude). The
  * Momento engine plugs in with:
  *   registerFaseInterlude(H62_MOMENTO.battle, H62_MOMENTO.fase, (change) => playCircusMomento(change))   (battle/fases.ts)
- * Presentation only: the sim already applied the phase, so the outcome (and the estimate worker) never changes.
+ * EL PLAN ENDS the fight (endsBattle, owner's rule 2026-10-10): the sim declares the victory when it enters it, the
+ * same in the estimate worker; the Momento plays and the victory follows.
  */
 // MOMENTO: circus_malus (H62, phase change)
 export const H62_MOMENTO = { battle: 'umbral_correctores', fase: 'el_plan', song: 'circus_malus' } as const;
@@ -221,7 +224,7 @@ export const O4_SPECS: O4Spec[] = [
     cata: { id: 'sun', by: 'LA REDACCIÓN' },
     rules: () => ({ fases: { side: 1, phases: CORRECTORES_PHASES } satisfies FasesCfg, umbral: { side: 1, base: UMBRAL_RULES.byFase!.correctores, byFase: { el_plan: CORRECTORES_PLAN } } }),
     intro: () => [
-      'CORRECCIÓN: cada turno reparan sus 2 celdas más rotas. Pégales duro y en el mismo lugar. A la mitad de su casco empieza EL PLAN.',
+      'CORRECCIÓN: cada turno reparan sus 2 celdas más rotas. Pégales duro y en el mismo lugar. Al 80% de daño llega el GOLPE FINAL.',
       'TACHÓN: el elemento que más les pegó en tu turno queda TACHADO tu siguiente turno (×0.6). Cambia de elemento.',
       '{time} Tiempo le pega ×1.5 al Vacío y a la Gravedad; {earth} Tierra, al Cristal y a la Luz.',
     ],
