@@ -1,0 +1,276 @@
+{
+  "$doc": "BATALLAS MUSICALES (src/battle/music/*, docs/part-ii/24-batallas-musicales.md — esquema y cómo escribir un plan). battles[id] = plan de una batalla (id de STORY_BATTLES / encargo / especial; ids desconocidos se ignoran sin error). presets[id] = planes reutilizables (`extends`). kinds[default|boss|story|errand|duel] = plan por tipo (null = la música del director, sin plan). goals[id] = una misión activa que monta su plan/remate sobre CUALQUIER batalla (H38). defaults se mezcla debajo de todo. La música decide CUÁNDO se muestra algo, nunca QUÉ pasa: el sim no lee este archivo (SINCRO entra como input explícito del jugador, battle/sincro.ts). Tiempos = segundos del timeline canónico de docs/part-ii/18 §0.3; secciones y marcadores = nombres del beat map.",
+  "version": 1,
+  "defaults": {
+    "loop": true,
+    "fadeIn": 0.3,
+    "lateSkipMs": 120,
+    "sync": {
+      "enabled": true,
+      "minStrength": 0.6,
+      "strongStrength": 0.85,
+      "maxDelayBars": 1,
+      "minGapBeats": 1,
+      "batchMax": 3,
+      "stretch": [0.8, 1.3],
+      "firstMove": { "kinds": ["drop", "reentry", "phrase"], "minStrength": 0.9, "maxDelayBars": 1.25 },
+      "setPieceMaxBars": 1
+    },
+    "sincro": { "enabled": false, "minStrength": 0.8, "kinds": ["drop", "reentry"], "windowMs": 170 },
+    "victory": { "section": null, "quantize": "bar" },
+    "defeat": { "fade": 2.5 }
+  },
+  "presets": {
+    "fiesta": {
+      "$doc": "Reacciones para una canción de pelea con energía (LIKY FIGHT). Nada de esto toca el sim.",
+      "track": null,
+      "reactions": [
+        { "on": "bar", "minEnergy": 0.75, "do": ["sky"], "amount": 0.4 },
+        { "on": "bar", "minEnergy": 0.78, "every": 2, "do": ["sea"], "amount": 0.6 },
+        { "on": "bar", "minEnergy": 0.75, "phases": ["aim"], "do": ["crew"], "amount": 0.5 },
+        { "on": "bar", "maxEnergy": 0.62, "phases": ["aim", "intro"], "do": ["ui"], "amount": 0.5 },
+        { "on": "hit", "minStrength": 0.97, "minEnergy": 0.7, "phases": ["aim"], "do": ["camera", "sky"], "amount": 0.35 },
+        { "on": "hit:drop", "do": ["special"], "amount": 1 },
+        { "on": "hit:reentry", "do": ["sky", "crew"], "amount": 0.8 },
+        { "on": "hit:stop", "do": ["freeze"] }
+      ]
+    },
+    "solemne": {
+      "$doc": "Reacciones sobrias (WHEN I LOSE, primordiales): luz fría en los compases fuertes, sin baile de la tripulación.",
+      "track": null,
+      "reactions": [
+        { "on": "bar", "minEnergy": 0.8, "every": 2, "do": ["sky"], "amount": 0.35, "color": "#9fc3ff" },
+        { "on": "bar", "minEnergy": 0.83, "every": 4, "do": ["sea"], "amount": 0.5 },
+        { "on": "bar", "maxEnergy": 0.5, "phases": ["aim", "intro"], "do": ["ui"], "amount": 0.35 },
+        { "on": "hit:drop", "do": ["special"], "amount": 0.7, "color": "#9fc3ff" },
+        { "on": "hit:phrase", "minStrength": 0.99, "phases": ["aim"], "do": ["camera"], "amount": 0.3 }
+      ]
+    },
+    "mecanico": {
+      "$doc": "Reacciones de los Correctores (CIRCUS MALUS): todo exacto, nada sobra. Un pulso blanco por compás en el coro.",
+      "track": null,
+      "reactions": [
+        { "on": "bar", "minEnergy": 0.84, "do": ["sky"], "amount": 0.25, "color": "#f4f4f0" },
+        { "on": "bar", "phases": ["aim", "intro"], "every": 2, "do": ["ui"], "amount": 0.3 },
+        { "on": "hit:drop", "do": ["special"], "amount": 0.6, "color": "#f4f4f0" }
+      ]
+    },
+    "epico": {
+      "$doc": "Reacciones de ascenso (Hemkade): cada drop es una capa nueva del cielo.",
+      "track": null,
+      "reactions": [
+        { "on": "bar", "minEnergy": 0.85, "do": ["sky"], "amount": 0.45, "color": "#ffaf7b" },
+        { "on": "bar", "minEnergy": 0.85, "every": 2, "do": ["sea"], "amount": 0.5 },
+        { "on": "bar", "minEnergy": 0.85, "phases": ["aim"], "every": 2, "do": ["crew"], "amount": 0.4 },
+        { "on": "bar", "maxEnergy": 0.6, "phases": ["aim", "intro"], "do": ["ui"], "amount": 0.4 },
+        { "on": "hit:drop", "do": ["special"], "amount": 1, "color": "#ffaf7b" }
+      ]
+    },
+    "despecho": {
+      "$doc": "Reacciones de te ODIO: la señal que se corta (stops) y vuelve.",
+      "track": null,
+      "reactions": [
+        { "on": "bar", "minEnergy": 0.76, "every": 2, "do": ["sky"], "amount": 0.35, "color": "#ff5c8a" },
+        { "on": "bar", "minEnergy": 0.8, "every": 4, "do": ["sea"], "amount": 0.5 },
+        { "on": "bar", "maxEnergy": 0.55, "phases": ["aim", "intro"], "do": ["ui"], "amount": 0.4 },
+        { "on": "hit:drop", "do": ["special"], "amount": 0.9, "color": "#ff5c8a" },
+        { "on": "hit:stop", "do": ["freeze"] }
+      ]
+    },
+    "liky_fight": {
+      "$doc": "LIKY FIGHT «Pelea de acordeón» (liky_fight.battle, el REMIX de batalla: las 6 originales quedan para los Momentos musicales). Arranca contenida (intro de percusión: los barcos se preparan; el verso sin melodía). En el PRIMER turno enemigo la música salta (en compás) a pre_drop (2 compases antes del drop: el remix es corto y el salto se oye enseguida, así el enemigo alcanza a apuntar) y el DROP cae justo con el primer golpe grande del enemigo; después los cañones caen en los golpes fuertes. Cuando la tripulación rival se tambalea (≤ 35 %), entra por build_2 → climax (el gancho una octava arriba). Al ganar: el remate (outro) en el siguiente compás.",
+      "extends": "fiesta",
+      "track": "liky_fight.battle",
+      "startSection": "intro",
+      "loop": true,
+      "states": [
+        { "id": "primer_golpe", "when": { "enemyTurn": 1, "before": "first_drop" }, "to": { "section": "pre_drop", "quantize": "bar" } },
+        { "id": "remate", "when": { "enemyHullBelow": 0.35, "unlessSection": ["drop", "climax"] }, "to": { "section": "build_2", "quantize": "bar" } }
+      ],
+      "victory": { "section": "outro", "quantize": "bar" },
+      "defeat": { "fade": 3 }
+    },
+    "yonose_todo": {
+      "$doc": "YONOSE TODO «Aunque no lo sepa todo» (yonose_todo.battle): la versión decidida, de energía media. Arranca en la intro (el golpe de apertura); el primer turno enemigo salta a pre_drop → drop; con el rival ≤ 35 % entra el climax. Al ganar: el remate con la célula del arco en celesta (re-arreglo 2026-10-10: sin sintes agregados).",
+      "extends": "fiesta",
+      "track": "yonose_todo.battle",
+      "startSection": "intro",
+      "reactions": [
+        { "on": "bar", "minEnergy": 0.8, "every": 2, "do": ["sky"], "amount": 0.35, "color": "#f4a261" },
+        { "on": "bar", "minEnergy": 0.84, "every": 4, "do": ["sea"], "amount": 0.5 },
+        { "on": "bar", "minEnergy": 0.8, "phases": ["aim"], "every": 2, "do": ["crew"], "amount": 0.4 },
+        { "on": "bar", "maxEnergy": 0.6, "phases": ["aim", "intro"], "do": ["ui"], "amount": 0.4 },
+        { "on": "hit:drop", "do": ["special"], "amount": 0.9, "color": "#f4a261" }
+      ],
+      "states": [
+        { "id": "primer_golpe", "when": { "enemyTurn": 1, "before": "first_drop" }, "to": { "section": "pre_drop", "quantize": "bar" } },
+        { "id": "decidida", "when": { "enemyHullBelow": 0.35, "unlessSection": ["climax"] }, "to": { "section": "build_2", "quantize": "bar" } }
+      ],
+      "victory": { "section": "outro", "quantize": "bar" },
+      "defeat": { "fade": 3 }
+    }
+  },
+  "kinds": {
+    "default": null,
+    "boss": null,
+    "story": null,
+    "errand": null,
+    "duel": null
+  },
+  "goals": {
+    "H38": {
+      "$doc": "¡A BABOR!: mientras H38 está activa y Canelo va en la tripulación, cualquier batalla sin plan propio suena con el remix de LIKY FIGHT. Si Canelo da el golpe final: climax en el siguiente compás (narrativo, sin loop: el clímax y su remate siguen sonando durante la revelación) y el remix entra a la Fonoteca.",
+      "mission": "H38",
+      "species": "c_canelo",
+      "plan": "liky_fight",
+      "finale": { "track": "liky_fight.battle", "section": "climax", "quantize": "bar", "loop": false, "narrative": true, "unlock": { "song": "liky_fight.battle", "source": "¡A BABOR!" } }
+    }
+  },
+  "battles": {
+    "dev_liky_fight": {
+      "$doc": "DEV ?scene=battle&music=liky_fight — la batalla coreografiada de prueba (con SINCRO) para ver la pelea antes de su misión. Suena el remix de batalla.",
+      "extends": "liky_fight",
+      "sincro": { "enabled": true }
+    },
+    "ruptura_paginas": {
+      "$doc": "H34 La Biblioteca a la Deriva — WHEN I LOSE «Cuernos de tinta» (remix) desde el verse, en su loop. La marea de tinta se ve en first_drop (el coro del remix).",
+      "extends": "solemne",
+      "track": "when_i_lose.battle",
+      "startSection": "verse",
+      "reactions": [
+        { "on": "bar", "minEnergy": 0.8, "every": 2, "do": ["sky"], "amount": 0.35, "color": "#9fc3ff" },
+        { "on": "bar", "maxEnergy": 0.5, "phases": ["aim", "intro"], "do": ["ui"], "amount": 0.35 },
+        { "on": "marker:first_drop", "do": ["tide"], "amount": 1, "color": "#14213d" },
+        { "on": "hit:drop", "do": ["special"], "amount": 0.7, "color": "#9fc3ff" }
+      ]
+    },
+    "ruptura_bibliotecario": {
+      "$doc": "H35 Shhh — WHEN I LOSE (remix) desde el verse. RUIDO → la música se ahoga (duck + paso-bajo): el jefe la calla. Al vencerlo: climax (su golpe) en el siguiente compás, sin loop: clímax + remate. Desbloquea el remix (la original es del Momento musical).",
+      "extends": "solemne",
+      "track": "when_i_lose.battle",
+      "startSection": "verse",
+      "ruido": { "duckDb": 7, "duckFrom": 2, "lowpassHz": [null, 2600, 1100, 520] },
+      "victory": { "section": "climax", "quantize": "bar", "narrative": true, "releaseAfterSec": 28, "unlock": { "song": "when_i_lose.battle", "source": "Shhh" } }
+    },
+    "ruptura_nacar": {
+      "$doc": "H39 Isla Nácar (Prismarina) — YONOSE TODO «Aunque no lo sepa todo» (remix decidido): la luz llegó al monte. Desbloquea el remix. DECIDIDO (MENORES 2026-10-10, doc 24 §5.2): se queda YONOSE y no WHEN I LOSE (doc 18 §5.4): Prismarina es una capitana vanidosa, no un primordial; WHEN I LOSE ya suena en H34, H35 (+ su Momento con la original) y H40, y H39→H40 serían la misma pista seguida; es la única batalla que da yonose_todo.battle a la Fonoteca.",
+      "extends": "yonose_todo",
+      "victory": { "section": "outro", "quantize": "bar", "unlock": { "song": "yonose_todo.battle", "source": "Isla Nácar" } }
+    },
+    "ruptura_madrenacar": {
+      "$doc": "H40 Madre Nácar — WHEN I LOSE (remix) desde el drop (el coro); en la última fase (≤ 34 % de su barco) climax. Todo dentro del loop.",
+      "extends": "solemne",
+      "track": "when_i_lose.battle",
+      "startSection": "drop",
+      "endTo": { "section": "verse", "loop": true },
+      "states": [{ "id": "ultima_fase", "when": { "enemyHullBelow": 0.34 }, "to": { "section": "climax", "quantize": "bar" } }]
+    },
+    "ruptura_corrector": {
+      "$doc": "H41 La letra en el margen — CIRCUS MALUS «Calíope» (remix) en su loop desde el verse. Al ganar: su final raro RE-ORQUESTADO (outro: los 4 acordes torcidos en calíope y cajita) en el siguiente compás, narrativo, mientras el barco blanco se corrige. Desbloquea el remix cuando el final terminó.",
+      "extends": "mecanico",
+      "track": "circus_malus.battle",
+      "startSection": "verse",
+      "victory": { "section": "outro", "quantize": "bar", "narrative": true, "unlock": { "song": "circus_malus.battle", "source": "La letra en el margen", "delaySec": 8 } }
+    },
+    "cielo_invertidas": {
+      "$doc": "H44 Islas Invertidas — dos fases. Fase 1 (el mar): Hemkade «Capas del cielo» (remix) desde el verse (sin bombo), llega sola al drop. Entre fases suena el MOMENTO liky_fight (LIKY FIGHT original, src/momentos): la música de la batalla se suspende y, al corte, la fase 2 (el cielo) entra en el siguiente compás con el climax del remix. Desbloquea hemkade.ambient.",
+      "extends": "epico",
+      "track": "hemkade.battle",
+      "startSection": "verse",
+      "states": [{ "id": "cielo", "when": { "signal": "fase:cielo" }, "to": { "section": "climax", "quantize": "bar", "loop": true } }],
+      "victory": { "unlock": { "song": "hemkade.ambient", "source": "Islas Invertidas" } }
+    },
+    "cielo_embajada": {
+      "$doc": "H46 La embajada — duelo de temas: empieza CIRCUS MALUS (remix, el Corrector); al pasar el umbral de daño (≤ 70 % de su barco) entra LIKY FIGHT (remix) en el drop: Canelo se queda con la pista.",
+      "extends": "mecanico",
+      "track": "circus_malus.battle",
+      "startSection": "verse",
+      "states": [{ "id": "canelo_gana_la_pista", "when": { "enemyHullBelow": 0.7 }, "to": { "track": "liky_fight.battle", "section": "drop", "quantize": "bar", "loop": true, "stinger": "swap" } }]
+    },
+    "cielo_almirante": {
+      "$doc": "H47 El otro almirante — Hemkade (remix) desde el drop. Cuando la gravedad se invierte (turno 3) la música cae al breakdown (la melodía sola) y vuelve sola por build_2 → climax.",
+      "extends": "epico",
+      "track": "hemkade.battle",
+      "startSection": "drop",
+      "states": [{ "id": "inversion", "when": { "turnAtLeast": 3, "playerTurn": 3 }, "to": { "section": "breakdown", "quantize": "bar" } }]
+    },
+    "cielo_masamadre": {
+      "$doc": "H49 Primordial de la Gravedad — WHEN I LOSE (remix) en tres fases: verse → drop → climax, por el barco que le queda.",
+      "extends": "solemne",
+      "track": "when_i_lose.battle",
+      "startSection": "verse",
+      "states": [
+        { "id": "fase_2", "when": { "enemyHullBelow": 0.67 }, "to": { "section": "drop", "quantize": "bar" } },
+        { "id": "fase_3", "when": { "enemyHullBelow": 0.34 }, "to": { "section": "climax", "quantize": "bar" } }
+      ]
+    },
+    "ruptura_sincronia": {
+      "$doc": "H51 Sincronía — la batalla coreografiada con el remix de LIKY FIGHT y ventanas de SINCRO (golpes ≥ 0,8, drops y reentradas del mapa del remix). Fuego + Tormenta en la tripulación: un disparo en el pulso = SOBRECARGA. teach: señala al gato que puede, la pista del anillo sale siempre y el primer acierto tiene su línea. Se gana igual sin usarla (sin muro).",
+      "extends": "liky_fight",
+      "sincro": { "enabled": true, "teach": true }
+    },
+    "ruptura_estrella": {
+      "$doc": "H52 La Estrella que empujaron — te ODIO «Señal rota» (remix) desde el verse. Cuando su barco cae a ≤ 30 % la música se va «del otro lado» (el break filtrado + el tartamudeo) y vuelve sola por el climax. Desbloquea el remix.",
+      "extends": "despecho",
+      "track": "te_odio.battle",
+      "startSection": "verse",
+      "states": [{ "id": "del_otro_lado", "when": { "enemyHullBelow": 0.3 }, "to": { "section": "break", "quantize": "bar" } }],
+      "victory": { "unlock": { "song": "te_odio.battle", "source": "La Estrella que empujaron" } }
+    },
+    "ruptura_disruptores": {
+      "$doc": "H55 Los Disruptores — te ODIO (remix) desde el drop: sus grafitis caen en los CORTES de señal del gancho (stop/reentry en el mapa del remix; ya no hacen falta extraHits). Su fase glitch (señal 'fase:glitch' de battle/fases.ts) → break (filtrado + tartamudeo glitch) → climax. Desbloquea te_odio.ambient. (MOMENTO: te_odio antes de la fase glitch, oleada3Flow.ts.)",
+      "extends": "despecho",
+      "track": "te_odio.battle",
+      "startSection": "drop",
+      "states": [{ "id": "glitch", "when": { "signal": "fase:glitch" }, "to": { "section": "break", "quantize": "bar" } }],
+      "victory": { "unlock": { "song": "te_odio.ambient", "source": "Los Disruptores" } }
+    },
+    "umbral_suenos": {
+      "$doc": "H58 Archipiélago de los Sueños — liky_fight.explore (puerto de fiesta, sin pelea); si no está, el remix de LIKY FIGHT desde el verse. Las reglas oníricas las sortea el sim por ronda: la música solo marca cada frase (4 compases) con luz.",
+      "extends": "fiesta",
+      "track": "liky_fight.explore",
+      "fallback": "liky_fight.battle",
+      "startSection": "verse",
+      "reactions": [
+        { "on": "hit:phrase", "phases": ["aim", "enemy", "flight"], "do": ["sky"], "amount": 0.55, "color": "#c9a7ff" },
+        { "on": "bar", "minEnergy": 0.75, "every": 2, "do": ["sea"], "amount": 0.5 },
+        { "on": "bar", "minEnergy": 0.75, "phases": ["aim"], "do": ["crew"], "amount": 0.45 },
+        { "on": "bar", "maxEnergy": 0.62, "phases": ["aim", "intro"], "do": ["ui"], "amount": 0.45 },
+        { "on": "hit:drop", "do": ["special"], "amount": 0.9, "color": "#c9a7ff" },
+        { "on": "hit:stop", "do": ["freeze"] }
+      ]
+    },
+    "umbral_correctores": {
+      "$doc": "H62 Los Correctores tienen un plan — CIRCUS MALUS (remix) desde el drop, en su loop. Al vencer: stinger «correccion_rota» (cuando exista) y la versión «Corrección» de CIRCUS entra a la Fonoteca. (MOMENTO: circus_malus en la fase el_plan, rupturasO4Battles.ts.)",
+      "extends": "mecanico",
+      "track": "circus_malus.battle",
+      "startSection": "drop",
+      "victory": { "stinger": "correccion_rota", "unlock": { "song": "circus_malus.stinger", "source": "Los Correctores tienen un plan" } }
+    },
+    "umbral_final": {
+      "$doc": "H63 El Umbral — jefe de 4 fases (battle/fases.ts → señales 'fase:<id>'), todo con REMIXES de batalla: Correctores = CIRCUS MALUS drop · Disruptores = te ODIO climax · Titiriteros = amb.hilos «Hilos» (= boss.umbral de doc 18 §9, COMPOSER doc 30: entra en su intro y sigue en su loop; respaldo Hemkade breakdown) · fase final = Hemkade climax. Entre fases: stinger «swap» y cambio en compás (cada fase entra en su compás 1). Al ganar: el remate de Hemkade, narrativo.",
+      "extends": "epico",
+      "track": "circus_malus.battle",
+      "startSection": "drop",
+      "endTo": { "track": "circus_malus.battle", "section": "verse", "loop": true },
+      "states": [
+        { "id": "disruptores", "when": { "signal": "fase:disruptores" }, "to": { "track": "te_odio.battle", "section": "climax", "quantize": "bar", "stinger": "swap" } },
+        { "id": "titiriteros", "when": { "signal": "fase:titiriteros" }, "to": { "track": "amb.hilos", "section": "intro", "loop": true, "quantize": "bar", "stinger": "swap", "fallback": { "track": "hemkade.battle", "section": "breakdown", "quantize": "bar", "stinger": "swap" } } },
+        { "id": "final", "when": { "signal": "fase:umbral" }, "to": { "track": "hemkade.battle", "section": "climax", "quantize": "bar", "stinger": "swap" } }
+      ],
+      "victory": { "track": "hemkade.battle", "section": "outro", "quantize": "bar", "narrative": true, "unlock": { "song": "amb.hilos", "source": "El Umbral", "delaySec": 6 } }
+    },
+    "ruptura_leviatan": {
+      "$doc": "H57 El Leviatán Invertido — Hemkade «Capas del cielo» (remix) por fases: mar = drop en loop; cielo = climax (el arpegio una octava arriba); grieta astral = breakdown (la melodía sola) → build_2 → climax otra vez; liberación (al ganar) = el remate (outro), narrativo. Las fases llegan por la señal del mecanismo FASES (battle/fases.ts onFase → 'fase:<id>'). Desbloquea el remix. (MOMENTO: hemkade en el cambio de capa, oleada3Flow.ts.)",
+      "extends": "epico",
+      "track": "hemkade.battle",
+      "startSection": "drop",
+      "endTo": { "section": "drop", "loop": true },
+      "states": [
+        { "id": "cielo", "when": { "signal": "fase:cielo" }, "to": { "section": "climax", "quantize": "bar" } },
+        { "id": "grieta", "when": { "signal": "fase:grieta" }, "to": { "section": "breakdown", "quantize": "bar" } }
+      ],
+      "victory": { "section": "outro", "quantize": "bar", "narrative": true, "unlock": { "song": "hemkade.battle", "source": "El Leviatán Invertido", "delaySec": 5 } }
+    }
+  }
+}

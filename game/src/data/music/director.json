@@ -1,0 +1,355 @@
+{
+  "$doc": "Director musical (src/audio/director.ts, docs/part-ii/19-audio-arquitectura.md). MUSIC y las escenas editan ESTA tabla, no el código. partI = estado → humor procedural (Parte I intacta). partII = estado → candidatos: 'tracks' se prueban en orden (o 'pick': rotate|random) y el primero que exista en tracks.json suena; si ninguno existe, 'procedural' (o silencio). Refs: 'cancion' o 'cancion.variacion' (id o kind de la variación). contexts['estado:contexto'] o contexts['contexto'] pisan campos del estado (setState(s, { context })). REGLA DEL DUEÑO: las 6 canciones ORIGINALES ('liky_fight', 'hemkade'… sin variación) solo suenan en los Momentos musicales (src/momentos) y en la Fonoteca: aquí solo variaciones y remixes de batalla ('<canción>.<versión>'); tests/originalsReserved.test.ts lo vigila.",
+  "defaults": {
+    "fade": 2.5,
+    "quantize": "bar",
+    "loop": true
+  },
+  "partI": {
+    "title": "silence",
+    "island": "island",
+    "island_night_astral": "island",
+    "explore": "island",
+    "explore_mystery": "tension",
+    "discovery": "island",
+    "battle": "battle",
+    "battle_special": "battle",
+    "boss": "boss",
+    "victory": "island",
+    "emotional": "island",
+    "silence": "silence"
+  },
+  "partII": {
+    "title": {
+      "procedural": "silence"
+    },
+    "island": {
+      "tracks": [
+        "yonose_todo.ambient",
+        "when_i_lose.ambient",
+        "yonose_todo.aftermath"
+      ],
+      "pick": "first",
+      "procedural": "island",
+      "prefetch": [
+        "explore"
+      ]
+    },
+    "island_night_astral": {
+      "tracks": [
+        "amb.night_astral",
+        "yonose_todo.ambient",
+        "when_i_lose.ambient",
+        "hemkade.ambient"
+      ],
+      "procedural": "island",
+      "fade": 4
+    },
+    "explore": {
+      "tracks": [
+        "liky_fight.explore",
+        "te_odio.explore",
+        "when_i_lose.ambient",
+        "yonose_todo.ambient"
+      ],
+      "pick": "rotate",
+      "procedural": "island"
+    },
+    "explore_mystery": {
+      "tracks": [
+        "circus_malus.explore",
+        "te_odio.ambient",
+        "circus_malus.ambient"
+      ],
+      "procedural": "tension"
+    },
+    "discovery": {
+      "tracks": [],
+      "procedural": "island",
+      "stinger": "discovery"
+    },
+    "battle": {
+      "tracks": [],
+      "procedural": "battle"
+    },
+    "battle_special": {
+      "tracks": [
+        "liky_fight.battle"
+      ],
+      "sync": true,
+      "quantize": "now",
+      "fade": 0.3,
+      "loop": false,
+      "procedural": "battle"
+    },
+    "boss": {
+      "tracks": [],
+      "procedural": "boss"
+    },
+    "victory": {
+      "tracks": [],
+      "procedural": "island"
+    },
+    "emotional": {
+      "tracks": [
+        "yonose_todo.ambient"
+      ],
+      "fade": 3,
+      "loop": true,
+      "procedural": "silence"
+    },
+    "silence": {
+      "silence": true,
+      "fade": 3
+    }
+  },
+  "contexts": {
+    "explore:cometa": {
+      "tracks": [
+        "liky_fight.explore",
+        "yonose_todo.ambient"
+      ],
+      "pick": "first",
+      "procedural": "island",
+      "fade": 3
+    },
+    "explore:world:o3_grafiti": {
+      "tracks": [
+        "te_odio.explore",
+        "te_odio.ambient"
+      ],
+      "pick": "first",
+      "procedural": "tension",
+      "fade": 3
+    },
+    "explore:world:o3_leviatan": {
+      "tracks": [
+        "hemkade.ambient",
+        "yonose_todo.ambient"
+      ],
+      "pick": "first",
+      "procedural": "tension",
+      "fade": 4
+    },
+    "explore_mystery:paginas": {
+      "tracks": [
+        "when_i_lose.ambient",
+        "yonose_todo.ambient"
+      ],
+      "procedural": "tension",
+      "fade": 3
+    },
+    "explore:nacar": {
+      "tracks": [
+        "amb.nacar",
+        "when_i_lose.ambient",
+        "yonose_todo.ambient"
+      ],
+      "procedural": "island",
+      "fade": 3
+    },
+    "explore:invertidas": {
+      "tracks": [
+        "hemkade.ambient",
+        "yonose_todo.ambient"
+      ],
+      "procedural": "island",
+      "fade": 3
+    },
+    "explore:suenos": {
+      "tracks": [
+        "amb.suenos",
+        "yonose_todo.ambient",
+        "liky_fight.explore"
+      ],
+      "procedural": "island",
+      "fade": 3
+    },
+    "explore_mystery:umbral": {
+      "tracks": [
+        "amb.umbral",
+        "te_odio.ambient",
+        "circus_malus.explore"
+      ],
+      "procedural": "tension",
+      "fade": 3
+    },
+    "emotional:olvidada": {
+      "tracks": [
+        "yonose_todo.aftermath_ritmo",
+        "yonose_todo.ambient"
+      ],
+      "loop": true,
+      "procedural": "silence",
+      "fade": 3
+    },
+    "island:world:o2_trombas": {
+      "tracks": [
+        "hemkade.ambient",
+        "yonose_todo.ambient"
+      ],
+      "procedural": "island",
+      "fade": 4
+    },
+    "island:world:o2_cielo": {
+      "tracks": [
+        "hemkade.ambient",
+        "yonose_todo.ambient"
+      ],
+      "procedural": "island",
+      "fade": 4
+    },
+    "island:world:o2_corona": {
+      "tracks": [
+        "circus_malus.explore",
+        "yonose_todo.ambient"
+      ],
+      "procedural": "island",
+      "fade": 4
+    },
+    "island:world:o2_almirante": {
+      "tracks": [
+        "hemkade.ambient",
+        "yonose_todo.ambient"
+      ],
+      "procedural": "island",
+      "fade": 4
+    },
+    "island:world:o2_senal": {
+      "tracks": [
+        "yonose_todo.ambient",
+        "amb.night_astral"
+      ],
+      "procedural": "island",
+      "fade": 4
+    },
+    "island:world:o2_masa": {
+      "tracks": [
+        "when_i_lose.ambient",
+        "yonose_todo.ambient"
+      ],
+      "procedural": "island",
+      "fade": 4
+    },
+    "explore_mystery:cine:h54_maneki": {
+      "tracks": [
+        "amb.archivo",
+        "circus_malus.explore"
+      ],
+      "procedural": "tension",
+      "fade": 3
+    }
+  },
+  "moodToState": {
+    "island": "island",
+    "battle": "battle",
+    "tension": "explore_mystery",
+    "boss": "boss",
+    "silence": "silence"
+  },
+  "stingers": {
+    "discovery": {
+      "procedural": "discovery"
+    },
+    "unlock": {
+      "file": "music/stinger.unlock.m4a",
+      "gain": 0.9
+    },
+    "star_fall": {
+      "file": "music/amb.motivo.m4a",
+      "gain": 0.9
+    },
+    "discovery_sib": {
+      "file": "music/stinger.discovery_sib.m4a",
+      "gain": 0.9
+    },
+    "discovery_mi": {
+      "file": "music/stinger.discovery_mi.m4a",
+      "gain": 0.9
+    },
+    "reveal": {
+      "procedural": "reveal"
+    },
+    "registro_000": {
+      "file": "music/stinger.registro_000.m4a",
+      "procedural": "registro_000",
+      "gain": 0.9
+    },
+    "registro_000_despertando": {
+      "file": "music/stinger.registro_000_despertando.m4a",
+      "procedural": "registro_000",
+      "gain": 0.9
+    },
+    "eco": {
+      "file": "music/stinger.eco.m4a",
+      "procedural": "eco",
+      "gain": 0.9
+    },
+    "canelo_astral": {
+      "file": "music/stinger.canelo_astral.m4a",
+      "procedural": "canelo_astral",
+      "gain": 0.9
+    },
+    "sincro": {
+      "file": "music/stinger.sincro.m4a",
+      "procedural": "sincro",
+      "gain": 0.7
+    },
+    "tromba": {
+      "file": "music/stinger.tromba.m4a",
+      "procedural": "tromba",
+      "gain": 0.9
+    },
+    "kit_vuelo": {
+      "file": "music/stinger.kit_vuelo.m4a",
+      "procedural": "kit_vuelo",
+      "gain": 0.9
+    },
+    "ronroneo": {
+      "file": "music/stinger.ronroneo.m4a",
+      "procedural": "ronroneo",
+      "gain": 0.9
+    },
+    "swap": {
+      "file": "music/stinger.swap.m4a",
+      "procedural": "swap",
+      "gain": 0.8
+    },
+    "correctores": {
+      "file": "music/stinger.correctores.m4a",
+      "procedural": "correctores",
+      "gain": 0.9
+    },
+    "titiriteros": {
+      "file": "music/stinger.titiriteros.m4a",
+      "procedural": "titiriteros",
+      "gain": 0.9
+    },
+    "leviatan_gracias": {
+      "file": "music/stinger.leviatan_gracias.m4a",
+      "procedural": "leviatan_gracias",
+      "gain": 0.9
+    },
+    "tachon": {
+      "file": "music/stinger.tachon.m4a",
+      "procedural": "pluma",
+      "gain": 0.75
+    },
+    "correccion_rota": {
+      "file": "music/stinger.correccion_rota.m4a",
+      "procedural": "correccion",
+      "gain": 0.9
+    },
+    "discovery_fa": {
+      "file": "music/stinger.discovery_fa.m4a",
+      "procedural": "discovery",
+      "gain": 0.9
+    },
+    "discovery_sol": {
+      "file": "music/stinger.discovery_sol.m4a",
+      "procedural": "discovery",
+      "gain": 0.9
+    }
+  },
+  "ambienceFiles": {}
+}

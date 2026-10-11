@@ -1,0 +1,767 @@
+[
+ {
+  "id": "circus_malus",
+  "title": "CIRCUS MALUS",
+  "file": "music/circus_malus.m4a",
+  "durationSec": 126.525,
+  "bpm": 100,
+  "key": "Mi (modo ambiguo mayor/menor, cromático)",
+  "beatmap": "beatmaps/circus_malus.json",
+  "variations": [
+   {
+    "id": "circus_malus.original",
+    "file": "music/circus_malus.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "circus_malus.explore",
+    "file": "music/circus_malus.explore.m4a",
+    "kind": "explore",
+    "title": "Cajita de música",
+    "durationSec": 84.0,
+    "loop": {
+     "start": 2.375714,
+     "end": 79.175714
+    },
+    "bpm": 100,
+    "gainDb": 0,
+    "lufs": -18.01,
+    "note": "Re-arreglo 2026-10-10 (pedido del dueño: menos tétrica, timbres propios): el mismo riff del bajo (medido) en una cajita de música de verdad (muestreada, una octava arriba), celesta con un contracanto en Mi mayor, arpa suave de «um-pa» (se corta en 28–31 como el bajo de la canción), arpa en el break y un arpegio de celesta que devuelve el loop. Ya no lleva el piano de la original ni el tic. 32 compases a 100."
+   },
+   {
+    "id": "circus_malus.stinger",
+    "file": "music/circus_malus.stinger.m4a",
+    "kind": "stinger",
+    "title": "Corrección",
+    "durationSec": 9.86,
+    "loop": null,
+    "bpm": 100,
+    "lufs": -18.15,
+    "note": "Recorte sin procesar del final original (115,19–125,05 s), misma ganancia que la canción."
+   },
+   {
+    "id": "circus_malus.battle",
+    "file": "music/circus_malus.battle.m4a",
+    "kind": "battle",
+    "title": "Calíope",
+    "durationSec": 65.0,
+    "loop": {
+     "start": 4.791814,
+     "end": 57.591814
+    },
+    "bpm": 100,
+    "gainDb": 0,
+    "beatmap": "beatmaps/circus_malus.battle.json",
+    "lufs": -16.54,
+    "note": "Remix de batalla: el riff en un calíope nuevo, verso 0–3 sin piano, coro 12–19, el corte del bajo 28–29, coro 2 32–39 + contracanto en cajita, hats y redobles de trap, 808; el final raro re-orquestado y comprimido. Loop 22 compases (52,8 s)."
+   }
+  ],
+  "loop": {
+   "start": 0.003447,
+   "end": 76.803447
+  },
+  "cover": {
+   "palette": [
+    "#1B1420",
+    "#7A1F2B",
+    "#E9D8B4",
+    "#C9A227",
+    "#6B3FA0"
+   ],
+   "motif": "carpa de circo a rayas que gira sola; un carrusel de cajita de música que se detiene"
+  },
+  "moods": [
+   "inquietante",
+   "juguetón",
+   "circo",
+   "mecánico",
+   "hipnótico"
+  ],
+  "lufs": -16.0,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 5579765,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Alguien aplaude a destiempo."
+ },
+ {
+  "id": "hemkade",
+  "title": "Hemkade",
+  "file": "music/hemkade.m4a",
+  "durationSec": 219.611,
+  "bpm": 160,
+  "key": "Fa menor",
+  "beatmap": "beatmaps/hemkade.json",
+  "variations": [
+   {
+    "id": "hemkade.original",
+    "file": "music/hemkade.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "hemkade.ambient",
+    "file": "music/hemkade.ambient.m4a",
+    "kind": "ambient",
+    "title": "Cielo abierto",
+    "durationSec": 57.0,
+    "loop": {
+     "start": 2.966485,
+     "end": 50.966485
+    },
+    "bpm": 80,
+    "gainDb": 0,
+    "beatmap": "beatmaps/hemkade.ambient.json",
+    "lufs": -18.05,
+    "note": "Stem other (intro + breakdown) sin bombeo, a medio tiempo con rubberband ×2 (80 BPM: 1 compás = 2 de la canción), sub y pad nuevos, aire. 16 compases."
+   },
+   {
+    "id": "hemkade.battle",
+    "file": "music/hemkade.battle.m4a",
+    "kind": "battle",
+    "title": "Capas del cielo",
+    "durationSec": 52.7,
+    "loop": {
+     "start": 5.990522,
+     "end": 47.990522
+    },
+    "bpm": 160,
+    "gainDb": 0,
+    "beatmap": "beatmaps/hemkade.battle.json",
+    "lufs": -16.61,
+    "note": "Remix de batalla: verso sin bombo ni bajo + redoble de bombo, drop 24–31, la melodía sola (40–42), clímax 120–127, acorde final + arpegio pluck nuevo con sidechain, coro, palmas, impactos. Loop 28 compases (42 s)."
+   }
+  ],
+  "loop": {
+   "start": 24.002472,
+   "end": 132.002472
+  },
+  "cover": {
+   "palette": [
+    "#0B1026",
+    "#3A1C71",
+    "#FFAF7B",
+    "#F5F7FF",
+    "#D76D77"
+   ],
+   "motif": "rayo épico que sube por capas: mar, nubes, estrellas"
+  },
+  "moods": [
+   "épico",
+   "ascenso",
+   "implacable",
+   "heroico",
+   "clímax"
+  ],
+  "lufs": -16.1,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 9684843,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Sube. Y sigue subiendo."
+ },
+ {
+  "id": "liky_fight",
+  "title": "LIKY FIGHT",
+  "file": "music/liky_fight.m4a",
+  "durationSec": 237.119,
+  "bpm": 131,
+  "key": "Sol menor armónico",
+  "beatmap": "beatmaps/liky_fight.json",
+  "variations": [
+   {
+    "id": "liky_fight.original",
+    "file": "music/liky_fight.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "liky_fight.explore",
+    "file": "music/liky_fight.explore.m4a",
+    "kind": "explore",
+    "title": "Puerto de fiesta",
+    "durationSec": 64.122,
+    "loop": {
+     "start": 1.795261,
+     "end": 60.421224
+    },
+    "bpm": 131,
+    "gainDb": 0,
+    "lufs": -18.05,
+    "note": "Compases 16–47: percusión sin bombo (−9 dB), melodía, bajo −10 dB + marimba nueva a contratiempo. 32 compases a 131."
+   },
+   {
+    "id": "liky_fight.battle",
+    "file": "music/liky_fight.battle.m4a",
+    "kind": "battle",
+    "title": "Pelea de acordeón",
+    "durationSec": 63.058,
+    "loop": {
+     "start": 7.32576,
+     "end": 58.623469
+    },
+    "bpm": 131,
+    "gainDb": 0,
+    "beatmap": "beatmaps/liky_fight.battle.json",
+    "lufs": -16.55,
+    "note": "Remix de batalla: los stems reordenados (intro de percusión, verso con la batería del coro y sin melodía, drop 40–47, break 32–34, clímax 56–63) + acordeón nuevo con el gancho, comping, palmas, güira e impactos. Loop 28 compases (51,3 s); clímax y remate final como secciones."
+   }
+  ],
+  "loop": {
+   "start": 43.965556,
+   "end": 161.217483
+  },
+  "cover": {
+   "palette": [
+    "#FFD23F",
+    "#FF3B3B",
+    "#1B9AAA",
+    "#2B2D42",
+    "#06D6A0"
+   ],
+   "motif": "guantes de boxeo con flores; tambora y güira cruzadas"
+  },
+  "moods": [
+   "fiesta",
+   "pelea",
+   "bailable",
+   "caribeño",
+   "eufórico"
+  ],
+  "lufs": -16.1,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 10456961,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Hay peleas que se bailan."
+ },
+ {
+  "id": "when_i_lose",
+  "title": "WHEN I LOSE",
+  "file": "music/when_i_lose.m4a",
+  "durationSec": 221.744,
+  "bpm": 140,
+  "key": "Mi menor (pedal de Mi)",
+  "beatmap": "beatmaps/when_i_lose.json",
+  "variations": [
+   {
+    "id": "when_i_lose.original",
+    "file": "music/when_i_lose.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "when_i_lose.ambient",
+    "file": "music/when_i_lose.ambient.m4a",
+    "kind": "ambient",
+    "title": "Voces de tinta",
+    "durationSec": 60.0,
+    "loop": {
+     "start": 1.533084,
+     "end": 56.390227
+    },
+    "bpm": 140,
+    "gainDb": 0,
+    "lufs": -18.01,
+    "note": "Compases 2–33: voces + other (armónico), sin batería; el bajo pasa a pedal de Mi; coro/pad nuevos; cueva. 32 compases a 140 (sentido 70)."
+   },
+   {
+    "id": "when_i_lose.aftermath",
+    "file": "music/when_i_lose.aftermath.m4a",
+    "kind": "aftermath",
+    "title": "Después de perder",
+    "durationSec": 24.143,
+    "loop": null,
+    "bpm": 112,
+    "gainDb": 0,
+    "beatmap": "beatmaps/when_i_lose.aftermath.json",
+    "lufs": -18.0,
+    "note": "Puente (compases 68–75) sin batería, más lento (×1,25 → 112 BPM, voces con formantes), filtro que se cierra y cola. Sin loop."
+   },
+   {
+    "id": "when_i_lose.battle",
+    "file": "music/when_i_lose.battle.m4a",
+    "kind": "battle",
+    "title": "Cuernos de tinta",
+    "durationSec": 59.571,
+    "loop": {
+     "start": 6.832404,
+     "end": 54.832404
+    },
+    "bpm": 140,
+    "gainDb": 0,
+    "beatmap": "beatmaps/when_i_lose.battle.json",
+    "lufs": -16.53,
+    "note": "Remix de batalla (re-arreglo 2026-10-10: cambios más naturales): la intro es la segunda mitad de la frase inicial (4–7) sobre el golpe del comienzo y la batería de la canción (14–15) entra como en la original; verso 16–22 + el compás previo al drop de la canción (39); coro 40–47, el puente con voces 68–71, clímax 104–111; el canto (La–Si–Do…Sol…Mi) en cornos y trombones muestreados, taikos, redobles, impactos. Loop 28 compases (48 s)."
+   }
+  ],
+  "loop": {
+   "start": 27.431633,
+   "end": 96.003061
+  },
+  "cover": {
+   "palette": [
+    "#2E2A24",
+    "#8C6A43",
+    "#C8A97E",
+    "#E8E1D3",
+    "#4F6D7A"
+   ],
+   "motif": "piedras antiguas con pinturas de gatos; voces que salen de la tinta"
+  },
+  "moods": [
+   "ancestral",
+   "solemne",
+   "místico",
+   "nocturno",
+   "derrota digna"
+  ],
+  "lufs": -16.0,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 9778912,
+   "encoderDelaySamples": 2112
+  },
+  "feelBpm": 70,
+  "hint": "La cantan los que estuvieron antes."
+ },
+ {
+  "id": "yonose_todo",
+  "title": "YONOSE TODO",
+  "file": "music/yonose_todo.m4a",
+  "durationSec": 208.961,
+  "bpm": 90,
+  "key": "Si♭ menor",
+  "beatmap": "beatmaps/yonose_todo.json",
+  "variations": [
+   {
+    "id": "yonose_todo.original",
+    "file": "music/yonose_todo.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "yonose_todo.ambient",
+    "file": "music/yonose_todo.ambient.m4a",
+    "kind": "ambient",
+    "title": "Solo las teclas",
+    "durationSec": 50.667,
+    "loop": {
+     "start": 2.622086,
+     "end": 45.288753
+    },
+    "bpm": 90,
+    "gainDb": 0,
+    "lufs": -18.01,
+    "note": "Las teclas desnudas (break) + celesta, pad, sub, campana con la célula del arco y coro. 16 compases a 90."
+   },
+   {
+    "id": "yonose_todo.aftermath",
+    "file": "music/yonose_todo.aftermath.m4a",
+    "kind": "aftermath",
+    "title": "Reconstrucción",
+    "durationSec": 40.0,
+    "loop": {
+     "start": 2.304354,
+     "end": 34.304354
+    },
+    "bpm": 90,
+    "gainDb": 0,
+    "lufs": -18.02,
+    "note": "Capa 0/3: teclas lejanas + pad. Mismo largo y grilla que _bajo y _ritmo (cambiar en la misma posición)."
+   },
+   {
+    "id": "yonose_todo.aftermath_bajo",
+    "file": "music/yonose_todo.aftermath_bajo.m4a",
+    "kind": "aftermath",
+    "title": "Reconstrucción · bajo",
+    "durationSec": 40.0,
+    "loop": {
+     "start": 2.112789,
+     "end": 34.112789
+    },
+    "bpm": 90,
+    "gainDb": 0,
+    "lufs": -17.51,
+    "note": "Capa 1/3: + bajo del coro."
+   },
+   {
+    "id": "yonose_todo.aftermath_ritmo",
+    "file": "music/yonose_todo.aftermath_ritmo.m4a",
+    "kind": "aftermath",
+    "title": "Reconstrucción · ritmo",
+    "durationSec": 40.0,
+    "loop": {
+     "start": 2.110181,
+     "end": 34.110181
+    },
+    "bpm": 90,
+    "gainDb": 0,
+    "lufs": -17.24,
+    "note": "Capa 2/3: + batería del coro. La 3/3 es la original (climax)."
+   },
+   {
+    "id": "yonose_todo.menu_loop",
+    "file": "music/yonose_todo.menu_loop.m4a",
+    "kind": "menu_loop",
+    "title": "Intro en bucle",
+    "durationSec": 22.083,
+    "loop": {
+     "start": 5.298254,
+     "end": 21.298254
+    },
+    "bpm": 90,
+    "lufs": -16.65,
+    "note": "Recorte de la original (compases 0–7), loop en compases 2–7; misma ganancia que la canción."
+   },
+   {
+    "id": "yonose_todo.battle",
+    "file": "music/yonose_todo.battle.m4a",
+    "kind": "battle",
+    "title": "Aunque no lo sepa todo",
+    "durationSec": 70.067,
+    "loop": {
+     "start": 5.30805,
+     "end": 63.974717
+    },
+    "bpm": 90,
+    "gainDb": 0,
+    "beatmap": "beatmaps/yonose_todo.battle.json",
+    "lufs": -17.46,
+    "note": "Remix de batalla (re-arreglo 2026-10-10: sin sintes agregados): verso 8–11, coro 32–39, teclas 44–45, clímax 56–63 con los propios sonidos de la canción + timbales orquestales (muestreados) con el mismo ritmo, los redobles de su caja, impactos; remate con el golpe del clímax, cuerdas en Si♭m y la célula del arco en celesta. Loop 22 compases (58,7 s)."
+   }
+  ],
+  "loop": {
+   "start": 85.338685,
+   "end": 149.338685
+  },
+  "cover": {
+   "palette": [
+    "#1D3557",
+    "#F4A261",
+    "#457B9D",
+    "#F1FAEE",
+    "#E76F51"
+   ],
+   "motif": "lluvia y sol al mismo tiempo; un gato mirando por la ventana"
+  },
+  "moods": [
+   "agridulce",
+   "nostálgico",
+   "esperanza",
+   "cálido",
+   "melancolía"
+  ],
+  "lufs": -16.8,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 9215169,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Se escucha a pedacitos, hasta el final."
+ },
+ {
+  "id": "te_odio",
+  "title": "te ODIO",
+  "file": "music/te_odio.m4a",
+  "durationSec": 214.1,
+  "bpm": 120,
+  "key": "Sol frigio (≈ Do menor)",
+  "beatmap": "beatmaps/te_odio.json",
+  "variations": [
+   {
+    "id": "te_odio.original",
+    "file": "music/te_odio.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "te_odio.explore",
+    "file": "music/te_odio.explore.m4a",
+    "kind": "explore",
+    "title": "Señal filtrada",
+    "durationSec": 38.0,
+    "loop": {
+     "start": 1.572517,
+     "end": 33.572517
+    },
+    "bpm": 120,
+    "gainDb": 0,
+    "lufs": -18.01,
+    "note": "Verso (10–25): other filtrado a 750 Hz con compuerta de «señal» y los stops citados; sub suave en lugar del 808; solo hats; estática. 16 compases a 120."
+   },
+   {
+    "id": "te_odio.ambient",
+    "file": "music/te_odio.ambient.m4a",
+    "kind": "ambient",
+    "title": "Solo la voz",
+    "durationSec": 38.0,
+    "loop": {
+     "start": 1.749773,
+     "end": 33.749773
+    },
+    "bpm": 120,
+    "gainDb": 0,
+    "lufs": -18.02,
+    "note": "Coro 2 (26–33): voz + other, sin batería ni 808; 8 compases con voz y 8 con su eco. 16 compases a 120."
+   },
+   {
+    "id": "te_odio.battle",
+    "file": "music/te_odio.battle.m4a",
+    "kind": "battle",
+    "title": "Señal rota",
+    "durationSec": 64.4,
+    "loop": {
+     "start": 3.973492,
+     "end": 59.973492
+    },
+    "bpm": 120,
+    "gainDb": 0,
+    "beatmap": "beatmaps/te_odio.battle.json",
+    "lufs": -16.54,
+    "note": "Remix de batalla (re-arreglo 2026-10-10: sin las campanas): verso 10–17 con las teclas de la canción que se van abriendo (filtro 1,2 → 6 kHz), el gancho 2–9 con cortes de señal (la voz sigue), break filtrado 82–84 + tartamudeo glitch, clímax 66–73, redobles de hats, impactos. Loop 28 compases (56 s)."
+   }
+  ],
+  "loop": {
+   "start": 20.000499,
+   "end": 68.000499
+  },
+  "cover": {
+   "palette": [
+    "#120E1A",
+    "#F72585",
+    "#7209B7",
+    "#E5E5E5",
+    "#B5179E"
+   ],
+   "motif": "corazón de neón partido por una grieta con glitch"
+  },
+  "moods": [
+   "despecho",
+   "rivalidad",
+   "tenso",
+   "emocional",
+   "nocturno"
+  ],
+  "lufs": -16.1,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 9441809,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Lo dice con rabia y con cariño."
+ },
+ {
+  "id": "amb",
+  "title": "Otras grabaciones",
+  "file": "music/amb.motivo.m4a",
+  "durationSec": 3.8,
+  "bpm": 90,
+  "key": "Si♭ menor (el motivo del arco)",
+  "kind": "collection",
+  "variations": [
+   {
+    "id": "amb.motivo",
+    "file": "music/amb.motivo.m4a",
+    "kind": "original",
+    "title": "El motivo"
+   },
+   {
+    "id": "amb.night_astral",
+    "file": "music/amb.night_astral.m4a",
+    "kind": "ambient",
+    "title": "Noche de estrellas",
+    "durationSec": 93.333,
+    "loop": {
+     "start": 2.666667,
+     "end": 88.0
+    },
+    "bpm": 90,
+    "gainDb": 0,
+    "beatmap": "beatmaps/amb.night_astral.json",
+    "lufs": -18.01,
+    "note": "Composición nueva: pedal de Si♭, pad, la célula del arco en celesta y campana (compases 0 y 16), glissandos hacia arriba, centelleos, las teclas reales de YONOSE una octava arriba muy lejos. 32 compases a 90."
+   },
+   {
+    "id": "amb.nacar",
+    "file": "music/amb.nacar.m4a",
+    "kind": "ambient",
+    "title": "Isla Nácar",
+    "durationSec": 101.143,
+    "loop": {
+     "start": 1.585692,
+     "end": 97.585692
+    },
+    "bpm": 140,
+    "gainDb": 0,
+    "beatmap": "beatmaps/amb.nacar.json",
+    "lufs": -18.01,
+    "note": "Composición nueva en Mi menor (grilla 140, se siente 70): armónica de cristal, crótalos, vibráfono con arco que cita el canto de WHEN I LOSE, y esa voz real muy lejos. 56 compases."
+   },
+   {
+    "id": "amb.suenos",
+    "file": "music/amb.suenos.m4a",
+    "kind": "ambient",
+    "title": "Archipiélago de los Sueños",
+    "durationSec": 81.0,
+    "loop": {
+     "start": 3.0,
+     "end": 75.0
+    },
+    "bpm": 80,
+    "gainDb": 0,
+    "beatmap": "beatmaps/amb.suenos.json",
+    "lufs": -20.9,
+    "layers": [
+     {
+      "id": "calido",
+      "file": "music/amb.suenos.calido.m4a",
+      "loop": {
+       "start": 3.0,
+       "end": 39.0
+      },
+      "gain": 1.0
+     },
+     {
+      "id": "agua",
+      "file": "music/amb.suenos.agua.m4a",
+      "loop": {
+       "start": 3.0,
+       "end": 39.0
+      },
+      "gain": 1.0
+     },
+     {
+      "id": "magia",
+      "file": "music/amb.suenos.magia.m4a",
+      "loop": {
+       "start": 3.0,
+       "end": 39.0
+      },
+      "gain": 1.0
+     },
+     {
+      "id": "hondo",
+      "file": "music/amb.suenos.hondo.m4a",
+      "loop": {
+       "start": 3.0,
+       "end": 39.0
+      },
+      "gain": 1.0
+     }
+    ],
+    "note": "Composición nueva (COMPOSER, doc 30): Re♭ mayor / Si♭ menor, 80 BPM, base 24 compases (piano con fieltro, cuerdas, la célula del arco INVERTIDA Re♭–Do–Si♭) + 4 capas de 12 compases, una por tipo de soñador: calido (kalimba), agua (cristal, gotas, campanitas), magia (celesta + coro + arpa que cae), hondo (piano al revés, cajita desafinada). La región las prende según quién duerme (state/sys/suenosDream dreamLayers). Con todas las capas: −17,5 LUFS."
+   },
+   {
+    "id": "amb.umbral",
+    "file": "music/amb.umbral.m4a",
+    "kind": "ambient",
+    "title": "El Umbral",
+    "durationSec": 70.0,
+    "loop": {
+     "start": 2.0,
+     "end": 66.0
+    },
+    "bpm": 120,
+    "gainDb": 0,
+    "beatmap": "beatmaps/amb.umbral.json",
+    "lufs": -20.15,
+    "layers": [
+     {
+      "id": "correctores",
+      "file": "music/amb.umbral.correctores.m4a",
+      "loop": {
+       "start": 2.0,
+       "end": 34.0
+      },
+      "gain": 1.0
+     },
+     {
+      "id": "disruptores",
+      "file": "music/amb.umbral.disruptores.m4a",
+      "loop": {
+       "start": 2.0,
+       "end": 34.0
+      },
+      "gain": 1.0
+     },
+     {
+      "id": "titiriteros",
+      "file": "music/amb.umbral.titiriteros.m4a",
+      "loop": {
+       "start": 2.0,
+       "end": 34.0
+      },
+      "gain": 1.0
+     }
+    ],
+    "note": "Composición nueva (COMPOSER, doc 30): pedal de Si♭, 120 BPM, base 32 compases (la página en blanco + la célula de REGISTRO 000 corrida un semitono) + 3 capas de 16, una por fuerza: correctores (cajita seca, el riff y los acordes «perfectos» de CIRCUS movidos a Si♭), disruptores (el 808 y los hats de te ODIO, cortes de señal, tape stop), titiriteros (arpa en Si♭ lidio, hilos de cristal, lápiz)."
+   },
+   {
+    "id": "amb.archivo",
+    "file": "music/amb.archivo.m4a",
+    "kind": "ambient",
+    "title": "El Archivo",
+    "durationSec": 92.0,
+    "loop": {
+     "start": 4.0,
+     "end": 84.0
+    },
+    "bpm": 60,
+    "gainDb": 0,
+    "beatmap": "beatmaps/amb.archivo.json",
+    "lufs": -18.01,
+    "note": "Composición nueva (COMPOSER, doc 30): drone de Si♭, 60 BPM (latido y monitor), cuerdas y coro entre Si♭maj7♯11 (lidio) y Si♭m(add9), papel y lápiz, el motivo lidio en arpa y una vez la célula del arco a lo lejos. 20 compases."
+   },
+   {
+    "id": "amb.hilos",
+    "file": "music/amb.hilos.m4a",
+    "kind": "battle",
+    "title": "Hilos",
+    "durationSec": 54.0,
+    "loop": {
+     "start": 5.992041,
+     "end": 47.992041
+    },
+    "bpm": 160,
+    "gainDb": 0,
+    "beatmap": "beatmaps/amb.hilos.json",
+    "lufs": -16.54,
+    "note": "Composición nueva (COMPOSER, doc 30) = boss.umbral de doc 18 §9: 160 BPM, Si♭ menor ↔ Fa menor, orquesta (GeneralUser GS) + batería y bajo de Hemkade citados; el motivo de la célula «corregida» (Si♭–Do–Re–Mi). Vocabulario de remix (intro/verse/drop/break/climax/outro), termina en Do (V de Fa menor) para entregar a Hemkade."
+   },
+   {
+    "id": "amb.registro_000",
+    "file": "music/stinger.registro_000_despertando.m4a",
+    "kind": "stinger",
+    "title": "REGISTRO 000 · despertando",
+    "durationSec": 7.2,
+    "gainDb": 0,
+    "note": "Remate nuevo (COMPOSER, doc 30): la célula Si–Do♯–Re desafinada resbala medio tono y cae afinada en Si♭–Do–Re♭ → Si♭m. Suena en los créditos (stinger registro_000_despertando)."
+   }
+  ],
+  "loop": null,
+  "cover": {
+   "palette": [
+    "#0B1230",
+    "#2E3A7A",
+    "#F2E9C9",
+    "#9FD3E6",
+    "#C9B6F2"
+   ],
+   "motif": "estrellas que suben sobre el mar de noche; nácar y cristal"
+  },
+  "moods": [
+   "nocturno",
+   "misterioso",
+   "cristalino",
+   "calmo"
+  ],
+  "gainDb": 0,
+  "lufs": -17.4,
+  "hint": "Cosas que se oyen de noche."
+ }
+]
