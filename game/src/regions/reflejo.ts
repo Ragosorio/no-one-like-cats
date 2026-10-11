@@ -5,6 +5,9 @@
  * water reflects an island that is not there: the Isla de las Páginas Hundidas exists only upside down,
  * under the surface — a mirrored ghost drawn after the ocean, wobbling with the waves. Then the camera
  * looks up, and the sky is empty where the island should be.
+ *
+ * The visit IS a CINE scene (src/cine/scenes/reflejo.ts, `cine: 'reflejo'`): camera moves, stars rising from the
+ * sea, the ghost brightening as you find it (drive 'ghost'), YONOSE's arc cell when it shows; then home.
  */
 import * as THREE from 'three';
 import type { RegionDef } from './types';
@@ -17,7 +20,7 @@ const height = islandHeight({ radius: 9, seed: 11, base: 3.5, hills: 0.8, pads: 
 function ghostIsland(): THREE.Group {
   const g = new THREE.Group();
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 } },
+    uniforms: { uTime: { value: 0 }, uGhost: { value: 1 } },
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
@@ -26,8 +29,8 @@ function ghostIsland(): THREE.Group {
       void main(){ vec3 p = position; vec4 w = modelMatrix * vec4(p,1.0);
         w.x += sin(w.z * 0.35 + uTime * 1.3) * 0.6 + sin(w.z * 1.7 + uTime * 2.1) * 0.15;
         vH = -w.y; gl_Position = projectionMatrix * viewMatrix * w; }`,
-    fragmentShader: /* glsl */ `uniform float uTime; varying float vH;
-      void main(){ float a = 0.22 * smoothstep(14.0, 0.0, vH) * (0.75 + 0.25 * sin(vH * 3.0 - uTime * 2.0));
+    fragmentShader: /* glsl */ `uniform float uTime; uniform float uGhost; varying float vH;
+      void main(){ float a = 0.22 * uGhost * smoothstep(14.0, 0.0, vH) * (0.75 + 0.25 * sin(vH * 3.0 - uTime * 2.0));
         gl_FragColor = vec4(vec3(0.75, 0.88, 1.0) * a, 1.0); }`,
   });
   const add = (geo: THREE.BufferGeometry, x: number, y: number, z: number, ry = 0, rz = 0) => {
@@ -64,18 +67,9 @@ export const region: RegionDef = {
   hour: 23.2,
   weather: 'despejado',
   fog: { near: 60, far: 260 },
-  camera: { target: [0, 6, -20], yaw: 0, pitch: 0.12, dist: 18 },
+  camera: { target: [0, 9, -14], yaw: 0.15, pitch: 0.12, dist: 12 },
   arrival: [0, 4, 0],
-  cinematic: {
-    duration: 19,
-    shots: [
-      { at: 0, target: [0, 9, -14], yaw: 0.15, pitch: 0.12, dist: 12, cut: true },
-      { at: 0.4, target: [0, 22, -40], yaw: 0.1, pitch: -0.05, dist: 30, lines: [['LUZTERNA', 'Desde aquí arriba se ve mejor, Capi. Y también se ve peor.']] },
-      { at: 6, target: [0, -2, -66], yaw: 0, pitch: 0.42, dist: 46, lines: [['LUZTERNA', 'Ahí, en el agua. Libros. Una isla entera hecha de libros, al revés.']] },
-      { at: 11.5, target: [0, 16, -70], yaw: 0.05, pitch: 0.08, dist: 58, lines: [['LUZTERNA', 'Y arriba… nada. Solo existe en el reflejo. Como mis ganas de hacer ejercicio.']] },
-      { at: 16, target: [0, 6, -30], yaw: -0.25, pitch: 0.22, dist: 44, lines: [['LUZTERNA', 'Mañana zarpamos. Hoy no. Hoy me da miedo. …Un poquito.']] },
-    ],
-  },
+  cine: 'reflejo',
   async build(ctx) {
     const ghost = ghostIsland();
     ctx.world.scene.add(ghost);
@@ -91,10 +85,17 @@ export const region: RegionDef = {
     glass.position.set(0, 12.2, 0);
     ctx.world.scene.add(tower, cap, glass);
     const mat = ghost.userData.mat as THREE.ShaderMaterial;
+    mat.uniforms.uGhost.value = 0.15;
     return {
       pois: [],
       update(_dt, t) {
         mat.uniforms.uTime.value = t;
+      },
+      cine: {
+        driveGet: (id) => (id === 'ghost' ? (mat.uniforms.uGhost.value as number) : undefined),
+        drive: (id, k) => {
+          if (id === 'ghost') mat.uniforms.uGhost.value = k;
+        },
       },
     };
   },

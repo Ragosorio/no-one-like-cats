@@ -26,11 +26,21 @@ import { rng as seeded } from '../engine/core/noise';
 import { activities } from '../regions/life';
 import { REGION_INFO, type RegionId } from '../regions';
 import type { POI, RegionBuild, RegionCtx, RegionDef } from '../regions/types';
+import { RegionStage } from '../regions/cineStage';
+import { setCineStage } from '../cine';
+import { Modal } from '../ui/modal';
+import { scenes } from '../core/scenes';
 
 const LOADERS: Record<RegionId, () => Promise<{ region: RegionDef }>> = {
   paginas: () => import('../regions/paginas'),
   nacar: () => import('../regions/nacar'),
   reflejo: () => import('../regions/reflejo'),
+  invertidas: () => import('../regions/invertidas'),
+  corona: () => import('../regions/corona'),
+  cometa: () => import('../regions/cometa'),
+  suenos: () => import('../regions/suenos'),
+  olvidada: () => import('../regions/olvidada'),
+  umbral: () => import('../regions/umbral'),
 };
 
 const RARITY_H: Record<string, number> = { common: 2.4, rare: 2.5, epic: 2.7, legendary: 3.1, mythic: 3.2, heroic: 3.0, divine: 3.3 };
@@ -58,6 +68,8 @@ export class RegionScene extends Scene {
   private bgAlpha = 1;
   private describe = new Map<string, { title: string; text: string }>();
   private offResize: (() => void) | null = null;
+  /** a CINE scene holds the screen (regions/cineStage.ts): taps on cats / markers wait */
+  private held = false;
 
   constructor(readonly regionId: string) {
     super();
@@ -149,16 +161,40 @@ export class RegionScene extends Scene {
       this.build.dispose?.();
       return;
     }
-    if (!region.cinematic) await this.addVisitors(region);
+    if (!region.cinematic && !region.cine) await this.addVisitors(region);
     this.syncHomes();
     world.warmup();
     this.removeChild(this.loading);
-    if (region.cinematic) this.startCinematic(region);
+    // the island as a CINE stage (src/cine): the story's scenes here, replays from Ajustes
+    setCineStage(
+      'region',
+      new RegionStage({
+        regionId: region.id,
+        world,
+        hud: this.hud,
+        build: () => this.build,
+        alive: () => !this.gone && scenes.current === this,
+        blocked: () => scenes.overlayLayer.children.some((c) => c instanceof Modal && c.visible && !c.destroyed && !c.closed),
+        floatText: (p, text) => this.floatAt(p, text),
+        hold: (on) => (this.held = on),
+      }),
+    );
+    if (region.cine) void this.playEntrance(region.cine);
+    else if (region.cinematic) this.startCinematic(region);
     else {
       this.drawHud(region);
       G.count(`feature_region_${region.id}`);
       if (!G.has(`region_visited:${region.id}`)) G.flag(`region_visited:${region.id}`);
     }
+  }
+
+  /** a visit that IS a scene (el reflejo): it plays, then the sea brings you home (SALTAR too) */
+  private async playEntrance(id: string) {
+    const { playCine } = await import('../cine');
+    const res = await playCine(id);
+    if (this.gone || res === 'interrupted') return;
+    this.cine = { t: 0, shot: 0, done: false };
+    this.endCinematic();
   }
 
   private realHour() {
@@ -238,9 +274,10 @@ export class RegionScene extends Scene {
     const plate = new Container();
     const name = txt(region.name.toUpperCase(), { fontFamily: F.poster, fontSize: 40, fill: C.ink });
     const sub = txt(region.subtitle, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink });
-    sub.y = 46;
+    // (46 touched the poster caps: «ARCHIPIÉLAGO…» sat on its subtitle)
+    sub.y = 52;
     const bw = Math.max(name.width, sub.width) + 40;
-    const bg = new Graphics().roundRect(-20, -14, bw, 92, 14).fill({ color: C.paper, alpha: 0.94 }).stroke({ width: 3, color: C.ink });
+    const bg = new Graphics().roundRect(-20, -14, bw, 98, 14).fill({ color: C.paper, alpha: 0.94 }).stroke({ width: 3, color: C.ink });
     plate.addChild(bg, name, sub);
     plate.position.set(v.x + 40, v.y + 34);
     const back = new Button('VOLVER A LA CARTA', () => void import('../app/flow').then((f) => f.goMap()), { w: 320, h: 64, size: 24, color: C.paper });
@@ -302,7 +339,7 @@ export class RegionScene extends Scene {
 
   private pick(x: number, y: number) {
     const w = this.world;
-    if (!w || this.cine) return;
+    if (!w || this.cine || this.held) return;
     const hit = w.pickResident(x, y);
     if (!hit) return;
     hit.cat.brain.emote('surprise', 0.5);
@@ -411,6 +448,8 @@ export class RegionScene extends Scene {
 
   exit() {
     this.gone = true;
+    // withdrawing the stage interrupts a scene playing here
+    setCineStage('region', null);
     this.offResize?.();
     this.build?.dispose?.();
     this.world?.dispose();

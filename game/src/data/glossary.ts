@@ -660,6 +660,40 @@ export const GLOSSARY: GlossEntry[] = [
     quip: 'Te disparan, lo devuelves. Se llama educación.',
     gate: { element: 'crystal' },
   },
+  // Parte II · Oleada 2 (battle/gravedad.ts · battle/cielo.ts · state/sys/rupturasO2.ts)
+  {
+    id: 'el_gravity',
+    term: 'Gravedad',
+    group: 'gatos',
+    what: 'En barcos: no pega, MUEVE. Lo que toca queda FLOTANDO 2 turnos: recibe +35% de los golpes del rival, y si un módulo que flota (no el núcleo ni un camarote) ya está muy roto, al siguiente golpe se cae del barco entero: ¡AL AGUA! en el mar (40% de vida o menos), ¡AL VACÍO! en el cielo (60% o menos). Cada tiro de un gato de Gravedad que cae en el barco rival abre un POZO ahí: tus siguientes tiros (la andanada de ese turno y el gato del siguiente) se curvan hacia él. En el Podio, su Técnica GRAVITY DROP! puede ATURDIRLO.',
+    why: 'Le pega ×1.5 a {storm} Tormenta y a {crystal} Cristal (les cambia para dónde es abajo). Recibe ×1.5 de {void} Vacío y de {time} Tiempo.',
+    how: 'Gana en las Islas Invertidas y Plomito se queda; Masa Madre llega después. Hábitat de Gravedad en la Tienda y Resonancia con un padre de Gravedad: los raros y épicos salen cruzándolo con Tierra, Tormenta, Luz o Agua.',
+    where: 'Tienda › hábitat de Gravedad · Santuario',
+    quip: 'No apuntaste mal. El cielo te corrigió. A tu favor, por una vez.',
+    gate: { element: 'gravity' },
+  },
+  {
+    id: 'kit_vuelo',
+    term: 'Kit de Vuelo (aerobarco)',
+    group: 'barco',
+    what: 'Un kit de Corona Celeste que le pone globo y hélices a UN barco tuyo: sigue siendo el mismo barco (nombre, gatos, plano e historia), solo que ahora flota. Tiene 3 niveles para toda tu flota: 1 Kit de Vuelo (vuela) · 2 Estabilizadores (el viento en capas empuja 30% menos tus tiros) · 3 Ancla de Nube (tus módulos rotos no se caen al vacío).',
+    why: 'Las batallas del cielo solo se pelean con un barco que vuela. Si zarpas con uno que no, el juego te ofrece cambiar al que sí.',
+    how: 'ASTILLERO › pestaña VUELO › INSTALAR. El primero es gratis; otro barco cuesta un poco de oro y chatarra. Los niveles piden oro, chatarra, planos y cristales de Gravedad.',
+    where: 'Astillero › VUELO',
+    quip: 'Tu barco no cambió. Solo aprendió a no tocar el agua. Como los gatos.',
+    gate: { flag: 'kit_vuelo:ofrecido' },
+  },
+  {
+    id: 'cielo',
+    term: 'Batallas del cielo',
+    group: 'mar',
+    what: 'Arriba de las nubes: todo pesa ×0.7 (los tiros llegan más lejos), el viento sopla distinto en tres pisos (arriba ×1.6, en medio ×1, abajo al revés) y hay ISLOTES flotando entre los barcos que paran los tiros (el Sonido y el Vacío los atraviesan). Un módulo muy roto (25% o menos) que recibe otro golpe se cae al vacío y se pierde.',
+    why: 'Cambia cómo se apunta: tiros bombeados para pasar sobre los islotes, tiros bajos para el viento de abajo. La línea de tiro ya lo calcula todo: léela.',
+    how: 'Necesitas un barco con Kit de Vuelo. Con Estabilizadores el viento te mueve menos; con Ancla de Nube no se te cae nada.',
+    where: 'Islas Invertidas · Corona Celeste',
+    quip: 'Allá arriba el suelo es opcional. La caída no.',
+    gate: { flag: 'kit_vuelo:ofrecido' },
+  },
 ];
 
 export const GLOSS_BY_ID = new Map(GLOSSARY.map((e) => [e.id, e]));

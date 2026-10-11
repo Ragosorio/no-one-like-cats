@@ -8,7 +8,7 @@ import { Container, Graphics } from 'pixi.js';
 import { C, F } from '../../ui/theme';
 import { ELEMENT_BY_ID } from '../../data/content';
 
-export type Pattern = 'flames' | 'waves' | 'watercolor' | 'woodcut' | 'krackle' | 'tarot' | 'glitch' | 'aurora' | 'riso' | 'kagee' | 'sepia' | 'vitral' | 'static' | 'nacar';
+export type Pattern = 'flames' | 'waves' | 'watercolor' | 'woodcut' | 'krackle' | 'tarot' | 'glitch' | 'aurora' | 'riso' | 'kagee' | 'sepia' | 'vitral' | 'static' | 'nacar' | 'orbital';
 export interface Dimension {
   id: string;
   name: string;
@@ -45,6 +45,8 @@ const D: Record<string, Omit<Dimension, 'id' | 'sound'>> = {
   void: { name: 'NOIR INVERTIDO', bg: 0xf2f2f0, mid: 0x231626, accent: 0xff2e88, hi: 0xffffff, ink: 0x0d110f, font: F.glitch, pattern: 'static', word: '虚' },
   // Parte II · Oleada 1
   crystal: { name: 'NÁCAR PRISMÁTICO', bg: 0xf7f2ff, mid: 0xb79cff, accent: 0x8fd3ff, hi: 0x6fe0c8, ink: 0x2e2450, font: F.serif, pattern: 'nacar', word: '晶' },
+  // Parte II · Oleada 2
+  gravity: { name: 'CIANOTIPO ORBITAL', bg: 0x13224a, mid: 0x3e6fd8, accent: 0xf0b44c, hi: 0xe9f0ff, ink: 0xe9f0ff, font: F.ui, pattern: 'orbital', word: '重' },
 };
 
 export function dimensionOf(el: string): Dimension {
@@ -402,6 +404,101 @@ export function dimensionBackground(dim: Dimension, w: number, h: number, seed =
       p.rect(18, 18, w - 36, h - 36).stroke({ width: 6, color: dim.mid }).rect(30, 30, w - 60, h - 60).stroke({ width: 2, color: dim.accent });
       break;
     }
+    case 'orbital': {
+      // cyanotype blueprint: chalk grid, an orbit diagram around a heavy well (tiny moons riding it),
+      // dotted trajectories that fall UP, a brass plumb bob on its line, pebbles rising (all inside w×h)
+      const chalk = dim.hi;
+      const cx0 = (x: number) => Math.max(24, Math.min(w - 24, x));
+      const cy0 = (y: number) => Math.max(24, Math.min(h - 24, y));
+      for (let x = 24; x < w - 12; x += 24) p.moveTo(x, 12).lineTo(x, h - 12);
+      for (let y = 24; y < h - 12; y += 24) p.moveTo(12, y).lineTo(w - 12, y);
+      p.stroke({ width: 1, color: chalk, alpha: 0.08 });
+      for (let x = 96; x < w - 12; x += 96) p.moveTo(x, 12).lineTo(x, h - 12);
+      for (let y = 96; y < h - 12; y += 96) p.moveTo(12, y).lineTo(w - 12, y);
+      p.stroke({ width: 2, color: chalk, alpha: 0.15 });
+      // the well: violet glow, a mid-blue body, crosshair
+      const cx = w * 0.46;
+      const cy = h * 0.52;
+      const R = Math.min(w, h) * 0.38;
+      for (let k = 4; k >= 1; k--) p.circle(cx, cy, R * 0.12 * (1 + k * 0.5)).fill({ color: 0x8e6cff, alpha: 0.08 });
+      // orbits (tilted ellipses): solid chalk, dotted trajectory, solid; a tiny moon on each
+      const orbits: [number, number, number, boolean, number][] = [
+        [1, 0.3, -0.22, false, 0.4],
+        [0.72, 0.24, -0.12, true, 2.3],
+        [0.46, 0.18, -0.3, false, 4.1],
+      ];
+      for (const [kr, ky, rot, dotted, ma] of orbits) {
+        const rx = R * kr;
+        const ry = R * ky;
+        const at = (a: number) => {
+          const ex = Math.cos(a) * rx;
+          const ey = Math.sin(a) * ry;
+          return [cx0(cx + ex * Math.cos(rot) - ey * Math.sin(rot)), cy0(cy + ex * Math.sin(rot) + ey * Math.cos(rot))];
+        };
+        if (dotted) {
+          for (let i = 0; i < 56; i++) {
+            const [x, y] = at((i / 56) * Math.PI * 2);
+            p.circle(x, y, 2.8);
+          }
+          p.fill({ color: chalk, alpha: 0.7 });
+        } else {
+          const pts: number[] = [];
+          for (let i = 0; i < 72; i++) pts.push(...at((i / 72) * Math.PI * 2));
+          p.poly(pts, true).stroke({ width: 3, color: chalk, alpha: 0.75 });
+        }
+        const [mx, my] = at(ma);
+        p.circle(mx, my, 7 + kr * 7).fill(kr === 1 ? dim.accent : chalk).stroke({ width: 3, color: dim.bg });
+      }
+      p.circle(cx, cy, R * 0.12).fill(dim.mid).stroke({ width: 4, color: chalk });
+      p.moveTo(cx - R * 0.22, cy).lineTo(cx + R * 0.22, cy).moveTo(cx, cy - R * 0.22).lineTo(cx, cy + R * 0.22).stroke({ width: 1.5, color: chalk, alpha: 0.6 });
+      // trajectories that fall UPWARD (accelerating dots), a chevron at the top of each
+      for (const [x0, dx] of [
+        [w * 0.12, w * 0.1],
+        [w * 0.7, -w * 0.08],
+      ] as const) {
+        const y0 = h - 48;
+        for (let i = 0; i <= 14; i++) {
+          const t = i / 14;
+          p.circle(cx0(x0 + dx * t), cy0(y0 - t * t * (h - 120)), 3);
+        }
+        p.fill({ color: chalk, alpha: 0.75 });
+        const tx = cx0(x0 + dx);
+        const ty = cy0(y0 - (h - 120));
+        p.moveTo(tx - 10, ty + 8).lineTo(tx, ty - 4).lineTo(tx + 10, ty + 8).stroke({ width: 3, color: chalk, cap: 'round', join: 'round' });
+      }
+      // a brass plumb bob on its line, with a blueprint measure beside it
+      const bx = cx0(w * 0.84);
+      const by = Math.max(80, h * 0.34);
+      p.moveTo(bx, 18).lineTo(bx, by - 12).stroke({ width: 2, color: chalk, alpha: 0.9 });
+      p.rect(bx - 8, by - 14, 16, 12).fill(0xc88a2e).stroke({ width: 2.5, color: chalk });
+      p.moveTo(bx - 20, by + 8).quadraticCurveTo(bx, by - 14, bx + 20, by + 8).lineTo(bx, by + 60).closePath().fill(dim.accent).stroke({ width: 3, color: chalk, join: 'round' });
+      p.moveTo(bx - 9, by + 10).lineTo(bx - 2, by + 40).stroke({ width: 3, color: 0xfff6da, alpha: 0.8, cap: 'round' });
+      const qx = cx0(bx + 38);
+      p.moveTo(qx, 30).lineTo(qx, by + 60).moveTo(qx - 8, 30).lineTo(qx + 8, 30).moveTo(qx - 8, by + 60).lineTo(qx + 8, by + 60).stroke({ width: 1.5, color: chalk, alpha: 0.6 });
+      // pebbles rising, speed lines under each
+      const peb: [number, number, number][] = [];
+      for (let i = 0; i < 26; i++) {
+        const x = 40 + r() * (w - 80);
+        const y = cy0(h * 0.3 + r() * h * 0.6);
+        const s = 3 + r() * 6;
+        peb.push([x, y, s]);
+        p.ellipse(x, y, s * 1.25, s).fill({ color: i % 5 === 0 ? dim.accent : chalk, alpha: 0.85 });
+      }
+      for (const [x, y, s] of peb) {
+        const l = 8 + s * 2;
+        p.moveTo(x - s * 0.5, y + s + 3).lineTo(x - s * 0.5, Math.min(h - 24, y + s + 3 + l)).moveTo(x + s * 0.5, y + s + 3).lineTo(x + s * 0.5, Math.min(h - 24, y + s + 3 + l * 0.6));
+      }
+      p.stroke({ width: 1.5, color: chalk, alpha: 0.5 });
+      // blueprint frame + title block
+      p.rect(18, 18, w - 36, h - 36).stroke({ width: 5, color: chalk, alpha: 0.85 }).rect(30, 30, w - 60, h - 60).stroke({ width: 1.5, color: dim.accent });
+      if (w > 420 && h > 220) {
+        const tw = 168;
+        const th = 56;
+        p.rect(w - 30 - tw, h - 30 - th, tw, th).fill({ color: dim.bg, alpha: 0.7 }).stroke({ width: 2, color: chalk, alpha: 0.8 });
+        p.moveTo(w - 30 - tw, h - 30 - th / 2).lineTo(w - 30, h - 30 - th / 2).moveTo(w - 30 - tw * 0.4, h - 30 - th).lineTo(w - 30 - tw * 0.4, h - 30).stroke({ width: 1.5, color: chalk, alpha: 0.6 });
+      }
+      break;
+    }
   }
   return c;
 }
@@ -498,6 +595,14 @@ export function projectileArt(el: string, size = 28, upgraded = false): Graphics
       g.poly([s * 0.9, s * 0.5, 0, s * 1.1, 0, 0]).fill(dim.hi);
       g.moveTo(-s * 0.45, -s * 0.6).lineTo(-s * 0.15, -s * 0.82).stroke({ width: 2.5, color: 0xffffff, cap: 'round' });
       break;
+    case 'gravity':
+      // a heavy indigo orb: chalk orbit ring around it, a brass moon riding the ring, a pale highlight
+      g.circle(0, 0, s * 0.95).fill(dim.mid).stroke({ width: 4, color: C.ink });
+      g.circle(-s * 0.3, -s * 0.3, s * 0.28).fill({ color: dim.hi, alpha: 0.55 });
+      g.ellipse(0, s * 0.08, s * 1.55, s * 0.45).stroke({ width: 6, color: C.ink });
+      g.ellipse(0, s * 0.08, s * 1.55, s * 0.45).stroke({ width: 2.5, color: dim.hi });
+      g.circle(s * 1.15, s * 0.35, s * 0.32).fill(dim.accent).stroke({ width: 2.5, color: C.ink });
+      break;
     default:
       g.circle(0, 0, s).fill(dim.accent).stroke({ width: 4, color: C.ink });
       g.circle(s * 0.15, -s * 0.1, s * 0.55).fill(dim.hi);
@@ -564,6 +669,12 @@ export function trailBit(el: string, upgraded = false): Graphics {
       const k = Math.random();
       g.poly([0, -s * 0.8, s * 0.5, 0, 0, s * 0.8, -s * 0.5, 0]).fill(k < 0.3 ? dim.bg : k < 0.55 ? dim.accent : k < 0.8 ? dim.mid : dim.hi);
       g.rotation = Math.random() * 6;
+      break;
+    }
+    case 'gravity': {
+      // chalk dots of a trajectory, now and then a little brass pebble
+      if (Math.random() < 0.25) g.ellipse(0, 0, s * 0.55, s * 0.42).fill(dim.accent).stroke({ width: 1.5, color: C.ink });
+      else g.circle(0, 0, s * 0.32).fill(dim.hi);
       break;
     }
     default:

@@ -8,8 +8,17 @@ import { mergeContent } from './mergeContent';
 // Part I's content.json stays untouched (append-only: arrays concatenate, objects merge by key).
 import rupturasEspecies from './rupturas/especies.json';
 import rupturasHistoria from './rupturas/historia.json';
+import especiesO2 from './rupturas/especies-o2.json';
+import historiaO2 from './rupturas/historia-o2.json';
+import especiesO3 from './rupturas/especies-o3.json';
+import historiaO3 from './rupturas/historia-o3.json';
+import especiesO4 from './rupturas/especies-o4.json';
+import historiaO4 from './rupturas/historia-o4.json';
 
-const raw = mergeContent(base as unknown as Record<string, unknown>, rupturasEspecies as Record<string, unknown>, rupturasHistoria as Record<string, unknown>);
+const raw = mergeContent(base as unknown as Record<string, unknown>, rupturasEspecies as Record<string, unknown>,
+  rupturasHistoria as Record<string, unknown>,
+  ...([especiesO2, historiaO2, especiesO3, historiaO3, especiesO4, historiaO4] as Record<string, unknown>[]),
+);
 // materials[] is an id-keyed array, so a module can't reach into a material's `mult`: a new element brings its hull
 // multipliers as `materialMult[element][material]` (rupturas/especies.json) and they're folded in here — only where
 // Part I has no value (append-only, like the merge)

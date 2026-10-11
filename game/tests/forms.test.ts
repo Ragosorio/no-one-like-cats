@@ -1,6 +1,6 @@
 /**
  * FORMS (Parte II, docs/part-ii/12-puente-oleada-1.md §4): evolutions as switchable manifestations.
- * Canelo Almirante (unlocked by `forma:canelo_almirante`) and Canelo Astral (sealed this wave).
+ * Canelo Almirante (unlocked by `forma:canelo_almirante`) and Canelo Astral (unsealed in Oleada 3: `forma:canelo_astral`, H53).
  * Old saves without `form` must load exactly as before; a form never touches another cat.
  */
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -68,7 +68,7 @@ describe('registry (data/rupturas/formas.ts)', () => {
       if (f.sealed) expect(f.sealedHint).toBeTruthy();
     }
   });
-  it('Canelo: Original / Almirante (Fuego + Agua, ¡A BABOR!) / Astral (sellada, Cósmico)', () => {
+  it('Canelo: Original / Almirante (Fuego + Agua, ¡A BABOR!) / Astral (Cósmico, Bola de Pelo de Horizonte)', () => {
     expect(formsOf('c_canelo').map((f) => f.id)).toEqual([ALM, AST]);
     const alm = FORM_BY_ID.get(ALM)!;
     expect(alm.slug).toBe('canelo_admiral_cat');
@@ -77,8 +77,10 @@ describe('registry (data/rupturas/formas.ts)', () => {
     expect(applyForm(catDef('c_canelo'), ALM).combat.ultimate.name.startsWith('¡A BABOR!')).toBe(true);
     const ast = FORM_BY_ID.get(AST)!;
     expect(ast.slug).toBe('canelo_astral_cat');
-    expect(ast.sealed).toBe(true);
-    expect(ast.sealedHint).toBe('Algo en el cielo todavía no se abre.');
+    // Oleada 3 unsealed it: its flag (H53) is what opens it now
+    expect(ast.sealed).toBeFalsy();
+    expect(ast.unlockFlag).toBe('forma:canelo_astral');
+    expect(ast.ult?.key).toBe('canelo_astral');
     expect(applyForm(catDef('c_canelo'), AST).elements).toEqual(['fire', 'cosmic']);
   });
   it('applyForm ignores unknown ids and other species (never alters a def it does not own)', () => {
@@ -136,13 +138,18 @@ describe('switching (state/sys/forms.ts)', () => {
     expect('form' in c).toBe(false);
     expect(G.s.gems).toBe(gems); // free
   });
-  it('a sealed form can never be selected, even with a flag', () => {
+  it('a sealed form can never be unlocked, even with a flag; Canelo Astral opens with its flag (H53)', () => {
     const c = canelo();
+    const ast = FORM_BY_ID.get(AST)!;
     G.flag('forma:canelo_astral');
-    expect(forms.setForm(c, AST)).toBe('sealed');
-    expect(c.form).toBeUndefined();
-    c.form = AST; // hand-edited save: still draws and fights as the original
+    expect(forms.formUnlocked({ ...ast, sealed: true })).toBe(false);
+    expect(forms.formUnlocked(ast)).toBe(true);
+    delete G.s.flags['forma:canelo_astral'];
+    expect(forms.setForm(c, AST)).toBe('locked');
+    c.form = AST; // hand-edited save without the flag: still draws and fights as the original
     expect(forms.activeForm(c)).toBeUndefined();
+    G.flag('forma:canelo_astral');
+    expect(forms.activeForm(c)?.id).toBe(AST);
   });
   it('another species cannot take Canelo’s form; the form does not alter other cats', () => {
     G.flag(FLAG);

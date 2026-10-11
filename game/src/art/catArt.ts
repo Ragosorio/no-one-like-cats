@@ -30,6 +30,8 @@ export const ELEMENT_FX: Record<string, { main: number; accent: number; dark: nu
   shadow: { main: 0x5a4a78, accent: 0xc8102e, dark: 0x0d110f, particle: 'wisp' },
   // Parte II · Oleada 1: NÁCAR PRISMÁTICO (pearl white, sky prism, lilac, sea-glass)
   crystal: { main: 0x8fd3ff, accent: 0xf7f2ff, dark: 0x5b4a8a, particle: 'shard' },
+  // Parte II · Oleada 2: CIANOTIPO ORBITAL (prussian-blue blueprint, chalk orbits, brass plumb bobs)
+  gravity: { main: 0x3e6fd8, accent: 0xf0b44c, dark: 0x13224a, particle: 'rock' },
 };
 
 export function elementFx(el: string) {
@@ -86,6 +88,7 @@ const STAND_IN: Record<string, [base: string, tint: number]> = {
   ecomudo_static_cat: ['neon_glitch_cat', 0xd0d0d8],
   devoradora_portal_cat: ['candy_alchemist_cat', 0xd8a0c8],
   nadie_static_cat: ['iridescent_origami_cat', 0xa0a0b0],
+  // Parte II · Oleadas 2, 3 y 4 (Lotes E, F y G): real paintings + rigs landed 2026-10-10, no stand-in anymore
 };
 /** generic stand-in when a slug's file fails to load at runtime (404, offline cache miss…) */
 const FALLBACK_SLUG = 'nube_dream_cat';

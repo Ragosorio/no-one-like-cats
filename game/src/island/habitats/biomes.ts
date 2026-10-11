@@ -10,6 +10,7 @@
  *   ambient   particles + breathing glows (island/habitats/ambient.ts)
  * Concept references (outside the repo): fuego, hielo, luz, magia, sombra, agua, tiempo.
  * Parte II: cristal (NÁCAR PRISMÁTICO — mother-of-pearl floor, geodes, a prism that splits the light).
+ * Parte II · Oleada 2: gravedad (CIANOTIPO ORBITAL — blueprint floor, floating rocks, a waterfall that climbs, orbits).
  */
 import { Container, Graphics } from 'pixi.js';
 import { C } from '../../ui/theme';
@@ -1658,4 +1659,165 @@ function crystalB(c: BiomeCtx) {
   if (stage >= 1) c.amb.add('shard', pal.leaf, 1 + stage, inYard(c, 0.3), { amp: 8, sp: 0.1, h: 70 });
 }
 
-const BIOMES: Record<string, (c: BiomeCtx) => void> = { fire, water, nature, earth, storm, magic, cosmic, void: voidB, ice, sound, shadow, time, light, crystal: crystalB };
+// =========================================================================================== GRAVITY
+function gravityB(c: BiomeCtx) {
+  const { pal, N, stage } = c;
+  const s = SZ[stage];
+  const chalk = pal.leaf2;
+  /** a floating rock: flat lit top, the underside tapering to a point (origin = middle of the top face) */
+  const floatRock = (g: Graphics, x: number, y: number, w: number, h: number) => {
+    g.poly([x - w / 2, y, x - w * 0.3, y + h * 0.55, x - w * 0.04, y + h, x + w * 0.24, y + h * 0.6, x + w / 2, y]).fill(pal.rock).stroke(THIN);
+    g.moveTo(x - w * 0.18, y + h * 0.3).lineTo(x - w * 0.06, y + h * 0.75).stroke({ width: 1.2, color: pal.rockDark, alpha: 0.7 });
+    g.ellipse(x, y, w / 2, w * 0.15).fill(pal.rockLit).stroke(THIN);
+    g.ellipse(x - w * 0.1, y - 1, w * 0.24, w * 0.06).fill({ color: chalk, alpha: 0.35 });
+  };
+  // cyanotype floor: blueprint-blue tiles ruled in chalk, a "+" survey mark every few tiles
+  for (let gy = 0; gy < N; gy++)
+    for (let gx = 0; gx < N; gx++) diamond(c.gnd, gx + 0.03, gy + 0.03, 0.94, 0.94).fill({ color: (gx + gy) % 2 ? pal.soil : pal.soil2, alpha: 0.97 }).stroke({ width: 1.2, color: chalk, alpha: 0.28 });
+  for (let gy = 0; gy < N; gy++)
+    for (let gx = 0; gx < N; gx++) {
+      if ((gx * 2 + gy) % 3) continue;
+      const p = P(gx, gy);
+      c.gnd.moveTo(p.x - 5, p.y).lineTo(p.x + 5, p.y).moveTo(p.x, p.y - 3).lineTo(p.x, p.y + 3);
+    }
+  c.gnd.stroke({ width: 1.2, color: chalk, alpha: 0.45 });
+  // a chalk orbit ruled on the ground + a dotted trajectory inside it
+  const mid = (N - 1) / 2;
+  groundEllipse(c.gnd, mid, mid, N * 0.36).stroke({ width: 2, color: chalk, alpha: 0.5 });
+  for (let i = 0; i < 28; i++) {
+    const a = (i / 28) * Math.PI * 2;
+    const p = P(mid + Math.cos(a) * N * 0.22, mid + Math.sin(a) * N * 0.22);
+    c.gnd.circle(p.x, p.y, 1.8);
+  }
+  c.gnd.fill({ color: chalk, alpha: 0.55 });
+  // gravel: pale pebbles and brass grit
+  for (let i = 0; i < 4 + N * 2; i++) {
+    const p = inYard(c, 0.3)();
+    const w = 2.5 + c.r() * 3;
+    c.gnd.ellipse(p.x, p.y, w * 1.3, w * 0.8).fill(i % 4 === 0 ? pal.bloom : i % 2 ? pal.leaf : pal.rockLit).stroke({ width: 1, color: pal.rockDark, alpha: 0.7 });
+  }
+  // floating rocks hover over the yard (their shadow stays on the ground), bobbing on the 12 fps beat
+  for (let i = 0; i < 1 + stage; i++) {
+    const p = inYard(c, 0.8)();
+    const w = (18 + c.r() * 12) * s;
+    const lift = 26 + c.r() * 18;
+    c.gnd.ellipse(p.x, p.y, w * 0.55, w * 0.2).fill({ color: pal.rockDark, alpha: 0.35 });
+    const g = new Graphics();
+    floatRock(g, 0, 0, w, w * 0.7);
+    g.position.set(p.x, p.y - lift);
+    c.gFx.addChild(g);
+    const ph = c.r() * 6;
+    c.ticks.push((t) => {
+      g.y = p.y - lift + Math.sin(stepped(t) * 1.4 + ph) * 3;
+    });
+  }
+  // backdrop: slate rocks; T4+ an inverted waterfall (its pool feeds a column that climbs to a floating ledge)
+  rock(c.bk, BR(c, 0.8).x, BR(c, 0.8).y, 40 * s, 30 * s, pal.rock, pal.rockLit);
+  rock(c.bk, BL(c, 0.78).x, BL(c, 0.78).y, 34 * s, 26 * s, pal.rock, pal.rockLit);
+  if (stage >= 1) {
+    const p = BL(c, 0.45, 0.3);
+    const top = p.y - 150 * s;
+    const fw = 14 * s;
+    c.bk.ellipse(p.x, p.y, 34 * s, 11 * s).fill(pal.glass).stroke(INK);
+    c.bk.poly([p.x - fw, p.y - 2, p.x - fw * 0.7, top + 10, p.x + fw * 0.7, top + 10, p.x + fw, p.y - 2]).fill({ color: pal.glass, alpha: 0.85 }).stroke(THIN);
+    floatRock(c.bk, p.x, top, 70 * s, 46 * s);
+    // white streaks climbing the column (3 pre-built frames, no redraw)
+    const streaks = [0, 1, 2].map((f) => {
+      const g = new Graphics();
+      for (let k = 0; k < 5; k++) {
+        const y = p.y - 10 - ((k + f / 3) / 5) * (p.y - top - 30);
+        const x = p.x + (k % 2 ? 1 : -1) * fw * 0.35;
+        g.moveTo(x, y).lineTo(x, y - 14 * s);
+      }
+      g.stroke({ width: 2, color: 0xffffff, alpha: 0.85, cap: 'round' });
+      c.bFx.addChild(g);
+      return g;
+    });
+    frames(c, streaks, 6);
+    c.amb.glow(glowSprite(c.bFx, p.x, (p.y + top) / 2, pal.glow, 0.25, 0.7 * s, true));
+    c.amb.add('bubble', pal.glass, 2 + stage * 2, () => ({ x: p.x + (c.r() - 0.5) * fw * 2, y: p.y - 6 }), { h: p.y - top - 20, amp: 4, sp: 0.2 });
+    // a ledge behind the right edge; a brass counterweight swings under it on its chain
+    const q = BR(c, 0.5, 0.35);
+    const ly = q.y - 120 * s;
+    c.bk.moveTo(q.x, ly + 20 * s).lineTo(q.x, ly + 70 * s).stroke({ width: 2, color: C.ink });
+    floatRock(c.bk, q.x, ly, 60 * s, 40 * s);
+    const wgt = new Graphics();
+    wgt.poly([-12, 6, 12, 6, 9, 28, -9, 28]).fill(pal.bloom).stroke(INK);
+    wgt.roundRect(-5, 0, 10, 7, 2).fill(shade(pal.bloom, 0.8)).stroke(THIN);
+    wgt.moveTo(-6, 10).lineTo(-4, 24).stroke({ width: 2, color: 0xfff6da, alpha: 0.8, cap: 'round' });
+    wgt.scale.set(s);
+    wgt.position.set(q.x, ly + 70 * s);
+    c.bFx.addChild(wgt);
+    c.ticks.push((t) => {
+      wgt.rotation = Math.sin(stepped(t) * 1.1) * 0.08;
+    });
+  }
+  // crown (T7+): an orbit diagram over the house — chalk rings, a blueprint planet, two moons riding them
+  if (stage >= 2) {
+    const top = { x: c.house.x + 70, y: c.roofY - 70 - stage * 15 };
+    c.amb.glow(glowSprite(c.cFx, top.x, top.y, pal.glow, 0.4, 0.9, true));
+    const orr = new Container();
+    const rings = new Graphics().ellipse(0, 0, 70, 20).stroke({ width: 2.5, color: chalk, alpha: 0.8 });
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2;
+      rings.circle(Math.cos(a) * 44, Math.sin(a) * 13, 1.8);
+    }
+    rings.fill({ color: chalk, alpha: 0.7 });
+    const planet = new Graphics().circle(0, 0, 16).fill(0x3e6fd8).stroke(INK);
+    planet.ellipse(0, 2, 15, 4).stroke({ width: 1.5, color: chalk, alpha: 0.7 });
+    planet.circle(-5, -6, 4).fill({ color: chalk, alpha: 0.5 });
+    const moons = [pal.bloom, chalk].map((col) => new Graphics().circle(0, 0, 6).fill(col).stroke(THIN));
+    orr.addChild(rings, planet, ...moons);
+    orr.position.set(top.x, top.y);
+    c.cFx.addChild(orr);
+    c.ticks.push((t) => {
+      const st = stepped(t);
+      orr.y = top.y + Math.sin(st * 1.2) * 4;
+      moons[0].position.set(Math.cos(st * 0.9) * 70, Math.sin(st * 0.9) * 20);
+      moons[1].position.set(Math.cos(2 - st * 1.4) * 44, Math.sin(2 - st * 1.4) * 13);
+    });
+  }
+  // T10: a floating isle with a giant brass plumb bob swinging under it, three pebbles orbiting the bob
+  if (stage >= 3) {
+    const p = { x: c.house.x - 95, y: c.roofY - 160 };
+    c.amb.glow(glowSprite(c.cFx, p.x, p.y + 80, pal.glow, 0.45, 1.0, true));
+    const grp = new Container();
+    const isl = new Graphics();
+    floatRock(isl, 0, 0, 84, 56);
+    const pend = new Container();
+    pend.position.set(0, 52);
+    const body = new Graphics().moveTo(0, 0).lineTo(0, 18).stroke({ width: 2, color: C.ink });
+    body.roundRect(-7, 14, 14, 9, 3).fill(shade(pal.bloom, 0.8)).stroke(THIN);
+    body.moveTo(-20, 30).quadraticCurveTo(0, 10, 20, 30).lineTo(0, 80).closePath().fill(pal.bloom).stroke(INK);
+    body.moveTo(-9, 30).lineTo(-3, 62).stroke({ width: 3, color: 0xfff6da, alpha: 0.8, cap: 'round' });
+    pend.addChild(body);
+    grp.addChild(pend, isl);
+    grp.position.set(p.x, p.y);
+    c.cFx.addChild(grp);
+    const peb = [0, 1, 2].map((k) => {
+      const g = new Graphics().ellipse(0, 0, 5, 3.8).fill(k === 1 ? pal.bloom : chalk).stroke(HAIR);
+      c.cFx.addChild(g);
+      return g;
+    });
+    c.ticks.push((t) => {
+      const st = stepped(t);
+      grp.y = p.y + Math.sin(st * 0.9) * 5;
+      pend.rotation = Math.sin(st * 1.1) * 0.1;
+      peb.forEach((g, k) => {
+        const a = st * 0.8 + (k / 3) * Math.PI * 2;
+        g.position.set(p.x + Math.cos(a) * 40, grp.y + 100 + Math.sin(a) * 12);
+      });
+    });
+  }
+  // front: pebbles falling UP (chalk speed lines under them) beside small slate rocks
+  for (let i = 0; i < 2 + stage; i++) {
+    const p = i % 2 ? FR(c, 0.3 + c.r() * 0.5) : FL(c, 0.6 + c.r() * 0.3);
+    c.fr.ellipse(p.x, p.y - 12, 4.5, 3.4).fill(i % 3 === 0 ? pal.bloom : chalk).stroke(HAIR);
+    c.fr.moveTo(p.x - 2, p.y - 6).lineTo(p.x - 2, p.y + 2).moveTo(p.x + 2, p.y - 6).lineTo(p.x + 2, p.y - 1).stroke({ width: 1.4, color: chalk, alpha: 0.7, cap: 'round' });
+    rock(c.fr, p.x + 12, p.y + 2, 14, 9, pal.rock, pal.rockLit);
+  }
+  c.amb.add('shard', chalk, 2 + stage * 2, inYard(c), { amp: 6, sp: 0.08, h: 90 });
+  c.amb.add('mote', pal.glow, 1 + stage, inYard(c, 0.3), { amp: 10, sp: 0.07, h: 80 });
+}
+
+const BIOMES: Record<string, (c: BiomeCtx) => void> = { fire, water, nature, earth, storm, magic, cosmic, void: voidB, ice, sound, shadow, time, light, crystal: crystalB, gravity: gravityB };

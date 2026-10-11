@@ -121,6 +121,8 @@ export const PAL: Record<string, Pal> = {
   light: { soil: 0xfdf2d2, soil2: 0xf6e3ad, rock: 0xfff8e8, rockLit: 0xffffff, rockDark: 0xe2c98a, glow: 0xffd77a, glowHot: 0xffffff, leaf: 0x8fd06a, leaf2: 0xb5e27a, bloom: 0xffffff, bloom2: 0xff9fb4, wall: 0xfff8e1, roof: 0xffd77a, trim: 0xb89558, glass: 0x7fd8ff },
   // Parte II · Oleada 1: NÁCAR PRISMÁTICO (pearl white, sky prism, lilac, sea-glass)
   crystal: { soil: 0xefeafb, soil2: 0xe2daf5, rock: 0xb79cff, rockLit: 0xe8deff, rockDark: 0x7e66c9, glow: 0x8fd3ff, glowHot: 0xffffff, leaf: 0x6fe0c8, leaf2: 0xa8f0e0, bloom: 0xffd6f0, bloom2: 0x8fd3ff, wall: 0xf7f2ff, roof: 0xb79cff, trim: 0x6fe0c8, glass: 0x8fd3ff },
+  // Parte II · Oleada 2: CIANOTIPO ORBITAL (prussian-blue blueprint soil, chalk-white ferns, brass weights, violet well glow)
+  gravity: { soil: 0x2a4686, soil2: 0x325092, rock: 0x5a6fa8, rockLit: 0x8ea4dc, rockDark: 0x1c2f63, glow: 0x8e6cff, glowHot: 0xe9f0ff, leaf: 0xc9d6ff, leaf2: 0xe9f0ff, bloom: 0xf0b44c, bloom2: 0xe9f0ff, wall: 0xdfe7fb, roof: 0x13224a, trim: 0xf0b44c, glass: 0xbcd6ff },
 };
 export function pal(el: string): Pal {
   return PAL[el] ?? PAL.fire;

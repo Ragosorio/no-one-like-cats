@@ -73,6 +73,17 @@
  *   l_bibliotecario SHHH… THE END        Merlina's FIN on 3 modules (the book closes 2 turns later if he stands)
  *   s_refracta      TOTAL REFRACTION     Áurea's fan of 5 rays from above (here the prism splits a Cristal shot:
  *                                         the rays cut PRISMA), the crossed cabins' cats are struck, DESLUMBRADOS
+ *
+ * PARTE II · OLEADA 2 (El Cielo Despierta):
+ *   l_masamadre     FIRST MASS!          her own bun of mass, then a huge POZO over their ship (battle/gravedad.ts):
+ *                                         2 turns (★5 3) in which every projectile of HER side bends toward it, and
+ *                                         every enemy cell around it floats (FLOTANDO). s_manzanita's APPLE METEOR!
+ *                                         is a plain meteor ultimate (catShots.ultFromDef: the name says METEOR).
+ *
+ * PARTE II · OLEADA 3 (La Era Astral):
+ *   canelo_astral   BOLA DE PELO DE HORIZONTE  (form) the hairballs enter a rift by Canelo and drop straight down from
+ *                                         another one high above where the aim lands: over every islet and planetoid
+ *   l_jonas         WHALE SONG!          Abisa's lure + flooding (the sea pulls their shots for a turn), then his jet
  */
 import type { Battle, BattleEvent, ShotPath, PathPoint } from './sim';
 import { CAT_K, DMG_K } from './sim';
@@ -82,6 +93,7 @@ import type { CatState, ElementId, ShotDef } from './types';
 import type { ShipModel } from './ship';
 import { p2Blind, p2CanStop, p2Deaf, p2Heard, p2Night, p2SetNight } from './multiverso';
 import { crRaiseFacet } from './cristal';
+import { grFirstMass } from './gravedad';
 
 export interface UltCtx {
   side: 0 | 1;
@@ -979,6 +991,42 @@ export const ULTS: Record<string, UltFn> = {
   s_refracta(b, o) {
     return ULTS.l_aurea(b, o);
   },
+
+  // ================================================================== PARTE II · OLEADA 2
+  // ------------------------------------------------------------------ everything falls toward her
+  l_masamadre(b, o) {
+    const paths = normal(b, o);
+    grFirstMass(b, o.side, o.cat.def.stars, o.events);
+    return paths;
+  },
+
+  // ================================================================== PARTE II · OLEADA 3
+  // ------------------------------------------------------------------ BOLA DE PELO DE HORIZONTE (Canelo Astral)
+  // The hairballs dive into a rift right in front of him and come out of another one high ABOVE the spot your aim
+  // was going to land on (you choose it by aiming): they drop straight down from there, over every islet, planetoid
+  // and cover. Deterministic (no rng), inside the same ultimate budget as every other ultimate.
+  canelo_astral(b, o) {
+    const aimed = b.buildPaths(o.shot, o.origin, o.angle, o.power, o.wind, o.side)[0];
+    const end = aimed.impacts.length ? aimed.points[aimed.impacts[aimed.impacts.length - 1]] : aimed.points[aimed.points.length - 1];
+    const tx = Math.max(-200, Math.min(2120, end.x));
+    const ty = Math.min(end.y, b.waterY) - 520;
+    const rift = { x: o.origin.x + Math.cos(o.angle) * 80, y: o.origin.y + Math.sin(o.angle) * 80 };
+    const drops = b.buildPaths(o.shot, { x: tx, y: ty }, Math.PI / 2, 700, 0, o.side);
+    const paths: ShotPath[] = drops.map((d) => ({
+      ...d,
+      points: [{ ...o.origin }, rift, ...d.points],
+      impacts: d.impacts.map((i) => i + 2),
+      jumps: [2, ...(d.jumps ?? []).map((i) => i + 2)],
+      seal: d.seal !== undefined ? d.seal + 2 : undefined,
+    }));
+    o.events.push({ k: 'ultfx', fx: 'flash', side: o.side, x: rift.x, y: rift.y, path: 0, at: 1 });
+    b.resolvePaths(o.side, o.shot, o.atk, paths, o.events);
+    return paths;
+  },
+  // ------------------------------------------------------------------ the sea sings (Jonás, out of the Leviatán)
+  l_jonas(b, o) {
+    return ULTS.l_abisa(b, o);
+  },
 };
 
 /**
@@ -1031,6 +1079,10 @@ export function ultWorth(b: Battle, c: CatState): boolean {
     case 's_refracta':
       // once per battle: wait for cabins to strike (or for the fight to drag on)
       return alive.length >= 2 || b.turn >= 5;
+    // ---- Parte II · Oleada 2
+    case 'l_masamadre':
+      // one big POZO at a time (a small one of hers is fine to replace)
+      return !b.wells.some((w) => w.owner === c.side && w.affects === c.side && w.r >= 300);
     default:
       return true;
   }

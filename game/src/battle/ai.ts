@@ -7,6 +7,9 @@ import { ultWorth } from './ults';
 import { p2AimNoise, p2ShotValue } from './multiverso';
 import { crShotValue } from './cristal';
 import { nzShotValue } from './ruido';
+import { grShotValue } from './gravedad';
+import { skyTargetMul } from './cielo';
+import { umShotValue } from './umbral';
 import { sealValue } from './cataclysm';
 
 export type Personality = 'clumsy' | 'sniper' | 'tuner' | 'calculator' | 'avenger' | 'looter' | 'demolisher' | 'elementalist';
@@ -106,6 +109,8 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
       else if (cat.charging > 0) v *= 5;
       else if (pers === 'looter') v *= 1.6;
       else if (pers === 'avenger' && hint?.dmgBy?.get(cat.def.uid)) v *= 1.8;
+      // H46: the Correctors came for that cat
+      if (cat && !cat.ko) v *= skyTargetMul(b, side, cat.def.catId);
     }
     if (m.tag === 'throat') v = 9;
     // an exposed boss weak point (open Grimorio, charging star-core, the Espiráculo up for air): go for it
@@ -189,6 +194,10 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
         if (score > 0) score *= crShotValue(b, side, s.shot, paths);
         // H34: Sonido at the Bibliotecario hits ×2 (a bit less tempting when it's the hit that wakes him)
         if (score > 0) score *= nzShotValue(b, side, s.shot);
+        // Oleada 4 TACHÓN: an element they crossed out is worth less this turn (umbral.ts)
+        if (score > 0) score *= umShotValue(b, side, s.shot);
+        // Parte II · Oleada 2: Gravedad on purpose (open a POZO; finish a broken module so it falls off)
+        if (score > 0) score *= grShotValue(b, side, s.shot, paths);
         if (score > 0) {
           const end = paths[0].points[paths[0].points.length - 1];
           options.push({ shooter: s.id, ult: s.ult, shot: s.shot, angle, power, score, tx: end.x, ty: end.y });

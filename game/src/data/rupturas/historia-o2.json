@@ -1,0 +1,444 @@
+{
+  "$comment": "Parte II · Oleada 2 — misiones H42–H49 y beats de El Cielo Despierta. Se fusiona sobre content.json (solo agrega). Ver docs/part-ii/22-oleada-2.md. Los ganchos (cuándo suena cada parte) viven en ui/story/rupturasScriptO2.ts; las batallas del cielo, el Kit de Vuelo y la decisión de H48 en state/sys/rupturasO2.ts. Cada beat trae \"$scene\": lo que la escena debería MOSTRAR (lo usa la pasada de cine).",
+  "missions": [
+    {
+      "id": "H42",
+      "chain": "historia",
+      "title": "Trombas",
+      "goal": {
+        "type": "use_feature",
+        "feature": "region_invertidas",
+        "text": "Abre la CARTA y toca las Islas Invertidas: la tromba te sube al cielo."
+      },
+      "trigger": "mission:H41",
+      "purpose": "story",
+      "reward": {
+        "std": true
+      },
+      "unlocks": [],
+      "line": "Eso no es una tromba. Es un elevador.",
+      "why": "En el Primer Mar salen remolinos que suben. Súbete a uno (la isla nueva de la CARTA) y mira qué hay encima del mar.",
+      "estTime": "~1:30"
+    },
+    {
+      "id": "H43",
+      "chain": "historia",
+      "title": "El Kit de Vuelo",
+      "goal": {
+        "type": "use_feature",
+        "feature": "kit_vuelo",
+        "text": "Abre el ASTILLERO › pestaña VUELO e instala el Kit de Vuelo en tu barco (el primero es gratis)."
+      },
+      "trigger": "mission:H42",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 2
+      },
+      "unlocks": [],
+      "line": "Tu barco va a volar. Y va a seguir siendo tu barco.",
+      "why": "Una mecánica de Corona Celeste bajó por la tromba con un kit para que tu barco vuele. Instálalo: sin él no hay batallas en el cielo.",
+      "estTime": "~1:00"
+    },
+    {
+      "id": "H44",
+      "chain": "historia",
+      "title": "Islas Invertidas",
+      "goal": {
+        "type": "win_battle",
+        "battle": "cielo_invertidas",
+        "text": "Toca esta misión (o su marca en las Islas Invertidas) y vence a la capitana Cascada en el cielo."
+      },
+      "trigger": "mission:H43",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 3
+      },
+      "unlocks": [],
+      "line": "Cascadas que caen para arriba. Y una capitana que dice que tú estás de cabeza.",
+      "why": "Tu primera batalla en el cielo: todo pesa menos, el viento sopla distinto por pisos y hay islotes en medio. Gana y te llevas un elemento nuevo, la GRAVEDAD, y a Plomito.",
+      "estTime": "~7:00"
+    },
+    {
+      "id": "H45",
+      "chain": "historia",
+      "title": "Corona Celeste",
+      "goal": {
+        "type": "use_feature",
+        "feature": "region_corona",
+        "text": "Abre la CARTA y sube a Corona Celeste, la ciudad sobre las nubes."
+      },
+      "trigger": "mission:H44",
+      "purpose": "story",
+      "reward": {
+        "std": true
+      },
+      "unlocks": [],
+      "line": "La ciudad más segura del mundo. Nadie llora. Nadie elige.",
+      "why": "La mecánica del kit vive ahí. Ve a conocer su ciudad… y averigua por qué a Luzterna le da miedo.",
+      "estTime": "~2:00"
+    },
+    {
+      "id": "H46",
+      "chain": "historia",
+      "title": "La embajada",
+      "goal": {
+        "type": "win_battle",
+        "battle": "cielo_embajada",
+        "text": "Toca esta misión para enfrentar a la Embajada Blanca: hazle 30% de daño (o vence a su tripulación) antes de que se vaya en el turno 7."
+      },
+      "trigger": "mission:H45",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 4
+      },
+      "unlocks": [],
+      "line": "Quieren «arreglar» a Canelo. Canelo no está descompuesto.",
+      "why": "Un Corrector diplomático te ofrece corregir la impaciencia de Canelo. Pelea para que no lo toquen. (Y alguien de su barco quiere bajarse.)",
+      "estTime": "~6:00"
+    },
+    {
+      "id": "H47",
+      "chain": "historia",
+      "title": "El otro almirante",
+      "goal": {
+        "type": "win_battle",
+        "battle": "cielo_almirante",
+        "text": "Toca esta misión (o su marca en las Islas Invertidas) y vence a La Errata Mayor."
+      },
+      "trigger": "mission:H46",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 5
+      },
+      "unlocks": [],
+      "line": "Alguien le daba órdenes al Leviatán.",
+      "why": "Un galeón blanco lleva la insignia de almirante de la flota de Nadie. Por fin vas a saber quién mandaba. Gana y te llevas 15 cristales de Gravedad.",
+      "estTime": "~8:00"
+    },
+    {
+      "id": "H48",
+      "chain": "historia",
+      "title": "Luzterna lo sabe",
+      "goal": {
+        "type": "use_feature",
+        "feature": "linterna",
+        "text": "Toca esta misión para hablar con Luzterna y dile qué hacer con su linterna."
+      },
+      "trigger": "mission:H47",
+      "purpose": "story",
+      "reward": {
+        "std": true
+      },
+      "unlocks": [],
+      "line": "Su linterna nunca fue solo una linterna.",
+      "why": "Luzterna descubrió algo de su linterna y le dolió. Te va a preguntar algo. No hay respuesta mala.",
+      "estTime": "~1:00"
+    },
+    {
+      "id": "H49",
+      "chain": "historia",
+      "title": "Primordial de la Gravedad",
+      "goal": {
+        "type": "win_battle",
+        "battle": "cielo_masamadre",
+        "text": "Toca esta misión (o su marca en Corona Celeste) y vence a Masa Madre."
+      },
+      "trigger": "mission:H48",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 10
+      },
+      "unlocks": [
+        "oleada2_fin"
+      ],
+      "line": "Todo cae hacia ella. Hasta tú.",
+      "why": "La primordial de la Gravedad cuida el cielo desde antes de que hubiera suelo. Véncela y se une a tu isla. Cierra la Oleada 2.",
+      "estTime": "~8:00"
+    }
+  ],
+  "story": {
+    "beats": [
+      {
+        "id": "b42_trombas",
+        "time": "tras H41 (a) · al llegar arriba (b)",
+        "trigger": "H42",
+        "style": "NOIR OCEÁNICO → CIANOTIPO ORBITAL",
+        "title": "Trombas",
+        "$scene": "a) De día, en el Primer Mar: tres remolinos se levantan del agua y siguen subiendo hasta perderse en las nubes; las gaviotas suben con ellos sin aletear. Cámara de abajo hacia arriba. b) Dentro de las Islas Invertidas: el barco sale escupido de la tromba entre nubes; islas colgando del cielo, cascadas que suben; el barco tambalea sostenido solo por el remolino.",
+        "lines": [
+          [
+            "LUZTERNA",
+            "Eso no es una tromba, Capi. Es un elevador. Y no hay botón de bajar."
+          ],
+          [
+            "LUZTERNA",
+            "Ya salió en la CARTA: arriba de las nubes hay islas. De cabeza. Tócalas y nos subimos."
+          ],
+          [
+            "LUZTERNA",
+            "Yo que tú me amarraba el sombrero. Ah, no tienes. Amárrate a Canelo."
+          ],
+          [
+            "LUZTERNA",
+            "Ok. Ok. Respira. …Yo no respiro. Tú respira."
+          ],
+          [
+            "LUZTERNA",
+            "Problema: tu barco no vuela. Lo sostiene la tromba, y la tromba ya se ve cansada."
+          ]
+        ]
+      },
+      {
+        "id": "b43_kit",
+        "time": "al llegar arriba (a) · al instalar el kit (b)",
+        "trigger": "H43",
+        "style": "CIANOTIPO ORBITAL (taller)",
+        "title": "El Kit de Vuelo",
+        "$scene": "a) Hélice aterriza en la cubierta colgada de un paraguas-hélice, saca un plano azul del kit (globo, hélices laterales, timón de cola) y lo pega con cinta en el mástil. b) En el Astillero: el barco del jugador se infla de globo, despliega hélices y da un saltito; su nombre sigue pintado igual en el casco.",
+        "lines": [
+          [
+            "HÉLICE",
+            "¡Ey! ¿Ese cascarón es tuyo? Bonito. No vuela, pero bonito."
+          ],
+          [
+            "HÉLICE",
+            "Soy Hélice, mecánica de Corona Celeste. Del sótano, pero mecánica. Te traigo esto: un KIT DE VUELO."
+          ],
+          [
+            "LUZTERNA",
+            "¿Y qué le hace a mi barco? Porque es MI barco. Bueno, tuyo, Capi. Pero lo quiero."
+          ],
+          [
+            "HÉLICE",
+            "Le pone globo y hélices y nada más: sigue con su nombre, sus gatos y sus mañas. Instálalo en tu ASTILLERO, pestaña VUELO. El primero va por la casa."
+          ],
+          [
+            "HÉLICE",
+            "¡Vuela! Bueno, flota con estilo. Allá arriba todo pesa menos y el viento sopla distinto en cada piso. Ojo con eso."
+          ],
+          [
+            "LUZTERNA",
+            "¿Y por qué una mecánica de Corona Celeste baja a ayudar a unos piratas con gatos?"
+          ],
+          [
+            "HÉLICE",
+            "Porque allá arriba nadie me deja arreglar lo que yo quiero. Y tu barco estaba feísimo. …Ups. Me tengo que ir."
+          ]
+        ]
+      },
+      {
+        "id": "b44_invertidas",
+        "time": "tras H43 (a) · tras vencer a Cascada (b)",
+        "trigger": "H44",
+        "style": "CIANOTIPO ORBITAL",
+        "title": "Islas Invertidas",
+        "$scene": "a) Una isla cuelga de cabeza; un barco está amarrado a su fondo, también de cabeza; Cascada en la proa, con la cascada subiéndole por el lomo, señala hacia 'abajo' (que es arriba). b) Después de la pelea: Plomito cae dormido en la cubierta y la cubierta cruje; piedritas flotan alrededor de los gatos.",
+        "lines": [
+          [
+            "CASCADA",
+            "¡Alto ahí, gente de cabeza! Esta es MI fiesta, y estas islas están del lado correcto. Ustedes no."
+          ],
+          [
+            "LUZTERNA",
+            "Capi, una capitana de cabeza nos dice a NOSOTROS que estamos de cabeza. Me cae bien."
+          ],
+          [
+            "LUZTERNA",
+            "Empieza en el mar y termina en el cielo: allá arriba todo pesa menos, el viento cambia por pisos y los islotes estorban. Toca su marca roja o la misión fijada."
+          ],
+          [
+            "CASCADA",
+            "Está bien, está bien. Ganaste. Creo. Desde aquí se ve como que perdiste… pero qué fiestón, ¿eh?"
+          ],
+          [
+            "LUZTERNA",
+            "GRAVEDAD: no pega, MUEVE. Lo que toca queda Flotando: recibe más daño y, si ya está muy roto, al siguiente golpe se cae del barco."
+          ],
+          [
+            "LUZTERNA",
+            "Y cada tiro de un gato de Gravedad abre un POZO: tus siguientes tiros se curvan hacia ahí. Apuntar nunca fue tan fácil. Ni tan raro."
+          ],
+          [
+            "LUZTERNA",
+            "Le pega ×1.5 a la Tormenta y al Cristal; el Vacío y el Tiempo la doblan. Y Plomito ya se durmió en la cubierta. Pesa como piano."
+          ]
+        ]
+      },
+      {
+        "id": "b45_corona",
+        "time": "tras H44 (a) · al llegar a Corona Celeste (b, c)",
+        "trigger": "H45",
+        "style": "BLANCO PERFECTO sobre CIANOTIPO",
+        "title": "Corona Celeste",
+        "$scene": "a) Sobre las nubes, una ciudad blanca y simétrica con torres de cúpula; desde lejos se oye un ronroneo enorme, todo al mismo tiempo. b) En la ciudad: calles perfectas, gatos idénticos ronroneando en fila; ningún gato juega, ninguno elige; Hélice sale de un sótano con mochila hecha. c) El Catdex se abre solo: la ficha de REGISTRO 000 agrega una línea con tinta fresca.",
+        "lines": [
+          [
+            "LUZTERNA",
+            "Corona Celeste. Ya salió en la CARTA. Hélice dijo que viene de ahí: vamos a devolverle la visita."
+          ],
+          [
+            "LUZTERNA",
+            "Y no toques nada. En las ciudades bonitas todo se cobra."
+          ],
+          [
+            "LUZTERNA",
+            "La ciudad más segura del mundo. Aquí nadie se cae, nadie se pierde y nadie se equivoca."
+          ],
+          [
+            "LUZTERNA",
+            "Esto me da más miedo que estar muerta, Capi."
+          ],
+          [
+            "HÉLICE",
+            "Me voy con ustedes. Es la primera vez que elijo algo en nueve años."
+          ],
+          [
+            "LUZTERNA",
+            "¿Visto? Yo no lo vi. Tú no lo viste. ¿Quién lo está viendo por nosotros?"
+          ]
+        ]
+      },
+      {
+        "id": "b46_embajada",
+        "time": "al llegar a Corona (a) · tras la embajada (b)",
+        "trigger": "H46",
+        "style": "BLANCO PERFECTO",
+        "title": "La embajada",
+        "$scene": "a) La única torre de la ciudad que no ronronea es la embajada; sale un gato blanco sin cara, hace una reverencia perfecta y le muestra a Canelo un folleto: 'CANELO 2.0 — SIN IMPACIENCIA'. Canelo le gruñe al folleto. b) La embajada se aleja; un gato blanco (Ronrón) salta de su borda a tu cubierta y, por primera vez, deja de ronronear.",
+        "lines": [
+          [
+            "EMBAJADOR",
+            "Bienvenidos a Corona Celeste. Notamos que su Canelo es… impaciente. Podemos corregirlo. Gratis. Sin dolor."
+          ],
+          [
+            "LUZTERNA",
+            "¿Corregir a Canelo? Canelo no está descompuesto. Canelo ES así. Eso es lo que lo hace Canelo."
+          ],
+          [
+            "LUZTERNA",
+            "Toca la misión fijada, Capi. No hay que hundirlos: con 30% de daño se largan. Y que no le pongan una pata encima."
+          ],
+          [
+            "EMBAJADOR",
+            "Lamentable. La impaciencia es un error de fábrica. Volveremos con una versión que sí acepte ayuda."
+          ],
+          [
+            "LUZTERNA",
+            "Y uno de sus gatos se bajó: Ronrón. Dice que es la primera vez que deja de ronronear y que se siente rarísimo. Bienvenido al club, chiquito."
+          ]
+        ]
+      },
+      {
+        "id": "b47_almirante",
+        "time": "tras H46 (a) · tras vencer a La Errata Mayor (b, c)",
+        "trigger": "H47",
+        "style": "BLANCO PERFECTO → NOIR OCEÁNICO",
+        "title": "El otro almirante",
+        "$scene": "a) Entre las Islas Invertidas aparece un galeón blanco con mascarón de ballena y una insignia de almirante en la vela: la insignia de la flota de Nadie, pero pintada encima de blanco. b) El Almirante (sin cara) habla con la calma de quien firma órdenes; en el fondo, la silueta del Leviatán dibujada en tiza, obediente. c) Del galeón cae una escama negra y fría; Luzterna la sostiene junto a un Fragmento del Vacío: son iguales.",
+        "lines": [
+          [
+            "LUZTERNA",
+            "Capi… esa insignia es de la flota de Nadie. Del Leviatán. ¿No que Nadie nunca tuvo almirante?"
+          ],
+          [
+            "ALMIRANTE",
+            "Nadie nunca tuvo almirante, capitana. El Leviatán sí. Era yo."
+          ],
+          [
+            "LUZTERNA",
+            "Toca la misión fijada. Quiero respuestas. Y si no me las da, quiero su barco."
+          ],
+          [
+            "ALMIRANTE",
+            "El Leviatán no era malo. Era obediente. Le dijimos «corrige ese mar» y lo corrigió. «Borra esa isla» y la borró."
+          ],
+          [
+            "ALMIRANTE",
+            "Nadie nunca le dio una orden. Nosotros sí. Los Correctores. Y él creyó que las órdenes eran suyas."
+          ],
+          [
+            "LUZTERNA",
+            "Por eso Nadie preguntaba quién había derrotado a su almirante. Nunca fue su almirante, Capi. Era de ellos."
+          ],
+          [
+            "LUZTERNA",
+            "Ya entendí los Fragmentos: son tinta seca de páginas que alguien borró. Por eso están fríos. Nadie los recuerda."
+          ],
+          [
+            "LUZTERNA",
+            "Capi… yo también tengo algo que revisar. Mi linterna está haciendo un ruido raro."
+          ]
+        ]
+      },
+      {
+        "id": "b48_linterna",
+        "time": "tras H47 (a) · tras tu respuesta (b)",
+        "trigger": "H48",
+        "style": "NOIR OCEÁNICO (de noche, en el faro)",
+        "title": "Luzterna lo sabe",
+        "$scene": "a) De noche, el faro de tu isla: la linterna parpadea con un ritmo que no es de linterna (tres cortas, una larga) y su haz apunta hacia afuera, más allá del cielo. Luzterna con las manos sobre el vidrio. Pausa larga antes de la pregunta. Después: dos botones grandes (APÁGALA / DÉJALA ENCENDIDA). b) Luzterna limpia el vidrio con la manga y la luz sale más derecha que nunca.",
+        "lines": [
+          [
+            "LUZTERNA",
+            "Capi. Mi linterna no alumbra para afuera porque sí. Está mandando una SEÑAL. Hacia afuera de la caja."
+          ],
+          [
+            "LUZTERNA",
+            "Yo la colgué para tener una luz de casa. Y resulta que es un faro… para alguien que no conozco."
+          ],
+          [
+            "LUZTERNA",
+            "No lo sabía, Capi. Te juro que no lo sabía. ¿Qué hago? ¿La apago?"
+          ],
+          [
+            "LUZTERNA",
+            "La dejo encendida. Cuidar algo también es dejar que lo vean."
+          ],
+          [
+            "LUZTERNA",
+            "Y si alguien viene, que venga. Aquí hay gatos, un faro y una muerta muy enojada."
+          ]
+        ]
+      },
+      {
+        "id": "b49_masamadre",
+        "time": "tras H48 (a) · tras vencer a Masa Madre (b, c)",
+        "trigger": "H49",
+        "style": "CIANOTIPO ORBITAL (dorado de horno)",
+        "title": "Primordial de la Gravedad",
+        "$scene": "a) Corona Celeste se inclina: las migajas, las pelotas y un gato despistado ruedan solos hacia el horno más grande de la ciudad; del horno sale vapor que respira. b) Masa Madre baja a tu barco y el cielo se queda sin peso un segundo; en el cielo aparece una COSTURA. c) Detrás de la costura, un instante: una mano hecha de luz sostiene un lápiz y escribe; luego la costura se cierra. Cartel: CONTINUARÁ.",
+        "lines": [
+          [
+            "MASA MADRE",
+            "Ay, mis niños. Todo cae hacia mí tarde o temprano. Ustedes cayeron temprano."
+          ],
+          [
+            "LUZTERNA",
+            "Es la primordial de la Gravedad, Capi. Huele a pan recién hecho. No te distraigas. …Yo tampoco."
+          ],
+          [
+            "LUZTERNA",
+            "Toca la misión fijada. En su cielo todo se curva hacia el centro: los tiros, los barcos y mi paciencia."
+          ],
+          [
+            "MASA MADRE",
+            "Bien leudado, {g:capitán|capitana|capitane}. Me voy con ustedes: su isla pesa bonito. Pesa a cosas queridas."
+          ],
+          [
+            "LUZTERNA",
+            "Capi… ¿viste eso? Dime que viste eso."
+          ],
+          [
+            "LUZTERNA",
+            "Los márgenes tienen dueño. Y el dueño tiene manos."
+          ]
+        ]
+      }
+    ]
+  }
+}

@@ -20,6 +20,22 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-15-la-marea-completa',
+    date: '2026-10-15',
+    title: 'PARTE II completa · Escenas con música',
+    luzterna: 'El mar aprendió a cantar. No me preguntes cómo; yo solo sé que ahora tararea cuando nadie lo ve. Súbele al volumen y ven al faro.',
+    items: [
+      { tag: 'NUEVO', text: 'La Parte II ya está completa: tres oleadas nuevas de historia hasta el final de «La Marea Imposible», con más islas para recorrer en 3D, batallas en el cielo y más allá.' },
+      { tag: 'NUEVO', text: 'Elemento nuevo: GRAVEDAD. 22 gatos nuevos, cada uno con su propia forma de moverse.' },
+      { tag: 'NUEVO', text: 'Tus gatos ahora tienen carácter al moverse: se preparan antes de saltar, frenan con su peso y reaccionan a su manera (los tímidos se asoman, los valientes avanzan, los dormilones se enteran tarde). Canelo, como siempre, primero. Si prefieres calma, «Reducir movimiento» en Ajustes lo apaga.' },
+      { tag: 'NUEVO', text: 'Escenas con su propia música: algunos momentos de la historia se viven al ritmo de una canción, con botones a tiempo. Hagas lo que hagas, la historia sigue igual: solo cambia lo que ves. No te diremos cuáles ni dónde.' },
+      { tag: 'NUEVO', text: 'FONOTECA: las canciones que el mar te va dejando se coleccionan y se vuelven a escuchar cuando quieras. Y en VOLVER A VER repites cualquier escena que ya viviste.' },
+      { tag: 'CAMBIO', text: 'Renovación cinematográfica y musical: escenas nuevas, música para explorar y una versión de batalla para cada pelea. Si la música no te cuadra con el ritmo, en Ajustes está el «Ajuste de ritmo».' },
+      { tag: 'CAMBIO', text: 'La historia de la Parte II vuelve a empezar para que la vivas renovada. Tu progreso queda intacto: gatos, formas, islas y recursos siguen contigo, y los premios únicos que ya ganaste no se repiten.' },
+      { tag: 'ARREGLO', text: 'Pantallas que ya caben en ventanas cuadradas y panorámicas, nombres que ya no se cortan, textos que ya no se enciman y VOLVER A VER con desplazamiento.' },
+    ],
+  },
+  {
     id: '2026-10-14-nivel-100',
     date: '2026-10-14',
     title: 'Nivel 100 (y pantallas que ya caben)',

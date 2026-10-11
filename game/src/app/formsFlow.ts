@@ -14,6 +14,8 @@ import { H, W } from '../core/App';
 import { G } from '../state/game';
 import { Modal, toast } from '../ui/modal';
 import { dialogActive, storyLayer } from '../ui/dialog';
+import { hushed } from '../ui/hush';
+import { beatPending } from './story';
 import { catDef } from '../data/content';
 import { applyForm, type FormDef } from '../data/rupturas/formas';
 import { formOwner, formRevealsPending, markFormRevealed } from '../state/sys/forms';
@@ -42,9 +44,9 @@ export function initForms() {
 function where(): 'island' | 'map' | 'other' {
   const c = scenes.current;
   if (!c) return 'other';
-  const n = c.constructor.name;
-  if ((IslandCls && c instanceof IslandCls) || n === 'IslandScene') return 'island';
-  if ((MapCls && c instanceof MapCls) || n === 'MapScene') return 'map';
+  // instanceof / duck-typing only, never `constructor.name`: a production build renames classes
+  if (IslandCls && c instanceof IslandCls) return 'island';
+  if (MapCls && c instanceof MapCls) return 'map';
   return 'other';
 }
 
@@ -52,7 +54,7 @@ function where(): 'island' | 'map' | 'other' {
 function calm(): boolean {
   const w = where();
   if (w !== 'island' && w !== 'map') return false;
-  if ((scenes as unknown as { busy?: boolean }).busy || dialogActive()) return false;
+  if ((scenes as unknown as { busy?: boolean }).busy || dialogActive() || hushed()) return false;
   const sl = storyLayer();
   if (sl.children.some((ch) => ch.visible && !ch.destroyed)) return false;
   for (const ch of scenes.overlayLayer.children) {
@@ -68,9 +70,16 @@ function calm(): boolean {
   return true;
 }
 
+/**
+ * A form whose reveal is a story SCENE (Canelo Almirante: cine h38_almirante, b38_a_babor#b) waits for it: the
+ * scene plays the transformation and this reveal card as its last beat (and marks it revealed). If the scene isn't
+ * coming (an old save, a reload that lost it), the reveal plays here as always.
+ */
+export const FORM_SCENE: Record<string, string> = { canelo_almirante: 'b38_a_babor#b' };
+
 async function pump() {
   if (!G.s.cats.length) return;
-  const pending = formRevealsPending();
+  const pending = formRevealsPending().filter((f) => !(FORM_SCENE[f.id] && beatPending(FORM_SCENE[f.id])));
   if (!pending.length || !calm()) {
     calmSince = 0;
     return;
@@ -90,11 +99,14 @@ async function pump() {
   }
 }
 
-/** the reveal + toast for one form (also callable from dev tools: `__forms.reveal('canelo_almirante')`) */
-export async function revealForm(f: FormDef) {
+/** the reveal + toast for one form (also callable from dev tools: `__forms.reveal('canelo_almirante')`).
+ *  `replay`: a scene's «volver a ver» — shows the card, marks nothing */
+export async function revealForm(f: FormDef, o: { replay?: boolean; worn?: boolean; scene?: boolean } = {}) {
   // marked first: a crash or a reload mid-sequence never loops it (and it pays nothing anyway)
-  markFormRevealed(f.id);
-  G.save();
+  if (!o.replay) {
+    markFormRevealed(f.id);
+    G.save();
+  }
   const def = applyForm(catDef(f.species), f.id);
   const owner = formOwner(f);
   const who = owner && owner.name !== catDef(f.species).name ? `${owner.name}, ` : '';
@@ -111,7 +123,10 @@ export async function revealForm(f: FormDef) {
     chips: f.chips,
     replay: true,
   });
-  toast(`¡${f.name}! Cámbialo en su ficha.`, { icon: 'paw', sub: 'Toca al gato › FORMA. Es gratis y el de siempre no se pierde.', dur: 4 });
+  if (o.replay) return;
+  // the story put the form on him (cine h38_almirante): say how to take it off; otherwise how to put it on
+  if (o.worn) toast(`¡${f.name}! Ya lo trae puesto.`, { icon: 'paw', sub: 'En su ficha › FORMA vuelves al de siempre cuando quieras. Es gratis.', dur: 4.5, force: o.scene });
+  else toast(`¡${f.name}! Cámbialo en su ficha.`, { icon: 'paw', sub: 'Toca al gato › FORMA. Es gratis y el de siempre no se pierde.', dur: 4, force: o.scene });
 }
 
 (globalThis as unknown as { __forms: unknown }).__forms = {

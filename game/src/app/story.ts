@@ -21,6 +21,10 @@ import { FEATURES, FeatureIntro, GLOSSARY_HINT } from '../ui/story/features';
 import { Text } from 'pixi.js';
 import { Line, say, tip, clearTips, cancelDialogs, dialogActive, storyLayer } from '../ui/dialog';
 import { Modal } from '../ui/modal';
+import { hush, hushed, hushReset } from '../ui/hush';
+import { runningCine } from '../cine/registry';
+const runningCineNow = () => !!runningCine();
+import { fireBeatLine } from '../cine/lineHooks';
 import { missionPanel, kingdomBanner, milestonePoster, DoneItem } from '../ui/story/rewards';
 import { promptCatName } from '../ui/story/nameCat';
 import { offlineReport } from '../ui/story/offline';
@@ -41,6 +45,9 @@ import { CASINO_INTRO } from '../panels/casino/intro';
 import { GRIETAS_EXPLAIN, MULTI_INTRO, MULTI_OUTRO } from '../ui/story/grietasScript';
 import { FINAL_EPILOGUE, FINAL_INTRO, FINAL_OUTRO } from '../ui/story/finaleScript';
 import { RUPTURAS_COVERED, RUPTURAS_ON_DONE, RUPTURAS_ON_NEW } from '../ui/story/rupturasScript';
+import { O2_COVERED, O2_ON_DONE, O2_ON_NEW } from '../ui/story/rupturasScriptO2';
+import { O3_COVERED, O3_ON_DONE, O3_ON_NEW } from '../ui/story/rupturasScriptO3';
+import { O4_COVERED, O4_ON_DONE, O4_ON_NEW } from '../ui/story/rupturasScriptO4';
 
 // ------------------------------------------------------------------ beat plan (M1: b01–b11 · M2: zones 2–3)
 interface BeatRef {
@@ -54,10 +61,13 @@ interface BeatRef {
   /** lines written in ui/story/script.ts instead of content.story */
   custom?: Line[];
   /** non-dialog beat: the player profile prompt (name + gender), the Marea Final, the credits roll,
-   *  a cat that joins (`reveal`), or a trip to a Parte II 3D region (`region`: e.g. H31's cinematic) */
-  special?: 'profile' | 'marea' | 'credits' | 'reveal' | 'region';
+   *  a cat that joins (`reveal`), a trip to a Parte II 3D region (`region`: e.g. H31's cinematic), or a
+   *  CINE scene played on this screen (`cine`: src/cine, e.g. the H31 opening; its lines are this beat's `lines`) */
+  special?: 'profile' | 'marea' | 'credits' | 'reveal' | 'region' | 'cine';
   /** for special 'region': the region id (src/regions/index.ts) */
   region?: string;
+  /** for special 'cine': the cine id (src/cine/scenes) */
+  cine?: string;
   /** for special 'reveal': the species that joins after the lines */
   species?: string;
   /** for special 'credits': the end of the whole story instead of Chapter 1 */
@@ -68,6 +78,10 @@ interface BeatRef {
   onlyOn?: 'map' | 'island' | 'region';
   /** may ALSO play inside a 3D region (island / map otherwise): Parte II arrival beats */
   inRegion?: boolean;
+  /** an island cine waiting while you're on the CARTA: the story takes you home for it */
+  travel?: boolean;
+  /** skip it (marked seen) once this mission is done: the moment it's about was overtaken */
+  until?: string;
 }
 /** beats that open when a mission APPEARS */
 const ON_NEW: Record<string, BeatRef[]> = {
@@ -103,6 +117,9 @@ const ON_NEW: Record<string, BeatRef[]> = {
   H29: [{ beat: 'final_intro', custom: FINAL_INTRO, effect: 'darkSky', delay: 3 }],
   // Parte II · Oleada 1 «La Marea Imposible» (H31–H41, after «Fin»): lines in data/rupturas/historia.json
   ...RUPTURAS_ON_NEW,
+  ...O2_ON_NEW,
+  ...O3_ON_NEW,
+  ...O4_ON_NEW,
 };
 /** beats that play when a mission is COMPLETED */
 const ON_DONE: Record<string, BeatRef[]> = {
@@ -145,6 +162,9 @@ const ON_DONE: Record<string, BeatRef[]> = {
   H30: [{ beat: 'final_epilogue', custom: FINAL_EPILOGUE, delay: 1 }],
   // Parte II · Oleada 1: after each step (the battle's cat / element reveal already played)
   ...RUPTURAS_ON_DONE,
+  ...O2_ON_DONE,
+  ...O3_ON_DONE,
+  ...O4_ON_DONE,
 };
 
 /** beats that fire when a condition becomes true (checked while calm on island/map) */
@@ -175,7 +195,7 @@ function catRarity(species: string) {
   return CONTENT.cats.find((c) => c.id === species)?.rarity;
 }
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
-const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28', 'H29', 'H30', ...RUPTURAS_COVERED]);
+const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28', 'H29', 'H30', ...RUPTURAS_COVERED, ...O2_COVERED, ...O3_COVERED, ...O4_COVERED]);
 
 interface QueuedBeat {
   key: string;
@@ -203,18 +223,24 @@ let MapCls: (abstract new (...a: never[]) => unknown) | null = null;
 function where(): 'island' | 'map' | 'battle' | 'region' | 'other' {
   const c = scenes.current;
   if (!c) return 'other';
-  const n = c.constructor.name;
-  if ((IslandCls && c instanceof IslandCls) || n === 'IslandScene') return 'island';
-  if ((MapCls && c instanceof MapCls) || n === 'MapScene') return 'map';
+  // instanceof / duck-typing only, never `constructor.name`: a production build renames classes
+  if (IslandCls && c instanceof IslandCls) return 'island';
+  if (MapCls && c instanceof MapCls) return 'map';
   // Parte II 3D regions (scenes/RegionScene: `regionId`). Duck-typed: importing it here would pull three.js at boot
-  if (typeof (c as { regionId?: unknown }).regionId === 'string' || n === 'RegionScene') return 'region';
-  if (/Battle/.test(n)) return 'battle';
+  if (typeof (c as { regionId?: unknown }).regionId === 'string') return 'region';
+  if ((c as { isBattle?: unknown }).isBattle === true) return 'battle';
   return 'other';
 }
 /** a queued beat may play here (inside a 3D region only the beats written for it: never Part I's) */
 function fits(ref: BeatRef, here: ReturnType<typeof where>) {
   if (here === 'region') return ref.onlyOn === 'region' || !!ref.inRegion;
+  // a scene that needs home: from the CARTA, the story takes you there (playBeat)
+  if (ref.travel && here === 'map' && ref.onlyOn === 'island') return true;
   return !ref.onlyOn || ref.onlyOn === here;
+}
+/** a beat part is queued and will play (app/formsFlow waits for the transformation scene instead of popping) */
+export function beatPending(key: string) {
+  return beats.some((q) => q.key === key);
 }
 function transitioning() {
   return !!(scenes as unknown as { busy?: boolean }).busy;
@@ -332,7 +358,8 @@ async function playFeature(f: FeatureIntro, mode: 'use' | 'appear') {
 
 function canTip() {
   const w = where();
-  return (w === 'island' || w === 'map') && !transitioning() && !dialogActive() && !introRunning;
+  // a scene holding the screen (a cine, a reveal: ui/hush.ts) → mission cards, panels and beats wait for it
+  return (w === 'island' || w === 'map') && !transitioning() && !dialogActive() && !introRunning && !hushed();
 }
 function canPanel() {
   return canTip() && !overlayBlocked();
@@ -343,13 +370,14 @@ function canBeat() {
 }
 /** calm inside a Parte II 3D region: its own beats may play (the mission panels wait for the island / map) */
 function canRegionBeat() {
-  return where() === 'region' && !transitioning() && !dialogActive() && !introRunning && !overlayBlocked() && !busy && !panelShowing;
+  // a region holding its arrival for the story's scene ('arrival', regions/paginas.ts) lets that scene start
+  return where() === 'region' && !transitioning() && !dialogActive() && !introRunning && !overlayBlocked() && !busy && !panelShowing && !hushed(['arrival', 'travel']);
 }
 
 /** Luzterna calls you "grumete" until Boss 1, "Capi" afterwards; Canelo keeps the name you gave him. */
 function personalize(sp: string, text: string) {
   // dialog boxes are plain text: element badge tokens ({fire}…) only render in iconText
-  let t = gtxt(text).replace(/\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void|crystal|unknown)\}\s?/g, '');
+  let t = gtxt(text).replace(/\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void|crystal|gravity|unknown)\}\s?/g, '');
   const c = firstCat();
   if (c && c.species === 'c_canelo' && c.name && c.name !== 'Canelo') {
     t = t.replace(/\bCanelo\b/g, c.name);
@@ -382,6 +410,11 @@ function beatLines(ref: BeatRef): Line[] {
       if (ref.beat === 'b07_resonancia' || ref.beat === 'b08_pimenton') text = resonanceNames(text);
       return [sp, text] as Line;
     });
+}
+
+/** a beat's lines as the story says them (names, «Capi», gender): cine replays from Ajustes use it */
+export function storyLines(beat: string, idx?: number[]): Line[] {
+  return beatLines({ beat, lines: idx });
 }
 
 function keyOf(ref: BeatRef) {
@@ -521,8 +554,28 @@ async function pump() {
   }
 }
 
+/**
+ * Between two scenes that follow each other (the faro → «el reflejo»; the correction → CONTINUARÁ) the screen stays
+ * held: a popup queued during the first one must not slip into the gap (ui/hush.ts). Never longer than 6 s.
+ */
+let betweenT = 0;
+function holdBetween(on: boolean) {
+  window.clearTimeout(betweenT);
+  hush('between', false);
+  if (!on) return;
+  hush('between', true);
+  betweenT = window.setTimeout(() => hush('between', false), 6000);
+}
+function sceneComing() {
+  const here = where();
+  const now = performance.now();
+  return beats.some((q) => (q.ref.special === 'cine' || q.ref.special === 'region') && q.notBefore - now < 3000 && fits(q.ref, here) && !beatSeen(q.key));
+}
+
 async function playBeat(q: QueuedBeat) {
   if (beatSeen(q.key)) return; // seen meanwhile (another path played it)
+  // a scene starts: it holds the screen itself from here (the gap hold, if any, lets go)
+  if (q.ref.special === 'cine' || q.ref.special === 'region') window.setTimeout(() => holdBetween(false), 400);
   if (q.ref.special === 'credits') {
     busy = true;
     try {
@@ -541,6 +594,14 @@ async function playBeat(q: QueuedBeat) {
     markBeat(q.key);
     G.save();
     busy = true;
+    // the trip is part of the scene: popups wait until the destination's own scene holds the screen (or ~8 s)
+    hush('travel', true);
+    const t0 = performance.now();
+    const letGo = window.setInterval(() => {
+      if (!(runningCineNow?.() ?? false) && performance.now() - t0 < 8000) return;
+      window.clearInterval(letGo);
+      hush('travel', false);
+    }, 250);
     try {
       await goRegion(q.ref.region).catch(async (e) => {
         console.warn('[story] region', q.ref.region, e);
@@ -549,6 +610,45 @@ async function playBeat(q: QueuedBeat) {
     } finally {
       busy = false;
       lastBlockEnd = performance.now();
+    }
+    return;
+  }
+  if (q.ref.special === 'cine' && q.ref.cine) {
+    // (the gap after this scene is held if another one follows right away: holdBetween in the finally below)
+    // Parte II: a declarative cinematic on this screen (src/cine). Its script persists the beat at its point of no
+    // return; interrupted before that (the scene changed) → it plays again the next calm moment here.
+    // Overtaken (its mission is already done: e.g. you landed before the dawn played) → seen, skipped.
+    if (q.ref.until && G.s.missions.done.includes(q.ref.until)) {
+      markBeat(q.key);
+      G.save();
+      return;
+    }
+    // never under a panel (the cine would pause with its letterbox over the panel): a little later
+    if (modalOpen()) {
+      beats.push({ ...q, notBefore: performance.now() + 1200 });
+      return;
+    }
+    busy = true;
+    try {
+      if (q.ref.travel && q.ref.onlyOn === 'island' && where() !== 'island') {
+        await goIsland();
+        const { cineStage } = await import('../cine');
+        for (let k = 0; k < 40 && !cineStage('island')?.alive(); k++) await wait(0.15);
+        await wait(0.8);
+      }
+      const { playCine } = await import('../cine');
+      const res = await playCine(q.ref.cine, { host: { lines: (beat, idx) => beatLines({ beat, lines: idx }) } });
+      if (res === 'interrupted' && !beatSeen(q.key)) beats.push({ ...q, notBefore: performance.now() + 2500 });
+      else {
+        markBeat(q.key);
+        const b = BEAT_BY_ID.get(q.ref.beat);
+        if (!q.ref.part || (q.ref.lines && b && q.ref.lines[q.ref.lines.length - 1] === b.lines.length - 1)) markBeat(q.ref.beat);
+        G.save();
+      }
+    } finally {
+      busy = false;
+      lastBlockEnd = performance.now();
+      holdBetween(sceneComing());
     }
     return;
   }
@@ -594,7 +694,9 @@ async function playBeat(q: QueuedBeat) {
     await say(lines, {
       cinematic: big,
       dim: big ? 0.35 : 0.22,
-      onLine: async (_i, sp, text) => {
+      onLine: async (i, sp, text) => {
+        // a surface on screen may react to this line (src/cine/lineHooks.ts: the FOLIO stamp, …)
+        fireBeatLine(q.key, i, sp, text);
         if (q.ref.effect === 'darkSky' && sp === 'SISTEMA' && text.startsWith('(')) await darkSky(storyLayer());
       },
     });
@@ -726,15 +828,17 @@ export async function maybeIntro(info: BootInfo) {
     }
   }
   // an update landed since this save was last played: tell them what changed (and what it did to THEIR island)
-  const upd = await import('../ui/updatesPanel');
-  if (upd.hasNews()) {
-    busy = true;
-    try {
+  // (held from before the import: in that gap the pump used to start a queued beat and NOVEDADES opened over its
+  // dialog, which then could not be clicked on until the panel closed)
+  busy = true;
+  try {
+    const upd = await import('../ui/updatesPanel');
+    if (upd.hasNews()) {
       await wait(0.6);
       await upd.openUpdates();
-    } finally {
-      busy = false;
     }
+  } finally {
+    busy = false;
   }
 }
 
@@ -765,6 +869,7 @@ export async function replayPrologue() {
 export async function wipeSaveAndRestart() {
   cancelDialogs();
   clearTips();
+  hushReset();
   resetQueues();
   for (const ch of [...storyLayer().children]) destroyDeep(ch);
   for (const ch of [...scenes.overlayLayer.children]) if (ch !== storyLayer()) destroyDeep(ch);

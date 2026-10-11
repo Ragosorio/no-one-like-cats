@@ -1,0 +1,775 @@
+{
+  "$comment": "Parte II · Oleada 2 «El Cielo Despierta» — elemento Gravedad (verbo MOVER) y especies del Lote E. Se fusiona sobre content.json (solo agrega). Ver docs/part-ii/22-oleada-2.md. Reglas de combate de la Gravedad: battle/gravedad.ts; batallas del cielo: battle/cielo.ts. materialMult lo dobla content.ts dentro de materials[].mult.",
+  "elements": [
+    {
+      "id": "gravity",
+      "name": "Gravedad",
+      "emoji": "",
+      "order": 16,
+      "unlock": "chapter2:H44",
+      "discovery": "Islas Invertidas (H44): al vencer a la capitana Cascada, el peso de las islas se queda contigo. Trae a Plomito.",
+      "dimension": "CIANOTIPO ORBITAL (planos de observatorio en azul de Prusia + plomadas de latón)",
+      "palette": [
+        "#13224A",
+        "#E9F0FF",
+        "#3E6FD8",
+        "#F0B44C"
+      ],
+      "verb": "Mover",
+      "shotArchetype": "orbe_gravitatorio",
+      "shotRule": "Orbe pesado que deja FLOTANDO 2 turnos lo que toca: lo que flota recibe +35% de los golpes del rival, y un módulo que flota (no núcleo ni camarote) que queda muy roto y recibe otro golpe se cae del barco: ¡AL AGUA! en el mar (40% o menos), ¡AL VACÍO! en el cielo (60% o menos). Cada tiro de un gato de Gravedad que cae en el barco rival abre un POZO ahí: los siguientes proyectiles de su lado (la andanada de ese turno y el gato del siguiente) se curvan hacia él.",
+      "midFlight": "arrastra un poco de todo: gotas, plumas y una gaviota muy confundida.",
+      "status": "flotando",
+      "beats": "crystal",
+      "beatenBy": "void",
+      "levelUpgrades": {
+        "10": {
+          "name": "Órbita",
+          "effect": "+25% radio."
+        },
+        "20": {
+          "name": "Masa Crítica",
+          "effect": "Flotando dura 1 turno más."
+        }
+      },
+      "habitatBiome": null,
+      "particle": "rock",
+      "onomatopoeia": [
+        "¡VUUUM!",
+        "¡PLOMP!"
+      ],
+      "sfxLayer": "zumbido grave + péndulo de reloj de pared"
+    }
+  ],
+  "affinity": {
+    "gravity": {
+      "crystal": 1.5,
+      "storm": 1.5,
+      "void": 0.75,
+      "time": 0.75
+    },
+    "crystal": {
+      "gravity": 0.75
+    },
+    "storm": {
+      "gravity": 0.75
+    },
+    "void": {
+      "gravity": 1.5
+    },
+    "time": {
+      "gravity": 1.5
+    }
+  },
+  "materialMult": {
+    "gravity": {
+      "wood": 1,
+      "canvas": 0.75,
+      "iron": 1.25,
+      "stone": 1.25,
+      "crystal": 1,
+      "bone": 1,
+      "void": 0.75
+    }
+  },
+  "statuses": [
+    {
+      "id": "flotando",
+      "name": "Flotando",
+      "icon": "plomada",
+      "target": "celda",
+      "turns": 2,
+      "effect": "Gravedad: la celda flota y no tiene dónde apoyarse: recibe +35% de los golpes del rival. Si su módulo (no el núcleo ni un camarote) queda muy roto y recibe otro golpe del rival, se cae del barco: ¡AL AGUA! en el mar (40% de vida o menos) o ¡AL VACÍO! en el cielo (60% o menos). Nv20: dura 1 turno más."
+    },
+    {
+      "id": "pozo",
+      "name": "Pozo",
+      "icon": "orbita",
+      "target": "barco",
+      "turns": 2,
+      "effect": "Gravedad: cada tiro de un gato de Gravedad que cae en el barco rival abre un pozo ahí (uno por lado). Los proyectiles de su lado (la andanada de ese turno y el gato de su próximo turno) se curvan hacia él. Los del rival, no."
+    }
+  ],
+  "reactions": [
+    {
+      "id": "al_vacio",
+      "name": "¡Al Vacío!",
+      "trigger": {
+        "status": "flotando",
+        "by": "cualquiera"
+      },
+      "effect": "Un módulo Flotando (no núcleo ni camarote) que ya está muy roto recibe otro golpe del rival y se cae del barco entero: se pierde. En el mar (¡AL AGUA!) con 40% de vida o menos; en el cielo con 60% o menos. Una vez por disparo.",
+      "mult": 1,
+      "axis": "mover",
+      "grimoire": "Lo que flota y está roto, se cae. Es física. También es chisme."
+    },
+    {
+      "id": "atraccion",
+      "name": "Atracción",
+      "trigger": {
+        "status": "pozo",
+        "by": "tus proyectiles"
+      },
+      "effect": "Tus proyectiles que pasan cerca del pozo se curvan hacia él: la andanada sigue al gato y el próximo tiro casi se apunta solo.",
+      "mult": 1,
+      "axis": "mover",
+      "grimoire": "No apuntaste mal. El cielo te corrigió. A tu favor, por una vez."
+    }
+  ],
+  "catdexSets": [
+    {
+      "id": "set_contrapeso",
+      "name": "Familia Contrapeso",
+      "cats": [
+        "c_plomito",
+        "c_globito",
+        "r_contrapeso",
+        "e_cascada",
+        "l_masamadre"
+      ],
+      "rule": "Lo que pones a Flotar dura +1 turno."
+    },
+    {
+      "id": "set_corona",
+      "name": "Corona Celeste",
+      "cats": [
+        "r_helice",
+        "r_ronron",
+        "c_globito"
+      ],
+      "rule": "Tus pozos de Gravedad jalan un poco más."
+    }
+  ],
+  "cats": [
+    {
+      "id": "c_plomito",
+      "name": "Plomito",
+      "epithet": "el Peso Muerto que Ronca",
+      "art": {
+        "slug": "plomito_plumb_cat",
+        "tint": null,
+        "aura": [
+          "#f0b44c",
+          "#3e6fd8",
+          "#e9f0ff"
+        ]
+      },
+      "elements": [
+        "gravity"
+      ],
+      "rarity": "common",
+      "primordial": false,
+      "secret": false,
+      "role": "artillero",
+      "worker": "builder",
+      "trait": "dormilon",
+      "battleForm": {
+        "name": "PLOMITO — DEAD WEIGHT FORM",
+        "cry": "DEAD WEIGHT!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+        "powerBase": "balance:rarities.power_base.common",
+        "foodMult": "balance:rarities.food_mult.common",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.artillero.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Plomada",
+          "cry": null,
+          "archetype": "orbe_gravitatorio",
+          "element": "gravity",
+          "dmg": 60,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "flotando",
+          "statusTurns": 2,
+          "gravityMul": 0.8,
+          "speedMul": 1,
+          "special": "Una plomada de latón que cae pesadísima. Lo que toca queda FLOTANDO 2 turnos: recibe +35% del rival y, si su módulo ya está muy roto, al siguiente golpe se cae del barco (¡AL AGUA! / ¡AL VACÍO!). Si cae en el barco rival abre un POZO ahí: tus siguientes tiros (los cañones de este turno y el gato del siguiente) se curvan hacia él."
+        },
+        "ultimate": {
+          "name": "DEAD WEIGHT! (重し)",
+          "effect": "Tres plomadas en abanico: todo lo que tocan queda Flotando.",
+          "dmg": 45,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Peso muerto: se duerme donde sea y nadie lo puede mover. Literal: ya lo intentaron con grúa.",
+        "star3": "★3: su Plomada explota 15% más grande.",
+        "star5": "★5: Flotando dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Te lo regala la capitana Cascada al ganar en las Islas Invertidas (H44). Después: Resonancia con al menos un padre de Gravedad (Común).",
+        "balanceSource": "resonance"
+      },
+      "hint": "Si algo en tu isla no se mueve ni con grúa, es él. Dormido.",
+      "lore": "Era la plomada de un albañil de las nubes. Un día se le resbaló, cayó para arriba y se convirtió en gato. Pesa como un yunque y ronca como un tractor con gripa.",
+      "balanceName": "Plomito"
+    },
+    {
+      "id": "c_globito",
+      "name": "Globito",
+      "epithet": "el que Nunca Toca el Suelo",
+      "art": {
+        "slug": "globito_balloon_cat",
+        "tint": null,
+        "aura": [
+          "#e9f0ff",
+          "#8fa8ff",
+          "#f0b44c"
+        ]
+      },
+      "elements": [
+        "gravity"
+      ],
+      "rarity": "common",
+      "primordial": false,
+      "secret": false,
+      "role": "soporte",
+      "worker": "voyager",
+      "trait": "perezoso",
+      "battleForm": {
+        "name": "GLOBITO — ZERO-G FLOAT FORM",
+        "cry": "FLOAT AWAY!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+        "powerBase": "balance:rarities.power_base.common",
+        "foodMult": "balance:rarities.food_mult.common",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.soporte.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Burbuja Cero-G",
+          "cry": null,
+          "archetype": "orbe_gravitatorio",
+          "element": "gravity",
+          "dmg": 50,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "flotando",
+          "statusTurns": 2,
+          "gravityMul": 0.35,
+          "speedMul": 0.9,
+          "special": "Un orbe flotón que casi no cae: llega lejísimos y bajito. Lo que toca queda FLOTANDO 2 turnos: recibe +35% del rival y, si su módulo ya está muy roto, al siguiente golpe se cae del barco (¡AL AGUA! / ¡AL VACÍO!). Si cae en el barco rival abre un POZO ahí: tus siguientes tiros (los cañones de este turno y el gato del siguiente) se curvan hacia él."
+        },
+        "ultimate": {
+          "name": "FLOAT AWAY! (ふわふわ)",
+          "effect": "Tres burbujas flotonas en abanico: todo lo que tocan queda Flotando.",
+          "dmg": 40,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Ingravidez: duerme flotando a un palmo del suelo. Dice que el suelo está sucio. No miente.",
+        "star3": "★3: su burbuja explota 15% más grande.",
+        "star5": "★5: Flotando dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con al menos un padre de Gravedad (Común).",
+        "balanceSource": "resonance"
+      },
+      "hint": "Lo ves flotando por la isla. Si lo jalas de la cola, vuelve a subir. Si lo sueltas, también.",
+      "lore": "Se tragó un globo de helio en una fiesta de cumpleaños y nunca volvió a bajar. Lo amarran a una piedra para que no se lo lleve el viento. La piedra ya le cae bien.",
+      "balanceName": "Globito"
+    },
+    {
+      "id": "r_contrapeso",
+      "name": "Contrapeso",
+      "epithet": "el que Equilibra a Sentones",
+      "art": {
+        "slug": "contrapeso_counterweight_cat",
+        "tint": null,
+        "aura": [
+          "#3e6fd8",
+          "#a07a52",
+          "#f0b44c"
+        ]
+      },
+      "elements": [
+        "gravity",
+        "earth"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "tanque",
+      "worker": null,
+      "trait": "leal",
+      "battleForm": {
+        "name": "CONTRAPESO — COUNTERWEIGHT FORM",
+        "cry": "BALANCE BREAKER!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.tanque.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Contrapesazo",
+          "cry": null,
+          "archetype": "roca",
+          "element": "gravity",
+          "dmg": 65,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "flotando",
+          "statusTurns": 2,
+          "gravityMul": 1.5,
+          "speedMul": 0.95,
+          "special": "Una pesa de bronce que perfora 2 capas al caer. Lo que toca queda FLOTANDO 2 turnos: recibe +35% del rival y, si su módulo ya está muy roto, al siguiente golpe se cae del barco (¡AL AGUA! / ¡AL VACÍO!). Si cae en el barco rival abre un POZO ahí: tus siguientes tiros (los cañones de este turno y el gato del siguiente) se curvan hacia él."
+        },
+        "ultimate": {
+          "name": "BALANCE BREAKER! (天秤崩し)",
+          "effect": "Una pesa enorme que perfora 4 capas y deja Flotando todo lo que parte.",
+          "dmg": 55,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Ancla viva: dice que el barco se mece menos cuando él va a bordo. Nadie lo ha medido. Nadie se atreve.",
+        "star3": "★3: el Contrapesazo perfora 1 capa más.",
+        "star5": "★5: Flotando dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Gravedad y uno de Tierra.",
+        "balanceSource": "resonance"
+      },
+      "hint": "La familia Contrapeso sostiene las Islas Invertidas. Literal: se sientan del otro lado para que no se volteen.",
+      "lore": "Lleva 300 años sentado del lado correcto de una isla que cuelga. Pide vacaciones cada siglo. Se las niegan cada siglo. Ya ni se enoja: se sienta más fuerte.",
+      "balanceName": "Contrapeso"
+    },
+    {
+      "id": "r_helice",
+      "name": "Hélice",
+      "epithet": "la Mecánica del Sótano",
+      "art": {
+        "slug": "helice_propeller_cat",
+        "tint": null,
+        "aura": [
+          "#f0b44c",
+          "#ffe14a",
+          "#3e6fd8"
+        ]
+      },
+      "elements": [
+        "gravity",
+        "storm"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "soporte",
+      "worker": "builder",
+      "trait": "curioso",
+      "battleForm": {
+        "name": "HÉLICE — FULL THROTTLE FORM",
+        "cry": "FULL THROTTLE!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.soporte.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Ráfaga de Hélice",
+          "cry": null,
+          "archetype": "rafaga",
+          "element": "gravity",
+          "dmg": 50,
+          "radius": 1.0,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "flotando",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una ráfaga de hélice casi recta (el viento no la mueve) que deja FLOTANDO lo que toca y empuja el siguiente tiro enemigo (CORRIENTE). Si cae en el barco rival abre un POZO ahí: tus siguientes tiros (los cañones de este turno y el gato del siguiente) se curvan hacia él."
+        },
+        "ultimate": {
+          "name": "FULL THROTTLE! (全開)",
+          "effect": "Una ráfaga enorme a toda hélice: deja Flotando lo que toca y empuja el siguiente tiro enemigo.",
+          "dmg": 45,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Llave inglesa: arregla lo que sea con cinta, saliva y fe. Lo que no arregla, lo hace volar.",
+        "star3": "★3: su ráfaga explota 15% más grande.",
+        "star5": "★5: Flotando dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Corona Celeste (H45): la mecánica del Kit de Vuelo decide quedarse en tu barco. Después: Resonancia con un padre de Gravedad y uno de Tormenta.",
+        "balanceSource": "resonance"
+      },
+      "hint": "Si tu barco vuela, fue ella. Si se cae, también fue ella, pero no lo va a admitir.",
+      "lore": "La única mecánica de Corona Celeste que todavía elige qué arreglar. Los demás arreglan lo que les dicen. Ella arregla lo que le da la gana. Por eso la tenían en el sótano.",
+      "balanceName": "Helice"
+    },
+    {
+      "id": "r_ronron",
+      "name": "Ronrón",
+      "epithet": "el que Ronronea Siempre",
+      "art": {
+        "slug": "ronron_purr_cat",
+        "tint": null,
+        "aura": [
+          "#ffffff",
+          "#ffe9a8",
+          "#8fa8ff"
+        ]
+      },
+      "elements": [
+        "gravity",
+        "light"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "controlador",
+      "worker": "banker",
+      "trait": "leal",
+      "battleForm": {
+        "name": "RONRÓN — PERFECT PURR FORM",
+        "cry": "PERFECT PURR!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.controlador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Ronroneo Grave",
+          "cry": null,
+          "archetype": "onda",
+          "element": "gravity",
+          "dmg": 45,
+          "radius": 1.0,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "flotando",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una onda de ronroneo que atraviesa paredes (una onda de gravedad, técnicamente) y deja FLOTANDO cada celda que cruza. Si cae en el barco rival abre un POZO ahí: tus siguientes tiros (los cañones de este turno y el gato del siguiente) se curvan hacia él."
+        },
+        "ultimate": {
+          "name": "PERFECT PURR! (完璧な喉鳴らし)",
+          "effect": "Un ronroneo tan perfecto que hace vibrar el barco entero: atraviesa todo y deja Flotando lo que cruza.",
+          "dmg": 40,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Ronroneo perfecto: no se detiene. Ni dormido. Ni comiendo. Da un poquito de miedo.",
+        "star3": "★3: su onda cruza 2 celdas más.",
+        "star5": "★5: Flotando dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Gravedad y uno de Luz.",
+        "balanceSource": "resonance"
+      },
+      "hint": "En Corona Celeste todos ronronean al mismo tiempo. Este nunca para. ¿Felicidad? ¿Costumbre? Pregúntale. Te va a ronronear.",
+      "lore": "Nació en Corona Celeste, donde nadie llora. Lleva nueve años ronroneando sin parar. Si le preguntas si es feliz, ronronea. Si le preguntas si sabe hacer otra cosa, ronronea más fuerte.",
+      "balanceName": "Ronron"
+    },
+    {
+      "id": "e_cascada",
+      "name": "Cascada",
+      "epithet": "la Capitana que Cae para Arriba",
+      "art": {
+        "slug": "cascada_upfall_cat",
+        "tint": null,
+        "aura": [
+          "#6fc3ff",
+          "#3e6fd8",
+          "#e9f0ff"
+        ]
+      },
+      "elements": [
+        "gravity",
+        "water"
+      ],
+      "rarity": "epic",
+      "primordial": false,
+      "secret": false,
+      "role": "francotirador",
+      "worker": null,
+      "trait": "bravucon",
+      "battleForm": {
+        "name": "CASCADA — UPFALL CAPTAIN FORM",
+        "cry": "UPFALL HARPOON!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+        "powerBase": "balance:rarities.power_base.epic",
+        "foodMult": "balance:rarities.food_mult.epic",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.francotirador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Chorro Invertido",
+          "cry": null,
+          "archetype": "rayo",
+          "element": "gravity",
+          "dmg": 90,
+          "radius": 1.0,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 1,
+          "status": "flotando",
+          "statusTurns": 2,
+          "gravityMul": -0.4,
+          "speedMul": 1.1,
+          "special": "Un chorro de agua que cae hacia ARRIBA: apúntale un poquito abajo. Perfora 1 capa y deja FLOTANDO lo que toca. Si cae en el barco rival abre un POZO ahí: tus siguientes tiros (los cañones de este turno y el gato del siguiente) se curvan hacia él."
+        },
+        "ultimate": {
+          "name": "UPFALL HARPOON! (逆滝の銛)",
+          "effect": "Un chorro gigante que sube en curva, perfora 2 capas y deja Flotando lo que parte.",
+          "dmg": 105,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Ojo de cascada: ve el mundo de cabeza y apunta igual de bien. Dice que el mundo es el que está de cabeza.",
+        "star3": "★3: el chorro perfora 2 capas.",
+        "star5": "★5: Flotando dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Gravedad y uno de Agua, ambos padres Nv15+.",
+        "balanceSource": "resonance",
+        "minParentLevel": 15
+      },
+      "hint": "La capitana de las Islas Invertidas: su barco es una fiesta que nunca termina. Su cascada cae para arriba y ella jura que el resto del mundo está mal.",
+      "lore": "Se cayó de una cascada de chiquita. Hacia arriba. Desde entonces jura que el cielo es el suelo y el suelo es el techo, y que la vida es una fiesta: bocinas en la popa, papel picado en los mástiles y un coco con popote en la mano. Bravucona y fiestera, discute con todos y gana siempre: nadie aguanta discutir de cabeza, y menos bailando.",
+      "balanceName": "Cascada"
+    },
+    {
+      "id": "l_masamadre",
+      "name": "Masa Madre",
+      "epithet": "la que Todo lo Atrae",
+      "art": {
+        "slug": "masamadre_mass_cat",
+        "tint": null,
+        "aura": [
+          "#f0b44c",
+          "#3e6fd8",
+          "#13224a"
+        ]
+      },
+      "elements": [
+        "gravity"
+      ],
+      "rarity": "legendary",
+      "primordial": true,
+      "secret": false,
+      "role": "invocador",
+      "worker": null,
+      "trait": "gloton",
+      "battleForm": {
+        "name": "MASA MADRE — PRIMORDIAL MASS FORM",
+        "cry": "FIRST MASS!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+        "powerBase": "balance:rarities.power_base.legendary",
+        "foodMult": "balance:rarities.food_mult.legendary",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.invocador.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Bollo Gravitatorio",
+          "cry": null,
+          "archetype": "orbe_gravitatorio",
+          "element": "gravity",
+          "dmg": 90,
+          "radius": 1.8,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "flotando",
+          "statusTurns": 3,
+          "gravityMul": 0.7,
+          "speedMul": 0.9,
+          "special": "Un bollo de masa tan denso que dobla la luz. Deja FLOTANDO 3 turnos lo que toca. Si cae en el barco rival abre un POZO ahí: tus siguientes tiros (los cañones de este turno y el gato del siguiente) se curvan hacia él."
+        },
+        "ultimate": {
+          "name": "FIRST MASS! (原初の質量)",
+          "effect": "Un pozo enorme se abre sobre el barco rival: dos turnos en que TODOS los tiros de su lado (gatos y cañones) se curvan hacia él, y lo que hay alrededor queda Flotando. Tope 35%; jefes 15%.",
+          "dmg": 0,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Origen de la Gravedad: tus gatos de Gravedad +10%.",
+        "star3": "★3: su Bollo explota 20% más grande.",
+        "star5": "★5: el pozo de FIRST MASS! dura 1 turno más."
+      },
+      "obtain": {
+        "source": "ruptura:H49",
+        "how": "Corona Celeste (H49): se queda contigo cuando le ganas. Duplicados: dos padres que compartan Gravedad, Nv20+ (después de tenerla).",
+        "balanceSource": "ruptura:H49",
+        "minParentLevel": 20
+      },
+      "hint": "Todo cae hacia ella: las migajas, las pelotas, los gatos, los barcos. Sobre todo las migajas.",
+      "lore": "Es la masa madre de todo lo que pesa. Lleva leudando desde el principio del mundo: cada cosa que cae, cae porque ella la llama. Huele delicioso. No la muerdas. Ya lo intentó Canelo.",
+      "balanceName": "Masa Madre"
+    },
+    {
+      "id": "s_manzanita",
+      "name": "Manzanita",
+      "epithet": "la que Cayó para Arriba",
+      "art": {
+        "slug": "manzanita_apple_cat",
+        "tint": null,
+        "aura": [
+          "#e8443a",
+          "#7ed957",
+          "#f0b44c"
+        ]
+      },
+      "elements": [
+        "gravity",
+        "nature"
+      ],
+      "rarity": "epic",
+      "primordial": false,
+      "secret": true,
+      "role": "asediador",
+      "worker": null,
+      "trait": "curioso",
+      "battleForm": {
+        "name": "MANZANITA — FALLING APPLE FORM",
+        "cry": "APPLE METEOR!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+        "powerBase": "balance:rarities.power_base.epic",
+        "foodMult": "balance:rarities.food_mult.epic",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.asediador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Manzanazo",
+          "cry": null,
+          "archetype": "roca",
+          "element": "gravity",
+          "dmg": 60,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "flotando",
+          "statusTurns": 2,
+          "gravityMul": 1.6,
+          "speedMul": 0.9,
+          "special": "Una manzana durísima que cae con todo y perfora 2 capas. Lo que toca queda FLOTANDO 2 turnos: recibe +35% del rival y, si su módulo ya está muy roto, al siguiente golpe se cae del barco (¡AL AGUA! / ¡AL VACÍO!). Si cae en el barco rival abre un POZO ahí: tus siguientes tiros (los cañones de este turno y el gato del siguiente) se curvan hacia él."
+        },
+        "ultimate": {
+          "name": "APPLE METEOR! (林檎隕石)",
+          "effect": "Una manzana gigante cae del cielo justo donde apuntas: perfora 3 capas y deja Flotando todo alrededor. Una vez por batalla.",
+          "dmg": 120,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Ley universal: lo que ella tira, cae. Lo que le tiran, también. Es justa.",
+        "star3": "★3: la manzana gigante explota 20% más grande.",
+        "star5": "★5: APPLE METEOR! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "secret",
+        "how": "Resonancia: los padres tienen que juntar Gravedad y Naturaleza entre los dos, ambos Nv20+ y al menos uno con ★3+ → sale en la fila ??? de la tabla."
+      },
+      "hint": "Una manzana, algo que pese y alguien que la vea caer. Junta Gravedad y Naturaleza en el Santuario… y que uno de los dos ya tenga sus estrellitas.",
+      "lore": "Se cayó de un árbol. Para arriba. Le pegó en la cabeza a un científico que pasaba en globo y él inventó una ley. Ella inventó un berrinche, porque nadie le dio crédito.",
+      "balanceName": "Manzanita"
+    }
+  ],
+  "secretRecipes": [
+    {
+      "cat": "s_manzanita",
+      "condition": "Unión de padres cubre Gravedad y Naturaleza; ambos Nv20+ y al menos uno ★3+.",
+      "bucket": "secret",
+      "altRoute": ""
+    }
+  ]
+}

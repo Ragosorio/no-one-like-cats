@@ -344,6 +344,12 @@ export class PuppetBrain {
   }
   /** extra amplitude multiplier for everything (0 freezes the acting) */
   energy = 1;
+  /**
+   * Additive pose written every frame by an owner's animation layer (art/intent.ts: anticipation, squash, reactions),
+   * in the same units as the targets above (lean/crouch) plus head offsets in painting px / radians. Raw (no spring:
+   * the layer shapes its own curves). All zero = exactly the old acting, so nobody who ignores it changes.
+   */
+  readonly pose = { lean: 0, crouch: 0, headDy: 0, headA: 0, look: 0 };
   /** spontaneous acts allowed */
   acts: ActSet;
   // ---- face state
@@ -548,7 +554,8 @@ export class PuppetBrain {
       if (a.kind === 'flick') actTail = 0.55 * Math.sin(p * Math.PI * 3) * env;
     }
     // ---- head: wandering tilt + bob; lean in on attack, turn with look, droop asleep
-    const look = clamp(this.lookS.v + actLook, -1, 1);
+    const P = this.pose;
+    const look = clamp(this.lookS.v + actLook + P.look, -1, 1);
     const awake = 1 - sleep;
     const headA =
       E *
@@ -558,9 +565,10 @@ export class PuppetBrain {
         this.attack * 0.12 +
         look * 0.07 +
         sleep * 0.08 +
-        actHeadA);
+        actHeadA +
+        P.headA);
     const headDx = E * (this.attack * 10 + look * 11);
-    const headDy = E * (2.2 * Math.sin(t * 2.4 + s) * (1 - sleep * 0.6) - this.surprise * 8 + this.sleepy * 6 + sleep * 9 + walk * 2.6 * Math.sin(this.walkPh * 2) + actHeadDy);
+    const headDy = E * (2.2 * Math.sin(t * 2.4 + s) * (1 - sleep * 0.6) - this.surprise * 8 + this.sleepy * 6 + sleep * 9 + walk * 2.6 * Math.sin(this.walkPh * 2) + actHeadDy + P.headDy);
     const hc = Math.cos(headA);
     const hs = Math.sin(headA);
     const [nx, ny] = rig.neck;
@@ -584,8 +592,8 @@ export class PuppetBrain {
     const fdy = rig.floats.map((_, i) => E * 6 * Math.sin(t * 1.5 + i * 1.7 + s));
     // ---- body: lean (shear over the feet) + crouch (squash toward the feet) + walk bob
     const step = Math.abs(Math.sin(this.walkPh));
-    const lean = E * (this.leanS.v * 0.22 + walk * 0.06 + this.attack * 0.1 - this.hurt * 0.08 + actLean * 0.25);
-    const crouch = E * (this.crouchS.v * 0.16 + walk * 0.045 * step + actCrouch * 0.12 + sleep * 0.05);
+    const lean = E * ((this.leanS.v + P.lean) * 0.22 + walk * 0.06 + this.attack * 0.1 - this.hurt * 0.08 + actLean * 0.25);
+    const crouch = E * ((this.crouchS.v + P.crouch) * 0.16 + walk * 0.045 * step + actCrouch * 0.12 + sleep * 0.05);
     const bodyH = m.feetY - m.topY;
     const cx = m.W / 2;
     const fy = m.feetY;

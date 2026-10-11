@@ -69,6 +69,9 @@ export const REACTION_INFO: Record<string, ReactionInfo> = {
   'REFRACCIÓN': { ono: '¡TIIIN!', color: 0x8fd3ff, desc: 'Golpe sobre el Prisma: se parte en 2 esquirlas ×0.75', els: ['crystal'] },
   ESPECTRO: { ono: '¡SHIIIN!', color: 0xb79cff, desc: 'Luz sobre el Prisma ×1.25: 3 esquirlas de colores', els: ['crystal', 'light'] },
   REFLEJO: { ono: '¡KLIIING!', color: 0x6fe0c8, desc: 'La faceta frena 40% y le regresa una esquirla', els: ['crystal'] },
+  // Parte II · Oleada 2 (battle/gravedad.ts)
+  '¡AL AGUA!': { ono: '¡PLOMP!', color: 0x3e6fd8, desc: 'Un módulo Flotando muy roto se cae del barco (40% o menos)', els: ['gravity'] },
+  '¡AL VACÍO!': { ono: '¡VUUUM!', color: 0xf0b44c, desc: 'En el cielo, un módulo roto se cae al vacío (Flotando: 60% o menos)', els: ['gravity'] },
   '¡SANTABÁRBARA!': { ono: '¡KABOOM!', color: 0xff6a1a, desc: 'Pólvora: explosión en cadena', els: ['fire'] },
   '¡PARARRAYOS!': { ono: '¡ZAP!', color: 0xffe14a, desc: 'El pararrayos se tragó tu rayo', els: ['storm'] },
 };

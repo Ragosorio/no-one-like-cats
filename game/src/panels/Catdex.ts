@@ -52,7 +52,7 @@ import { runSliced } from '../core/sliced';
 import { openCatPanel } from './CatPanel';
 import { openHabitatPanel } from './island/HabitatPanel';
 import { openHomeless } from './island/HomelessPanel';
-import { Registro000Sheet, registroCard } from './collection/registro000';
+import { Registro000Sheet, registroArrival, registroArrivalDue, registroCard } from './collection/registro000';
 import { openRegistro000, registro000Visible } from '../state/sys/rupturas';
 import { checkMissions } from '../state/sys/missions';
 
@@ -334,6 +334,8 @@ class CatdexView {
         this.showRegistro();
       }, { lift: 6 });
       grid.content.addChild(holder);
+      // Parte II: the first time, the card slips in by itself and the Catdex glitches (collection/registro000.ts)
+      if (registroArrivalDue()) registroArrival(holder, this.modal.panel);
     }
     // cards stream in a few per frame (each one rasterizes its cat): the panel opens at once and never freezes
     const jobs: (() => void)[] = [];

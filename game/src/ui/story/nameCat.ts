@@ -147,7 +147,8 @@ export async function promptName(layer: Container, o: NamePromptOpts): Promise<s
     const caret = new Graphics().rect(0, 0, 6, 54).fill(C.pinkHot);
     caret.y = 26;
     plate.addChild(label, nameT, caret);
-    plate.position.set(566, 352);
+    // under the subtitle when it takes two lines (the profile's «…O muy tonto.» hid behind the plate)
+    plate.position.set(566, Math.max(352, sub.y + sub.height + 12));
     // Parte II (from H32): the register has a line above yours that nobody filled — the plate and the
     // chips move down to make room for it (the buttons stay put: there's slack above them)
     if (o.folio000) {

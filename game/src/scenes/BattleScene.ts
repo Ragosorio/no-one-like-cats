@@ -38,11 +38,24 @@ import { koRank } from '../state/sys/ranks';
 import { P2_ONO, p2Hidden, p2Projectile, p2Trail } from '../battle/fx/multiversoFx';
 import { p2Feats, p2Night } from '../battle/multiverso';
 import { NZ_RAGE, NZ_SHOUT, nzChips } from '../battle/ruido';
+// Parte II · Oleada 2: the sky layer (rules battle/cielo.ts, look battle/fx/cieloFx.ts)
+import { skyAwake, skyChips } from '../battle/cielo';
+// Parte II · MOMENTOS MUSICALES: an interactive music cinematic on a phase change (src/momentos, docs/part-ii/29)
+import { momentoForFase } from '../momentos/registry';
+import '../momentos/songs';
+import { SKY_PALETTE, SkyBattleFx } from '../battle/fx/cieloFx';
+// Parte II · Oleada 4: the dream rules (H58) and the Correctores / Umbral rules (battle/suenos.ts, battle/umbral.ts)
+import { o4Banner, o4Chips } from '../battle/fx/suenosFx';
+// Parte II · Oleada 3+: FASES — layers (sea / sky / astral / glitch), bodies and the phase-change staging (battle/fases.ts)
+import { fasesChips } from '../battle/fases';
+import { FasesFx, RiftFx } from '../battle/fx/fasesFx';
 import { settings } from '../core/settings';
 import { fmt } from '../core/format';
 import { G } from '../state/game';
 import { screenRect } from '../ui/screen';
 import { playBattleEnd, EndRow } from '../battle/ui/endScreen';
+// Parte II: the battle's music plan — choreography + SINCRO, presentation only (src/battle/music, docs/part-ii/24)
+import { BattleMusic, startBattleMusic } from '../battle/music';
 
 export const WATER_Y = SIM_WATER_Y;
 
@@ -163,6 +176,8 @@ const PHASE_NOTE: Record<string, string[]> = {
 type Chip = { text: string; color: number; ink?: number; hot?: boolean };
 
 export class BattleScene extends Scene {
+  /** scene marker for app/story where(): survives minification (never `constructor.name`) */
+  readonly isBattle = true;
   sim!: Battle;
   camRoot = new Container();
   world = new Container();
@@ -235,10 +250,19 @@ export class BattleScene extends Scene {
   seaIce: SeaIceFx | null = null;
   fogEye: FogEyeFx | null = null;
   coreMarker: CoreMarker | null = null;
+  /** Parte II · Oleada 2: clouds, wind bands, islets and balloons of a sky battle */
+  skyFx: SkyBattleFx | null = null;
+  /** Parte II · Oleada 3+: a phased battle's layers and its phase changes (battle/fx/fasesFx.ts) */
+  fasesFx: FasesFx | null = null;
+  private fasesWait: Promise<void> | null = null;
+  /** a «Momento musical» waiting for the shot to land (src/momentos/battle.ts) */
+  private momentoNext: (() => Promise<void>) | null = null;
   /** CATACLISMOS: the seal over their ship + the ghost marks on yours */
   cataFx: CataFx | null = null;
   ultMarks = new UltMarks();
   matchup = new MatchupPanel();
+  /** the battle's music plan (src/battle/music): WHEN things are shown, never WHAT happens; inert without a plan */
+  music: BattleMusic | null = null;
   private healAcc = 0;
   private wetDeckShown = false;
   private t = 0;
@@ -267,7 +291,9 @@ export class BattleScene extends Scene {
     if (sp.intro?.slug) slugs.push(sp.intro.slug);
     await preloadCats(slugs);
 
-    this.sea = new Sea(WATER_Y, sp.palette);
+    // a sky battle floats over a sea of clouds (battle/cielo.ts); a DORMANT sky (H44: sea first) starts on the sea
+    const skyNow = !!sp.rules?.sky && !sp.rules.sky.from;
+    this.sea = new Sea(WATER_Y, skyNow ? SKY_PALETTE : sp.palette);
     this.sky = new SkyLife(WATER_Y);
     this.sky.wind = this.sim.wind;
     this.camRoot.addChild(this.world);
@@ -317,6 +343,15 @@ export class BattleScene extends Scene {
       }
     }
     this.buildBossRigs();
+    if (skyNow) this.ensureSkyFx();
+    if (sp.rules?.fases) {
+      this.fasesFx = new FasesFx({ sim: this.sim, sea: this.sea, world: this.world, shipsLayer: this.shipsLayer, above: this.debris, overlay: this.overlay, skyLife: this.sky, battleId: sp.meta?.special ?? null });
+      // a phase with rifts (portals) needs the portal rings + their flashes on the shot animation
+      if (!this.portalFx && sp.rules.fases.phases.some((f) => f.env?.portals)) {
+        this.portalFx = new RiftFx();
+        this.world.addChildAt(this.portalFx, this.world.getChildIndex(this.shipsLayer));
+      }
+    }
     this.buildHud();
     if (import.meta.env.DEV) (window as unknown as { __battle: BattleScene }).__battle = this;
     this.eventMode = 'static';
@@ -327,6 +362,7 @@ export class BattleScene extends Scene {
     this.on('pointerupoutside', this.up, this);
     window.addEventListener('keydown', this.onKey);
     window.addEventListener('keyup', this.onKeyUp);
+    this.music = startBattleMusic(this);
     await this.intro();
     this.playerTurn();
   }
@@ -399,7 +435,8 @@ export class BattleScene extends Scene {
         this.inks.set(p.id, f);
       }
     }
-    if (id === 'star' || id === 'leviathan') {
+    // the sky's «ABAJO ES ARRIBA» (H47) uses the same inverted-column look as the Estrella / Leviatán
+    if (id === 'star' || id === 'leviathan' || sp.rules?.sky?.invert) {
       this.gravityFx = new GravityFx(W, H);
       this.world.addChildAt(this.gravityFx, this.world.getChildIndex(this.shipsLayer));
     }
@@ -498,6 +535,7 @@ export class BattleScene extends Scene {
       if (p?.alive && p.active && f.dead) f.summon();
     }
     this.ultMarks.setEclipse(sim.sides[0].buffs.blind > 0 || sim.sides[1].buffs.blind > 0);
+    this.skyFx?.sync();
   }
 
   /** world y of the top of a ship at world x */
@@ -511,10 +549,12 @@ export class BattleScene extends Scene {
   }
 
   override exit() {
+    this.music?.dispose();
     window.removeEventListener('keydown', this.onKey);
     window.removeEventListener('keyup', this.onKeyUp);
     this.shaker.destroy();
     this.sky?.destroy();
+    this.fasesFx?.destroy();
   }
 
   private onKey = (e: KeyboardEvent) => {
@@ -595,7 +635,8 @@ export class BattleScene extends Scene {
       hint.visible = k === 1;
       hintBg.clear().roundRect(-10, -4, hint.width + 20, hint.height + 8, 6).fill({ color: C.ink, alpha: 0.55 });
       hintBox.visible = hint.visible;
-      hintBox.position.set(v.x + v.w - hint.width - 30, v.y + v.h - 175 * k);
+      // above the crew cards' top edge (at 175 a crew of 7 hid «…DISPARAR · 1-7» behind the last card)
+      hintBox.position.set(v.x + v.w - hint.width - 30, v.y + v.h - 202 * k);
     };
     lay();
     const off = game.onView(lay);
@@ -732,6 +773,22 @@ export class BattleScene extends Scene {
     if (ps.buffs.fin.length) pItems.push({ text: `FIN x${ps.buffs.fin.length}: ¡TUMBA A SU MERLINA!`, color: C.paper, hot: true });
     if (this.sim.wells.some((w) => w.kind === 'lure' && w.affects === 0)) pItems.push({ text: 'CEBO: TUS TIROS SE VAN AL MAR', color: 0x7fd8ff, hot: true });
     if (this.sim.field.tideMul !== 1) pItems.push({ text: `MAREA ALTA: TODO PESA x${this.sim.field.tideMul}`, color: 0x7fd8ff });
+    // Parte II · Oleada 2: the sky (gravity, wind bands, islets, the void) and its story twists
+    if (this.sim.cfg.rules?.sky) {
+      const [se, spl] = skyChips(this.sim);
+      items.push(...se);
+      pItems.push(...spl);
+    }
+    if (this.sim.cfg.rules?.fases) {
+      const [fe, fp] = fasesChips(this.sim);
+      items.push(...fe);
+      pItems.push(...fp);
+    }
+    if (this.sim.cfg.rules?.dream || this.sim.cfg.rules?.umbral) {
+      const [oe, op] = o4Chips(this.sim);
+      items.push(...oe);
+      pItems.push(...op);
+    }
     const sig = JSON.stringify([items, pItems]);
     if (sig === this.ruleSig) return;
     this.ruleSig = sig;
@@ -784,6 +841,7 @@ export class BattleScene extends Scene {
     const fall = q.events.find((e): e is Extract<BattleEvent, { k: 'cata' }> => e.k === 'cata' && e.what === 'fall');
     const land = q.events.find((e): e is Extract<BattleEvent, { k: 'cata' }> => e.k === 'cata' && e.what === 'land');
     const mul = (land?.n ?? 100) / 100;
+    await this.music?.beforeSetPiece();
     if (fall) await preCata(this.ultCtx(), fall, by, mul);
     const rest = q.events.filter((e) => e !== fall);
     if (q.paths.length) await this.animateShot(q.side, 'boss', q.paths, rest, q.shot);
@@ -1049,6 +1107,7 @@ export class BattleScene extends Scene {
       if (d.ult && cat) await this.ultCutIn(cat);
       const res = this.sim.fire(1, d.shooter, d.angle, d.power, d.ult);
       this.volleyTarget = volleyAim(this.volleyTarget, res.events, 1);
+      await this.music?.beforeEnemyShot(res, 'cat', d.shooter, false);
       await this.animateShot(1, d.shooter, res.paths, res.events, res.shot);
       await this.checkBossPhase();
     }
@@ -1186,6 +1245,8 @@ export class BattleScene extends Scene {
   async playerFire() {
     if (this.phase !== 'aim') return;
     this.phase = 'flight';
+    // SINCRO: released inside a window of the battle's music → an explicit input, like the angle (battle/sincro.ts)
+    const sincro = this.music?.sincroNow() ?? false;
     this.lastAimG.clear();
     this.aimReadout.visible = false;
     this.lastLabel.visible = false;
@@ -1197,7 +1258,7 @@ export class BattleScene extends Scene {
     }
     this.lastElevation = -this.aim.angle;
     this.turnShooter = this.selected;
-    const res = this.sim.fire(0, this.selected, this.aim.angle, this.aim.power, ult);
+    const res = this.sim.fire(0, this.selected, this.aim.angle, this.aim.power, ult, undefined, sincro ? { sincro } : undefined);
     this.refreshCards();
     // the volley concentrates on the FIRST hit of this turn (same rule as the headless sim)
     this.volleyTarget = volleyAim(this.volleyTarget, res.events, 0);
@@ -1283,6 +1344,17 @@ export class BattleScene extends Scene {
     gsap.to(layer, { alpha: 0, duration: 0.2, onComplete: () => layer.destroy({ children: true }) });
   }
 
+  /** the sky's look (clouds, wind bands, islets, balloons) — at enter, or when a dormant sky wakes (H44 phase 2) */
+  ensureSkyFx() {
+    if (this.skyFx || !this.sim.cfg.rules?.sky || this.destroyed) return;
+    const fx = (this.skyFx = new SkyBattleFx(this.sim, (side) => {
+      const v = this.ships[side];
+      return { x: v.x, y: v.y, w: this.sim.sides[side].ship.cols * CELL };
+    }));
+    this.world.addChildAt(fx.back, this.world.getChildIndex(this.shipsLayer));
+    this.world.addChildAt(fx.front, this.world.getChildIndex(this.sea.frontLayer()) + 1);
+  }
+
   /** dev: jump the boss phase (window.__battle.devPhase(3)) */
   async devPhase(n: 1 | 2 | 3) {
     for (const e of this.sim.forcePhase(n)) this.applyEvent(e);
@@ -1292,6 +1364,19 @@ export class BattleScene extends Scene {
 
   /** boss phase banners (the sim decides the phase; we present it after the shot) */
   async checkBossPhase() {
+    // MOMENTO: liky_fight (H44, between phase 1 and 2) — a «Momento musical» registered for this phase change plays
+    // first, once the shot that crossed the threshold has landed; it stages the new layer under its hard cut (src/momentos)
+    if (this.momentoNext) {
+      const go = this.momentoNext;
+      this.momentoNext = null;
+      await go();
+    }
+    // FASES: a layer change staged by the last shot finishes before the next turn (battle/fx/fasesFx.ts)
+    if (this.fasesWait) {
+      const w = this.fasesWait;
+      this.fasesWait = null;
+      await w;
+    }
     if (!this.phaseQueue.length || this.sim.winner !== null) {
       this.phaseQueue.length = 0;
       return;
@@ -1359,18 +1444,28 @@ export class BattleScene extends Scene {
     this.overlay.addChild(label);
     gsap.from(label.scale, { x: 0.2, y: 0.2, duration: 0.18, ease: 'back.out(3)' });
     gsap.to(label, { alpha: 0, delay: 0.9, duration: 0.25, onComplete: () => label.destroy() });
+    // the enemy volley lands on the music's accents (presentation only: the sim already resolved every shot)
+    const sync = side === 1 && !!this.music?.volleySync;
+    const flying: Promise<void>[] = [];
     for (const m of cannons) {
       if (this.sim.winner !== null) break;
       if (!m.alive) continue;
       const a = aimCannon(this.sim, side, m.id, aiSeed.cannon(this.sim, m.id), volleySigma(this.spec, side), this.volleyTarget ?? undefined);
       const res = this.sim.fire(side, 'cannon', a.angle, a.power, false, m.id);
+      if (sync) await this.music!.beforeEnemyShot(res, 'cannon', null, true);
       const mz = this.sim.cannonMuzzle(side, m.id);
       if (side === 1) this.flt(mz.x, mz.y - 50, `${wname(m.id)} DEL BARCO`, { color: 0xb9b2a0, size: 22, font: F.poster, dur: 0.9, rise: 30 });
       this.fxp.burst(mz.x, mz.y, { count: 18, tint: [C.yellow, C.orange, C.paper, 0x8a95a3], speed: [100, 420], gravity: -60, life: [0.2, 0.6], angle: side === 0 ? [-0.6, 0.6] : [Math.PI - 0.6, Math.PI + 0.6] });
       v.fireCannon(m.id);
-      await this.animateShot(side, 'cannon', res.paths, res.events, res.shot, true);
+      const anim = this.animateShot(side, 'cannon', res.paths, res.events, res.shot, true);
+      if (sync) {
+        flying.push(anim);
+        continue;
+      }
+      await anim;
       this.refreshCards();
     }
+    await Promise.all(flying);
   }
 
   // ---------------------------------------------------------------- animation of events
@@ -1513,6 +1608,9 @@ export class BattleScene extends Scene {
       const tick = (t: Ticker) => {
         acc += (t.deltaMS / 1000) * time.scale * (this.fast ? 2.5 : 1) * (quick ? 1.7 : 1);
         const stepDt = 1 / 120;
+        // an enemy shot synced to the music: the audio clock says where it is, so it lands on the hit
+        const synced = this.music?.flightAcc(paths, idx[0], stepDt);
+        if (synced !== undefined) acc = synced;
         frame++;
         while (acc >= stepDt) {
           acc -= stepDt;
@@ -1670,6 +1768,7 @@ export class BattleScene extends Scene {
           this.ships[e.side].hitReact(e.x, e.y, 0.3);
           break;
         }
+        this.music?.onImpact(e);
         const shown = e.total + this.pierceAcc;
         this.pierceAcc = 0;
         sfx(e.total > 600 ? 'bigboom' : 'boom');
@@ -2236,6 +2335,36 @@ export class BattleScene extends Scene {
         this.shaker.add(0.5);
         this.refreshRules();
         break;
+      // Parte II · Oleada 4: a new dream (H58) / the Correctores' rules or an Umbral phase start (battle/fx/suenosFx.ts)
+      case 'sueno':
+      case 'umbral':
+        o4Banner(this.overlay, this.sim, e);
+        this.refreshRules();
+        break;
+      // Parte II · Oleada 3+: FASES — the sim entered phase n: flash, new layer, banner, music signal (battle/fx/fasesFx.ts)
+      case 'fase': {
+        const n = e.n ?? 0;
+        const from = e.amount ?? -1;
+        const stageIt = () =>
+          (this.fasesFx?.stage(n, from) ?? Promise.resolve()).then(() => {
+            // a dormant sky woke with this phase (H44): its clouds, wind bands, islets and balloons appear
+            if (skyAwake(this.sim)) this.ensureSkyFx();
+            this.syncLate();
+            this.refreshRules();
+          });
+        const momento = momentoForFase(this.spec.meta?.special, this.sim.cfg.rules?.fases?.phases[n]?.id);
+        if (momento) {
+          this.momentoNext = () => import('../momentos/battle').then((mb) => mb.runBattleMomento(this, momento.id, stageIt));
+          break;
+        }
+        const prev = this.fasesWait;
+        const go = stageIt();
+        this.fasesWait = prev ? prev.then(() => go) : go;
+        this.shaker.add(0.4);
+        this.syncLate();
+        this.refreshRules();
+        break;
+      }
     }
   }
 
@@ -2309,6 +2438,7 @@ export class BattleScene extends Scene {
   async finish(): Promise<void> {
     if (this.phase === 'end') return;
     this.phase = 'end';
+    this.music?.onFinish(this.sim.winner === 0);
     this.refreshCards();
     const won = this.sim.winner === 0;
     if (this.spec.boss) {

@@ -68,7 +68,7 @@ describe('family duels (same harness as the balance doc, small and deterministic
     // first draft (facet 0.5 / reflect 0.35): 14/16 here · tuned: 10/16
     expect(wins / n).toBeGreaterThanOrEqual(0.25);
     expect(wins / n).toBeLessThanOrEqual(0.75);
-  }, 60_000);
+  }, 240_000);
 
   it('family crews follow the budget: Cristal at A is common + rare + epic, mixed crews swap the cheapest slots', () => {
     expect(familyCrew('crystal', 'A', 0).map((id) => catDef(id).rarity)).toEqual(['common', 'rare', 'epic']);

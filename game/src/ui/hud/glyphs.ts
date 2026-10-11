@@ -26,7 +26,8 @@ export type GlyphKind =
   | 'capsule'
   | 'tools'
   | 'vault'
-  | 'podium';
+  | 'podium'
+  | 'vinyl';
 
 export function glyph(kind: GlyphKind, s = 48, color: number = C.ink, accent: number = C.pink): Container {
   const c = new Container();
@@ -168,6 +169,14 @@ export function glyph(kind: GlyphKind, s = 48, color: number = C.ink, accent: nu
       g.rect(-24, 2, 16, 18).fill(accent).stroke(INK);
       g.rect(8, 8, 16, 12).fill(0xc77b3a).stroke(INK);
       g.poly([-9, -10, -9, -22, -4, -15, 0, -24, 4, -15, 9, -22, 9, -10]).fill(C.yellow).stroke({ width: 2, color: C.ink });
+      break;
+    case 'vinyl':
+      // FONOTECA (Parte II): a record half out of its sleeve
+      g.rect(-24, -18, 30, 36).fill(accent).stroke(INK);
+      g.circle(8, 0, 19).fill(color).stroke(INK);
+      g.circle(8, 0, 13).stroke({ width: 1.5, color: 0x5a5056 });
+      g.circle(8, 0, 6).fill(C.yellow);
+      g.circle(8, 0, 1.6).fill(color);
       break;
   }
   c.addChild(g);

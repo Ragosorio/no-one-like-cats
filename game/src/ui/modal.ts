@@ -5,6 +5,7 @@ import { C, F } from './theme';
 import { Panel, txt, poster } from './widgets';
 import { sfx } from '../core/audio';
 import { scenes } from '../core/scenes';
+import { whenCalm } from './hush';
 import { icon, IconKind } from './icons';
 
 /**
@@ -121,8 +122,10 @@ let toastY = 0;
 /** toasts on screen by content: the same message again refreshes the one showing (no stacks of clones) */
 const live = new Map<string, { c: Container; fade: gsap.core.Tween }>();
 
-export function toast(text: string, o: { icon?: IconKind; color?: number; sub?: string; dur?: number } = {}) {
+export function toast(text: string, o: { icon?: IconKind; color?: number; sub?: string; dur?: number; force?: boolean } = {}) {
   const key = `${text}\u0000${o.sub ?? ''}`;
+  // a scene is playing (src/ui/hush.ts): the toast waits for it to end (same message = one toast)
+  if (!o.force && whenCalm(() => toast(text, o), `toast:${key}`)) return;
   const same = live.get(key);
   if (same && !same.c.destroyed) {
     same.fade.restart(true);

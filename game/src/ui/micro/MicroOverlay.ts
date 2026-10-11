@@ -8,7 +8,8 @@ import { txt, poster } from '../widgets';
 import { icon, IconKind } from '../icons';
 import { sfx } from '../../core/audio';
 import { onomatopoeia, sparkles, floatText } from '../../fx/juice';
-import { ActiveMicro, currentMicro, onMicro, setMicroAllowed, winMicro, MicroReward } from '../../state/sys/micro';
+import { ActiveMicro, currentMicro, onMicro, setMicroAllowed, setMicroHeld, winMicro, MicroReward } from '../../state/sys/micro';
+import { hushed } from '../hush';
 import { IslandScene } from '../../scenes/IslandScene';
 import { catTexture, preloadCats } from '../../art/catArt';
 import { SilhouetteFilter } from '../../fx/filters';
@@ -48,11 +49,14 @@ function onIsland() {
 }
 
 function tick(tk: Ticker) {
-  setMicroAllowed(onIsland());
+  // a scene holds the screen (a cine): no new microevent, and a running one waits hidden with its clock stopped
+  const hush = hushed();
+  setMicroAllowed(onIsland() && !hush);
+  setMicroHeld(hush);
   const m = currentMicro();
   // the microevent lives above the panels (fxLayer): hide it while a panel is open, or the stray cat's
   // silhouette walks across the Catdex
-  root.visible = onIsland() && !panelOpen();
+  root.visible = onIsland() && !panelOpen() && !hush;
   if (!m || !clockTxt) return;
   const s = Math.ceil(m.leftMs / 1000);
   clockTxt.text = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;

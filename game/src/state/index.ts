@@ -16,7 +16,13 @@ import './sys/storyBattles'; // registers the Fragmentos retro patch before any 
 import './sys/podio';
 import './sys/grietas';
 import './sys/finale'; // EL ARCHIVO RASGADO (H29–H30), after the grietas register theirs
-import './sys/rupturas'; // Parte II · Oleada 1 «La Marea Imposible» (H31–H38), after «Fin»
+import './sys/rupturas'; // Parte II · Oleada 1 «La Marea Imposible» (H31–H41), after «Fin»
+// Parte II renovada: reinicio narrativo (una vez por partida) + registro de premios. Its patch must run BEFORE any
+// later wave's patch reads Part II progress (patches run in registration order); it reads STORY_BATTLES at run time.
+import './sys/rupturasReset';
+import './sys/rupturasO2'; // Oleada 2 «El Cielo Despierta» (H42–H49)
+import './sys/rupturasO3'; // Oleada 3 «La Era Astral» (H50–H57)
+import './sys/rupturasO4'; // Oleada 4 «El Umbral» (H58–H65)
 import { markAllPatched } from './patches';
 import { UPDATE_IDS } from '../data/updates';
 

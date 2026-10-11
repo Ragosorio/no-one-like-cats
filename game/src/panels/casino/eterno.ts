@@ -26,7 +26,7 @@ import { screenRect } from '../../ui/screen';
 import { glowTexture, sparkTexture } from '../../art/textures';
 import { Particles } from '../../fx/particles';
 import { flash, floatText, onomatopoeia, sparkles } from '../../fx/juice';
-import { AT_RISK, AT_RISK_NAME, ETERNO, EternoField, EternoRecord, addLuck, atRisk, doublePot, eternoRoll, eternoState, lockEterno, luckyMult, resolveEterno, startEterno, stopEterno } from '../../state/sys/casino/eterno';
+import { AT_RISK, AT_RISK_NAME, ETERNO, ETERNO_EXTRA, EternoField, EternoRecord, addLuck, atRisk, doublePot, eternoRoll, eternoState, extraAtRisk, lockEterno, luckyMult, resolveEterno, startEterno, stopEterno } from '../../state/sys/casino/eterno';
 import type { Granted } from '../../state/sys/casino';
 import type { AutoHost } from './auto';
 import { gapFor } from './auto';
@@ -89,6 +89,15 @@ export function openEternoConfirm(onConfirm: () => void) {
     risk.addChild(cell);
   });
   ry += 2 * 46 + 6;
+  // soft resources other systems put at stake (Combustible Astral…): listed only when you hold some
+  const ex = extraAtRisk();
+  const exLine = ETERNO_EXTRA.filter((x) => ex[x.key]).map((x) => `${x.name}: ${fmt(ex[x.key])}`);
+  if (exLine.length) {
+    const et = T(`Y también: ${exLine.join(' · ')}`, 24, CP.paper, { wordWrapWidth: 1130 });
+    et.position.set(18, ry);
+    risk.addChild(et);
+    ry += et.height + 8;
+  }
   const safe = T('Tus gatos, barcos, hábitats y progreso NO se tocan (ni niveles, estrellas, orbes, cristales, prisma, chatarra, planos ni historia).', 20, 0xffd0c8, { wordWrapWidth: 1130 });
   safe.position.set(18, ry);
   ry += safe.height + 14;

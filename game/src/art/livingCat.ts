@@ -84,6 +84,10 @@ export class CatPuppet extends Mesh {
   get model() {
     return this.brain.model;
   }
+  /** additive pose layer (art/intent.ts writes it; all zero = the plain acting) */
+  get pose() {
+    return this.brain.pose;
+  }
 
   constructor(
     texture: Texture,

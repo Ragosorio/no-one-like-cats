@@ -30,6 +30,7 @@ import { workersUnlocked } from '../../state/sys/workforce';
 import { autoHarvestOn, bankUnlocked, fishBuffer } from '../../state/sys/island';
 import { toast } from '../modal';
 import { podioUnlocked } from '../../state/sys/podio';
+import { fonotecaAvailable } from '../../audio/fonoteca';
 
 /** panels owned by agents that may not exist yet: resolved lazily with import.meta.glob (never a hard import) */
 const LAZY = import.meta.glob<Record<string, unknown>>(['../../panels/shop/Shop.ts', '../../panels/casino/open.ts']);
@@ -203,6 +204,8 @@ export class Hud extends Container {
       { id: 'shop', label: 'TIENDA', glyph: 'shop', onTap: () => lazyOpen('../../panels/shop/Shop.ts', 'openShop', 'TIENDA'), visible: () => island && u().sail },
       { id: 'podio', label: 'PODIO', glyph: 'podium', onTap: () => void import('../../panels/podio/open').then((m) => m.openPodio()), visible: () => podioUnlocked() },
       { id: 'casino', label: 'CASINO', glyph: 'capsule', onTap: () => lazyOpen('../../panels/casino/open.ts', 'openCasino', 'CASINO'), visible: () => island && u().mesa },
+      // Parte II: appears with the first song unlocked (src/audio/fonoteca.ts)
+      { id: 'fonoteca', label: 'FONOTECA', glyph: 'vinyl', onTap: () => void import('../../panels/Fonoteca').then((m) => m.openFonoteca()), visible: () => fonotecaAvailable() },
       { id: 'settings', label: 'AJUSTES', glyph: 'gear', onTap: () => openSettings(), visible: () => true },
     ]);
     this.actions.position.set(W / 2, H - 120);

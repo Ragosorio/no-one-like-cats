@@ -151,14 +151,13 @@
         "id": "b31_estrellas",
         "time": "tras H30 «Fin»",
         "trigger": "H31",
-        "style": "NOIR OCEÁNICO (de noche) → cinemática 3D «el reflejo»",
+        "style": "NOCHE ASTRAL — la isla se oscurece de verdad (cine h31_opening, estado del mundo noche_astral) → cinemática 3D «el reflejo»",
         "title": "Las estrellas caen hacia arriba",
         "lines": [
-          ["SISTEMA", "(Es de noche. Tu isla duerme. Una estrella se despega del mar… y sube.)"],
-          ["LUZTERNA", "Capi. Capi. Despierta. No, no es una pesadilla: las estrellas se están cayendo… para ARRIBA."],
+          ["LUZTERNA", "Capi. Capi. Despierta."],
+          ["LUZTERNA", "No, no es una pesadilla: las estrellas se están cayendo… para ARRIBA."],
           ["LUZTERNA", "¿Ves? Otra. Y otra. Como burbujas de refresco, pero de cielo."],
-          ["LUZTERNA", "Sube al faro, que desde arriba se ve mejor. Y no hagas ruido: los gatos duermen. …Bueno, siempre duermen."],
-          ["SISTEMA", "(La linterna gira sola dentro del faro. Por primera vez, su haz sale hacia afuera.)"],
+          ["LUZTERNA", "Sube al faro, que desde arriba se ve mejor. Y no hagas ruido: hay gatos durmiendo. …Bueno, siempre hay gatos durmiendo."],
           ["LUZTERNA", "Mi linterna alumbra para afuera de la caja, Capi. Y el mar está reflejando una isla que no está ahí."],
           ["LUZTERNA", "Y mira para dónde apunta el Faro del Primer Mar. El que se prendió solo. El que «no apuntaba a casa»."],
           ["LUZTERNA", "Justo ahí. Siempre apuntó ahí. …Odio cuando las cosas raras empiezan a tener sentido."]
@@ -168,15 +167,13 @@
         "id": "b32_registro",
         "time": "tras H31",
         "trigger": "H32",
-        "style": "CATDEX (glitch)",
+        "style": "CATDEX (glitch) — cine h32_registro en la isla; la ficha se mete sola al Catdex; FOLIO se revela en la ficha",
         "title": "REGISTRO 000",
         "lines": [
-          ["SISTEMA", "NEW ENTRY DETECTED — REGISTRO 000"],
-          ["CATDEX", "REGISTRO 000 · AUTOR: — · FECHA: —"],
           ["LUZTERNA", "¿Y eso? El Catdex agregó una ficha solito. ANTES del número uno. Eso no se puede: yo inventé ese orden."],
           ["LUZTERNA", "Ábrela, Capi. Antes de que se borre… o de que alguien le escriba más. No sé qué me da más miedo."],
           ["LUZTERNA", "Esa ficha no la escribí yo. Y tú tampoco, Capi: tu letra es horrible."],
-          ["CAPTION", "La estática del Barco del Vacío vuelve a la pantalla. Esta vez se queda quieta y se deja leer: F · O · L · I · O."],
+          ["CAPTION", "La estática del Barco del Vacío vuelve. Esta vez se queda quieta y se deja leer: F · O · L · I · O."],
           ["LUZTERNA", "FOLIO. La palabra que nadie podía leer era FOLIO. Alguien nos está archivando, Capi. Tú eres el folio 001. ¿Y el 000?"],
           ["PERIÓDICO", "¡EXTRA! ¿QUIÉN ES EL CUARTO GATO DE LA FOTO?"]
         ]
@@ -185,13 +182,12 @@
         "id": "b33_paginas",
         "time": "tras H32 (a) · al desembarcar (b)",
         "trigger": "H33",
-        "style": "TINTA Y PAPEL MOJADO",
+        "style": "AMANECER (cine h33_amanecer) → la isla sale del mar al desembarcar (cine h33_llegada, 3D)",
         "title": "La Isla de las Páginas Hundidas",
         "lines": [
-          ["CAPTION", "Amanece. Donde ayer había mar hay una isla de libros mojados. Las gaviotas actúan como si siempre hubiera estado ahí."],
+          ["CAPTION", "Donde ayer había mar hay una isla de libros mojados. Las gaviotas actúan como si siempre hubiera estado ahí."],
           ["LUZTERNA", "La Isla de las Páginas Hundidas. Según el mapa, siempre estuvo aquí. Según yo, el mapa está mintiendo."],
           ["LUZTERNA", "Abre la CARTA, Capi. Tiene una hoja pegada en la orilla que nadie pegó, con una isla en tinta fresquita. Tócala y vamos."],
-          ["CAPTION", "Tus gatos bajan del barco. El suelo cruje como papel viejo. Porque ES papel viejo."],
           ["LUZTERNA", "Huele a biblioteca mojada. O sea, a perro mojado con lentes."],
           ["LUZTERNA", "Y todo está escrito: las piedras, los árboles, hasta las olas traen letra chiquita. Alguien anotó esta isla con mucho cariño… y con mucha prisa."]
         ]
@@ -234,15 +230,14 @@
         "id": "b36_pagina_canelo",
         "time": "tras H35 (a) · al leer la página (b)",
         "trigger": "H36",
-        "style": "TINTA Y PAPEL MOJADO (Eco)",
+        "style": "TINTA Y PAPEL MOJADO (Eco) — cine h36_eco en Páginas: la página se escribe sola, cajita de música",
         "title": "La página de Canelo",
         "lines": [
           ["CAPTION", "En la Isla de las Páginas Hundidas flota una página suelta. No se moja. No se hunde. Y tiene un nombre escrito con letra bonita."],
           ["LUZTERNA", "Capi, esa página dice «Canelo». NUESTRO Canelo. Ve a leerla antes de que él se entere… o peor: antes de que se la coma."],
           ["CAPTION", "«CANELO, ALMIRANTE DE LA FLOTA GATUNA. Hundió 40 barcos. Nunca se bajó del timón.»"],
           ["LUZTERNA", "Capi… esto nunca pasó."],
-          ["LUZTERNA", "Es un ECO: otra vida que el mismo gato pudo tener. Misma panza, otro destino. Alguien la escribió… y la dejó en borrador."],
-          ["CAPTION", "Canelo se sienta encima de la página. No piensa bajarse. Ni por croquetas. …Bueno, por croquetas tal vez."]
+          ["LUZTERNA", "Es un ECO: otra vida que el mismo gato pudo tener. Misma panza, otro destino. Alguien la escribió… y la dejó en borrador."]
         ]
       },
       {
@@ -263,13 +258,11 @@
         "id": "b38_a_babor",
         "time": "tras H37 (a) · el golpe final de Canelo (b)",
         "trigger": "H38",
-        "style": "COZY → ANIME INFERNO",
+        "style": "COZY → transformación (cine h38_almirante en la isla)",
         "title": "¡A BABOR!",
         "lines": [
           ["LUZTERNA", "Plan: bájale la vida al rival y guárdale el remate a Canelo. Que SU tiro sea el último que le pegue. Él solo quiere la foto."],
           ["LUZTERNA", "Los cañones del barco siguen su tiro, así que esos no le roban la foto. Otro gato disparando después de él, sí. Ojo."],
-          ["CAPTION", "La página de Canelo se completa sola: «…y el último cañonazo fue suyo.» La tinta brilla. Y se seca."],
-          ["CAPTION", "Canelo se acomoda un sombrero que no tenía hace un segundo. Le queda. Le queda MUY bien."],
           ["LUZTERNA", "¡A BABOR! …Nadie sabe dónde queda babor. Igual funciona."],
           ["LUZTERNA", "Sigue siendo el mismo gato impaciente. Ahora con sombrero."],
           ["LUZTERNA", "Su Eco y él ya son la misma página: CANELO ALMIRANTE. Cámbiale la forma en su ficha cuando quieras. Y no, no se le quita lo glotón."]
@@ -296,14 +289,13 @@
         "id": "b40_madrenacar",
         "time": "tras H39",
         "trigger": "H40",
-        "style": "NÁCAR PRISMÁTICO (caverna)",
+        "style": "NÁCAR PRISMÁTICO (caverna) → lo que recuerda el cristal, en tu isla (cine h40_cristal)",
         "title": "Madre Nácar",
         "lines": [
           ["CAPTION", "En el fondo de Isla Nácar hay una caverna donde cada cristal muestra una escena distinta. Ninguna es de hoy."],
           ["MADRE NÁCAR", "Bienvenidos. Ya los había visto llegar. Varias veces. En una ni siquiera venían."],
           ["LUZTERNA", "Es la primordial del Cristal, Capi. Habla como abuela que ya se sabe el chisme. Toca la misión fijada."],
           ["MADRE NÁCAR", "Los cristales recordamos todo lo que reflejamos. Mira este. ¿Ves al gato en las rocas? Tú tampoco lo viste la primera vez."],
-          ["CAPTION", "En el cristal: los peñascos frente a tu isla, de noche. Un gato sentado, mirando hacia acá. Parpadeas y ya no está."],
           ["MADRE NÁCAR", "Y este otro es tu isla. Sin gatos. Sin faro. Como si nunca hubieras llegado. No te asustes: es un reflejo. Por ahora."],
           ["LUZTERNA", "Ya. Tápalo. Me quedo con el del gato misterioso, que es menos deprimente. Y tú, abuela, te vienes con nosotros."]
         ]
@@ -312,7 +304,7 @@
         "id": "b41_corrector",
         "time": "tras H40",
         "trigger": "H41",
-        "style": "BLANCO PERFECTO",
+        "style": "BLANCO PERFECTO → el mundo se «corrige» (cine h41_correccion) → CONTINUARÁ (cine h41_continuara)",
         "title": "La letra en el margen",
         "lines": [
           ["CAPTION", "Un barco blanco perfecto atraca sin hacer olas. Su tripulación ronronea al mismo tiempo. Todos. Siempre."],
@@ -320,12 +312,10 @@
           ["LUZTERNA", "¿Corregirnos? Sobre mi cadáver. …Ah, verdad."],
           ["LUZTERNA", "Y trae un Canelo que SÍ obedece. Qué asco. El nuestro es almirante y no obedece ni a su sombrero. Toca la misión fijada, Capi: vamos a llenarle el barco de errores."],
           ["CORRECTOR", "Error de redacción en la batalla. Se tomará nota. Volveremos con la versión corregida."],
-          ["CAPTION", "En el casco blanco queda una firma a mano: «—N.»"],
           ["LUZTERNA", "«—N.». Como la carta. No era de Nadie ni de Noctis: era N de Normal. Qué nombre tan aburrido para un villano."],
           ["LUZTERNA", "Y Espumita se bajó de su barco. Dice que allá todo estaba demasiado limpio. Un gato con criterio."],
           ["LUZTERNA", "Vienen más, Capi. Muchos barcos blancos. Y allá arriba, detrás de las nubes, algo se está despertando."],
-          ["CORRECTOR", "Su isla tiene demasiadas contradicciones, {g:Capitán|Capitana|Capitane}. Las vamos a corregir."],
-          ["CAPTION", "CONTINUARÁ: EL CIELO DESPIERTA"]
+          ["CORRECTOR", "Su isla tiene demasiadas contradicciones, {g:Capitán|Capitana|Capitane}. Las vamos a corregir."]
         ]
       }
     ]

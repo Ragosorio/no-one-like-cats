@@ -21,6 +21,8 @@ export const SIM_ELEMENT: Record<string, ElementId> = {
   time: 'time',
   // Parte II · Oleada 1 (battle/cristal.ts)
   crystal: 'crystal',
+  // Parte II · Oleada 2 (battle/gravedad.ts)
+  gravity: 'gravity',
 };
 const STATUS: Record<string, StatusId> = {
   ardiendo: 'burning',
@@ -31,6 +33,8 @@ const STATUS: Record<string, StatusId> = {
   congelado: 'frozen',
   // Cristal: PRISMA (the next foe hit of another element there refracts — battle/cristal.ts)
   prisma: 'prism',
+  // Gravedad: FLOTANDO (a broken module that floats falls off the ship on the next hit — battle/gravedad.ts)
+  flotando: 'grav',
 };
 const TRAJ: Record<string, Trajectory> = {
   bola_rebote: 'bounce',
@@ -84,6 +88,12 @@ export function shotFromSpec(s: ShotSpec, level: number): ShotDef {
     let pr = statuses.find((x) => x.id === 'prism');
     if (!pr) statuses.push((pr = { id: 'prism', turns: 2 }));
     if (level >= 20) pr.turns += 1;
+  }
+  // every Gravedad shot leaves FLOTANDO where it lands; Nv20 "Masa Crítica": it lasts 1 turn more (battle/gravedad.ts)
+  if (s.element === 'gravity') {
+    let gr = statuses.find((x) => x.id === 'grav');
+    if (!gr) statuses.push((gr = { id: 'grav', turns: 2 }));
+    if (level >= 20) gr.turns += 1;
   }
   return {
     id: s.name,

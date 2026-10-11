@@ -245,6 +245,11 @@ interface SiegeInput {
   displayMulX?: number;
   /** sudden-death turn override (0 = off) */
   suddenDeath?: number;
+  /** Parte II story bands past Nv50 (state/sys/storyScale.ts): the enemy cats' level / stars. Unset = the old ones (Nv ≤ 50, ★1) */
+  enemyLevel?: number;
+  enemyStars?: number;
+  /** story battles: at least this many cat rooms on a generated ship (so a 4-cat crew fights whole). Unset = the archetype's */
+  catrooms?: number;
 }
 
 const BOSS_INTRO: Record<number, { lines: string[]; weak: string }> = {
@@ -381,6 +386,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     const arch = (CONTENT.enemyArchetypes as Record<string, { size: string; hull: string; cannons: number; catrooms: number; mast: boolean; special: string }>)[o.archetype] ?? CONTENT.enemyArchetypes.chalupa;
     const spec = specFromArchetype(arch, zone * 100 + stage + (o.type === 'errand' ? 50 : 0));
     if (o.archetype === 'torre_barco') spec.tower = true;
+    if (o.catrooms) spec.catrooms = Math.max(spec.catrooms, o.catrooms);
     if (isBoss) {
       spec.cols = Math.max(spec.cols, 16);
       spec.rows = Math.max(spec.rows, 10);
@@ -404,7 +410,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     if (c) rules.cataclysm = c;
   }
   // ---- enemy crew
-  const enemyLevel = Math.max(1, Math.round(Math.log(EP / 5) / Math.log(1.07)) - 20);
+  const enemyLevel = o.enemyLevel ?? Math.max(1, Math.min(50, Math.round(Math.log(EP / 5) / Math.log(1.07)) - 20));
   const hpBoost = (isBoss ? tune!.catHp : et.catHp * zt.catHp) * sk;
   const bossDef = isBoss ? zoneBoss(zone) : undefined;
   const enemyCats = o.enemyCats.map((sp, i) => {
@@ -413,7 +419,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     const capMul = isBoss && i === 0 ? tune!.capHp / tune!.catHp : 1;
     const capName = isBoss && i === 0 && bossDef && zone !== 6 ? bossDef.name : def.name;
     return battleCatFrom(
-      { uid: `e${i}`, species: sp, name: capName, level: Math.max(1, Math.min(50, enemyLevel)), stars: 1, dmgMul: ef * eDmg, hpMul: hpBoost * capMul * eh },
+      { uid: `e${i}`, species: sp, name: capName, level: enemyLevel, stars: o.enemyStars ?? 1, dmgMul: ef * eDmg, hpMul: hpBoost * capMul * eh },
       role?.hp ?? 100,
     );
   });
@@ -464,7 +470,7 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
       tune: { hull: enemyHpMul, crewHp: hpBoost, dmg: eDmg, stage: sk },
       ratio: { S, pf, ef, ph, eh },
       combatWeight: combatWeight(shipId),
-      enemyLevel: Math.max(1, Math.min(50, enemyLevel)),
+      enemyLevel,
       special: o.special,
       gearNotes: gear.notes,
       conductionBonus: extras.conductionJumps,

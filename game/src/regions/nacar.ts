@@ -22,6 +22,8 @@ import { paperLighting } from '../engine/world/paperCat';
 import { G } from '../state/game';
 import { MISSION_BY_ID } from '../data/content';
 import { sfx } from '../core/audio';
+import { audioApi } from '../audio/api';
+import { motif, stingerOr, unlockMoment } from '../cine/sound';
 import { ship } from '../rupturas/props';
 import { ARRIVAL, CLUSTERS, DOOR, GEODE, HALF, MOUNT, POOLS, PRISM, SHIP, SHELLS, SOLUTION, START, TERRACE, coastR, height, paint, walkable } from './nacar/layout';
 import { MAX_FAN, MAX_SEG, makeLit, syncLit } from './nacar/materials';
@@ -84,6 +86,11 @@ export const region: RegionDef = {
     const w = ctx.world;
     const rng = ctx.rng;
     const L = makeLit();
+    // the island's music: glass and voices in Mi menor (docs/part-ii/18 §5.4; falls back while its bed is recorded)
+    audioApi.setState('explore', { context: 'nacar', fade: 2.5 });
+    audioApi.ambience('sea', { fade: 2 });
+    // its recording goes into the Fonoteca the first time you hear it (doc 18 §8: H39)
+    unlockMoment(['amb.nacar']);
     const sky = { uZenith: w.sky.u.uZenith, uHorizon: w.sky.u.uHorizon };
     const open0 = doorOpen();
     const madreWon = G.has('won_ruptura_madrenacar');
@@ -143,12 +150,18 @@ export const region: RegionDef = {
       ctx.feature('haz_nacar');
       w.rig.focus(new THREE.Vector3(DOOR.x, TERRACE + 3.2, DOOR.z + 1), 30, 0.3, w.rig.goal.yaw);
       sfx('charge');
+      // the music holds its breath while the door fills with light; a glass chord swells (Mi menor)
+      audioApi.duck(true, 9, 'nacar_door');
+      motif('cristal');
       await anim(1.7, (k) => {
         dm.uCharge.value = k * k;
         crystal.mat.uniforms.uCharge.value = k * k * 0.25;
       });
       sfx('bigboom');
       sfx('reveal');
+      // doc 18 §5.2 H39: the door gives way on the discovery stinger
+      stingerOr('discovery_mi', 'discovery'); // E minor: matches the island's key (doc 23)
+      setTimeout(() => audioApi.duck(false, 9, 'nacar_door'), 2600);
       w.rig.shake(0.6);
       flash = 1;
       w.pools.sparks.emit({ pos: doorC, spread: { x: 2.2, y: 2.8, z: 0.3 }, vel: { x: 0, y: 2, z: 5 }, velJitter: { x: 6, y: 6, z: 5 }, life: 1.3, size: 0.55, color: '#ffffff', color2: '#b79cff', count: 180 });

@@ -17,6 +17,7 @@ import { PAL, type Halos } from './props';
 import { toonGradient } from '../../engine/world/heightfield';
 import type { LocalLight } from '../../engine/world/paperCat';
 import { sfx } from '../../core/audio';
+import { nacarNote } from '../../cine/sound';
 
 const Q = Math.PI / 4;
 const ease = (k: number) => {
@@ -361,7 +362,11 @@ export function beamPuzzle(
         dirty = moving;
         const key = `${trace.end.kind}:${trace.pts.length}`;
         if (!moving && key !== lastEnd) {
-          if (trace.bounces.length > 1 && lastEnd) sfx('zap', 1 + trace.bounces.length * 0.12);
+          if (trace.bounces.length > 1 && lastEnd) {
+            sfx('zap', 1 + trace.bounces.length * 0.12);
+            // the beam sings: one glass note per mirror it touches, rising in Mi menor (docs/part-ii/26)
+            for (let k = 0; k < trace.bounces.length; k++) setTimeout(() => nacarNote(k), 90 + k * 120);
+          }
           lastEnd = key;
         }
         if (!moving && !solved && !reaching && trace.end.kind === 'door') {

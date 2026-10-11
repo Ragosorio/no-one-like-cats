@@ -107,6 +107,8 @@ export class Ambient extends Container {
   private overLayer = new Container();
   private labelLayer = new Container();
   private labels = new Map<string, Container>();
+  /** daytime life (gulls, sunbeams): 1 = as always, 0 = gone (Parte II nights: island/night) */
+  dayLife = 1;
   constructor(
     tiles: Map<string, Tile>,
     private bounds: { minX: number; maxX: number; minY: number; maxY: number },
@@ -148,6 +150,8 @@ export class Ambient extends Container {
         gl.x += gl.vx * step;
         gl.y += gl.vy * step + Math.sin(this.t * 0.8 + gl.ph) * 6 * step;
         gl.g.position.set(gl.x, gl.y);
+        gl.g.alpha = this.dayLife;
+        gl.g.visible = this.dayLife > 0.01;
         const flap = Math.sin(this.t * 7 + gl.ph);
         gl.wingL.clear();
         const wy = -6 - flap * 9;
@@ -291,7 +295,7 @@ export class Ambient extends Container {
       }
       if (list) list.forEach((s, i) => {
         s.visible = vis;
-        if (vis) s.alpha = (id === 'forest' ? 0.4 : 0.32) + Math.sin(this.t * (0.5 + i * 0.3) + i * 2) * 0.12;
+        if (vis) s.alpha = ((id === 'forest' ? 0.4 : 0.32) + Math.sin(this.t * (0.5 + i * 0.3) + i * 2) * 0.12) * this.dayLife;
       });
     }
     if (id === 'ghost' || id === 'ruins') {

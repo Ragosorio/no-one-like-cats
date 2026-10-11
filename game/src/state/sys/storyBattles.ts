@@ -19,6 +19,10 @@ import { absStage, battleGold, battleScrap } from '../econ';
 import { STORY_SHIPS } from '../../battle/shipgen';
 import type { BattleResult, BattleSpec } from '../../scenes/BattleScene';
 import type { StageRules } from '../../battle/sim';
+import type { ShotDef } from '../../battle/types';
+import { battleKey, catKey, claimReward, rewardClaimed } from './rupturasLedger';
+import { storyScale } from './storyScale';
+import type { StoryBand } from './storyScale';
 
 export interface StoryBattleDef {
   id: string;
@@ -46,6 +50,22 @@ export interface StoryBattleDef {
   reward: { element?: string; cat?: string; fragments?: number; gems?: number; crystals?: number };
   /** Barco del Vacío: graded by damage, not by sinking */
   grade?: 'damage';
+  /** damage-graded: the % of its hull that passes (default 15) — Parte II H46 «La embajada» asks for more */
+  passPct?: number;
+  /** damage-graded: pays Fragmentos del Vacío per 15% (default true: the Barco del Vacío); false = only `reward` */
+  damageFragments?: boolean;
+  /**
+   * Parte II difficulty band (state/sys/storyScale.ts): historia · jefe (the Oleadas' bosses) · final (the saga's last).
+   * It sets the band's bite and how the battle follows your crew past Nv50. Unset (Parte I) = exactly as always.
+   */
+  band?: StoryBand;
+  /**
+   * at least this many cat rooms on its generated ship. A Parte II battle (with a band) defaults to its whole enemy list:
+   * a 4-cat crew on a 3-room archetype used to lose its 4th cat. Parte I keeps its archetype's rooms (untouched).
+   */
+  catrooms?: number;
+  /** cap on the walls a WAVE shot crosses, both sides, shots and ults (H63 «PUERTAS CERRADAS»). Unset = the kit's */
+  wavePierce?: number;
 }
 
 export const STORY_BATTLES: Record<string, StoryBattleDef> = {
@@ -147,13 +167,16 @@ export function storyBattleDone(id: string) {
   return G.has(`won_${id}`);
 }
 
-/** enemy power so the fight scales with your fleet (the story never walls you) */
+/** enemy power so the fight scales with your fleet (the story never walls you); Parte II adds its band (storyScale.ts) */
 function storyPower(def: StoryBattleDef) {
   return Math.max(5, shipPower() * def.powerMul);
 }
 
 export function buildStoryBattle(id: string, onEnd: (r: BattleResult) => void): BattleSpec {
   const def = STORY_BATTLES[id];
+  const crewUids = crew();
+  // Parte II bands: the same crew cats the estimate reads (null for Parte I: untouched)
+  const sc = storyScale(def, crewUids);
   const spec = buildSiege(
     {
       zone: def.zone,
@@ -165,14 +188,17 @@ export function buildStoryBattle(id: string, onEnd: (r: BattleResult) => void): 
       personality: 'afinador',
       difficulty: def.zone >= 5 ? 'capitan' : 'corsario',
       enemyCats: [...def.enemyCats],
-      ep: storyPower(def),
-      crewUids: crew(),
+      ep: storyPower(def) * (sc?.mul ?? 1),
+      crewUids,
       captain: def.captain,
       captainLine: def.line,
       rules: def.rules,
       special: id,
       blueprint: def.blueprint ? STORY_SHIPS[def.blueprint] : undefined,
       hpMulX: def.hpMulX,
+      enemyLevel: sc?.enemyLevel,
+      enemyStars: sc?.enemyStars,
+      catrooms: def.catrooms ?? (def.band ? def.enemyCats.length : undefined),
       displayMulX: def.displayMulX,
       suddenDeath: def.grade === 'damage' ? 0 : undefined,
       intro: { kind: 'errand', tag: 'HISTORIA', title: def.title, subtitle: def.enemy, lines: def.intro, color: def.color },
@@ -180,6 +206,11 @@ export function buildStoryBattle(id: string, onEnd: (r: BattleResult) => void): 
     onEnd,
   );
   spec.meta = { ...spec.meta!, stage: 0, boss: false };
+  if (def.wavePierce !== undefined) {
+    const cap = def.wavePierce;
+    const capShot = (s: ShotDef): ShotDef => (s.trajectory === 'wave' ? { ...s, pierce: Math.min(s.pierce ?? cap, cap) } : s);
+    for (const side of [spec.player, spec.enemy]) side.cats = side.cats.map((c) => ({ ...c, shot: capShot(c.shot), ...(c.ultimate ? { ultimate: capShot(c.ultimate) } : {}) }));
+  }
   return spec;
 }
 
@@ -196,6 +227,12 @@ export interface StoryLoot {
   crystals?: { el: string; n: number };
   /** Barco del Vacío: % of its hull you took (0–100) */
   damagePct?: number;
+  /** Parte II replay (rupturasLedger): this battle's unique payout was paid before — the scenes play, nothing repeats */
+  alreadyPaid?: boolean;
+  /** Parte II replay: the element was already yours; its discovery plays again as a scene (grants nothing) */
+  replayElement?: string;
+  /** ledger key of the reward cat (storyFlow → claimStoryCat): adopted once, a replay shows «ya es parte…» */
+  catKey?: string;
 }
 
 /** rewards + flags. The new element is pushed here; the discovery/reveal sequences are UI (storyFlow). */
@@ -203,12 +240,17 @@ export function applyStoryResult(id: string, r: BattleResult): StoryLoot {
   const def = STORY_BATTLES[id];
   const abs = absStage(Math.max(1, def.zone), Math.max(1, def.stage));
   const dmgPct = Math.round(Math.max(0, Math.min(1, r.enemyHullLost ?? 0)) * 100);
-  const passed = def.grade === 'damage' ? dmgPct >= 15 : r.won;
+  // a damage-graded fight with its own bar (passPct, Parte II) also passes when you beat it outright before it leaves
+  const passed = def.grade === 'damage' ? dmgPct >= (def.passPct ?? 15) || (def.passPct !== undefined && r.won && r.reason !== 'retreat') : r.won;
+  const dmgFrags = def.grade === 'damage' && def.damageFragments !== false;
   const first = passed && !storyBattleDone(id);
+  // Parte II after the narrative reset (rupturasReset): a won-before battle is fought again, its unique payout isn't
+  const payKey = battleKey(id, def.mission);
+  const paid = first && !!payKey && rewardClaimed(payKey);
   const loot: StoryLoot = { won: passed, first, gold: 0, scrap: 0, gems: 0, fragments: 0, newElement: null, newCat: null };
   G.s.stats.modulesDestroyed += r.modulesDestroyed;
   const m = G.s.momentum;
-  loot.gold = Math.round(battleGold(abs, G.goldPerSec, first, r.perfect, m) * (passed ? 1 : 0.3));
+  loot.gold = Math.round(battleGold(abs, G.goldPerSec, first && !paid, r.perfect, m) * (passed ? 1 : 0.3));
   loot.scrap = Math.max(1, Math.round(battleScrap(abs, r.perfect, m) * (passed ? 1 : 0.3)));
   if (def.grade === 'damage') {
     loot.damagePct = dmgPct;
@@ -232,26 +274,33 @@ export function applyStoryResult(id: string, r: BattleResult): StoryLoot {
   if (first) {
     G.flag(`won_${id}`);
     G.flag(`event_done_${id}`);
-    loot.gems = def.reward.gems ?? 0;
-    loot.fragments = def.grade === 'damage' ? Math.min(3, Math.floor(dmgPct / 15)) : def.reward.fragments ?? 0;
+    if (!paid) {
+      loot.gems = def.reward.gems ?? 0;
+      loot.fragments = dmgFrags ? Math.min(3, Math.floor(dmgPct / 15)) : def.reward.fragments ?? 0;
+    }
     const el = def.reward.element;
     if (el && !G.s.elements.includes(el)) {
       G.s.elements.push(el);
       G.flag(`element:${el}`);
       loot.newElement = el;
       G.emit('element', { id: el });
+    } else if (el && paid) loot.replayElement = el;
+    if (def.reward.cat) {
+      loot.newCat = def.reward.cat;
+      loot.catKey = catKey(id, def.mission) ?? undefined;
     }
-    if (def.reward.cat) loot.newCat = def.reward.cat;
-    if (el && def.reward.crystals) {
+    if (el && def.reward.crystals && !paid) {
       G.addCrystals(el, def.reward.crystals);
       loot.crystals = { el, n: def.reward.crystals };
     }
-  } else if (def.grade === 'damage' && passed) {
+    if (payKey && !paid) claimReward(payKey);
+    if (paid) loot.alreadyPaid = true;
+  } else if (dmgFrags && passed) {
     // a better attempt later still pays the missing fragments
     const before = Math.min(3, Math.floor(cnt(`dmgpct_paid_${id}`) / 15));
     loot.fragments = Math.max(0, Math.min(3, Math.floor(dmgPct / 15)) - before);
   }
-  if (def.grade === 'damage' && passed) G.s.counters[`dmgpct_paid_${id}`] = Math.max(cnt(`dmgpct_paid_${id}`), dmgPct);
+  if (dmgFrags && passed) G.s.counters[`dmgpct_paid_${id}`] = Math.max(cnt(`dmgpct_paid_${id}`), dmgPct);
   if (loot.fragments) addVoidFragments(loot.fragments);
   G.add('gold', loot.gold, 'story');
   G.add('scrap', loot.scrap, 'story');
@@ -261,9 +310,15 @@ export function applyStoryResult(id: string, r: BattleResult): StoryLoot {
   return loot;
 }
 
-/** the primordial / mythic joins (called by the UI right before its reveal) */
-export function claimStoryCat(species: string) {
-  return adopt(species);
+/**
+ * The primordial / mythic joins (called by the UI right before its reveal). With a Parte II ledger key
+ * (`StoryLoot.catKey`): adopted once per save; a replay adopts nothing (`already`) and the reveal says so.
+ */
+export function claimStoryCat(species: string, key?: string): ReturnType<typeof adopt> & { already?: boolean } {
+  if (key && rewardClaimed(key)) return { cat: null, isNew: false, orbs: 0, already: true };
+  const r = adopt(species);
+  if (key) claimReward(key);
+  return r;
 }
 
 // ------------------------------------------------------------------ Fragmentos del Vacío

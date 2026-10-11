@@ -10,7 +10,20 @@ import { C, F } from '../../ui/theme';
 import { Button, poster, txt } from '../../ui/widgets';
 import { G } from '../../state/game';
 import { folioRevealed } from '../../state/sys/rupturas';
+import { beatSeen, markBeat } from '../../state/ext/story';
+import { settings } from '../../core/settings';
+import { sfx } from '../../core/audio';
+import { audioApi } from '../../audio/api';
+import { currentWorldState, lookOf } from '../../state/sys/worldState';
+import { onBeatLine } from '../../cine/lineHooks';
+import { screenFx } from '../../cine/screenFx';
+import { stingerOr } from '../../cine/sound';
+import type { CineCtx } from '../../cine/types';
 import { REGISTRO_000 } from '../../ui/story/rupturasScript';
+import { REGISTRO_DESPERTANDO } from '../../ui/story/rupturasScriptO4';
+import { registro000Despertando } from '../../state/sys/rupturasO4';
+import { addRegistroO2Line, registroO2LineFor } from '../../ui/story/o2Registro';
+import { addRegistroO3Line } from '../../ui/story/o3Registro';
 import { GlitchText, chip } from './ui';
 import { fitText } from './CatCard';
 
@@ -69,6 +82,59 @@ function staticPanel(w: number, h: number, big: boolean) {
   return c;
 }
 
+// ------------------------------------------------------------------ the first time: the card inserts itself
+/** the beat key that remembers the Catdex already glitched once (Part II key: the narrative reset replays it) */
+export const REGISTRO_ARRIVAL = 'b32_registro#dex';
+/** the first open of the Catdex after the night of the stars, while H32 waits for it */
+export function registroArrivalDue() {
+  return !beatSeen(REGISTRO_ARRIVAL) && !!G.s?.missions?.active.includes('H32');
+}
+const softCtx = () => ({ reduceMotion: settings.reduceMotion, reduceFlashes: settings.reduceFlashes }) as CineCtx;
+/**
+ * The Catdex glitches ITSELF and the card nobody wrote slips into the first slot: the music stops, a beat of
+ * silence, REGISTRO 000's out-of-tune music box, the whole panel tears, the card flickers in out of static.
+ * `holder` = the card in the grid (starts hidden), `panel` = the Catdex's paper panel.
+ */
+export function registroArrival(holder: Container, panel: Container) {
+  markBeat(REGISTRO_ARRIVAL);
+  G.save();
+  holder.alpha = 0;
+  holder.eventMode = 'none';
+  try {
+    audioApi.setState('silence', { fade: 0.35 });
+  } catch {
+    /* sound never breaks a panel */
+  }
+  const steps: [number, () => void][] = [
+    [1.15, () => {
+      stingerOr('registro_000');
+      screenFx({ id: 'glitch', on: 'panel', dur: 1.1, k: 1 }, softCtx());
+    }],
+    [1.3, () => (holder.alpha = 1)],
+    [1.42, () => (holder.alpha = 0.15)],
+    [1.55, () => (holder.alpha = 1)],
+    [1.7, () => (holder.alpha = 0.3)],
+    [1.86, () => {
+      holder.alpha = 1;
+      sfx('glitch', 0.7);
+    }],
+    [2.6, () => screenFx({ id: 'glitch', on: 'panel', dur: 0.35, k: 0.5 }, softCtx())],
+    [3.2, () => {
+      holder.eventMode = 'static';
+      if (!holder.destroyed) gsap.fromTo(holder.scale, { x: 1.12, y: 1.12 }, { x: 1, y: 1, duration: 0.4, ease: 'back.out(2)' });
+      try {
+        audioApi.setState(lookOf(currentWorldState()).music, { fade: 3 });
+      } catch {
+        /* ignore */
+      }
+    }],
+  ];
+  for (const [t, fn] of steps)
+    gsap.delayedCall(settings.reduceMotion ? Math.min(t, 0.4 + t * 0.4) : t, () => {
+      if (!holder.destroyed && !panel.destroyed) fn();
+    });
+}
+
 /** the grid card (same size as a CatCard) */
 export function registroCard(w: number, h: number) {
   const c = new Container();
@@ -84,6 +150,35 @@ export function registroCard(w: number, h: number) {
   c.addChild(lab, st);
   gsap.to(st, { alpha: 0.2, duration: 0.6, repeat: -1, yoyo: true, ease: 'sine.inOut' });
   return c;
+}
+
+/** F · O · L · I · O out of the static, one letter at a time (they flicker in, then hold) */
+function developFolio(on: Container, cx: number, cy: number) {
+  const word = REGISTRO_000.stamp;
+  const letters: Container[] = [];
+  const size = 92;
+  const gap = 70;
+  const x0 = cx - ((word.length - 1) * gap) / 2;
+  [...word].forEach((ch, i) => {
+    const t = poster(ch, size, C.pinkHot, { stroke: { color: C.ink, width: 8 } });
+    t.anchor.set(0.5);
+    t.position.set(x0 + i * gap, cy);
+    t.alpha = 0;
+    on.addChild(t);
+    letters.push(t);
+    const at = 0.35 + i * 0.32;
+    const flick = settings.reduceFlashes ? [1] : [0.6, 0, 0.9, 0.2, 1];
+    flick.forEach((a, k) => gsap.delayedCall(at + k * 0.06, () => !t.destroyed && (t.alpha = a)));
+    gsap.delayedCall(at, () => sfx('tick', 0.8 + i * 0.12));
+  });
+  gsap.delayedCall(0.35 + word.length * 0.32 + 0.2, () => {
+    if (on.destroyed) return;
+    sfx('glitch', 0.6);
+    const fr = new Graphics().rect(x0 - gap / 2 - 10, cy - size * 0.62, gap * word.length + 20, size * 1.24).stroke({ width: 6, color: C.pinkHot });
+    fr.alpha = 0;
+    on.addChild(fr);
+    gsap.to(fr, { alpha: 0.9, duration: 0.25 });
+  });
 }
 
 /** the detail sheet (replaces the species sheet while open) */
@@ -127,7 +222,8 @@ export class Registro000Sheet extends Container {
       const row = new Graphics().rect(X, y, RW - 40, 88).fill(i % 2 ? C.paper : 0xe4dacb).stroke({ width: 3, color: C.ink, alignment: 1 });
       const kt = txt(k, { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: C.ink, letterSpacing: 4 });
       kt.position.set(X + 20, y + 10);
-      const vt = poster(v.toUpperCase(), 38, i === 3 ? C.pinkHot : C.ink);
+      // Parte II · Oleada 4: after the Parte II credits its ESTADO is no longer «observando» (rupturasO4)
+      const vt = poster((i === 3 && registro000Despertando() ? REGISTRO_DESPERTANDO : v).toUpperCase(), 38, i === 3 ? C.pinkHot : C.ink);
       vt.position.set(X + 20, y + 30);
       fitText(vt, RW - 120);
       this.addChild(row, kt, vt);
@@ -144,6 +240,18 @@ export class Registro000Sheet extends Container {
     const note = txt(notes.join('\n'), { fontFamily: F.serif, fontStyle: 'italic', fontSize: 24, fill: C.ink, wordWrap: true, wordWrapWidth: RW - 80, lineHeight: 32, padding: 6 });
     note.position.set(X + 4, 590);
     this.addChild(note);
+    // Parte II · Oleada 2: «Visto: Corona Celeste.» in the hand that isn't anyone's (fresh ink the first time)
+    addRegistroO2Line(this, X + 4, 590 + note.height + 12, Math.min(RW - 420, 520));
+    // Parte II · Oleada 3: who sees it (H53) — under Oleada 2's line, same hand (ui/story/o3Registro.ts)
+    addRegistroO3Line(this, X + 4, 590 + note.height + 12 + (registroO2LineFor(G.s) ? 50 : 0), Math.min(RW - 420, 520));
+    // FOLIO not revealed yet (first open, H32 completing now): the story's caption develops it out of the static,
+    // letter by letter, over the big card (b32_registro#b, line 1 of that part: cine/lineHooks.ts)
+    if (!folioRevealed()) {
+      const off = onBeatLine('b32_registro#b', (i) => {
+        if (i === 1 && !card.destroyed) developFolio(card, 200, 372);
+      });
+      this.on('destroyed', off);
+    }
     // the static word of the Barco del Vacío, readable at last (H32)
     if (folioRevealed()) {
       const stamp = new Container();

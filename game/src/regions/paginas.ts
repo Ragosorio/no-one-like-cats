@@ -15,6 +15,10 @@
  *    tap → the page lands on the book, Canelo sits on it, `feature_pagina_canelo` (the story beat
  *    b36 part b plays the lines inside the region)
  *  - REGISTRO 000 at night on a sea stack of books; never there when the camera gets close
+ *
+ * Scenes (src/cine/scenes/paginas.ts, on the 'region' stage): the first landing — the island RISES out of the sea
+ * as you arrive (drive 'rise', regions/rise.ts; it starts sunk while that scene is still owed, and comes up by itself
+ * if the scene never starts) — and Canelo's Eco (the golden page, a music box). Music: explore_mystery · paginas.
  */
 import * as THREE from 'three';
 import type { POI, RegionBuild, RegionCtx, RegionDef } from './types';
@@ -25,6 +29,12 @@ import type { Placement } from '../engine/world/flora';
 import { catLiteUrl } from '../art/catArt';
 import { CAT_BY_ID, MISSION_BY_ID } from '../data/content';
 import { G } from '../state/game';
+import { claimReward, rewardClaimed } from '../state/sys/rupturasLedger';
+import { beatSeen } from '../state/ext/story';
+import { audioApi } from '../audio/api';
+import { pendingRegionReplay } from '../cine/replay';
+import { islandRise } from './rise';
+import { hush } from '../ui/hush';
 import { BOOK, COVER_RECT, height, pageHeight, paint, SPOT, walkable } from './paginas/layout';
 import { Bin, Merger, canvasTexture, mat, toon } from './paginas/kit';
 import { bookMesh, COVERS, stack, type BookPlacement } from './paginas/books';
@@ -491,6 +501,52 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
 
   let busy = false;
   let alive = true;
+  // ---------------------------------------------------------------- the first landing: the island rises (cine h33_llegada)
+  const RISE_DEPTH = 15;
+  const rise = islandRise(w, RISE_DEPTH);
+  const arriving = (!beatSeen('b33_paginas#b') && !beatSeen('b33_paginas') && (ctx.activeStory() === 'H33' || ctx.missionDone('H33'))) || pendingRegionReplay('paginas') === 'h33_llegada';
+  let riseDriven = false;
+  // the island is still under the sea: the screen belongs to the landing (popups wait until the scene takes over)
+  let arrivalHush = arriving;
+  if (arriving) hush('arrival', true);
+  const endArrivalHush = () => {
+    if (!arrivalHush) return;
+    arrivalHush = false;
+    hush('arrival', false);
+  };
+  /** seconds before the island comes up by itself if no scene drives it (a scene that never starts) */
+  let riseAuto = arriving ? 6 : -1;
+  let autoK = 0;
+  let splashAcc = 0;
+  const residentsBack = () => rise.showCats((id) => id !== 'registro000' && !id.startsWith('visit_'));
+  const riseTo = (k: number, dt: number) => {
+    rise.set(RISE_DEPTH * (1 - k));
+    // water pouring off the island, right where the sea line is now
+    splashAcc += dt * (k < 0.98 ? 26 : 0);
+    while (splashAcc >= 1) {
+      splashAcc -= 1;
+      const p = rise.shore(rnd);
+      if (p) w.life.fx.splash?.(p, undefined as never);
+    }
+    if (k > 0.05 && k < 0.95 && rnd() < dt * 6) w.pools.pages.emit({ pos: { x: (rnd() - 0.5) * 40, y: 1, z: (rnd() - 0.5) * 40 }, vel: { x: 0.4, y: 3.2, z: 0.2 }, velJitter: { x: 1, y: 1, z: 1 }, life: 5, size: 0.4, color: '#f4ecd6', color2: '#d9c9a2', count: 2 });
+    if (k >= 0.999) residentsBack();
+  };
+  const land = () => {
+    // your cats come ashore one by one (a puff of wet sand each)
+    const vs = [...w.residents.entries()].filter(([id]) => id.startsWith('visit_'));
+    vs.forEach(([, r], i) =>
+      setTimeout(() => {
+        if (!alive) return;
+        r.cat.root.visible = true;
+        w.life.fx.dust?.(r.cat.root.position, undefined as never);
+        r.cat.brain.emote(i === 0 ? 'happy' : 'surprise', 0.7);
+      }, 250 + i * 420),
+    );
+  };
+  // the region's music: the drowned library hums (docs/part-ii/18 §5.4)
+  audioApi.setState('explore_mystery', { context: 'paginas', fade: 2.5 });
+  audioApi.ambience('sea', { fade: 2 });
+
   const nextLore = () => DIARIO.find((p) => !ctx.has(`pagina_leida:${p.n}`)) ?? null;
   const catchPage = async (f: Fish) => {
     if (busy || f.state !== 'idle') return;
@@ -502,10 +558,13 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
     const lore = nextLore();
     if (lore) {
       ctx.flag(`pagina_leida:${lore.n}`);
-      // a little gold the first time each page is read: about a minute of the island's production
-      const gold = Math.round(Math.max(150, G.goldPerSec * 60));
-      G.add('gold', gold, 'pagina');
-      ctx.floatText(f.pos.clone(), `+${gold.toLocaleString('es-MX')} oro`);
+      // a little gold the first time EVER each page is read (ledger: a Part II replay reads them again for free)
+      if (!rewardClaimed(`pagina:${lore.n}`)) {
+        claimReward(`pagina:${lore.n}`);
+        const gold = Math.round(Math.max(150, G.goldPerSec * 60));
+        G.add('gold', gold, 'pagina');
+        ctx.floatText(f.pos.clone(), `+${gold.toLocaleString('es-MX')} oro`);
+      }
       await ctx.say([
         ['CAPTION', lore.page],
         ['LUZTERNA', lore.luz],
@@ -660,6 +719,21 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
     update(dt, t, night) {
       uTime.value = t;
       uNight.value = night;
+      // still under the sea: nobody's home yet (visitors arrive after the build); the scene raises it, or it rises alone
+      if (rise.off > 0.05) for (const c of w.cats) c.root.visible = false;
+      if (riseAuto > 0 && !riseDriven) {
+        riseAuto -= dt;
+        if (riseAuto <= 0) autoK = 1e-4;
+      }
+      if (autoK > 0 && !riseDriven) {
+        autoK = Math.min(1, autoK + dt / 4);
+        riseTo(autoK * autoK * (3 - 2 * autoK), dt);
+        if (autoK >= 1) {
+          autoK = 0;
+          land();
+          endArrivalHush();
+        }
+      }
       const s = w.cycle.s;
       uTint.value.copy(s.grade).multiplyScalar(0.6 + 0.4 * Math.min(1, s.sunI / 2.2) + night * 0.15);
       uHalo.value = Math.pow(night, 1.3) * 1.15;
@@ -833,7 +907,7 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
     pos: f.mark,
     label: 'PESCAR PÁRRAFO',
     kind: 'activity' as const,
-    visible: () => f.state === 'idle' && !busy,
+    visible: () => f.state === 'idle' && !busy && rise.off < 0.05,
     onTap: () => catchPage(f),
   }));
   pois.push({
@@ -871,10 +945,52 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
     };
   }
 
+  // owed the landing scene: the island waits under the sea (everything is built by now, so it all goes down)
+  if (arriving) rise.set(RISE_DEPTH);
   return {
     pois,
+    cine: {
+      points: {
+        rest: REST.clone().add(new THREE.Vector3(0, 0.6, 0)),
+        page: GOLD_FLOAT.clone(),
+        arrival: new THREE.Vector3(SPOT.arrival.x, 1.2, SPOT.arrival.z),
+        center: new THREE.Vector3(0, 3, -2),
+        lighthouse: new THREE.Vector3(SPOT.lighthouse.x, 12, SPOT.lighthouse.z),
+      },
+      driveGet: (id) => (id === 'rise' ? 1 - rise.off / RISE_DEPTH : undefined),
+      drive: (id, k) => {
+        if (id !== 'rise') return;
+        riseDriven = true;
+        endArrivalHush(); // the scene holds the screen now
+        autoK = 0;
+        riseTo(k, 1 / 60);
+      },
+      fx: (cmd) => {
+        if (cmd.id === 'land') {
+          land();
+          return null;
+        }
+        if (cmd.id === 'sit') {
+          // Canelo takes HIS page (a replay: the page is already on the book)
+          const a = canelo();
+          if (a && w.director && gold?.state === 'rest') w.director.switchTo(a, sitOnPage);
+          return null;
+        }
+        if (cmd.id === 'pageGlow' && gold) {
+          const m = gold.mat;
+          const base = m.uniforms.uGlow.value as number;
+          m.uniforms.uGlow.value = 1.6;
+          w.pools.stars.emit({ pos: gold.mesh.position, spread: { x: 1.2, y: 0.4, z: 1.4 }, vel: { x: 0, y: 1.6, z: 0 }, velJitter: { x: 0.8, y: 1, z: 0.8 }, life: 2.2, size: 0.35, color: '#fff3b0', color2: '#ffb020', count: 40 });
+          return () => {
+            if (alive) m.uniforms.uGlow.value = base;
+          };
+        }
+        return undefined;
+      },
+    },
     dispose() {
       alive = false;
+      endArrivalHush();
       busy = false;
       bin.dispose();
       if (import.meta.env.DEV) delete (window as unknown as Record<string, unknown>).__paginas;

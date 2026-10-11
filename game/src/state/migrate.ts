@@ -13,6 +13,7 @@
  * every step is idempotent, and a copy of the save is kept before the first migration (core/save.ts).
  */
 import type { GameState } from './game';
+import { normalizeMusicExt } from '../audio/musicSave';
 
 /** bump when a MIGRATION is added (plain new optional fields don't need a bump: normalize() covers them) */
 export const SAVE_VERSION = 3;
@@ -121,6 +122,8 @@ export function normalize(raw: AnyState, defaults: GameState): GameState {
   const m = s.missions as Record<string, unknown>;
   for (const k of ['active', 'done', 'pinned', 'seenLines']) m[k] = [...new Set((m[k] as unknown[]).filter((x) => typeof x === 'string'))];
   m.active = (m.active as string[]).filter((id) => !(m.done as string[]).includes(id));
+  // Fonoteca (Parte II, src/audio/musicSave.ts): repaired in place, an unlock is never dropped
+  if (isObj(s.ext) && s.ext.music !== undefined) s.ext.music = normalizeMusicExt(s.ext.music);
   // timers with broken clocks would never finish
   s.timers = (s.timers as unknown[]).filter(isObj).filter((t) => typeof t.id === 'string' && typeof t.kind === 'string');
   for (const t of s.timers as Record<string, unknown>[]) {

@@ -38,6 +38,8 @@ import { onomatopoeia, sparkles, floatText, flash } from '../fx/juice';
 import { chip, elementChip, mix, rarityChip, wrapText, heading } from './island/ui';
 import { openAltar } from './Altar';
 import { TweenBag } from '../ui/hud/tweenBag';
+import { ecoOf, ecoShown, ecoStatus, ecosOpen } from '../state/sys/ecos';
+import { EcoFrameLook, EcosSection } from './catEcos';
 
 const NYAMS = ['¡ÑAM!', '¡ÑOM!', '¡ÑAM ÑAM!', '¡GULP!', '¡MMM!'];
 /** level numeral: center x and max width inside the NIVEL block */
@@ -62,18 +64,25 @@ const WORKER_NAME: Record<string, string> = { banker: 'Banquero', farmer: 'Granj
 /** FORMA selector: offset under the stars row (its "what's missing" line wraps to 2 lines at most: ≤ 82 px) */
 const FORM_ROW_DY = 94;
 
-export function openCatPanel(uid: string) {
+/** `section: 'ecos'` opens the sheet on its ECOS section (Parte II · H59, panels/catEcos.ts) */
+export function openCatPanel(uid: string, o: { section?: 'ecos' } = {}) {
   const c0 = getCat(uid);
   if (!c0) {
     toast('Ese gato no está en tu isla');
     return null;
   }
   const slug = catSlug(c0);
+  const make = () => {
+    const p = new CatPanel(uid);
+    const m = p.open();
+    if (o.section === 'ecos') p.showEcos();
+    return m;
+  };
   if (catTexture(slug) === Texture.WHITE) {
-    preloadCats([slug]).then(() => new CatPanel(uid).open());
+    preloadCats([slug]).then(make);
     return null;
   }
-  return new CatPanel(uid).open();
+  return make();
 }
 
 class CatPanel {
@@ -118,6 +127,11 @@ class CatPanel {
   private holo: Graphics | null = null;
   private halo: Graphics | null = null;
   private feeding = false;
+  /** Parte II · H59: the ECOS tab in the band, its section over the right column, and the Eco's look on the portrait */
+  private ecoTab: Container | null = null;
+  private ecoSection: EcosSection | null = null;
+  private ecoLook: EcoFrameLook | null = null;
+  private frameSize = { w: 540, h: 590 };
   private tick = (t: Ticker) => this.onTick(t);
   private tt = 0;
 
@@ -146,6 +160,7 @@ class CatPanel {
       }),
     );
     this.m.onClose = () => {
+      this.ecoLook?.destroy();
       Ticker.shared.remove(this.tick);
       this.stopHold();
       this.bag.killAll();
@@ -185,6 +200,7 @@ class CatPanel {
     pen.cursor = 'pointer';
     pen.on('pointertap', () => this.editName());
     this.m.panel.addChild(pen);
+    this.drawEcoTab();
 
     // ------------------------------------------------ left: art frame
     const FW = 540;
@@ -194,7 +210,9 @@ class CatPanel {
     this.drawFrame(FW, FH, def.rarity, fx);
     this.stage.position.set(FW / 2, FH - 120);
     this.frame.addChild(this.stage);
+    this.frameSize = { w: FW, h: FH };
     this.showIsland();
+    this.syncEcoLook(false);
     this.koBadge(FW);
     // toggle
     const tog = new Button('VER BATTLE FORM', () => this.toggleForm(tog), { w: 300, h: 56, size: 26, color: C.ink, textColor: C.paper });
@@ -661,6 +679,75 @@ class CatPanel {
     this.drawFormRow();
   }
 
+  // ================================================================== ECOS (Parte II · Oleada 4 · H59)
+  /** the ECOS tab in the band (left of RENOMBRAR): only once the Ecos exist in this save; a dot when one can wake */
+  private drawEcoTab() {
+    this.ecoTab?.destroy({ children: true });
+    this.ecoTab = null;
+    if (!ecosOpen()) return;
+    const ready = ecoStatus(this.uid) === 'ready';
+    const tab = new Container();
+    const g = new Graphics().rect(0, 0, 120, 44).fill(ready ? C.pinkHot : C.paper).stroke({ width: 3, color: C.ink });
+    const t = txt('ECOS', { fontFamily: F.bebas, fontSize: 26, fill: ready ? C.paper : C.ink, letterSpacing: 3 });
+    t.anchor.set(0.5);
+    t.position.set(60, 22);
+    tab.addChild(g, t);
+    if (ready) {
+      const dot = new Graphics().circle(116, 2, 11).fill(C.yellow).stroke({ width: 3, color: C.ink });
+      const ex = txt('!', { fontFamily: F.poster, fontSize: 18, fill: C.ink });
+      ex.anchor.set(0.5);
+      ex.position.set(116, 2);
+      tab.addChild(dot, ex);
+    }
+    tab.position.set(this.m.w - 250 - 136, 21);
+    tab.eventMode = 'static';
+    tab.cursor = 'pointer';
+    tab.on('pointertap', () => (this.ecoSection ? this.hideEcos() : this.showEcos()));
+    this.m.panel.addChild(tab);
+    this.ecoTab = tab;
+  }
+  /** the ECOS section over the right column (VOLVER A LA FICHA closes it) */
+  showEcos() {
+    if (this.m.closed || this.ecoSection || !ecosOpen()) return;
+    const x0 = this.frameSize.w + 40;
+    const sec = new EcosSection(this.uid, this.m.innerW - x0 - 8, this.m.innerH - 8, {
+      name: () => this.c.name,
+      lookChanged: (animate) => {
+        this.syncEcoLook(animate);
+        this.drawEcoTab();
+      },
+      back: () => this.hideEcos(),
+    });
+    sec.position.set(x0, 0);
+    // the right column steps aside while the section is open (the left keeps the portrait, stars and FORMA)
+    const keep = new Set<Container>([this.frame, this.starsBox, this.formBox]);
+    this.ecoHidden = this.m.body.children.filter((ch) => !keep.has(ch) && ch.visible);
+    for (const ch of this.ecoHidden) ch.visible = false;
+    this.m.body.addChild(sec);
+    this.ecoSection = sec;
+    sfx('pop', 0.6);
+  }
+  private ecoHidden: Container[] = [];
+  private hideEcos() {
+    this.ecoSection?.destroy({ children: true });
+    this.ecoSection = null;
+    for (const ch of this.ecoHidden) if (!ch.destroyed) ch.visible = true;
+    this.ecoHidden = [];
+  }
+  /** the awake Eco on the portrait (wash behind the cat + keepsake); never in BATTLE FORM */
+  private syncEcoLook(animate: boolean) {
+    this.ecoLook?.destroy();
+    this.ecoLook = null;
+    if (this.battleMode || !ecoShown(this.uid)) return;
+    const eco = ecoOf(this.uid);
+    if (!eco) return;
+    const look = new EcoFrameLook(this.uid, eco, this.frameSize.w, this.frameSize.h, { animate });
+    const at = this.frame.getChildIndex(this.stage);
+    this.frame.addChildAt(look.back, at);
+    this.frame.addChildAt(look.front, this.frame.getChildIndex(this.stage) + 1);
+    this.ecoLook = look;
+  }
+
   /** K.O. rank medal (state/sys/ranks, combat counts OwnedCat.kos) */
   private koBadge(FW: number) {
     const kos = this.c.kos ?? 0;
@@ -777,6 +864,7 @@ class CatPanel {
     const def = this.kit;
     this.battleMode = !this.battleMode;
     sfx(this.battleMode ? 'charge' : 'pop');
+    this.syncEcoLook(false);
     if (this.battleMode) {
       this.stage.removeChildren().forEach((x) => x.destroy({ children: true }));
       const bc = new BattleCat(catSlug(c), def.elements[0], 380);

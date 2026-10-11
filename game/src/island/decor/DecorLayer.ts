@@ -368,8 +368,11 @@ class DecorLayer {
     this.hover = new Graphics();
     const under = new Container();
     under.addChild(this.grid, this.hover);
-    const oi = world.children.indexOf(this.host.objects);
-    world.addChildAt(under, oi >= 0 ? oi : world.children.length);
+    // the placement grid goes right under the objects, wherever they live (the island grades its world
+    // layers inside a sub-container: island/night)
+    const objParent = this.host.objects.parent ?? world;
+    const oi = objParent.children.indexOf(this.host.objects);
+    objParent.addChildAt(under, oi >= 0 ? oi : objParent.children.length);
     this.under = under;
     gsap.to(this.grid, { alpha: 0.55, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
     world.addChild(ov);

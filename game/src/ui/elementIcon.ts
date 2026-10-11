@@ -7,7 +7,7 @@
 import { Assets, Container, Sprite, Text, TextStyle, TextStyleOptions, Texture } from 'pixi.js';
 import { C, F } from './theme';
 
-export const ELEMENT_IDS = ['fire', 'water', 'nature', 'earth', 'storm', 'magic', 'cosmic', 'ice', 'sound', 'shadow', 'time', 'light', 'void', 'crystal', 'unknown'] as const;
+export const ELEMENT_IDS = ['fire', 'water', 'nature', 'earth', 'storm', 'magic', 'cosmic', 'ice', 'sound', 'shadow', 'time', 'light', 'void', 'crystal', 'gravity', 'unknown'] as const;
 export type ElementIconId = (typeof ELEMENT_IDS)[number];
 
 /** sim/legacy ids → badge */
@@ -32,6 +32,7 @@ const EMOJI: Record<string, ElementIconId> = {
   '🕳️': 'void',
   '🕳': 'void',
   '💎': 'crystal',
+  '🪐': 'gravity',
   '❔': 'unknown',
 };
 
@@ -77,7 +78,7 @@ export function elementIcon(el: string, size = 32): Sprite {
   return s;
 }
 
-const TOKEN = /\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void|crystal|unknown|electric)\}|(🔥|💧|🌿|🌱|🪨|⚡|✨|🌌|🕳️|🕳|💎|❔)/gu;
+const TOKEN = /\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void|crystal|gravity|unknown|electric)\}|(🔥|💧|🌿|🌱|🪨|⚡|✨|🌌|🕳️|🕳|💎|🪐|❔)/gu;
 
 export interface IconTextOpts {
   /** wrap width in px (greedy, by words) */

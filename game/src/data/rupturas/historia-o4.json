@@ -1,0 +1,310 @@
+{
+  "$comment": "Parte II · Oleada 4 «El Umbral» — misiones H58–H65 y sus beats. Se fusiona sobre content.json (solo agrega). Ver docs/part-ii/27-oleada-4.md. Cuándo suena cada parte: ui/story/rupturasScriptO4.ts; estado y sistemas: state/sys/rupturasO4.ts; en pantalla (decisión, tachones, créditos, cines): app/oleada4Flow.ts + ui/story/o4*.ts. Cada beat trae \"$scene\": lo que la escena MUESTRA.",
+  "missions": [
+    {
+      "id": "H58",
+      "chain": "historia",
+      "title": "El Archipiélago de los Sueños",
+      "goal": {
+        "type": "win_battle",
+        "battle": "umbral_suenos",
+        "text": "Toca esta misión (o su marca en el Archipiélago de los Sueños) y vence a la capitana Duermevela."
+      },
+      "trigger": "mission:H57",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 4
+      },
+      "unlocks": [],
+      "line": "Tus gatos están soñando lo mismo. Y el sueño tiene puerto.",
+      "why": "En la CARTA salió un archipiélago que cambia según qué gatos duermen en tu isla. Allá las reglas de la batalla también sueñan: cambian cada pocos turnos. Gana y Almohadón se viene contigo.",
+      "estTime": "~7:00"
+    },
+    {
+      "id": "H59",
+      "chain": "historia",
+      "title": "Ecos de Vida",
+      "goal": {
+        "type": "use_feature",
+        "feature": "eco",
+        "text": "Abre la ficha de un gato (sección ECOS) y DESPIERTA su Eco."
+      },
+      "trigger": "mission:H58",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 3
+      },
+      "unlocks": [],
+      "line": "Tus gatos recuerdan vidas que no vivieron.",
+      "why": "Cada gato que ya durmió 3 noches en tu isla trae su primer ECO: otra vida posible del mismo gato. Despierta uno. No cambia su fuerza: cambia cómo se ve y lo que recuerda.",
+      "estTime": "~1:00"
+    },
+    {
+      "id": "H60",
+      "chain": "historia",
+      "title": "La Isla que Nadie Recuerda",
+      "goal": {
+        "type": "use_feature",
+        "feature": "olvidada",
+        "text": "Abre la CARTA, ve a La Isla que Nadie Recuerda y repara todas sus ruinas con tus gatos."
+      },
+      "trigger": "mission:H59",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "line": "Es tu isla. La versión en la que nunca llegaste.",
+      "why": "Los Ecos apuntan a una isla nueva de la CARTA. No hay pelea: toca cada ruina y elige a uno de tus gatos para levantarla.",
+      "estTime": "~4:00"
+    },
+    {
+      "id": "H61",
+      "chain": "historia",
+      "title": "Lo que Distraxia sabía",
+      "goal": {
+        "type": "use_feature",
+        "feature": "distraxia",
+        "text": "En La Isla que Nadie Recuerda, toca la página en blanco que flota en el centro."
+      },
+      "trigger": "mission:H60",
+      "purpose": "story",
+      "reward": {
+        "std": true
+      },
+      "unlocks": [],
+      "line": "Una página en blanco tiene algo que decir. Sin palabras.",
+      "why": "En el centro de la isla reparada flota una página en blanco. Tócala y lee lo que tacha.",
+      "estTime": "~1:30"
+    },
+    {
+      "id": "H62",
+      "chain": "historia",
+      "title": "Los Correctores tienen un plan",
+      "goal": {
+        "type": "win_battle",
+        "battle": "umbral_correctores",
+        "text": "Toca esta misión (o su marca en El Umbral) y vence a la flota de los Correctores."
+      },
+      "trigger": "mission:H61",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 6
+      },
+      "unlocks": [],
+      "line": "Un mundo perfecto. Todos felices. Nadie elige.",
+      "why": "Los Correctores quieren escribir un mundo perfecto en la página en blanco. Su flota espera en El Umbral, el borde de la CARTA. Gana y alguien de su barco se va a querer bajar.",
+      "estTime": "~7:00"
+    },
+    {
+      "id": "H63",
+      "chain": "historia",
+      "title": "El Umbral",
+      "goal": {
+        "type": "win_battle",
+        "battle": "umbral_final",
+        "text": "Toca esta misión (o su marca en El Umbral) y vence a Bisagra en sus cuatro fases."
+      },
+      "trigger": "mission:H62",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 10
+      },
+      "unlocks": [],
+      "line": "Tres fuerzas. Una puerta. Ninguna tiene toda la razón.",
+      "why": "La pelea más grande de la Parte II: cuatro fases y en cada una cambian las reglas. Perder no cuesta nada: vuelve cuando quieras.",
+      "estTime": "~10:00"
+    },
+    {
+      "id": "H64",
+      "chain": "historia",
+      "title": "Mentira",
+      "goal": {
+        "type": "use_feature",
+        "feature": "mentira",
+        "text": "De noche, toca el FARO de tu isla: la página en blanco te espera."
+      },
+      "trigger": "mission:H63",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 10
+      },
+      "unlocks": [],
+      "line": "«A nadie le gustan los gatos.»",
+      "why": "La página en blanco bajó a tu isla. Todos quieren que escribas algo en ella. Sube al faro.",
+      "estTime": "~3:00"
+    },
+    {
+      "id": "H65",
+      "chain": "historia",
+      "title": "Continuará",
+      "goal": {
+        "type": "use_feature",
+        "feature": "continuara",
+        "text": "Mira los créditos de la Parte II hasta el final (también desde esta misión)."
+      },
+      "trigger": "mission:H64",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 15
+      },
+      "unlocks": [
+        "oleada4_fin"
+      ],
+      "line": "Siempre hay algo al final de los créditos.",
+      "why": "Los créditos de la Parte II. Quédate hasta el final.",
+      "estTime": "~4:00"
+    }
+  ],
+  "story": {
+    "beats": [
+      {
+        "id": "b58_suenos",
+        "time": "tras H57 (a) · al ganar (b)",
+        "trigger": "H58",
+        "style": "ACUARELA ONÍRICA",
+        "title": "El Archipiélago de los Sueños",
+        "$scene": "a) De noche en tu isla, todos los gatos dormidos respiran al mismo tiempo; sobre ellos sube la misma burbuja de sueño, de un color por elemento, y se va hacia el mar. b) Duermevela bosteza sobre su barco hundido en nubes; Almohadón flota dormido hasta tu cubierta.",
+        "lines": [
+          ["CAPTION", "Esta noche tu isla ronca a coro. Todos tus gatos dormidos sueñan lo mismo… y el sueño se va flotando hacia el mar."],
+          ["LUZTERNA", "Capi, en la CARTA salió un archipiélago nuevo. Cambia de forma según quién duerma aquí."],
+          ["LUZTERNA", "O sea: está hecho del sueño de tus gatos. Y alguien lo está usando de puerto."],
+          ["LUZTERNA", "Si allá ves a uno de los tuyos dormido, no lo despiertes. Es de mala suerte. Lo digo yo, que de suerte sé poco."],
+          ["DUERMEVELA", "Me despertaste. Nadie me despierta. …Gracias, creo."],
+          ["DUERMEVELA", "Todos los sueños desembocan aquí, {g:capitán|capitana|capitane}. Y últimamente tus gatos sueñan con OTRAS vidas."],
+          ["LUZTERNA", "¿Otras vidas? ¿Como la página de Canelo? Ay, no. Ay, sí."],
+          ["CAPTION", "Almohadón se sube a tu barco. Se duerme antes de llegar a la cubierta."]
+        ]
+      },
+      {
+        "id": "b59_ecos",
+        "time": "tras H58 (a) · al despertar el primer Eco (b)",
+        "trigger": "H59",
+        "style": "TINTA Y PAPEL MOJADO (Eco)",
+        "title": "Ecos de Vida",
+        "$scene": "a) Mañana en tu isla: los gatos amanecen con cosas que no tenían (arena de otra playa, un sombrero, una cicatriz que no se hicieron); el que más duerme sonríe dormido. b) El Eco llega despacio sobre el gato, como un color que se asienta; el gato se estira y te mira.",
+        "lines": [
+          ["CAPTION", "En la mañana tus gatos amanecen raros. Uno trae arena de una playa que no existe. Otro, un sombrero que nadie le compró."],
+          ["LUZTERNA", "Son ECOS, Capi. Como el de Canelo: otra vida que el mismo gato pudo tener."],
+          ["LUZTERNA", "Solo les salen a los que ya durmieron 3 noches aquí. Esta es su casa: por eso se acuerdan."],
+          ["LUZTERNA", "Abre la ficha de uno y despiértalo. Sigue siendo tu gato. Nomás que con más pasado."],
+          ["CAPTION", "El Eco llega despacio, como quien vuelve de un viaje largo. El gato se estira. Te reconoce."],
+          ["LUZTERNA", "Misma panza, otro destino. Y aun así eligió quedarse contigo."],
+          ["LUZTERNA", "Lo raro: todos los Ecos terminan en la misma isla. Una que yo no conozco. Y yo conozco TODAS."]
+        ]
+      },
+      {
+        "id": "b60_olvidada",
+        "time": "tras H59 (a) · al reparar la última ruina (b)",
+        "trigger": "H60",
+        "style": "SEPIA · FOTO VIEJA",
+        "title": "La Isla que Nadie Recuerda",
+        "$scene": "a) La CARTA: una isla nueva se dibuja sola con un trazo tembloroso, con la forma exacta de TU isla. b) En la isla reparada, el color vuelve en ondas desde la última ruina; las siluetas ya son gatos de verdad; Polvillo sacude el polvo y se sienta a tu lado.",
+        "lines": [
+          ["CAPTION", "En la CARTA se dibuja una isla con forma conocida. Demasiado conocida."],
+          ["LUZTERNA", "Capi… esa isla tiene tus hábitats. Donde los pusiste. Igualitos."],
+          ["LUZTERNA", "Pero ahí no vive nadie. Es la versión en la que tú nunca llegaste."],
+          ["CAPTION", "La última pared se levanta. El color vuelve como cuando alguien abre una ventana."],
+          ["LUZTERNA", "Ya está. Ahora alguien sí llegó."],
+          ["LUZTERNA", "Y mira quién salió del polvo: dice que te estaba esperando. Que tardaste."]
+        ]
+      },
+      {
+        "id": "b61_distraxia",
+        "time": "tras H60 (a) · al tocar la página (b, tachones) · después (c)",
+        "trigger": "H61",
+        "style": "PÁGINA EN BLANCO · TACHONES",
+        "title": "Lo que Distraxia sabía",
+        "$scene": "a) En el centro de la isla reparada, donde pusiste tu primer hábitat, flota una página en blanco que respira. b) La página llena la pantalla: alguien escribe con tinta, se arrepiente, tacha, y vuelve a escribir. Sin cara, sin voz: solo letra. c) Los tachones se juntan en una línea que apunta al borde de la CARTA.",
+        "lines": [
+          ["CAPTION", "En el centro de la isla flota una página en blanco. No tiene cara. No le hace falta."],
+          ["LUZTERNA", "Esa página la conozco. Capi… es Distraxia. Lo que quedó de ella."],
+          ["LUZTERNA", "Tócala. Si quiere hablar, va a hablar a su manera."],
+          ["DISTRAXIA", "~~Lo siento.~~ ~~Perdón.~~ No me arrepiento."],
+          ["DISTRAXIA", "Yo sabía. Si dejaba de ~~recordar~~ olvidar, esta página se iba a escribir sola."],
+          ["DISTRAXIA", "~~Preferí ser nada.~~ Preferí ser un hueco. En un hueco cabe cualquier cosa. Hasta ~~mi~~ tu isla."],
+          ["LUZTERNA", "…Capi, creo que nos está dando las gracias. Con tachones, pero cuenta."],
+          ["CAPTION", "Los tachones se juntan en una sola línea. La línea apunta al borde de la CARTA."],
+          ["LUZTERNA", "Los Correctores ya vienen por la página. Quieren escribirla ELLOS. Y trajeron pluma nueva."]
+        ]
+      },
+      {
+        "id": "b62_correctores",
+        "time": "tras H61 (a) · al ganar (b)",
+        "trigger": "H62",
+        "style": "BLANCO PERFECTO",
+        "title": "Los Correctores tienen un plan",
+        "$scene": "a) El borde de la CARTA, donde el papel se acaba: una flota blanca perfectamente alineada; hasta las gaviotas van en fila. b) Los barcos blancos se quedan quietos, con una mancha de tinta que no se quita; un Corrector chiquito baja con una goma en la mano.",
+        "lines": [
+          ["CAPTION", "En el borde de la CARTA, donde el papel se acaba, espera una flota blanca. Alineada. Hasta las gaviotas van en fila."],
+          ["LA REDACCIÓN", "Propuesta final: un mundo sin errores. Todos los gatos felices. Para siempre."],
+          ["LUZTERNA", "¿Y si un gato no quiere ser feliz así?"],
+          ["LA REDACCIÓN", "No va a poder no querer. Ese es el punto."],
+          ["LA REDACCIÓN", "Su resultado contiene… desorden. Se archivará como borrador."],
+          ["CAPTION", "Un Corrector chiquito baja del barco blanco con una goma en la mano. Te la da. Ya no quiere borrar nada."],
+          ["LUZTERNA", "Tachón se queda. Bienvenido al desorden, mijo."],
+          ["LUZTERNA", "Pero no se fueron, Capi. Se fueron a juntar con los demás. En El Umbral."]
+        ]
+      },
+      {
+        "id": "b63_umbral",
+        "time": "tras H62 (a) · al ganar (b)",
+        "trigger": "H63",
+        "style": "TINTA EN EL BORDE",
+        "title": "El Umbral",
+        "$scene": "a) El borde de la página: barcos blancos, grafiti que chorrea glitch, hilos de luz que bajan del cielo; en medio, una gata enorme con forma de puerta entreabierta. b) Los barcos blancos dan media vuelta, el grafiti se escurre, los hilos suben como riendas que alguien suelta.",
+        "lines": [
+          ["CAPTION", "El Umbral: el borde de la página. Del otro lado no hay mar. No hay nada. Todavía."],
+          ["BISAGRA", "Aquí no se pasa. Ni se escribe. Ni se borra. Aquí se ESPERA."],
+          ["LUZTERNA", "Correctores, Disruptores, hilos de luz… y una gata puerta. Todos quieren la misma página."],
+          ["LUZTERNA", "Ninguno tiene toda la razón, Capi. Así que vamos a ganarle a todos. Con cariño."],
+          ["BISAGRA", "Me ganaste. Bien. Una puerta que nunca se abre es una pared."],
+          ["CAPTION", "Los barcos blancos dan media vuelta. El grafiti se escurre. Los hilos de luz suben despacio, como riendas que alguien suelta."],
+          ["LUZTERNA", "Se fueron todos. Y la página sigue en blanco, esperando a alguien."],
+          ["BISAGRA", "Esperando a alguien que decida. Me voy contigo: quiero ver quién."]
+        ]
+      },
+      {
+        "id": "b64_mentira",
+        "time": "tras H63, de noche en el faro (cine h64_mentira)",
+        "trigger": "H64",
+        "style": "NOCHE CLARA",
+        "title": "Mentira",
+        "$scene": "La noche más clara: todas las luces, todos los gatos mirando. La página en blanco baja como una hoja y se posa junto a tu faro. Te piden que escribas. Antes de que el lápiz toque el papel, Canelo se sube, da tres vueltas y se duerme encima. Desde lejos alguien escribe en el borde: «A nadie le gustan los gatos.» Tus gatos, medio dormidos: «…Mentira.» (en el golpe del clímax).",
+        "lines": [
+          ["CAPTION", "Esa noche la página en blanco baja del cielo y se posa junto a tu faro. Como una hoja que ya sabía dónde caer."],
+          ["LUZTERNA", "Capi. Te toca. Unos quieren un mundo perfecto, otros romper todas las cajas, otros que la dejes como está."],
+          ["LUZTERNA", "…¿Qué vas a escribir?"],
+          ["CAPTION", "Antes de que el lápiz toque el papel, Canelo se sube a la página. Da tres vueltas. Se acuesta encima."],
+          ["LUZTERNA", "Canelo. Bájate. …Canelo, en serio."],
+          ["CAPTION", "Nadie puede escribir debajo de un gato dormido. Es la ley más vieja del Archivo."],
+          ["LUZTERNA", "Es la primera vez que decide algo él solito, Capi. Y decidió que todavía no."],
+          ["CAPTION", "Muy lejos, alguien alcanza a escribir en el borde de la página: «A nadie le gustan los gatos.»"],
+          ["TUS GATOS", "(todos a la vez, medio dormidos) …Mentira."],
+          ["LUZTERNA", "Los gatos cruzan cualquier límite sin dejar de ser quienes son. Eso no se escribe, Capi. Se hace."]
+        ]
+      },
+      {
+        "id": "b65_continuara",
+        "time": "tras H64, al amanecer (cine h65_creditos)",
+        "trigger": "H65",
+        "style": "AMANECER · CRÉDITOS",
+        "title": "Continuará",
+        "$scene": "Amanece. Canelo sigue dormido encima de la página; nadie se atreve a moverlo. Créditos de la Parte II con YONOSE TODO entera. Al final, la ficha de REGISTRO 000 en el Catdex: ESTADO «observando» se tacha y se escribe «despertando» sobre los últimos tics del reloj.",
+        "lines": [
+          ["CAPTION", "Amanece. Canelo sigue dormido encima de la página. Nadie se atreve a moverlo."],
+          ["LUZTERNA", "Bueno, Capi. Creo que esto se acabó. Por ahora."],
+          ["CATDEX", "REGISTRO 000 · ESTADO: ~~observando~~ despertando"],
+          ["CAPTION", "CONTINUARÁ"]
+        ]
+      }
+    ]
+  }
+}

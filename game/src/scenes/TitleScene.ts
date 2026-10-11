@@ -5,6 +5,7 @@ import { GlitchFilter, OutlineFilter, RGBSplitFilter } from 'pixi-filters';
 import gsap from 'gsap';
 import { Scene } from '../core/scenes';
 import { W, H } from '../core/App';
+import { readSave } from '../core/save';
 import { C, F } from '../ui/theme';
 import { Button, dotGrid, crosses, poster, txt } from '../ui/widgets';
 import { paperTexture, halftoneTexture } from '../art/textures';
@@ -100,7 +101,14 @@ export class TitleScene extends Scene {
     const t2 = poster('LIKE CATS', 250, C.ink, { letterSpacing: -6 });
     t1.position.set(70, 70);
     t2.position.set(70, 290);
-    const meta = txt('CAPÍTULO 1 — EL PRIMER MAR', { fontFamily: F.ui, fontWeight: '700', fontSize: 26, fill: C.pinkHot });
+    // a save already in the Parte II (Part I's «Fin», H30, behind it) no longer says «Capítulo 1» on the cover
+    let partII = false;
+    try {
+      partII = !!readSave<{ missions?: { done?: string[] } }>()?.state?.missions?.done?.includes('H30');
+    } catch {
+      partII = false;
+    }
+    const meta = txt(partII ? 'PARTE II — LA MAREA IMPOSIBLE' : 'CAPÍTULO 1 — EL PRIMER MAR', { fontFamily: F.ui, fontWeight: '700', fontSize: 26, fill: C.pinkHot });
     meta.position.set(78, 50);
     const tag = txt('CUTE CATS.\nTERRIBLE CONSEQUENCES.', { fontFamily: F.poster, fontSize: 52, fill: C.ink, lineHeight: 56 });
     tag.position.set(78, 640);

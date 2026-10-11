@@ -446,6 +446,8 @@ const ENEMY_NOTE: Record<string, string> = {
   void: 'El rival trae Vacío: lo que borra no se repara y se come tus escudos.',
   // Parte II · Oleada 1 (rules in battle/cristal.ts)
   crystal: 'El rival trae Cristal: lo que te pega queda en PRISMA (su siguiente golpe de otro elemento ahí se parte en esquirlas) y cada tiro suyo que cae levanta una FACETA: tu próximo proyectil pierde 40% y una esquirla le vuelve a quien disparó.',
+  // Parte II · Oleada 2 (rules in battle/gravedad.ts)
+  gravity: 'El rival trae Gravedad: lo que te pega queda FLOTANDO (recibe +35% y, si es un módulo muy roto, al siguiente golpe se cae del barco) y cada tiro suyo que cae abre un POZO que le curva sus siguientes tiros hacia ahí.',
 };
 /** one line per multiverse element in the enemy crew (the sims already play it; this says WHY) */
 export function p2EnemyNotes(enemyElements: string[]): string[] {

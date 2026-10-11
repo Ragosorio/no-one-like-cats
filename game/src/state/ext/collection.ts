@@ -52,6 +52,7 @@ export function elColor(id: string): number {
     light: 0xe0b040,
     // Parte II
     crystal: 0x8fd3ff,
+    gravity: 0x3e6fd8,
   };
   return MAIN[id] ?? 0x9a8f80;
 }

@@ -125,6 +125,21 @@ const SPEAKERS: Record<string, Speaker> = {
   // perfect white tag; the box stays dark because system lines are printed in paper ink
   CORRECTOR: { id: 'corrector', name: 'EL CORRECTOR', kind: 'system', band: 0xffffff, bandText: C.ink, box: 0x3a4048, pitch: 1 },
   CATDEX: { id: 'catdex', name: 'CATDEX', kind: 'system', band: C.paper, bandText: C.ink, box: C.ink, pitch: 1.5 },
+  // Parte II · Oleada 2 «El Cielo Despierta» (state/sys/rupturasO2.ts). The Embajador and the Almirante are Correctors: no face.
+  HÉLICE: { id: 'helice', name: 'HÉLICE', kind: 'cat', slug: 'helice_propeller_cat', band: 0xf0b44c, bandText: C.ink, box: 0xfff3d6, pitch: 1.35, treat: 'ally' },
+  CASCADA: { id: 'cascada', name: 'CAPITANA CASCADA', kind: 'cat', slug: 'cascada_upfall_cat', band: 0x3e6fd8, bandText: 0xe9f0ff, box: 0xe4eeff, pitch: 1.15, treat: 'rival' },
+  'MASA MADRE': { id: 'masamadre', name: 'MASA MADRE', kind: 'cat', slug: 'masamadre_mass_cat', band: 0x13224a, bandText: 0xf0b44c, box: 0xfbf0d8, pitch: 0.6, treat: 'boss' },
+  EMBAJADOR: { id: 'embajador', name: 'EL EMBAJADOR', kind: 'system', band: 0xffffff, bandText: C.ink, box: 0x3a4048, pitch: 1.05 },
+  ALMIRANTE: { id: 'almirante', name: 'EL ALMIRANTE', kind: 'system', band: 0xf4f4f0, bandText: 0xb89558, box: 0x2e3440, pitch: 0.8 },
+  // Parte II · Oleada 3 «La Era Astral» (state/sys/rupturasO3.ts). Maneki is the secret cat s_maneki (Mochi Maneki).
+  ESCAFANDRA: { id: 'escafandra', name: 'ESCAFANDRA', kind: 'cat', slug: 'escafandra_fishbowl_cat', band: 0x9fe8ff, bandText: C.ink, box: 0xeefaff, pitch: 0.9, treat: 'ally' },
+  MANEKI: { id: 'maneki', name: 'MANEKI', kind: 'cat', slug: 'mochi_bell_cat', band: 0xd4a549, bandText: C.ink, box: 0xfbf1d6, pitch: 1.25, treat: 'ally' },
+  BRECHA: { id: 'brecha', name: 'BRECHA', kind: 'cat', slug: 'brecha_crowbar_cat', band: 0xff2e88, bandText: 0x7fd8ff, box: 0xffe3f0, pitch: 1.1, treat: 'rival' },
+  JONÁS: { id: 'jonas', name: 'JONÁS', kind: 'cat', slug: 'jonas_whale_cat', band: 0x1f5f7a, bandText: 0x9fe0d4, box: 0xe2f4f2, pitch: 0.7, treat: 'ally' },
+  // Parte II · Oleada 4 «El Umbral» (state/sys/rupturasO4.ts). La Redacción is the Correctores' voice: no face.
+  DUERMEVELA: { id: 'duermevela', name: 'CAPITANA DUERMEVELA', kind: 'cat', slug: 'duermevela_dreamcaptain_cat', band: 0x8f7ad8, bandText: 0xfff6dc, box: 0xf1ebff, pitch: 0.8, treat: 'rival' },
+  'LA REDACCIÓN': { id: 'redaccion', name: 'LA REDACCIÓN', kind: 'system', band: 0xffffff, bandText: C.ink, box: 0x3a4048, pitch: 0.95 },
+  BISAGRA: { id: 'bisagra', name: 'BISAGRA', kind: 'cat', slug: 'bisagra_hinge_cat', band: 0x2a2140, bandText: 0xc9a8ff, box: 0xede6ff, pitch: 0.65, treat: 'boss' },
 };
 
 export function speaker(id: string): Speaker {

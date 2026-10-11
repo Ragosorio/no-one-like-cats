@@ -1,0 +1,580 @@
+{
+  "$comment": "Parte II · Oleada 4 «El Umbral» — especies del Lote G (sin elemento nuevo: Sueño es regla de región, no elemento). Se fusiona sobre content.json (solo agrega). Ver docs/part-ii/13 y 19. Los gatos que te da la historia usan obtain.source 'ruptura:<misión>': state/sys/resonance.ts storyLocked los deja fuera de la Resonancia y del casino hasta que los tengas. Los tiros usan los arquetipos y reglas que ya existen (battle/catShots.ts, battle/multiverso.ts); las ultimates de Bisagra y Quizás funcionan con ultFromDef (Tiempo = TIME STOP; Vacío = BORRADO). El secreto s_quizas necesita su caso en resonance.ts (secretShape / SECRET_NEED / secretConditionMet).",
+  "catdexSets": [
+    {
+      "id": "set_suenos",
+      "name": "Archipiélago de los Sueños",
+      "cats": [
+        "c_almohadon",
+        "r_sonambulo",
+        "e_duermevela"
+      ],
+      "rule": "Tus gatos Dormilones empiezan con +10 de medidor de ultimate."
+    },
+    {
+      "id": "set_umbral",
+      "name": "Ni de Aquí ni de Allá",
+      "cats": [
+        "c_polvillo",
+        "r_tachon",
+        "l_bisagra"
+      ],
+      "rule": "Tu REBOBINAR repara 5% más del daño que haces."
+    }
+  ],
+  "cats": [
+    {
+      "id": "c_almohadon",
+      "name": "Almohadón",
+      "epithet": "el que Ronca en el Aire",
+      "art": {
+        "slug": "almohadon_pillow_cat",
+        "tint": null,
+        "aura": [
+          "#d9c8ff",
+          "#ffd6ea",
+          "#8a5cff"
+        ]
+      },
+      "elements": [
+        "cosmic"
+      ],
+      "rarity": "common",
+      "primordial": false,
+      "secret": false,
+      "role": "tanque",
+      "worker": null,
+      "trait": "perezoso",
+      "battleForm": {
+        "name": "ALMOHADÓN — DREAM CUSHION FORM",
+        "cry": "PILLOW FORT!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+        "powerBase": "balance:rarities.power_base.common",
+        "foodMult": "balance:rarities.food_mult.common",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.tanque.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Almohadazo",
+          "cry": null,
+          "archetype": "orbe_gravitatorio",
+          "element": "cosmic",
+          "dmg": 50,
+          "radius": 1.4,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "ingravido",
+          "statusTurns": 1,
+          "gravityMul": 0.6,
+          "speedMul": 0.8,
+          "special": "Una almohada que flota hasta el barco rival sin ninguna prisa: sube poquito, cae lento y se curva hacia lo más cercano. Explota suavecito… y aun así duele. Aplica Ingrávido."
+        },
+        "ultimate": {
+          "name": "PILLOW FORT! (枕の砦)",
+          "effect": "Una almohada gigante que cae flotando: explosión enorme y esponjosa. Esponjosa para él.",
+          "dmg": 50,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Colchón: duerme flotando a medio metro del suelo. Si se cae, rebota. Si rebota, sigue dormido.",
+        "star3": "★3: su Almohadazo explota 15% más grande.",
+        "star5": "★5: PILLOW FORT! explota 20% más grande."
+      },
+      "obtain": {
+        "source": "ruptura:H58",
+        "how": "Archipiélago de los Sueños (H58): te lo regalan al ganar la batalla. Después: Resonancia con al menos un padre de Cósmico (Común).",
+        "balanceSource": "ruptura:H58"
+      },
+      "hint": "Si ves una almohada flotando sobre tu isla y ronca, no es una almohada. O sí. Él tampoco sabe.",
+      "lore": "Nadie sabe si es un gato que se durmió encima de una almohada o una almohada que soñó que era gato. Él tampoco, y no piensa despertarse para averiguarlo. Flota a medio metro del suelo y ronca en acuarela.",
+      "balanceName": "Almohadon"
+    },
+    {
+      "id": "r_sonambulo",
+      "name": "Sonámbulo",
+      "epithet": "el que Pelea Dormido",
+      "art": {
+        "slug": "sonambulo_sleepwalker_cat",
+        "tint": null,
+        "aura": [
+          "#2a2433",
+          "#8f6b93",
+          "#c8b8ff"
+        ]
+      },
+      "elements": [
+        "shadow",
+        "magic"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "artillero",
+      "worker": "voyager",
+      "trait": "travieso",
+      "battleForm": {
+        "name": "SONÁMBULO — SLEEPWALKER FORM",
+        "cry": "NEMURI-KEN!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.artillero.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Golpe a Ciegas",
+          "cry": null,
+          "archetype": "sombra",
+          "element": "shadow",
+          "dmg": 60,
+          "radius": 1.1,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "maldito",
+          "statusTurns": 1,
+          "gravityMul": 0.9,
+          "speedMul": 0.9,
+          "special": "Lo tira sin mirar y no se ve volar: aparece al impactar. Ahí mismo una puñalada golpea por la espalda al gato enemigo más cercano (ignora sus escudos de gato) y lo que toca queda Maldito."
+        },
+        "ultimate": {
+          "name": "NEMURI-KEN! (眠り剣)",
+          "effect": "Tres sombras invisibles en abanico, tiradas sin mirar: al caer, apuñalan por la espalda a TODOS los gatos rivales.",
+          "dmg": 55,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Mirada perdida: duerme con los ojos abiertos y no ve nada. Nunca ha visto venir un disparo enemigo. Tampoco le ha importado.",
+        "star3": "★3: su Golpe a Ciegas explota 15% más grande.",
+        "star5": "★5: Maldito dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia con un padre de Sombra y uno de Magia.",
+        "balanceSource": "resonance"
+      },
+      "hint": "De noche camina por tu isla con los brazos estirados. No lo despiertes: dicen que es peligroso. Para ti.",
+      "lore": "Se durmió en el Archipiélago de los Sueños y nunca terminó de despertar. Pelea dormido, con los ojos abiertos y la mirada en otro planeta, y le atina igual; nadie sabe cómo. Si le preguntas, ronca. Si insistes, te muerde el dedo sin despertarse.",
+      "balanceName": "Sonambulo"
+    },
+    {
+      "id": "e_duermevela",
+      "name": "Duermevela",
+      "epithet": "la Capitana Medio Dormida",
+      "art": {
+        "slug": "duermevela_dreamcaptain_cat",
+        "tint": null,
+        "aura": [
+          "#b8a4ff",
+          "#ffcfe3",
+          "#3e2a6b"
+        ]
+      },
+      "elements": [
+        "magic",
+        "cosmic"
+      ],
+      "rarity": "epic",
+      "primordial": false,
+      "secret": false,
+      "role": "controlador",
+      "worker": null,
+      "trait": "dormilon",
+      "battleForm": {
+        "name": "DUERMEVELA — HALF-AWAKE CAPTAIN FORM",
+        "cry": "SWEET DREAMS!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+        "powerBase": "balance:rarities.power_base.epic",
+        "foodMult": "balance:rarities.food_mult.epic",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.controlador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Canción de Cuna",
+          "cry": null,
+          "archetype": "runa",
+          "element": "magic",
+          "dmg": 70,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "maldito",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 0.9,
+          "special": "Una nana que vuela sola hacia su blanco (se corrige en el aire). Lo que toca queda Maldito: el siguiente golpe ahí hace ×1.5 y se le ve la vida exacta."
+        },
+        "ultimate": {
+          "name": "SWEET DREAMS! (おやすみなさい)",
+          "effect": "Tres nanas en abanico que buscan solas su blanco: todo lo que tocan queda Maldito.",
+          "dmg": 75,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Duermevela: nunca está del todo dormida ni del todo despierta. Por eso nadie la agarra desprevenida… ni bien peinada.",
+        "star3": "★3: su Canción de Cuna explota 15% más grande.",
+        "star5": "★5: Maldito dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Capitana del Archipiélago de los Sueños (H58). Después: Resonancia con un padre de Magia y uno de Cósmico, ambos padres Nv15+.",
+        "balanceSource": "resonance",
+        "minParentLevel": 15
+      },
+      "hint": "La capitana del Archipiélago de los Sueños. Duerme con un ojo abierto y te gana con el otro.",
+      "lore": "Capitanea un barco que solo existe mientras alguien lo sueña, así que no deja dormir a nadie… menos a ella. Da órdenes bostezando, habla en susurros y nunca ha perdido una discusión: el otro siempre se duerme antes.",
+      "balanceName": "Duermevela"
+    },
+    {
+      "id": "c_polvillo",
+      "name": "Polvillo",
+      "epithet": "el que Nadie Recordaba",
+      "art": {
+        "slug": "polvillo_dust_cat",
+        "tint": null,
+        "aura": [
+          "#d9c29a",
+          "#b7aa98",
+          "#fff2d6"
+        ]
+      },
+      "elements": [
+        "time"
+      ],
+      "rarity": "common",
+      "primordial": false,
+      "secret": false,
+      "role": "artillero",
+      "worker": "builder",
+      "trait": "leal",
+      "battleForm": {
+        "name": "POLVILLO — DUST OF YESTERDAY FORM",
+        "cry": "CHIRI MO TSUMOREBA!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+        "powerBase": "balance:rarities.power_base.common",
+        "foodMult": "balance:rarities.food_mult.common",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.artillero.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Polvo de Ayer",
+          "cry": null,
+          "archetype": "reloj",
+          "element": "time",
+          "dmg": 55,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": null,
+          "statusTurns": 0,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un puñado de polvo viejo que cae en parábola. Al pegar, repara las celdas más dañadas de tu barco (35% del daño que hizo) y al gato enemigo golpeado le atrasa la recarga 1 turno."
+        },
+        "ultimate": {
+          "name": "TIME STOP: CHIRI MO TSUMOREBA! (塵も積もれば)",
+          "effect": "¡TIME STOP!: el rival pierde el próximo turno de sus gatos (sus cañones sí disparan; no se puede encadenar). Además lanza tres puñados de polvo en abanico que rebobinan.",
+          "dmg": 40,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Polvo de recuerdo: donde se sienta, alguien se acuerda de algo que había olvidado. Casi siempre es que dejó la estufa prendida.",
+        "star3": "★3: su Polvo de Ayer explota 15% más grande.",
+        "star5": "★5: repara 45% del daño que hace."
+      },
+      "obtain": {
+        "source": "ruptura:H60",
+        "how": "La Isla que Nadie Recuerda (H60): se une a tu tripulación cuando reparas la isla. Después: Resonancia con al menos un padre de Tiempo (Común).",
+        "balanceSource": "ruptura:H60"
+      },
+      "hint": "Está hecho del polvo de una isla que nadie recuerda. Si lo sacudes, estornudas recuerdos.",
+      "lore": "Un gatito de polvo que se sacude y suelta recuerdos ajenos: estornuda cumpleaños, tose canciones viejas y, si lo abrazas fuerte, te deja la ropa gris. Vale la pena. La ropa no, el abrazo.",
+      "balanceName": "Polvillo"
+    },
+    {
+      "id": "r_tachon",
+      "name": "Tachón",
+      "epithet": "el que Corrige lo que No le Gusta",
+      "art": {
+        "slug": "tachon_strikeout_cat",
+        "tint": null,
+        "aura": [
+          "#ffffff",
+          "#dfe6f2",
+          "#d8203a"
+        ]
+      },
+      "elements": [
+        "void",
+        "light"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "francotirador",
+      "worker": "banker",
+      "trait": "presumido",
+      "battleForm": {
+        "name": "TACHÓN — WHITE-OUT CORRECTOR FORM",
+        "cry": "CORRECTION!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.francotirador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Tachadura",
+          "cry": null,
+          "archetype": "borrado",
+          "element": "void",
+          "dmg": 60,
+          "radius": 1.0,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 2,
+          "status": "vacio",
+          "statusTurns": 1,
+          "gravityMul": 0.4,
+          "speedMul": 1.25,
+          "special": "Una raya perfectamente recta, trazada con regla: vuela plana y rápida, atraviesa 2 celdas y las BORRA: no se pueden reparar, ni rebobinar, ni regenerar en esta batalla. Se come burbujas, escudos y estados de lo que toca."
+        },
+        "ultimate": {
+          "name": "CORRECTION! (修正)",
+          "effect": "Una tachadura gruesa, de corrector: atraviesa 2 celdas y lo que tacha queda BORRADO para siempre en esta batalla.",
+          "dmg": 60,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Simetría perfecta: no soporta un bigote chueco. Te lo va a enderezar. Con regla.",
+        "star3": "★3: su Tachadura atraviesa 3 celdas.",
+        "star5": "★5: CORRECTION! explota 20% más grande."
+      },
+      "obtain": {
+        "source": "ruptura:H62",
+        "how": "Batalla de los Correctores (H62): se queda contigo cuando le ganas. Después: Resonancia con un padre de Vacío y uno de Luz.",
+        "balanceSource": "ruptura:H62"
+      },
+      "hint": "Blanco, simétrico y con un plumón de corrector en la boca. Si ves una raya en tu barco que no estaba, fue él.",
+      "lore": "Un Corrector de los de verdad: blanco, simétrico y armado con un plumón que borra todo lo que no le cuadra. Ya tachó un atardecer por «demasiado naranja», una canción por «muy larga» y a Canelo por «impuntual». Canelo sigue ahí. Tachón todavía no lo supera.",
+      "balanceName": "Tachon"
+    },
+    {
+      "id": "l_bisagra",
+      "name": "Bisagra",
+      "epithet": "la que Guarda la Puerta",
+      "art": {
+        "slug": "bisagra_hinge_cat",
+        "tint": null,
+        "aura": [
+          "#e0b77a",
+          "#f4efe6",
+          "#231626"
+        ]
+      },
+      "elements": [
+        "time",
+        "void"
+      ],
+      "rarity": "legendary",
+      "primordial": true,
+      "secret": false,
+      "role": "tanque",
+      "worker": null,
+      "trait": "chismoso",
+      "battleForm": {
+        "name": "BISAGRA — THRESHOLD KEEPER FORM",
+        "cry": "CLOSED DOOR!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+        "powerBase": "balance:rarities.power_base.legendary",
+        "foodMult": "balance:rarities.food_mult.legendary",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.tanque.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Portazo",
+          "cry": null,
+          "archetype": "reloj",
+          "element": "time",
+          "dmg": 85,
+          "radius": 1.6,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 1,
+          "pierce": 0,
+          "status": null,
+          "statusTurns": 0,
+          "gravityMul": 1.1,
+          "speedMul": 1,
+          "special": "Una puerta que se cierra de golpe y rebota una vez. Al pegar, repara las celdas más dañadas de tu barco (35% del daño que hizo) y al gato enemigo golpeado le atrasa la recarga 1 turno."
+        },
+        "ultimate": {
+          "name": "TIME STOP: CLOSED DOOR! (閉ざされた扉)",
+          "effect": "¡TIME STOP!: la puerta se cierra y el rival pierde el próximo turno de sus gatos (sus cañones sí disparan; no se puede encadenar). Además lanza tres portazos en abanico que rebotan y rebobinan. Una vez por batalla. Tope 35%; jefes 15%.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Ni de aquí ni de allá: rechina cada vez que alguien cruza. Por eso sabe quién entró. Y quién no salió.",
+        "star3": "★3: su Portazo explota 20% más grande.",
+        "star5": "★5: CLOSED DOOR! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "ruptura:H63",
+        "how": "El Umbral (H63): se une a ti cuando le ganas. Duplicados: dos padres que compartan Tiempo, con Vacío entre los dos, Nv20+ (después de tenerla).",
+        "balanceSource": "ruptura:H63",
+        "minParentLevel": 20
+      },
+      "hint": "No es de aquí. Tampoco de allá. Si le preguntas de dónde es, rechina.",
+      "lore": "Es la bisagra de la última puerta. Lleva tanto tiempo entre un lado y el otro que ya no sabe cuál es adentro. Rechina cuando alguien pasa, rechina cuando nadie pasa y, según ella, rechina «por si las dudas». Nadie le ha puesto aceite. Nadie se atreve.",
+      "balanceName": "Bisagra"
+    },
+    {
+      "id": "s_quizas",
+      "name": "Quizás",
+      "epithet": "el que Todavía No Elige",
+      "art": {
+        "slug": "quizas_maybe_cat",
+        "tint": null,
+        "aura": [
+          "#ffffff",
+          "#8a5cff",
+          "#0d110f"
+        ]
+      },
+      "elements": [
+        "void",
+        "cosmic"
+      ],
+      "rarity": "epic",
+      "primordial": false,
+      "secret": true,
+      "role": "asediador",
+      "worker": null,
+      "trait": "miedoso",
+      "battleForm": {
+        "name": "QUIZÁS — SUPERPOSITION FORM",
+        "cry": "MAYBE… MAYBE NOT!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+        "powerBase": "balance:rarities.power_base.epic",
+        "foodMult": "balance:rarities.food_mult.epic",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.asediador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Superposición",
+          "cry": null,
+          "archetype": "bola_rebote",
+          "element": "void",
+          "dmg": 48,
+          "radius": 1.1,
+          "projectiles": 2,
+          "spreadDeg": 9,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "vacio",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "El tiro sale en dos lugares a la vez (los dos son de verdad, más o menos). Donde cae, lo que había deja de estar: queda BORRADO y no se repara en esta batalla. Se come burbujas, escudos y estados de lo que toca."
+        },
+        "ultimate": {
+          "name": "CAT IN THE BOX! (箱の中の猫)",
+          "effect": "Abre la caja: las dos posibilidades caen más grandes y las dos resultan ciertas. Lo que tocan queda BORRADO. Una vez por batalla. Tope 35%; jefes 15%.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": "SEGUNDA VIDA (Revenant)",
+        "passive": "Es y no es: la primera vez que cae KO, resulta que no (vuelve con 60% de vida). La segunda, sí. Probablemente.",
+        "star3": "★3: sus dos tiros explotan 15% más grandes.",
+        "star5": "★5: CAT IN THE BOX! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "secret",
+        "how": "Resonancia: los padres tienen que juntar Vacío y Cósmico entre los dos y estar EXACTAMENTE al mismo nivel, Nv20+ → sale en la fila ??? de la tabla."
+      },
+      "hint": "Todo y nada, en una balanza pareja. Si uno de los dos pesa más que el otro, ya eligió.",
+      "lore": "Vive dentro de una caja. Mientras nadie la abra, está y no está, duerme y no duerme, te quiere y no te quiere. Si abres la caja, se ofende. Si no la abres, también. No ha decidido qué ser de grande. Ni de chiquito.",
+      "balanceName": "Quizas"
+    }
+  ],
+  "secretRecipes": [
+    {
+      "cat": "s_quizas",
+      "condition": "Unión de padres cubre Vacío y Cósmico; los dos padres exactamente al mismo nivel, Nv20+.",
+      "bucket": "secret",
+      "altRoute": ""
+    }
+  ]
+}

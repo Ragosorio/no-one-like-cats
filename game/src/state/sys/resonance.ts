@@ -117,6 +117,15 @@ function secretShape(id: string, sa: string, sb: string, U: Set<string>): boolea
     // Parte II · Oleada 1: a prism (Cristal), a light and a piece of sky
     case 's_refracta':
       return U.has('crystal') && U.has('light') && U.has('cosmic');
+    // Parte II · Oleada 2: an apple, something that weighs and someone who watches it fall
+    case 's_manzanita':
+      return U.has('gravity') && U.has('nature');
+    // Parte II · Oleada 3: something that weighs and something from very far away
+    case 's_platillo':
+      return U.has('cosmic') && U.has('gravity');
+    // Parte II · Oleada 4: something that isn't there and something very far away, exactly in step
+    case 's_quizas':
+      return U.has('void') && U.has('cosmic');
     default:
       return false;
   }
@@ -129,6 +138,9 @@ const SECRET_NEED: Record<string, string> = {
   s_lumen: 'los dos con ★3+',
   s_eclipse: 'uno de los dos a Nv20+',
   s_refracta: 'los dos a Nv20+',
+  s_manzanita: 'los dos a Nv20+ y uno con ★3+',
+  s_platillo: 'los dos a Nv25+',
+  s_quizas: 'los dos al mismo nivel, Nv20+',
 };
 export interface SecretClue {
   species: string;
@@ -208,6 +220,12 @@ function secretConditionMet(c: CatDef, sa: string, sb: string, la: number, lb: n
         : false;
     case 's_refracta':
       return U.has('crystal') && U.has('light') && U.has('cosmic') && la >= 20 && lb >= 20;
+    case 's_manzanita':
+      return U.has('gravity') && U.has('nature') && la >= 20 && lb >= 20 && Math.max(stA, stB) >= 3;
+    case 's_platillo':
+      return U.has('cosmic') && U.has('gravity') && la >= 25 && lb >= 25;
+    case 's_quizas':
+      return U.has('void') && U.has('cosmic') && la === lb && la >= 20;
     default:
       return false;
   }

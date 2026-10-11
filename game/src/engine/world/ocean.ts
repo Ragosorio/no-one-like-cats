@@ -61,6 +61,8 @@ export class Ocean {
         uNight: { value: 0 },
         uRain: { value: 0 },
         uFoam: { value: new THREE.Color('#f4fbff') },
+        // sum of the wave amplitudes: crest foam is keyed to the crest height RELATIVE to it
+        uCrestMax: { value: w.reduce((a, v) => a + v.steep / ((2 * Math.PI) / v.len), 0) },
         uPage: { value: 0 },
         uPageSea: { value: new THREE.Color('#4b93c4') },
         uPageShallow: { value: new THREE.Color('#7fd0de') },
@@ -75,7 +77,7 @@ export class Ocean {
       vertexShader: /* glsl */ `
         uniform float uTime; uniform float uAmp; uniform sampler2D uHeight; uniform float uHalf;
         uniform vec4 uWaveA[4];
-        varying vec3 vWorld; varying vec3 vN; varying float vDepth; varying float vCrest;
+        varying vec3 vWorld; varying vec3 vN; varying float vDepth; varying vec2 vXZ;
         #include <fog_pars_vertex>
         float groundAt(vec2 xz){ vec2 uv = (xz + uHalf) / (2.0*uHalf);
           if (uv.x<0.0||uv.y<0.0||uv.x>1.0||uv.y>1.0) return -9.0; return texture2D(uHeight, uv).r; }
@@ -95,16 +97,17 @@ export class Ocean {
           }
           p += d;
           vN = normalize(cross(B, T));
-          vWorld = p; vDepth = depth; vCrest = d.y;
+          vWorld = p; vDepth = depth; vXZ = p.xz - d.xz;
           vec4 mvPosition = viewMatrix * vec4(p,1.0);
           gl_Position = projectionMatrix * mvPosition;
           #include <fog_vertex>
         }`,
       fragmentShader: /* glsl */ `
-        uniform float uTime; uniform vec3 uDeep; uniform vec3 uShallow; uniform vec3 uSky; uniform vec3 uFoam;
+        uniform float uTime; uniform float uAmp; uniform vec4 uWaveA[4]; uniform float uCrestMax;
+        uniform vec3 uDeep; uniform vec3 uShallow; uniform vec3 uSky; uniform vec3 uFoam;
         uniform vec3 uSunDir; uniform vec3 uSunCol; uniform vec3 uMoonDir; uniform vec3 uMoonCol; uniform float uNight; uniform float uRain;
         uniform float uPage; uniform vec3 uPageSea; uniform vec3 uPageShallow;
-        varying vec3 vWorld; varying vec3 vN; varying float vDepth; varying float vCrest;
+        varying vec3 vWorld; varying vec3 vN; varying float vDepth; varying vec2 vXZ;
         #include <fog_pars_fragment>
         ${GLSL_NOISE}
         void main(){
@@ -117,7 +120,11 @@ export class Ocean {
             float ring = smoothstep(0.06,0.0,abs(length(f)-ph*0.45)) * (1.0-ph);
             N = normalize(N + vec3(f.x, 0.0, f.y) * ring * 2.5 * uRain);
           }
-          float depthT = smoothstep(0.0, 7.0, vDepth);
+          // (per-vertex depth on purpose: sampling the 160-texel height texture per pixel shows its texels)
+          float depth = vDepth;
+          float dist = length(vWorld - cameraPosition);
+          float px = max(length(fwidth(vXZ)), 1e-4); // world units per pixel (anti-aliasing footprint)
+          float depthT = smoothstep(0.0, 7.0, depth);
           vec3 col = mix(uShallow, uDeep, depthT);
           float fres = pow(1.0 - max(dot(N, V), 0.0), 4.0);
           col = mix(col, uSky, clamp(fres * 0.55, 0.0, 0.5));
@@ -131,22 +138,47 @@ export class Ocean {
           vec3 Rm = reflect(-normalize(uMoonDir), N);
           float spm = dot(Rm, V);
           col += uMoonCol * (step(0.996, spm) * spark * 0.8 + smoothstep(0.96, 0.997, spm) * 0.08) * uNight * far;
-          // shore foam: animated bands that crawl toward the beach + a solid lip
-          float n = vn(vWorld.xz*0.7 + uTime*0.15);
-          float band = step(0.62, fract(vDepth*1.6 - uTime*0.28 + n*0.6)) * (1.0 - smoothstep(0.15, 1.6, vDepth));
-          float lip = 1.0 - smoothstep(0.05, 0.32 + n*0.15, vDepth);
-          float crest = 0.45 * smoothstep(0.6, 0.8, vCrest + vn(vWorld.xz*2.3 - uTime*0.4)*0.25) * smoothstep(1.0, 4.0, vDepth) * (1.0 - smoothstep(60.0, 160.0, length(vWorld - cameraPosition)));
-          float foam = clamp(max(max(band*0.85, lip), crest*0.7), 0.0, 1.0);
+          // shore foam: animated bands that crawl toward the beach + a solid lip (edges widened by the
+          // pixel footprint so they never stair-step)
+          float n = vn(vXZ*0.7 + uTime*0.15);
+          float ph = fract(depth*1.6 - uTime*0.28 + n*0.6);
+          float aa = clamp(fwidth(depth*1.6) * 1.5, 0.02, 0.3);
+          float band = smoothstep(0.62 - aa, 0.62 + aa, ph) * (1.0 - smoothstep(1.0 - aa, 1.0, ph)) * (1.0 - smoothstep(0.15, 1.6, depth));
+          float lip = 1.0 - smoothstep(0.05, 0.32 + n*0.15, depth);
+          // crest foam: soft broken caps on the tallest swells only. The crest height is evaluated per
+          // pixel (same Gerstner sum as the vertices) and each wave fades out once it is smaller than a
+          // few pixels; the old version thresholded the per-vertex height (aliased on the 5-11 unit grid)
+          // over a 2.3/unit noise that turned into long white streaks at a distance.
+          // The foam sits in thin lines along the crests of the two big swells, only where the swells
+          // stack up (high total height), broken into lace by a small noise that is averaged away once
+          // its cells get smaller than a pixel.
+          float damp = uAmp * smoothstep(-0.2, 3.5, depth);
+          float h = 0.0; float line = 0.0;
+          for (int i=0;i<4;i++){
+            vec4 w = uWaveA[i]; vec2 dir = normalize(w.xy); float k = 6.28318/w.w; float c = sqrt(9.8/k);
+            float lod = 1.0 - smoothstep(w.w*0.06, w.w*0.18, px);
+            float sw = sin(k*(dot(dir,vXZ) - c*uTime*0.55));
+            h += (w.z/k) * damp * sw * lod;
+            if (i < 2) line = max(line, smoothstep(0.82, 0.99, sw) * lod);
+          }
+          float hN = h / max(uCrestMax, 1e-3);
+          float fine = vn(vXZ*1.3 - uTime*0.3)*0.6 + vn(vXZ*3.1 + vec2(uTime*0.2, uTime*0.1))*0.4;
+          fine = mix(fine, 0.5, smoothstep(0.06, 0.25, px));
+          float lace = smoothstep(0.32, 0.68, fine);
+          float patchy = smoothstep(0.35, 0.7, vn(vXZ*0.09 + vec2(uTime*0.04, -uTime*0.03)));
+          float crest = smoothstep(0.42, 0.7, hN) * line * lace * patchy
+            * smoothstep(1.5, 4.0, depth) * (1.0 - smoothstep(35.0, 120.0, dist));
+          float foam = clamp(max(max(band*0.85, lip), crest*0.5), 0.0, 1.0);
           col = mix(col, uFoam * mix(1.0, 0.55, uNight), foam);
-          float alpha = mix(0.5, 0.97, smoothstep(0.0, 2.2, vDepth));
+          float alpha = mix(0.5, 0.97, smoothstep(0.0, 2.2, depth));
           alpha = max(alpha, foam);
           // PAGE lens: the Part I chart sea — two flat blues, a diamond grid and an inked shoreline ring
           if (uPage > 0.0) {
             vec2 g = vec2(vWorld.x + vWorld.z, vWorld.x - vWorld.z) / 8.0;
             vec2 f = abs(fract(g) - 0.5);
             float grid = 1.0 - smoothstep(0.0, 0.03, min(0.5 - f.x, 0.5 - f.y));
-            vec3 pc = mix(uPageShallow, uPageSea, smoothstep(0.6, 3.0, vDepth));
-            pc = mix(pc, vec3(1.0), (1.0 - smoothstep(0.05, 0.35, vDepth)) * 0.85);
+            vec3 pc = mix(uPageShallow, uPageSea, smoothstep(0.6, 3.0, depth));
+            pc = mix(pc, vec3(1.0), (1.0 - smoothstep(0.05, 0.35, depth)) * 0.85);
             pc = mix(pc, pc * 0.82, grid);
             col = mix(col, pc, uPage);
             alpha = mix(alpha, 1.0, uPage);

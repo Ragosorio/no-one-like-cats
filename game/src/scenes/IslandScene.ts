@@ -93,6 +93,9 @@ import { openExpansionPanel } from '../panels/island/ExpansionPanel';
 import { openPopMenu } from '../panels/island/PopMenu';
 import { mountDecor, requestPlacement } from '../island/decor/DecorLayer';
 import { nearestHabitatSpot } from '../island/placement';
+import { IslandNight, type NightAnchors } from '../island/night';
+import { IslandStage } from '../island/night/stage';
+import { setCineStage } from '../cine';
 
 /** dev: synthesize a tap at logical (1920×1080) coords — used for automated testing */
 function devTap(lx: number, ly: number, holdMs = 40) {
@@ -121,6 +124,12 @@ export class IslandScene extends Scene {
   private sea = new SeaView();
   private worldRoot = new Container();
   private world = new Container();
+  /** the WORLD layers the narrative world state grades (terrain, ground, objects, ambient); world UI stays out */
+  private graded = new Container();
+  /** Parte II: the narrative world state on this island (night, sky, lights) + its cine stage */
+  night: IslandNight | null = null;
+  private stage: IslandStage | null = null;
+  private anchorPts: NightAnchors = { faro: null };
   private terrain!: TerrainView;
   private ground = new Container();
   private objects = new Container();
@@ -178,13 +187,19 @@ export class IslandScene extends Scene {
     this.terrain = new TerrainView(this.plan.tiles, rb);
     this.objects.sortableChildren = true;
     this.parts = new Particles();
-    this.world.addChild(this.terrain, this.ground, this.objects, this.wfx, this.bubbles, this.parts);
+    this.graded.label = 'graded';
+    this.terrain.camWorld = this.world;
+    this.graded.addChild(this.terrain, this.ground, this.objects);
+    this.world.addChild(this.graded, this.wfx, this.bubbles, this.parts);
     this.cam = new IslandCamera(this.world, this.worldRoot);
-    this.cam.onChange = () => this.sea.follow(this.world.x, this.world.y, this.cam.zoom);
+    this.cam.onChange = () => {
+      this.sea.follow(this.world.x, this.world.y, this.cam.zoom);
+      this.night?.follow();
+    };
     this.shaker = new Shaker(this.worldRoot, 14, 0.01);
     this.setBounds();
     this.ambient = new Ambient(this.plan.tiles, this.cam.bounds, this.bag);
-    this.world.addChild(this.ambient);
+    this.graded.addChild(this.ambient);
     const home = this.plan.plans.get(HOME)!;
     const hc = isoToScreen(home.center.gx, home.center.gy);
     this.cam.lookAt(hc.x - 230, hc.y + 30, false, 0.7);
@@ -205,6 +220,7 @@ export class IslandScene extends Scene {
     this.buildFixed();
     this.buildPlots();
     this.redrawTerrain(true);
+    this.mountNight(hc);
     // cats (textures first)
     const slugs = [...new Set([...G.s.cats.map((c) => catSlug(c)), 'canelo_cozy_cat', 'margarita_daisy_cat'])];
     preloadCats(slugs).then(() => {
@@ -234,20 +250,36 @@ export class IslandScene extends Scene {
       G.on('res', (r) => {
         if (r.key === 'gold') this.plots.forEach((p) => p.refreshPrice());
       }),
-      G.on('catLevel', () => this.syncCats()),
+      G.on('catLevel', (e) => {
+        this.syncCats();
+        // the cat that grew answers it in character (art/temperament.ts; presentation only)
+        this.cats.get(e.cat.uid)?.react('joy', null, { force: true });
+      }),
+      // the kingdom grew: the whole island cheers, a wave from the middle of the screen, each cat in its own time
+      G.on('klUp', () => {
+        const c = this.cam.center;
+        for (const a of this.cats.values()) a.react('joy', null, { delay: Math.min(1, Math.hypot(a.x - c.x, a.y - c.y) / 2000) });
+      }),
       // a cat switched FORM in its sheet: its island painting follows (state/sys/forms.ts)
       G.on('cat', (e) => {
         if (e.why === 'form') this.syncCats();
       }),
       islandBus.on('autoHarvest', (p) => this.autoHarvestFx(p.farm, p.food)),
     );
-    (globalThis as unknown as { __island: IslandScene }).__island = this;
-    (globalThis as unknown as { __islandDev: unknown }).__islandDev = { openHabitatPanel, openBuildMenu, openDock, openExpansionPanel, openMissions, openCatPanel, tapL: devTap, gsap, step: (n = 20) => {
+    // dev handles only: in production they kept the last (destroyed) island alive until the next visit
+    if (import.meta.env.DEV) (globalThis as unknown as { __island: IslandScene }).__island = this;
+    if (import.meta.env.DEV) (globalThis as unknown as { __islandDev: unknown }).__islandDev = { openHabitatPanel, openBuildMenu, openDock, openExpansionPanel, openMissions, openCatPanel, tapL: devTap, gsap, step: (n = 20) => {
       for (let i = 0; i < n; i++) this.update(0.05);
     } };
   }
 
   override exit() {
+    // withdrawing the stage interrupts a cine playing here (the world goes back to what the save says)
+    setCineStage('island', null);
+    this.stage?.dispose();
+    this.night?.destroy();
+    this.night = null;
+    this.stage = null;
     setIslandHooks(null);
     this.unsub.forEach((f) => f());
     for (const sv of this.secrets) sv.destroy();
@@ -259,6 +291,66 @@ export class IslandScene extends Scene {
     for (const c of this.cats.values()) c.destroy();
     this.cats.clear();
     gsap.killTweensOf(this.wfx.children);
+  }
+
+  // ================================================================== Parte II: narrative world state
+  /** the night sky, lights, grade and cine stage (src/island/night; state: src/state/sys/worldState.ts) */
+  private mountNight(home: { x: number; y: number }) {
+    const hp = this.plan.home;
+    const at = (c: Container | null | undefined) => (c && !c.destroyed ? this.world.toLocal(c.getGlobalPosition()) : null);
+    const spot = (s: { gx: number; gy: number; w: number; h: number }, dy = 0) => {
+      const p = isoToScreen(s.gx + s.w / 2, s.gy + s.h / 2);
+      return { x: p.x, y: p.y + dy };
+    };
+    this.anchorPts = {
+      faro: this.faroAt,
+      home,
+      portal: at(this.sanctuary.portal),
+      altar: { x: this.altar.c.x + this.altar.anchor.x, y: this.altar.c.y + this.altar.anchor.y },
+      port: spot(hp.port),
+      bank: spot(hp.bank),
+      boat: { x: this.boatBase.x, y: this.boatBase.y },
+    };
+    this.night = new IslandNight({
+      scene: this,
+      sea: this.sea,
+      worldRoot: this.worldRoot,
+      world: this.world,
+      graded: this.graded,
+      plan: this.plan,
+      ambient: this.ambient,
+      backdrops: this.terrain.backdrops,
+      skyWorld: this.skyWorld(),
+      bubbles: this.bubbles,
+      anchors: () => this.anchorPts,
+      actors: () => [...this.cats.values()],
+    });
+    this.stage = new IslandStage({
+      night: this.night,
+      cam: this.cam,
+      anchors: () => this.anchorPts,
+      actors: () => [...this.cats.values()],
+      hud: () => (this.destroyed ? null : this.hud),
+      wfx: this.wfx,
+      shake: (k) => this.shaker.add(k),
+      input: (on) => {
+        if (this.destroyed) return;
+        this.worldRoot.eventMode = on ? 'static' : 'none';
+        this.worldRoot.interactiveChildren = on;
+      },
+      alive: () => !this.destroyed && scenes.current === this,
+      blocked: () => scenes.overlayLayer.children.some((c) => c instanceof Modal && c.visible && !c.destroyed && !c.closed),
+    });
+    setCineStage('island', this.stage);
+  }
+
+  /** a world-space layer between the dimension skies and the islands (narrative skies draw there) */
+  private skyWorld() {
+    const c = new Container();
+    c.label = 'skyWorld';
+    c.eventMode = 'none';
+    this.terrain.addChildAt(c, this.terrain.children.indexOf(this.terrain.backdrops) + 1);
+    return c;
   }
 
   // ================================================================== world construction
@@ -448,6 +540,8 @@ export class IslandScene extends Scene {
     this.faroAt = { x: lpos.x + lh.lamp.x, y: lpos.y + lh.lamp.y };
     this.clickable(lh.c, () => {
       sfx('pop', 0.8);
+      // a cine waiting for this tap (the H31 opening's last step)
+      this.stage?.tapped('faro');
       // after «Fin» Luzterna lives up there (she hung her lantern in YOUR faro); H31 waits for this tap
       tapFaro();
       floatText(this.wfx, lpos.x, lpos.y - 200, faroText(), { size: 26, color: C.paper, font: F.ui, rise: 50, dur: 1.8 });
@@ -516,6 +610,7 @@ export class IslandScene extends Scene {
   // ================================================================== sync with state
   private syncAll() {
     this.redrawTerrain();
+    this.night?.rebuildSpots();
     const unlocked = new Set(regionsUnlocked().filter((r) => !this.revealHold.has(r)));
     this.syncHabitats(unlocked);
     // farms: state farms are (region, plot)
@@ -1345,6 +1440,13 @@ export class IslandScene extends Scene {
           this.cam.lookAt(this.faroAt.x, this.faroAt.y + 160, true, 0.95);
           this.pointAt(this.faroAt.x, this.faroAt.y - 40);
         } else if (g.feature === 'registro000') void openCatdex();
+        // Parte II · Oleada 2: H43 «install the Kit de Vuelo» · H48 «Luzterna's question»
+        else if (g.feature === 'kit_vuelo') openShipyard({ tab: 'flight' });
+        else if (g.feature === 'linterna') void import('../app/oleada2Flow').then((o) => o.offerLinterna());
+        // Parte II · Oleada 3: H53 the seal · H54 the Archivo's card · H56 the logbook · the Taller Cometa
+        else if (['sello_canelo', 'ficha_maneki', 'firma_bitacora', 'taller_cometa'].includes(String(g.feature))) void import('../app/oleada3Flow').then((o) => o.goFeature(String(g.feature)));
+        // Parte II · Oleada 4: H59 the cat's ECOS · H64 the page by the faro · H65 the credits (app/oleada4Flow.ts)
+        else if (['eco', 'mentira', 'continuara'].includes(String(g.feature))) void import('../app/oleada4Flow').then((o) => o.onPinnedFeature(String(g.feature)));
         else openMissions();
         return;
       }
@@ -1392,6 +1494,8 @@ export class IslandScene extends Scene {
   override update(dt: number) {
     this.t += dt;
     this.sea.tick(dt);
+    this.night?.update(dt);
+    this.stage?.update(dt);
     this.terrain.tick(dt);
     this.hud.update(dt);
     this.syncAcc += dt;

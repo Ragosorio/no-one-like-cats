@@ -47,6 +47,11 @@ let allowed = false;
 export function setMicroAllowed(v: boolean) {
   allowed = v;
 }
+/** a scene holds the screen (ui/hush.ts): the red clock of a running microevent stops too (it's sacred, not unfair) */
+let held = false;
+export function setMicroHeld(v: boolean) {
+  held = v;
+}
 export function currentMicro() {
   return active;
 }
@@ -130,6 +135,7 @@ export function winMicro(extra = 1): MicroReward {
 
 G.tickers.push((dt) => {
   if (active) {
+    if (held) return;
     active.leftMs -= dt; // RED clock: sacred, only counts while playing
     if (active.leftMs <= 0) {
       active = null;

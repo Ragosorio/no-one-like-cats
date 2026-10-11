@@ -1,0 +1,578 @@
+{
+  "$comment": "Parte II · Oleada 3 «La Era Astral» — especies (7: 6 astrales/de Puerto Cometa + 1 secreta). Se fusiona sobre content.json (solo agrega). Ver docs/part-ii/25-oleada-3.md. Arte: lote F del pipeline de Codex (arte-nuevo/); mientras tanto, suplentes en src/art/catArt.ts STAND_IN.",
+  "catdexSets": [
+    {
+      "id": "set_puerto_cometa",
+      "name": "Puerto Cometa",
+      "cats": [
+        "c_satelito",
+        "c_tanquecito",
+        "r_escafandra"
+      ],
+      "rule": "Colección: los tres del astillero retrofuturo."
+    },
+    {
+      "id": "set_disruptores",
+      "name": "Los Disruptores",
+      "cats": [
+        "r_grafitera",
+        "e_brecha"
+      ],
+      "rule": "Colección: los piratas de grieta."
+    }
+  ],
+  "cats": [
+    {
+      "id": "c_satelito",
+      "name": "Satélito",
+      "epithet": "el que Da Vueltas",
+      "art": {
+        "slug": "satelito_dish_cat",
+        "tint": null,
+        "aura": [
+          "#8a5cff",
+          "#9fe8ff",
+          "#e9f0ff"
+        ]
+      },
+      "elements": [
+        "cosmic"
+      ],
+      "rarity": "common",
+      "primordial": false,
+      "secret": false,
+      "role": "francotirador",
+      "worker": "voyager",
+      "trait": "curioso",
+      "battleForm": {
+        "name": "SATÉLITO — LOW ORBIT FORM",
+        "cry": "LOW ORBIT!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+        "powerBase": "balance:rarities.power_base.common",
+        "foodMult": "balance:rarities.food_mult.common",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.francotirador.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Órbita Baja",
+          "cry": null,
+          "archetype": "orbe_gravitatorio",
+          "element": "cosmic",
+          "dmg": 56,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "ingravido",
+          "statusTurns": 1,
+          "gravityMul": 0.8,
+          "speedMul": 0.85,
+          "special": "Un minisatélite que cae despacito y deja Ingrávido 1 turno lo que toca. En el vacío casi no cae: apúntale derechito."
+        },
+        "ultimate": {
+          "name": "LOW ORBIT! (低軌道)",
+          "effect": "Tres minisatélites en abanico: todo lo que tocan queda Ingrávido 1 turno.",
+          "dmg": 45,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Antena: siempre sabe de dónde viene el viento. En el espacio no hay viento, y eso lo pone nervioso.",
+        "star3": "★3: los minisatélites explotan 15% más grande.",
+        "star5": "★5: Ingrávido dura 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Te lo regala la Remolcadora al ganarle en el vacío (H52). Después: Resonancia con al menos un padre de Cósmico (Común).",
+        "balanceSource": "resonance"
+      },
+      "hint": "Si algo en tu isla da vueltas alrededor de tu cabeza y pita, es él.",
+      "lore": "Nació en una antena de Puerto Cometa. Capta todas las señales del universo y no entiende ninguna. Igual asiente.",
+      "balanceName": "Satélito"
+    },
+    {
+      "id": "c_tanquecito",
+      "name": "Tanquecito",
+      "epithet": "el que Huele a Cohete",
+      "art": {
+        "slug": "tanquecito_fuel_cat",
+        "tint": null,
+        "aura": [
+          "#ff6a1a",
+          "#ffd400",
+          "#7fd8ff"
+        ]
+      },
+      "elements": [
+        "fire"
+      ],
+      "rarity": "common",
+      "primordial": false,
+      "secret": false,
+      "role": "soporte",
+      "worker": "builder",
+      "trait": "gloton",
+      "battleForm": {
+        "name": "TANQUECITO — AFTERBURNER FORM",
+        "cry": "AFTERBURNER!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+        "powerBase": "balance:rarities.power_base.common",
+        "foodMult": "balance:rarities.food_mult.common",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.soporte.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Chispa de Escape",
+          "cry": null,
+          "archetype": "bola_rebote",
+          "element": "fire",
+          "dmg": 54,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 1,
+          "pierce": 0,
+          "status": "ardiendo",
+          "statusTurns": 1,
+          "gravityMul": 1.0,
+          "speedMul": 1.0,
+          "special": "Una chispa de motor que rebota una vez y deja Ardiendo 1 turno."
+        },
+        "ultimate": {
+          "name": "AFTERBURNER! (アフターバーナー)",
+          "effect": "Tres chispas de escape en abanico, cada una rebota 1 vez. Ardiendo 2.",
+          "dmg": 50,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Tanque lleno: huele a cohete. Los demás gatos lo siguen porque creen que va a la cocina.",
+        "star3": "★3: la chispa deja Ardiendo 2 turnos.",
+        "star5": "★5: +1 rebote."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Te lo presta Escafandra al pasar su examen (H51). Después: Resonancia con al menos un padre de Fuego (Común).",
+        "balanceSource": "resonance"
+      },
+      "hint": "Si en tu isla algo huele a gasolina y a galleta, es él.",
+      "lore": "Vivía dentro de un tanque de combustible astral. Salió cuando se acabó el combustible. Él dice que no fue su culpa. Fue su culpa.",
+      "balanceName": "Tanquecito"
+    },
+    {
+      "id": "r_escafandra",
+      "name": "Escafandra",
+      "epithet": "el del Casco de Pecera",
+      "art": {
+        "slug": "escafandra_fishbowl_cat",
+        "tint": null,
+        "aura": [
+          "#9fe8ff",
+          "#c0c8d8",
+          "#ff7ab8"
+        ]
+      },
+      "elements": [
+        "cosmic",
+        "earth"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "tanque",
+      "worker": "builder",
+      "trait": "presumido",
+      "battleForm": {
+        "name": "ESCAFANDRA — FISHBOWL FORM",
+        "cry": "FISHBOWL SLAM!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.tanque.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Llave Inglesa Orbital",
+          "cry": null,
+          "archetype": "roca",
+          "element": "earth",
+          "dmg": 64,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": null,
+          "statusTurns": 0,
+          "gravityMul": 1.0,
+          "speedMul": 1.0,
+          "special": "Una llave inglesa pesadísima que perfora 2 capas. Lo que no arregla, lo rompe."
+        },
+        "ultimate": {
+          "name": "FISHBOWL SLAM! (金魚鉢)",
+          "effect": "Una llave inglesa gigante cae del cielo justo donde apuntas y perfora 3 capas. Una vez por batalla.",
+          "dmg": 110,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Casco de pecera: el agua de su casco no se derrama ni en el vacío. Nadie sabe cómo. Él tampoco.",
+        "star3": "★3: la llave gigante explota 15% más grande.",
+        "star5": "★5: FISHBOWL SLAM! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia cuya unión incluya Cósmico y Tierra (después de Puerto Cometa, H50).",
+        "balanceSource": "resonance"
+      },
+      "hint": "Cósmico y Tierra en el Santuario. Y un casco que nunca se quita.",
+      "lore": "Dueño del Taller Cometa. Cobra en combustible, fía con lástima y dice que su casco de pecera es «por seguridad». El pez de adentro dice otra cosa.",
+      "balanceName": "Escafandra"
+    },
+    {
+      "id": "r_grafitera",
+      "name": "Grafitera",
+      "epithet": "la del Aerosol",
+      "art": {
+        "slug": "grafitera_spray_cat",
+        "tint": null,
+        "aura": [
+          "#ff2e88",
+          "#39ff14",
+          "#1f1f2e"
+        ]
+      },
+      "elements": [
+        "void",
+        "sound"
+      ],
+      "rarity": "rare",
+      "primordial": false,
+      "secret": false,
+      "role": "controlador",
+      "worker": null,
+      "trait": "travieso",
+      "battleForm": {
+        "name": "GRAFITERA — NEON TAG FORM",
+        "cry": "NEON TAG!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+        "powerBase": "balance:rarities.power_base.rare",
+        "foodMult": "balance:rarities.food_mult.rare",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.controlador.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Tag de Neón",
+          "cry": null,
+          "archetype": "onda",
+          "element": "sound",
+          "dmg": 58,
+          "radius": 1.0,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 4,
+          "status": "aturdido",
+          "statusTurns": 1,
+          "gravityMul": 1.0,
+          "speedMul": 1.0,
+          "special": "Un grafiti que suena: la onda atraviesa paredes, pinta todo lo que cruza y Aturde a cada gato cuyo camarote toca."
+        },
+        "ultimate": {
+          "name": "NEON TAG! (ネオンタグ)",
+          "effect": "Un grafiti gigante que cruza el barco de lado a lado: Aturde a cada gato cuyo camarote pinta.",
+          "dmg": 45,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Firma todo: el muelle, tu barco, tu gato. Pide permiso después. A veces.",
+        "star3": "★3: la onda cruza 2 celdas más.",
+        "star5": "★5: el grafiti deja Aturdido 1 turno más."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Se une al ganarle a los Disruptores (H55). Después: Resonancia cuya unión incluya Vacío y Sonido.",
+        "balanceSource": "resonance"
+      },
+      "hint": "Si un muro de tu isla amaneció pintado, ya sabes quién fue.",
+      "lore": "Disruptora de nacimiento: pinta puertas abiertas en las cajas cerradas. Dice que es arte. Los Correctores dicen que es vandalismo. Los dos tienen razón.",
+      "balanceName": "Grafitera"
+    },
+    {
+      "id": "e_brecha",
+      "name": "Brecha",
+      "epithet": "la Capitana Rompecajas",
+      "art": {
+        "slug": "brecha_crowbar_cat",
+        "tint": null,
+        "aura": [
+          "#ff2e88",
+          "#7fd8ff",
+          "#2a0a3a"
+        ]
+      },
+      "elements": [
+        "void",
+        "storm"
+      ],
+      "rarity": "epic",
+      "primordial": false,
+      "secret": false,
+      "role": "asediador",
+      "worker": null,
+      "trait": "bravucon",
+      "battleForm": {
+        "name": "BRECHA — BOX BREAKER FORM",
+        "cry": "BOX BREAKER!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+        "powerBase": "balance:rarities.power_base.epic",
+        "foodMult": "balance:rarities.food_mult.epic",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.asediador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Palanca de Grieta",
+          "cry": null,
+          "archetype": "borrado",
+          "element": "void",
+          "dmg": 68,
+          "radius": 1.0,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 2,
+          "status": "vacio",
+          "statusTurns": 1,
+          "gravityMul": 1.0,
+          "speedMul": 1.0,
+          "special": "Una palanca que abre grietas: atraviesa 2 celdas y las BORRA (no se reparan en esta batalla)."
+        },
+        "ultimate": {
+          "name": "BOX BREAKER! (箱壊し)",
+          "effect": "Tres palancas en abanico que abren grietas: cada una atraviesa 2 celdas y las BORRA. Una vez por batalla.",
+          "dmg": 50,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Rompecajas: le pega ×1.1 a todo lo que está cerrado. Que es casi todo.",
+        "star3": "★3: las palancas atraviesan 3 celdas.",
+        "star5": "★5: BOX BREAKER! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "resonance",
+        "how": "Resonancia cuya unión incluya Vacío y Tormenta (después de los Disruptores, H55).",
+        "balanceSource": "resonance"
+      },
+      "hint": "Una palanca, una grieta y alguien que no cree en las puertas.",
+      "lore": "Capitana de los Disruptores. Rompe cajas para que los mundos respiren. Nunca se ha preguntado qué pasa cuando un mundo respira de golpe.",
+      "balanceName": "Brecha"
+    },
+    {
+      "id": "l_jonas",
+      "name": "Jonás",
+      "epithet": "el que Vivía Adentro",
+      "art": {
+        "slug": "jonas_whale_cat",
+        "tint": null,
+        "aura": [
+          "#1f5f7a",
+          "#9fe0d4",
+          "#8a5cff"
+        ]
+      },
+      "elements": [
+        "water",
+        "cosmic"
+      ],
+      "rarity": "legendary",
+      "primordial": false,
+      "secret": false,
+      "role": "invocador",
+      "worker": null,
+      "trait": "perezoso",
+      "battleForm": {
+        "name": "JONÁS — WHALE SONG FORM",
+        "cry": "WHALE SONG!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+        "powerBase": "balance:rarities.power_base.legendary",
+        "foodMult": "balance:rarities.food_mult.legendary",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.invocador.hp",
+        "recarga": 0,
+        "shot": {
+          "name": "Chorro de Ballena",
+          "cry": null,
+          "archetype": "torpedo",
+          "element": "water",
+          "dmg": 72,
+          "radius": 1.4,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "mojado",
+          "statusTurns": 2,
+          "gravityMul": 1.0,
+          "speedMul": 1.0,
+          "special": "Un chorro que entra al agua y corre bajo la línea de flotación hasta el casco rival. Mojado 2."
+        },
+        "ultimate": {
+          "name": "WHALE SONG! (鯨の歌)",
+          "effect": "El mar canta: un remolino jala al agua los tiros rivales por 1 turno y su barco se inunda 20%. Luego su chorro.",
+          "dmg": 60,
+          "meterCost": 100,
+          "usesPerBattle": null,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Mil años adentro: no le hace nada estar Mojado. Al contrario.",
+        "star3": "★3: el remolino jala más fuerte.",
+        "star5": "★5: WHALE SONG! inunda 10% más."
+      },
+      "obtain": {
+        "source": "ruptura:H57",
+        "how": "Sale del Leviatán Invertido cuando lo liberas (H57). Duplicados: dos padres que compartan Agua o Cósmico, Nv25+ (después de tenerlo).",
+        "balanceSource": "ruptura:H57",
+        "minParentLevel": 25
+      },
+      "hint": "Algo vive dentro de algo muy grande. Libéralo y a lo mejor sale.",
+      "lore": "Vivió mil años dentro del Leviatán. Le puso cortinas, un huerto de algas y un nombre a cada costilla. Salió porque se le acabó el té.",
+      "balanceName": "Jonás"
+    },
+    {
+      "id": "s_platillo",
+      "name": "Platillo",
+      "epithet": "el Abducido",
+      "art": {
+        "slug": "platillo_saucer_cat",
+        "tint": null,
+        "aura": [
+          "#39ff14",
+          "#c0c8d8",
+          "#8a5cff"
+        ]
+      },
+      "elements": [
+        "cosmic",
+        "gravity"
+      ],
+      "rarity": "epic",
+      "primordial": false,
+      "secret": true,
+      "role": "invocador",
+      "worker": null,
+      "trait": "curioso",
+      "battleForm": {
+        "name": "PLATILLO — ABDUCTION FORM",
+        "cry": "ABDUCTION!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+        "powerBase": "balance:rarities.power_base.epic",
+        "foodMult": "balance:rarities.food_mult.epic",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.invocador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Rayo Tractor",
+          "cry": null,
+          "archetype": "orbe_gravitatorio",
+          "element": "cosmic",
+          "dmg": 62,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "ingravido",
+          "statusTurns": 2,
+          "gravityMul": 0.6,
+          "speedMul": 0.9,
+          "special": "Un rayo tractor en forma de orbe: lo que toca queda Ingrávido 2 turnos."
+        },
+        "ultimate": {
+          "name": "ABDUCTION! (誘拐)",
+          "effect": "Un platillo baja justo donde apuntas, levanta lo que toca (Ingrávido 2) y lo suelta de golpe: perfora 3 capas. Una vez por batalla.",
+          "dmg": 120,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.35
+        },
+        "limitation": null,
+        "passive": "Abducido: lo secuestraron unos extraterrestres y él los secuestró de vuelta. Ahora maneja él.",
+        "star3": "★3: el platillo explota 20% más grande.",
+        "star5": "★5: ABDUCTION! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "secret",
+        "how": "Resonancia: los padres tienen que juntar Cósmico y Gravedad entre los dos, ambos Nv25+ → sale en la fila ??? de la tabla."
+      },
+      "hint": "Algo que pesa y algo que viene de muy lejos. Junta Cósmico y Gravedad en el Santuario… y que los dos ya sean grandes.",
+      "lore": "Lo abdujeron unos extraterrestres por error: buscaban a una vaca. Se quedó con la nave, con el rayo y con la vaca.",
+      "balanceName": "Platillo"
+    }
+  ],
+  "secretRecipes": [
+    {
+      "cat": "s_platillo",
+      "condition": "Unión de padres cubre Cósmico y Gravedad; ambos Nv25+.",
+      "bucket": "secret",
+      "altRoute": ""
+    }
+  ]
+}

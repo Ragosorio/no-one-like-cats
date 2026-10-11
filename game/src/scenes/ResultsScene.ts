@@ -51,6 +51,8 @@ const DISCOVERY_CAPTION: Record<string, string> = {
   storm: 'La tormenta ya no es de la Gárgola. Ahora ronronea para ti. Y hace ruido.',
   // Parte II · Oleada 1 (normally revealed by storyFlow after Isla Nácar; same line if it ever comes from Results)
   crystal: 'Ganaste en Isla Nácar y el nácar te eligió. Ahora todo lo que te disparen puede rebotar. Y todo lo que tú dispares, también.',
+  // Parte II · Oleada 2 (normally revealed by storyFlow after the Islas Invertidas; same line if it ever comes from Results)
+  gravity: 'Ganaste de cabeza en las Islas Invertidas y el peso del cielo se vino contigo. Ahora tú decides para dónde es abajo.',
 };
 
 function pick<T>(a: T[]): T {

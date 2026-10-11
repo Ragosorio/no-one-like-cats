@@ -17,6 +17,7 @@ const WATER_Y = 760;
 
 /** Temporary playground to validate ship destruction feel. */
 export class BattleSandbox extends Scene {
+  readonly isBattle = true;
   world = new Container();
   sea = new Sea(WATER_Y);
   shipsLayer = new Container();

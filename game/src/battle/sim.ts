@@ -20,10 +20,25 @@ import { crBeginFire, crFacet, crImpact, crReact, crRefract, crShards, crStartTu
 // H34 «Shhh»: the Bibliotecario hates noise — Sonido ×2, RUIDO, ¡SHHHH! (rules in ruido.ts)
 import { nzAtkMul, nzBeginFire, nzImpact, nzStartTurn } from './ruido';
 import type { NoiseCfg } from './ruido';
+// Parte II · Oleada 2: Gravedad — FLOTANDO / ¡AL VACÍO! / POZO (rules in gravedad.ts) · the sky layer (cielo.ts)
+import { GR_TUNE, grAfterImpact, grBeginFire } from './gravedad';
+import { skyAtkMul, skyFlight, skyInit, skyIsletImpact, skyStartTurn } from './cielo';
+import type { SkyCfg } from './cielo';
+// Parte II · Oleada 3: FASES — multi-phase environments (gravity, wind, planetoids, rifts) switched at HP/turn thresholds
+import { fasesCheck, fasesFlight, fasesImpact, fasesInit, fasesStartTurn } from './fases';
+import type { FasesCfg } from './fases';
+// Parte II · Oleada 4: H58 dream rules drawn by phase (suenos.ts) · the Correctores / the Umbral's phase mechanics (umbral.ts)
+import { dreamAtkMul, dreamCannon, dreamFlight, dreamStartTurn } from './suenos';
+import type { DreamCfg } from './suenos';
+import { umAfterFire, umAtkMul, umStartTurn } from './umbral';
+import type { UmbralCfg } from './umbral';
 import { lateBossInit, lateBossStart, lateEnterPhase, wardIntercept, lateCellMul, lateAfterImpact, lateLoss, lateSplash, tickBuffs } from './bossLate';
 import { ULTS, ultBudgetFrac, ultTicks } from './ults';
 import { cataInit, cataStart, cataCrack, sealOpen } from './cataclysm';
 import type { CataCfg, CataId, CataState } from './cataclysm';
+// Parte II · Oleada 3: SINCRO — an explicit player input, never the music itself (rules in sincro.ts)
+import { scAfterFire, scBeginFire } from './sincro';
+import type { FireInput } from './sincro';
 
 export interface PathPoint {
   x: number;
@@ -91,7 +106,10 @@ export type BossWhat =
   | 'immune' // hit on a sleeping core
   | 'finale' // the last core fell: STARFALL
   // ---- Parte II
-  | 'shhh'; // H34: RUIDO 3/3, the Bibliotecario wakes up furious (n = times; ruido.ts)
+  | 'shhh' // H34: RUIDO 3/3, the Bibliotecario wakes up furious (n = times; ruido.ts)
+  | 'fase' // Oleada 3+: a phased battle entered phase n (amount = the phase it left; fases.ts)
+  | 'sueno' // Oleada 4 H58: a new dream rule (n = dream phase; suenos.ts)
+  | 'umbral'; // Oleada 4: the Correctores' / the Umbral phase's rules start (n = phase; umbral.ts)
 
 export type BattleEvent =
   | {
@@ -202,6 +220,14 @@ export interface StageRules {
   cataclysm?: CataCfg;
   /** H34 «Shhh»: this side hates noise — Sonido hits its ship ×2; 3 hits wake it furious (ruido.ts) */
   noise?: NoiseCfg;
+  /** Parte II · Oleada 2: a battle in the SKY — gravity ×0.7, layered wind, islets, falling into the void (cielo.ts) */
+  sky?: SkyCfg;
+  /** Parte II · Oleada 3+: FASES — the environment changes by phase (astral 0.25, the Leviatán's sea → sky → rift; fases.ts) */
+  fases?: FasesCfg;
+  /** Parte II · Oleada 4 H58: DREAM RULES — a rule drawn every few rounds from who sleeps on your island (suenos.ts) */
+  dream?: DreamCfg;
+  /** Parte II · Oleada 4: CORRECCIÓN / TACHÓN and the Umbral's phase mechanics, by fase (umbral.ts) */
+  umbral?: UmbralCfg;
 }
 
 export interface BattleConfig {
@@ -473,6 +499,8 @@ export class Battle {
     this.sides = cfg.sides.map((s, i) => this.mkSide(s, i as 0 | 1)) as [SideState, SideState];
     if (cfg.boss) this.initBoss(cfg.boss);
     if (cfg.rules?.cataclysm) cataInit(this, cfg.rules.cataclysm);
+    if (cfg.rules?.sky) skyInit(this, cfg.rules.sky);
+    if (cfg.rules?.fases) fasesInit(this, cfg.rules.fases);
   }
 
   private mkSide(s: SideSetup, side: 0 | 1): SideState {
@@ -735,6 +763,10 @@ export class Battle {
     p2StartTurn(this, side, ev);
     crStartTurn(this, side);
     nzStartTurn(this, side, ev);
+    skyStartTurn(this, side, ev);
+    fasesStartTurn(this, side, ev);
+    dreamStartTurn(this, side, ev);
+    umStartTurn(this, side, ev);
     for (const m of ship.modules) if (m.disabled > 0) m.disabled--;
     s.rodUsed = false;
     // bubble regenerates at the start of its owner's turn
@@ -807,6 +839,7 @@ export class Battle {
     this.bossAtStart(side, ev);
     this.checkVictory();
     ev.push(...this.updatePhase());
+    ev.push(...fasesCheck(this));
     return ev;
   }
 
@@ -1146,7 +1179,7 @@ export class Battle {
   /**
    * Resolve a shot. shooter: cat uid or 'cannon'. Returns paths for the view and ordered events.
    */
-  fire(side: 0 | 1, shooter: string, angle: number, power: number, ult = false, cannonId?: number): { paths: ShotPath[]; events: BattleEvent[]; shot: ShotDef; atk: number } {
+  fire(side: 0 | 1, shooter: string, angle: number, power: number, ult = false, cannonId?: number, input?: FireInput): { paths: ShotPath[]; events: BattleEvent[]; shot: ShotDef; atk: number } {
     const s = this.sides[side];
     let shot: ShotDef = NEUTRAL_SHOT;
     let atk = s.setup.cannonAtk;
@@ -1154,6 +1187,8 @@ export class Battle {
     let origin: PathPoint | null = null;
     if (shooter === 'cannon' && cannonId !== undefined) {
       shot = this.cannonShot(side, cannonId);
+      // H58 dream: the cannons fire fish (suenos.ts)
+      shot = dreamCannon(this, shot);
       const powder = s.ship.modules.some((m) => m.kind === 'powder' && m.alive);
       atk = s.setup.cannonAtk * (powder ? 1.25 : 1);
       if (shot.id === 'starbreaker') this.usedOnce.add(`${side}:${cannonId}`);
@@ -1173,6 +1208,10 @@ export class Battle {
     if (this.boss?.enraged && this.cfg.boss?.side === side) atk *= ENRAGE_MUL;
     // H34: the Bibliotecario's furious turn (RUIDO 3/3) hits ×1.5 — cats and the volley
     atk *= nzAtkMul(this, side);
+    // H46: the cat the Correctors came to «correct» hits harder (its impatience is the point)
+    if (cat) atk *= skyAtkMul(this, side, cat.def.catId);
+    // Oleada 4: the dreamed element ×1.3 (suenos.ts) · TACHÓN / CAOS / the boss in earnest (umbral.ts)
+    atk *= dreamAtkMul(this, side, shot) * umAtkMul(this, side, shot);
     const events: BattleEvent[] = [];
     // Eclipse: the next cat shot of this side hits ×2
     if (cat && s.buffs.empower > 0) {
@@ -1183,6 +1222,8 @@ export class Battle {
     p2BeginFire(this);
     crBeginFire(this);
     nzBeginFire(this);
+    grBeginFire(this);
+    scBeginFire(this, side, cat, input);
     // INESTABLE (limitation): the shot wobbles a little, for whoever owns the cat
     if (cat?.def.limitation === 'unstable') angle += this.rng.range(-0.06, 0.06);
     const windNow = this.wind + this.sides[side].windNext;
@@ -1203,6 +1244,8 @@ export class Battle {
       paths = this.buildPaths(shot, origin, angle, power, windNow, side);
       this.resolvePaths(side, shot, atk, paths, events);
     }
+    scAfterFire(this, side, shot, atk, events);
+    umAfterFire(this, side, shot, events);
     this.budget = null;
     this.curShooter = null;
     // post: shooter bookkeeping
@@ -1226,6 +1269,7 @@ export class Battle {
     if (cat && this.winner === null && events.some((e) => hurtsSide(e, 1 - side))) this.lastBlow[side] = cat.def.uid;
     this.checkVictory();
     events.push(...this.updatePhase());
+    events.push(...fasesCheck(this));
     // late-boss events raised while resolving (core switch…) show with this shot
     if (this.pending.length) events.push(...this.pending.splice(0));
     return { paths, events, shot, atk };
@@ -1318,13 +1362,19 @@ export class Battle {
     // a cataclysm's SEAL: the suffering side's shots crack it by flying through (recorded once per path)
     const seal = this.cata && sealOpen(this, side) ? this.cata.seal : null;
     let sealAt: number | undefined;
+    // the sky (cielo.ts): wind by altitude band and the floating islets (null in every other battle)
+    const sky = skyFlight(this, side, traj);
+    // FASES (fases.ts): the phase's wind multiplier and its bodies (planetoids, cloud banks)
+    const fz = fasesFlight(this, side, traj);
+    // H58 dream «EL AGUA ES SUELO» (suenos.ts): the sea is a floor for one bounce (null otherwise)
+    const dz = dreamFlight(this, side, traj);
     const done = (): ShotPath => ({ points: pts, element: shot.element, kind: traj, impacts, owners, jumps: jumps.length ? jumps : undefined, seal: sealAt });
     for (let step = 0; step < 900; step++) {
       const sub = Math.max(1, Math.ceil((Math.hypot(vx, vy) * DT) / 8));
       const sdt = DT / sub;
       for (let k = 0; k < sub; k++) {
         if (!torpedo) {
-          vx += wind * windK * sdt;
+          vx += wind * windK * (sky ? sky.windAt(y) : 1) * (fz ? fz.windMul : 1) * sdt;
           let gm = field.gMul * field.tideMul;
           const an = field.anti;
           if (an && x >= an.x0 && x <= an.x1 && y >= an.y0) gm = an.k;
@@ -1389,6 +1439,19 @@ export class Battle {
           y = this.waterY + 20;
           vx = Math.sign(vx || 1) * 760;
           vy = 0;
+        }
+        if (dz && !torpedo && vy > 0 && y >= this.waterY - 4 && dz.floor()) {
+          y = this.waterY - 4;
+          vy = -Math.abs(vy) * dz.bounce[0];
+          vx *= dz.bounce[1];
+          pts.push({ x, y });
+        }
+        // the sky's floating islets stop every projectile (Sonido's wave and Vacío's phase go through)
+        if ((sky && sky.islet(x, y)) || (fz && fz.body(x, y))) {
+          pts.push({ x, y });
+          impacts.push(pts.length - 1);
+          owners.push(owner);
+          return done();
         }
         // boss parts (tentacles, open eye, flying gargoyle, ink cats, Distraxia) stop the projectile
         if (anyParts && this.partAt(x, y, 1 - owner)) {
@@ -1463,6 +1526,10 @@ export class Battle {
 
   // ---------- damage resolution
   resolveImpact(attSide: number, shot: ShotDef, atk: number, x: number, y: number, ev: BattleEvent[], path: number, at: number, final: boolean) {
+    // the sky: a floating islet took this one (cielo.ts)
+    if (skyIsletImpact(this, attSide, shot, atk, x, y, ev, path, at)) return;
+    // FASES: a planetoid / cloud bank took this one, or a hull shield absorbed it (fases.ts)
+    if (fasesImpact(this, attSide, shot, atk, x, y, ev, path, at)) return;
     const hit = this.cellAt(x, y);
     const hitPart = this.partAt(x, y, 1 - attSide, 2);
     const targetSide = hit ? hit.side : hitPart ? hitPart.side : x > 960 ? 1 : 0;
@@ -1625,6 +1692,8 @@ export class Battle {
       }
       mult *= r.mult;
       if (st.cursed) mult *= 1.5;
+      // Gravedad: a FLOTANDO cell has nothing to brace against (gravedad.ts GR_TUNE.floatMul)
+      if (st.grav && a.side !== attSide) mult *= GR_TUNE.floatMul;
       if (st.charged && isRayo(shot)) mult *= 1.25;
       mult = clampMul(mult);
       // Gárgola: stone skin halves everything except Tierra and Estallido
@@ -1722,6 +1791,8 @@ export class Battle {
     p2Impact(this, { attSide, targetSide, shot, base, x, y, radius, final, total, path, at, catK: CAT_K, hitCat: (c, d, e, p, a, el, direct, chained) => this.hitCat(c, d, e, p, a, el, direct, chained) }, ev);
     // Parte II: a Cristal cat shot that landed raises a facet on its own ship
     crImpact(this, attSide, targetSide, shot, final, ev, path, at);
+    // Parte II · Oleada 2: a broken module falls off (¡AL AGUA! / ¡AL VACÍO!) and a Gravedad cat shot opens a POZO
+    if (foe) total += grAfterImpact(this, attSide, targetSide, shot, final, affected.filter((a) => a.side === targetSide).map((a) => a.c), x, y, ev, path, at);
     ev.push({ k: 'impact', x, y, side: targetSide, radius, element: shot.element, crit, path, at, total, mul: foe ? mainMul : undefined, mat: foe ? firstMat : undefined });
     for (let side = 0; side < 2; side++) {
       const chunks = this.sides[side].ship.collapse();

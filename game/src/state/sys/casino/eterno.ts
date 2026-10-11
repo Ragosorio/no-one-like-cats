@@ -47,6 +47,26 @@ export const ETERNO = {
 export const AT_RISK = ['gold', 'gems', 'food', 'tickets', 'chips'] as const;
 export type EternoField = (typeof AT_RISK)[number];
 export const AT_RISK_NAME: Record<EternoField, string> = { gold: 'Oro', gems: 'Gemas', food: 'Pescaditos', tickets: 'Boletos', chips: 'Fichas' };
+/**
+ * Other SOFT resources a later system puts at stake too (Parte II · Oleada 3: Combustible Astral, bible §11): ×2 on a
+ * win, 0 on a loss, exactly like the five above. Registered by their own module; cats, forms, Nácar and Tinta never.
+ */
+export interface EternoExtra {
+  key: string;
+  name: string;
+  get(): number;
+  set(v: number): void;
+}
+export const ETERNO_EXTRA: EternoExtra[] = [];
+/** the extras the player actually holds right now (the confirmation lists them) */
+export function extraAtRisk(): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const x of ETERNO_EXTRA) {
+    const v = x.get();
+    if (v > 0) out[x.key] = v;
+  }
+  return out;
+}
 
 export interface EternoSession {
   id: string;
@@ -75,6 +95,8 @@ export interface EternoRecord {
   after?: Record<EternoField, number>;
   /** the botín at the explosion (added on a win, gone on a loss) */
   pot?: { cur: EternoField; amount: number; doublings: number };
+  /** ETERNO_EXTRA balances: before the draw (win: they doubled · loss: they went to 0) */
+  extra?: Record<string, number>;
 }
 export interface EternoState {
   open?: EternoSession | null;
@@ -247,6 +269,9 @@ export function resolveEterno(id: string, roll: number): EternoResolution | null
       const d = rec.after[k] - before[k];
       if (d) G.emit('res', { key: k, delta: d, source: 'eterno' });
     }
+    const ex = extraAtRisk();
+    if (Object.keys(ex).length) rec.extra = ex;
+    for (const x of ETERNO_EXTRA) if (ex[x.key]) x.set(ex[x.key] * m);
     rec.prize = grantPrize(eternoPrize());
   } else {
     e.losses++;
@@ -259,6 +284,9 @@ export function resolveEterno(id: string, roll: number): EternoResolution | null
     c.tickets = 0;
     c.chips = 0;
     for (const k of AT_RISK) if (lost[k]) G.emit('res', { key: k, delta: -lost[k], source: 'eterno' });
+    const ex = extraAtRisk();
+    if (Object.keys(ex).length) rec.extra = ex;
+    for (const x of ETERNO_EXTRA) if (ex[x.key]) x.set(0);
   }
   G.save();
   return { record: rec, applied: true };

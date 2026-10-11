@@ -100,6 +100,8 @@ const SHOT_STATUS: Record<string, StatusId> = {
   vacio: 'crack',
   // Parte II · Cristal: the prism leaves a crack in the guard
   prisma: 'crack',
+  // Parte II · Gravedad: floating, it can't brace
+  flotando: 'crack',
 };
 
 const SHOT_KIND: Record<string, PowerKind> = {
@@ -150,6 +152,8 @@ const TECH: Record<string, TechDef> = {
   void: { name: 'NULL BITE! (虚無)', cry: '…', mult: 1.4, kind: 'crush', erase: true, desc: 'Se come su escudo y le BORRA 8% de la vida máxima. Para siempre.' },
   // Parte II · Oleada 1
   crystal: { name: 'PRISM SHARD! (分光)', cry: '¡MÍRATE, PERO DE LADO!', mult: 1.4, kind: 'beam', status: { id: 'crack', turns: 2, chance: 0.6 }, desc: 'Una esquirla de nácar refractada: puede dejarlo QUEBRADO (recibe +30%).' },
+  // Parte II · Oleada 2
+  gravity: { name: 'GRAVITY DROP! (重力落とし)', cry: '¡AL SUELO… O AL TECHO!', mult: 1.4, kind: 'crush', status: { id: 'stun', turns: 1, chance: 0.35 }, desc: 'Le cambia para dónde es abajo: lo estrella y puede ATURDIRLO.' },
 };
 
 interface StyleDef {
@@ -177,7 +181,7 @@ const STYLE: Record<string, StyleDef> = {
 
 /** status an element applies when a power needs "its element's status" */
 export function elementStatus(el: string): StatusId {
-  return ({ fire: 'burn', water: 'soak', nature: 'root', earth: 'crack', storm: 'shock', magic: 'curse', cosmic: 'crack', ice: 'freeze', light: 'blind', shadow: 'curse', sound: 'shock', time: 'crack', void: 'crack', crystal: 'crack' } as Record<string, StatusId>)[el] ?? 'burn';
+  return ({ fire: 'burn', water: 'soak', nature: 'root', earth: 'crack', storm: 'shock', magic: 'curse', cosmic: 'crack', ice: 'freeze', light: 'blind', shadow: 'curse', sound: 'shock', time: 'crack', void: 'crack', crystal: 'crack', gravity: 'stun' } as Record<string, StatusId>)[el] ?? 'burn';
 }
 
 /** the 4 power cards of a species */
@@ -239,6 +243,8 @@ const SIGNATURE: Record<string, Partial<PowerDef> & { desc: string }> = {
   l_cronos: { kind: 'ult', mult: 1.9, rewind: true, status: { id: 'stun', turns: 1, chance: 1 }, desc: 'TIME STOP: pierde su próximo turno, y Cronos se cura la mitad de lo que pega.' },
   // Parte II · Oleada 1: the Cristal primordial
   l_madrenacar: { kind: 'orb', mult: 1.9, selfShield: 0.3, status: { id: 'crack', turns: 2, chance: 1 }, desc: 'Lo encierra en nácar (QUEBRADO 2 turnos) y levanta una faceta: escudo de 30% de su vida.' },
+  // Parte II · Oleada 2: the Gravedad primordial
+  l_masamadre: { kind: 'crush', mult: 2.0, drain: 0.5, status: { id: 'stun', turns: 1, chance: 0.6 }, desc: 'Todo cae hacia ella: lo aplasta, le roba media barra de ULTI y puede ATURDIRLO.' },
 };
 
 function ult(d: CatDef): PowerDef {

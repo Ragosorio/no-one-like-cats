@@ -51,8 +51,11 @@ import { MkTab, MK_ROWS } from './shipyard/MkTab';
 import { WeaponsTab } from './shipyard/WeaponsTab';
 import { GearTab } from './shipyard/GearTab';
 import type { TrialReport } from './shipyard/trial';
+// Parte II · Oleada 2: VUELO — the Kit de Vuelo turns your ship into an aerobarco (state/sys/rupturasO2.ts)
+import { FlightTab } from './shipyard/FlightTab';
+import { flightKitAvailable, flightKitLevel, kitShips } from '../state/sys/rupturasO2';
 
-type TabId = 'mk' | 'weapons' | 'gear';
+type TabId = 'mk' | 'weapons' | 'gear' | 'flight';
 export interface ShipyardOpts {
   tab?: TabId;
   /** cannon slot to preselect in ARMAS */
@@ -97,6 +100,7 @@ class ShipyardPanel {
   private slot = 0;
   private mkTab: MkTab | null = null;
   private weaponsTab: WeaponsTab | null = null;
+  private flightTab: FlightTab | null = null;
   private resTexts: Text[] = [];
   private sig = '';
   private acc = 0;
@@ -310,17 +314,22 @@ class ShipyardPanel {
       ['weapons', 'ARMAS'],
       ['gear', 'EQUIPO'],
     ];
-    const tw = (RW - 16) / 3;
+    // the VUELO tab exists once Corona Celeste offered the kit (H43): Part I saves never see it
+    if (flightKitAvailable()) tabs.push(['flight', 'VUELO']);
+    else if (this.tab === 'flight') this.tab = 'mk';
+    const tw = (RW - 8 * (tabs.length - 1)) / tabs.length;
     tabs.forEach(([id, name], i) => {
       const c = new Container();
       c.position.set(i * (tw + 8), 0);
       const on = id === this.tab;
       c.addChild(new Graphics().rect(5, 5, tw, 50).fill(C.ink).rect(0, on ? -4 : 0, tw, on ? 54 : 50).fill(on ? C.ink : C.paper).stroke({ width: 3, color: C.ink }));
-      const t = txt(name, { fontFamily: F.poster, fontSize: 26, fill: on ? C.paper : C.ink });
+      const t = txt(name, { fontFamily: F.poster, fontSize: tabs.length > 3 ? 22 : 26, fill: on ? C.paper : C.ink });
+      if (t.width > tw - 12) t.scale.set((tw - 12) / t.width);
       t.anchor.set(0.5);
       t.position.set(tw / 2, 24);
       c.addChild(t);
-      const badge = id === 'gear' ? newGearCount() : id === 'mk' ? MK_ROWS.filter((f) => canUpgrade(f).ok).length : 0;
+      // VUELO: a dot while the kit is offered and no ship carries it yet (H43)
+      const badge = id === 'gear' ? newGearCount() : id === 'mk' ? MK_ROWS.filter((f) => canUpgrade(f).ok).length : id === 'flight' ? (kitShips().length ? 0 : 1) : 0;
       if (badge > 0) {
         const bg = new Graphics().circle(tw - 12, 4, 13).fill(id === 'gear' ? C.pinkHot : C.green).stroke({ width: 2.5, color: C.ink });
         const bt = txt(String(badge), { fontFamily: F.poster, fontSize: 16, fill: C.paper });
@@ -351,7 +360,12 @@ class ShipyardPanel {
     clearChildren(this.tabBody);
     this.mkTab = null;
     this.weaponsTab = null;
-    if (this.tab === 'mk') {
+    this.flightTab = null;
+    if (this.tab === 'flight') {
+      // the live refresh (tick → signature) rebuilds tabs, fleet and plan a moment later: the badge goes away too
+      this.flightTab = new FlightTab(RW, () => this.buildPower());
+      this.tabBody.addChild(this.flightTab);
+    } else if (this.tab === 'mk') {
       this.mkTab = new MkTab(RW, 150, (f, at) => this.doUpgrade(f, at));
       this.tabBody.addChild(this.mkTab);
     } else if (this.tab === 'weapons') {
@@ -498,12 +512,15 @@ class ShipyardPanel {
       equippedArtifacts(G.s.ship.active).join(','),
       layoutSig(layoutOf()),
       G.s.campaign.bossesDefeated,
+      // VUELO: offered / which ships fly / level
+      `${flightKitAvailable() ? 1 : 0}:${kitShips().join(',')}:${flightKitLevel()}`,
     ].join('|');
   }
 
   private tick(t: Ticker) {
     if (this.m.closed) return;
     this.mkTab?.tick(t.deltaMS);
+    this.flightTab?.tick(t.deltaMS);
     this.acc += t.deltaMS;
     if (this.acc < 300) return;
     this.acc = 0;

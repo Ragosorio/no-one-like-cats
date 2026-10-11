@@ -39,6 +39,13 @@ export const folioRevealed = () => done('H32');
 /** the counters H31 / H32 read (use_feature → `feature_<feature>`) */
 export function tapFaro() {
   G.count('feature_faro');
+  for (const f of [...faroTaps]) f();
+}
+/** later waves react to the faro being tapped (Oleada 4: H64's page waits there) */
+const faroTaps = new Set<() => void>();
+export function onFaroTap(fn: () => void) {
+  faroTaps.add(fn);
+  return () => void faroTaps.delete(fn);
 }
 export function openRegistro000() {
   G.count('feature_registro000');
@@ -57,6 +64,10 @@ export const nacarHazOk = () => G.has(NACAR_HAZ_FLAG) || (G.s.counters.feature_h
 
 /** region activities (use_feature) → the island they happen on; entering an island emits `feature_region_<id>` */
 const FEATURE_REGION: Record<string, RegionId> = { pagina_canelo: 'paginas', haz_nacar: 'nacar' };
+/** later waves add their region activities (rupturasO4: olvidada, distraxia) */
+export function registerFeatureRegion(feature: string, region: RegionId) {
+  FEATURE_REGION[feature] = region;
+}
 function featureRegion(feature: unknown): RegionId | null {
   const f = String(feature ?? '');
   if (f in FEATURE_REGION) return FEATURE_REGION[f];
@@ -151,6 +162,8 @@ interface RupturaSpec {
   intro: string[];
   color: number;
   reward: StoryBattleDef['reward'];
+  /** difficulty band (state/sys/storyScale.ts); default historia */
+  band?: StoryBattleDef['band'];
 }
 /**
  * Tuning: grieta-like (zone 6, a cataclysm every 3 turns at power 4) with a ×3 hull so the fight lasts.
@@ -174,7 +187,8 @@ export const RUPTURA_SPECS: RupturaSpec[] = [
     archetype: 'biblioteca',
     enemyCats: ['e_archivista', 'r_tintero', 'c_marcapaginas', 'c_marcapaginas'],
     // the opener: at ×1.1–1.15 an early shot to your core lost ~1 in 6
-    powerMul: 1.05,
+    // BALANCE DE JEFES (doc 27): with its 4th cat aboard (catrooms) ×1.05 → ×1.1
+    powerMul: 1.1,
     hpMulX: 3,
     cata: 'tide',
     by: 'LA MAREA DE TINTA',
@@ -199,7 +213,20 @@ export const RUPTURA_SPECS: RupturaSpec[] = [
     // ODIA EL RUIDO (battle/ruido.ts): Sonido ×2 on his ship; 3 hits of Sonido wake him furious (his next turn ×1.5).
     // Post-finale sims (16 seeds × aim normal/hard): 31/32 without a Sonido cat · 31/32 and 32/32 with Headliner aboard
     // (¡SHHHH! ~0.3 times per fight). docs/part-ii/15-balance-cristal.md §5
-    rules: { noise: { side: 1 } },
+    // MOMENTO: when_i_lose (H35, phase change) — TWO PHASES that are PRESENTATION ONLY (battle/fases.ts): no
+    // environment, no effects, no rule changes — the WHEN I LOSE «Momento musical» (src/momentos/songs/whenILose,
+    // docs/part-ii/29 §14) plays between them through the FASES interlude hook, and the fight resumes in its final
+    // phase. tests/momentosWIL.test.ts: the same seeds give the same fight, turn by turn, with and without the split.
+    rules: {
+      noise: { side: 1 },
+      fases: {
+        side: 1,
+        phases: [
+          { id: 'sala', name: 'La Sala de Lectura', banner: false },
+          { id: 'memoria', name: 'La memoria del Archivo', at: { hp: 0.4, turn: 4 }, banner: false },
+        ],
+      },
+    },
     intro: [
       'Odia el ruido: tus tiros de {sound} Sonido le pegan ×2 a su barco.',
       'Cada golpe de {sound} suma RUIDO. Con 3 grita ¡SHHHH! y su turno pega ×1.5.',
@@ -236,7 +263,8 @@ export const RUPTURA_SPECS: RupturaSpec[] = [
     line: 'Ya te vi ganar esta pelea. Y perderla. Veamos cuál toca hoy.',
     archetype: 'observatorio',
     enemyCats: ['l_madrenacar', 'e_prismarina', 'r_espejito', 'r_facetas'],
-    powerMul: 1.3,
+    // BALANCE DE JEFES (doc 27): with her whole court aboard (Facetas used to miss the 3-room observatorio) ×1.3 → ×1.4
+    powerMul: 1.4,
     hpMulX: 3,
     cata: 'meteors',
     by: 'MADRE NÁCAR',
@@ -289,6 +317,7 @@ for (const s of RUPTURA_SPECS) {
     intro: [...s.intro, `${poderDe(s.by)}: ${CATA_INFO[s.cata].name} cada 3 turnos · TÍRALE A SU SELLO`],
     color: s.color,
     reward: s.reward,
+    band: s.band ?? 'historia',
   };
   STORY_BATTLES[def.id] = def;
 }

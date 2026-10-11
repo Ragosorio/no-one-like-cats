@@ -43,6 +43,14 @@ export interface RegionBuild {
   pois: POI[];
   update?(dt: number, t: number): void;
   dispose?(): void;
+  /** what this island lends a CINE scene played on it (regions/cineStage.ts): named camera points, its own
+   *  flourishes (return null = handled, undefined = not mine) and named parameters to drive (0..1) */
+  cine?: {
+    points?: Record<string, THREE.Vector3>;
+    fx?(cmd: import('../cine/types').FxCmd, ctx: import('../cine/types').CineCtx): (() => void) | null | undefined;
+    drive?(id: string, k: number, ctx: import('../cine/types').CineCtx): void;
+    driveGet?(id: string): number | undefined;
+  };
 }
 
 export interface CinematicShot {
@@ -80,5 +88,7 @@ export interface RegionDef {
   weather?: 'despejado' | 'lluvia' | 'tormenta';
   /** a camera script that ends by returning to the island (no HUD but SALTAR) */
   cinematic?: { shots: CinematicShot[]; duration: number };
+  /** the whole visit IS a CINE scene (src/cine/scenes): it plays on arrival and brings you home when it ends */
+  cine?: string;
   build(ctx: RegionCtx): Promise<RegionBuild>;
 }

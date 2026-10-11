@@ -17,8 +17,9 @@ export const STATUS_TINT: Partial<Record<StatusId, number>> = {
   voided: 0x9a88b8,
   steam: 0xf2f2f2,
   prism: 0xe6e0ff,
+  grav: 0xc9d6ff,
 };
-const TINT_ORDER: StatusId[] = ['frozen', 'burning', 'charged', 'voided', 'wet', 'cursed', 'rooted', 'steam', 'prism'];
+const TINT_ORDER: StatusId[] = ['frozen', 'burning', 'charged', 'voided', 'wet', 'cursed', 'rooted', 'steam', 'prism', 'grav'];
 
 export function statusTint(st: Partial<Record<StatusId, number>>): number {
   for (const k of TINT_ORDER) if (st[k]) return STATUS_TINT[k] ?? 0xffffff;
@@ -185,6 +186,22 @@ export class CellStatusFx extends Container {
         const gy = (hash(s, f, 80 + i) - 0.5) * 28;
         const r = 3.5 + hash(s, f, 90 + i) * 3;
         g.poly([gx, gy - r * 1.4, gx + r, gy, gx, gy + r * 1.4, gx - r, gy]).fill(cols[(f + i) % 4]).stroke({ width: 1.4, color: ink });
+      }
+    }
+    if (this.kinds.has('grav')) {
+      // Gravedad: a pale pebble and a tiny brass plumb bob drift UPWARD over the cell (stepped, on the 12 fps beat)
+      for (let i = 0; i < 2; i++) {
+        const ph = (frame / 18 + i * 0.5 + hash(s, i, 100) * 0.3) % 1;
+        const px = (-9 + i * 17 + (hash(s, i, 110) - 0.5) * 6) * k;
+        const py = 16 - ph * 40;
+        const a = Math.min(1, (1 - ph) * 3, ph * 5);
+        if (i === 0) {
+          g.ellipse(px, py, 4.2, 3.2).fill({ color: 0xe9f0ff, alpha: a }).stroke({ width: 1.4, color: ink, alpha: a });
+          g.moveTo(px - 2, py + 6).lineTo(px - 2, py + 10).moveTo(px + 2, py + 6).lineTo(px + 2, py + 9).stroke({ width: 1.2, color: 0xe9f0ff, alpha: a * 0.7 });
+        } else {
+          g.moveTo(px, py - 9).lineTo(px, py - 4).stroke({ width: 1.2, color: ink, alpha: a });
+          g.poly([px - 4, py - 3, px + 4, py - 3, px, py + 6]).fill({ color: 0xf0b44c, alpha: a }).stroke({ width: 1.4, color: ink, alpha: a, join: 'round' });
+        }
       }
     }
     if (this.kinds.has('steam')) {

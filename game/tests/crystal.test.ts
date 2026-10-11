@@ -117,7 +117,8 @@ describe('affinity: Cristal enters the matrix balanced', () => {
     const strong = els.filter((d) => affinityMult('crystal', d) > 1);
     const weak = els.filter((a) => affinityMult(a, 'crystal') > 1);
     expect(strong.sort()).toEqual(['light', 'sound']);
-    expect(weak.sort()).toEqual(['earth', 'nature']);
+    // Oleada 2: Gravedad is strong against Cristal too (05 §6), with the ×0.75 way back
+    expect(weak.sort()).toEqual(['earth', 'gravity', 'nature']);
     for (const a of els)
       for (const d of els) {
         if (affinityMult(a, d) !== 1.5) continue;

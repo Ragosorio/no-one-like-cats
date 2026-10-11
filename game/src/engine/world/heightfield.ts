@@ -36,6 +36,8 @@ export class Heightfield {
   private wetU = { value: 0 };
   /** 0..1: PAGE lens (flat Part I map look) */
   private pageU = { value: 0 };
+  /** world y under which the ground is not drawn (sky-layer regions: floating islands, no sea floor) */
+  private cutU = { value: -1e9 };
   constructor(readonly o: HeightfieldOpts) {
     const { half, segments: n, height, paint } = o;
     const geo = new THREE.PlaneGeometry(half * 2, half * 2, n, n);
@@ -61,14 +63,16 @@ export class Heightfield {
     this.material.onBeforeCompile = (sh) => {
       sh.uniforms.uWet = this.wetU;
       sh.uniforms.uPage = this.pageU;
+      sh.uniforms.uCut = this.cutU;
       sh.vertexShader = sh.vertexShader
         .replace('#include <common>', '#include <common>\nvarying vec3 vWPos; varying float vH;')
         .replace('#include <begin_vertex>', '#include <begin_vertex>\n  vH = position.y; vWPos = (modelMatrix * vec4(position, 1.0)).xyz;');
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform float uWet; uniform float uPage; varying vec3 vWPos; varying float vH;')
+        .replace('#include <common>', '#include <common>\nuniform float uWet; uniform float uPage; uniform float uCut; varying vec3 vWPos; varying float vH;')
         .replace(
           '#include <color_fragment>',
           `#include <color_fragment>
+  if (vWPos.y < uCut) discard; // sky layer: the island ends here (the region draws its underside)
   diffuseColor.rgb *= mix(1.0, 0.72, uWet);
   diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(0.9, 0.95, 1.08), uWet);
   // PAGE lens (the island as the Archive writes it): flat map colors, iso diamond grid, inked coast
@@ -106,6 +110,14 @@ export class Heightfield {
   }
   set page(v: number) {
     this.pageU.value = v;
+  }
+  /**
+   * Sky-layer regions (Oleada 2+): ground below this world y is not drawn, so the heightfield reads as
+   * the TOP of floating islands (the region builds their undersides). The shadow pass still sees the
+   * cut skirt, which only shades empty air under the island. Default: nothing is cut.
+   */
+  set cutBelow(y: number) {
+    this.cutU.value = y;
   }
   dispose() {
     this.mesh.geometry.dispose();

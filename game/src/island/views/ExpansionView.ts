@@ -80,6 +80,8 @@ export class ExpansionView {
     this.clearTag.position.set(c.x, c.y - 214);
     this.clearTag.visible = false;
     ctx.bubbles.addChild(this.clearTag);
+    // world UI is never graded: the narrative night tints these by label (island/night)
+    this.clouds.label = 'veilClouds';
     ctx.bubbles.addChildAt(this.clouds, 0);
     this.buildClouds();
     ctx.bubbles.addChild(this.plaque, this.clock);

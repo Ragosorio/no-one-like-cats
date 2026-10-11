@@ -18,9 +18,11 @@ export type ElementId =
   | 'time'
   // Parte II · Oleada 1 (battle/cristal.ts)
   | 'crystal'
+  // Parte II · Oleada 2 (battle/gravedad.ts)
+  | 'gravity'
   | 'neutral';
 
-export type StatusId = 'wet' | 'burning' | 'frozen' | 'charged' | 'rooted' | 'cursed' | 'voided' | 'steam' | 'prism';
+export type StatusId = 'wet' | 'burning' | 'frozen' | 'charged' | 'rooted' | 'cursed' | 'voided' | 'steam' | 'prism' | 'grav';
 
 export type Trajectory =
   | 'ballistic' // normal arc

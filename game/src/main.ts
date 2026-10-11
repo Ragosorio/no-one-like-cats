@@ -32,15 +32,23 @@ import { goBattle, goIsland, goMap, goTitle } from './app/flow';
 import { mountMicroOverlay } from './ui/micro/MicroOverlay';
 import { initStory } from './app/story';
 import { initForms } from './app/formsFlow';
+import { initOleada2 } from './app/oleada2Flow';
+import { initOleada3 } from './app/oleada3Flow';
+import { initOleada4 } from './app/oleada4Flow';
 import { applyAudioSettings } from './panels/Settings';
+import { installAudio } from './audio/engine';
 import { preloadElementIcons } from './ui/elementIcon';
 import './state/sys/micro';
+import './momentos/install'; // Parte II · Momentos musicales: their save slice is normalized on every load (src/momentos)
 
 async function loadFonts() {
   const fams = Object.values(F);
   const all = Promise.all([
     ...fams.map((f) => document.fonts.load(`40px "${f}"`).catch(() => undefined)),
     document.fonts.load('700 40px "Space Grotesk"').catch(() => undefined),
+    // the italic cut is bundled but loads lazily: Pixi measured the first italic texts (Diario's tip, photo captions)
+    // with the fallback and cut their last word once the real face arrived («…En todos tus suéter»)
+    document.fonts.load('italic 400 40px "Playfair Display"').catch(() => undefined),
   ]);
   // a slow CDN (seen: a 408 on GitHub Pages) must not hold the boot on a black screen
   await Promise.race([all, new Promise((r) => setTimeout(r, 4000))]);
@@ -66,7 +74,10 @@ async function route(scene: string | null, fresh: boolean) {
     case 'battle': {
       const { BattleScene } = await import('./scenes/BattleScene');
       const { devBattle } = await import('./dev/devBattle');
-      const devB = (): InstanceType<typeof BattleScene> => new BattleScene(devBattle(() => scenes.go(devB())));
+      // ?scene=battle&music=liky_fight (DEV): the choreographed battle-music test fight (src/battle/music)
+      const musicId = import.meta.env.DEV ? new URLSearchParams(location.search).get('music') : null;
+      const mk = musicId ? (await import('./dev/devMusicBattle')).devMusicBattle(musicId) : devBattle;
+      const devB = (): InstanceType<typeof BattleScene> => new BattleScene(mk(() => scenes.go(devB())));
       return scenes.go(devB(), 'none');
     }
     case 'art': {
@@ -119,8 +130,12 @@ async function boot() {
   initSaveGuard();
   mountMicroOverlay();
   applyAudioSettings();
+  installAudio(); // Parte II audio engine: buses, director, Fonoteca (src/audio, docs/part-ii/19)
   initStory();
   initForms(); // Parte II forms: the reveal when one unlocks (app/formsFlow.ts)
+  initOleada2(); // Parte II · Oleada 2: the H48 choice, Hélice joining, the sky preflight (app/oleada2Flow.ts)
+  initOleada3(); // Parte II · Oleada 3: the Taller Cometa, the seal / card / logbook, Maneki, the void preflight (app/oleada3Flow.ts)
+  initOleada4(); // Parte II · Oleada 4: Ecos, the page by the faro, Polvillo, the strikethroughs, the credits (app/oleada4Flow.ts)
   window.addEventListener('pointerdown', () => audio.unlock());
   // the economy clock runs whenever a save is loaded (island, map, battles…)
   // dev: ?speed=4 runs the economy clock 4× faster (pacing tests); battles stay real-time
@@ -154,6 +169,11 @@ async function boot() {
       q.delete('save');
       history.replaceState(null, '', `${location.pathname}${q.size ? `?${q}` : ''}`);
     }
+  }
+  // ?momento=liky_fight (DEV): a Momento musical standalone; ?momento=lab = the cel treatment lab (src/momentos/dev.ts)
+  if (import.meta.env.DEV && q.get('momento')) {
+    bootGame();
+    return (await import('./momentos/dev')).devMomento(q.get('momento')!);
   }
   // ?stage=2-9: boot the save and jump straight into that campaign battle (dev)
   if (import.meta.env.DEV && q.get('stage')) {

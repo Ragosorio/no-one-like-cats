@@ -7,7 +7,7 @@ import { applyCatTint, slugOf } from '../art/tint';
 import { catDef } from '../data/content';
 import { C, F } from '../ui/theme';
 import { txt } from '../ui/widgets';
-import { isoToScreen } from './iso';
+import { isoToScreen, TH, TW } from './iso';
 import { emptyBoxArt } from './buildingArt';
 import { chatter } from './chatter/director';
 import { G } from '../state/game';
@@ -16,6 +16,10 @@ import { glowTexture, sparkTexture } from '../art/textures';
 import { mutationOverlay, syncMutationOverlay } from '../panels/collection/art';
 import { mutationLook } from '../state/ext/collection';
 import { bake, rgba, particleTex } from './dimensions/bake';
+import { settings } from '../core/settings';
+import { onomatopoeia } from '../fx/juice';
+import { motionAmount, motionProfile, type EventKind, type MotionProfile, type Reaction } from '../art/temperament';
+import { IntentDriver, arriveIntent, departIntent, departLead, hopIntent, quirkIntent, reactionIntent, type Intent } from '../art/intent';
 
 /** island-scale mutation particles (the collection decal is too fine at 100px) */
 const MUT_PART: Record<string, { tex: Parameters<typeof particleTex>[0]; tints: number[]; vy: number; add: boolean; size: number }> = {
@@ -68,6 +72,11 @@ export interface Area {
   avoid?: { x0: number; y0: number; x1: number; y1: number };
 }
 export type Mood = 'roam' | 'sleep' | 'sad' | 'boxsleep';
+/**
+ * Parte II narrative nights (island/night/cats.ts, by personality): watch the sky, cower, keep sleeping,
+ * try to catch the stars, or challenge them. null = the cat's normal island life.
+ */
+export type NightReaction = 'gaze' | 'cower' | 'sleep' | 'chase' | 'challenge';
 
 /** tiny crying cat face drawn in ink (no emojis) */
 function sadFace(x: number, y: number) {
@@ -113,6 +122,45 @@ export class CatActor extends Container {
   private holo: { root: Container; sheen: Sprite; mask: Sprite; t: number; sparks: { s: Sprite; t: number }[] } | null = null;
   /** painting slug it was built with (IslandScene rebuilds the actor when the cat switches form) */
   readonly slug: string;
+  /** narrative world state reaction (island/night/cats.ts); null = normal life. Changing it plays an entry beat. */
+  get night(): NightReaction | null {
+    return this._night;
+  }
+  set night(v: NightReaction | null) {
+    if (v === this._night) return;
+    const was = this._night;
+    this._night = v;
+    this.nightChanged(was, v);
+  }
+  private _night: NightReaction | null = null;
+  // ---- purposeful motion (art/temperament.ts + art/intent.ts): anticipation, weight, personality
+  /** how this cat moves (trait → temperament, rarity → weight, primordial → solemn, Canelo → his own) */
+  readonly prof: MotionProfile;
+  /** plays this cat's intents (its own visual dice, never the battle's) */
+  readonly intent: IntentDriver;
+  private quirkT = 0;
+  /** anticipation before walking off: the walk waits for it */
+  private holdMove = 0;
+  /** Canelo's zoomies (and anyone's dash): faster, leaning, skids on arrival */
+  private dash = 0;
+  /** a reaction just played: don't stack another one right away */
+  private reactCd = 0;
+  private reactAt: { x: number; y: number } | null = null;
+  private pendingGaze: { at: { x: number; y: number }; t: number; dur: number } | null = null;
+  private loud = false;
+  private _uniform = false;
+  /** a cine wants every cat in lockstep (the «corrected» pose): no personality while it holds */
+  get uniform() {
+    return this._uniform;
+  }
+  set uniform(v: boolean) {
+    if (v === this._uniform) return;
+    this._uniform = v;
+    if (v) this.intent.reset();
+  }
+  /** global point the sky-watchers turn their heads to */
+  skyAt: { x: number; y: number } | null = null;
+  private nightT = 1 + Math.random() * 4;
   /** layer for Zzz/bubbles (world fx) */
   constructor(
     public catUid: string,
@@ -130,6 +178,12 @@ export class CatActor extends Container {
     const ts = catDef(species).art.tint?.scale;
     if (ts) this.cat.baseScale *= ts;
     this.addChild(this.cat);
+    this.prof = motionProfile(species);
+    this.intent = new IntentDriver({ puppet: this.cat.sprite, body: this.cat, lifted: this.cat.sprite, size: BASE }, this.prof, catUid);
+    this.intent.onCue = (c) => this.onCue(c);
+    const tp = this.prof.temperament;
+    this.quirkT = this.intent.rng.range(tp.quirkEvery[0], tp.quirkEvery[1]) * 0.6;
+    if (tp.hopEvery) this.hopT = this.intent.rng.range(tp.hopEvery[0], tp.hopEvery[1]) * 0.6;
     this.eventMode = 'static';
     this.cursor = 'pointer';
     this.hitArea = new Rectangle(-BASE * 0.42, -BASE * 0.95, BASE * 0.84, BASE);
@@ -293,6 +347,9 @@ export class CatActor extends Container {
   talk() {
     if (this.destroyed) return;
     this.cat.sprite.emote('happy', 0.55);
+    const sq = this.prof.weight.squash;
+    const talk: Intent = { name: 'talk', dur: 0.5, tracks: { sx: [[0, 0.08 * sq], [0.12, -0.03 * sq, 'io'], [0.26, 0.015 * sq, 'io'], [0.45, 0, 'io']], sy: [[0, -0.08 * sq], [0.12, 0.03 * sq, 'io'], [0.26, -0.015 * sq, 'io'], [0.45, 0, 'io']] } };
+    if (this.intent.play(talk, this.motion(), { layer: true })) return;
     this.tweens.push(gsap.fromTo(this.cat.scale, { x: 1.08, y: 0.92 }, { x: 1, y: 1, duration: 0.45, ease: 'elastic.out(1.2,0.4)' }));
   }
 
@@ -314,6 +371,14 @@ export class CatActor extends Container {
     this.cat.sleeping = asleep;
     p.walk = this.moving && !asleep ? Math.min(1, 0.55 + this.speed * 0.5) : 0;
     p.crouch = this.mood === 'sad' ? 0.3 : 0;
+    p.lean = this.dash > 0 && this.moving ? 0.55 : 0;
+    if (this.pendingGaze) {
+      this.pendingGaze.t -= dt;
+      if (this.pendingGaze.t <= 0) {
+        this.gazeAt(this.pendingGaze.at, this.pendingGaze.dur);
+        this.pendingGaze = null;
+      }
+    }
     p.acts = asleep ? 'none' : this.mood === 'sad' ? 'calm' : 'all';
     this.gazeT -= dt;
     if (this.gazeT > 0 && this.gaze) p.lookAt(this.gaze);
@@ -321,6 +386,74 @@ export class CatActor extends Container {
       const ptr = game.pixi.renderer.events?.pointer?.global;
       p.lookAt(ptr && ptr.x > 0 ? ptr : null);
     } else p.lookAt(null);
+    if (this.night && !asleep) this.nightPose(p);
+  }
+
+  /** the sky is doing something (Parte II world state): posture by personality */
+  private nightPose(p: IslandCat['sprite']) {
+    const sky = this.gazeT > 0 && this.gaze ? this.gaze : this.skyAt;
+    switch (this.night) {
+      case 'gaze':
+        p.crouch = -0.3;
+        p.walk = 0;
+        p.acts = 'calm';
+        if (sky) p.lookAt(sky);
+        break;
+      case 'challenge':
+        p.crouch = 0.22;
+        p.walk = 0;
+        p.acts = 'none';
+        if (sky) p.lookAt(sky);
+        break;
+      case 'cower':
+        p.crouch = 0.62;
+        p.walk = 0;
+        p.acts = 'none';
+        p.lookAt(null);
+        break;
+      case 'sleep':
+        p.sleeping = true;
+        this.cat.sleeping = true;
+        p.walk = 0;
+        p.acts = 'none';
+        p.lookAt(null);
+        break;
+      case 'chase':
+        if (sky && !this.moving) p.lookAt(sky);
+        break;
+    }
+  }
+
+  /** returns true when the reaction holds the cat in place this step */
+  private nightStep(step: number) {
+    const r = this.night;
+    if (!r || this.mood === 'sleep' || this.mood === 'boxsleep' || this.travelling) return false;
+    this.nightT -= step;
+    const p = this.cat.sprite;
+    if (this.nightT <= 0 && this.nightVariety(r)) {
+      // played a personality beat instead (art/intent.ts)
+    } else if (this.nightT <= 0) {
+      if (r === 'sleep') {
+        this.nightT = 1.1;
+        this.spawnZ();
+      } else if (r === 'cower') {
+        this.nightT = 2.5 + Math.random() * 2.5;
+        p.emote('hurt', 0.35);
+      } else if (r === 'challenge') {
+        this.nightT = 3 + Math.random() * 3;
+        p.emote('attack', 0.7);
+      } else if (r === 'chase') {
+        this.nightT = 3.5 + Math.random() * 4;
+        p.emote('attack', 0.55);
+        this.cat.hop();
+      } else {
+        this.nightT = 4 + Math.random() * 5;
+        if (Math.random() < 0.35) p.emote('surprise', 0.4);
+      }
+    }
+    if (r === 'chase') return false;
+    this.moving = false;
+    return true;
   }
 
   setLevel(level: number, scale: number) {
@@ -398,7 +531,7 @@ export class CatActor extends Container {
       this.tweens.push(gsap.to(label, { y: label.y - 10, duration: 0.5, yoyo: true, repeat: -1, ease: 'sine.inOut' }));
       this.hint = h;
     }
-    if ((was === 'sleep' || was === 'boxsleep') && m === 'roam') this.cat.hop();
+    if ((was === 'sleep' || was === 'boxsleep') && m === 'roam' && !this.intent.play(hopIntent(this.prof), this.motion())) this.cat.hop();
     this.applyScale();
   }
 
@@ -412,8 +545,9 @@ export class CatActor extends Container {
     gsap.fromTo(this.cat.scale, { x: 1.25, y: 0.75 }, { x: 1, y: 1, duration: 0.6, ease: 'elastic.out(1.2,0.4)' });
   }
 
+  /** a tap, a new home, a cine hop: the cat's own joyful answer (plain hop with «reducir movimiento») */
   happy() {
-    this.cat.hop();
+    if (!this.playReaction(this.prof.temperament.react.tap, null, 0)) this.cat.hop();
   }
 
   /** stand right here now (a FORM switch rebuilds the actor where the old one was) */
@@ -436,7 +570,12 @@ export class CatActor extends Container {
     if (this.acc < 1 / 12) return; // animate on twos
     const step = this.acc;
     this.acc = 0;
-    if (this.mood === 'sleep' || this.mood === 'boxsleep') {
+    const amt = this.motion();
+    const asleep = this.mood === 'sleep' || this.mood === 'boxsleep';
+    this.intent.posture = !asleep && this.mood === 'roam' && !this._night ? 1 : 0;
+    this.intent.update(step, amt);
+    this.reactCd -= step;
+    if (asleep) {
       if (this.travelling) this.moveToward(step * 1.5);
       this.zzzT -= step;
       if (this.zzzT <= 0) {
@@ -445,11 +584,25 @@ export class CatActor extends Container {
       }
       return;
     }
+    if (this.nightStep(step)) return;
+    if (this.holdMove > 0) {
+      // gathering itself before walking off (the depart's anticipation)
+      this.moving = false;
+      this.holdMove -= step;
+      return;
+    }
     if (this.wait > 0) {
       this.moving = false;
       this.wait -= step;
       this.hopT -= step;
-      if (this.hopT <= 0 && this.mood === 'roam') {
+      if (amt > 0) {
+        this.idle(step);
+        if (this.wait <= 0 && !this.travelling) {
+          // anticipation: turn toward where it's going, lean back, gather, push off
+          this.faceTo(this.tx - this.gx, this.ty - this.gy);
+          if (this.intent.play(departIntent(this.prof), amt)) this.holdMove = departLead(this.prof);
+        }
+      } else if (this.hopT <= 0 && this.mood === 'roam') {
         this.hopT = 4 + Math.random() * 8;
         this.cat.hop();
       }
@@ -459,6 +612,9 @@ export class CatActor extends Container {
     if (this.moveToward(step)) {
       this.moving = false;
       this.travelling = false;
+      // follow-through: momentum carries it past its feet, it sways back and settles (a dash skids)
+      if (amt > 0 && this.mood === 'roam') this.intent.play(arriveIntent(this.prof, this.dash > 0 ? 1.9 : 1), amt);
+      this.dash = 0;
       this.wait = 1.2 + Math.random() * 3.5;
       const p = this.randomPoint();
       this.tx = p.x;
@@ -466,12 +622,178 @@ export class CatActor extends Container {
     }
   }
 
+  // ------------------------------------------------------------------ purposeful motion (docs/part-ii/31)
+  /** 0 with «reducir movimiento» or while a cine holds every cat in lockstep */
+  motion() {
+    return this._uniform ? 0 : motionAmount(settings.reduceMotion);
+  }
+
+  /** idle life by temperament: its own hops (or none, for the primordials) and its quirks */
+  private idle(step: number) {
+    if (this.mood !== 'roam' || this.intent.busy) return;
+    const tp = this.prof.temperament;
+    const rng = this.intent.rng;
+    this.quirkT -= step;
+    if (tp.hopEvery && this.hopT <= 0) {
+      this.hopT = rng.range(tp.hopEvery[0], tp.hopEvery[1]);
+      const canelo = this.prof.signature === 'canelo';
+      this.intent.play(canelo && rng.chance(0.4) ? reactionIntent('zoom', this.prof, rng) : hopIntent(this.prof, { double: rng.chance(tp.doubleHop), height: 0.75 + rng.next() * 0.45 }), this.motion());
+      return;
+    }
+    if (this.quirkT > 0) return;
+    this.quirkT = rng.range(tp.quirkEvery[0], tp.quirkEvery[1]);
+    const q = rng.pick(tp.quirks);
+    if (q === 'zoom') {
+      // zoomies: a far spot of its area, a sprint, a skid
+      const far = this.farPoint();
+      this.tx = far.x;
+      this.ty = far.y;
+      this.faceTo(this.tx - this.gx, this.ty - this.gy);
+    }
+    this.loud = false;
+    this.intent.play(quirkIntent(q, this.prof, rng), this.motion());
+  }
+
+  /** an intent's cue for the owner */
+  private onCue(c: string) {
+    if (this.destroyed) return;
+    if (c === 'dash') {
+      this.dash = 1;
+      this.wait = 0;
+      this.holdMove = 0;
+    } else if (c === 'move') {
+      // advance: a few steps toward what caught its eye (inside its own area)
+      const at = this.reactAt;
+      if (!at || !this.parent || this._night || this.mood !== 'roam' || this.travelling) return;
+      const lp = this.parent.toLocal(at);
+      const gx = (lp.y / (TH / 2) + lp.x / (TW / 2)) / 2;
+      const gy = (lp.y / (TH / 2) - lp.x / (TW / 2)) / 2;
+      const d = Math.hypot(gx - this.gx, gy - this.gy) || 1;
+      const go = Math.min(d, 1.4);
+      const a = this.area;
+      this.tx = Math.max(a.x0, Math.min(a.x0 + a.w, this.gx + ((gx - this.gx) / d) * go));
+      this.ty = Math.max(a.y0, Math.min(a.y0 + a.h, this.gy + ((gy - this.gy) / d) * go));
+      this.wait = 0;
+      this.holdMove = 0;
+    } else if (c === 'swatText' && this.loud && this.fx) {
+      onomatopoeia(this.fx, this.x, this.y - 150 * this.scale.y, '¡MÍA!', { size: 64, color: C.yellow });
+    }
+  }
+
+  /**
+   * Something happened (a sky event, a boom, a cheer): the cat answers in character, after its own reaction time
+   * (+ `delay`, e.g. how far the news has to travel). It LOOKS first (if `at` is given), then the body reacts.
+   * Returns false when it can't (asleep, in lockstep, cooling down from the last one).
+   */
+  react(kind: EventKind, at: { x: number; y: number } | null = null, o: { delay?: number; force?: boolean; loud?: boolean; gaze?: number } = {}): boolean {
+    if (this.destroyed || this._uniform) return false;
+    if (this.mood === 'sleep' || this.mood === 'boxsleep' || this._night === 'sleep') return false;
+    if (!o.force && this.reactCd > 0) return false;
+    const tp = this.prof.temperament;
+    const lat = (o.delay ?? 0) + this.intent.rng.range(tp.latency[0], tp.latency[1]) * tp.tempo;
+    this.loud = !!o.loud;
+    return this.playReaction(tp.react[kind], at, lat, kind, o.gaze);
+  }
+
+  /** Canelo's own: he leaps at it, misses, lands, grooms like nothing happened (false = motion off) */
+  swat(at: { x: number; y: number } | null = null, loud = true): boolean {
+    if (this.destroyed || this._uniform) return false;
+    this.loud = loud;
+    return this.playReaction('swat', at, 0);
+  }
+
+  /** play a reaction now or after `lat` s (looks at `at` first); false = motion is off (caller does the plain thing) */
+  playReaction(r: Reaction, at: { x: number; y: number } | null, lat: number, kind?: EventKind, gaze?: number): boolean {
+    const amt = this.motion();
+    if (amt <= 0) {
+      if (kind) this.cat.sprite.emote(kind === 'joy' || kind === 'tap' ? 'happy' : 'surprise', kind === 'wonder' ? 0.4 : 0.7);
+      return false;
+    }
+    this.reactCd = lat + 1.2;
+    this.reactAt = at;
+    if (at && r !== 'hide' && r !== 'glare' && r !== 'ignore') this.pendingGaze = { at, t: lat * 0.6, dur: gaze ?? 2.2 + this.intent.rng.next() * 1.4 };
+    const dir = at ? this.dirTo(at) : 1;
+    return this.intent.play(reactionIntent(r, this.prof, this.intent.rng, dir), amt, { delay: lat });
+  }
+
+  /** the narrative state changed under this cat: an entry beat in character (and a shake-off when it ends) */
+  private nightChanged(was: NightReaction | null, v: NightReaction | null) {
+    if (this._uniform || this.destroyed || this.motion() <= 0) return;
+    if (this.mood === 'sleep' || this.mood === 'boxsleep') return;
+    const tp = this.prof.temperament;
+    const lat = this.intent.rng.range(tp.latency[0], tp.latency[1]) * tp.tempo + this.intent.rng.next() * 0.35;
+    if (!v) {
+      if (was) this.playReaction('ignore', null, lat);
+      return;
+    }
+    if (was) return; // one reaction to another: the pose changes, no new entry beat
+    const canelo = this.prof.signature === 'canelo';
+    const r: Reaction =
+      v === 'gaze' ? (this.prof.solemn ? 'loom' : 'gawk')
+      : v === 'chase' ? (canelo ? 'swat' : 'pounce')
+      : v === 'challenge' ? (tp.react.joy === 'puff' ? 'puff' : 'brace')
+      : v === 'cower' ? 'hide'
+      : 'late';
+    this.playReaction(r, this.skyAt, lat);
+  }
+
+  /** a personality beat during a narrative night instead of the plain periodic emote; false = do the plain one */
+  private nightVariety(r: NightReaction): boolean {
+    if (this.motion() <= 0) return false;
+    if (this.intent.busy) {
+      this.nightT = 0.6; // something's still playing: try again in a moment (never a plain hop over it)
+      return true;
+    }
+    const rng = this.intent.rng;
+    const sky = this.skyAt;
+    const canelo = this.prof.signature === 'canelo';
+    const tp = this.prof.temperament;
+    let beat: Reaction | null = null;
+    if (r === 'cower') beat = rng.chance(0.6) ? 'hide' : null;
+    else if (r === 'challenge') beat = rng.pick<Reaction>(['brace', 'puff', 'brace']);
+    else if (r === 'chase') beat = canelo ? rng.pick<Reaction>(['swat', 'swat', 'zoom']) : rng.pick<Reaction>(['pounce', 'bounce']);
+    else if (r === 'gaze') beat = rng.chance(0.55) ? (this.prof.solemn ? 'loom' : rng.pick<Reaction>(['gawk', 'gawk', tp.react.wonder === 'advance' ? 'advance' : 'gawk', 'nod'])) : null;
+    if (!beat) return false;
+    this.nightT = (r === 'chase' ? 3.5 : 4) + rng.next() * 5 * tp.tempo;
+    this.loud = canelo && beat === 'swat' && rng.chance(0.35);
+    return this.playReaction(beat, sky, 0);
+  }
+
+  /** which side a global point is on, in the cat's own facing (+1 = in front) */
+  private dirTo(at: { x: number; y: number }) {
+    const l = this.toLocal(at);
+    return l.x >= 0 ? 1 : -1;
+  }
+  private faceTo(dx: number, dy: number) {
+    if (Math.abs(dx) + Math.abs(dy) < 1e-4) return;
+    const f = dx - dy >= 0 ? 1 : -1;
+    if (f !== this.face) {
+      this.face = f;
+      this.applyScale();
+    }
+  }
+  /** the far side of its own area (zoomies) */
+  private farPoint() {
+    let best = this.randomPoint();
+    let bd = Math.hypot(best.x - this.gx, best.y - this.gy);
+    for (let i = 0; i < 3; i++) {
+      const p = this.randomPoint();
+      const d = Math.hypot(p.x - this.gx, p.y - this.gy);
+      if (d > bd) {
+        best = p;
+        bd = d;
+      }
+    }
+    return best;
+  }
+
   /** returns true on arrival */
   private moveToward(step: number) {
     const dx = this.tx - this.gx;
     const dy = this.ty - this.gy;
     const d = Math.hypot(dx, dy);
-    const sp = this.travelling ? Math.max(1.6, d / 3) : this.speed;
+    const pace = this.motion() > 0 ? this.prof.temperament.pace * (this.dash > 0 ? 2.6 : 1) : 1;
+    const sp = this.travelling ? Math.max(1.6, d / 3) : this.speed * pace;
     if (d < 0.05) return true;
     const mv = Math.min(d, sp * step);
     this.gx += (dx / d) * mv;
@@ -499,6 +821,8 @@ export class CatActor extends Container {
 
   override destroy() {
     chatter.unregister(this);
+    this.intent.clear();
+    this.intent.onCue = null;
     gsap.killTweensOf(this.cat.sprite);
     gsap.killTweensOf(this.cat.scale);
     this.tweens.forEach((t) => t.kill());

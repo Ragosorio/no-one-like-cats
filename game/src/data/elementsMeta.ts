@@ -18,6 +18,7 @@ export const ELEMENT_ICON: Record<string, string> = {
   time: '🕰️',
   shadow: '🌑',
   crystal: '💎',
+  gravity: '🪐',
 };
 
 export const ELEMENT_NAME: Record<string, string> = {
@@ -39,4 +40,5 @@ export const ELEMENT_NAME: Record<string, string> = {
   time: 'TIEMPO',
   shadow: 'SOMBRA',
   crystal: 'CRISTAL',
+  gravity: 'GRAVEDAD',
 };

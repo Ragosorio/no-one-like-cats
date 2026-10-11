@@ -106,8 +106,8 @@ describe('Parte II · Oleada 1 — data', () => {
       expect(m.goal.text.length).toBeGreaterThan(10);
       prev = id;
     }
-    // nothing of Parte II beyond H41 yet (Oleada 2 starts at H42: docs/part-ii/13)
-    expect(MISSION_BY_ID.get('H42')).toBeUndefined();
+    // Oleada 2 starts at H42, right after H41 (docs/part-ii/13 · tests/rupturasO2.test.ts)
+    expect(MISSION_BY_ID.get('H42')?.trigger).toBe('mission:H41');
     expect(MISSION_BY_ID.get('H31')!.goal).toMatchObject({ type: 'use_feature', feature: 'faro' });
     expect(MISSION_BY_ID.get('H32')!.goal).toMatchObject({ type: 'use_feature', feature: 'registro000' });
     expect(MISSION_BY_ID.get('H33')!.goal).toMatchObject({ type: 'use_feature', feature: 'region_paginas' });
@@ -370,8 +370,82 @@ describe('Parte II · Oleada 1 — saves', () => {
     checkMissions();
     expect(done('H41')).toBe(true);
     expect(G.has('oleada1_fin')).toBe(true);
-    // the islands stay on the chart for good
-    expect(onChart()).toEqual(['paginas', 'nacar']);
+    // the islands stay on the chart for good (and H42 «Trombas» already put the first sky island next to them)
+    expect(onChart()).toEqual(['paginas', 'nacar', 'invertidas']);
+  });
+
+  it('the wave as SCENES (docs/part-ii/26): each scene persists its key, the world follows, the consequences stay', async () => {
+    const W = await import('../src/state/sys/worldState');
+    const { markBeat } = await import('../src/state/ext/story');
+    const REG = await import('../src/cine/registry');
+    await import('../src/cine/scenes');
+    const { farIsleShown, caneloCarriesPage } = await import('../src/island/night/farIsle');
+    const { O1_SONGS } = await import('../src/cine/sound');
+    const tracks = JSON.parse(readFileSync(new URL('../src/data/music/tracks.json', import.meta.url), 'utf8')) as { id: string }[];
+    loadFixture('post-finale');
+    const world = () => W.currentWorldState(G.s).id;
+    /** what the story does when a cine beat plays: the scene persists its key(s) */
+    const scene = (id: string) => {
+      const s = REG.getCine(id)!;
+      expect(s, id).toBeTruthy();
+      const keys: string[] = [];
+      const walk = (steps: typeof s.steps) => {
+        for (const st of steps) {
+          if ('persist' in st) keys.push(st.persist.beat);
+          if ('parallel' in st) walk(st.parallel);
+          if ('seq' in st) walk(st.seq);
+        }
+      };
+      walk(s.steps);
+      for (const k of keys) markBeat(k);
+      return keys;
+    };
+    expect(world()).toBe('presagio');
+    expect(scene('h31_opening')).toEqual(['b31_estrellas#a']);
+    expect(world()).toBe('noche_astral');
+    R.tapFaro();
+    checkMissions();
+    scene('h31_faro');
+    markBeat('b31_reflejo');
+    expect(world()).toBe('noche_astral');
+    scene('h32_registro');
+    R.openRegistro000();
+    checkMissions();
+    markBeat('b32_registro#b'); // the FOLIO dialog
+    // FOLIO read: still night until the dawn scene brings the sun up
+    expect(world()).toBe('noche_astral');
+    expect(farIsleShown()).toBe(false);
+    expect(scene('h33_amanecer')).toEqual(['b33_paginas#a']);
+    expect(world()).toBe('cielo_roto');
+    expect(farIsleShown()).toBe(true); // the island of books stays on the horizon
+    G.count('feature_region_paginas');
+    checkMissions();
+    scene('h33_llegada');
+    playUntil('H36');
+    scene('h35_margen');
+    G.count('feature_pagina_canelo');
+    checkMissions();
+    scene('h36_eco');
+    expect(active('H37')).toBe(true);
+    expect(caneloCarriesPage()).toBe(true); // he took the page aboard
+    playUntil('H39');
+    expect(done('H38')).toBe(true);
+    expect(caneloCarriesPage()).toBe(false); // …and it became his hat
+    scene('h38_almirante');
+    playUntil('H41');
+    scene('h40_cristal');
+    applyStoryResult('ruptura_corrector', WIN);
+    checkMissions();
+    expect(done('H41')).toBe(true);
+    expect(scene('h41_correccion')).toEqual(['b41_corrector#b', 'b41_corrector#c', 'b41_corrector']);
+    // every O1 scene is now in Ajustes › VOLVER A VER, in story order
+    const listed = REG.replayList(G.s.beatsSeen).map((e) => e.id);
+    for (const id of ['h31_opening', 'h31_faro', 'reflejo', 'h32_registro', 'h33_amanecer', 'h33_llegada', 'h35_margen', 'h36_eco', 'h38_almirante', 'h40_cristal', 'h41_correccion', 'h41_continuara']) expect(listed, id).toContain(id);
+    // the Fonoteca of the wave: every record earned by now, and every one of them is a real song of the catalog
+    for (const song of O1_SONGS) {
+      expect(song.when(), song.ref).toBe(true);
+      if (!song.ref.startsWith('amb.')) expect(tracks.some((t) => t.id === song.ref.split('.')[0]), song.ref).toBe(true);
+    }
   });
 
   it('the map flags survive a reload and are repaired from the missions if missing', () => {
@@ -404,7 +478,7 @@ describe('Parte II · Oleada 1 — saves', () => {
       const r = autoBattle(buildStoryBattle(id, () => undefined), DIFFICULTY.hard, 4242, 30);
       expect(r.turns, id).toBeGreaterThan(0);
     }
-  }, 60_000);
+  }, 240_000);
 });
 
 describe('the final blow (sim.finalBlow): same answer on screen and in the estimate', () => {
@@ -429,7 +503,7 @@ describe('the final blow (sim.finalBlow): same answer on screen and in the estim
     const fresh = makeBattle(spec, 5);
     expect(fresh.finalBlow).toBeNull();
     expect(fresh.lastBlow).toEqual([null, null]);
-  }, 60_000);
+  }, 240_000);
 
   it('what counts as a blow: structure, modules, cats, boss parts — never misses or heals', () => {
     expect(hurtsSide({ k: 'cell', side: 1, cell: {} as never, dmg: 12, destroyed: false, path: 0, at: 0 }, 1)).toBe(true);

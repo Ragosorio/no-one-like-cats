@@ -348,6 +348,35 @@ function elementFeature(el: string, g: Graphics, c: Container, x: number, y: num
         wink.rotation = s;
       };
     }
+    case 'gravity': {
+      // Parte II · Oleada 2: a small brass counterweight on a blueprint-blue slab; pebbles float over the path, bobbing
+      g.ellipse(x, y, 30, 11).fill(0x2a4686).stroke(INK);
+      g.ellipse(x, y - 1, 20, 6.5).stroke({ width: 1.5, color: 0xe9f0ff, alpha: 0.6 });
+      g.poly([x - 7, y - 2, x - 5, y - 14, x + 5, y - 14, x + 7, y - 2]).fill(0xf0b44c).stroke({ width: 2, color: C.ink, join: 'round' });
+      g.roundRect(x - 3, y - 18, 6, 4, 1.5).fill(0xc88a2e).stroke({ width: 1.5, color: C.ink });
+      g.moveTo(x - 3.5, y - 4).lineTo(x - 2.5, y - 12).stroke({ width: 1.5, color: 0xfff6da, alpha: 0.8, cap: 'round' });
+      const gl = glow(c, x, y - 14, 0x8e6cff, 0.35, 0.55);
+      const spots: [number, number, number, number][] = [
+        [x - 22, y - 16, 3.6, 0xe9f0ff],
+        [x - 10, y - 30, 2.8, 0xb9c6ff],
+        [x + 13, y - 26, 3.2, 0xe9f0ff],
+        [x + 23, y - 12, 2.6, 0xf0b44c],
+      ];
+      const peb = spots.map(([px, py, r, col]) => {
+        const p = new Graphics().ellipse(0, 0, r * 1.25, r).fill(col).stroke({ width: 1.2, color: C.ink });
+        p.position.set(px, py);
+        c.addChild(p);
+        return p;
+      });
+      return (t) => {
+        const s = stepped(t);
+        gl.alpha = 0.28 + Math.sin(s * 1.3) * 0.1;
+        peb.forEach((p, k) => {
+          p.y = spots[k][1] + Math.sin(s * 1.5 + k * 1.7) * 3;
+          p.rotation = Math.sin(s * 0.9 + k) * 0.4;
+        });
+      };
+    }
     default: {
       g.poly([x - 8, y, x - 11, y - 18, x - 4, y - 30, x, y - 14]).fill(fx.main).stroke(THIN);
       g.poly([x, y, x + 3, y - 34, x + 9, y - 40, x + 12, y - 18, x + 8, y]).fill(fx.accent).stroke(THIN);

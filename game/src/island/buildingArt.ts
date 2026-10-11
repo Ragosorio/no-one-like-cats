@@ -607,6 +607,45 @@ function elementProp(el: string): { c: Container; tick?: Tick } {
       };
       break;
     }
+    case 'gravity': {
+      // a brass plumb bob hanging UP from a blueprint-blue plate (its line pulls the ground), three pebbles orbit it
+      g.ellipse(0, 0, 13, 5).fill(0x2a4686).stroke(THIN);
+      g.ellipse(0, -1, 8, 2.6).stroke({ width: 1.2, color: 0xe9f0ff, alpha: 0.7 });
+      const gl = new Sprite(glowTexture());
+      gl.anchor.set(0.5);
+      gl.tint = 0x8e6cff;
+      gl.alpha = 0.4;
+      gl.scale.set(0.5);
+      gl.y = -32;
+      c.addChildAt(gl, 0);
+      const ring = new Graphics().ellipse(0, 0, 20, 6.5).stroke({ width: 1.5, color: 0xe9f0ff, alpha: 0.55 });
+      ring.y = -34;
+      c.addChild(ring);
+      const bob = new Container();
+      bob.y = -24;
+      const line = new Graphics().moveTo(0, 6).lineTo(0, 24).stroke({ width: 1.5, color: C.ink });
+      const body = new Graphics();
+      body.moveTo(-9, 0).quadraticCurveTo(0, 10, 9, 0).lineTo(0, -24).closePath().fill(0xf0b44c).stroke(INK);
+      body.moveTo(-4, -2).lineTo(-1, -16).stroke({ width: 1.8, color: 0xfff6da, alpha: 0.85, cap: 'round' });
+      body.roundRect(-4, 3, 8, 5, 1.5).fill(0xc88a2e).stroke(THIN);
+      bob.addChild(line, body);
+      c.addChild(bob);
+      const pebbles = [0xe9f0ff, 0xb9c6ff, 0xf0b44c].map((col) => {
+        const p = new Graphics().ellipse(0, 0, 3.4, 2.6).fill(col).stroke({ width: 1.2, color: C.ink });
+        c.addChild(p);
+        return p;
+      });
+      tick = (t) => {
+        const s = stepped(t);
+        bob.y = -24 + Math.sin(s * 1.4) * 2.5;
+        ring.y = bob.y - 10;
+        pebbles.forEach((p, k) => {
+          const a = s * 1.2 + (k / 3) * Math.PI * 2;
+          p.position.set(Math.cos(a) * 20, ring.y + Math.sin(a) * 6.5);
+        });
+      };
+      break;
+    }
     default: {
       g.poly([-8, 0, -11, -18, -4, -30, 0, -14]).fill(fx.main).stroke(THIN);
       g.poly([0, 0, 3, -34, 9, -40, 12, -18, 8, 0]).fill(fx.accent).stroke(THIN);
@@ -790,6 +829,7 @@ function trims(el: string) {
     light: { roof: 0xffd77a, glass: 0x7fd8ff, stone: 0xfff8e1, banner: 0xe8879a },
     void: { roof: 0x0d110f, glass: 0xffffff, stone: 0xd9d9d6, banner: 0xff2e88 },
     crystal: { roof: 0xb79cff, glass: 0x8fd3ff, stone: 0xf7f2ff, banner: 0x6fe0c8 },
+    gravity: { roof: 0x13224a, glass: 0xbcd6ff, stone: 0xdfe7fb, banner: 0xf0b44c },
   };
   return { fx, ...(map[el] ?? map.fire) };
 }
@@ -852,6 +892,12 @@ function topper(g: Graphics, x: number, y: number, el: string, s = 1) {
       g.poly([x, y - 20 * s, x + 7 * s, y - 12 * s, x, y - 12 * s]).fill(0x8fd3ff);
       g.poly([x - 7 * s, y - 12 * s, x, y, x, y - 12 * s]).fill(0xb79cff);
       break;
+    case 'gravity':
+      // a brass plumb bob ringed by a chalk orbit, a tiny moon on it
+      g.moveTo(x - 6 * s, y - 14 * s).quadraticCurveTo(x, y - 22 * s, x + 6 * s, y - 14 * s).lineTo(x, y).closePath().fill(0xf0b44c).stroke(THIN);
+      g.ellipse(x, y - 12 * s, 12 * s, 3.5 * s).stroke({ width: 2, color: 0xe9f0ff });
+      g.circle(x + 10 * s, y - 10 * s, 2.4 * s).fill(0x3e6fd8).stroke({ width: 1, color: C.ink });
+      break;
     default:
       g.star(x, y - 9 * s, 5, 9 * s, 4 * s).fill(fx.accent).stroke(THIN);
   }
@@ -871,7 +917,7 @@ function glowAt(c: Container, x: number, y: number, tint: number, alpha = 0.4, s
 /** Tier 4 · Casita de Coral: bulbous coral dome + side bulb + turret, sea-weed, element turret/topper */
 function casitaCoral(g: Graphics, c: Container, el: string) {
   const t = trims(el);
-  const CORAL: Record<string, number> = { earth: 0xf2b48a, storm: 0xc9b6e8, ice: 0xcfe9ff, sound: 0xffb3d4, shadow: 0xd9cfc0, time: 0xe8d2a8, light: 0xfff0c2, void: 0xe2e2e0, crystal: 0xece4ff };
+  const CORAL: Record<string, number> = { earth: 0xf2b48a, storm: 0xc9b6e8, ice: 0xcfe9ff, sound: 0xffb3d4, shadow: 0xd9cfc0, time: 0xe8d2a8, light: 0xfff0c2, void: 0xe2e2e0, crystal: 0xece4ff, gravity: 0xc9d6ff };
   const coral = CORAL[el] ?? 0xff9fb4;
   const coralD = shade(coral, 0.82);
   g.ellipse(0, 8, 62, 22).fill(0xf2dca8).stroke(INK);

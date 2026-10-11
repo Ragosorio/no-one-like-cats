@@ -5,7 +5,7 @@
  *   speak('¿Miedo, capitana?', { pitch: 1.1 })
  * Honors the global mute (settings.muted). Never throws if the API is missing.
  */
-import { settings } from './settings';
+import { settings, voiceLoudness } from './settings';
 
 const KEY = 'nolc-voice';
 
@@ -97,7 +97,7 @@ export function speak(text: string, o: { pitch?: number; rate?: number; volume?:
     u.lang = v?.lang ?? 'es-MX';
     u.pitch = o.pitch ?? 1;
     u.rate = o.rate ?? 1.05;
-    u.volume = Math.max(0, Math.min(1, (o.volume ?? 1) * Math.max(0.2, settings.sfxVolume + 0.3)));
+    u.volume = Math.max(0, Math.min(1, (o.volume ?? 1) * voiceLoudness())); // Ajustes › VOCES × GENERAL
     s.speak(u);
     return true;
   } catch {

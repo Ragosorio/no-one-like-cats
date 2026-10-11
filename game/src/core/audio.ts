@@ -2,9 +2,11 @@
  * Procedural sound: every SFX is synthesized with Web Audio (no audio files).
  * A "voice" is an oscillator or noise burst with pitch slide + ADSR-ish envelope.
  */
+import { BUS_IDS, busGain, settings } from './settings';
+
 type Wave = OscillatorType | 'noise';
 
-interface Voice {
+export interface Voice {
   wave: Wave;
   freq: number;
   /** end frequency (slide) */
@@ -21,44 +23,165 @@ interface Voice {
   vib?: number;
 }
 
+/** a bus the mixer exposes (settings.vol keys) */
+export type Bus = 'master' | 'music' | 'sfx' | 'ambient' | 'voice';
+
+/**
+ * Bus graph (docs/part-ii/19-audio-arquitectura.md):
+ *
+ *   procBus (Part I procedural music) ─┐
+ *   music decks (src/audio/player) ────┴► musicBus ─► musicDuck ─┐
+ *   ambience beds ───────────────────────► ambientBus ─► ambDuck ─┤
+ *   sfx voices ──────────────────────────► sfxBus ────────────────┼─► master ─► compressor ─► out
+ *   voice lines ─────────────────────────► voiceBus ──────────────┘
+ *
+ * Bus gains = slider² (core/settings.ts). Ducks are keyed (dialog, api, stinger…): the deepest wins.
+ */
 class AudioEngine {
   ctx: AudioContext | null = null;
   master!: GainNode;
   sfxBus!: GainNode;
   musicBus!: GainNode;
+  ambientBus!: GainNode;
+  voiceBus!: GainNode;
+  /** Part I procedural music submix (core/music.ts) → musicBus; the director fades it against file music */
+  procBus!: GainNode;
+  musicDuck!: GainNode;
+  ambDuck!: GainNode;
   private noiseBuf: AudioBuffer | null = null;
   muted = false;
+  /** LEGACY mirrors (raw gains), kept for old readers */
   sfxVolume = 0.7;
   musicVolume = 0.35;
+  /** current bus gains (applied when the context exists) */
+  gains: Record<Bus, number> = { master: 0.81, music: 0.36, sfx: 0.7, ambient: 0.49, voice: 0.72 };
+  private ducks = new Map<string, { db: number; n: number }>();
+  private unlockFns: (() => void)[] = [];
 
   /** Must be called from a user gesture. */
   unlock() {
     if (this.ctx) {
-      if (this.ctx.state === 'suspended') this.ctx.resume();
+      if (this.ctx.state === 'suspended') void this.ctx.resume().catch(() => undefined);
       return;
     }
-    this.ctx = new AudioContext();
-    this.master = this.ctx.createGain();
-    this.master.gain.value = this.muted ? 0 : 1;
-    const comp = this.ctx.createDynamicsCompressor();
+    let ctx: AudioContext;
+    try {
+      ctx = new AudioContext({ latencyHint: 'interactive' });
+    } catch {
+      return; // no Web Audio: the game stays silent, nothing throws
+    }
+    this.ctx = ctx;
+    this.master = ctx.createGain();
+    const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -14;
     comp.ratio.value = 4;
-    this.master.connect(comp).connect(this.ctx.destination);
-    this.sfxBus = this.ctx.createGain();
-    this.sfxBus.gain.value = this.sfxVolume;
-    this.sfxBus.connect(this.master);
-    this.musicBus = this.ctx.createGain();
-    this.musicBus.gain.value = this.musicVolume;
-    this.musicBus.connect(this.master);
-    const len = this.ctx.sampleRate * 1;
-    this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    this.master.connect(comp).connect(ctx.destination);
+    const bus = (to: AudioNode) => {
+      const g = ctx.createGain();
+      g.connect(to);
+      return g;
+    };
+    this.musicDuck = bus(this.master);
+    this.ambDuck = bus(this.master);
+    this.musicBus = bus(this.musicDuck);
+    this.ambientBus = bus(this.ambDuck);
+    this.sfxBus = bus(this.master);
+    this.voiceBus = bus(this.master);
+    this.procBus = bus(this.musicBus);
+    this.applyGains(true);
+    const len = ctx.sampleRate * 1;
+    this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    if (ctx.state === 'suspended') void ctx.resume().catch(() => undefined);
+    for (const f of this.unlockFns.splice(0)) {
+      try {
+        f();
+      } catch (e) {
+        console.error('[audio] unlock hook', e);
+      }
+    }
+  }
+  /** run once the AudioContext exists (immediately if it already does) */
+  onUnlock(fn: () => void) {
+    if (this.ctx) fn();
+    else this.unlockFns.push(fn);
+  }
+  /** the context exists and is running (sound can actually be heard) */
+  get running() {
+    return !!this.ctx && this.ctx.state === 'running';
   }
 
   setMuted(m: boolean) {
     this.muted = m;
-    if (this.ctx) this.master.gain.value = m ? 0 : 1;
+    this.applyGains();
+  }
+  /** set bus gains (0..1, already curved) and apply them smoothly */
+  setGains(g: Partial<Record<Bus, number>>) {
+    Object.assign(this.gains, g);
+    this.musicVolume = this.gains.music;
+    this.sfxVolume = this.gains.sfx;
+    this.applyGains();
+  }
+  private applyGains(instant = false) {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const set = (p: AudioParam, v: number) => {
+      if (instant) p.value = v;
+      else {
+        p.cancelScheduledValues(ctx.currentTime);
+        p.setTargetAtTime(v, ctx.currentTime, 0.03);
+      }
+    };
+    set(this.master.gain, this.muted ? 0 : this.gains.master);
+    set(this.musicBus.gain, this.gains.music);
+    set(this.sfxBus.gain, this.gains.sfx);
+    set(this.ambientBus.gain, this.gains.ambient);
+    set(this.voiceBus.gain, this.gains.voice);
+  }
+  bus(b: Bus): GainNode | null {
+    if (!this.ctx) return null;
+    return b === 'master' ? this.master : b === 'music' ? this.musicBus : b === 'ambient' ? this.ambientBus : b === 'voice' ? this.voiceBus : this.sfxBus;
+  }
+
+  /**
+   * Keyed ducking of music (and, softer, ambience). `on` adds one hold on `key`, `off` removes one;
+   * the deepest active duck wins. Smooth (≈80 ms down, ≈350 ms back up).
+   */
+  duck(key: string, on: boolean, db = 6) {
+    const d = this.ducks.get(key);
+    if (on) this.ducks.set(key, { db: Math.max(db, d?.db ?? 0), n: (d?.n ?? 0) + 1 });
+    else if (d) {
+      if (d.n <= 1) this.ducks.delete(key);
+      else d.n--;
+    }
+    this.applyDuck();
+  }
+  /** drop every hold on a key (scene change, cancelDialogs) */
+  unduck(key: string) {
+    this.ducks.delete(key);
+    this.applyDuck();
+  }
+  /** current music attenuation in dB (0 = none) */
+  get duckDb() {
+    let db = 0;
+    for (const d of this.ducks.values()) db = Math.max(db, d.db);
+    return db;
+  }
+  private applyDuck() {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    const db = this.duckDb;
+    const m = Math.pow(10, -db / 20);
+    const a = Math.pow(10, -(db * 0.5) / 20);
+    const tc = db > 0 ? 0.08 : 0.35;
+    for (const [p, v] of [
+      [this.musicDuck.gain, m],
+      [this.ambDuck.gain, a],
+    ] as const) {
+      p.cancelScheduledValues(ctx.currentTime);
+      p.setTargetAtTime(v, ctx.currentTime, tc);
+    }
   }
 
   voice(v: Voice, bus?: AudioNode, pitchMul = 1) {
@@ -116,10 +239,10 @@ class AudioEngine {
     }
   }
 
-  play(name: SfxName, pitchMul = 1) {
+  play(name: SfxName, pitchMul = 1, bus?: AudioNode) {
     if (!this.ctx || this.muted) return;
     const recipe = SFX[name];
-    for (const v of recipe) this.voice(v, undefined, pitchMul);
+    for (const v of recipe) this.voice(v, bus, pitchMul);
   }
 }
 
@@ -226,4 +349,11 @@ const SFX = {
 export type SfxName = keyof typeof SFX;
 
 export const audio = new AudioEngine();
+/** push Ajustes (core/settings.ts) into the mixer — safe before the AudioContext exists */
+export function applyMix() {
+  const g: Partial<Record<Bus, number>> = {};
+  for (const b of BUS_IDS) g[b] = busGain(b);
+  audio.setGains(g);
+  audio.setMuted(settings.muted);
+}
 export const sfx = (name: SfxName, pitch = 1) => audio.play(name, pitch);

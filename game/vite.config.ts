@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { execSync } from 'node:child_process';
 import { readdirSync, rmSync, statSync } from 'node:fs';
@@ -74,5 +75,8 @@ export default defineConfig(({ command, mode }) => {
     },
     define: { __BUILD_ID__: JSON.stringify(id) },
     plugins: [versionFile(id), dropRemoteArt(art)],
+    // vitest: the battle-sim tests take 1–6 s on a calm machine and 10× that while other agents / builds load it;
+    // a generous default keeps `npm test` green on a busy machine (the heaviest tests set their own, larger budget)
+    test: { testTimeout: 120_000, hookTimeout: 120_000 },
   };
 });

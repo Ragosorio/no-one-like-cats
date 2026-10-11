@@ -1,0 +1,441 @@
+{
+  "$comment": "Parte II · Oleada 3 — misiones H50–H57 y beats de La Era Astral. Se fusiona sobre content.json (solo agrega). Ver docs/part-ii/25-oleada-3.md. Ganchos (cuándo suena cada parte): ui/story/rupturasScriptO3.ts; batallas, Combustible Astral, Kit Astral e interacciones: state/sys/rupturasO3.ts + app/oleada3Flow.ts. Cada beat trae \"$scene\": lo que la escena debería MOSTRAR (lo usa la pasada de cine). Pasada de cine (2026-10-10): las líneas que el mundo ya muestra se quitaron (los ids de beat no cambian); las escenas viven en ui/story/o3Cines.ts.",
+  "missions": [
+    {
+      "id": "H50",
+      "chain": "historia",
+      "title": "Puerto Cometa",
+      "goal": {
+        "type": "use_feature",
+        "feature": "region_cometa",
+        "text": "Toca esta misión: tu aerobarco sube por la costura del cielo hasta Puerto Cometa."
+      },
+      "trigger": "mission:H49",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 2
+      },
+      "unlocks": [],
+      "line": "Un astillero colgado de un cometa. Cobra en combustible.",
+      "why": "La costura del cielo se abrió y del otro lado hay un puerto con neón. Ahí convierten barcos en naves. Llega y el dueño te regala el primer tanque.",
+      "estTime": "~2:00"
+    },
+    {
+      "id": "H51",
+      "chain": "historia",
+      "title": "Sincronía",
+      "goal": {
+        "type": "win_battle",
+        "battle": "ruptura_sincronia",
+        "text": "Toca esta misión (o el muelle de pruebas en Puerto Cometa) y pasa el examen de Escafandra. Lleva un gato de Fuego y uno de Tormenta."
+      },
+      "trigger": "mission:H50",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 3
+      },
+      "unlocks": [],
+      "line": "Aquí arriba los gatos pelean juntos.",
+      "why": "Escafandra no te deja salir al vacío sin examen. Aprende la SINCRO: con Fuego y Tormenta a bordo, suelta cuando brille el anillo, al ritmo. Gana y Tanquecito se une.",
+      "estTime": "~6:00"
+    },
+    {
+      "id": "H52",
+      "chain": "historia",
+      "title": "La Estrella que empujaron",
+      "goal": {
+        "type": "win_battle",
+        "battle": "ruptura_estrella",
+        "text": "Toca esta misión y alcanza a La Remolcadora en el vacío (necesitas tu nave astral y combustible)."
+      },
+      "trigger": "mission:H51",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 4
+      },
+      "unlocks": [],
+      "line": "Alguien la empujó. Por fin vas a saber quién.",
+      "why": "Tu primera batalla en el vacío: todo pesa casi nada, no hay viento y un planetoide jala los tiros. Gana y te llevas a Satélito y 20 cristales Cósmicos.",
+      "estTime": "~7:00"
+    },
+    {
+      "id": "H53",
+      "chain": "historia",
+      "title": "Canelo Astral",
+      "goal": {
+        "type": "use_feature",
+        "feature": "sello_canelo",
+        "text": "Toca esta misión y rompe el sello que Canelo no deja de mirar."
+      },
+      "trigger": "mission:H52",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 3
+      },
+      "unlocks": [
+        "forma:canelo_astral"
+      ],
+      "line": "Canelo no come. Canelo no duerme. Canelo mira.",
+      "why": "En la punta del muelle hay un sello y Canelo no le quita los ojos de encima. Rómpelo con él.",
+      "estTime": "~1:30"
+    },
+    {
+      "id": "H54",
+      "chain": "historia",
+      "title": "Maneki, el conserje",
+      "goal": {
+        "type": "use_feature",
+        "feature": "ficha_maneki",
+        "text": "Toca esta misión: Maneki te enseña una ficha del Archivo. Bárrela."
+      },
+      "trigger": "mission:H53",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 3
+      },
+      "unlocks": [],
+      "line": "Alguien barría las cajas. Y tiene llaves.",
+      "why": "Una gata con cascabel y escoba sabe quién lleva el Archivo. Te va a enseñar una ficha llena de polvo de estrellas.",
+      "estTime": "~1:30"
+    },
+    {
+      "id": "H55",
+      "chain": "historia",
+      "title": "Los Disruptores",
+      "goal": {
+        "type": "win_battle",
+        "battle": "ruptura_disruptores",
+        "text": "Toca esta misión y enfrenta a Brecha y sus Disruptores en el vacío (nave astral + combustible)."
+      },
+      "trigger": "mission:H54",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 5
+      },
+      "unlocks": [],
+      "line": "Quieren romper todas las cajas. La tuya también.",
+      "why": "Piratas de grieta con latas de pintura. Tienen razón en algo, y eso incomoda. A la mitad abren grietas que voltean los tiros. Gana y Grafitera se une.",
+      "estTime": "~8:00"
+    },
+    {
+      "id": "H56",
+      "chain": "historia",
+      "title": "La nota al margen que es tuya",
+      "goal": {
+        "type": "use_feature",
+        "feature": "firma_bitacora",
+        "text": "Toca esta misión y firma la bitácora de Puerto Cometa."
+      },
+      "trigger": "mission:H55",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 2
+      },
+      "unlocks": [],
+      "line": "Puro trámite. Nadie lee esto.",
+      "why": "Para zarpar al vacío profundo hay que firmar la bitácora del puerto. Es un trámite. Seguro.",
+      "estTime": "~1:00"
+    },
+    {
+      "id": "H57",
+      "chain": "historia",
+      "title": "El Leviatán Invertido",
+      "goal": {
+        "type": "win_battle",
+        "battle": "ruptura_leviatan",
+        "text": "Toca esta misión y libera al Leviatán: en el mar, en el cielo y en la grieta astral."
+      },
+      "trigger": "mission:H56",
+      "purpose": "story",
+      "reward": {
+        "std": false,
+        "gems": 10
+      },
+      "unlocks": [
+        "oleada3_fin"
+      ],
+      "line": "Lo hundiste una vez. Ahora nada al revés.",
+      "why": "La pelea más grande de la saga, en tres capas: mar, cielo y grieta astral. Cada capa cambia cómo vuelan los tiros. Rompe sus cadenas. Cierra la Oleada 3.",
+      "estTime": "~10:00"
+    }
+  ],
+  "story": {
+    "beats": [
+      {
+        "id": "b50_cometa",
+        "time": "tras H49 (a) · al llegar a Puerto Cometa (b)",
+        "trigger": "H50",
+        "style": "CIANOTIPO ORBITAL → RETROFUTURO (neón, cromo, scanlines)",
+        "title": "Puerto Cometa",
+        "$scene": "a) De día en tu isla: la costura del cielo (la de H49) se abre un poco más; del otro lado parpadean luces de neón y un letrero cromado que zumba. Luzterna con la mano de visera. b) Llegada en 3D: un astillero colgado de la cola de un cometa, grúas cromadas, letreros con scanlines, gatos con casco de pecera; Escafandra golpea el casco de tu aerobarco con una llave y le pega una calcomanía de COMBUSTIBLE.",
+        "lines": [
+          [
+            "LUZTERNA",
+            "Capi, eso es un puerto. Arriba del cielo. Con letrero. Dice «PUERTO COMETA · SE ACEPTAN NAVES · NO SE FÍA»."
+          ],
+          [
+            "HÉLICE",
+            "¡Puerto Cometa! Ahí convierten barcos en naves. Mi abuela decía que era un mito. Mi abuela decía muchas cosas."
+          ],
+          [
+            "LUZTERNA",
+            "Toca la misión: tu aerobarco alcanza la grieta. Lo que haya del otro lado, que nos cobre barato."
+          ],
+          [
+            "ESCAFANDRA",
+            "¡Bienvenidos a Puerto Cometa! Aquí su barquito se vuelve NAVE. Cobro en Combustible Astral: ni oro, ni gemas, ni lágrimas."
+          ],
+          [
+            "ESCAFANDRA",
+            "¿No traen combustible? Ay, primerizos. El primer tanque va por la casa. Y el Kit Astral también, porque me caen bien."
+          ],
+          [
+            "ESCAFANDRA",
+            "Pásenle al TALLER COMETA. Ahí se llena el tanque y se mejora la nave. Lo demás… se cobra."
+          ]
+        ]
+      },
+      {
+        "id": "b51_sincronia",
+        "time": "al aparecer H51 (a) · al ganar (b)",
+        "trigger": "H51",
+        "style": "RETROFUTURO (muelle de pruebas)",
+        "title": "Sincronía",
+        "$scene": "a) El muelle de pruebas: una pista de aterrizaje en el vacío con conos de neón; Luzterna con una vincha y una pizarra donde dibuja dos medidores que se llenan a la vez y una flecha que salta de módulo en módulo, gritando el kanji. b) Escafandra sella un pasaporte con un ¡CHUNK! que hace temblar el muelle; Tanquecito sale de una caja de herramientas oliendo a cohete.",
+        "lines": [
+          [
+            "ESCAFANDRA",
+            "Antes de soltarlos en el vacío, examen. En mi muelle de pruebas. Contra mis muchachos."
+          ],
+          [
+            "LUZTERNA",
+            "Capi, aquí arriba los gatos pelean AL RITMO. Fuego y Tormenta, sueltas cuando brilla el anillo… ¡SHINKURO! ¡同期! ¡SINCRO!"
+          ],
+          [
+            "LUZTERNA",
+            "Fuego más Tormenta: ¡SOBRECARGA! ¡プラズマ! El golpe salta de módulo en módulo. No sé japonés, pero se siente correcto."
+          ],
+          [
+            "LUZTERNA",
+            "Toca la misión fijada. Lleva un gato de Fuego y uno de Tormenta. Y grita. Gritar ayuda."
+          ],
+          [
+            "ESCAFANDRA",
+            "¡Aprobado! Nunca había visto a alguien gritar «sincro» con tanta fe."
+          ],
+          [
+            "LUZTERNA",
+            "Fue en japonés, Escafandra. Respeta."
+          ],
+          [
+            "ESCAFANDRA",
+            "Llévense a Tanquecito. Huele a cohete, pero es buena persona."
+          ]
+        ]
+      },
+      {
+        "id": "b52_estrella",
+        "time": "al aparecer H52 (a) · al ganar (b)",
+        "trigger": "H52",
+        "style": "RETROFUTURO → VACÍO (estrellas fijas, sin horizonte)",
+        "title": "La Estrella que empujaron",
+        "$scene": "a) En el vacío, más allá del puerto: una nave remolcadora cuadrada arrastra un planetoide con un cable de luz; el cable tiene la misma textura que el rayo que empujó a la Estrella Errante en la Parte I (flashback de 1 s: la estrella cayendo). b) La bitácora de la Remolcadora abierta: renglones con fechas, una orden escrita AL MARGEN con letra bonita; al pie, un dibujito: una mano con un lápiz. Luzterna cierra el libro despacio.",
+        "lines": [
+          [
+            "LUZTERNA",
+            "Capi… ese cable. Es igualito al que vi el día que cayó la Estrella Errante. «Algo me empujó», dijo."
+          ],
+          [
+            "ESCAFANDRA",
+            "La Remolcadora. Mueve estrellas de una caja a otra. Nunca pregunta por qué. Yo tampoco: me pagan."
+          ],
+          [
+            "LUZTERNA",
+            "Toca la misión fijada. En el vacío todo pesa casi nada, no hay viento y los planetas te jalan los tiros."
+          ],
+          [
+            "LUZTERNA",
+            "La empujaron para salvar otra caja. Otro mundo. Y la nuestra se quedó con el golpe."
+          ],
+          [
+            "LUZTERNA",
+            "No sé si estoy enojada. Creo que sí. Pero no hay a quién gritarle. Nadie aquí es malo, Capi. Eso es lo peor."
+          ]
+        ]
+      },
+      {
+        "id": "b53_canelo",
+        "time": "al aparecer H53 (a) · al romper el sello (b)",
+        "trigger": "H53",
+        "style": "VACÍO → el sello (círculo de runas cósmicas que late)",
+        "title": "Canelo Astral",
+        "$scene": "a) La punta del muelle de Puerto Cometa: Canelo sentado de espaldas, inmóvil, la bufanda flotando; enfrente, en el vacío, un círculo de runas que late con su respiración. Su plato de comida intacto. b) El sello se parte como cáscara de huevo en el golpe de la música; Canelo cruza y sale del otro lado con la cola llena de estrellas. Corte a tu isla de noche: Canelo Astral sentado frente al peñasco vacío, mirando algo que la cámara no muestra.",
+        "lines": [
+          [
+            "ESCAFANDRA",
+            "Eso es un SELLO. Cada tanto un gato se queda viendo uno así. Normalmente se le pasa. Este no parpadea."
+          ],
+          [
+            "LUZTERNA",
+            "Capi, tu gato está raro. Bueno, más raro. Y el sello late al ritmo de su ronroneo."
+          ],
+          [
+            "LUZTERNA",
+            "Toca la misión. Si ese sello se va a romper, que se rompa con nosotros ahí."
+          ],
+          [
+            "LUZTERNA",
+            "¿Canelo? …Sigue siendo Canelo. Misma bufanda. Misma panza. Ahora brilla. Ay, no: también es más impaciente."
+          ],
+          [
+            "LUZTERNA",
+            "¿Qué ves, gordo? …No me contesta. Nunca me contesta. Pero ahora parece que alguien sí le contesta a él."
+          ]
+        ]
+      },
+      {
+        "id": "b54_maneki",
+        "time": "al aparecer H54 (a) · al barrer la ficha (b)",
+        "trigger": "H54",
+        "style": "VACÍO → EL ARCHIVO (fichas clínicas, luz de hospital)",
+        "title": "Maneki, el conserje",
+        "$scene": "a) En el muelle suena un cascabel; Maneki barre polvo de estrellas que nadie más ve y lo mete en una cajita; su escoba es más vieja que el puerto. b) La ficha barrida: una tarjeta de hospital con el sello «ARCHIVO»; renglones «PACIENTE: un mundo con gatos», «ESTADO: sanando». Maneki guarda la escoba y se sienta con tu tripulación como si siempre hubiera estado ahí.",
+        "lines": [
+          [
+            "MANEKI",
+            "Ay, perdón. Costumbre. Barrí cajas mucho tiempo. Miles. Ustedes viven en una, ¿sabían?"
+          ],
+          [
+            "MANEKI",
+            "Las barría para los que escriben en los márgenes. Ustedes les dicen Titiriteros. Yo les decía «jefes»."
+          ],
+          [
+            "MANEKI",
+            "Toca la misión y te enseño su ficha. No se asusten: está todo en orden. Eso es lo que da miedo."
+          ],
+          [
+            "MANEKI",
+            "El Archivo no es una biblioteca. Es un hospital. Cada caja es un mundo que se estaba muriendo."
+          ],
+          [
+            "MANEKI",
+            "Los Titiriteros los guardan, los cuidan… y a veces les escriben el final para que no se rompan."
+          ],
+          [
+            "LUZTERNA",
+            "¿Y la nuestra? ¿De qué estaba enferma?"
+          ],
+          [
+            "MANEKI",
+            "De nada, capitana. La suya es la que está sanando. Por eso me quedo con ustedes: alguien tiene que barrer."
+          ]
+        ]
+      },
+      {
+        "id": "b55_disruptores",
+        "time": "al aparecer H55 (a) · al ganar (b)",
+        "trigger": "H55",
+        "style": "VACÍO → GLITCH (grafiti de neón, RGB corrido)",
+        "title": "Los Disruptores",
+        "$scene": "a) El vacío pintado: grafitis de neón flotando entre las estrellas («NINGUNA CAJA ES HOGAR»); una nave hecha de latas de pintura; Brecha cuelga de cabeza del mástil con un aerosol en cada pata. b) Brecha se va riéndose con el casco abollado; Grafitera se queda flotando junto a tu barco, pintando una caja con la puerta abierta en tu casco (y pidiendo permiso después).",
+        "lines": [
+          [
+            "BRECHA",
+            "¡Ey, gatitos de caja! Somos los Disruptores. Rompemos cajas para que los mundos respiren. ¿Se apuntan?"
+          ],
+          [
+            "LUZTERNA",
+            "Mi isla está en una caja. Si la rompes, se derrama. Con todo y mis gatos."
+          ],
+          [
+            "BRECHA",
+            "Detallitos. Toca la misión y lo discutimos a cañonazos. Abrimos grietas: lo que entra por una, sale por la otra… y ya es nuestro."
+          ],
+          [
+            "BRECHA",
+            "Ok, ok. Pegas bonito para estar encerrado."
+          ],
+          [
+            "BRECHA",
+            "Pero piénsalo: ¿quién decide cuándo tu mundo está «curado»? ¿Tú? ¿O una mano que no ves?"
+          ],
+          [
+            "LUZTERNA",
+            "…Odio cuando los piratas tienen un punto, Capi."
+          ]
+        ]
+      },
+      {
+        "id": "b56_nota",
+        "time": "al aparecer H56 (a) · al firmar (b)",
+        "trigger": "H56",
+        "style": "SILENCIO (papel, tinta, una sola nota de piano)",
+        "title": "La nota al margen que es tuya",
+        "$scene": "a) La oficina de Escafandra: un libro de bitácora gordísimo, una pluma de cometa, un sello de goma. b) Primer plano de tu firma recién hecha; la cámara se desliza al margen de la misma hoja: una nota vieja con la MISMA letra. Silencio total. Luzterna no dice nada un rato; luego lo dice.",
+        "lines": [
+          [
+            "SISTEMA",
+            "(La bitácora de Puerto Cometa pide tu firma para zarpar al vacío profundo.)"
+          ],
+          [
+            "ESCAFANDRA",
+            "Firma aquí, {g:capitán|capitana|capitane}. Puro trámite. Nadie lee esto."
+          ],
+          [
+            "LUZTERNA",
+            "Toca la misión y firma, Capi. Yo te detengo la pluma. Bueno, no puedo, soy fantasma. Te la detengo moralmente."
+          ],
+          [
+            "LUZTERNA",
+            "Capi… ¿desde cuándo escribes así de bonito?"
+          ],
+          [
+            "LUZTERNA",
+            "…No me contestes. No ahorita."
+          ]
+        ]
+      },
+      {
+        "id": "b57_leviatan",
+        "time": "al aparecer H57 (a) · al ganar (b, c)",
+        "trigger": "H57",
+        "style": "NOIR OCEÁNICO → CIANOTIPO ORBITAL → VACÍO (las tres capas)",
+        "title": "El Leviatán Invertido",
+        "$scene": "a) El Primer Mar se voltea: del fondo sale una ballena-barco de hueso nadando boca arriba, envuelta en cadenas blancas que llevan escritas órdenes («CORRIGE ESE MAR»); sube hacia el cielo y la cámara la sigue. b) En la grieta astral la última cadena se rompe; el Leviatán se queda quieto, flotando; un ojo del tamaño de tu isla te mira y hace un sonido grave (la célula del arco en trompa). Jonás, barbudo de algas, sale de su boca preguntando si ya llegaron. c) Detrás del Leviatán, la grieta no se cierra: respira; del otro lado se ve un borde, como el final de una página.",
+        "lines": [
+          [
+            "LUZTERNA",
+            "El Leviatán. Lo hundimos, Capi. Lo vi hundirse. Y ahora nada al revés, envuelto en cadenas blancas."
+          ],
+          [
+            "LUZTERNA",
+            "Las cadenas son órdenes: «Corrige ese mar.» Todavía las cumple. Va a arrastrar la pelea al cielo… y más arriba."
+          ],
+          [
+            "LUZTERNA",
+            "Toca la misión. Primero el mar, luego el cielo, luego la grieta. Si rompes sus cadenas, a lo mejor nos escucha."
+          ],
+          [
+            "LUZTERNA",
+            "De nada, grandote. Ve a nadar donde quieras. …Eso fue lo más bonito que he visto estando muerta."
+          ],
+          [
+            "JONÁS",
+            "¿Ya llegamos? Llevo mil años ahí adentro. Ustedes me sacaron. Ahora me aguantan."
+          ],
+          [
+            "LUZTERNA",
+            "Capi… del otro lado se ve un borde. Como el final de una página."
+          ]
+        ]
+      }
+    ]
+  }
+}

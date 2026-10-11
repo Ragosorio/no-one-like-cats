@@ -17,9 +17,15 @@ export interface RupturaBeatRef {
   onlyOn?: 'map' | 'island' | 'region';
   /** may also play inside a 3D region (the island / the map otherwise): arrival beats */
   inRegion?: boolean;
-  /** `special: 'region'`: no lines, it TRAVELS to that 3D region (a cinematic returns to the island by itself) */
-  special?: 'region';
+  /** `special: 'region'`: no lines, it TRAVELS to that 3D region (a cinematic returns to the island by itself) ·
+   *  `special: 'cine'`: a CINE scene on this screen (src/cine) that speaks this beat's `lines` itself */
+  special?: 'region' | 'cine';
   region?: string;
+  cine?: string;
+  /** a cine that must play at home: if the story is waiting on the CARTA, it takes you home for it */
+  travel?: boolean;
+  /** a scene about a moment that can be overtaken: once this mission is done, it is skipped (marked seen) */
+  until?: string;
 }
 
 const part = (beat: string, p: string, lines: number[], o: Partial<RupturaBeatRef> = {}): RupturaBeatRef => ({ beat, part: p, lines, ...o });
@@ -33,11 +39,16 @@ export const REFLEJO_CINEMATIC: RupturaBeatRef = { beat: 'b31_reflejo', special:
  * so every ON_NEW waits longer than the ON_DONE parts before it (tests/rupturasStory.test.ts checks it).
  */
 export const RUPTURAS_ON_NEW: Record<string, RupturaBeatRef[]> = {
-  // after «Fin»: let the ending breathe before the stars start falling up
-  H31: [part('b31_estrellas', 'a', [0, 1, 2, 3], { effect: 'darkSky', delay: 20 })],
-  H32: [part('b32_registro', 'a', [0, 1, 2, 3], { delay: 2 })],
-  // the island shows up on the CARTA (flag region:paginas, state/sys/rupturas.ts)
-  H33: [part('b33_paginas', 'a', [0, 1, 2], { delay: 2 })],
+  // after «Fin»: a breath (the world is already in 'presagio': now and then a star rises in daylight), then the
+  // OPENING — a cine on the island (src/cine/scenes/opening.ts): the sky really goes dark and stays dark
+  // (world state 'noche_astral', src/state/sys/worldState.ts). It persists this part at its climax.
+  H31: [part('b31_estrellas', 'a', [0, 1, 2, 3], { special: 'cine', cine: 'h31_opening', onlyOn: 'island', delay: 20 })],
+  // back from «el reflejo», still at night: silence, the picture tears, a card nobody wrote slips into the Catdex
+  // (cine h32_registro; the Catdex itself glitches the first time you open it: panels/collection/registro000.ts)
+  H32: [part('b32_registro', 'a', [0, 1], { delay: 2, special: 'cine', cine: 'h32_registro', onlyOn: 'island', travel: true })],
+  // «Amanece» for real: the night ends on screen (cine h33_amanecer persists the part when the sun is up) and the
+  // island of books shows on the horizon; it shows up on the CARTA too (flag region:paginas, state/sys/rupturas.ts)
+  H33: [part('b33_paginas', 'a', [0, 1, 2], { delay: 2, special: 'cine', cine: 'h33_amanecer', onlyOn: 'island', travel: true, until: 'H33' })],
   // you just landed (H33 done inside the region): the Archivista greets you there, AFTER the arrival beat
   // (both are queued at once; the first one ready plays first, so this one waits a little longer)
   H34: [part('b34_biblioteca', 'a', [0, 1], { delay: 2, inRegion: true })],
@@ -55,20 +66,33 @@ export const RUPTURAS_ON_NEW: Record<string, RupturaBeatRef[]> = {
 /** beats that play when a mission is COMPLETED (the battle's cat / element reveal already played) */
 export const RUPTURAS_ON_DONE: Record<string, RupturaBeatRef[]> = {
   // …and then the camera flies over the night sea: the 3D cinematic «el reflejo» (once)
-  H31: [part('b31_estrellas', 'b', [4, 5, 6, 7], { effect: 'darkSky', delay: 0.6 }), REFLEJO_CINEMATIC],
-  H32: [part('b32_registro', 'b', [4, 5, 6, 7], { delay: 0.8 })],
-  // arrival on the Isla de las Páginas Hundidas (entering the region completes H33)
-  H33: [part('b33_paginas', 'b', [3, 4, 5], { delay: 0.8, inRegion: true })],
+  // (the island is still at night: the world state shows it). Part b is a cine on the faro (h31_faro): the beam
+  // stops sweeping and points where the Primer Mar's faro points
+  H31: [part('b31_estrellas', 'b', [4, 5, 6], { delay: 0.6, special: 'cine', cine: 'h31_faro', onlyOn: 'island' }), REFLEJO_CINEMATIC],
+  // read over the Catdex: the static on the card develops into FOLIO with the caption (cine/lineHooks.ts)
+  H32: [part('b32_registro', 'b', [2, 3, 4, 5], { delay: 0.8 })],
+  // arrival on the Isla de las Páginas Hundidas (entering the region completes H33): the island rises out of the
+  // sea as you land (cine h33_llegada, 3D; regions/paginas.ts drives the rise)
+  H33: [part('b33_paginas', 'b', [3, 4], { delay: 0, inRegion: true, onlyOn: 'region', special: 'cine', cine: 'h33_llegada' })],
   H34: [part('b34_biblioteca', 'b', [2, 3, 4], { delay: 1.5 })],
-  H35: [part('b35_shhh', 'b', [4, 5, 6, 7], { delay: 1.5 }), part('b35_shhh', 'c', [8, 9, 10], { delay: 2.5 })],
-  // Canelo's page, read inside the region (its activity completes H36)
-  H36: [part('b36_pagina_canelo', 'b', [2, 3, 4, 5], { delay: 0.8, inRegion: true })],
+  // the Bibliotecario explains at home, and someone else's handwriting shows up in the margins (cine h35_margen)
+  H35: [part('b35_shhh', 'b', [4, 5, 6, 7], { delay: 1.5, special: 'cine', cine: 'h35_margen', onlyOn: 'island', travel: true }), part('b35_shhh', 'c', [8, 9, 10], { delay: 2.5 })],
+  // Canelo's page, read inside the region (its activity completes H36): his Eco in a music box (cine h36_eco)
+  H36: [part('b36_pagina_canelo', 'b', [2, 3, 4], { delay: 0.8, inRegion: true, onlyOn: 'region', special: 'cine', cine: 'h36_eco' })],
   H37: [part('b37_timon', 'b', [3, 4], { delay: 2 })],
   // «La página se completa»: Canelo becomes the admiral of his Eco (the form reveal follows: formsFlow)
-  H38: [part('b38_a_babor', 'b', [2, 3, 4, 5], { delay: 1.5 }), part('b38_a_babor', 'c', [6], { delay: 2 })],
+  // the transformation at home (cine h38_almirante): the page falls, writes its last line, wraps him… and on the
+  // song's climax he's wearing the hat. The form reveal card closes the scene (app/formsFlow.ts waits for it)
+  H38: [part('b38_a_babor', 'b', [2, 3, 4], { delay: 1.5, special: 'cine', cine: 'h38_almirante', onlyOn: 'island', travel: true })],
   H39: [part('b39_nacar', 'b', [4, 5, 6, 7], { delay: 1.5 })],
-  H40: [part('b40_madrenacar', 'b', [3, 4, 5, 6], { delay: 1.5 })],
-  H41: [part('b41_corrector', 'b', [4, 5, 6, 7], { delay: 1.5 }), part('b41_corrector', 'c', [8, 9, 10], { delay: 2.5 })],
+  // what the crystal remembers, shown on YOUR island: a cat on the rocks, then nobody at all (cine h40_cristal)
+  H40: [part('b40_madrenacar', 'b', [3, 4, 5], { delay: 1.5, special: 'cine', cine: 'h40_cristal', onlyOn: 'island', travel: true })],
+  // the island gets «corrected» for a moment, the signature, and CONTINUARÁ (cine h41_correccion plays both parts;
+  // h41_continuara is part c alone, if part b was cut short after its point of no return)
+  H41: [
+    part('b41_corrector', 'b', [4, 5, 6], { delay: 1.5, special: 'cine', cine: 'h41_correccion', onlyOn: 'island', travel: true }),
+    part('b41_corrector', 'c', [7, 8], { delay: 2.5, special: 'cine', cine: 'h41_continuara', onlyOn: 'island', travel: true }),
+  ],
 };
 
 /** missions whose «new mission» tip is already said by their beat */

@@ -14,6 +14,7 @@ import gsap from 'gsap';
 import { W, H, game } from '../core/App';
 import { scenes } from '../core/scenes';
 import { sfx } from '../core/audio';
+import { audioApi } from '../audio/api';
 import { settings } from '../core/settings';
 import { C, F } from './theme';
 import { txt, poster } from './widgets';
@@ -23,6 +24,7 @@ import { clean, isDirection, speaker, Speaker } from './story/text';
 import { LuzternaPortrait, makePortrait, Portrait, preloadStoryArt } from './story/portrait';
 import { destroyDeep, settle } from './story/tweens';
 import { followView, screenRect } from './screen';
+import { hushed, whenCalm } from './hush';
 
 export type Line = [speaker: string, text: string];
 
@@ -248,6 +250,8 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
   const needSlugs = [...new Set(lines.map(([s]) => speaker(s).slug).filter((s): s is string => !!s))];
   await preloadStoryArt(needSlugs);
   _blocking++;
+  // music steps back −6 dB while someone talks (src/audio: keyed hold, released below)
+  audioApi.duck(true, 6, 'dialog');
   // a corner tip already on screen would sit right under the speech box: it waits until we're done
   const parkedTip = tipShowing;
   if (parkedTip) parkedTip.visible = false;
@@ -424,6 +428,7 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
   cancelers.delete(cancel);
   window.removeEventListener('keydown', onKey);
   _blocking--;
+  audioApi.duck(false, 6, 'dialog');
   if (parkedTip && !parkedTip.destroyed) parkedTip.visible = true;
   if (root.destroyed) return;
   root.eventMode = 'none';
@@ -469,6 +474,8 @@ interface TipReq {
   speaker: string;
   dur?: number;
   title?: string;
+  /** a scene's own corner line: shows even while the screen is hushed */
+  force?: boolean;
 }
 const tipQueue: TipReq[] = [];
 let tipShowing: Container | null = null;
@@ -476,8 +483,10 @@ let tipShowing: Container | null = null;
 export const TIP_POS = { x: 70, y: H - 200 };
 
 /** Non-blocking corner bubble ("Luzterna dice…"). Queued; click to dismiss. */
-export function tip(text: string, o: { speaker?: string; dur?: number; title?: string } = {}) {
-  const req = { text, speaker: o.speaker ?? 'LUZTERNA', dur: o.dur, title: o.title };
+export function tip(text: string, o: { speaker?: string; dur?: number; title?: string; force?: boolean } = {}) {
+  // a scene is playing (src/ui/hush.ts): gameplay tips wait for it to end; the scene's own corner lines pass (force)
+  if (!o.force && whenCalm(() => tip(text, o), `tip:${text}`)) return;
+  const req = { text, speaker: o.speaker ?? 'LUZTERNA', dur: o.dur, title: o.title, force: o.force };
   if (tipQueue.some((q) => q.text === text)) return;
   tipQueue.push(req);
   if (!tipShowing) void nextTip();
@@ -491,8 +500,8 @@ export function clearTips() {
 let tipWaiting = false;
 async function nextTip() {
   if (!tipQueue.length || tipShowing || tipWaiting) return;
-  // never on top of a blocking dialog: wait for it to close
-  if (_blocking > 0) {
+  // never on top of a blocking dialog: wait for it to close (nor over a scene that holds the screen: ui/hush.ts)
+  if (_blocking > 0 || (hushed() && !tipQueue[0]?.force)) {
     tipWaiting = true;
     window.setTimeout(() => {
       tipWaiting = false;

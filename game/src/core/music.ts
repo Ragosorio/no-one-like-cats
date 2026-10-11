@@ -81,6 +81,12 @@ const PENTA_MIN = [0, 3, 5, 7, 10, 12, 15, 17];
 
 class Music {
   mood: Mood = 'silence';
+  /**
+   * Parte II (src/audio/director.ts): when set and it returns true, the adaptive director took the
+   * request (it may answer with file music, or call playRaw() back). Part I saves never route: the
+   * procedural moods below play exactly as they always did.
+   */
+  router: ((m: Mood) => boolean) | null = null;
   private next: Mood | null = null;
   private step = 0;
   private bar = 0;
@@ -89,6 +95,12 @@ class Music {
   private seed = 1;
 
   play(m: Mood) {
+    if (this.router?.(m)) return;
+    this.playRaw(m);
+  }
+
+  /** the procedural sequencer itself (the director calls this; scenes call play()) */
+  playRaw(m: Mood) {
     if (!audio.ctx) return;
     if (m === this.mood) return;
     if (this.mood === 'silence') {
@@ -101,6 +113,12 @@ class Music {
   }
 
   stop() {
+    if (this.router?.('silence')) return;
+    this.stopRaw();
+  }
+
+  stopRaw() {
+    this.next = null;
     this.mood = 'silence';
     if (this.timer) window.clearInterval(this.timer);
     this.timer = null;
@@ -139,7 +157,7 @@ class Music {
   private tick(t: number) {
     const def = MOODS[this.mood as Exclude<Mood, 'silence'>];
     const ctx = audio.ctx!;
-    const bus = audio.musicBus;
+    const bus = audio.procBus ?? audio.musicBus;
     const s = this.step;
     const root = def.prog[this.bar % def.prog.length];
     const f0 = 110 * Math.pow(2, root / 12);

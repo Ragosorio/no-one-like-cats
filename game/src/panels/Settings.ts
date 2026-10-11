@@ -7,8 +7,8 @@ import gsap from 'gsap';
 import { Modal, toast } from '../ui/modal';
 import { C, F } from '../ui/theme';
 import { Button, poster, txt } from '../ui/widgets';
-import { settings, saveSettings } from '../core/settings';
-import { audio, sfx } from '../core/audio';
+import { settings, saveSettings, BusId } from '../core/settings';
+import { audio, applyMix, sfx } from '../core/audio';
 import { clean } from '../ui/story/text';
 import { G } from '../state/game';
 import { gtxt } from '../ui/gender';
@@ -20,17 +20,11 @@ void import('../app/story').then((m) => m.initStory()).catch(() => undefined);
 
 /** push settings into the audio engine (safe before the AudioContext exists) */
 export function applyAudioSettings() {
-  audio.sfxVolume = settings.sfxVolume;
-  audio.musicVolume = settings.musicVolume;
-  if (audio.ctx) {
-    audio.sfxBus.gain.value = settings.sfxVolume;
-    audio.musicBus.gain.value = settings.musicVolume;
-  }
-  audio.setMuted(settings.muted);
+  applyMix();
 }
 
 // ------------------------------------------------------------------ widgets
-class Slider extends Container {
+export class Slider extends Container {
   private fill = new Graphics();
   private knob = new Container();
   private dragging = false;
@@ -81,7 +75,7 @@ class Slider extends Container {
   }
 }
 
-class Toggle extends Container {
+export class Toggle extends Container {
   private bg = new Graphics();
   private knob = new Graphics();
   private t: Text;
@@ -144,35 +138,37 @@ let open_: Modal | null = null;
 export function openSettings(..._args: unknown[]) {
   if (open_ && !open_.closed) return open_;
   applyAudioSettings();
-  const m = new Modal('AJUSTES', 1240, 880, { subtitle: 'tinta, papel y gatos' });
+  const m = new Modal('AJUSTES', 1240, 960, { subtitle: 'tinta, papel y gatos' });
   open_ = m;
   const b = m.body;
   const colW = 540;
-  // ---------------- audio
+  // ---------------- audio (five buses: src/audio, docs/part-ii/19-audio-arquitectura.md)
   const sa = section('AUDIO', colW);
   b.addChild(sa);
   let y = 54;
-  const lMusic = rowLabel('MÚSICA');
-  lMusic.position.set(0, y);
-  const sMusic = new Slider(300, settings.musicVolume, (v) => {
-    settings.musicVolume = v;
-    applyAudioSettings();
-    saveSettings();
-  });
-  sMusic.position.set(170, y - 4);
-  b.addChild(lMusic, sMusic);
-  y += 72;
-  const lSfx = rowLabel('EFECTOS');
-  lSfx.position.set(0, y);
-  const sSfx = new Slider(300, settings.sfxVolume, (v) => {
-    settings.sfxVolume = v;
-    applyAudioSettings();
-    saveSettings();
-    sfx('coin');
-  });
-  sSfx.position.set(170, y - 4);
-  b.addChild(lSfx, sSfx);
-  y += 72;
+  const rows: [BusId, string, () => void][] = [
+    ['master', 'GENERAL', () => sfx('pop')],
+    ['music', 'MÚSICA', () => undefined],
+    ['sfx', 'EFECTOS', () => sfx('coin')],
+    ['ambient', 'AMBIENTE', () => undefined],
+    ['voice', 'VOCES', () => audio.play('meow', 1, audio.voiceBus)],
+  ];
+  for (const [bus, label, preview] of rows) {
+    const l = poster(label, 30, C.ink);
+    l.position.set(0, y + 6);
+    const sl = new Slider(300, settings.vol[bus], (v) => {
+      settings.vol[bus] = v;
+      applyAudioSettings();
+      saveSettings();
+    });
+    // a sample of the bus when you let go (music/ambience are judged on what's playing)
+    sl.on('pointerup', preview);
+    sl.on('pointerupoutside', preview);
+    sl.position.set(170, y - 4);
+    b.addChild(l, sl);
+    y += 64;
+  }
+  y += 6;
   const lMute = rowLabel('SILENCIAR TODO', 'para jugar en la oficina (no te vimos)');
   lMute.position.set(0, y);
   const tMute = new Toggle(settings.muted, (v) => {
@@ -182,7 +178,29 @@ export function openSettings(..._args: unknown[]) {
   });
   tMute.position.set(colW - 140, y);
   b.addChild(lMute, tMute);
-  y += 100;
+  y += 84;
+  // «Ajuste de ritmo»: Bluetooth / TV sound arrives late — the battles' beat (src/battle/music) shifts with it
+  const lRit = rowLabel('AJUSTE DE RITMO', 'si los golpes llegan tarde, súbelo');
+  lRit.position.set(0, y);
+  const ritVal = poster('', 30, C.ink);
+  ritVal.anchor.set(0.5, 0);
+  ritVal.position.set(colW - 110, y + 8);
+  const drawRit = () => {
+    const v = Math.round(Number(settings.rhythmOffsetMs) || 0);
+    ritVal.text = `${v > 0 ? '+' : ''}${v} ms`;
+  };
+  const stepRit = (d: number) => {
+    settings.rhythmOffsetMs = Math.max(-200, Math.min(200, Math.round(((Number(settings.rhythmOffsetMs) || 0) + d) / 10) * 10));
+    saveSettings();
+    drawRit();
+  };
+  const ritMinus = new Button('−', () => stepRit(-10), { w: 56, h: 52, size: 34, color: C.paper });
+  const ritPlus = new Button('+', () => stepRit(10), { w: 56, h: 52, size: 34, color: C.paper });
+  ritMinus.position.set(colW - 222, y);
+  ritPlus.position.set(colW - 56, y);
+  drawRit();
+  b.addChild(lRit, ritMinus, ritVal, ritPlus);
+  y += 90;
   // ---------------- accessibility
   const sx = section('ACCESIBILIDAD', colW);
   sx.position.set(0, y);
@@ -206,16 +224,14 @@ export function openSettings(..._args: unknown[]) {
   tFl.position.set(colW - 140, y);
   b.addChild(lFl, tFl);
   y += 86;
-  y += 14;
-
-  // ---------------- player profile (name + gender)
+  // ---------------- player profile (name + gender) — right column, under PARTIDA (placed below)
+  const profBox = new Container();
+  b.addChild(profBox);
   const sp = section('TU PERFIL', colW);
-  sp.position.set(0, y);
-  b.addChild(sp);
-  y += 54;
+  profBox.addChild(sp);
   const prof = new Container();
-  prof.position.set(0, y);
-  b.addChild(prof);
+  prof.position.set(0, 54);
+  profBox.addChild(prof);
   const drawProfile = () => {
     prof.removeChildren().forEach((c) => c.destroy({ children: true }));
     const p = G.s.player;
@@ -305,6 +321,7 @@ export function openSettings(..._args: unknown[]) {
   };
   drawTone();
 
+  profBox.position.set(X2, 640);
   // ---------------- danger zone
   const sd = section('PARTIDA', W2);
   sd.position.set(X2, 360);
@@ -316,9 +333,11 @@ export function openSettings(..._args: unknown[]) {
     zone.removeChildren().forEach((c) => c.destroy({ children: true }));
     const info = txt('Tu isla se guarda sola cada 10 segundos. Y al cerrar. Y cuando parpadeas.', { fontFamily: F.ui, fontWeight: '700', fontSize: 17, fill: C.ink, wordWrap: true, wordWrapWidth: W2 });
     zone.addChild(info);
-    const replay = new Button('VER PRÓLOGO', () => {
+    // VOLVER A VER: the prologue and every Parte II scene this island has seen (panels/Replays.ts; replays never
+    // change progress: src/cine/replay.ts)
+    const replay = new Button('VOLVER A VER', () => {
       m.close();
-      void import('../app/story').then((s) => s.replayPrologue());
+      void import('./Replays').then((r) => r.openReplays());
     }, { w: 250, h: 64, size: 28, color: C.paper });
     replay.position.set(0, 52);
     // three buttons share the second row, sized from the column's real width

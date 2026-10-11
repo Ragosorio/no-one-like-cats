@@ -66,6 +66,9 @@ export class TerrainView extends Container {
   private skies = new Map<string, SkyRec>();
   private fxs = new Map<string, DimFx>();
   private t = 0;
+  /** the camera container (default: the parent). IslandScene grades its world layers inside a sub-container
+   *  (island/night), so it points this at the real camera world */
+  camWorld: Container | null = null;
   constructor(
     public tiles: Map<string, Tile>,
     public regionBiome: Record<string, string>,
@@ -120,7 +123,7 @@ export class TerrainView extends Container {
   /** call from the scene update */
   tick(dt: number) {
     this.t += dt;
-    const cam = camOf(this.parent as Container | null, W, H);
+    const cam = camOf((this.camWorld ?? this.parent) as Container | null, W, H);
     dimWorld.cam = cam;
     const mx = 260 / Math.max(0.3, cam.zoom);
     for (const [id, L] of this.layers) {

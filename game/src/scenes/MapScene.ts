@@ -5,6 +5,11 @@
  * Parte II: the «MAR DE LAS RUPTURAS» — a sheet glued to the chart's right edge that nobody remembers
  * gluing, with the 3D islands (src/regions) in a fresher, misaligned ink. Only drawn when an island's flag
  * is set (state/sys/rupturas.ts mapRegions); tapping one travels there (app/flow goRegion).
+ * Oleada 2: «EL CIELO» — a fold-out sheet slipped UNDER the top of the Mar de las Rupturas and opened
+ * upward (the chart grows above the sea), with the sky-layer islands floating on it and a waterspout
+ * climbing across the seam. Drawn only when one of its islands' flags is set.
+ * Oleada 3: «LO DE ARRIBA» — a strip of night chart (indigo paper, gold ink, stars) whose foot slips under
+ * the sky sheet's torn top: what is above the sky. Drawn only with its island's flag (`region:cometa`).
  */
 import { Container, Graphics, Sprite, TilingSprite } from 'pixi.js';
 import { STORY_BATTLES } from '../state/sys/storyBattles';
@@ -21,6 +26,7 @@ import { ZONES, catName, zoneBoss } from '../data/content';
 import { toast } from '../ui/modal';
 import { frontier } from '../state/sys/campaign';
 import { G } from '../state/game';
+import { game } from '../core/App';
 import {
   FACTION,
   STAGES_PER_ZONE,
@@ -69,6 +75,8 @@ import { screenRect } from '../ui/screen';
 import { MapRegion, mapRegions, regionForGoal } from '../state/sys/rupturas';
 import { beatSeen, markBeat } from '../state/ext/story';
 import type { RegionId } from '../regions';
+import { MapNight } from '../island/night/mapNight';
+import { buildMapO4, mapO4Pos, mapO4Regions } from '../regions/mapO4';
 
 const BOX_W = 600;
 const BOX_H = 400;
@@ -102,9 +110,32 @@ const FOG_LINES = ['', '', 'Aquí hay gárgolas (dicen)', 'Aquí llueve para arr
 const CHART_W = 1896;
 /** Parte II: the glued sheet «MAR DE LAS RUPTURAS» (chart coords: right past the frame, taped over the seam) */
 const RS = { x: 1898, y: 168, w: 560, h: 870 };
+/** label of the sheets' vertical title strips (also regions/mapO4.ts): the chart's handwritten notes keep off them */
+export const SHEET_TAB = 'sheetTab';
+/** label of the Parte II islands' name ribbons: the handwritten notes keep off them too */
+const ISLE_NAME = 'isleName';
 /** the fresher ink of things that «always were there», and its misregistered shadow */
 const FRESH = 0x2c4fb8;
 const MISREG = 0x8a5cd6;
+/** Oleada 2: the fold-out «EL CIELO» sheet, ABOVE the Rupturas sheet (its foot slips under it) */
+const SKY_S = { x: RS.x + 16, y: -540, w: 532, h: 734 };
+/** the sky sheet's paper and its wash */
+const SKY_PAPER = 0xe8eef0;
+const SKY_WASH = 0xc9dcef;
+const GILT = 0xd99a2b;
+/** where each sky island floats on the sky sheet (sheet coords) */
+const SKY_ISLE: Partial<Record<RegionId, { p: Pt; land: number; seed: number }>> = {
+  corona: { p: [352, 262], land: 0xf6efdc, seed: 23 },
+  invertidas: { p: [178, 486], land: 0xdcd2f0, seed: 61 },
+};
+/** Oleada 3: «LO DE ARRIBA», a night-chart strip above the sky sheet (y is computed: it slips under the sky's top) */
+const ASTRAL_S = { x: SKY_S.x + 36, w: 468, h: 372 };
+const ASTRAL_PAPER = 0x1d2150;
+const ASTRAL_INK = 0xf2dfa8;
+/** where each astral island sits on the strip (sheet coords) */
+const ASTRAL_ISLE: Partial<Record<RegionId, { p: Pt; seed: number }>> = {
+  cometa: { p: [300, 206], seed: 37 },
+};
 /** where each island sits on the sheet (sheet coords) + its land tint */
 const RS_ISLE: Partial<Record<RegionId, { p: Pt; land: number; seed: number }>> = {
   paginas: { p: [276, 318], land: 0xe9ddc2, seed: 41 },
@@ -210,8 +241,17 @@ export class MapScene extends Scene {
   private chartW = CHART_W;
   /** Parte II islands on the chart (empty without Parte II) */
   private rupturas: MapRegion[] = [];
+  /** Oleada 2 sky islands on the «EL CIELO» sheet (empty until one of their flags is set) */
+  private cielo: MapRegion[] = [];
+  /** Oleada 3 islands on the «LO DE ARRIBA» strip (empty until one of their flags is set) */
+  private astral: MapRegion[] = [];
+  private astralY = 0;
+  /** top of the drawn chart (the sky sheet raises it) */
+  private chartTop = CHART_TOP;
   /** last time a drag actually panned (a drag release must not open a 3D island) */
   private pannedAt = -1e9;
+  /** the narrative world state on the chart paper (island/night/mapNight.ts; invisible in Part I) */
+  private night = new MapNight();
 
   override enter() {
     // ---------- paper & chart
@@ -228,13 +268,29 @@ export class MapScene extends Scene {
     this.buildErrandPins();
     this.buildFog();
     this.drawRoutes();
+    // the sky sheet goes first: the Rupturas sheet is glued OVER its foot; the astral strip slips UNDER the sky's top
+    const underSky = this.chart.children.length;
+    this.buildCielo();
     this.buildRupturas();
+    this.buildSeam();
+    this.buildAstral(underSky);
+    buildMapO4(this);
     // vignette on top of the chart
     const vig = new Sprite(vignetteTexture());
     vig.width = W;
     vig.height = H;
     vig.eventMode = 'none';
     this.addChild(vig);
+    // Parte II: the chart is read under the story's light (night wash, printed stars, the sky's seam)
+    this.addChild(this.night);
+    // its handwritten notes stay on the screen but never write over a sheet's vertical title strip or an island's name
+    const tabs: Container[] = [];
+    const findTabs = (o: Container) => {
+      if (o.label === SHEET_TAB || o.label === ISLE_NAME) tabs.push(o);
+      else for (const c of o.children) findTabs(c);
+    };
+    findTabs(this.chart);
+    this.night.avoid = () => tabs;
     this.buildMasthead();
     // marker
     const b = boat(C.pink);
@@ -252,6 +308,11 @@ export class MapScene extends Scene {
         else if (g.type === 'void_fragments') void import('../ui/fragmentsPanel').then((f) => f.openFragments());
         // «Continuará»: the ending plays on the island
         else if (g.type === 'watch') void import('../app/flow').then((fl) => fl.goIsland()).then(() => import('../app/story')).then((st) => st.playChapterEnding(m.id));
+        // Parte II · Oleada 2: H43 the kit (the chart glides to «EL CIELO», then the Astillero › VUELO) · H48 home to the faro
+        else if (g.type === 'use_feature' && ['kit_vuelo', 'linterna'].includes(String((m.goal as { feature?: unknown }).feature))) void import('../app/oleada2Flow').then((o) => o.chartFeature(String((m.goal as { feature?: unknown }).feature)));
+        // «Gana una batalla en los Acantilados…»: you're already on the chart → glide to that zone (IR used to reopen
+        // MISIONES, whose IR reopened MISIONES)
+        else if (typeof (m.goal as { zone?: unknown }).zone === 'number') this.focusZone((m.goal as unknown as { zone: number }).zone);
         else void import('../panels/Missions').then((x) => x.openMissions());
       },
     });
@@ -263,7 +324,7 @@ export class MapScene extends Scene {
     const f = frontier();
     const focus = campaignMemo.justUnlocked ? Number(campaignMemo.justCleared?.split('-')[0] ?? f.zone) : f.zone;
     // Parte II: while the story waits on one of its islands, the chart opens there (not after a campaign win)
-    const calling = campaignMemo.justCleared ? undefined : this.rupturas.find((r) => r.call);
+    const calling = campaignMemo.justCleared ? undefined : [...this.rupturas, ...this.cielo, ...this.astral, ...mapO4Regions()].find((r) => r.call);
     if (calling) this.focusIsle(calling.id, false);
     else this.focusZone(focus, false);
     window.addEventListener('wheel', this.onWheel, { passive: false });
@@ -271,6 +332,8 @@ export class MapScene extends Scene {
   }
 
   override exit() {
+    this.offView?.();
+    this.offView = null;
     window.removeEventListener('wheel', this.onWheel);
     gsap.killTweensOf(this.cam);
     killTree(this);
@@ -287,7 +350,7 @@ export class MapScene extends Scene {
     const minX = W - this.chartW * s - m;
     const maxX = -24 * s + m;
     const minY = H - 1066 * s - m;
-    const maxY = 100 - CHART_TOP * s + m;
+    const maxY = 100 - this.chartTop * s + m;
     this.cam.x = Math.max(Math.min(minX, maxX), Math.min(Math.max(minX, maxX), this.cam.x));
     this.cam.y = Math.max(Math.min(minY, maxY), Math.min(Math.max(minY, maxY), this.cam.y));
     this.chart.scale.set(s);
@@ -602,7 +665,7 @@ export class MapScene extends Scene {
   private buildMasthead() {
     const band = new Container();
     const bg = new TilingSprite({ texture: paperTexture(P.aged, 512, 1.5), width: W, height: 100 });
-    const rule = doubleRule(W, C.ink, 3);
+    let rule = doubleRule(W, C.ink, 3);
     rule.position.set(0, 98);
     const cx = 790;
     const title = txt('Diario del Mar', { fontFamily: F.news, fontSize: 62, fill: C.ink });
@@ -642,11 +705,34 @@ export class MapScene extends Scene {
       gsap.to(badge.scale, { x: 1.18, y: 1.18, yoyo: true, repeat: -1, duration: 0.5, ease: 'sine.inOut' });
     }
     this.addChild(err);
+    // a window that isn't 16:9: the band spans the whole screen and stays on top, the buttons keep to the corner
+    // (the band used to end short on wide screens and float mid-screen on 4:3, with the chart showing above it)
+    const layout = (v: { x: number; y: number; w: number; h: number }) => {
+      band.position.set(v.x, v.y);
+      bg.width = v.w;
+      rule.destroy();
+      rule = doubleRule(v.w, C.ink, 3);
+      rule.position.set(0, 98);
+      band.addChildAt(rule, 1);
+      title.x = cx - v.x;
+      line.x = cx - v.x;
+      zoom.position.set(v.x + v.w - 24 - 196, v.y + v.h - 24 - 70);
+      err.position.set(v.x + v.w - 24 - 196, v.y + v.h - 24 - 70 - 84);
+    };
+    layout(game.view);
+    this.offView = game.onView(layout);
   }
+  private offView: (() => void) | null = null;
 
   // ------------------------------------------------------------------ Parte II: MAR DE LAS RUPTURAS
   /** chart coords of a Parte II island (the sheet's tilt is tiny: ignored) */
   private islePos(id: RegionId): Pt {
+    const o4 = mapO4Pos(id);
+    if (o4) return o4;
+    const ap = ASTRAL_ISLE[id]?.p;
+    if (ap) return [ASTRAL_S.x + ap[0], this.astralY + ap[1]];
+    const sp = SKY_ISLE[id]?.p;
+    if (sp) return [SKY_S.x + sp[0], SKY_S.y + sp[1]];
     const p = RS_ISLE[id]?.p ?? [RS.w / 2, RS.h / 2];
     return [RS.x + p[0], RS.y + p[1]];
   }
@@ -725,6 +811,7 @@ export class MapScene extends Scene {
     tab.anchor.set(0.5);
     tab.rotation = -Math.PI / 2;
     tab.position.set(18, h / 2 - 20);
+    tab.label = SHEET_TAB;
     const arrow = new Graphics().poly([-6, -9, 7, 0, -6, 9]).fill(FRESH);
     arrow.position.set(16, h / 2 + 100);
     sheet.addChild(tab, arrow);
@@ -785,7 +872,15 @@ export class MapScene extends Scene {
       d.moveTo(-60, -40).lineTo(-26, -20).moveTo(-62, -30).lineTo(-28, -12).stroke({ width: 1.5, color: 0xd99a2b, alpha: 0.8 });
     }
     c.addChild(reg, g, d);
-    // the name, on a ribbon like the bosses' (fresh ink)
+    this.isleChrome(c, r, (r.id === 'nacar' ? 62 : 56) + 34, [r.id === 'nacar' ? 62 : 82, -50]);
+    return c;
+  }
+
+  /**
+   * What every Parte II island on the chart has: its name on a ribbon (fresh ink), a red «!» pin when the
+   * story waits there, hover/tap (travel to the 3D island) and, the first time, the ink soaking in.
+   */
+  private isleChrome(c: Container, r: MapRegion, ribbonY: number, pinAt: Pt, hit: [number, number] = [130, 110]) {
     const nm = txt(r.name, { fontFamily: F.brush, fontSize: 17, fill: FRESH });
     nm.anchor.set(0.5);
     const rw = nm.width + 28;
@@ -797,8 +892,9 @@ export class MapScene extends Scene {
         .stroke({ width: 2, color: FRESH, join: 'round' }),
       nm,
     );
-    rib.position.set(0, (r.id === 'nacar' ? 62 : 56) + 34);
+    rib.position.set(0, ribbonY);
     rib.rotation = -0.025;
+    rib.label = ISLE_NAME;
     c.addChild(rib);
     // the story waits here: a red pin that bobs (like an open errand)
     if (r.call) {
@@ -807,13 +903,18 @@ export class MapScene extends Scene {
       const ex = txt('!', { fontFamily: F.poster, fontSize: 26, fill: C.paper });
       ex.anchor.set(0.5);
       pin.addChild(pg, ex);
-      pin.position.set(r.id === 'nacar' ? 62 : 82, -50);
+      pin.position.set(pinAt[0], pinAt[1]);
       c.addChild(pin);
       gsap.to(pin.scale, { x: 1.18, y: 1.18, yoyo: true, repeat: -1, duration: 0.5, ease: 'sine.inOut' });
     }
     c.eventMode = 'static';
     c.cursor = 'pointer';
-    c.hitArea = { contains: (x: number, y: number) => (x * x) / (130 * 130) + (y * y) / (110 * 110) < 1 };
+    // the island's oval, and its name ribbon too (La Isla que Nadie Recuerda hangs its ribbon below the oval: tapping
+    // the name did nothing)
+    c.hitArea = {
+      contains: (x: number, y: number) =>
+        (x * x) / (hit[0] * hit[0]) + (y * y) / (hit[1] * hit[1]) < 1 || (Math.abs(x) <= rw / 2 + 12 && Math.abs(y - ribbonY) <= 16),
+    };
     c.on('pointerover', () => {
       gsap.to(c.scale, { x: 1.06, y: 1.06, duration: 0.14, ease: 'back.out(3)' });
       sfx('hover');
@@ -845,7 +946,395 @@ export class MapScene extends Scene {
         gsap.to(st, { alpha: 0, delay: 2.6, duration: 0.5, onComplete: () => st.destroy({ children: true }) });
       });
     }
+  }
+
+  // ------------------------------------------------------------------ Oleada 2: EL CIELO
+  /**
+   * The fold-out sheet ABOVE the sea: paler, bluer paper opened upward from under the Rupturas sheet (a
+   * crease near its foot), a sky wash, an altitude scale «en gatos apilados», engraved clouds and wind,
+   * and the sky-layer islands floating in fresh ink — their undersides hanging, their clouds below.
+   * Nothing at all until one of its islands' flags is set: the chart stays exactly as it was.
+   */
+  private buildCielo() {
+    this.cielo = mapRegions().filter((r) => !!SKY_ISLE[r.id]);
+    if (!this.cielo.length) return;
+    this.chartW = Math.max(this.chartW, SKY_S.x + SKY_S.w + 24);
+    this.chartTop = SKY_S.y - 30;
+    const { w, h } = SKY_S;
+    const sheet = new Container();
+    sheet.position.set(SKY_S.x, SKY_S.y);
+    sheet.rotation = -0.011;
+    // torn top edge (the sheet's foot is straight: it slips under the sea's sheet)
+    const shape: number[] = [];
+    const n = 40;
+    for (let i = 0; i <= n; i++) shape.push((i / n) * w, 8 + (hash1(i * 5.13 + 2) - 0.5) * 14 + (i % 2 ? 2 : -2));
+    shape.push(w, h, 0, h);
+    const shadow = new Graphics().poly(shape).fill({ color: C.ink, alpha: 0.18 });
+    shadow.position.set(-8, 8);
+    const base = new Graphics().poly(shape).fill(SKY_PAPER);
+    const tex = new TilingSprite({ texture: paperTexture(SKY_PAPER, 512, 1.1), width: w + 20, height: h });
+    const mask = new Graphics().poly(shape).fill(0xffffff);
+    tex.mask = mask;
+    // the sky wash: deeper at the top, fading into the paper toward the sea
+    const wash = new Graphics();
+    for (let i = 0; i < 14; i++) wash.rect(0, i * (h * 0.055), w, h * 0.055 + 1).fill({ color: SKY_WASH, alpha: 0.42 * (1 - i / 14) });
+    const washMask = new Graphics().poly(shape).fill(0xffffff);
+    wash.mask = washMask;
+    const edge = new Graphics().poly(shape).stroke({ width: 1.5, color: P.agedEdge, alpha: 0.7 });
+    // the fold: it was folded twice to fit in the book (creases + a slightly darker panel)
+    const fold = new Graphics();
+    for (const fy of [h * 0.36, h * 0.72]) {
+      fold.rect(0, fy, w, 10).fill({ color: C.ink, alpha: 0.05 });
+      fold.moveTo(0, fy).lineTo(w, fy + 2).stroke({ width: 1.2, color: P.agedEdge, alpha: 0.55 });
+      fold.moveTo(0, fy + 1.5).lineTo(w, fy + 3.5).stroke({ width: 1, color: 0xffffff, alpha: 0.5 });
+    }
+    sheet.addChild(shadow, base, tex, mask, wash, washMask, fold, edge);
+    // its frame in the fresh ink, and the altitude scale up the left margin
+    const fr = new Graphics();
+    fr.rect(36, 30, w - 66, h - 62).stroke({ width: 3, color: FRESH });
+    fr.rect(44, 38, w - 82, h - 78).stroke({ width: 1.2, color: FRESH, alpha: 0.8 });
+    sheet.addChild(fr);
+    const alt = new Graphics();
+    const ay0 = h - 60;
+    const ay1 = 130;
+    alt.moveTo(60, ay0).lineTo(60, ay1).stroke({ width: 1.6, color: FRESH, alpha: 0.8 });
+    for (let i = 0; i <= 8; i++) {
+      const y = ay0 - ((ay0 - ay1) * i) / 8;
+      alt.moveTo(60, y).lineTo(i % 2 ? 66 : 72, y).stroke({ width: 1.4, color: FRESH, alpha: 0.8 });
+    }
+    alt.poly([54, ay1 + 2, 60, ay1 - 10, 66, ay1 + 2]).fill(FRESH);
+    sheet.addChild(alt);
+    const altL = txt('ALTITUD · en gatos apilados', { fontFamily: F.serif, fontStyle: 'italic', fontSize: 13, fill: FRESH });
+    altL.anchor.set(0.5);
+    altL.rotation = -Math.PI / 2;
+    altL.position.set(84, (ay0 + ay1) / 2 + 40);
+    altL.alpha = 0.85;
+    sheet.addChild(altL);
+    for (const [k, lab] of [
+      [0, '0'],
+      [4, '200'],
+      [8, '400'],
+    ] as const) {
+      const t = txt(lab, { fontFamily: F.serif, fontSize: 12, fill: FRESH });
+      t.anchor.set(1, 0.5);
+      t.position.set(52, ay0 - ((ay0 - ay1) * k) / 8);
+      sheet.addChild(t);
+    }
+    // engraved clouds and wind
+    const cg = new Graphics();
+    for (const [cx, cy, sc] of [
+      [150, 210, 0.9],
+      [470, 150, 0.6],
+      [330, 420, 0.7],
+    ] as const)
+      cloud(cg, cx, cy, sc, 0xf6f8f8, FRESH);
+    sheet.addChild(cg);
+    const wg = new Graphics();
+    for (let i = 0; i < 9; i++) {
+      const x = 110 + hash1(i * 3.7 + 1) * (w - 220);
+      const y = 140 + hash1(i * 6.1 + 4) * (h - 260);
+      const L = 40 + hash1(i * 1.9) * 50;
+      wg.moveTo(x, y);
+      for (let k = 1; k <= 8; k++) wg.lineTo(x + (L * k) / 8, y + Math.sin(k * 0.9 + i) * 3);
+      wg.stroke({ width: 1.3, color: FRESH, alpha: 0.35 });
+      wg.poly([x + L, y - 3, x + L + 7, y + Math.sin(8 * 0.9 + i) * 3, x + L, y + 5]).fill({ color: FRESH, alpha: 0.35 });
+    }
+    sheet.addChild(wg);
+    // title (and its misregistered ghost)
+    const ttl = (fill: number) => txt('El Cielo', { fontFamily: F.news, fontSize: 48, fill });
+    const ghost = ttl(MISREG);
+    ghost.anchor.set(0.5, 0);
+    ghost.alpha = 0.35;
+    ghost.position.set(w / 2 + 14 + 2.5, 50 - 2);
+    const title = ttl(FRESH);
+    title.anchor.set(0.5, 0);
+    title.position.set(w / 2 + 14, 50);
+    const sub = txt('Hoja desplegable · lo que hay encima del mar (no se moja)', { fontFamily: F.serif, fontStyle: 'italic', fontSize: 14, fill: FRESH });
+    sub.anchor.set(0.5, 0);
+    sub.position.set(w / 2 + 14, 110);
+    sheet.addChild(ghost, title, sub);
+    // the islands
+    for (const r of this.cielo) sheet.addChild(this.skyIsle(r));
+    // the strip that peeks over the sea's sheet when the chart is zoomed out: what's up there
+    const tab = txt('▲ EL CIELO ▲', { fontFamily: F.poster, fontSize: 17, fill: FRESH, letterSpacing: 3 });
+    tab.anchor.set(0.5);
+    tab.position.set(160, h - 50);
+    sheet.addChild(tab);
+    gsap.to(tab, { y: h - 56, yoyo: true, repeat: -1, duration: 0.7, ease: 'sine.inOut' });
+    this.chart.addChild(sheet);
+  }
+
+  /** one sky island: floating land with its upside-down mountain, clouds under it, its vignette */
+  private skyIsle(r: MapRegion): Container {
+    const def = SKY_ISLE[r.id]!;
+    const c = new Container();
+    c.position.set(def.p[0], def.p[1]);
+    const rx = r.id === 'corona' ? 84 : 70;
+    const ry = r.id === 'corona' ? 34 : 30;
+    const poly = islandPoly(0, 0, rx, ry, def.seed, 28, 0.14);
+    // the hanging mountain under it (hatched), then the land on top
+    const under = new Graphics();
+    const lo = poly.filter(([, y]) => y >= -2).sort((a, b) => a[0] - b[0]);
+    const depth = r.id === 'corona' ? 70 : 92;
+    const tipX = r.id === 'corona' ? 4 : -10;
+    const conePts: number[] = [];
+    for (const [x, y] of lo) conePts.push(x, y);
+    conePts.push(tipX + 10, depth * 0.72, tipX, depth, tipX - 12, depth * 0.66);
+    under.poly(conePts).fill(r.id === 'corona' ? 0xf1e8d4 : 0xcbbfe6).stroke({ width: 2.6, color: FRESH, join: 'round' });
+    for (let i = 0; i < 9; i++) {
+      const x0 = -rx * 0.8 + (i * rx * 1.6) / 8;
+      under.moveTo(x0, ry * 0.4).lineTo(tipX + (x0 - tipX) * 0.25, depth * 0.85).stroke({ width: 1, color: FRESH, alpha: 0.35 });
+    }
+    // roots / chains dangling
+    for (let i = 0; i < 4; i++) {
+      const x = -rx * 0.5 + i * rx * 0.33;
+      under.moveTo(x, ry * 0.6 + 6).bezierCurveTo(x + 5, ry + 22, x - 4, ry + 38, x + 2, ry + 52).stroke({ width: 1.4, color: r.id === 'corona' ? GILT : FRESH, alpha: 0.7 });
+    }
+    const reg = new Graphics();
+    drawIsland(reg, poly, 0, 0, { land: def.land, ink: MISREG, rings: 0, hatch: false });
+    reg.position.set(3.5, -2.5);
+    reg.alpha = 0.35;
+    const g = new Graphics();
+    drawIsland(g, poly, 0, 0, { land: def.land, ink: FRESH, rings: 0, hatch: false });
+    const cl = new Graphics();
+    cloud(cl, -rx * 0.55, ry + 30, 0.85, 0xf8fafa, FRESH);
+    cloud(cl, rx * 0.6, ry + 22, 0.7, 0xf8fafa, FRESH);
+    const d = new Graphics();
+    if (r.id === 'corona') {
+      // the white-gold city: symmetric towers, domes, a crown floating over the middle one
+      const tw = (x: number, hgt: number, wd: number) => {
+        d.rect(x - wd / 2, -hgt, wd, hgt).fill(0xfffcf2).stroke({ width: 2, color: FRESH });
+        d.moveTo(x - wd / 2, -hgt * 0.55).lineTo(x + wd / 2, -hgt * 0.55).stroke({ width: 1.4, color: GILT });
+        d.arc(x, -hgt, wd / 2, Math.PI, 0).fill(0xf2cf6e).stroke({ width: 1.8, color: FRESH });
+      };
+      tw(-46, 26, 12);
+      tw(46, 26, 12);
+      tw(-22, 38, 12);
+      tw(22, 38, 12);
+      tw(0, 62, 15);
+      d.rect(-60, -10, 120, 12).fill(0xfffcf2).stroke({ width: 2, color: FRESH });
+      for (let i = 0; i < 9; i++) d.rect(-56 + i * 14, -10, 4, 10).fill({ color: GILT, alpha: 0.8 });
+      // the crown
+      const cy = -84;
+      d.poly([-12, cy + 8, -12, cy - 4, -6, cy + 2, 0, cy - 8, 6, cy + 2, 12, cy - 4, 12, cy + 8]).fill(0xf2cf6e).stroke({ width: 2, color: FRESH, join: 'round' });
+      d.ellipse(0, cy + 4, 20, 5).stroke({ width: 1.2, color: GILT, alpha: 0.8 });
+      // a little airship
+      d.ellipse(80, -56, 18, 7).fill(0xfffcf2).stroke({ width: 1.8, color: FRESH });
+      d.rect(74, -48, 12, 5).fill(GILT).stroke({ width: 1.2, color: FRESH });
+    } else {
+      // trees standing on it… and an upside-down islet hanging over it, its trees pointing down,
+      // with water falling UP (wavy lines with arrowheads)
+      for (const [x, s] of [
+        [-34, 1],
+        [-12, 0.8],
+        [26, 0.9],
+      ] as const) {
+        d.moveTo(x, 0).lineTo(x, -16 * s).stroke({ width: 2, color: FRESH });
+        d.circle(x, -22 * s, 9 * s).fill(0xffb2cf).stroke({ width: 1.8, color: FRESH });
+      }
+      const ix = 18;
+      const iy = -78;
+      d.poly([ix - 34, iy, ix + 34, iy, ix + 6, iy - 40]).fill(0xcbbfe6).stroke({ width: 2.2, color: FRESH, join: 'round' });
+      d.ellipse(ix, iy, 34, 7).fill(0xdcd2f0).stroke({ width: 2, color: FRESH });
+      for (const x of [-18, 2, 20]) {
+        d.moveTo(ix + x, iy + 4).lineTo(ix + x, iy + 16).stroke({ width: 1.6, color: FRESH });
+        d.circle(ix + x, iy + 21, 6).fill(0x9fe6cf).stroke({ width: 1.4, color: FRESH });
+      }
+      for (const x of [-44, 54]) {
+        d.moveTo(x, 4);
+        for (let k = 1; k <= 8; k++) d.lineTo(x + Math.sin(k * 1.4) * 3, 4 - k * 9);
+        d.stroke({ width: 2, color: 0x3a9ec4 });
+        d.poly([x - 5, -64, x, -74, x + 5, -64]).fill(0x3a9ec4);
+      }
+    }
+    c.addChild(cl, under, reg, g, d);
+    this.isleChrome(c, r, r.id === 'corona' ? 112 : 128, [rx * 0.95, -40], [rx + 40, 110]);
     return c;
+  }
+
+  // ------------------------------------------------------------------ Oleada 3: LO DE ARRIBA
+  /**
+   * A strip of NIGHT CHART above the sky: indigo paper printed in gold ink — stars, a nebula wash, a
+   * constellation shaped like a cat, a ringed planet — with the astral islands on it (Puerto Cometa: a
+   * comet chip with its tail streaming off the paper). Its foot slips under the sky sheet's torn top
+   * (or, without the sky sheet, under the Rupturas sheet's top). Nothing at all without its flags.
+   */
+  private buildAstral(at: number) {
+    this.astral = mapRegions().filter((r) => !!ASTRAL_ISLE[r.id]);
+    if (!this.astral.length) return;
+    const { w, h } = ASTRAL_S;
+    const y0 = this.cielo.length ? SKY_S.y - h + 52 : RS.y - h + 34;
+    this.astralY = y0;
+    this.chartW = Math.max(this.chartW, ASTRAL_S.x + w + 24);
+    this.chartTop = Math.min(this.chartTop, y0 - 30);
+    const sheet = new Container();
+    sheet.position.set(ASTRAL_S.x, y0);
+    sheet.rotation = 0.014;
+    // torn top edge; a straight foot (it goes under the sheet below)
+    const shape: number[] = [];
+    const n = 36;
+    for (let i = 0; i <= n; i++) shape.push((i / n) * w, 8 + (hash1(i * 3.71 + 9) - 0.5) * 14 + (i % 2 ? 2 : -2));
+    shape.push(w, h, 0, h);
+    const shadow = new Graphics().poly(shape).fill({ color: C.ink, alpha: 0.22 });
+    shadow.position.set(7, 8);
+    const base = new Graphics().poly(shape).fill(ASTRAL_PAPER);
+    const tex = new TilingSprite({ texture: paperTexture(ASTRAL_PAPER, 512, 0.7), width: w + 20, height: h });
+    const mask = new Graphics().poly(shape).fill(0xffffff);
+    tex.mask = mask;
+    // a nebula wash (pink / violet / teal, very soft)
+    const neb = new Graphics();
+    for (let i = 0; i < 9; i++) {
+      const nx = 90 + hash1(i * 5.3 + 1) * (w - 180);
+      const ny = 70 + hash1(i * 7.9 + 2) * (h - 170);
+      neb.ellipse(nx, ny, 70 + hash1(i * 2.2) * 80, 26 + hash1(i * 3.1) * 30).fill({ color: [0xff5fa8, 0x7a4dff, 0x3fd0d0][i % 3], alpha: 0.07 });
+    }
+    const nebMask = new Graphics().poly(shape).fill(0xffffff);
+    neb.mask = nebMask;
+    const edge = new Graphics().poly(shape).stroke({ width: 1.5, color: 0x0c0e26, alpha: 0.8 });
+    sheet.addChild(shadow, base, tex, mask, neb, nebMask, edge);
+    // the stars (printed in gold and white), a few four-pointed ones
+    const st = new Graphics();
+    for (let i = 0; i < 90; i++) {
+      const sx = 40 + hash1(i * 1.37 + 4) * (w - 80);
+      const sy = 30 + hash1(i * 2.71 + 6) * (h - 90);
+      st.circle(sx, sy, 0.7 + hash1(i * 4.1) * 1.6).fill({ color: i % 4 ? 0xffffff : ASTRAL_INK, alpha: 0.55 + hash1(i * 9.3) * 0.45 });
+    }
+    for (let i = 0; i < 9; i++) star(st, 50 + hash1(i * 6.7 + 2) * (w - 100), 40 + hash1(i * 8.3 + 1) * (h - 110), 5 + hash1(i) * 4, ASTRAL_INK);
+    // a constellation shaped like a cat sitting (thin gold lines, dots on the stars)
+    const cat: Pt[] = [
+      [70, 150], [78, 120], [92, 136], [104, 120], [110, 150], [118, 196], [96, 214], [66, 210], [56, 182], [70, 150],
+    ];
+    st.moveTo(cat[0][0], cat[0][1]);
+    for (const [cx, cy] of cat.slice(1)) st.lineTo(cx, cy);
+    st.moveTo(118, 196).bezierCurveTo(146, 200, 150, 170, 136, 160).stroke({ width: 1.2, color: ASTRAL_INK, alpha: 0.7 });
+    for (const [cx, cy] of cat) st.circle(cx, cy, 2.4).fill(ASTRAL_INK);
+    // a little ringed planet in the corner
+    st.circle(w - 74, 132, 15).fill(0xe9a07a).stroke({ width: 1.6, color: ASTRAL_INK });
+    st.moveTo(w - 87, 128).lineTo(w - 61, 128).stroke({ width: 1.2, color: 0xb76a5a, alpha: 0.8 });
+    st.ellipse(w - 74, 134, 28, 7).stroke({ width: 2, color: ASTRAL_INK });
+    sheet.addChild(st);
+    // its frame, in gold
+    const fr = new Graphics();
+    fr.rect(30, 26, w - 60, h - 86).stroke({ width: 2.6, color: ASTRAL_INK });
+    fr.rect(37, 33, w - 74, h - 100).stroke({ width: 1, color: ASTRAL_INK, alpha: 0.7 });
+    sheet.addChild(fr);
+    // title (and its misregistered ghost)
+    const ttl = (fill: number) => txt('Lo de Arriba', { fontFamily: F.news, fontSize: 40, fill });
+    const ghost = ttl(0xff5fa8);
+    ghost.anchor.set(0.5, 0);
+    ghost.alpha = 0.4;
+    ghost.position.set(w / 2 + 2.5, 40 - 2);
+    const title = ttl(ASTRAL_INK);
+    title.anchor.set(0.5, 0);
+    title.position.set(w / 2, 40);
+    const sub = txt('Carta estelar · aquí se acaba el aire (traiga el suyo)', { fontFamily: F.serif, fontStyle: 'italic', fontSize: 13, fill: ASTRAL_INK });
+    sub.anchor.set(0.5, 0);
+    sub.position.set(w / 2, 90);
+    sheet.addChild(ghost, title, sub);
+    for (const r of this.astral) sheet.addChild(this.astralIsle(r));
+    // the strip that peeks out over the sky sheet: what's up there
+    const tab = txt('▲ LO DE ARRIBA ▲', { fontFamily: F.poster, fontSize: 15, fill: ASTRAL_INK, letterSpacing: 3 });
+    tab.anchor.set(0.5);
+    tab.position.set(118, h - 82);
+    sheet.addChild(tab);
+    gsap.to(tab, { y: h - 87, yoyo: true, repeat: -1, duration: 0.7, ease: 'sine.inOut' });
+    this.chart.addChildAt(sheet, Math.min(at, this.chart.children.length));
+    // tape over the seam (on top of both sheets)
+    const tape = new Container();
+    for (const [tx, rot] of [
+      [ASTRAL_S.x + 60, 0.2],
+      [ASTRAL_S.x + w - 70, -0.16],
+    ] as const) {
+      const t = new Graphics().rect(-30, -12, 60, 24).fill({ color: 0xf6e6a8, alpha: 0.6 }).stroke({ width: 1, color: P.agedEdge, alpha: 0.4 });
+      t.position.set(tx, y0 + h - 44);
+      t.rotation = rot;
+      tape.addChild(t);
+    }
+    this.chart.addChild(tape);
+  }
+
+  /** an astral island: a comet chip with its tail streaming off across the strip, a gantry and a tiny rocket */
+  private astralIsle(r: MapRegion): Container {
+    const def = ASTRAL_ISLE[r.id]!;
+    const c = new Container();
+    c.position.set(def.p[0], def.p[1]);
+    const g = new Graphics();
+    // the tail: fanned strokes off to the upper left, fading
+    for (let i = 0; i < 7; i++) {
+      const k = i / 6;
+      g.moveTo(-34, -6 + i * 3)
+        .bezierCurveTo(-90, -30 + i * 8, -150, -40 + i * 14, -210 - i * 6, -70 + i * 18)
+        .stroke({ width: 3.2 - k * 1.8, color: i % 2 ? 0x8fe8ff : 0xff8fd0, alpha: 0.85 - k * 0.45, cap: 'round' });
+    }
+    // the chip (and its misregistered print)
+    const poly = islandPoly(0, 0, 58, 30, def.seed, 22, 0.3);
+    const reg = new Graphics();
+    drawIsland(reg, poly, 0, 0, { land: 0x5a5296, ink: 0xff5fa8, rings: 0, hatch: false });
+    reg.position.set(3.5, -2.5);
+    reg.alpha = 0.35;
+    const land = new Graphics();
+    drawIsland(land, poly, 0, 0, { land: 0x8d86c4, ink: ASTRAL_INK, rings: 0, hatch: false });
+    // jagged underside
+    const lo = poly.filter(([, y]) => y >= -2).sort((a, b) => a[0] - b[0]);
+    const pts: number[] = [];
+    for (const [x, y] of lo) pts.push(x, y);
+    pts.push(20, 42, 6, 64, -10, 40, -30, 50);
+    const under = new Graphics().poly(pts).fill(0x3b3670).stroke({ width: 2.2, color: ASTRAL_INK, join: 'round' });
+    const d = new Graphics();
+    // the crater's crystal (cyan) and a little gantry (gold) with a hull in it
+    d.poly([-6, -2, -2, -22, 2, -2]).fill(0x8ff1ff).stroke({ width: 1.4, color: ASTRAL_INK });
+    d.rect(18, -22, 26, 18).stroke({ width: 1.6, color: 0xf2b632 });
+    d.moveTo(18, -13).lineTo(44, -13).stroke({ width: 1, color: 0xf2b632 });
+    d.ellipse(31, -8, 11, 3.5).fill(0xc9d2e0).stroke({ width: 1.2, color: ASTRAL_INK });
+    // the launch rail and its rocket
+    d.moveTo(-26, -4).quadraticCurveTo(-44, -6, -52, -26).stroke({ width: 2, color: 0xc9d2e0 });
+    d.poly([-30, -10, -22, -6, -30, -2]).fill(0xe8574d);
+    d.circle(-27, -6, 2.2).fill(0xf1e7d0);
+    c.addChild(g, under, reg, land, d);
+    this.isleChrome(c, r, 74, [62, -40], [96, 80]);
+    return c;
+  }
+
+  /**
+   * Where the two sheets meet: tape over the seam, and a waterspout that comes up from under the sea's
+   * sheet and climbs into the sky (drawn on the sky's foot, so it never covers the sea's title).
+   */
+  private buildSeam() {
+    if (!this.cielo.length || !this.rupturas.length) return;
+    const seam = new Container();
+    const sx = SKY_S.x + 448;
+    const yb = RS.y - 2;
+    const yt = SKY_S.y + SKY_S.h - 300;
+    const g = new Graphics();
+    whirl(g, sx, yb - 6, 0.7, FRESH);
+    const steps = 20;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const y = yb - 10 - (yb - 10 - yt) * t;
+      const rw = 5 + 24 * Math.pow(t, 1.5);
+      const x = sx + Math.sin(t * 5) * 5 * (1 - t);
+      g.ellipse(x, y, rw, rw * 0.28).stroke({ width: 1.5, color: FRESH, alpha: 0.45 + 0.4 * (1 - t) });
+    }
+    g.moveTo(sx - 5, yb - 10).bezierCurveTo(sx - 8, yb - 110, sx - 26, yt + 70, sx - 29, yt).stroke({ width: 2, color: FRESH, alpha: 0.8 });
+    g.moveTo(sx + 5, yb - 10).bezierCurveTo(sx + 8, yb - 110, sx + 26, yt + 70, sx + 29, yt).stroke({ width: 2, color: FRESH, alpha: 0.8 });
+    g.poly([sx - 7, yt - 4, sx, yt - 18, sx + 7, yt - 4]).fill(FRESH);
+    seam.addChild(g);
+    const lab = txt('Tromba · solo de subida', { fontFamily: F.serif, fontStyle: 'italic', fontSize: 14, fill: FRESH });
+    lab.anchor.set(1, 0.5);
+    lab.rotation = -0.04;
+    lab.position.set(sx - 36, yb - 44);
+    seam.addChild(lab);
+    // tape over the seam, sky sheet to sea sheet
+    for (const [tx, rot] of [
+      [RS.x + 70, 0.16],
+      [RS.x + 300, -0.12],
+    ] as const) {
+      const t = new Graphics().rect(-34, -13, 68, 26).fill({ color: 0xf6e6a8, alpha: 0.6 }).stroke({ width: 1, color: P.agedEdge, alpha: 0.4 });
+      t.position.set(tx, RS.y + 4);
+      t.rotation = rot;
+      seam.addChild(t);
+    }
+    this.chart.addChild(seam);
   }
 
   // ------------------------------------------------------------------ errands (Encargos)
@@ -1134,6 +1623,7 @@ export class MapScene extends Scene {
   override update(dt: number) {
     this.t += dt;
     this.hud?.update(dt);
+    this.night.update(dt);
     // frontier pulse (on twos)
     const step = Math.floor(this.t * 12) / 12;
     for (const n of this.nodes.values()) {

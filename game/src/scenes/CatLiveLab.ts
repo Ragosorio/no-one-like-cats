@@ -1,4 +1,4 @@
-import { Container, Graphics } from 'pixi.js';
+import { Container, Graphics, Ticker } from 'pixi.js';
 import { Scene } from '../core/scenes';
 import { W, H } from '../core/App';
 import { paperBg, poster, txt } from '../ui/widgets';
@@ -7,12 +7,16 @@ import { livingCat, preloadCats } from '../art/catArt';
 import { ART, CatEmote, CatPuppet, catRig } from '../art/livingCat';
 import { CATS } from '../data/content';
 import parte2 from '../data/art-parte2.json';
+import { motionAmount, motionProfile, type Quirk, type Reaction } from '../art/temperament';
+import { IntentDriver, arriveIntent, departIntent, hopIntent, quirkIntent, reactionIntent } from '../art/intent';
+import { settings } from '../core/settings';
 
 /**
  * Dev scene (?scene=catlive): every painting as a living MAI puppet.
  * &cat=<slug> shows one big · &cats=a,b,c a few · &lote=b|c|parte2 the new paintings · &rig=1 draws the MAI rig
  * over it (white ellipses = pins) · click a cat to cycle emotes. Any slug works, even one no content.json cat uses yet.
- * window.__catlab exposes the puppets for headless checks.
+ * window.__catlab exposes the puppets for headless checks, and their purposeful-motion drivers (art/intent.ts):
+ * `__catlab.play(i, 'hop' | 'depart' | 'arrive' | <Reaction> | <Quirk>)` (docs/part-ii/31-animaciones-con-proposito.md).
  */
 export class CatLiveLab extends Scene {
   override async enter() {
@@ -33,6 +37,7 @@ export class CatLiveLab extends Scene {
     const slugs = one ? [one] : pick ?? [...new Set(CATS.map((c) => c.art.slug))].sort();
     await preloadCats(slugs);
     const puppets: CatPuppet[] = [];
+    const intents: IntentDriver[] = [];
     const cols = one ? 1 : pick && slugs.length <= 8 ? Math.min(4, slugs.length) : 8;
     const rows = Math.ceil(slugs.length / cols);
     const cell = one ? 900 : Math.min(pick && slugs.length <= 8 ? 470 : 225, (W - 40) / cols, (H - 190) / rows / 0.98);
@@ -47,7 +52,12 @@ export class CatLiveLab extends Scene {
       const p = livingCat(slug, { anchorX: 0.5, anchorY: 0.94, fps: 15 });
       const size = one ? 900 : cell * 0.98;
       p.scale.set(size / ART);
-      holder.addChild(p);
+      // the body squashes around the feet; the painting lifts (same split as the island's IslandCat)
+      const body = new Container();
+      body.addChild(p);
+      holder.addChild(body);
+      const species = CATS.find((c) => c.art.slug === slug)?.id ?? slug;
+      intents.push(new IntentDriver({ puppet: p, body, lifted: p, size }, motionProfile(species), slug));
       if (showRig) holder.addChild(rigOverlay(slug, size));
       if (!one) {
         const label = txt(slug.replace(/_cat$/, '').replace(/_/g, ' ').toUpperCase(), { fontFamily: F.ui, fontSize: 15, fill: C.ink });
@@ -65,7 +75,24 @@ export class CatLiveLab extends Scene {
     const legend = txt('arte: MAI SVG puro · rig MAI (ojos/orejas/cabeza/cola/flotantes) · click = emoción', { fontFamily: F.ui, fontSize: 20, fill: C.ink });
     legend.position.set(30, H - 34);
     this.addChild(legend);
-    (window as unknown as { __catlab: unknown }).__catlab = { puppets, slugs };
+    const tick = (tk: Ticker) => {
+      const amt = motionAmount(settings.reduceMotion);
+      for (const d of intents) d.update(Math.min(0.1, tk.deltaMS / 1000), amt);
+    };
+    Ticker.shared.add(tick);
+    this.once('destroyed', () => Ticker.shared.remove(tick));
+    const play = (i: number, what: string, dir = 1) => {
+      const d = intents[i];
+      if (!d) return false;
+      const pr = d.profile;
+      const it =
+        what === 'hop' ? hopIntent(pr) : what === 'double' ? hopIntent(pr, { double: true }) : what === 'depart' ? departIntent(pr) : what === 'arrive' ? arriveIntent(pr)
+        : what.startsWith('q:') ? quirkIntent(what.slice(2) as Quirk, pr, d.rng) // q:<quirk> (nod, zoom… are also reactions)
+        : (['tap', 'glance', 'sniff', 'stretch', 'flare', 'scan', 'sigh', 'bow'] as string[]).includes(what) ? quirkIntent(what as Quirk, pr, d.rng)
+        : reactionIntent(what as Reaction, pr, d.rng, dir);
+      return d.play(it, motionAmount(settings.reduceMotion), { dir });
+    };
+    (window as unknown as { __catlab: unknown }).__catlab = { puppets, slugs, intents, play, profiles: intents.map((d) => d.profile) };
   }
 }
 

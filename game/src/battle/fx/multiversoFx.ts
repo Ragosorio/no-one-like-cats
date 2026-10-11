@@ -49,6 +49,14 @@ export function p2Projectile(shot: ShotDef, core: Graphics, fx: Fx): boolean {
       core.poly([12, 7, 0, 15, 0, 0]).fill(0x6fe0c8);
       core.moveTo(-6, -8).lineTo(-2, -11).stroke({ width: 2, color: 0xffffff, cap: 'round' });
       return true;
+    case 'gravity':
+      // Parte II · Gravedad: a heavy indigo orb with a white chalk orbit ring and a brass moon riding it
+      core.circle(0, 0, 13).fill(0x3e6fd8).stroke({ width: 4, color: C.ink });
+      core.circle(-4, -4, 4).fill({ color: 0xe9f0ff, alpha: 0.55 });
+      core.ellipse(0, 1, 21, 6.5).stroke({ width: 5, color: C.ink });
+      core.ellipse(0, 1, 21, 6.5).stroke({ width: 2.2, color: 0xe9f0ff });
+      core.circle(16, 5, 4.5).fill(0xf0b44c).stroke({ width: 2, color: C.ink });
+      return true;
   }
   return false;
 }
@@ -94,4 +102,6 @@ export const P2_ONO: Record<string, [string, number]> = {
   time: ['¡TIC-TAC!', 0xe0b77a],
   // Parte II · Oleada 1
   crystal: ['¡TIIIN!', 0x8fd3ff],
+  // Parte II · Oleada 2
+  gravity: ['¡VUUUM!', 0x3e6fd8],
 };

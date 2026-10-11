@@ -11,6 +11,7 @@ import { mk, crew, crewSize } from './ship';
 import { isCleared, stageUnlocked } from './campaign';
 import { KO_RANKS } from './ranks';
 import { GoalSpec, MISSION_GATES, goalCounters, goalSupported } from './missionGoals';
+import { claimMissionReward, missionRewardClaimed } from './rupturasLedger';
 
 type GoalEval = { cur: number; need: number };
 
@@ -251,20 +252,24 @@ function complete(m: MissionDef): MissionReward {
   s.done.push(m.id);
   const r = m.reward as Record<string, unknown> & { std: boolean };
   const out: MissionReward = { gold: 0, food: 0, gems: 0, orbs: null };
+  // a Parte II mission completed again after the narrative reset (rupturasLedger): only the income part pays again
+  const again = missionRewardClaimed(m.id);
   if (r.std) {
     out.gold += Math.max(50, Math.round(G.goldPerSec * BAL.kingdom.mission_reward.gold_seconds_of_income));
     out.food += Math.max(20, Math.round(G.foodPerSec * BAL.kingdom.mission_reward.food_seconds_of_income));
-    if (Math.random() < BAL.kingdom.mission_reward.gem_chance) out.gems += 1;
+    if (!again && Math.random() < BAL.kingdom.mission_reward.gem_chance) out.gems += 1;
     const pool = G.s.cats;
-    if (pool.length) out.orbs = { species: pool[Math.floor(Math.random() * pool.length)].species, n: BAL.kingdom.mission_reward.orbs };
+    if (!again && pool.length) out.orbs = { species: pool[Math.floor(Math.random() * pool.length)].species, n: BAL.kingdom.mission_reward.orbs };
     G.purr('mission', 'mission');
     G.bump('mission');
     G.xp('mission');
   }
-  out.gold += Number(r.gold ?? 0);
-  out.food += Number(r.food ?? 0);
-  out.gems += Number(r.gems ?? 0);
-  if (r.orbsOfFedCat) {
+  if (!again) {
+    out.gold += Number(r.gold ?? 0);
+    out.food += Number(r.food ?? 0);
+    out.gems += Number(r.gems ?? 0);
+  }
+  if (r.orbsOfFedCat && !again) {
     const best = [...G.s.cats].sort((a, b) => b.level - a.level)[0];
     if (best) out.orbs = { species: best.species, n: Number(r.orbsOfFedCat) };
   }
@@ -273,6 +278,7 @@ function complete(m: MissionDef): MissionReward {
   if (out.gems) G.add('gems', out.gems, 'mission');
   if (out.orbs) G.addOrbs(out.orbs.species, out.orbs.n);
   for (const u of m.unlocks) if (!/^[HCKE]\d\d$/.test(u)) G.flag(u);
+  claimMissionReward(m.id);
   G.count('missions_done');
   lastRewards.set(m.id, out);
   G.emit('mission', { id: m.id, kind: 'done' });

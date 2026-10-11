@@ -180,7 +180,8 @@ export class CatCard extends Container {
     const nt = txt(name, { fontFamily: F.poster, fontSize: Math.round(L.plate.h * 0.46), fill: nameColor, letterSpacing: 0.5 });
     nt.anchor.set(0.5, 0);
     fitText(nt, L.plate.w - 8);
-    nt.position.set(w / 2, L.plate.y + L.plate.h * 0.1);
+    // (0.1 / 0.64 let the poster caps sit on the rarity line: «POLVILLO» covered the top of «COMÚN»)
+    nt.position.set(w / 2, L.plate.y + L.plate.h * 0.06);
     this.addChild(nt);
     const rt = txt(known ? rarityName(this.rarity) : 'SIN REGISTRO', {
       fontFamily: F.ui,
@@ -190,7 +191,7 @@ export class CatCard extends Container {
       letterSpacing: 2,
     });
     rt.anchor.set(0.5, 0);
-    rt.position.set(w / 2, L.plate.y + L.plate.h * 0.64);
+    rt.position.set(w / 2, L.plate.y + L.plate.h * 0.68);
     fitText(rt, L.plate.w - 6);
     this.addChild(rt);
 

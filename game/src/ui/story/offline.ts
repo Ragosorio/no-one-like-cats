@@ -79,9 +79,10 @@ export async function offlineReport(layer: Container, s: OfflineSummary, opts: {
       fill: C.ink,
       wordWrap: true,
       wordWrapWidth: 560,
-      lineHeight: 26,
+      lineHeight: 24,
     });
-    body1.position.set(0, 236);
+    // (236 / 26 put its second line under the photo's frame: «Los Doblones esperan…» half hidden)
+    body1.position.set(0, 232);
     lead.addChild(k1, h1, gi, goldCtr, h1b, body1);
 
     // photo of a sleeping Canelo

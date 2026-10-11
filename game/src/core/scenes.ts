@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import { W, H, game } from './App';
 import { C } from '../ui/theme';
 import { sfx } from './audio';
+import { trimPixiPools } from './pixiFixes';
 
 export abstract class Scene extends Container {
   /**
@@ -67,6 +68,7 @@ class SceneManager {
       this.current.exit();
       this.sceneLayer.removeChild(this.current);
       this.current.destroy({ children: true });
+      trimPixiPools(); // the old scene's Graphics just returned their (ratcheted) batchers to Pixi's pools
     }
     this.current = next;
     this.sceneLayer.addChild(next);

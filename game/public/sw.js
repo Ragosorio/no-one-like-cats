@@ -5,6 +5,11 @@
  * - cats-svg/, story/, icons/: stale-while-revalidate in a cache that survives deploys
  *   (vector art is big and rarely changes; a redrawn cat shows up on the next view)
  * - version.json: never cached (core/updates.ts asks it "is there a newer build?")
+ * - music/*.mp3|ogg|opus|m4a… (Parte II songs, src/audio): cache 'nolc-music' (survives deploys).
+ *   Plain GETs (prefetch, decoded cues): stale-while-revalidate, revalidated at most once a day.
+ *   RANGE requests (an <audio> element streaming): answered from the cached file as a proper 206
+ *   slice when it's there; otherwise passed straight to the network untouched (never cached, never
+ *   turned into a 200) — streaming and seeking keep working exactly as without a worker.
  * - remote art (only when the build sets VITE_ART_BASE*, see src/art/artBase.ts and
  *   docs/part-ii/09-hosting-arte.md): core/pwa.ts adds ?art=<absolute bases>&tiers=all|full.
  *   Those URLs (same origin or CORS) get the same stale-while-revalidate art cache, and the copies
@@ -19,6 +24,8 @@ const ART_TIERS = Q.get('tiers') || '';
 const isRemoteArt = (href) => ART_BASES.some((b) => href.startsWith(b));
 const CODE = `nolc-code-${BUILD}`;
 const ART = 'nolc-art';
+const MUSIC = 'nolc-music';
+const isMusic = (url) => /\/music\/[^?#]+\.(mp3|ogg|opus|oga|m4a|aac|webm|wav|flac)$/i.test(url.pathname);
 const SHELL = ['./', './manifest.webmanifest', './icon.svg', './favicon.svg'];
 
 self.addEventListener('install', (e) => {
@@ -29,7 +36,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CODE && k !== ART).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CODE && k !== ART && k !== MUSIC).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
       .then(() => pruneArt().catch(() => undefined)),
   );
@@ -54,6 +61,11 @@ self.addEventListener('fetch', (e) => {
     );
     return;
   }
+  if (!remoteArt && isMusic(url)) {
+    if (req.headers.has('range')) e.respondWith(musicRange(req));
+    else e.respondWith(musicFile(req, e));
+    return;
+  }
   if (!remoteArt && url.pathname.includes('/assets/')) {
     e.respondWith(caches.match(req).then((hit) => hit || fetchAndCache(req, CODE)));
     return;
@@ -67,6 +79,59 @@ self.addEventListener('fetch', (e) => {
     );
   }
 });
+
+/** a whole music file: cached copy first, refreshed in the background at most once a day */
+async function musicFile(req, e) {
+  const c = await caches.open(MUSIC);
+  const hit = await c.match(req.url);
+  const fresh = hit && Date.now() - Number(hit.headers.get('x-nolc-at') || 0) < 86400000;
+  if (hit && fresh) return hit;
+  const net = fetch(req).then(async (res) => {
+    if (res.status === 200) {
+      const body = await res.clone().blob();
+      const h = new Headers(res.headers);
+      h.set('x-nolc-at', String(Date.now()));
+      h.set('Content-Length', String(body.size));
+      await c.put(req.url, new Response(body, { status: 200, headers: h }));
+    }
+    return res;
+  });
+  if (hit) {
+    e.waitUntil(net.catch(() => undefined));
+    return hit;
+  }
+  return net;
+}
+
+/** a byte range of a music file: a 206 sliced from the cached file, or the network as-is */
+async function musicRange(req) {
+  const c = await caches.open(MUSIC);
+  const hit = await c.match(req.url);
+  if (!hit) return fetch(req);
+  const m = /^bytes=(\d*)-(\d*)$/.exec((req.headers.get('range') || '').trim());
+  if (!m) return fetch(req);
+  const blob = await hit.blob();
+  const size = blob.size;
+  let start = m[1] === '' ? NaN : Number(m[1]);
+  let end = m[2] === '' ? NaN : Number(m[2]);
+  if (Number.isNaN(start)) {
+    // suffix range: the last N bytes
+    if (Number.isNaN(end)) return fetch(req);
+    start = Math.max(0, size - end);
+    end = size - 1;
+  } else if (Number.isNaN(end) || end >= size) end = size - 1;
+  if (start >= size || start > end) return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
+  return new Response(blob.slice(start, end + 1), {
+    status: 206,
+    statusText: 'Partial Content',
+    headers: {
+      'Content-Type': hit.headers.get('Content-Type') || 'audio/mpeg',
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+      'Content-Length': String(end - start + 1),
+      'Accept-Ranges': 'bytes',
+    },
+  });
+}
 
 function fetchAndCache(req, name) {
   return fetch(req).then((res) => {
