@@ -42,7 +42,7 @@ Léelo completo antes de empezar. Tu encargo particular (canción, misión y est
   - Pausa con Esc, y también al ocultar la pestaña.
 - **Prohibido:**
   - Imágenes raster en el repo. Todo es vector, procedural, shader o fuente.
-  - Tocar los originales en `~/Desktop/NO ONE LIKE CATS sounds/`.
+  - Tocar los originales en `~/Desktop/No one - raster (fuera del repo)/audio-derivados/originales/` (movidas ahí el 2026-10-10 con `SHA256SUMS`; antes en `~/Desktop/NO ONE LIKE CATS sounds/`).
   - Commit o push.
 - **Audio:** solo a través de `src/audio/api.ts`. Ninguna canción original suena fuera de tu Momento (lo vigila `tests/originalsReserved.test.ts`).
 - **Herramientas:** el dueño autorizó instalar herramientas para escuchar y analizar mejor (pip, brew), siempre fuera del repo, en `audio-derivados/`. El disco está justo, ~5 GB libres: revisa antes de bajar algo grande.
