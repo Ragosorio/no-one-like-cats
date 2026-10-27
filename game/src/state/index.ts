@@ -23,6 +23,8 @@ import './sys/rupturasReset';
 import './sys/rupturasO2'; // Oleada 2 «El Cielo Despierta» (H42–H49)
 import './sys/rupturasO3'; // Oleada 3 «La Era Astral» (H50–H57)
 import './sys/rupturasO4'; // Oleada 4 «El Umbral» (H58–H65)
+import './sys/gateras'; // Parte III · la Carta de las Cajas: normalizes the optional ext.gateras on load (never creates it)
+import './sys/p3cats'; // Parte III · the cats of the boxes: catch-up of the earned ones on load (never touches a save without the Parte III)
 import { markAllPatched } from './patches';
 import { UPDATE_IDS } from '../data/updates';
 

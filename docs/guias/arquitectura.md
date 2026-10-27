@@ -4,8 +4,8 @@ Bienvenida, bienvenido. Si llegaste aquí es porque quieres meterle mano a NO ON
 por dónde empezar. Tranqui: el código es grande, pero tiene un orden. Esta guía es el mapa del barco.
 No explica cada tornillo; te dice en qué cubierta está cada cosa y quién le habla a quién.
 
-Todo el juego vive en `game/` (TypeScript + PixiJS v8 + GSAP + pixi-filters, empaquetado con Vite).
-Cuando esta guía dice `src/...` se refiere a `game/src/...`.
+Todo el juego vive en `game/` (TypeScript + PixiJS v8 + GSAP + pixi-filters, y three.js para las islas 3D de la
+Parte II, empaquetado con Vite y probado con vitest). Cuando esta guía dice `src/...` se refiere a `game/src/...`.
 
 Guías hermanas, para cuando ya sepas qué quieres hacer:
 
@@ -14,7 +14,12 @@ Guías hermanas, para cuando ya sepas qué quieres hacer:
 - [Agregar historia](agregar-historia.md)
 - [Agregar un barco](agregar-barco.md)
 - [Animaciones](animaciones.md)
+- [Rutas de desarrollo](rutas-de-desarrollo.md)
+- [Cines y estados del mundo](cines-y-estados.md)
+- [Agregar un Momento musical](agregar-momento.md)
+- [Dimensiones y gateras](dimensiones-y-gateras.md)
 - [Cómo sacar una actualización sin romper partidas](../ACTUALIZACIONES.md)
+- [Los repositorios y el arte](../REPOSITORIOS.md)
 - [Motor y plataformas](../MOTOR-Y-PLATAFORMAS.md)
 - [Cómo contribuir](../../CONTRIBUTING.md)
 
@@ -23,7 +28,7 @@ Guías hermanas, para cuando ya sepas qué quieres hacer:
 ## 1. Las capas, en un dibujo
 
 ```
-            content.json / balance.json        (datos: gatos, misiones, números)
+  content.json + módulos de cada parte / balance.json   (datos: gatos, misiones, números)
                         │
                         ▼
               data/content.ts · state/econ.ts  (acceso tipado + fórmulas puras)
@@ -52,22 +57,31 @@ sí: para ir de una a otra se pasa por `src/app/flow.ts`.
 
 | Carpeta | Qué hay | Archivos que conviene abrir primero |
 |---|---|---|
-| `app/` | Navegación y orquestación entre escenas (el pegamento). | `flow.ts`, `battleFlow.ts`, `story.ts`, `storyFlow.ts` |
-| `art/` | Arte de gatos en código: SVG hechos con [MAI SVG](https://github.com/Ragosorio/MAI-SVG) + mallas deformables. | `livingCat.ts` (gatos vivos con rig), `catArt.ts` (carga `cats-svg/` y `cats-svg/lite/`), `tint.ts` (variantes teñidas), `textures.ts` (papel) |
+| `app/` | Navegación y orquestación entre escenas (el pegamento). | `flow.ts`, `battleFlow.ts`, `story.ts`, `storyFlow.ts`; Parte II: `formsFlow.ts`, `oleada2Flow.ts`… `oleada4Flow.ts`, `o4Finale.ts`; Parte III: `cajasFlow.ts`, `gaterasFlow.ts` |
+| `art/` | Arte de gatos en código: SVG hechos con [MAI SVG](https://github.com/Ragosorio/MAI-SVG) + mallas deformables. | `livingCat.ts` (gatos vivos con rig), `puppetCore.ts` (el núcleo que comparten 2D y 3D), `catArt.ts` (carga `cats-svg/` y `cats-svg/lite/`), `artBase.ts` / `artPaths.ts` / `artShardPins.ts` (de dónde se sirve el arte, ver [REPOSITORIOS.md](../REPOSITORIOS.md)), `temperament.ts` / `intent.ts` (animaciones con propósito), `tint.ts`, `textures.ts` |
+| `audio/` | El motor de audio de la Parte II: catálogo de pistas, director adaptativo, capas, remates, Fonoteca e invitación al sonido. | `engine.ts`, `api.ts` (`audioApi`), `catalog.ts`, `director.ts`, `fonoteca.ts` |
 | `battle/` | Combate: simulación pura, IA, vista, mar, cielo, jefes. | `sim.ts` (lógica determinista sin render), `autoplay.ts` (IA contra IA, la usan los scripts de balance), `ai.ts`, `hud.ts`, `anime/` (barcos estilo anime), `boss/rigs.ts` |
-| `core/` | El motor de casa: app, escenas, eventos, guardado, audio, PWA. | `App.ts`, `scenes.ts`, `events.ts`, `save.ts`, `updates.ts`, `pwa.ts`, `audio.ts` (SFX sintetizados, sin archivos), `music.ts` (música procedural), `rng.ts`, `format.ts`, `safety.ts` |
-| `data/` | Contenido y balance en JSON + accesos tipados. | `content.json`, `balance.json`, `content.ts`, `catRigs.json`, `chatter.ts`, `elementsMeta.ts`, `updates.ts` |
-| `dev/` | Utilidades solo para desarrollo. | `devBattle.ts` (la batalla de `?scene=battle`) |
+| `cine/` | Escenas declarativas: cámara, mundo, gatos, sonido, diálogo. Ver [cines-y-estados.md](cines-y-estados.md). | `types.ts`, `runner.ts`, `registry.ts`, `scenes/*.ts` |
+| `core/` | El motor de casa: app, escenas, eventos, guardado, El Baúl, audio, PWA. | `App.ts`, `scenes.ts`, `events.ts`, `save.ts`, `vault.ts` (El Baúl), `updates.ts`, `pwa.ts`, `settings.ts`, `audio.ts` (efectos sintetizados), `music.ts` (la música procedural de la Parte I), `rng.ts`, `format.ts`, `safety.ts` |
+| `data/` | Contenido y balance en JSON + accesos tipados. | `content.json`, `rupturas/*.json` (Parte II), `gateras/*.json` (Parte III), `mergeContent.ts`, `balance.json`, `content.ts`, `catRigs.json`, `music/` (pistas, batallas, director, mapas de pulsos), `podio.json`, `glossary.ts`, `updates.ts` |
+| `dev/` | Utilidades solo para desarrollo. | `devBattle.ts` (la batalla de `?scene=battle`), `devMusicBattle.ts`, `overflowAudit.ts` (`__overflow()`) |
+| `engine/` | El motor 3D de las regiones (three.js): mundo, océano, cielo, clima, cámara, vida y los gatos de papel en 3D. | `world/World3D.ts`, `world/paperCat.ts`, `life/director.ts` |
 | `fx/` | Jugo visual: shake, partículas, filtros y secuencias grandes. | `juice.ts`, `particles.ts`, `filters.ts`, `sequences/` (`catReveal`, `gachaSummon`, `starUp`, `victoryNews`...) |
-| `island/` | La isla isométrica: terreno, cámara, gatos paseando, decoración, dimensiones. | `iso.ts`, `camera.ts`, `catActor.ts`, `worldUi.ts`, `archipelago.ts`, `views/`, `dimensions/`, `chatter/` |
-| `panels/` | Paneles modales que se abren encima de la isla o el mapa. | `CatPanel.ts`, `Shipyard.ts`, `Sanctuary.ts`, `Kingdom.ts`, `casino/`, `shop/`, `island/` |
-| `scenes/` | Pantallas completas (una activa a la vez). | `TitleScene.ts`, `IslandScene.ts`, `MapScene.ts`, `BattleScene.ts` |
+| `island/` | La isla isométrica: terreno, cámara, gatos paseando, decoración, dimensiones, la noche. | `iso.ts`, `camera.ts`, `catActor.ts`, `worldUi.ts`, `archipelago.ts`, `views/`, `dimensions/`, `chatter/`, `night/` (el escenario de cine `island`) |
+| `momentos/` | Los Momentos musicales: núcleo puro, kit de anime y una carpeta por canción. Ver [agregar-momento.md](agregar-momento.md). | `index.ts` (`playMomento`), `score.ts`, `runner.ts`, `anime/`, `songs/` |
+| `panels/` | Paneles modales que se abren encima de la isla o el mapa. | `CatPanel.ts`, `Shipyard.ts`, `Sanctuary.ts`, `Kingdom.ts`, `Fonoteca.ts`, `Replays.ts` (VOLVER A VER), `Bitacora.ts`, `casino/`, `shop/`, `island/`, `podio/` |
+| `podio/` | Los duelos 1 contra 1 del Podio: motor, arena, escalera, poderes. | `engine.ts`, `ladder.ts`, `powers.ts` |
+| `regions/` | Las islas 3D de la Parte II, una por archivo, y su registro. | `index.ts` (`REGION_IDS`), `paginas.ts`, `nacar.ts`, `cometa.ts`… |
+| `rupturas/` | La porción vertical aislada de la Parte II (`rupturas.html`): nunca toca la partida. | `main.ts` |
+| `scenes/` | Pantallas completas (una activa a la vez). | `TitleScene.ts`, `IslandScene.ts`, `MapScene.ts`, `BattleScene.ts`, `RegionScene.ts`, `PodioScene.ts`, `GaterasMapScene.ts`, `CajaScene.ts` |
 | `state/` | Estado del juego, reglas, guardado, migraciones. | `game.ts`, `index.ts`, `econ.ts`, `sys/`, `ext/`, `migrate.ts`, `patches.ts` |
-| `ui/` | Kit de interfaz: botones, textos, modales, toasts, íconos, HUD, diálogos. | `widgets.ts`, `theme.ts`, `modal.ts`, `icons.ts`, `elementIcon.ts`, `dialog.ts`, `hud/` |
+| `ui/` | Kit de interfaz: botones, textos, modales, toasts, íconos, HUD, diálogos, guiones de historia. | `widgets.ts`, `theme.ts`, `modal.ts`, `icons.ts`, `elementIcon.ts`, `dialog.ts`, `saveGuard.ts`, `hud/`, `story/` |
+| `workers/` | Trabajo fuera del hilo principal. | `estimate.worker.ts` (la estimación de victoria) |
 
-Fuera de `src/` también hay cosas útiles: `game/public/` (SVGs de gatos, íconos, arte de historia,
-`sw.js`, manifest), `game/test-saves/` (partidas de prueba para `?save=`) y
-`game/scripts/verify-missions.ts` (revisa las misiones sin navegador).
+Fuera de `src/` también hay cosas útiles: `game/public/` (SVGs de gatos, íconos, arte de historia, música,
+`sw.js`, manifest), `game/test-saves/` (partidas de prueba para `?save=`), `game/tests/` (vitest),
+`game/scripts/verify-missions.ts` (revisa las misiones sin navegador), `game/scripts/art-publish.ts` (el sitio
+de arte) y `game/rupturas.html` (la porción vertical aislada de la Parte II).
 
 ---
 
@@ -82,8 +96,10 @@ Fuera de `src/` también hay cosas útiles: `game/public/` (SVGs de gatos, ícon
    await Promise.race([all, new Promise((r) => setTimeout(r, 4000))]);
    ```
 3. `game.init(...)` (crea Pixi), `preloadElementIcons()`, `scenes.init()`.
-4. `initPwa()` (service worker, botón INSTALAR), `initUpdates()` (cartel de versión nueva),
-   `mountMicroOverlay()`, `applyAudioSettings()`, `initStory()` (escucha eventos de `G` para la historia).
+4. `initPwa()` (service worker, botón INSTALAR), `initUpdates()` (cartel de versión nueva), `initSaveGuard()`
+   (una sola pestaña escribe la partida; El Baúl), `mountMicroOverlay()`, `applyAudioSettings()`, `installAudio()`
+   (el motor de audio de la Parte II), `initStory()` (escucha eventos de `G` para la historia), `initForms()`,
+   `initOleada2()`, `initOleada3()`, `initOleada4()` (los flujos de la Parte II) e `initCajas()` (la Parte III).
 5. El **reloj de la economía**: un `Ticker` de Pixi que avanza `G.tick()` siempre que haya partida cargada.
    ```ts
    Ticker.shared.add((t) => {
@@ -96,27 +112,27 @@ Fuera de `src/` también hay cosas útiles: `game/public/` (SVGs de gatos, ícon
 
 ### Rutas de la URL
 
+`route()` en `main.ts` lee `?scene=` y los demás parámetros. La lista completa, con partidas de prueba y capturas sin
+pantalla, está en [rutas-de-desarrollo.md](rutas-de-desarrollo.md). En resumen:
+
 | Parámetro | Qué hace | ¿Solo en dev? |
 |---|---|---|
 | (nada) | El juego de verdad: pantalla de título. | no |
 | `?scene=island` / `?scene=map` | Carga la partida (`bootGame()`) y salta directo a la isla o al mapa. | no |
-| `&new=1` | Junto con `island`/`map`: empieza partida nueva (`newGame()`). Ojo, eso reemplaza la partida guardada. | no |
-| `?scene=battle` | Batalla de prueba con `dev/devBattle.ts`; al terminar, otra igual. | no |
-| `?scene=art` | `ArtLab`: comparar estilos de render de gatos (isla, cómic, battle form, tinta) y probar una revelación. | no |
-| `?scene=catlive` | `CatLiveLab`: todos los gatos como marionetas MAI. `&cat=<slug>` muestra uno, `&rig=1` dibuja el rig. | no |
-| `?scene=shiplab` | `ShipArtLab`: todas las pieles de barco (jugador, enemigos, jefes) con tripulación y estados. | no |
-| `?scene=sandbox` | `BattleSandbox`: arena para probar cómo se rompen los barcos. | no |
-| `?scene=islandlab` | `IslandSandbox`: la isla y su cámara, sin partida. | no |
-| `?scene=dev` | LABORATORIO: una página que lista todos los labs con qué hacen y qué guía los explica (`scenes/DevLab.ts`, lista `LABS`). | no |
-| `?scene=fxlab` | `FxLab`: visor de secuencias de `fx/sequences/` con el gato que elijas (`&cat=<slug o id>`). | no |
-| `?dev=1` (en el título) | Muestra un botón LAB en la esquina de la pantalla de título que lleva a `?scene=dev`. | no |
-| `?save=post-boss1` | Copia `game/test-saves/post-boss1.json` a la ranura de guardado y limpia el parámetro. | sí |
+| `&new=1` | Junto con `island`/`map`: empieza partida nueva (`newGame()`). Reemplaza la partida guardada. | sí |
+| `?scene=dev`, `?dev=1` | El LABORATORIO (`scenes/DevLab.ts`, lista `LABS`) y su botón en el título. | no |
+| `?scene=catlive`, `fxlab`, `art`, `shiplab`, `sandbox`, `battle`, `islandlab` | Los laboratorios. | no |
+| `?scene=battle&music=liky_fight` | La batalla musical de prueba. | sí |
+| `?scene=region&region=<id>` | Una isla 3D de la Parte II (`regions/index.ts › REGION_IDS`). | sí |
+| `?scene=cajas` / `?scene=caja&set=bar\|calle` | La Carta de las Cajas y el set de una dimensión (Parte III). | sí |
+| `?momento=<id>` / `?momento=lab` | Un Momento musical suelto / el laboratorio del tratamiento. | sí |
+| `?save=<fixture>` | Copia `game/test-saves/<fixture>.json` a la ranura de guardado y limpia el parámetro. | sí |
 | `?stage=2-9` | Carga la partida y entra directo a la batalla de campaña zona 2, etapa 9. | sí |
 | `?speed=4` | El reloj de la economía corre 4 veces más rápido (las batallas no). | sí |
 | `?realtime=1` | GSAP sigue el reloj real aunque la pestaña esté en segundo plano (pruebas headless). | sí |
 
-En dev también quedan
-colgados `window.__gsap`, `window.__scenes` y, siempre, `globalThis.__G` para hurgar desde la consola.
+En dev también quedan colgados `window.__gsap`, `window.__scenes` y `__overflow()`; siempre, `globalThis.__G`,
+`__story` y `__cine` para hurgar desde la consola.
 
 ---
 
@@ -163,8 +179,12 @@ fondo (o muestran más mundo) hasta `game.view`. Si algo tuyo tiene que reaccion
 | `BattleScene` | La batalla de barcos (recibe un `BattleSpec`, devuelve un `BattleResult`). |
 | `ResultsScene` | Portada de periódico de victoria o la derrota noir con análisis del jefe. |
 | `CasinoScene` | Casino "El Gato Negro": tragamonedas, ruleta, portal (gacha), La Caja, accesorios. |
+| `PodioScene` | Los duelos 1 contra 1 del Podio. |
+| `RegionScene` | Una isla 3D de la Parte II (three.js en su propio canvas); es el escenario de cine `region`. |
+| `GaterasMapScene` | La Carta de las Cajas, el segundo mapa (Parte III). Ver [dimensiones-y-gateras.md](dimensiones-y-gateras.md). |
+| `CajaScene` | La escena 2D de una dimensión (Parte III); es el escenario de cine `caja`. |
 | `DevLab` | LABORATORIO, el índice de labs. |
-| `ArtLab`, `CatLiveLab`, `ShipArtLab`, `BattleSandbox`, `IslandSandbox` | Laboratorios de desarrollo (ver rutas). |
+| `ArtLab`, `CatLiveLab`, `FxLab`, `ShipArtLab`, `BattleSandbox`, `IslandSandbox` | Laboratorios de desarrollo (ver rutas). |
 
 ### La batalla en pantalla ES la simulación
 
@@ -201,6 +221,9 @@ jugador con `decide(..., aiSeed.cat(sim, 0, k))` y comparar cada `startTurn`/`fi
   la isla o el mapa están tranquilos (nunca en medio de una batalla).
 - `storyFlow.ts`: batallas de historia (`startStoryBattle`) y las secuencias de "nuevo elemento" y
   "nuevo gato" (`revealElement`, `revealCat`).
+- Parte II: `flow.ts › goRegion(id)` (las islas 3D), `formsFlow.ts` (cuando se desbloquea una forma de Canelo),
+  `oleada2Flow.ts`, `oleada3Flow.ts`, `oleada4Flow.ts` y `o4Finale.ts` (lo propio de cada oleada).
+- Parte III: `cajasFlow.ts` (la Carta de las Cajas y sus batallas) y `gaterasFlow.ts` (las escenas de una dimensión).
 
 ---
 
@@ -258,6 +281,16 @@ estrella, Ronroneo, momentum, XP. Sin efectos secundarios: entra número, sale n
 | `shop.ts` | Precios y compras de la Tienda (solo oro y gemas ganadas jugando). |
 | `casino.ts` / `gacha.ts` / `accessories.ts` | Casino honesto, portal con pity visible, accesorios con bonos chiquitos. |
 | `estimate.ts` | Probabilidad de victoria honesta: simula la etapa con tu barco real varias veces. |
+| `podio.ts` | El Podio: desbloqueo (después del Jefe 1), escalera, nivel de Podio por gato, premios de campeón. |
+| `grietas.ts` / `finale.ts` | Las Grietas del Multiverso (los 6 elementos de después de la historia) y el final de la Parte I. |
+| `simulacro.ts` | El Simulacro: tu flota repite en segundo plano la mejor etapa que ya ganaste. |
+| `worldState.ts` | Estados del mundo derivados de la historia ([cines-y-estados.md](cines-y-estados.md)). |
+| `rupturas.ts`, `rupturasO2.ts`, `rupturasO3.ts`, `rupturasO4.ts`, `rupturasO4Battles.ts` | La Parte II por oleadas: batallas de historia, banderas, sistemas y estados del mundo de cada una. |
+| `rupturasReset.ts` / `rupturasLedger.ts` | El reinicio narrativo de la Parte II y el registro de premios ya cobrados (nunca se pagan dos veces). |
+| `forms.ts` | Las formas de Canelo (datos en `data/rupturas/formas.ts`). |
+| `storyScale.ts` | Cómo escala una batalla de historia con tu tripulación. |
+| `ecos.ts`, `olvidada.ts`, `suenosDream.ts` | Sistemas de la Oleada 4 de la Parte II. |
+| `gateras.ts`, `gaterasBattles.ts`, `gaterasWorld.ts` | La Parte III: la Carta de las Cajas, sus batallas y sus estados del mundo ([dimensiones-y-gateras.md](dimensiones-y-gateras.md)). |
 
 ### `state/ext/` (ayudantes de UI)
 
@@ -268,7 +301,7 @@ Lecturas cómodas sobre `sys/` para cada módulo de pantalla, sin esquema persis
 
 ### `state/migrate.ts` y `state/patches.ts`
 
-`migrate.ts` cambia la **forma** de partidas viejas (`MIGRATIONS[v]`, `SAVE_VERSION`, hoy en 2) y
+`migrate.ts` cambia la **forma** de partidas viejas (`MIGRATIONS[v]`, `SAVE_VERSION`, hoy en 3) y
 `normalize()` rellena lo que falte. `patches.ts` corre arreglos de **juego** una sola vez por partida
 (`registerPatch({ id, why, run })`). El detalle completo, con sus reglas sagradas, está en
 [ACTUALIZACIONES.md](../ACTUALIZACIONES.md). Léelo antes de tocar `GameState`.
@@ -307,6 +340,12 @@ La partida va a `localStorage` dentro de un sobre `{ version, savedAt, build, st
 
 Si `localStorage` no está disponible, hay un respaldo en memoria. Exportar e importar viven aquí
 también (`exportSave`, `importSave`); el panel está en `ui/backupsPanel.ts`.
+
+Encima de eso está **El Baúl** (`core/vault.ts`): un historial en IndexedDB con resumen de cada copia, una carpeta
+del jugador donde se escriben archivos `.nocat` (Chrome y Edge), descargar y abrir `.nocat`, y `storage.persist()`.
+Dos candados contra pisar progreso: **una sola pestaña escribe** a la vez (Web Locks, `ui/saveGuard.ts`) y
+`G.save()` **nunca guarda una partida con menos tiempo de juego** (`playMs`) que la que ya está en disco. Todo
+código que reemplace la partida llama antes a `snapshot(motivo)`.
 
 ### Actualizaciones (`core/updates.ts`, `data/updates.ts`)
 
@@ -355,28 +394,45 @@ m.body.addChild(new Button('LISTO', () => m.close()));
 
 ### `data/content.json`
 
-El contenido del juego (unas 16 mil líneas). Claves de primer nivel:
+El contenido de la Parte I (unas 19 500 líneas). Claves de primer nivel:
 
 | Clave | Qué guarda |
 |---|---|
 | `meta` | Nombre del juego, capítulo, idioma, pantalla lógica. |
-| `elements` | Los 8 elementos: id, nombre, desbloqueo, dimensión, paleta. |
+| `elements` | Los 13 elementos de la Parte I: id, nombre, desbloqueo, dimensión, paleta. |
 | `affinity` | Tabla de ventajas entre elementos. |
 | `materials` | Materiales de casco y sus multiplicadores por elemento. |
 | `statuses` / `catStatuses` | Estados alterados de barcos / de gatos. |
 | `reactions` | Reacciones entre elementos (y su entrada en el Grimorio). |
 | `roles` / `workers` / `traits` / `mutations` | Roles de combate, trabajos, rasgos y mutaciones de gatos. |
-| `cats` | Los 54 gatos de la Catdex. |
+| `cats` | Los 86 gatos de la Parte I. |
 | `catdexSets` / `catdexTeaser` / `tintDecals` | Sets de colección, el gato teaser y decorados de variantes teñidas. |
 | `resonanceRules` / `resonanceRecipes` / `secretRecipes` | Reglas, recetas y secretos de Resonancia. |
 | `ships` / `modules` / `shipArt` | Barcos del jugador, módulos, reliquias, artefactos y su arte. |
 | `volley` / `koSequence` / `aiDifficulty` | Reglas de la andanada, secuencia de K.O. y niveles de IA. |
 | `enemyArchetypes` / `enemies` / `elites` / `bosses` | Enemigos por zona (con etapas), élites y jefes. |
-| `missions` | 108 misiones en cadenas, con metas, disparadores y recompensas. |
+| `missions` | Las 127 misiones de la Parte I en cadenas, con metas, disparadores y recompensas. |
 | `events` | Microeventos y eventos relámpago. |
-| `expansions` | Las 8 expansiones de la isla. |
+| `expansions` | Las 12 expansiones de la isla. |
 | `automation` / `kingdomMilestones` | Automatizaciones por nivel de Reino y los hitos del 1 al 50. |
 | `story` | Personajes, beats y textos de derrota. |
+
+### Los módulos de cada parte
+
+Las partes nuevas **no tocan** `content.json`: traen su contenido en módulos que `content.ts` une al cargar con
+`mergeContent` (`data/mergeContent.ts`). La unión **solo agrega**: los arreglos se concatenan, los objetos se mezclan
+por clave y un valor de la Parte I no se puede sobrescribir (en desarrollo y en las pruebas truena; en producción se
+ignora con un aviso). Un `id` repetido también se rechaza: los ids son para siempre.
+
+| Módulo | Qué agrega |
+|---|---|
+| `data/rupturas/especies.json`, `especies-o2.json`, `especies-o3.json`, `especies-o4.json` | Los 34 gatos de la Parte II, los elementos Cristal y Gravedad (con sus multiplicadores de material en `materialMult`), estados, reacciones, sets y recetas. |
+| `data/rupturas/historia.json`, `historia-o2.json`, `historia-o3.json`, `historia-o4.json` | Las 35 misiones de la Parte II y sus beats. |
+| `data/rupturas/formas.ts` | Las formas de Canelo. |
+| `data/gateras/historia.json`, `data/gateras/regiones.json` | La Parte III: misiones de la porción vertical y la Carta de las Cajas. |
+
+Con todo unido, hoy el juego tiene 120 gatos, 15 elementos y 166 misiones (162 publicadas y 4 de la Parte III en
+desarrollo). `node scripts/verify-missions.ts --all` las revisa todas.
 
 ### El resto de `data/`
 
@@ -385,7 +441,11 @@ El contenido del juego (unas 16 mil líneas). Claves de primer nivel:
   `stageDef('2-9')`, `affinityMult()`, `materialMult()`...
 - `balance.json`: todos los números (rarezas, gatos, resonancia, hábitats, combate, reino, Ronroneo,
   momentum, expediciones...). Se lee a través de `BAL` en `state/econ.ts`.
-- `catRigs.json`: un rig por gato (33 pinturas), compactado desde MAI; lo consume `art/livingCat.ts`.
+- `catRigs.json`: un rig por pintura (los 120 gatos, las 2 formas de Canelo, Luzterna y las pinturas nuevas en
+  prueba), compactado desde MAI; lo consume `art/livingCat.ts`.
+- `music/`: `tracks.json` (el catálogo de pistas), `battles.json` (planes de música por batalla), `director.json`
+  (el director adaptativo) y `beatmaps/` (mapas de pulsos y ataques).
+- `podio.json` (el Podio), `art-parte2.json` (pinturas nuevas por lote) y `glossary.ts` (el glosario).
 - `chatter.ts`: las frases que sueltan los gatos en la isla (con su retractación cobarde incluida).
 - `elementsMeta.ts`: nombres e íconos para mostrar elementos; la jugabilidad vive en `content.json`.
 - `updates.ts`: NOVEDADES (ver arriba).
@@ -393,7 +453,7 @@ El contenido del juego (unas 16 mil líneas). Claves de primer nivel:
 ### Cómo fluye un dato
 
 ```
-content.json ──► content.ts (CATS, catDef) ──► state/sys/* (reglas) ──► panels/* y scenes/* (pantalla)
+content.json + módulos ──► content.ts (mergeContent, CATS, catDef) ──► state/sys/* (reglas) ──► panels/* y scenes/*
 balance.json ──► state/econ.ts (BAL + fórmulas) ──┘
 ```
 
@@ -415,6 +475,10 @@ una fórmula de oro dentro de un panel, detente, respira y muévela a `state/`.
   ícono SVG.
 - `.github/workflows/deploy.yml`: en cada push a `main`, Node 22, `npm ci`, `npm run build`, un
   **guardia que falla si encuentra PNG, JPG, WEBP o GIF en `dist/`**, y publica en GitHub Pages.
+- **El arte pesado se sirve aparte.** Con la variable de repo `NOLC_ART_BASE_FULL` (que llega al build como
+  `VITE_ART_BASE_FULL`), el plugin `nolc-drop-remote-art` de `vite.config.ts` saca de `dist/` los SVG completos y el
+  juego los pide al sitio de arte (`Ragosorio/nolc-arte`). Antes del build, `scripts/art-publish.ts check` compara lo
+  publicado con el commit. Sin variables, todo el arte va dentro de `dist/`. Detalle: [REPOSITORIOS.md](../REPOSITORIOS.md).
 
 Plataformas, rendimiento y por qué elegimos este motor: [MOTOR-Y-PLATAFORMAS.md](../MOTOR-Y-PLATAFORMAS.md).
 
@@ -430,7 +494,8 @@ Plataformas, rendimiento y por qué elegimos este motor: [MOTOR-Y-PLATAFORMAS.md
   Para textos con género usa `gtxt()` de `ui/gender.ts`.
 - **Cero imágenes raster.** Todo el arte es SVG o se dibuja en código. ¿Por qué? Carga más rápido, se puede
   animar (los gatos se doblan como marionetas sobre su propia pintura) y no cuesta nada. El deploy lo
-  vigila: un PNG colado tumba el build. Lo mismo con el audio: los sonidos y la música se sintetizan.
+  vigila: un PNG colado tumba el build. Los efectos de sonido se sintetizan en código y la música de la Parte I es
+  procedural; la música de la Parte II son archivos `.m4a` en `public/music/` (ver [agregar-momento.md](agregar-momento.md)).
 - **Nada de emojis en pantalla.** Los elementos se muestran con `elementIcon()` / `iconText()`.
 - **Las escenas no se importan entre sí**: se navega con `app/flow.ts`.
 - **Los sistemas no conocen la UI**: emiten eventos y la UI escucha.
@@ -462,3 +527,18 @@ la corrección: es lo más parecido a darle de comer a un gato.
   se importa primero en `main.ts`), `art/rasterCache.ts` (caché del navegador de gatos rasterizados, por build),
   `workers/estimate.worker.ts` (la ESTIMACIÓN fuera del hilo principal), `core/sliced.ts` (trabajo por cuadros).
 - **Pruebas**: `npm test` (vitest, `game/tests/`).
+
+## Piezas nuevas (Parte II y Parte III, al 2026-10-14)
+
+- **Islas 3D**: `engine/` (three.js) + `regions/` + `scenes/RegionScene.ts`; se entra con `goRegion(id)`. Diseño:
+  [../part-ii/14-regiones-3d.md](../part-ii/14-regiones-3d.md).
+- **Un mundo que sigue a la historia**: `state/sys/worldState.ts` + `island/night/` + `cine/`. Guía:
+  [cines-y-estados.md](cines-y-estados.md).
+- **Música**: `audio/` (catálogo, director, Fonoteca) + `data/music/` + `public/music/`. Las originales del autor solo
+  suenan en los Momentos y en la Fonoteca (`tests/originalsReserved.test.ts`).
+- **Momentos musicales**: `momentos/`. Guía: [agregar-momento.md](agregar-momento.md).
+- **Animaciones con propósito**: `art/temperament.ts` + `art/intent.ts`. Ver [animaciones.md](animaciones.md).
+- **Contenido por módulos**: `data/rupturas/`, `data/gateras/` + `data/mergeContent.ts` (solo agrega).
+- **El Baúl**: `core/vault.ts` + `ui/saveGuard.ts`.
+- **Parte III (en desarrollo)**: `scenes/GaterasMapScene.ts`, `scenes/CajaScene.ts`, `state/sys/gateras*.ts`,
+  `battle/mareo.ts`, `panels/Bitacora.ts`. Guía: [dimensiones-y-gateras.md](dimensiones-y-gateras.md).

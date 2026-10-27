@@ -186,7 +186,7 @@ export const DEFAULT_TEMPERAMENT: Temperament = T('default', {
 });
 
 /** mass by rarity (bigger legends weigh more); primordials are titans */
-const RARITY_MASS: Record<string, number> = { common: 0.9, rare: 1, epic: 1.1, legendary: 1.3, mythic: 1.4, heroic: 1.4, divine: 1.5, secret: 1.2 };
+const RARITY_MASS: Record<string, number> = { common: 0.9, rare: 1, epic: 1.1, legendary: 1.3, multidimensional: 1.3, mythic: 1.4, heroic: 1.4, divine: 1.5, secret: 1.2 };
 export const PRIMORDIAL_MASS = 1.8;
 
 /** cats whose body is a joke about weight (or lightness), by species id */

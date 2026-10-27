@@ -20,6 +20,21 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-27-fuera-de-la-caja',
+    date: '2026-10-27',
+    title: 'PARTE III · Fuera de la Caja',
+    luzterna: 'Gordo, al pie del faro hay una página que no estaba ayer. Huele a cerveza y a algo que no sé nombrar. Yo alumbro; tú trae a todos.',
+    items: [
+      { tag: 'NUEVO', text: 'Empieza la Parte III, «Fuera de la Caja»: cuatro actos y un final que se cuentan con películas. Cada una tiene su propio estilo, y muchas no piden ni un toque: solo mira.' },
+      { tag: 'NUEVO', text: 'Antes de cada batalla importante, un video corto te cuenta qué pasa, por qué importa, contra quién vas y qué te juegas. La primera vez se ve completo; después lo puedes saltar.' },
+      { tag: 'NUEVO', text: 'La Carta de las Cajas: cajas nuevas por abrir, cada una con sus propias reglas de batalla, desvíos, rescates y actividades.' },
+      { tag: 'NUEVO', text: 'Más de 30 gatos nuevos, y algunos te van a sonar conocidos. Ninguno sale del Portal, del Casino ni de la Resonancia: todos se ganan jugando. Llega también una rareza nueva.' },
+      { tag: 'NUEVO', text: 'Canciones nuevas para la FONOTECA, y todas las películas quedan en VOLVER A VER.' },
+      { tag: 'ARREGLO', text: 'La música de batalla retoma donde va la pelea, en vez de volver al principio, y pasar de una batalla a otra ya no da errores.' },
+      { tag: 'CAMBIO', text: 'Tu isla, tus gatos y tu partida no cambian. La Parte III solo agrega.' },
+    ],
+  },
+  {
     id: '2026-10-15-la-marea-completa',
     date: '2026-10-15',
     title: 'PARTE II completa · Escenas con música',

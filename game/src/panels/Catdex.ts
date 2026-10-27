@@ -14,7 +14,8 @@ import { scenes } from '../core/scenes';
 import { CATS, CONTENT, catDef } from '../data/content';
 import { G } from '../state/game';
 import { BAL } from '../state/econ';
-import { canStarUp, checkSets, collState, dexStatus, setsCompleted, starNeed, takeSetCelebrations } from '../state/sys/cats';
+import { canStarUp, checkSets, collState, dexStatus, dexVisible, setsCompleted, starNeed, takeSetCelebrations } from '../state/sys/cats';
+import { P3_MULTIDIM, isMultidim, isP3Cat } from '../state/sys/multidim';
 import { playPendingSets } from './collection/setPoster';
 import {
   dexCount,
@@ -288,7 +289,9 @@ class CatdexView {
       x += c.width + 8;
     };
     add2(mk('TODAS', this.rarFilter === null, () => this.filter(this.elFilter, null)));
-    const rars: (PrintRarity | 'secret')[] = ['common', 'rare', 'epic', 'legendary', 'primordial', 'mythic', 'heroic', 'divine', 'secret'];
+    // Parte III: MULTIDIMENSIONAL is its own category, LAST (state/sys/multidim.ts categoryOrder), once the boxes opened
+    const md: PrintRarity[] = P3_MULTIDIM.on && CATS.some((c) => isMultidim(c.rarity) && dexVisible(c.id)) ? ['multidimensional'] : [];
+    const rars: (PrintRarity | 'secret')[] = ['common', 'rare', 'epic', 'legendary', 'primordial', 'mythic', 'heroic', 'divine', ...md, 'secret'];
     for (const r of rars) {
       const name = r === 'secret' ? 'SECRETO' : rarityName(r);
       const col = r === 'secret' ? C.violet : r === 'common' ? 0x6d6356 : rarityColor(r);
@@ -392,6 +395,8 @@ class CatdexView {
   }
 
   private passes(id: string) {
+    // Parte III: a box cat only once the Parte III began (or once it's known): state/sys/cats.ts dexVisible
+    if (!dexVisible(id)) return false;
     const d = catDef(id);
     const st = dexStatus(id);
     if (this.search) {
@@ -883,10 +888,16 @@ class DetailSheet extends Container {
     stamp.position.set(X + RW - 420, top + 10);
     this.addChild(stamp);
     let y = top + 10;
-    y = this.section('POSIBLES PADRES', possibleParents(def), X, y, colW + 120, { size: 20 });
-    const minLv = (def.obtain as unknown as { minParentLevel?: number }).minParentLevel;
-    const cond = [minLv ? `Ambos padres Nv${minLv}+.` : null, `Resultado ${rarityName(printRarity(species))}: ${resonanceMinutes(def.rarity)} de Resonancia.`].filter(Boolean).join('\n');
-    y = this.section('CONDICIONES CONOCIDAS', cond, X, y, colW + 120, { color: C.ink });
+    if (isP3Cat(def)) {
+      // Parte III: a box cat never resonates — the rumor says where it is (its source: data/gateras/especies.json)
+      y = this.section('CÓMO SE CONSIGUE', possibleParents(def), X, y, colW + 120, { size: 20 });
+      y = this.section('FUERA DE LA CAJA', 'No sale de la Resonancia, del Casino ni del Portal: viene de otra caja y llega por la historia.', X, y, colW + 120, { color: C.ink });
+    } else {
+      y = this.section('POSIBLES PADRES', possibleParents(def), X, y, colW + 120, { size: 20 });
+      const minLv = (def.obtain as unknown as { minParentLevel?: number }).minParentLevel;
+      const cond = [minLv ? `Ambos padres Nv${minLv}+.` : null, `Resultado ${rarityName(printRarity(species))}: ${resonanceMinutes(def.rarity)} de Resonancia.`].filter(Boolean).join('\n');
+      y = this.section('CONDICIONES CONOCIDAS', cond, X, y, colW + 120, { color: C.ink });
+    }
     const orbs = G.s.orbs[species] ?? 0;
     if (orbs) y = this.section('ORBES GUARDADOS', `Tienes ${orbs} orbes de ${def.name}. Te esperan en el Altar.`, X, y, colW + 120, { color: 0xb8862a });
     const lore = hintFor(def);
@@ -907,6 +918,9 @@ class DetailSheet extends Container {
       y += 110;
       const h = hintFor(def);
       if (h) y = this.section('PISTA', h, X, y, RW - 200, { italic: true, size: 26, color: C.violet });
+    } else if (isP3Cat(def)) {
+      // Parte III: a sealed box cat (no silhouette: it would spoil who it is)
+      y = this.section('FUERA DE LA CAJA', 'Vive en otra caja. Lo vas a conocer en el camino: la historia, un rescate o una actividad de la Carta te lo presentan.', X, y, RW - 200, { size: 22 });
     } else {
       const missing = def.elements.filter((e) => !isElementKnown(e));
       y = this.section(

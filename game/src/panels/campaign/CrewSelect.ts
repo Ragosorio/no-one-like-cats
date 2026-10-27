@@ -16,7 +16,8 @@ import { sfx } from '../../core/audio';
 import { fmt } from '../../core/format';
 import { G } from '../../state/game';
 import { catDef, ROLE_BY_ID, SHIP_BY_ID } from '../../data/content';
-import { crew, crewSize, setCrew } from '../../state/sys/ship';
+import { benched, crew, crewSize, setCrew } from '../../state/sys/ship';
+import { llamaLabel } from '../../state/sys/finalState';
 import { cat as getCat, catPow } from '../../state/sys/cats';
 import { catBusy } from '../../state/sys/workforce';
 import { CatQuery, queryCats } from '../../state/ext/catQuery';
@@ -123,7 +124,9 @@ class CrewSelect {
     const box = this.cabins;
     clearChildren(box);
     const n = crewSize(this.shipId);
-    const cur = crew(this.shipId);
+    // Parte III · EL FINAL: the night of H93–H94 Canelo's cabin stays his, greyed out — «SIN LLAMA» (ship.benched)
+    const sin = (G.s.ship.crew[this.shipId] ?? []).filter((u) => benched(u));
+    const cur = [...sin, ...crew(this.shipId)];
     const hint = label(this.selected >= 0 ? `CAMAROTE ${this.selected + 1}: ahora toca un gato de la lista` : 'Toca un camarote para elegir quién va ahí, o toca gatos para subirlos / bajarlos', 15, P.blue, { letterSpacing: 1 });
     box.addChild(hint);
     const w = Math.min(230, (1100 - (n - 1) * 12) / n);
@@ -136,6 +139,23 @@ class CrewSelect {
       const cab = label(`CAMAROTE ${i + 1}`, 13, P.blue, { letterSpacing: 2 });
       cab.position.set(8, 6);
       s.addChild(cab);
+      if (c && benched(c.uid)) {
+        const p = catPortrait(c.species, 92, { slug: catSlug(c), grayscale: true });
+        p.position.set(w / 2, 72);
+        p.alpha = 0.55;
+        const nm = txt(c.name.toUpperCase(), { fontFamily: F.poster, fontSize: 22, fill: 0x8a8378 });
+        nm.anchor.set(0.5, 0);
+        nm.position.set(w / 2, 120);
+        if (nm.width > w - 12) nm.scale.set((w - 12) / nm.width);
+        const sl = label(llamaLabel() ?? 'SIN LLAMA', 13, 0x8a8378, { letterSpacing: 2 });
+        sl.anchor.set(0.5, 0);
+        sl.position.set(w / 2, 146);
+        s.addChild(new Graphics().rect(0, 0, w, h).fill({ color: 0x9a948a, alpha: 0.45 }), p, nm, sl);
+        s.position.set(i * (w + 12), 30);
+        clickable(s, () => sfx('error'));
+        box.addChild(s);
+        continue;
+      }
       if (c) {
         const d = catDef(c.species);
         const p = catPortrait(c.species, 92, { slug: catSlug(c) });
@@ -292,6 +312,9 @@ class CrewSelect {
     // status line
     const tags: [string, number][] = [];
     if (inCrew) tags.push(['A BORDO', C.pinkHot]);
+    // Parte III · EL FINAL: Canelo's flame (state/sys/finalState.ts): «SIN LLAMA» the night of H94, «LLAMA 30 %» after
+    const fl = c.species === 'c_canelo' ? llamaLabel() : null;
+    if (fl) tags.push([fl, 0x8a8378]);
     if (busy) tags.push([busy === 'expedition' ? 'DE EXPEDICIÓN' : 'CON OFICIO', C.red]);
     else if (other) tags.push([`EN ${(SHIP_BY_ID.get(other)?.name ?? other).toUpperCase()}`, P.blue]);
     let tx = 126;
@@ -311,6 +334,11 @@ class CrewSelect {
     }
     clickable(card, () => {
       if (this.list.wasDrag) return;
+      if (benched(uid)) {
+        sfx('error');
+        toast(`${c.name} no tiene llama`, { color: C.paper });
+        return;
+      }
       if (busy) {
         sfx('error');
         toast(busy === 'expedition' ? `${c.name} anda de expedición` : `${c.name} está trabajando`, { color: C.paper, sub: busy === 'expedition' ? 'Vuelve cuando termine el viaje' : 'Quítale el oficio en Oficios para que zarpe' });

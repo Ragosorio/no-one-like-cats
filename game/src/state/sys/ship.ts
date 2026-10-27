@@ -3,6 +3,7 @@ import { G } from '../game';
 import { CONTENT, SHIP_BY_ID } from '../../data/content';
 import { BAL, FamilyId, modulePower, moduleCost, mkCap, mkMaterials } from '../econ';
 import { cat as getCat, catPow } from './cats';
+import { caneloSinLlama } from './gaterasWorld';
 import { ShipBlueprint, MATERIAL_HP, Material, DIRS } from '../../battle/ship';
 import { WEAPON_TYPES, weaponShot } from '../../battle/weapons';
 
@@ -30,16 +31,26 @@ export function crewSize(shipId: string) {
   return balanceShip(shipId)?.crew ?? 3;
 }
 export function crew(shipId = G.s.ship.active) {
-  return (G.s.ship.crew[shipId] ?? []).filter((u) => !!getCat(u));
+  return (G.s.ship.crew[shipId] ?? []).filter((u) => !!getCat(u) && !benched(u));
+}
+/**
+ * Parte III · EL FINAL: the night of H93–H94 Canelo has no flame — his cabin stays his (greyed out, «SIN LLAMA»), but he
+ * doesn't sail or count until the dawn gives it back (state/sys/gaterasWorld.caneloSinLlama). Nothing is stored.
+ */
+export function benched(uid: string): boolean {
+  return caneloSinLlama() && getCat(uid)?.species === 'c_canelo';
 }
 export function setCrew(shipId: string, uids: string[]) {
+  // a benched Canelo keeps his cabin through the night (he's back at dawn, where he was)
+  const keep = (G.s.ship.crew[shipId] ?? []).filter((u) => benched(u) && !uids.includes(u));
+  uids = [...keep, ...uids];
   G.s.ship.crew[shipId] = uids.slice(0, crewSize(shipId));
   G.recalc();
 }
 /** fill empty crew slots with the strongest free cats */
 export function autoCrew(shipId = G.s.ship.active) {
   const cur = crew(shipId);
-  const pool = G.s.cats.filter((c) => !cur.includes(c.uid)).sort((a, b) => catPow(b) - catPow(a));
+  const pool = G.s.cats.filter((c) => !cur.includes(c.uid) && !benched(c.uid)).sort((a, b) => catPow(b) - catPow(a));
   while (cur.length < crewSize(shipId) && pool.length) cur.push(pool.shift()!.uid);
   setCrew(shipId, cur);
 }

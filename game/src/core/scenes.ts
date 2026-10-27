@@ -13,6 +13,12 @@ export abstract class Scene extends Container {
    * world out there (island, map, battle sea).
    */
   bleed: number | null = C.paper;
+  /**
+   * (optional, PERF) settles when the scene's first picture is complete (its paintings loaded, its set built). A
+   * 'blocks' / 'iris' transition keeps the screen covered until then (at most COVER_WAIT_MS), so the wipe opens on
+   * the finished scene instead of stuttering through its build. Set it in enter(), before the first await.
+   */
+  coverUntil?: Promise<unknown>;
   /** called after being added to stage */
   enter(): void {}
   /** called before removal */
@@ -21,6 +27,19 @@ export abstract class Scene extends Container {
 }
 
 export type Transition = 'blocks' | 'iris' | 'none';
+
+/** the longest a transition stays closed waiting for the next scene's first picture (Scene.coverUntil) */
+export const COVER_WAIT_MS = 1000;
+
+/** wait n rendered frames (the ticker renders under the cover meanwhile); a hidden tab doesn't wait */
+function coveredFrames(n: number): Promise<void> {
+  if (typeof requestAnimationFrame !== 'function' || (typeof document !== 'undefined' && document.visibilityState === 'hidden')) return Promise.resolve();
+  return new Promise((res) => {
+    let k = 0;
+    const step = () => (++k >= n ? res() : requestAnimationFrame(step));
+    requestAnimationFrame(step);
+  });
+}
 
 class SceneManager {
   readonly sceneLayer = new Container();
@@ -58,6 +77,11 @@ class SceneManager {
     if (transition === 'blocks') await this.blocksIn();
     else await this.irisIn();
     this.swap(next);
+    // PERF (Parte III): the new scene's first frames are the heavy ones (its paintings decoded, its Graphics
+    // tessellated, textures uploaded, shaders linked: 100–270 ms measured on the Carta / a battle / the island). Let
+    // them happen while the screen is still covered, so the wipe never stutters as it opens.
+    if (next.coverUntil) await Promise.race([next.coverUntil.catch(() => undefined), new Promise((r) => setTimeout(r, COVER_WAIT_MS))]);
+    await coveredFrames(2);
     if (transition === 'blocks') await this.blocksOut();
     else await this.irisOut();
     this.busy = false;

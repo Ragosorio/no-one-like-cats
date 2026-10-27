@@ -10,6 +10,8 @@ import { C, F } from '../theme';
 import { Button, paperBg, poster, txt } from '../widgets';
 import { G } from '../../state/game';
 import { CATS, catDef } from '../../data/content';
+// the Catdex's own total (a Parte III box cat only counts once the Parte III began: state/sys/cats.ts dexVisible)
+import { dexTotal } from '../../state/ext/collection';
 import { fmt } from '../../core/format';
 import { livingCat, preloadCats } from '../../art/catArt';
 import { ART } from '../../art/livingCat';
@@ -37,7 +39,7 @@ function stats(final = false): Block[] {
     { kind: 'gap' },
     { kind: 'body', text: `Tu primer hábitat era una caja de cartón. El mejor que tienes hoy es: ${lastHab}.` },
     { kind: 'body', text: `Tu primer gato lanzaba bolas de pelo. Hoy ${mvpName} borra medio barco (${fmt(mvp?.kos ?? 0)} K.O.).` },
-    { kind: 'body', text: `Barcos hundidos: ${fmt(s.stats.victories)} · Gatos descubiertos: ${registered}/${CATS.length} · Oro ganado: ${fmt(s.stats.goldEarned)}` },
+    { kind: 'body', text: `Barcos hundidos: ${fmt(s.stats.victories)} · Gatos descubiertos: ${registered}/${dexTotal()} · Oro ganado: ${fmt(s.stats.goldEarned)}` },
     { kind: 'small', text: `Momento favorito: «${moment}»` },
   ];
 }

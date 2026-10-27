@@ -98,7 +98,10 @@ export class MomentoClock {
     if (!cur) return null;
     // the next segment started (its deck is the one heard now)
     const nx = segs[this.seg + 1];
-    if (nx && this.nextCued === this.seg + 1 && p >= nx.from - 0.05 && p <= nx.from + 1.5 && !(p >= cur.from && p <= cur.to - 0.25)) {
+    // (FILM-ACTO4) a LOOPED edit repeats material of the current segment (a derived piece under a longer film): the new
+    // deck's position falls INSIDE the current segment's range, so it's told apart by the clock being at the boundary
+    const atEnd = this.m >= cur.m0 + (cur.to - cur.from) - 0.6 && p < cur.to - 1;
+    if (nx && this.nextCued === this.seg + 1 && p >= nx.from - 0.05 && p <= nx.from + 1.5 && (!(p >= cur.from && p <= cur.to - 0.25) || atEnd)) {
       this.seg++;
       this.note(`segmento ${this.seg} (${nx.from.toFixed(2)})`);
       return nx.m0 + (p - nx.from);

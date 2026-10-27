@@ -2,7 +2,9 @@
 
 Un gato en NO ONE LIKE CATS son cuatro cosas: **datos** (quién es, qué dispara, cómo se consigue), **pintura** (un SVG vectorial puro), **rig** (dónde tiene la cabeza, las orejas, los ojos y la cola para poder "actuar") y **cariño** (un nombre con chiste y una línea de lore que dé ganas de tenerlo). Esta guía cubre las cuatro. La cuarta depende de ti.
 
-Guías hermanas: [agregar-elemento.md](agregar-elemento.md) · [agregar-historia.md](agregar-historia.md) · [agregar-barco.md](agregar-barco.md) · [animaciones.md](animaciones.md) · [arquitectura.md](arquitectura.md) · [CONTRIBUTING](../../CONTRIBUTING.md)
+Guías hermanas: [agregar-elemento.md](agregar-elemento.md) · [agregar-historia.md](agregar-historia.md) · [agregar-barco.md](agregar-barco.md) · [animaciones.md](animaciones.md) · [arquitectura.md](arquitectura.md) · [rutas-de-desarrollo.md](rutas-de-desarrollo.md) · [CONTRIBUTING](../../CONTRIBUTING.md)
+
+Estilos de arte, con ejemplos: [../arte/ESTILOS.md](../arte/ESTILOS.md). Cómo se publica el arte (repos y shards): [../REPOSITORIOS.md](../REPOSITORIOS.md).
 
 ---
 
@@ -10,7 +12,8 @@ Guías hermanas: [agregar-elemento.md](agregar-elemento.md) · [agregar-historia
 
 | Archivo | Qué pones ahí |
 |---|---|
-| `game/src/data/content.json` → `cats[]` | La ficha del gato: nombre, elementos, rareza, rol, disparo, ultimate, cómo se obtiene, lore. |
+| `game/src/data/content.json` → `cats[]` | La ficha de un gato de la Parte I: nombre, elementos, rareza, rol, disparo, ultimate, cómo se obtiene, lore. |
+| `game/src/data/rupturas/especies*.json` → `cats[]` | Los gatos de la Parte II, con la misma ficha. Una parte nueva trae sus gatos en **su propio módulo**, que `content.ts` une con `mergeContent` (solo agrega: no puede sobrescribir nada de la Parte I). |
 | `game/src/data/content.ts` | El tipo `CatDef` (qué campos lee el código de verdad) y `CATS`, `CAT_BY_ID`, `catDef()`. |
 | `game/src/data/balance.json` | Números por rareza (`rarities.gold_base_per_s`, `power_base`, `duplicate_orbs`, `resonance_time_s`…). El gato hereda los de su rareza. |
 | `game/public/cats-svg/<slug>.svg` | La pintura en detalle completo (MAI SVG, perfil *game-compact*). |
@@ -79,7 +82,7 @@ Así se ve Canelo (recortado, es real):
 | `art.slug` | Nombre del archivo SVG y del rig: `public/cats-svg/<slug>.svg`, `lite/<slug>.svg`, `catRigs.json[<slug>]`. Varias especies pueden compartir slug (ver variantes). |
 | `art.tint` | `null` para la pintura original, o un `TintSpec` para una variante teñida (ver abajo). |
 | `art.aura` | 3 colores hex del aura (marcos, brillos de revelación). |
-| `elements` | 1 o 2 ids de `elements[]` (`fire`, `water`, `nature`, `earth`, `storm`, `magic`, `cosmic`). Decide hábitat, Resonancia y afinidad en combate. |
+| `elements` | 1 o 2 ids de elemento: `fire`, `water`, `nature`, `earth`, `storm`, `magic`, `cosmic`, `ice`, `sound`, `shadow`, `time`, `light`, `void`, `crystal`, `gravity` (hay algunos especiales con 3). Decide hábitat, Resonancia y afinidad en combate. |
 | `rarity` | `common`, `rare`, `epic`, `legendary`, `mythic`, `heroic` o `divine`. De aquí salen oro/s, poder, orbes y tiempo de Resonancia (`balance.json` → `rarities`). Heroicos y Divinos no salen de la Resonancia ni del casino (ver sección 6). |
 | `primordial` | `true` para el legendario "fundador" de un elemento (Ignis, Gea…). Solo los primordiales legendarios salen de Resonancia, y solo si los padres comparten su elemento. |
 | `secret` | `true` saca al gato de los pozos normales; necesita una condición propia (sección 6). |
@@ -123,12 +126,14 @@ Aquí no entra ni un píxel. El `.gitignore` bloquea `png`, `jpg`, `webp`, `gif`
 
 El flujo con [MAI SVG](https://github.com/Ragosorio/MAI-SVG) (la herramienta hermana de este juego, también de código abierto):
 
-1. **Dibuja o consigue la ilustración** del gato en 700×700 lógicos, fondo transparente, cuerpo completo, sentado o de tres cuartos (mira los 54 que ya existen para el encuadre). El PNG fuente vive **fuera** del repo. Si llega más grande (los del lote A venían a 1024×1024, gato al 90 % de alto), redúcelo a 700×700 antes de vectorizar: así el viewBox, el rig y el peso del SVG quedan como los demás.
+1. **Dibuja o consigue la ilustración** del gato en 700×700 lógicos, fondo transparente, cuerpo completo, sentado o de tres cuartos (mira los 120 que ya existen para el encuadre, o la galería de [ESTILOS.md](../arte/ESTILOS.md)). El PNG fuente vive **fuera** del repo. Si llega más grande (los del lote A venían a 1024×1024, gato al 90 % de alto), redúcelo a 700×700 antes de vectorizar: así el viewBox, el rig y el peso del SVG quedan como los demás.
 2. **Vectoriza** con MAI: `mai vectorize --preset high-color-preserved` (el alfa se vuelve máscara vectorial). Mira el `premultipliedRgbMae` del reporte: lo normal es 6–11. Si sale enorme (70+), el trazador se colapsó en una silueta plana; reduce el PNG con otro filtro (p. ej. `mitchell` en vez de `lanczos3`, o al revés: Kage colapsó con `mitchell` y salió bien con `lanczos3`) y repite.
 3. **Exporta para el juego** con `scripts/game-export.ts` de MAI (perfil *game-compact*: mismo dibujo, verificado píxel a píxel) → `game/public/cats-svg/<slug>.svg`. El manifiesto de tamaños queda en `game/public/cats-svg/game-export.json`.
 4. **Genera la versión ligera** con `scripts/game-thumbs.ts` de MAI → `game/public/cats-svg/lite/<slug>.svg`.
 
 Por qué dos archivos: `lite/` (aprox. 1 MB sin comprimir en el caso de Canelo) es lo que espera todo el juego para isla, batalla, tienda y Catdex. El completo (aprox. 8.6 MB sin comprimir) solo se baja en segundo plano cuando el gato se dibuja más grande que unos 640 px en pantalla (`requestCatSvg` en `catArt.ts`). Ambos usan el mismo espacio de 700×700, así que el rig sirve para los dos.
+
+En tu computadora los dos se sirven desde `game/public/`. En el sitio publicado, el completo se sirve desde el repo de arte `Ragosorio/nolc-arte` (y, cuando se active, `nolc-arte-2` para el arte nuevo). No tienes que hacer nada: el gato nuevo se ve en ligero en cuanto se publica y en completo cuando el sitio de arte se pone al día. Ojo: **redibujar** un gato que ya existe hace fallar el deploy a propósito hasta que el sitio de arte publique la versión nueva; avísalo en tu PR. Detalle en [REPOSITORIOS.md](../REPOSITORIOS.md#7-qué-tocas-si-quieres-agregar-arte).
 
 El `slug` termina en `_cat` por convención (`canelo_cozy_cat`, `jelly_aquatic_cat`). Usa minúsculas y guiones bajos.
 
@@ -227,6 +232,8 @@ case 's_maneki':
   return da.worker === 'banker' && db.worker === 'banker' && la >= 15 && lb >= 15;
 ```
 
+- **`p3:<fuente>`** (los gatos de la Parte III, en `game/src/data/gateras/especies.json`): no hay receta. Cada ficha trae su fuente en el campo `p3` (`historia`, `etapa`, `rescate`, `actividad` o `recordar`), y `state/sys/p3cats.ts` la entrega como un descubrimiento normal. Nunca salen de la Resonancia, el Casino, el Portal, la tienda de gatos ni el Podio (`isP3Cat` en `state/sys/multidim.ts`). Sus orbes salen de su actividad, de repetir etapas de su caja y de la Tienda de la Caja.
+
 ### Colecciones de la Catdex
 
 `content.json` → `catdexSets[]` agrupa gatos. Completar un set da Prisma y levanta el flag `<set.id>` (ver `checkSets()` en `state/sys/cats.ts`):
@@ -243,19 +250,19 @@ Si tu gato completa un tema, súmalo a un set o propón uno nuevo. Ojo: hoy el t
 
 - Un gato nuevo **no** necesita migración: las partidas guardan especies por id, y un id nuevo simplemente no está en ellas todavía.
 - Si quieres regalarlo a quien ya pasó el punto donde se obtiene (por ejemplo, lo entrega el Jefe 2 y alguien ya lo venció), eso es un **parche** (`registerPatch`), ver [ACTUALIZACIONES.md](../ACTUALIZACIONES.md).
-- El total de la Catdex se usa en varios lados (`meta.counts.catdexEntries` y algunos textos como los créditos, que dicen `/54`). Si sumas gatos, busca ese número.
+- La Catdex y los créditos cuentan `CATS.length`, así que se actualizan solos. `meta.counts` en `content.json` es una nota de diseño de la Parte I que el código no lee.
 - Cuéntaselo a los jugadores con una entrada en `game/src/data/updates.ts` (NOVEDADES).
 
 ---
 
 ## 8. Checklist
 
-- [ ] Ficha en `content.json` → `cats[]` con id nuevo y con el prefijo de su rareza.
+- [ ] Ficha en `content.json` → `cats[]` (o en el módulo de su parte) con id nuevo y con el prefijo de su rareza.
 - [ ] `lite/<slug>.svg` y `<slug>.svg` en `game/public/cats-svg/` (o una variante teñida de un slug existente). Cero raster.
 - [ ] Rig en `catRigs.json` revisado con `?scene=catlive&cat=<slug>&rig=1`.
 - [ ] Se ve bien en `?scene=fxlab&cat=<id>` (revelación y Battle Form).
 - [ ] Cómo se consigue funciona (Resonancia real, jefe, evento o condición secreta).
 - [ ] Lore y grito revisados: tono del juego, sin chistes sobre etnia, religión ni el Holocausto.
-- [ ] `npm run build` pasa.
+- [ ] `npm run typecheck`, `npm test` y `npm run build` pasan.
 - [ ] Probado con partida nueva y con una vieja (`?save=post-boss3`).
 - [ ] Entrada en NOVEDADES (`game/src/data/updates.ts`) y, si aplica, parche para partidas viejas.

@@ -5,7 +5,7 @@
 import { G, OwnedCat, ResonanceJob } from '../game';
 import { CATS, CONTENT, ELEMENTS, ELEMENT_BY_ID, ROLE_BY_ID, catDef, CatDef, ElementDef } from '../../data/content';
 import { BAL, RarityId, catGoldPerSec, catLevelCapFor, catPower, starMinLevel, starMult } from '../econ';
-import { cat as getCat, starNeed, canStarUp, speciesCount, mutationDef, traitInfoById } from '../sys/cats';
+import { cat as getCat, starNeed, canStarUp, speciesCount, mutationDef, traitInfoById, dexVisible } from '../sys/cats';
 import { busyCats, freeSlots, queuedCats, queueUnlocked, revealCopy, startResonance } from '../sys/resonance';
 import { queueResonance, resonanceQueue } from '../sys/workforce';
 
@@ -17,7 +17,8 @@ export function printRarity(species: string): PrintRarity {
   return d.primordial ? 'primordial' : d.rarity;
 }
 
-export const RARITY_ORDER: PrintRarity[] = ['common', 'rare', 'epic', 'legendary', 'primordial', 'mythic', 'heroic', 'divine'];
+/** the collection's order; a Parte III MULTIDIMENSIONAL goes last (its own category: state/sys/multidim.ts categoryOrder) */
+export const RARITY_ORDER: PrintRarity[] = ['common', 'rare', 'epic', 'legendary', 'primordial', 'mythic', 'heroic', 'divine', 'multidimensional'];
 export function rarityRank(r: PrintRarity) {
   return RARITY_ORDER.indexOf(r);
 }
@@ -65,8 +66,9 @@ export function dexElements(): ElementDef[] {
 }
 
 // ---------------------------------------------------------------- catdex
+/** the Catdex's total: every species it shows (Parte III's box cats only once the Parte III began: cats.ts dexVisible) */
 export function dexTotal() {
-  return CATS.length;
+  return CATS.filter((c) => dexVisible(c.id)).length;
 }
 export function dexCount() {
   return speciesCount();

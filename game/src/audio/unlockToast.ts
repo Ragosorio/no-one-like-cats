@@ -17,6 +17,7 @@ import { drawCover, drawVinyl } from './cover';
 import { resolveTrack, trackById } from './catalog';
 import type { UnlockEvent } from './fonoteca';
 import { versionsToast } from './versionsToast';
+import { hushed } from '../ui/hush';
 
 const queue: UnlockEvent[] = [];
 let showing = false;
@@ -59,7 +60,10 @@ function cornerBusy(): boolean {
   return toastAvoidRects(scenes.fxLayer).some((r) => overlaps(zone, r));
 }
 function next(waited = 0) {
-  if (queue.length && waited < 15000 && cornerBusy()) {
+  // a scene is holding the screen (a cine, a Momento, the Parte III bar and alley): the record card waits for it to end
+  // (≤ 10 min, a safety net only: holds are always released) instead of landing on top of the story (QA-PORCION:
+  // «NUEVA CANCIÓN» over the bar's scene B · QA-PULIDO: over Luzterna's «DERECHO» in the alley, past the old 3 min)
+  if (queue.length && ((waited < 15000 && cornerBusy()) || (waited < 600000 && hushed()))) {
     showing = true;
     window.setTimeout(() => next(waited + 500), 500);
     return;

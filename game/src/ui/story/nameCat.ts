@@ -15,6 +15,7 @@ import { halftoneTexture, paperTexture } from '../../art/textures';
 import { onomatopoeia, sparkles } from '../../fx/juice';
 import { clean } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
+import { luzternaPortraitOk } from './ghost';
 import { destroyDeep } from './tweens';
 import { screenRect } from '../screen';
 import { FOLIO_000 } from './rupturasScript';
@@ -113,6 +114,8 @@ export async function promptName(layer: Container, o: NamePromptOpts): Promise<s
       cat = sp;
     } else {
       const lzBig = new LuzternaPortrait(560, 0.95);
+      // Parte III: after her death her face never shows by accident (ui/story/ghost.ts)
+      lzBig.visible = luzternaPortraitOk();
       lzBig.position.set(300, 700);
       cat = lzBig;
     }
@@ -199,6 +202,8 @@ export async function promptName(layer: Container, o: NamePromptOpts): Promise<s
     // tiny Luzterna peeking (when the big art is a cat)
     if (slug) {
       const lz = new LuzternaPortrait(260, 0.9);
+      // Parte III: after her death her face never shows by accident (ui/story/ghost.ts)
+      lz.visible = luzternaPortraitOk();
       lz.position.set(PW + 60, 300);
       lz.scale.x = -1;
       panel.addChild(lz);

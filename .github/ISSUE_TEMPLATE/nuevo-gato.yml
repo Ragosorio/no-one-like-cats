@@ -1,0 +1,135 @@
+name: Nuevo gato
+description: Propón un gato para la Catdex, con o sin dibujo.
+title: "[Gato] "
+labels: ["nuevo-gato"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¿Tienes un gato en la cabeza? Cuéntanos quién es. El dibujo puede llegar después (para eso está la plantilla **Arte**).
+
+        La guía completa está en [docs/guias/agregar-gato.md](https://github.com/Ragosorio/no-one-like-cats/blob/main/docs/guias/agregar-gato.md).
+
+  - type: input
+    id: nombre
+    attributes:
+      label: Nombre
+      placeholder: "Canelo"
+    validations:
+      required: true
+
+  - type: input
+    id: epiteto
+    attributes:
+      label: Epíteto
+      description: El chiste en tres palabras.
+      placeholder: "el Impaciente"
+
+  - type: dropdown
+    id: elementos
+    attributes:
+      label: Elemento (uno o dos)
+      multiple: true
+      options:
+        - Fuego
+        - Agua
+        - Naturaleza
+        - Tierra
+        - Tormenta
+        - Magia
+        - Cósmico
+        - Hielo
+        - Sonido
+        - Sombra
+        - Tiempo
+        - Luz
+        - Vacío
+        - Cristal
+        - Gravedad
+        - Uno nuevo (cuéntalo abajo)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: rareza
+    attributes:
+      label: Rareza
+      options:
+        - Común
+        - Raro
+        - Épico
+        - Legendario
+        - Legendario primordial (funda un elemento)
+        - Mítico
+        - Heroico
+        - Divino
+        - Secreto (con una condición especial)
+        - No sé
+
+  - type: dropdown
+    id: rol
+    attributes:
+      label: Rol en combate
+      options:
+        - artillero
+        - demoledor
+        - francotirador
+        - asediador
+        - soporte
+        - tanque
+        - controlador
+        - invocador
+        - No sé
+
+  - type: input
+    id: rasgo
+    attributes:
+      label: Rasgo o maña
+      placeholder: "impaciente, glotón, dormilón, chismoso, bravucón, miedoso, presumido, curioso…"
+
+  - type: textarea
+    id: lore
+    attributes:
+      label: Su lore (1 o 2 frases)
+      description: Que dé risa, ternura o las dos.
+      placeholder: "Nació para dormir en una caja. Lo despertaste para incendiar barcos. Ahora es tu problema."
+    validations:
+      required: true
+
+  - type: textarea
+    id: combate
+    attributes:
+      label: En combate
+      value: |
+        - Nombre del disparo:
+        - Grito de ataque (en inglés o japonés):
+        - Qué hace (rebota, va bajo el agua, perfora, se divide…):
+        - Ultimate (nombre y qué hace):
+        - Battle Form (cómo se ve transformado):
+
+  - type: textarea
+    id: obtencion
+    attributes:
+      label: Cómo se consigue
+      description: Resonancia de qué elementos, un jefe, una liga del Podio, un evento, una condición secreta…
+
+  - type: dropdown
+    id: arte
+    attributes:
+      label: Arte
+      options:
+        - Tengo un dibujo propio
+        - Tengo permiso del autor para publicarlo bajo la licencia MIT del proyecto
+        - No tengo dibujo, solo la idea
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: tono
+    attributes:
+      label: Revisión de tono
+      options:
+        - label: "Sin chistes sobre etnia, religión ni el Holocausto."
+          required: true
+        - label: "Si es un homenaje a algo pop, tiene nombre y giro propios."
+          required: true

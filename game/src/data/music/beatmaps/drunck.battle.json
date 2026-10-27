@@ -1,0 +1,729 @@
+{
+ "id": "drunck.battle",
+ "duration": 46.036,
+ "bpm": 165,
+ "offset": 0.0,
+ "beatsPerBar": 4,
+ "beats": [
+  0.0,
+  0.364,
+  0.727,
+  1.091,
+  1.455,
+  1.818,
+  2.182,
+  2.545,
+  2.909,
+  3.273,
+  3.636,
+  4.0,
+  4.364,
+  4.727,
+  5.091,
+  5.455,
+  5.818,
+  6.182,
+  6.545,
+  6.909,
+  7.273,
+  7.636,
+  8.0,
+  8.364,
+  8.727,
+  9.091,
+  9.455,
+  9.818,
+  10.182,
+  10.545,
+  10.909,
+  11.273,
+  11.636,
+  12.0,
+  12.364,
+  12.727,
+  13.091,
+  13.455,
+  13.818,
+  14.182,
+  14.545,
+  14.909,
+  15.273,
+  15.636,
+  16.0,
+  16.364,
+  16.727,
+  17.091,
+  17.455,
+  17.818,
+  18.182,
+  18.545,
+  18.909,
+  19.273,
+  19.636,
+  20.0,
+  20.364,
+  20.727,
+  21.091,
+  21.455,
+  21.818,
+  22.182,
+  22.545,
+  22.909,
+  23.273,
+  23.636,
+  24.0,
+  24.364,
+  24.727,
+  25.091,
+  25.455,
+  25.818,
+  26.182,
+  26.545,
+  26.909,
+  27.273,
+  27.636,
+  28.0,
+  28.364,
+  28.727,
+  29.091,
+  29.455,
+  29.818,
+  30.182,
+  30.545,
+  30.909,
+  31.273,
+  31.636,
+  32.0,
+  32.364,
+  32.727,
+  33.091,
+  33.455,
+  33.818,
+  34.182,
+  34.545,
+  34.909,
+  35.273,
+  35.636,
+  36.0,
+  36.364,
+  36.727,
+  37.091,
+  37.455,
+  37.818,
+  38.182,
+  38.545,
+  38.909,
+  39.273,
+  39.636,
+  40.0,
+  40.364,
+  40.727,
+  41.091,
+  41.455,
+  41.818,
+  42.182,
+  42.545,
+  42.909,
+  43.273,
+  43.636,
+  44.0,
+  44.364,
+  44.727,
+  45.091,
+  45.455,
+  45.818
+ ],
+ "downbeats": [
+  0.0,
+  1.455,
+  2.909,
+  4.364,
+  5.818,
+  7.273,
+  8.727,
+  10.182,
+  11.636,
+  13.091,
+  14.545,
+  16.0,
+  17.455,
+  18.909,
+  20.364,
+  21.818,
+  23.273,
+  24.727,
+  26.182,
+  27.636,
+  29.091,
+  30.545,
+  32.0,
+  33.455,
+  34.909,
+  36.364,
+  37.818,
+  39.273,
+  40.727,
+  42.182,
+  43.636,
+  45.091
+ ],
+ "sections": [
+  {
+   "name": "intro",
+   "start": 0.0,
+   "end": 2.909,
+   "energy": 0.55
+  },
+  {
+   "name": "verse",
+   "start": 2.909,
+   "end": 14.545,
+   "energy": 0.7
+  },
+  {
+   "name": "drop",
+   "start": 14.545,
+   "end": 24.727,
+   "energy": 0.9
+  },
+  {
+   "name": "break",
+   "start": 24.727,
+   "end": 29.091,
+   "energy": 0.45
+  },
+  {
+   "name": "climax",
+   "start": 29.091,
+   "end": 40.727,
+   "energy": 0.95
+  },
+  {
+   "name": "outro",
+   "start": 40.727,
+   "end": 46.036,
+   "energy": 0.4
+  }
+ ],
+ "markers": [
+  {
+   "name": "loop_start",
+   "time": 2.907256
+  },
+  {
+   "name": "pre_drop",
+   "time": 11.636
+  },
+  {
+   "name": "build_1",
+   "time": 13.091
+  },
+  {
+   "name": "first_drop",
+   "time": 14.545
+  },
+  {
+   "name": "breakdown",
+   "time": 24.727
+  },
+  {
+   "name": "build_2",
+   "time": 27.636
+  },
+  {
+   "name": "intense",
+   "time": 29.091
+  },
+  {
+   "name": "loop_end",
+   "time": 40.725442
+  },
+  {
+   "name": "last_bar",
+   "time": 40.727
+  },
+  {
+   "name": "sting",
+   "time": 40.727
+  },
+  {
+   "name": "cut",
+   "time": 43.636
+  },
+  {
+   "name": "end",
+   "time": 46.036
+  }
+ ],
+ "loop": {
+  "start": 2.907256,
+  "end": 40.725442
+ },
+ "hits": [
+  {
+   "time": 0.0,
+   "kind": "kick",
+   "strength": 0.94
+  },
+  {
+   "time": 0.727,
+   "kind": "stab",
+   "strength": 0.3
+  },
+  {
+   "time": 1.455,
+   "kind": "stab",
+   "strength": 0.4
+  },
+  {
+   "time": 1.636,
+   "kind": "stab",
+   "strength": 0.3
+  },
+  {
+   "time": 2.182,
+   "kind": "stab",
+   "strength": 0.3
+  },
+  {
+   "time": 2.727,
+   "kind": "kick",
+   "strength": 0.92
+  },
+  {
+   "time": 2.909,
+   "strength": 0.85,
+   "kind": "phrase"
+  },
+  {
+   "time": 3.273,
+   "kind": "kick",
+   "strength": 0.36
+  },
+  {
+   "time": 3.636,
+   "kind": "kick",
+   "strength": 0.31
+  },
+  {
+   "time": 4.0,
+   "kind": "kick",
+   "strength": 0.38
+  },
+  {
+   "time": 4.727,
+   "kind": "stab",
+   "strength": 0.53
+  },
+  {
+   "time": 5.455,
+   "kind": "kick",
+   "strength": 0.54
+  },
+  {
+   "time": 5.818,
+   "kind": "kick",
+   "strength": 0.7
+  },
+  {
+   "time": 6.182,
+   "kind": "kick",
+   "strength": 0.44
+  },
+  {
+   "time": 6.545,
+   "kind": "kick",
+   "strength": 0.5
+  },
+  {
+   "time": 6.909,
+   "kind": "kick",
+   "strength": 0.38
+  },
+  {
+   "time": 7.636,
+   "kind": "kick",
+   "strength": 0.63
+  },
+  {
+   "time": 8.0,
+   "kind": "kick",
+   "strength": 0.54
+  },
+  {
+   "time": 8.364,
+   "kind": "stab",
+   "strength": 0.8
+  },
+  {
+   "time": 8.727,
+   "strength": 0.85,
+   "kind": "phrase"
+  },
+  {
+   "time": 9.091,
+   "kind": "stab",
+   "strength": 0.3
+  },
+  {
+   "time": 9.455,
+   "kind": "kick",
+   "strength": 0.54
+  },
+  {
+   "time": 9.818,
+   "kind": "kick",
+   "strength": 0.31
+  },
+  {
+   "time": 10.182,
+   "kind": "kick",
+   "strength": 0.34
+  },
+  {
+   "time": 10.909,
+   "kind": "kick",
+   "strength": 0.54
+  },
+  {
+   "time": 11.636,
+   "kind": "kick",
+   "strength": 0.74
+  },
+  {
+   "time": 12.0,
+   "kind": "kick",
+   "strength": 0.81
+  },
+  {
+   "time": 12.364,
+   "kind": "kick",
+   "strength": 0.38
+  },
+  {
+   "time": 12.727,
+   "kind": "kick",
+   "strength": 0.74
+  },
+  {
+   "time": 14.182,
+   "strength": 0.8,
+   "kind": "build"
+  },
+  {
+   "time": 14.364,
+   "kind": "kick",
+   "strength": 0.85
+  },
+  {
+   "time": 14.455,
+   "kind": "kick",
+   "strength": 0.85
+  },
+  {
+   "time": 14.545,
+   "strength": 1.0,
+   "kind": "drop"
+  },
+  {
+   "time": 15.091,
+   "kind": "stab",
+   "strength": 0.35
+  },
+  {
+   "time": 15.636,
+   "kind": "kick",
+   "strength": 0.36
+  },
+  {
+   "time": 16.364,
+   "kind": "kick",
+   "strength": 0.36
+  },
+  {
+   "time": 16.727,
+   "kind": "kick",
+   "strength": 0.31
+  },
+  {
+   "time": 17.091,
+   "kind": "stab",
+   "strength": 0.54
+  },
+  {
+   "time": 17.455,
+   "kind": "kick",
+   "strength": 0.46
+  },
+  {
+   "time": 17.818,
+   "kind": "stab",
+   "strength": 0.42
+  },
+  {
+   "time": 18.182,
+   "kind": "kick",
+   "strength": 0.41
+  },
+  {
+   "time": 19.273,
+   "kind": "kick",
+   "strength": 0.5
+  },
+  {
+   "time": 19.636,
+   "kind": "kick",
+   "strength": 0.5
+  },
+  {
+   "time": 20.0,
+   "kind": "kick",
+   "strength": 0.46
+  },
+  {
+   "time": 20.364,
+   "strength": 0.85,
+   "kind": "phrase"
+  },
+  {
+   "time": 21.091,
+   "kind": "kick",
+   "strength": 0.63
+  },
+  {
+   "time": 21.273,
+   "kind": "stab",
+   "strength": 0.3
+  },
+  {
+   "time": 21.455,
+   "kind": "kick",
+   "strength": 0.31
+  },
+  {
+   "time": 22.364,
+   "kind": "stab",
+   "strength": 0.4
+  },
+  {
+   "time": 22.545,
+   "kind": "kick",
+   "strength": 0.54
+  },
+  {
+   "time": 23.273,
+   "kind": "stab",
+   "strength": 0.72
+  },
+  {
+   "time": 23.545,
+   "kind": "stab",
+   "strength": 0.31
+  },
+  {
+   "time": 24.0,
+   "kind": "kick",
+   "strength": 0.33
+  },
+  {
+   "time": 24.364,
+   "kind": "kick",
+   "strength": 0.74
+  },
+  {
+   "time": 25.0,
+   "kind": "stab",
+   "strength": 0.3
+  },
+  {
+   "time": 25.091,
+   "kind": "stab",
+   "strength": 0.3
+  },
+  {
+   "time": 26.182,
+   "strength": 0.85,
+   "kind": "phrase"
+  },
+  {
+   "time": 27.0,
+   "kind": "stab",
+   "strength": 0.35
+  },
+  {
+   "time": 27.273,
+   "kind": "stab",
+   "strength": 0.38
+  },
+  {
+   "time": 28.727,
+   "strength": 0.8,
+   "kind": "build"
+  },
+  {
+   "time": 28.818,
+   "kind": "kick",
+   "strength": 0.85
+  },
+  {
+   "time": 28.909,
+   "kind": "kick",
+   "strength": 0.85
+  },
+  {
+   "time": 29.0,
+   "kind": "kick",
+   "strength": 0.85
+  },
+  {
+   "time": 29.091,
+   "strength": 1.0,
+   "kind": "drop"
+  },
+  {
+   "time": 29.455,
+   "kind": "kick",
+   "strength": 0.46
+  },
+  {
+   "time": 30.182,
+   "kind": "kick",
+   "strength": 0.44
+  },
+  {
+   "time": 30.909,
+   "kind": "kick",
+   "strength": 0.63
+  },
+  {
+   "time": 31.273,
+   "kind": "kick",
+   "strength": 0.41
+  },
+  {
+   "time": 31.636,
+   "kind": "kick",
+   "strength": 0.63
+  },
+  {
+   "time": 32.0,
+   "strength": 0.85,
+   "kind": "phrase"
+  },
+  {
+   "time": 32.364,
+   "kind": "stab",
+   "strength": 0.49
+  },
+  {
+   "time": 32.727,
+   "kind": "kick",
+   "strength": 0.44
+  },
+  {
+   "time": 33.818,
+   "kind": "kick",
+   "strength": 0.54
+  },
+  {
+   "time": 34.182,
+   "kind": "kick",
+   "strength": 0.74
+  },
+  {
+   "time": 34.545,
+   "kind": "kick",
+   "strength": 0.5
+  },
+  {
+   "time": 35.636,
+   "kind": "kick",
+   "strength": 0.83
+  },
+  {
+   "time": 36.182,
+   "kind": "stab",
+   "strength": 0.35
+  },
+  {
+   "time": 36.364,
+   "kind": "kick",
+   "strength": 0.34
+  },
+  {
+   "time": 36.727,
+   "kind": "kick",
+   "strength": 0.36
+  },
+  {
+   "time": 36.909,
+   "kind": "stab",
+   "strength": 0.42
+  },
+  {
+   "time": 37.091,
+   "kind": "kick",
+   "strength": 0.54
+  },
+  {
+   "time": 37.818,
+   "strength": 0.85,
+   "kind": "phrase"
+  },
+  {
+   "time": 38.364,
+   "kind": "stab",
+   "strength": 0.31
+  },
+  {
+   "time": 38.909,
+   "kind": "kick",
+   "strength": 0.63
+  },
+  {
+   "time": 39.455,
+   "kind": "stab",
+   "strength": 0.33
+  },
+  {
+   "time": 40.0,
+   "kind": "stab",
+   "strength": 0.3
+  },
+  {
+   "time": 40.364,
+   "kind": "stab",
+   "strength": 0.3
+  },
+  {
+   "time": 40.727,
+   "kind": "kick",
+   "strength": 0.46
+  },
+  {
+   "time": 41.455,
+   "kind": "kick",
+   "strength": 0.31
+  },
+  {
+   "time": 41.818,
+   "kind": "kick",
+   "strength": 0.63
+  },
+  {
+   "time": 42.364,
+   "kind": "stab",
+   "strength": 0.33
+  },
+  {
+   "time": 42.909,
+   "kind": "stab",
+   "strength": 0.31
+  },
+  {
+   "time": 43.273,
+   "kind": "stab",
+   "strength": 0.3
+  }
+ ]
+}

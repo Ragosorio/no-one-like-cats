@@ -43,6 +43,7 @@ const LABEL: Record<ShipStyleId, string> = {
   bone: 'Z6 · MAREA SIN NOMBRE',
   noctis: 'EVENTO · BANDERA NEGRA',
   void: '??? · NAVE DE NADIE',
+  borracha: 'P3 · LA BORRACHA',
 };
 
 /** a plan that suits each skin (the campaign generator supplies its own in real battles) */

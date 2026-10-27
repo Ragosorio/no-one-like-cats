@@ -6,8 +6,10 @@ en dos o tres archivos de TypeScript que lo ponen en escena.
 
 ## Qué vas a tocar
 
-- **Misiones** (`missions[]` en `game/src/data/content.json`): la cadena `historia` (H01–H22) y las
-  cadenas laterales `capitan` (C), `criador` (K) y `explorador` (E). Se evalúan solas cada ~0.7 s.
+- **Misiones** (`missions[]` en `game/src/data/content.json`): la cadena `historia` de la Parte I (H01–H30) y las
+  cadenas laterales `capitan` (C), `criador` (K) y `explorador` (E). Se evalúan solas cada ~0.7 s. Las partes nuevas
+  traen sus misiones en su propio módulo: la Parte II (H31–H65) en `game/src/data/rupturas/historia*.json` y la
+  Parte III en `game/src/data/gateras/historia.json`. `content.ts` las une con `mergeContent`, que solo agrega.
 - **Beats de diálogo** (`story.beats` en `content.json`, o líneas escritas en `game/src/ui/story/script.ts`)
   y los **ganchos** que deciden cuándo suenan (`ON_NEW`, `ON_DONE`, `WHEN` en `game/src/app/story.ts`).
 - **Zonas, jefes y batallas de historia**: `enemies`, `bosses`, `elites` en `content.json`,
@@ -18,6 +20,8 @@ Antes de empezar, si no conoces la estructura general, date una vuelta por [arqu
 Si tu historia trae un gato nuevo, un elemento o un barco, vas a necesitar también
 [agregar-gato.md](agregar-gato.md), [agregar-elemento.md](agregar-elemento.md) o
 [agregar-barco.md](agregar-barco.md). Para que el personaje se mueva bonito: [animaciones.md](animaciones.md).
+Si la escena necesita cámara, luz o un mundo que cambie: [cines-y-estados.md](cines-y-estados.md). Si suena una
+canción del autor: [agregar-momento.md](agregar-momento.md).
 
 ## Mapa de archivos
 
@@ -25,6 +29,9 @@ Si tu historia trae un gato nuevo, un elemento o un barco, vas a necesitar tambi
 |---|---|
 | `game/src/data/content.json` → `missions[]` | Todas las misiones (datos puros) |
 | `game/src/data/content.json` → `story.beats` / `story.characters` / `story.defeatCopy` | Beats con líneas, fichas de personajes (solo referencia) y frases de derrota (las usa `ResultsScene.ts`) |
+| `game/src/data/rupturas/historia*.json`, `game/src/data/gateras/historia.json` | Misiones y beats de la Parte II y de la Parte III (módulos que solo agregan) |
+| `game/src/ui/story/rupturasScript*.ts`, `gaterasScript.ts` | Cuándo suena cada beat de la Parte II y de la Parte III (tablas que `story.ts` une a las suyas) |
+| `game/src/cine/scenes/*.ts` | Escenas con cámara y mundo ([cines-y-estados.md](cines-y-estados.md)) |
 | `game/src/data/content.ts` | Tipos (`MissionDef`, `BeatDef`, `BossDef`...) y mapas `MISSION_BY_ID`, `BEAT_BY_ID` |
 | `game/src/state/sys/missions.ts` | `triggerMet()`, `evalGoal()`, `activate()`, `complete()`, `checkMissions()` |
 | `game/src/state/sys/missionGoals.ts` | Catálogo puro: `GOAL_HANDLERS`, `TRIGGER_KINDS`, `MISSION_GATES` |
@@ -43,7 +50,7 @@ Si tu historia trae un gato nuevo, un elemento o un barco, vas a necesitar tambi
 
 ## Cómo funciona una misión (lo que el código hace de verdad)
 
-Cada misión en `content.json` tiene exactamente estos campos:
+Cada misión en `content.json` tiene estos campos (más `why`, y `card` en la Parte III; ver abajo):
 
 ```json
 {
@@ -106,6 +113,13 @@ para historia o misiones fijadas, y solo si el id no está en `COVERED`.
 
 **`purpose`** y **`estTime`**: hoy el código no los lee. Son notas de diseño (y para el estimador
 humano). Llénalos igual, que el que venga atrás te lo va a agradecer.
+
+**`why`**: el "para qué" de la misión, en una línea. Se ve debajo del objetivo, en el aviso de misión nueva y en el
+glosario ([../CONTEXTO-NARRATIVO.md](../CONTEXTO-NARRATIVO.md)). Escríbelo siempre: la queja más común de quien juega
+es "no sabía por qué hacía esto".
+
+**`card`** (Parte III): la tarjeta de la Bitácora, cinco campos de una línea (`pasa`, `importa`, `queremos`, `ahi` y
+`cambio`). Ver [dimensiones-y-gateras.md](dimensiones-y-gateras.md#7-la-bitácora).
 
 **Fijadas (pins)**: máximo 3. Una misión `historia` nueva desplaza a una que no sea de historia.
 
@@ -309,13 +323,15 @@ ver `game/src/main.ts`):
 |---|---|
 | `?save=<fixture>` | Copia `game/test-saves/<fixture>.json` sobre tu partida (`nolc-save-v1`) y sigue. **Pisa tu partida de pruebas.** |
 | `?stage=Z-S` | Carga la partida y entra directo a esa batalla de campaña (ej. `?stage=2-9`) |
-| `?scene=island` / `?scene=map` | Entra directo a la isla o al mapa; con `&new=1` empieza partida nueva |
+| `?scene=island` / `?scene=map` | Entra directo a la isla o al mapa; con `&new=1` (solo dev) empieza partida nueva |
 | `?speed=4` | La economía corre 4 veces más rápido (las batallas no) |
 | `?scene=dev` | LABORATORIO: la página que lista todos los labs (`scenes/DevLab.ts`) |
 
-Fixtures que existen hoy: `casino`, `isla-m2`, `m2-postboss2`, `m2-preboss2`, `m2-preboss3`,
-`m2-zone2`, `post-boss1`, `post-boss2`, `post-boss3`, `pre-boss3`, `zone2-par`. Se combinan:
-`?save=post-boss3&scene=map`.
+Fixtures que existen hoy: de la Parte I, `post-boss1`, `post-boss2`, `post-boss3`, `pre-boss3`, `m2-zone2`,
+`zone2-par`, `m2-preboss2`, `m2-postboss2`, `m2-preboss3`, `isla-m2`, `casino`, `casino-v1`, `late-game`,
+`post-story` y `post-finale`; de la Parte II, `rupturas-mid`, `rupturas-mid-v1`, `rupturas-fin`, `rupturas-h44`,
+`rupturas-o3`, `rupturas-o4`, `rupturas-raro` y `h65-normal`. Qué es cada una:
+[rutas-de-desarrollo.md](rutas-de-desarrollo.md#5-partidas-de-prueba). Se combinan: `?save=post-boss3&scene=map`.
 
 En la consola del navegador:
 
@@ -336,7 +352,7 @@ adelante.
 
 ## Checklist
 
-- [ ] `npm run build` pasa (incluye el typecheck).
+- [ ] `npm run typecheck`, `npm test` y `npm run build` pasan.
 - [ ] `node scripts/verify-missions.ts --all` no se queja de tu goal.
 - [ ] Probé con una partida nueva y con una vieja vía `?save=<fixture>` que ya había pasado ese punto.
 - [ ] Los ids de misión y de beat son nuevos, y nunca renombré ni reutilicé uno existente (son para siempre).

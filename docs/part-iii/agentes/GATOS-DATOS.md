@@ -1,0 +1,50 @@
+# Agente GATOS-DATOS (Parte III: los gatos nuevos como coleccionables)
+
+⚠️ Spoilers de la Parte III.
+
+- **Qué estoy haciendo**: TERMINADO (2026-10-27). Sin commits ni push.
+- **Hecho**:
+  - **Datos**: `game/src/data/gateras/especies.json` tiene 35 gatos.
+    - Son los 32 de ARTE-INTEG, con sus slugs finales, y los 3 de la Borracha.
+    - Se fusionan al final de `CATS` (`data/content.ts`): ningún número del Catdex se mueve.
+    - Cada gato trae su fuente en `p3` y su caja en `origin`.
+    - Generador: `scratch/gatos-datos/gen_especies.py` (fuera del repo).
+  - **Motor de fuentes**: `game/src/state/sys/p3cats.ts`.
+    - Fuentes: historia, etapa, rescate, actividad y recordar.
+    - Repetir da orbes del Multidimensional de la caja: 35 %, sembrado.
+    - Estado: un flag por gato (`p3cat_<id>`). No hay campo nuevo ni migración.
+    - Se pone al día al cargar y al completar una misión.
+  - **Revelación**: `ui/story/p3CatsScript.ts` y `app/p3CatsFlow.ts`.
+    - El director (`app/story.ts`) la pone en la Carta.
+    - Los cambios en `story.ts` son tres: el campo `first`, la entrada en WHEN y el despacho `p3cat_`.
+  - **Exclusiones**: `multidim.ts › isP3Cat / poolableCat`. Cubren la Resonancia (también el «???»), el Casino y el Portal, la tienda de gatos, el Podio y los planteles de jefes de la Parte I.
+  - **MULTIDIMENSIONAL encendida**: 9 especies con arte.
+    - Impresión propia: caja abierta y marco iridiscente (`printTextures.ts`).
+    - Chip propio al final del filtro.
+  - **Catdex**:
+    - Un gato de las cajas es carta sellada (nunca silueta) y solo aparece cuando empezó la Parte III. Esto también aplica a `dexTotal` y a los créditos.
+    - Textos «FUERA DE LA CAJA» y «CÓMO SE CONSIGUE».
+  - **Planteles** con los gatos propios: B-5, B-9, EMIAU (con Scratch), S-5, El Estambre, A-5, L-5, L-8 (Sir Simón) y P-5. Medido antes y después (`mecanicas-v2/05` §5).
+  - **Tienda de la Caja** (Maneki): `panels/TiendaCaja.ts` y el botón MANEKI en la Carta.
+  - **Sello de victoria**: «¡… SE UNE!» va primero, y un rescate en una victoria repetida también lleva sello.
+  - **Fixtures**: se regeneraron con `make-act-fixtures.ts`: h75, h83, h89 y h93. El script marca como vistas las revelaciones de los gatos ganados.
+  - **Pruebas**:
+    - `tests/p3Cats.test.ts` (25) y ajustes en `gateras`, `p3Politica`, `p3Ronda` y `rarityFinite`.
+    - `tsc` limpio, `vitest` con 1000 verdes y 2 saltadas, `verify-missions --all` con 194 OK o dormidas.
+  - **Prueba sin pantalla** (vite 5193, Chrome headless):
+    - Desde h69: la tarjeta de B-5, la batalla, el sello, la revelación, el Catdex y la isla.
+    - Desde h75: Homiau en la isla y las tarjetas de La Ronda y de repetir.
+    - Desde h83: el rescate de Gato Araña Noir y los orbes de repetir S-7.
+    - Además, un gato por caja.
+    - Hoja de contacto: `scratch/gatos-datos/hoja-contacto-gatos-p3.jpg`.
+  - **Documentación**: `mecanicas-v2/05-gatos-coleccionables.md` y una línea sin spoilers en `docs/guias/agregar-gato.md`.
+- **Falta** (no es de este agente; está anotado en `mecanicas-v2/05` §6–7):
+  - La Carta no dibuja los nodos de Superhéroes, Anime, Libros ni POP: no tienen `screen`, y `openBoxes` pide `stages`. Se propuso como tarea aparte.
+  - Reglas de origen, Cruce y Ventaja de casa de los Multidimensionales; los 4 huecos sin arte; Don Bombín; ultis con firma; sets del Catdex de las cajas.
+  - Error que ya existía en `panels/Bitacora.ts › playUltimaVez`: el bucle `writeIn` lee el texto de un Text ya destruido si se cierra rápido. Se propuso como tarea aparte.
+- **Cómo retomar**:
+  - `cd game && npx tsc --noEmit && npx vitest run && npx tsx scripts/verify-missions.ts --all`.
+  - **Prueba**: vite con `scratch/gatos-datos/vite.gd.config.ts` (puerto 5193, sin HMR **ni watch**: hay que reiniciarlo después de cada cambio, o sirve el código viejo). Luego `node scratch/gatos-datos/pp/gd.mjs a|b|c|d|e` y `node pp/compose.mjs` para la hoja.
+  - **Medición de planteles**: `npx vite-node scratch/gatos-datos/measure_rosters.ts 48` (lee `swaps.json`).
+  - **Trampa**: `especies.json` se regenera con el script. Si se edita a mano, no correr el script encima.
+- **Última actualización**: 2026-10-27.

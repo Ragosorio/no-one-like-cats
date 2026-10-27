@@ -18,6 +18,7 @@ import { say, Line } from '../dialog';
 import { gtxt } from '../gender';
 import { clean } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
+import { luzternaPortraitOk } from './ghost';
 import { folio000Line, promptName } from './nameCat';
 import { destroyDeep } from './tweens';
 import { screenRect } from '../screen';
@@ -76,6 +77,8 @@ export async function choicePrompt<T>(layer: Container, o: { title1: string; tit
       panel.addChild(f);
     }
     const lz = new LuzternaPortrait(380, 0.92);
+    // Parte III: after her death her face never shows by accident (ui/story/ghost.ts)
+    lz.visible = luzternaPortraitOk();
     lz.position.set(PW - 170, PH - 20);
     lz.scale.x = -1;
     panel.addChild(lz);

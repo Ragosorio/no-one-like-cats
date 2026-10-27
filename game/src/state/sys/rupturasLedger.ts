@@ -15,14 +15,24 @@ import { G } from '../game';
 
 /** Parte II starts at H31 (H31–H41 Oleada 1, H42–H65 Oleadas 2–4: docs/part-ii/17) */
 export const PART2_FIRST = 31;
+/**
+ * …and ends at H65. Parte III (H66+, docs/part-iii/11 §2 A1) is NOT Parte II: its missions, beats, flags and
+ * battles never enter the Part II narrative reset nor this ledger.
+ */
+export const PART2_LAST = 65;
 
 /** `H31`…`H99` → 31…; anything else → 0 */
 export function missionNum(id: unknown): number {
   const m = /^H(\d{2,3})$/.exec(String(id ?? ''));
   return m ? Number(m[1]) : 0;
 }
-/** a Parte II story mission (the narrative the reset replays) */
-export const isPart2Mission = (id: unknown) => missionNum(id) >= PART2_FIRST;
+/** a Parte II story mission (the narrative the reset replays): H31…H65 only */
+export const isPart2Mission = (id: unknown) => {
+  const n = missionNum(id);
+  return n >= PART2_FIRST && n <= PART2_LAST;
+};
+/** a story mission AFTER Parte II (H66+: Parte III and beyond) */
+export const isAfterPart2Mission = (id: unknown) => missionNum(id) > PART2_LAST;
 
 export interface RupturasExt {
   /** unique rewards already paid: key → when (ms) */

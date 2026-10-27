@@ -4,13 +4,13 @@ Un elemento es lo más grande que puedes agregar sin inventar un modo de juego: 
 
 Antes de escribir código, abre un *issue* de tipo **Idea** con: nombre, verbo (el de Fuego es "Incendiar", el de Agua "Inundar"), a quién le gana y contra quién pierde, su estado, su arquetipo de disparo, su dimensión visual y cómo se descubre en la historia. Si el elemento no tiene una personalidad clara en una frase, todavía no está listo.
 
-Guías hermanas: [agregar-gato.md](agregar-gato.md) · [agregar-historia.md](agregar-historia.md) · [agregar-barco.md](agregar-barco.md) · [animaciones.md](animaciones.md) · [arquitectura.md](arquitectura.md) · [CONTRIBUTING](../../CONTRIBUTING.md)
+Guías hermanas: [agregar-gato.md](agregar-gato.md) · [agregar-historia.md](agregar-historia.md) · [agregar-barco.md](agregar-barco.md) · [animaciones.md](animaciones.md) · [arquitectura.md](arquitectura.md) · [CONTRIBUTING](../../CONTRIBUTING.md) · la dimensión de estilo de cada elemento: [../arte/ESTILOS.md](../arte/ESTILOS.md#5-los-elementos-y-sus-dimensiones)
 
 ---
 
 ## 1. Lo que ya existe
 
-Hoy hay 13 elementos en `content.json` → `elements[]`, en este orden:
+Hoy hay 15 elementos: 13 en `content.json` → `elements[]` y 2 de la Parte II en sus propios módulos (sección "Parte II" abajo). En orden:
 
 | id | Nombre | Cómo se desbloquea (`unlock`) |
 |---|---|---|
@@ -27,6 +27,8 @@ Hoy hay 13 elementos en `content.json` → `elements[]`, en este orden:
 | `time` | Tiempo | `grieta:time` — Oasis Dorado limpio (H26) |
 | `light` | Luz | `grieta:light` — Reino 36 + Atolón Estelar limpio (H27) |
 | `void` | Vacío | `grieta:void` — Abismo del Ronroneo limpio o 10 Fragmentos del Vacío (H28) |
+| `crystal` | Cristal | `chapter2:H39` (Parte II, `data/rupturas/especies.json`) |
+| `gravity` | Gravedad | `chapter2:H44` (Parte II, `data/rupturas/especies-o2.json`) |
 
 Ojo con un detalle de nombres: en el contenido el elemento se llama `storm`, pero en el simulador de combate se llama `electric` (`SIM_ELEMENT` en `game/src/battle/catShots.ts` y `toContentEl()` en `game/src/battle/sim.ts`). No es un error, es historia. Los seis de la Parte 2 se llaman igual en los dos lados.
 
@@ -62,13 +64,30 @@ Sonido ×1.5 al cristal, ×0.75 a madera y lona, ×0.5 al vacío; Tiempo ×1.25 
 (se pudre, se oxida), ×0.75 al hueso; Hielo ×1.25 a hierro y lona; Sombra ×1.25 a cristal y hueso;
 Vacío ×1.25 al cristal y ×0.5 contra el vacío.
 
+
+### Parte II: Cristal y Gravedad
+
+Llegaron en módulos propios, sin tocar `content.json`: cada módulo trae su `elements`, su fila en `affinity`, sus
+`statuses` y `reactions`, y sus multiplicadores de material en `materialMult[elemento][material]`. Como `materials[]`
+es un arreglo por id, un módulo no puede meterse en el `mult` de un material: `content.ts` dobla `materialMult` sobre
+`materials` al cargar, **solo donde la Parte I no tiene valor**.
+
+| Elemento | Verbo | Reglas (iguales para jugador y enemigo) | Archivo |
+|---|---|---|---|
+| Cristal | Redirigir | PRISMA en las celdas golpeadas; REFRACCIÓN: el primer golpe de otro elemento sobre un prisma se parte en esquirlas; FACETA: cada disparo de gato de Cristal levanta una faceta que desvía parte del siguiente proyectil enemigo. | `game/src/battle/cristal.ts` |
+| Gravedad | Mover | FLOTANDO: las celdas golpeadas reciben más daño; ¡AL AGUA! / ¡AL VACÍO!: un módulo ya roto se cae del barco entero; POZO: un pozo de gravedad dobla los proyectiles de ese lado. | `game/src/battle/gravedad.ts` |
+
+Las dos reglas son puras y deterministas (no sacan azar), con su estado en un `WeakMap` y ganchos chiquitos en
+`sim.ts`: así la estimación de victoria juega exactamente la misma pelea. Es el patrón a seguir para un elemento nuevo
+de una parte nueva.
+
 ---
 
 ## 2. Mapa de archivos
 
 | Archivo | Qué tocas |
 |---|---|
-| `game/src/data/content.json` → `elements[]` | La ficha del elemento. |
+| `game/src/data/content.json` → `elements[]` | La ficha del elemento (Parte I). En una parte nueva, va en su módulo de datos (como `data/rupturas/especies.json`) junto con `affinity`, `materialMult`, `statuses` y `reactions`. |
 | `game/src/data/content.json` → `affinity` | A quién le pega x1.5 y de quién recibe x0.75. |
 | `game/src/data/content.json` → `materials[]` | Cuánto daño hace a cada material de barco (`mult`). |
 | `game/src/data/content.json` → `statuses[]`, `reactions[]` | Su estado y sus combinaciones con otros estados. |
@@ -223,7 +242,7 @@ Un elemento sin gatos es un letrero bonito. Mínimo necesitas:
 
 ## 8. Checklist
 
-- [ ] Ficha en `content.json` → `elements[]` con paleta de 4 colores y `order`.
+- [ ] Ficha en `content.json` → `elements[]` (o en el módulo de su parte) con paleta de 4 colores y `order`.
 - [ ] Fila y columna en `affinity`; `mult` en los 7 `materials[]`.
 - [ ] Estado (si es nuevo) en `statuses[]` y en el simulador (`StatusId`, `STATUS`, `sim.ts`).
 - [ ] `balance.json` → `elements[]` y quién lo entrega (jefe o batalla de historia).
@@ -232,5 +251,5 @@ Un elemento sin gatos es un letrero bonito. Mínimo necesitas:
 - [ ] Hábitat probado en `?scene=islandlab`; secuencia probada en `?scene=fxlab`.
 - [ ] Primordial, comunes y raros de combinación (ver [agregar-gato.md](agregar-gato.md)).
 - [ ] Parche para partidas que ya pasaron el punto de descubrimiento.
-- [ ] `npm run build` pasa; probado con partida nueva y con `?save=post-boss3`.
+- [ ] `npm run typecheck`, `npm test` y `npm run build` pasan; probado con partida nueva y con `?save=post-boss3`.
 - [ ] NOVEDADES en `game/src/data/updates.ts`.

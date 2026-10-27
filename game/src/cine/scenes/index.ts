@@ -9,3 +9,6 @@ import './margen';
 import './almirante';
 import './cristal';
 import './correccion';
+// Parte III · La Borracha (stage 'caja': scenes/CajaScene.ts; flow: app/gaterasFlow.ts)
+import './p3Bar';
+import './p3Salida';

@@ -22,6 +22,7 @@ import type { CineCtx } from '../../cine/types';
 import { REGISTRO_000 } from '../../ui/story/rupturasScript';
 import { REGISTRO_DESPERTANDO } from '../../ui/story/rupturasScriptO4';
 import { registro000Despertando } from '../../state/sys/rupturasO4';
+import { registro000Estado } from '../../state/sys/gaterasWorld';
 import { addRegistroO2Line, registroO2LineFor } from '../../ui/story/o2Registro';
 import { addRegistroO3Line } from '../../ui/story/o3Registro';
 import { GlitchText, chip } from './ui';
@@ -144,7 +145,8 @@ export function registroCard(w: number, h: number) {
   lab.anchor.set(0.5, 1);
   lab.position.set(w / 2, h - 12);
   fitText(lab, w - 16);
-  const st = txt('OBSERVANDO', { fontFamily: F.ui, fontWeight: '700', fontSize: 10, fill: C.pinkHot, letterSpacing: 2 });
+  // ESTADO as the story says it is (Parte III: «despierto» after the awakening, docs/part-iii/01 c-11)
+  const st = txt(registro000Estado().toUpperCase(), { fontFamily: F.ui, fontWeight: '700', fontSize: 10, fill: C.pinkHot, letterSpacing: 2 });
   st.anchor.set(0.5, 0);
   st.position.set(w / 2, 10);
   c.addChild(lab, st);
@@ -202,7 +204,7 @@ export class Registro000Sheet extends Container {
     gsap.from(card, { rotation: -0.2, alpha: 0, duration: 0.35, ease: 'back.out(1.8)' });
     const num = poster(`${REGISTRO_000.serial} / ???`, 34, C.paper);
     num.position.set(40, 650);
-    const stc = chip('OBSERVANDO', { bg: C.pinkHot, fg: C.ink, size: 16, font: F.poster });
+    const stc = chip(registro000Estado().toUpperCase(), { bg: C.pinkHot, fg: C.ink, size: 16, font: F.poster });
     stc.position.set(40, 700);
     this.addChild(num, stc);
     gsap.to(stc, { alpha: 0.35, duration: 0.7, repeat: -1, yoyo: true, ease: 'sine.inOut' });
@@ -223,10 +225,22 @@ export class Registro000Sheet extends Container {
       const kt = txt(k, { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: C.ink, letterSpacing: 4 });
       kt.position.set(X + 20, y + 10);
       // Parte II · Oleada 4: after the Parte II credits its ESTADO is no longer «observando» (rupturasO4)
+      const despierto = i === 3 && registro000Estado() === 'despierto';
       const vt = poster((i === 3 && registro000Despertando() ? REGISTRO_DESPERTANDO : v).toUpperCase(), 38, i === 3 ? C.pinkHot : C.ink);
       vt.position.set(X + 20, y + 30);
       fitText(vt, RW - 120);
       this.addChild(row, kt, vt);
+      // Parte III: after the awakening, «despertando» is struck out and DESPIERTO is written beside it, in the margins'
+      // hand (docs/part-iii/04 §6 D3)
+      if (despierto) {
+        vt.alpha = 0.5;
+        const y0 = vt.y + vt.height * 0.55;
+        this.addChild(new Graphics().moveTo(vt.x - 4, y0 + 3).lineTo(vt.x + vt.width + 6, y0 - 3).stroke({ width: 5, color: 0x24224f, cap: 'round' }));
+        const hw = txt('DESPIERTO', { fontFamily: F.brush, fontSize: 40, fill: 0x24224f, padding: 10 });
+        hw.position.set(vt.x + vt.width + 24, y + 22);
+        hw.rotation = -0.04;
+        this.addChild(hw);
+      }
       if (i === 3) {
         const dot = new Graphics().circle(0, 0, 10).fill(C.pinkHot).stroke({ width: 3, color: C.ink });
         dot.position.set(X + RW - 80, y + 44);

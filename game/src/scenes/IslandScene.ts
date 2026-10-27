@@ -56,9 +56,13 @@ import {
 import { preloadCats, elementFx, catTexture } from '../art/catArt';
 import { STORY_BATTLES } from '../state/sys/storyBattles';
 import { startStoryBattle } from '../app/storyFlow';
+import { cajasGoal } from '../app/cajasFlow';
 import { slugOf } from '../art/tint';
 import { catSlug } from '../state/sys/forms';
 import { partIIOpen, regionForGoal, tapFaro } from '../state/sys/rupturas';
+import { luzternaFallecida, paginaLlama } from '../state/sys/gaterasWorld';
+import { faroNaranja } from '../state/sys/finalState';
+import { notifyFaroTap } from '../ui/story/faroTap';
 import { FARO_CALL, FARO_LUZTERNA, FARO_PART_I } from '../ui/story/rupturasScript';
 import { glowTexture } from '../art/textures';
 import { floatText, onomatopoeia, sparkles, flash, Shaker } from '../fx/juice';
@@ -112,9 +116,16 @@ function devTap(lx: number, ly: number, holdMs = 40) {
   });
 }
 
+/** the faro after her (08 §5.4): her blue light until her death; dark; then Canelo's orange (H96) */
+function faroFinal(): 'suya' | 'apagado' | 'naranja' {
+  if (faroNaranja()) return 'naranja';
+  return luzternaFallecida() ? 'apagado' : 'suya';
+}
 /** what the faro says when tapped: the sea before «Fin»; Luzterna (who lives there now) after it */
 let faroLine = 0;
 function faroText() {
+  // ⚠️ Parte III · EL FINAL: after her death the faro doesn't speak (voiceFor('faro') is silent: 08 §6.2)
+  if (luzternaFallecida()) return '';
   if (!partIIOpen()) return FARO_PART_I;
   if (G.s.missions.active.includes('H31')) return FARO_CALL;
   return FARO_LUZTERNA[faroLine++ % FARO_LUZTERNA.length];
@@ -223,7 +234,8 @@ export class IslandScene extends Scene {
     this.mountNight(hc);
     // cats (textures first)
     const slugs = [...new Set([...G.s.cats.map((c) => catSlug(c)), 'canelo_cozy_cat', 'margarita_daisy_cat'])];
-    preloadCats(slugs).then(() => {
+    // PERF: the wipe stays closed until the cats are in (core/scenes.ts coverUntil, capped)
+    this.coverUntil = preloadCats(slugs).then(() => {
       if (this.destroyed) return;
       this.ready = true;
       this.syncAll();
@@ -536,6 +548,8 @@ export class IslandScene extends Scene {
     this.beam.scale.set(1.2, 0.8);
     this.beam.position.set(lpos.x + lh.lamp.x, lpos.y + lh.lamp.y);
     this.beam.blendMode = 'add';
+    // light, not a target: its pulsing glow sat over the lamp and swallowed the faro's taps (QA-PULIDO: lamp 0 %)
+    this.beam.eventMode = 'none';
     this.wfx.addChild(this.beam);
     this.faroAt = { x: lpos.x + lh.lamp.x, y: lpos.y + lh.lamp.y };
     this.clickable(lh.c, () => {
@@ -544,7 +558,11 @@ export class IslandScene extends Scene {
       this.stage?.tapped('faro');
       // after «Fin» Luzterna lives up there (she hung her lantern in YOUR faro); H31 waits for this tap
       tapFaro();
-      floatText(this.wfx, lpos.x, lpos.y - 200, faroText(), { size: 26, color: C.paper, font: F.ui, rise: 50, dur: 1.8 });
+      // a story waiting for the faro (H92: «sentarse con ella» starts the film) — ui/story/faroTap.ts
+      notifyFaroTap();
+      // H66 waits: the faro is the prologue's door too (ui/story/gaterasCines.ts), no line on top of it
+      const ft = paginaLlama(G.s) ? '' : faroText();
+      if (ft) floatText(this.wfx, lpos.x, lpos.y - 200, ft, { size: 26, color: C.paper, font: F.ui, rise: 50, dur: 1.8 });
       if (G.s.missions.active.includes('H31')) checkMissions();
     });
     // ---- Banco del Reino (KL15): fenced lot before, neoclassical bank after
@@ -1283,6 +1301,8 @@ export class IslandScene extends Scene {
   private goToGoal(m: MissionDef) {
     const g = m.goal as Record<string, unknown> & { type: string };
     // Parte II: what happens on a 3D island (landing, Canelo's page, Nácar's beam puzzle) takes you there
+    // Parte III: H68 (the gatera) and H69 (B-5) live on the Carta de las Cajas (app/cajasFlow.ts)
+    if (cajasGoal(g)) return;
     const reg = regionForGoal(g);
     if (reg) {
       void goRegion(reg);
@@ -1435,8 +1455,13 @@ export class IslandScene extends Scene {
         } else if (g.feature === 'crop_repeat' || g.feature === 'auto_harvest') openDock();
         else if (g.feature === 'resonance_queue') openSanctuary();
         else if (g.feature === 'podio_win') void import('../panels/podio/open').then((p) => p.openPodio());
-        // Parte II: H31 «tap the faro» · H32 «open REGISTRO 000 in the Catdex»
-        else if (g.feature === 'faro' && this.faroAt) {
+        // Parte II: H31 «tap the faro» · H32 «open REGISTRO 000 in the Catdex» · Parte III H66 «tap the page by the faro»
+        else if (g.feature === 'p3_bar' && this.stage?.resolve('pagina')) {
+          // H66: the arrow points at the PAGE on the ground (pointing at the lamp sent the owner to the faro)
+          const pg = this.stage.resolve('pagina')!;
+          this.cam.lookAt(pg.x, pg.y - 60, true, 1.05);
+          this.pointAt(pg.x, pg.y - 70);
+        } else if ((g.feature === 'faro' || g.feature === 'p3_bar') && this.faroAt) {
           this.cam.lookAt(this.faroAt.x, this.faroAt.y + 160, true, 0.95);
           this.pointAt(this.faroAt.x, this.faroAt.y - 40);
         } else if (g.feature === 'registro000') void openCatdex();
@@ -1567,7 +1592,11 @@ export class IslandScene extends Scene {
       });
     // lighthouse beam sweep
     const pulse = Math.max(0, Math.sin(this.t * 2.2));
-    this.beam.alpha = 0.25 + pulse * 0.6;
+    // ⚠️ EL FINAL: the faro goes dark with her (H94); H96, Canelo lights it with his own flame — orange, not hers
+    const fin = faroFinal();
+    this.beam.visible = fin !== 'apagado';
+    if (fin === 'naranja') this.beam.tint = 0xffa040;
+    this.beam.alpha = (fin === 'naranja' ? 0.2 : 0.25) + pulse * (fin === 'naranja' ? 0.45 : 0.6);
     this.beam.scale.set(1 + pulse * 0.6, 0.7 + pulse * 0.3);
   }
 }

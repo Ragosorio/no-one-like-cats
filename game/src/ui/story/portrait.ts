@@ -2,6 +2,7 @@
  * Story portraits. Luzterna = translucent ghost witch floating "on twos" with a pulsing lantern.
  * Other speakers reuse the painted cats with a treatment (enemy / rival / duck…).
  */
+import { luzternaPortraitOk } from './ghost';
 import { Assets, ColorMatrixFilter, Container, Graphics, Sprite, Texture, Ticker } from 'pixi.js';
 import { GlowFilter, OutlineFilter } from 'pixi-filters';
 import gsap from 'gsap';
@@ -191,7 +192,12 @@ export class CatPortrait extends Container {
 export type Portrait = LuzternaPortrait | CatPortrait;
 
 export function makePortrait(sp: Speaker, size: number): Portrait | null {
-  if (sp.kind === 'luzterna') return new LuzternaPortrait(size);
+  if (sp.kind === 'luzterna') {
+    // Parte III: after her death her face never shows by accident (ui/story/ghost.ts)
+    const lp = new LuzternaPortrait(size);
+    lp.visible = luzternaPortraitOk();
+    return lp;
+  }
   if (sp.kind === 'cat') return new CatPortrait(sp, size * 0.92);
   return null;
 }

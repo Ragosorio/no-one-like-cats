@@ -39,6 +39,13 @@ import type { CataCfg, CataId, CataState } from './cataclysm';
 // Parte II · Oleada 3: SINCRO — an explicit player input, never the music itself (rules in sincro.ts)
 import { scAfterFire, scBeginFire } from './sincro';
 import type { FireInput } from './sincro';
+// Parte III · La Borracha: MAREO — the sway, the drift, the donuts, the bottles, the karaoke (rules in mareo.ts)
+import { mareoAngle, mareoImpact, mareoInit, mareoMeterMul, mareoStartTurn } from './mareo';
+import type { MareoCfg, MareoInput } from './mareo';
+import { rimaAtkMul, vipStartTurn } from './barRules';
+import { actAfterFire, actAtkMul, actStartTurn, dueloLimpio } from './actRules';
+import type { CapitulosCfg, OnoCfg, PausaCfg, PoderCfg, PoseCfg, RitmoCfg, VictimCfg } from './actRules';
+import type { RimaCfg, VipCfg } from './barRules';
 
 export interface PathPoint {
   x: number;
@@ -109,7 +116,9 @@ export type BossWhat =
   | 'shhh' // H34: RUIDO 3/3, the Bibliotecario wakes up furious (n = times; ruido.ts)
   | 'fase' // Oleada 3+: a phased battle entered phase n (amount = the phase it left; fases.ts)
   | 'sueno' // Oleada 4 H58: a new dream rule (n = dream phase; suenos.ts)
-  | 'umbral'; // Oleada 4: the Correctores' / the Umbral phase's rules start (n = phase; umbral.ts)
+  | 'umbral' // Oleada 4: the Correctores' / the Umbral phase's rules start (n = phase; umbral.ts)
+  // ---- Parte III
+  | 'dona'; // La Borracha: a donut on that side's deck was eaten and it healed (n = donut id, amount = structure healed; mareo.ts)
 
 export type BattleEvent =
   | {
@@ -228,6 +237,30 @@ export interface StageRules {
   dream?: DreamCfg;
   /** Parte II · Oleada 4: CORRECCIÓN / TACHÓN and the Umbral's phase mechanics, by fase (umbral.ts) */
   umbral?: UmbralCfg;
+  /** Parte III · La Borracha: MAREO — swaying aim + a small seeded drift, donuts that heal, bottles, karaoke (mareo.ts) */
+  mareo?: MareoCfg;
+  /** Parte III · La Ronda «LA ÚLTIMA Y NOS VAMOS»: `side` must win by the end of round `turns`, or it loses ('condicion') */
+  turnLimit?: { side: 0 | 1; turns: number };
+  /** Parte III · La Ronda «SIN DERRAMAR»: `side` loses ('condicion') the moment it has lost more than `allow` modules (0) */
+  intact?: { side: 0 | 1; allow?: number };
+  /** Parte III · Acto I «RIMA» (EMIAU, H73): repeating the last element is booed, changing it is cheered (barRules.ts) */
+  rima?: RimaCfg;
+  /** Parte III · Acto I «LISTA VIP» (El Cadenero, H74): the strongest cat of `side` skips each turn (barRules.ts) */
+  vip?: VipCfg;
+  /** Parte III · EL FINAL «A oscuras» (H94): these sides cannot lose — their ship holds on at the last breath (no defeat
+   *  is possible in the mourning; the fight ends by `retreat` or by the story's «MIRA») */
+  undying?: number[];
+  /** Parte III · Actos II–IV: the boxes' rules and their story battles' own (battle/actRules.ts) */
+  onomatopeya?: OnoCfg;
+  poder?: PoderCfg;
+  capitulos?: CapitulosCfg;
+  ritmo?: RitmoCfg;
+  duelo?: boolean;
+  pausas?: PausaCfg[];
+  enredo?: VictimCfg;
+  correccion?: VictimCfg;
+  esquirlas?: VictimCfg;
+  pose?: PoseCfg;
 }
 
 export interface BattleConfig {
@@ -387,7 +420,7 @@ export interface SideBuffs {
 }
 
 /** 'momento': the fight ended on a phase with `endsBattle` (battle/fases.ts) — a «Momento musical» closes it */
-export type VictoryReason = 'core' | 'crew' | 'sunk' | 'retreat' | 'momento';
+export type VictoryReason = 'core' | 'crew' | 'sunk' | 'retreat' | 'momento' | 'condicion';
 
 /** GDD material table (content.materials): multiplier per element of the shot; 'storm' = sim 'electric' */
 export const MAT_RESIST: Record<string, Partial<Record<ElementId, number>>> = (() => {
@@ -502,6 +535,7 @@ export class Battle {
     if (cfg.rules?.cataclysm) cataInit(this, cfg.rules.cataclysm);
     if (cfg.rules?.sky) skyInit(this, cfg.rules.sky);
     if (cfg.rules?.fases) fasesInit(this, cfg.rules.fases);
+    if (cfg.rules?.mareo) mareoInit(this);
   }
 
   private mkSide(s: SideSetup, side: 0 | 1): SideState {
@@ -705,6 +739,8 @@ export class Battle {
   }
   /** alive, not-overloaded cannons */
   cannons(side: number) {
+    // DUELO LIMPIO (Itō): one shot per turn, no volleys (actRules.ts)
+    if (dueloLimpio(this)) return [];
     // the flying gargoyle's ship no longer fires
     if (this.boss?.flying && this.cfg.boss?.side === side) return [];
     return this.sides[side].ship.modules.filter((m) => {
@@ -748,6 +784,7 @@ export class Battle {
   }
   /** extra cat shots this turn (Gorrión turn 1, Bigotes Rotos phase 3) */
   extraShots(side: number) {
+    if (dueloLimpio(this)) return 0;
     if (this.boss && this.cfg.boss?.side === side && this.boss.id === 'sardina' && this.boss.phase === 3) return 1;
     if (this.turn === 1 && this.sides[side].setup.firstTurnDouble) return 1;
     return 0;
@@ -837,6 +874,11 @@ export class Battle {
     tickBuffs(this, side, ev);
     // the zone's / boss's cataclysm: lands (if it was warned) or counts down to its next warning
     cataStart(this, side, ev);
+    // Parte III · La Borracha: loose donuts fall; the alley's bottles (queued like a cataclysm's volley)
+    mareoStartTurn(this, side, ev);
+    // Parte III · Acto I: LISTA VIP (barRules.ts)
+    vipStartTurn(this, side, ev);
+    actStartTurn(this, side, ev);
     this.bossAtStart(side, ev);
     this.checkVictory();
     ev.push(...this.updatePhase());
@@ -868,6 +910,12 @@ export class Battle {
       if (rt && this.winner === null && this.turn > rt.turn) {
         this.winner = (1 - rt.side) as 0 | 1;
         this.reason = 'retreat';
+      }
+      // La Ronda: the bar closes (battle/ronda.ts)
+      const tl = this.cfg.rules?.turnLimit;
+      if (tl && this.winner === null && this.turn > tl.turns) {
+        this.winner = (1 - tl.side) as 0 | 1;
+        this.reason = 'condicion';
       }
     }
     // wind drifts a little each turn
@@ -1180,7 +1228,7 @@ export class Battle {
   /**
    * Resolve a shot. shooter: cat uid or 'cannon'. Returns paths for the view and ordered events.
    */
-  fire(side: 0 | 1, shooter: string, angle: number, power: number, ult = false, cannonId?: number, input?: FireInput): { paths: ShotPath[]; events: BattleEvent[]; shot: ShotDef; atk: number } {
+  fire(side: 0 | 1, shooter: string, angle: number, power: number, ult = false, cannonId?: number, input?: FireInput & MareoInput): { paths: ShotPath[]; events: BattleEvent[]; shot: ShotDef; atk: number } {
     const s = this.sides[side];
     let shot: ShotDef = NEUTRAL_SHOT;
     let atk = s.setup.cannonAtk;
@@ -1214,6 +1262,10 @@ export class Battle {
     // Oleada 4: the dreamed element ×1.3 (suenos.ts) · TACHÓN / CAOS / the boss in earnest (umbral.ts)
     atk *= dreamAtkMul(this, side, shot) * umAtkMul(this, side, shot);
     const events: BattleEvent[] = [];
+    // Parte III · Acto I: RIMA (barRules.ts)
+    atk *= rimaAtkMul(this, side, shot, !!cat, events);
+    // Parte III · Actos II–IV: Onomatopeya, Poder, Ritmo, Esquirlas, Pose de portada (actRules.ts)
+    atk *= actAtkMul(this, side, shot, cat, events);
     // Eclipse: the next cat shot of this side hits ×2
     if (cat && s.buffs.empower > 0) {
       atk *= 2;
@@ -1227,6 +1279,8 @@ export class Battle {
     scBeginFire(this, side, cat, input);
     // INESTABLE (limitation): the shot wobbles a little, for whoever owns the cat
     if (cat?.def.limitation === 'unstable') angle += this.rng.range(-0.06, 0.06);
+    // MAREO (La Borracha): every cat shot sways (the phase the screen released at, or a seeded one) + a small seeded drift
+    if (cat) angle = mareoAngle(this, side, angle, input);
     const windNow = this.wind + this.sides[side].windNext;
     this.sides[side].windNext = 0;
     this.curShooter = cat ?? null;
@@ -1266,6 +1320,7 @@ export class Battle {
       const last = paths[0].points[paths[0].impacts.length ? paths[0].impacts[paths[0].impacts.length - 1] : paths[0].points.length - 1];
       events.push({ k: 'info', text: 'CORRIENTE', x: last.x, y: last.y - 40, color: 0xc6f0e4, path: 0, at: paths[0].points.length - 1 });
     }
+    actAfterFire(this, side, shot, cat, events);
     for (let i = 0; i < 2; i++) events.push(...this.updateExposure(i));
     if (cat && this.winner === null && events.some((e) => hurtsSide(e, 1 - side))) this.lastBlow[side] = cat.def.uid;
     this.checkVictory();
@@ -1600,6 +1655,8 @@ export class Battle {
     }
     // H34: Sonido on the noise-hater's ship hits ×2 and adds RUIDO (ruido.ts)
     if (foe) base *= nzImpact(this, attSide, targetSide, shot, ev, path, at);
+    // La Borracha: an impact on one of their donuts — they eat it and heal (mareo.ts)
+    if (foe) mareoImpact(this, attSide, targetSide, x, y, ev, path, at);
     // Cristal: a nacre FACET on the target ship redirects the next projectile that lands there (cristal.ts)
     if (foe && final) base *= crFacet(this, attSide, targetSide, base, CAT_K, x, y, ev, path, at);
     let total = 0;
@@ -2072,7 +2129,8 @@ export class Battle {
   /** ultimate meter gain multiplier: without a Summoning Room ults effectively cost 125 */
   meterMul(side: number) {
     const arc = this.sides[side].ship.modules.find((m) => m.kind === 'arcane' && !m.tag);
-    return arc && arc.alive ? 1 : 0.8;
+    // La Borracha · Karaoke: the singers' ultimates fill slower (mareo.ts)
+    return (arc && arc.alive ? 1 : 0.8) * mareoMeterMul(this, side);
   }
 
   /** returns true if the cat used a second life */
@@ -2122,6 +2180,8 @@ export class Battle {
     if (this.winner !== null) return;
     const lost: (VictoryReason | null)[] = [null, null];
     for (let side = 0; side < 2; side++) {
+      // EL FINAL «A oscuras»: this side holds on, whatever the damage (no defeat in the mourning)
+      if (this.cfg.rules?.undying?.includes(side)) continue;
       const s = this.sides[side];
       // the Leviatán: only the core of the current phase counts, and the sea holds it up until F3
       const ov = lateLoss(this, side);
@@ -2132,6 +2192,9 @@ export class Battle {
       else if (!duel && !ov?.noSink && (s.ship.integrity() < SINK_AT || s.flood >= 1)) lost[side] = 'sunk';
       // the flying gargoyle falls: her crew surrenders
       if (!lost[side] && this.cfg.boss?.side === side && this.boss?.flying && this.captain()?.ko) lost[side] = 'crew';
+      // La Ronda «SIN DERRAMAR»: one module lost and the round is lost (battle/ronda.ts)
+      const it = this.cfg.rules?.intact;
+      if (!lost[side] && it?.side === side && s.ship.modules.filter((m) => !m.alive).length > (it.allow ?? 0)) lost[side] = 'condicion';
     }
     if (!lost[0] && !lost[1]) return;
     let loser = lost[0] ? 0 : 1;

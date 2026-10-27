@@ -77,6 +77,8 @@ import { beatSeen, markBeat } from '../state/ext/story';
 import type { RegionId } from '../regions';
 import { MapNight } from '../island/night/mapNight';
 import { buildMapO4, mapO4Pos, mapO4Regions } from '../regions/mapO4';
+import { cartaAvailable } from '../state/sys/gateras';
+import { cajasGoal, goCajas } from '../app/cajasFlow';
 
 const BOX_W = 600;
 const BOX_H = 400;
@@ -304,6 +306,8 @@ export class MapScene extends Scene {
       onGoal: (m) => {
         const g = m.goal as { battle?: unknown; type?: string };
         // Parte II: landing, Canelo's page, Nácar's beam puzzle… happen on a 3D island: go there
+        // Parte III: H68 (the gatera) and H69 (B-5) live on the Carta de las Cajas (app/cajasFlow.ts)
+        if (cajasGoal(m.goal as never)) return;
         const reg = regionForGoal(m.goal);
         if (reg) void import('../app/flow').then((fl) => fl.goRegion(reg));
         else if (typeof g.battle === 'string' && g.battle in STORY_BATTLES) void startStoryBattle(g.battle);
@@ -708,6 +712,9 @@ export class MapScene extends Scene {
       gsap.to(badge.scale, { x: 1.18, y: 1.18, yoyo: true, repeat: -1, duration: 0.5, ease: 'sine.inOut' });
     }
     this.addChild(err);
+    // Parte III: LA CARTA DE LAS CAJAS — Luzterna's notebook, from H68 on (scenes/GaterasMapScene.ts)
+    const cajas = cartaAvailable() ? new Button('CAJAS', () => void goCajas(), { w: 190, h: 64, size: 30, color: 0xe8a33d }) : null;
+    if (cajas) this.addChild(cajas);
     // a window that isn't 16:9: the band spans the whole screen and stays on top, the buttons keep to the corner
     // (the band used to end short on wide screens and float mid-screen on 4:3, with the chart showing above it)
     const layout = (v: { x: number; y: number; w: number; h: number }) => {
@@ -721,6 +728,7 @@ export class MapScene extends Scene {
       line.x = cx - v.x;
       zoom.position.set(v.x + v.w - 24 - 196, v.y + v.h - 24 - 70);
       err.position.set(v.x + v.w - 24 - 196, v.y + v.h - 24 - 70 - 84);
+      cajas?.position.set(v.x + v.w - 24 - 196, v.y + v.h - 24 - 70 - 168);
     };
     layout(game.view);
     this.offView = game.onView(layout);

@@ -42,6 +42,7 @@ import { RuinMesher, buildRuins, scenery } from './olvidada/ruins';
 import { blankPage, inkLine } from './olvidada/page';
 import { pickRepairer } from './olvidada/picker';
 import { hush } from '../ui/hush';
+import { RARITY_H } from '../art/rarityHeight';
 
 /** an old photo by day (milky sepia), a teal-dark night with amber where something still glows (concept 10) */
 const SEPIA: SkyKey[] = [
@@ -98,7 +99,6 @@ const LENS = /* glsl */ `
 
 const dev = devParams();
 const silC = new THREE.Color();
-const RARITY_H: Record<string, number> = { common: 2.4, rare: 2.5, epic: 2.7, legendary: 3.1, mythic: 3.2, heroic: 3.0, divine: 3.3 };
 /** the seed of a repaired ruin's color window, and the last wave over everything */
 const SRC_R = 13;
 const WAVE_R = 170;

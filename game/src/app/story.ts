@@ -20,6 +20,8 @@ import { beatSeen, markBeat, lineSeen, markLine, firstCat, nameFirstCat, offline
 import { FEATURES, FeatureIntro, GLOSSARY_HINT } from '../ui/story/features';
 import { Text } from 'pixi.js';
 import { Line, say, tip, clearTips, cancelDialogs, dialogActive, storyLayer } from '../ui/dialog';
+import { setSpeakerHook } from '../ui/story/text';
+import { catSlug } from '../state/sys/forms';
 import { Modal } from '../ui/modal';
 import { hush, hushed, hushReset } from '../ui/hush';
 import { runningCine } from '../cine/registry';
@@ -40,6 +42,7 @@ import { darkSky } from '../ui/story/effects';
 import { applyAudioSettings, openSettings } from '../panels/Settings';
 import { destroyDeep, killTweensDeep } from '../ui/story/tweens';
 import { goIsland, goRegion, goTitle } from './flow';
+import { dueloMuted } from '../ui/story/ghost';
 import { PODIO_INTRO, HEROICO_INTRO, DIVINO_INTRO } from '../podio/lines';
 import { CASINO_INTRO } from '../panels/casino/intro';
 import { GRIETAS_EXPLAIN, MULTI_INTRO, MULTI_OUTRO } from '../ui/story/grietasScript';
@@ -49,6 +52,13 @@ import { CHART_ISLANDS_TOLD, chartIslandsToTell } from '../state/sys/rupturas';
 import { O2_COVERED, O2_ON_DONE, O2_ON_NEW } from '../ui/story/rupturasScriptO2';
 import { O3_COVERED, O3_ON_DONE, O3_ON_NEW } from '../ui/story/rupturasScriptO3';
 import { O4_COVERED, O4_ON_DONE, O4_ON_NEW } from '../ui/story/rupturasScriptO4';
+// Parte III · porción vertical (H66–H69): its hooks, its world (registers the p3_* states) and its island scenes
+import { P3_COVERED, P3_ON_DONE, P3_ON_NEW, P3_WHEN } from '../ui/story/gaterasScript';
+import { P3_CAT_WHEN } from '../ui/story/p3CatsScript';
+import { ultimaVezDue } from '../state/sys/gaterasWorld';
+import { cartaAvailable } from '../state/sys/gateras';
+import { STANDINS } from '../film/standins';
+import '../ui/story/gaterasCines';
 
 // ------------------------------------------------------------------ beat plan (M1: b01–b11 · M2: zones 2–3)
 interface BeatRef {
@@ -64,7 +74,7 @@ interface BeatRef {
   /** non-dialog beat: the player profile prompt (name + gender), the Marea Final, the credits roll,
    *  a cat that joins (`reveal`), a trip to a Parte II 3D region (`region`: e.g. H31's cinematic), or a
    *  CINE scene played on this screen (`cine`: src/cine, e.g. the H31 opening; its lines are this beat's `lines`) */
-  special?: 'profile' | 'marea' | 'credits' | 'reveal' | 'region' | 'cine';
+  special?: 'profile' | 'marea' | 'credits' | 'reveal' | 'region' | 'cine' | 'card' | 'flow';
   /** for special 'region': the region id (src/regions/index.ts) */
   region?: string;
   /** for special 'cine': the cine id (src/cine/scenes) */
@@ -75,14 +85,23 @@ interface BeatRef {
   edition?: 'final';
   /** zone arrival card before the lines (and the map pans to that zone) */
   card?: number;
-  /** only plays on this screen ('region' = inside a Parte II 3D region) */
-  onlyOn?: 'map' | 'island' | 'region';
+  /** only plays on this screen ('region' = inside a Parte II 3D region · 'cajas' = Parte III's Carta de las Cajas) */
+  onlyOn?: 'map' | 'island' | 'region' | 'cajas';
   /** may ALSO play inside a 3D region (island / map otherwise): Parte II arrival beats */
   inRegion?: boolean;
   /** an island cine waiting while you're on the CARTA: the story takes you home for it */
   travel?: boolean;
   /** skip it (marked seen) once this mission is done: the moment it's about was overtaken */
   until?: string;
+  /** Parte III: not ready until this beat key is seen (a card waits for the scene it closes) */
+  after?: string;
+  /** Parte III `special: 'card'`: the Bitácora's card of this mission (panels/Bitacora.ts), when it appears / is done */
+  mission?: string;
+  phase?: 'new' | 'done';
+  /** Parte III `special: 'flow'`: a story flow (app/acto1Flow.ts: dialog, choices, films; it persists its own substeps) */
+  flow?: string;
+  /** queued AHEAD of what is waiting (Parte III: a box cat's reveal right after its battle, before the next card) */
+  first?: boolean;
 }
 /** beats that open when a mission APPEARS */
 const ON_NEW: Record<string, BeatRef[]> = {
@@ -121,6 +140,8 @@ const ON_NEW: Record<string, BeatRef[]> = {
   ...O2_ON_NEW,
   ...O3_ON_NEW,
   ...O4_ON_NEW,
+  // Parte III · porción vertical (H66–H69): the Bitácora's cards + the scenes at home (ui/story/gaterasScript.ts)
+  ...P3_ON_NEW,
 };
 /** beats that play when a mission is COMPLETED */
 const ON_DONE: Record<string, BeatRef[]> = {
@@ -166,6 +187,7 @@ const ON_DONE: Record<string, BeatRef[]> = {
   ...O2_ON_DONE,
   ...O3_ON_DONE,
   ...O4_ON_DONE,
+  ...P3_ON_DONE,
 };
 
 /** beats that fire when a condition becomes true (checked while calm on island/map) */
@@ -190,13 +212,17 @@ const WHEN: { key: string; cond: () => boolean; ref: BeatRef }[] = [
   { key: 'secret_maneki_strays', cond: () => (G.s.counters.strays ?? 0) >= 10 && !owns('s_maneki'), ref: { beat: 'secret_maneki_strays', custom: SECRET_JOINS.s_maneki, special: 'reveal', species: 's_maneki', onlyOn: 'island', delay: 2 } },
   { key: 'secret_lumen_40', cond: () => speciesCount() >= 40 && !owns('s_lumen'), ref: { beat: 'secret_lumen_40', custom: SECRET_JOINS.s_lumen, special: 'reveal', species: 's_lumen', onlyOn: 'island', delay: 2 } },
   { key: 'secret_eclipse_duo', cond: () => (G.s.counters.eclipse_duo_win ?? 0) >= 1 && !owns('s_eclipse'), ref: { beat: 'secret_eclipse_duo', custom: SECRET_JOINS.s_eclipse, special: 'reveal', species: 's_eclipse', delay: 2 } },
+  // Parte III: the route's lines after B-2 and before B-5 (on the Carta de las Cajas, while H69 is on)
+  ...P3_WHEN.map((w) => ({ key: w.key, cond: () => G.s.missions.active.includes(w.mission) && G.has(w.flag), ref: w.ref as BeatRef })),
+  // Parte III: the reveal of a box cat already earned (state/sys/p3cats.ts sets the flag and adopts it), on the Carta
+  ...P3_CAT_WHEN.map((w) => ({ key: w.key, cond: () => G.has(w.key), ref: { beat: w.key, special: 'flow', flow: w.key, onlyOn: 'cajas', delay: w.delay, after: w.after, first: true } as BeatRef })),
 ];
 const owns = (species: string) => G.s.cats.some((c) => c.species === species);
 function catRarity(species: string) {
   return CONTENT.cats.find((c) => c.id === species)?.rarity;
 }
 /** the 'new' tip of these missions is already said by a beat / special UI (or would spoil it) */
-const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28', 'H29', 'H30', ...RUPTURAS_COVERED, ...O2_COVERED, ...O3_COVERED, ...O4_COVERED]);
+const COVERED = new Set(['H01', 'H02', 'H03', 'H04', 'H05', 'H06', 'H07', 'H08', 'H09', 'K07', 'H10', 'H11', 'H13', 'H14', 'H15', 'H17', 'H18', 'H19', 'H20', 'H21', 'H22', 'P01', 'H23', 'H24', 'H25', 'H26', 'H27', 'H28', 'H29', 'H30', ...RUPTURAS_COVERED, ...O2_COVERED, ...O3_COVERED, ...O4_COVERED, ...P3_COVERED]);
 
 interface QueuedBeat {
   key: string;
@@ -221,9 +247,11 @@ let IslandCls: (abstract new (...a: never[]) => unknown) | null = null;
 let MapCls: (abstract new (...a: never[]) => unknown) | null = null;
 
 // ------------------------------------------------------------------ helpers
-function where(): 'island' | 'map' | 'battle' | 'region' | 'other' {
+function where(): 'island' | 'map' | 'battle' | 'region' | 'cajas' | 'other' {
   const c = scenes.current;
   if (!c) return 'other';
+  // Parte III · the Carta de las Cajas (scenes/GaterasMapScene, B: `storyStage = 'cajas'`). Duck-typed, like regions
+  if ((c as { storyStage?: unknown }).storyStage === 'cajas') return 'cajas';
   // instanceof / duck-typing only, never `constructor.name`: a production build renames classes
   if (IslandCls && c instanceof IslandCls) return 'island';
   if (MapCls && c instanceof MapCls) return 'map';
@@ -242,6 +270,10 @@ function fits(ref: BeatRef, here: ReturnType<typeof where>) {
 /** a beat part is queued and will play (app/formsFlow waits for the transformation scene instead of popping) */
 export function beatPending(key: string) {
   return beats.some((q) => q.key === key);
+}
+/** the finale's own beats (its cards and flows) are the only ones the mourning lets through */
+function finalRef(ref: BeatRef) {
+  return ref.special === 'flow' || (ref.special === 'card' && !!ref.mission && Number(ref.mission.slice(1)) >= 93);
 }
 function transitioning() {
   return !!(scenes as unknown as { busy?: boolean }).busy;
@@ -360,7 +392,7 @@ async function playFeature(f: FeatureIntro, mode: 'use' | 'appear') {
 function canTip() {
   const w = where();
   // a scene holding the screen (a cine, a reveal: ui/hush.ts) → mission cards, panels and beats wait for it
-  return (w === 'island' || w === 'map') && !transitioning() && !dialogActive() && !introRunning && !hushed();
+  return (w === 'island' || w === 'map' || w === 'cajas') && !transitioning() && !dialogActive() && !introRunning && !hushed();
 }
 function canPanel() {
   return canTip() && !overlayBlocked();
@@ -385,9 +417,25 @@ function personalize(sp: string, text: string) {
     // Parte II: his page in capitals (H36) — the form's name «CANELO ALMIRANTE» stays as the form is called
     t = t.replace(/\bCANELO\b(?! ALMIRANTE)/g, c.name.toUpperCase());
   }
-  if (sp.toUpperCase() === 'LUZTERNA' && G.s.campaign.bossesDefeated >= 1) t = t.replace(/\bgrumete\b/g, 'Capi');
+  // the Bitácora is her notebook (Parte III, docs/part-iii/08 §6): it calls you what she calls you
+  const who = sp.toUpperCase();
+  if ((who === 'LUZTERNA' || who === 'BITÁCORA') && G.s.campaign.bossesDefeated >= 1) t = t.replace(/\bgrumete\b/g, 'Capi');
   return t;
 }
+/**
+ * CANELO as a speaker (Parte III: he talks inside the boxes) — the name the player gave him, like his lines say it,
+ * and the painting of his active form (Almirante, Astral…).
+ */
+export function caneloSpeaker(key: string): { name?: string; slug?: string } | undefined {
+  // Maneki: Part II's portrait is his collectible (mochi_bell_cat); from the Carta on he is the janitor of the boxes
+  // in his Parte III painting — the same as in the films (film/standins.ts)
+  if (key === 'MANEKI') return cartaAvailable() ? { slug: STANDINS.maneki } : undefined;
+  if (key !== 'CANELO') return undefined;
+  const c = firstCat();
+  if (!c || c.species !== 'c_canelo') return undefined;
+  return { name: c.name && c.name !== 'Canelo' ? c.name.toUpperCase() : undefined, slug: catSlug(c) };
+}
+setSpeakerHook(caneloSpeaker);
 function resonanceNames(text: string) {
   const job = G.s.resonance.jobs[G.s.resonance.jobs.length - 1];
   if (!job) return text;
@@ -425,7 +473,9 @@ function keyOf(ref: BeatRef) {
 function queueBeat(ref: BeatRef) {
   const key = keyOf(ref);
   if (beatSeen(key) || beatSeen(ref.beat) || beats.some((q) => q.key === key)) return;
-  beats.push({ key, ref, notBefore: performance.now() + (ref.delay ?? 0) * 1000 });
+  const q = { key, ref, notBefore: performance.now() + (ref.delay ?? 0) * 1000 };
+  if (ref.first) beats.unshift(q);
+  else beats.push(q);
 }
 
 // ------------------------------------------------------------------ events
@@ -436,7 +486,8 @@ function onMission(id: string, kind: 'new' | 'progress' | 'done') {
     for (const r of ON_NEW[id] ?? []) queueBeat(r);
     if (COVERED.has(id)) markLine(id);
   } else if (kind === 'done') {
-    done.push({ m, r: lastRewards.get(id) });
+    // Parte III: the Bitácora's CAMBIÓ card is this mission's panel (the prize goes small at its bottom: 03 §3)
+    if (!m.card) done.push({ m, r: lastRewards.get(id) });
     lastDoneAt = performance.now();
     for (const r of ON_DONE[id] ?? []) queueBeat(r);
     // H09 done before its delayed beat → play it now
@@ -464,8 +515,11 @@ function maybeTip(m: MissionDef) {
 async function pump() {
   if (!inited) return;
   const now = performance.now();
+  // Parte III · the mourning (SADIE → «Continuará»): 0 jingles, 0 panels, 0 tips, 0 explanations; only the finale's own
+  // cards and flows go on (ui/story/ghost.ts dueloMuted; final/00-indice §2.6). Nothing is dropped: it waits
+  const muted = dueloMuted();
   // T1 kingdom banner (non-blocking) — show on island/map
-  if (kls.length && canPanel() && !busy) {
+  if (kls.length && canPanel() && !busy && !muted) {
     const levels = kls.splice(0, kls.length).sort((a, b) => a - b);
     const top = levels[levels.length - 1];
     const lines: string[] = [];
@@ -490,7 +544,7 @@ async function pump() {
     return;
   }
   // T2 mission panels (grouped)
-  if (done.length && !panelShowing && canPanel() && !busy && now - lastDoneAt > 450) {
+  if (done.length && !panelShowing && canPanel() && !busy && !muted && now - lastDoneAt > 450) {
     const items = done.splice(0, done.length);
     while (panelTimes.length && now - panelTimes[0] > 90000) panelTimes.shift();
     const short = panelTimes.length >= 3 || items.length >= 3;
@@ -502,7 +556,7 @@ async function pump() {
     return;
   }
   // condition beats (zone arrivals, elite warnings) join the queue when they become true
-  if (canBeat()) {
+  if (canBeat() && !muted) {
     // a save without a player profile (old saves, dev fixtures): Luzterna asks before anything else
     // (only on the island, never over a battle / results / casino / an open panel)
     if (!G.s.player && G.s.cats.length && where() === 'island' && !G.s.missions.active.includes('H01') && !beats.some((q) => q.ref.special === 'profile'))
@@ -516,7 +570,7 @@ async function pump() {
   // blocking beats
   if (beats.length && (canBeat() || canRegionBeat())) {
     const here = where();
-    const i = beats.findIndex((q) => now >= q.notBefore && fits(q.ref, here));
+    const i = beats.findIndex((q) => now >= q.notBefore && fits(q.ref, here) && (!q.ref.after || beatSeen(q.ref.after)) && (!muted || finalRef(q.ref)));
     if (i >= 0) {
       const q = beats.splice(i, 1)[0];
       await playBeat(q);
@@ -524,7 +578,7 @@ async function pump() {
     }
   }
   // features: first use (over its panel) beats first appearance (when calm, spaced out)
-  if (canBeat() && !beats.some((q) => q.notBefore <= now && fits(q.ref, where()))) {
+  if (canBeat() && !muted && !beats.some((q) => q.notBefore <= now && fits(q.ref, where()))) {
     const used = featureInUse(now);
     const f = used ?? featureAppeared(now);
     if (f) {
@@ -534,7 +588,7 @@ async function pump() {
   }
   // Parte II (hotfix 2026-10-10): the 3D islands are drawn on the CARTA, not next to yours — Luzterna says it once
   // (a new player: when the story puts the first one there; a save after the narrative reset: once, on the island)
-  if (where() === 'island' && canBeat() && !beats.length) {
+  if (where() === 'island' && canBeat() && !muted && !beats.length) {
     const isle = chartIslandsToTell();
     if (isle) {
       await tellChartIslands();
@@ -556,7 +610,7 @@ async function pump() {
     return;
   }
   // mission tips (non-blocking)
-  if (canTip() && !busy) {
+  if (canTip() && !busy && !muted) {
     for (const id of G.s.missions.active) {
       const m = MISSION_BY_ID.get(id);
       if (m && maybeTip(m)) break;
@@ -679,6 +733,70 @@ async function playBeat(q: QueuedBeat) {
     }
     return;
   }
+  if (q.ref.special === 'flow' && q.ref.flow) {
+    // Parte III · Acto I: a story flow (app/acto1Flow.ts). It persists its substeps itself; cut short → again later
+    if (q.ref.until && G.s.missions.done.includes(q.ref.until)) {
+      markBeat(q.key);
+      G.save();
+      return;
+    }
+    if (modalOpen()) {
+      beats.push({ ...q, notBefore: performance.now() + 1200 });
+      return;
+    }
+    busy = true;
+    try {
+      // the finale's flows (h93…h97) live in app/finalFlow.ts; the Acto I's in app/acto1Flow.ts
+      // the finale (h93…h97): app/finalFlow.ts · the Actos II–IV (h75…h92): app/actsFlow.ts · the Acto I: app/acto1Flow.ts
+      // a box cat's reveal (p3cat_<id>): app/p3CatsFlow.ts
+      const { playStoryFlow } = /^p3cat_/.test(q.ref.flow) ? await import('./p3CatsFlow') : /^h9[3-7]_/.test(q.ref.flow) ? await import('./finalFlow') : /^h(7[5-9]|8\d|9[0-2])_/.test(q.ref.flow) ? await import('./actsFlow') : await import('./acto1Flow');
+      const res = await playStoryFlow(q.ref.flow);
+      if (res === 'interrupted') beats.push({ ...q, notBefore: performance.now() + 2500 });
+      else {
+        markBeat(q.key);
+        G.save();
+      }
+    } catch (e) {
+      console.warn('[story] flow', q.ref.flow, e);
+      beats.push({ ...q, notBefore: performance.now() + 4000 });
+    } finally {
+      busy = false;
+      lastBlockEnd = performance.now();
+    }
+    return;
+  }
+  if (q.ref.special === 'card' && q.ref.mission) {
+    // Parte III: the Bitácora opens to this mission's card (panels/Bitacora.ts). Never under a panel.
+    const m = MISSION_BY_ID.get(q.ref.mission);
+    if (!m?.card) return markBeat(q.key);
+    // a «new» card for a mission that's already done was overtaken (a flow played through it): seen, skipped
+    if (q.ref.phase !== 'done' && G.s.missions.done.includes(m.id)) {
+      markBeat(q.key);
+      G.save();
+      return;
+    }
+    if (modalOpen()) {
+      beats.push({ ...q, notBefore: performance.now() + 1200 });
+      return;
+    }
+    busy = true;
+    try {
+      const { showMissionCard } = await import('../panels/Bitacora');
+      // H66: first the warm mark on the page goes cold (04 §1: «la marca ya no está tibia»)
+      if (m.id === 'H66' && q.ref.phase !== 'done' && where() === 'island') {
+        const { playCine } = await import('../cine');
+        await playCine('p3_fria').catch(() => undefined);
+      }
+      if (beatSeen(q.key)) return; // a flow showed it meanwhile (showP3Card)
+      await showMissionCard(storyLayer(), m, q.ref.phase ?? 'new', { reward: lastRewards.get(m.id) ?? null });
+      markBeat(q.key);
+      G.save();
+    } finally {
+      busy = false;
+      lastBlockEnd = performance.now();
+    }
+    return;
+  }
   if (q.ref.special === 'marea') startMareaFinal(180);
   if (q.ref.special === 'profile') {
     if (G.s.player) return markBeat(q.key);
@@ -788,6 +906,13 @@ function catchUp() {
   for (const id of G.s.missions.active) for (const r of ON_NEW[id] ?? []) queueBeat(r);
   // saves from before the chapter end was wired: the Primer Mar fell but the ending never played
   if (G.s.missions.active.includes('H22') && !beatSeen('b25_creditos')) for (const r of ON_DONE.H21 ?? []) queueBeat(r);
+  // Parte III: a reload (or a closed tab) between the alley and the end of the awakening on the island: H67 is done
+  // but its ON_DONE (REGISTRO 000 despierta → CAMBIÓ of H67) never played — queue it again, or the H68 card waits forever
+  if (G.s.missions.active.includes('H68') && !beatSeen('b67_despierta')) for (const r of ON_DONE.H67 ?? []) queueBeat(r);
+  // Parte III · Acto I: the same for every mission of the box — a reload between a mission's end and its scenes (the
+  // close at La Última Ronda, EM%EN, the warning + OH SHIT, the CAMBIÓ cards) plays them again, never skips them: the
+  // next mission's card waits for them (`after`). Seen keys are skipped (queueBeat), overtaken ones mark themselves
+  for (const id of P3_COVERED) if (G.s.missions.done.includes(id) && id !== 'H67') for (const r of P3_ON_DONE[id] ?? []) queueBeat(r as BeatRef);
   // saves where El Arcanista fell without handing Merlina over
   if (G.s.campaign.bossesDefeated >= 4 && !G.s.cats.some((c) => c.species === 'l_merlina'))
     queueBeat({ beat: 'merlina_late', custom: BOSS_OUTRO[4], special: 'reveal', species: 'l_merlina', delay: 2 });
@@ -863,6 +988,12 @@ export async function maybeIntro(info: BootInfo) {
     if (upd.hasNews()) {
       await wait(0.6);
       await upd.openUpdates();
+    }
+    // Parte III: back after 8 h or more → the Bitácora opens by itself on «La última vez…» (03 §4)
+    if (ultimaVezDue(info.offlineMs)) {
+      await wait(0.5);
+      const { playUltimaVez } = await import('../panels/Bitacora');
+      await playUltimaVez(storyLayer());
     }
   } finally {
     busy = false;

@@ -12,11 +12,16 @@
  * - full  = cats-svg/<slug>.svg      (detail upgrade; if it fails the cat simply stays lite)
  * - story = story/**.svg             (Luzterna)
  *
- * A base may be a list ("a,b"): the file goes to shard `fnv1a(slug) % n`, so the lite and full
- * files of one cat always live on the same shard. Art site k of n publishes exactly those files.
+ * A base may be a list ("a,b"): the file goes to shard `shardFor(slug, n)`, so the lite and full files of one cat
+ * always live on the same shard. Art site k of n publishes exactly those files. Every file that existed when the
+ * second site was opened is PINNED to site 0 (artShardPins.ts: its URL never moves); anything newer goes to the last
+ * site. (Before pins the rule was `fnv1a(slug) % n`, which would have moved half the published art: `shardOf` stays
+ * exported for reference and tests.)
  *
  * Keep this file to erasable TypeScript only (node runs it with type stripping).
  */
+import { PINNED_SHARD } from './artShardPins.ts';
+
 export type ArtTier = 'full' | 'lite' | 'story';
 
 export interface ArtConfig {
@@ -72,6 +77,17 @@ export function shardOf(key: string, n: number): number {
   return h % n;
 }
 
+/**
+ * The shard a key lives on among `n` art sites: 1 site → 0; a pinned key → its pin (clamped to the sites that exist);
+ * any other key → the newest site (n − 1). Stable: adding a site never moves a pinned file.
+ */
+export function shardFor(key: string, n: number, pins: ReadonlyMap<string, number> = PINNED_SHARD): number {
+  if (n <= 1) return 0;
+  const pin = pins.get(key);
+  if (pin !== undefined) return Math.min(Math.max(0, pin), n - 1);
+  return n - 1;
+}
+
 /** the bases a path is served from under `cfg` ([] = next to the game) */
 export function basesFor(path: string, cfg: ArtConfig): string[] {
   const t = artTier(path);
@@ -89,7 +105,7 @@ export function joinArtUrl(base: string, path: string): string {
 export function resolveArtUrl(path: string, cfg: ArtConfig): string {
   const bases = basesFor(path, cfg);
   if (!bases.length) return path;
-  return joinArtUrl(bases[shardOf(shardKey(path), bases.length)], path);
+  return joinArtUrl(bases[shardFor(shardKey(path), bases.length)], path);
 }
 
 /** of these dist-relative files, the ones served from an art site instead (= drop them from the game's dist) */
@@ -107,6 +123,6 @@ export function filesForArtSite(files: string[], tiers: ArtSiteTiers, shard: num
     if (!t) return false;
     if (tiers === 'full' && t !== 'full') return false;
     if (tiers === 'lite' && t === 'full') return false;
-    return shardOf(shardKey(f), count) === shard;
+    return shardFor(shardKey(f), count) === shard;
   });
 }

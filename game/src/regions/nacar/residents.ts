@@ -9,6 +9,7 @@ import type { PaperCat } from '../../engine/world/paperCat';
 import { catLiteUrl } from '../../art/catArt';
 import { CAT_BY_ID } from '../../data/content';
 import { CAVE_DEPTH, DOOR, SPIRE, TERRACE, height } from './layout';
+import { withRegistroEstado } from '../../state/sys/gaterasWorld';
 
 interface ResidentDef {
   id: string;
@@ -85,7 +86,7 @@ export async function residents(ctx: RegionCtx, o: { madreWon: boolean }): Promi
     reg.facing = 1;
     reg.root.visible = false;
   }
-  ctx.describe.set('registro000', { title: 'REGISTRO 000 · FOLIO 000', text: 'Especie: desconocida · Elemento: ninguno · Rareza: no aplica · Estado: observando.\n\nSentado en el pico de cristal, mirando hacia tu isla. Cuando te acercas, ya no está.' });
+  ctx.describe.set('registro000', { title: 'REGISTRO 000 · FOLIO 000', text: withRegistroEstado('Especie: desconocida · Elemento: ninguno · Rareza: no aplica · Estado: observando.\n\nSentado en el pico de cristal, mirando hacia tu isla. Cuando te acercas, ya no está.') });
 
   const lensHold = new Map<string, number>();
   let zzzT = 0;

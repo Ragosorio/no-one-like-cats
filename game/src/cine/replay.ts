@@ -48,6 +48,8 @@ export async function replayScene(id: string): Promise<CineResult> {
     const fin = await import('../app/o4Finale');
     if (fin.hasFinaleMomento()) return fin.playFinale({ replay: true, from: FINALE_SCENES[id] });
   }
+  // Parte III: the scenes of another box play on their own stage (scenes/CajaScene.ts), then home
+  if (s.stage === 'caja') return (await import('../app/gaterasFlow')).replayCaja(id);
   const [{ playCine }, flow, story] = await Promise.all([import('./index'), import('../app/flow'), import('../app/story')]);
   const lines = (beat: string, idx?: number[]): Line[] => story.storyLines(beat, idx);
   if (s.stage === 'region' && s.replay?.region) {

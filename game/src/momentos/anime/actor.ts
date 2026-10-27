@@ -11,7 +11,7 @@
  */
 import { Assets, Container, Sprite, Texture, type Renderer } from 'pixi.js';
 import { CatPuppet } from '../../art/livingCat';
-import { artSlug, loadCatTexture, onCatArt, requestCatSvg, standInTint } from '../../art/catArt';
+import { artSlug, loadCatTexture, onCatArt, onCatArtFailed, requestCatSvg, standInTint } from '../../art/catArt';
 import { LUZTERNA_URL } from '../../ui/story/portrait';
 import { bakeCel, type CelOpts } from './shaders';
 
@@ -37,17 +37,27 @@ async function paintingOf(raw: string, detail: boolean): Promise<{ tex: Texture;
     let done = false;
     // onCatArt may call back synchronously (already loaded): `off` is not assigned yet then
     let off: (() => void) | null = null;
+    let offFail: (() => void) | null = null;
     off = onCatArt(slug, (t) => {
       if (done) return;
       done = true;
-      queueMicrotask(() => off?.());
+      queueMicrotask(() => (off?.(), offFail?.()));
       res(t);
     });
     if (done) off();
+    // the full vector can't load (not on the art host yet, offline): keep the lite one now, not after the 7 s wait
+    if (!done)
+      offFail = onCatArtFailed(slug, () => {
+        if (done) return;
+        done = true;
+        queueMicrotask(() => (off?.(), offFail?.()));
+        res(lite);
+      });
     setTimeout(() => {
       if (done) return;
       done = true;
       off?.();
+      offFail?.();
       res(lite);
     }, 7000);
   });
@@ -65,7 +75,7 @@ export class Studio {
      * (optional) a Momento's OWN treatment instead of the cel bake (WHEN I LOSE: the illuminated-miniature bake). It
      * must return NEW textures (never the painting itself: the Studio destroys what it gets on dispose).
      */
-    private bake?: (renderer: Renderer, src: Texture) => { tex: Texture; sil: Texture },
+    private bake?: (renderer: Renderer, src: Texture, slug?: string) => { tex: Texture; sil: Texture },
   ) {}
 
   /** load + bake (idempotent) */
@@ -77,7 +87,7 @@ export class Studio {
       p = paintingOf(raw, this.detail)
         .then(({ tex, slug, tint }) => {
           if (tex === Texture.WHITE || tex === Texture.EMPTY) return null;
-          const b = this.bake ? this.bake(this.renderer, tex) : bakeCel(this.renderer, tex, this.cel);
+          const b = this.bake ? this.bake(this.renderer, tex, slug) : bakeCel(this.renderer, tex, this.cel);
           const out: Baked = { tex: b.tex, sil: b.sil, slug, tint };
           this.baked.set(raw, out);
           return out;

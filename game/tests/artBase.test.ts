@@ -6,8 +6,9 @@
 import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
 import { ART_CONFIG, ART_REMOTE, artCrossOrigin, artSwQuery, artUrl } from '../src/art/artBase';
-import { artConfig, artTier, filesForArtSite, joinArtUrl, parseArtBases, remoteArtFiles, resolveArtUrl, shardKey, shardOf } from '../src/art/artPaths';
+import { artConfig, artTier, filesForArtSite, joinArtUrl, parseArtBases, remoteArtFiles, resolveArtUrl, shardFor, shardKey, shardOf } from '../src/art/artPaths';
 import { rasterKeyPath } from '../src/art/rasterCache';
+import { PINNED_SHARD } from '../src/art/artShardPins';
 
 const SLUGS = readdirSync(new URL('../public/cats-svg/lite/', import.meta.url))
   .filter((f) => f.endsWith('.svg'))
@@ -93,8 +94,18 @@ describe('with an art base', () => {
       expect(sites[k].has(f)).toBe(true);
       expect(sites[1 - k].has(f)).toBe(false);
     }
-    // both shards get a fair share
-    expect(Math.min(sites[0].size, sites[1].size)).toBeGreaterThan(files.length * 0.3);
+    // every file published before the second site existed stays on site 0 (pinned: its URL never moves) …
+    const pinned = (f: string) => PINNED_SHARD.has(shardKey(f));
+    for (const f of files) expect(sites[pinned(f) ? 0 : 1].has(f)).toBe(true);
+    expect(files.filter(pinned).length).toBeGreaterThanOrEqual(245); // the 122 cats (lite + full) + Luzterna of 2026-10-13
+    // … and new art (a slug that isn't pinned) goes to the newest site
+    expect(shardFor('p3_nuevo_gato_cat', 2)).toBe(1);
+    expect(resolveArtUrl('cats-svg/p3_nuevo_gato_cat.svg', cfg)).toBe('https://a.io/2/cats-svg/p3_nuevo_gato_cat.svg');
+    expect(resolveArtUrl('cats-svg/lite/p3_nuevo_gato_cat.svg', cfg)).toBe('https://a.io/2/cats-svg/lite/p3_nuevo_gato_cat.svg');
+    // a pinned file keeps exactly today's URL when a site is added
+    for (const s of SLUGS.filter((k) => PINNED_SHARD.has(k))) expect(resolveArtUrl(`cats-svg/${s}.svg`, artConfig('', 'https://a.io/1/,https://a.io/2/'))).toBe(`https://a.io/1/cats-svg/${s}.svg`);
+    // with one site nothing changes at all
+    expect(shardFor('p3_nuevo_gato_cat', 1)).toBe(0);
     // a full-only site never carries lite/story
     expect(filesForArtSite(files, 'full', 0, 1).every((f) => artTier(f) === 'full')).toBe(true);
     expect(filesForArtSite(files, 'lite', 0, 1).every((f) => artTier(f) !== 'full')).toBe(true);

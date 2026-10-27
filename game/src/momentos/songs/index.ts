@@ -8,3 +8,4 @@ import './hemkade';
 import './teOdio';
 import './circusMalus';
 import './yonoseTodo';
+import './drunck'; // Parte III · H66 (app/gaterasFlow.ts)

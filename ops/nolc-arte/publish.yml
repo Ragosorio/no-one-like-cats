@@ -55,6 +55,7 @@ jobs:
             game/public/cats-svg/
             game/public/story/
             game/src/art/artPaths.ts
+            game/src/art/artShardPins.ts
             game/scripts/art-publish.ts
       - name: Already published? (scheduled runs only)
         id: same

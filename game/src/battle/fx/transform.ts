@@ -113,7 +113,8 @@ export function playTransform(layer: Container, i: TransformInput): Promise<void
           const rgb = new RGBSplitFilter({ red: { x: -14, y: 0 }, green: { x: 0, y: 8 }, blue: { x: 14, y: -6 } });
           root.filters = [rgb];
           gsap.to([rgb.red, rgb.blue], { x: 0, y: 0, duration: 0.4 });
-          gsap.to(rgb.green, { y: 0, duration: 0.4, onComplete: () => (root.filters = []) });
+          // (the battle can be replaced mid cut-in: never touch a destroyed container)
+          gsap.to(rgb.green, { y: 0, duration: 0.4, onComplete: () => void (!root.destroyed && (root.filters = [])) });
           speedLines(root, W / 2, H / 2, C.ink, 56, 0.8);
         }
       },
@@ -126,7 +127,7 @@ export function playTransform(layer: Container, i: TransformInput): Promise<void
     tl.call(() => { bc.sprite.crouch = 0.9; bc.sprite.lean = 0.5; }, [], tFlash);
     tl.call(() => { bc.sprite.crouch = -0.35; bc.sprite.lean = -0.2; bc.sprite.emote('attack', 1.4); bc.sprite.emote('surprise'); }, [], tFlash + 0.22);
     tl.call(() => { bc.sprite.crouch = 0; bc.sprite.lean = 0; bc.sprite.emote('happy', 0.8); }, [], tFlash + 0.55);
-    tl.call(() => (bc.sprite.filters = prev), [], tFlash + (short ? 0.12 : 0.3));
+    tl.call(() => void (!bc.sprite.destroyed && (bc.sprite.filters = prev)), [], tFlash + (short ? 0.12 : 0.3));
     tl.from(cartel, { y: -900, duration: 0.2, ease: 'back.out(1.6)' }, tFlash + 0.1);
     tl.from(bubble.scale, { x: 0, y: 0, duration: 0.2, ease: 'back.out(3)', onStart: () => sfx('meow', 0.8) }, tFlash + 0.2);
     tl.to({}, { duration: short ? 0.45 : 1.0 }, tFlash + 0.3);

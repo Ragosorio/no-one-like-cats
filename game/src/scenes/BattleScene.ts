@@ -3,6 +3,9 @@ import { isTouch } from '../core/pwa';
 import gsap from 'gsap';
 import { Scene, scenes } from '../core/scenes';
 import { W, H, game } from '../core/App';
+import { audioApi } from '../audio/api';
+import { mountDarkness, miraPrompt, type FinalFxHost } from '../battle/ui/finalFx';
+import { actChips } from '../battle/actRules';
 import { Sea } from '../battle/sea';
 import { CELL } from '../battle/ship';
 import { AnimeShipView } from '../battle/anime';
@@ -38,6 +41,11 @@ import { koRank } from '../state/sys/ranks';
 import { P2_ONO, p2Hidden, p2Projectile, p2Trail } from '../battle/fx/multiversoFx';
 import { p2Feats, p2Night } from '../battle/multiverso';
 import { NZ_RAGE, NZ_SHOUT, nzChips } from '../battle/ruido';
+// Parte III · La Borracha: MAREO's chips (rules) and its view (the swaying guide, the donuts, the bottles)
+import { mareoChips } from '../battle/mareo';
+import { rondaChips } from '../battle/ronda';
+import { barChips } from '../battle/barRules';
+import { MareoFx, mareoProjectile } from '../battle/mareoFx';
 // Parte II · Oleada 2: the sky layer (rules battle/cielo.ts, look battle/fx/cieloFx.ts)
 import { skyAwake, skyChips } from '../battle/cielo';
 // Parte II · MOMENTOS MUSICALES: an interactive music cinematic on a phase change (src/momentos, docs/part-ii/29)
@@ -131,6 +139,8 @@ export interface BattleSpec {
     noPreview?: boolean;
     /** share of the ship's Poder its fights scale with (ship.ts COMBAT_WEIGHT: the Bastión ×0.8) */
     combatWeight?: number;
+    /** Parte III «la caja te mide»: the enemy crew's attack × this (campaign.ts SiegeInput.mirror) */
+    mirror?: number;
   };
   mode?: 'siege' | 'duel';
   /** AI personality from content (afinador, demoledor, elementalista…) */
@@ -140,6 +150,9 @@ export interface BattleSpec {
   intro?: BattleIntro;
   /** sudden-death turn (default 10, 0 = off) */
   suddenDeath?: number;
+  /** ⚠️ Parte III · EL FINAL (state/sys/finalBattles.ts): `quietWin` = a win ends with no victory screen, no jingle, no loot
+   *  card (the siege of H93 → F32); `dark` = «A oscuras» (only your cats' eyes); `mira` = the single input on that turn */
+  final?: { quietWin?: boolean; dark?: boolean; mira?: { turn: number; auto?: number; canelo?: string | null } };
   onEnd: (r: BattleResult) => void;
 }
 
@@ -259,10 +272,14 @@ export class BattleScene extends Scene {
   private momentoNext: (() => Promise<void>) | null = null;
   /** CATACLISMOS: the seal over their ship + the ghost marks on yours */
   cataFx: CataFx | null = null;
+  /** La Borracha (battle/mareoFx.ts): null in every other battle */
+  mareoFx: MareoFx | null = null;
   ultMarks = new UltMarks();
   matchup = new MatchupPanel();
   /** the battle's music plan (src/battle/music): WHEN things are shown, never WHAT happens; inert without a plan */
   music: BattleMusic | null = null;
+  /** EL FINAL «A oscuras» (battle/ui/finalFx.ts) */
+  darkFx: ReturnType<typeof mountDarkness> | null = null;
   private healAcc = 0;
   private wetDeckShown = false;
   private t = 0;
@@ -289,6 +306,9 @@ export class BattleScene extends Scene {
     this.prof = enemyProfile(sp);
     const slugs = [...sp.player.cats, ...sp.enemy.cats].map((c) => c.slug);
     if (sp.intro?.slug) slugs.push(sp.intro.slug);
+    // PERF: the wipe stays closed until the paintings are in and the battle is built (core/scenes.ts coverUntil)
+    let built = () => {};
+    this.coverUntil = new Promise<void>((r) => (built = r));
     await preloadCats(slugs);
 
     // a sky battle floats over a sea of clouds (battle/cielo.ts); a DORMANT sky (H44: sea first) starts on the sea
@@ -343,6 +363,7 @@ export class BattleScene extends Scene {
       }
     }
     this.buildBossRigs();
+    if (sp.rules?.mareo) this.mareoFx = new MareoFx(this.sim, this.ships);
     if (skyNow) this.ensureSkyFx();
     if (sp.rules?.fases) {
       this.fasesFx = new FasesFx({ sim: this.sim, sea: this.sea, world: this.world, shipsLayer: this.shipsLayer, above: this.debris, overlay: this.overlay, skyLife: this.sky, battleId: sp.meta?.special ?? null });
@@ -353,6 +374,7 @@ export class BattleScene extends Scene {
       }
     }
     this.buildHud();
+    built();
     if (import.meta.env.DEV) (window as unknown as { __battle: BattleScene }).__battle = this;
     this.eventMode = 'static';
     this.hitArea = { contains: () => true };
@@ -364,6 +386,8 @@ export class BattleScene extends Scene {
     window.addEventListener('keyup', this.onKeyUp);
     this.music = startBattleMusic(this);
     await this.intro();
+    // the scene can be replaced while its intro plays (a battle straight into another): its turns never start
+    if (this.destroyed) return;
     this.playerTurn();
   }
 
@@ -462,6 +486,8 @@ export class BattleScene extends Scene {
       this.cataFx = new CataFx(this.sim);
       this.world.addChildAt(this.cataFx, at());
     }
+    // EL FINAL «A oscuras»: the fight in black, only your cats' eyes (battle/ui/finalFx.ts)
+    if (sp.final?.dark) this.darkFx = mountDarkness(this as unknown as FinalFxHost);
     this.syncLate();
   }
 
@@ -485,6 +511,7 @@ export class BattleScene extends Scene {
       this.wellFx.set(w, fx);
     }
     this.ward?.setLayers(es.ward?.layers ?? 0);
+    this.mareoFx?.sync();
     this.portalFx?.set(sim.portals, sim.portalNext);
     if (this.gravityFx) {
       const an = sim.field.anti;
@@ -644,6 +671,7 @@ export class BattleScene extends Scene {
   }
 
   refreshCards() {
+    if (this.destroyed) return;
     if (this.sim) {
       for (let side = 0; side < 2; side++)
         for (const c of this.sim.sides[side].cats) {
@@ -765,6 +793,17 @@ export class BattleScene extends Scene {
     if (r?.noise?.side === 1) items.push(...nzChips(this.sim));
     if (this.sim.turn >= 10 && this.spec.mode !== 'duel') items.push({ text: 'MUERTE SÚBITA', color: C.red, ink: C.paper });
     const pItems: Chip[] = [...pItemsDivine];
+    // Parte III · La Borracha: MAREO (the donuts, the bottles, the karaoke on their side; the sway on yours)
+    if (r?.mareo) {
+      const [me, mp] = mareoChips(this.sim);
+      items.push(...me);
+      pItems.push(...mp);
+    }
+    // Parte III · La Ronda: the bar's condition (battle/ronda.ts)
+    pItems.push(...rondaChips(r, this.sim.turn));
+    // Parte III · Acto I: RIMA (EMIAU) · LISTA VIP (El Cadenero) — battle/barRules.ts
+    pItems.push(...barChips(this.sim));
+    pItems.push(...actChips(this.sim));
     const ps = this.sim.sides[0];
     if (ps.bubbleKind) pItems.push(ps.bubble > 0 ? { text: `BURBUJA x${ps.bubble}`, color: C.cyan } : { text: 'BURBUJA: RECARGA', color: 0x8a95a3 });
     if (ps.buffs.stone > 0) pItems.push({ text: `CORAZÓN DE PIEDRA ${ps.buffs.stone}`, color: 0xc4bdab });
@@ -903,7 +942,9 @@ export class BattleScene extends Scene {
         cry: capDef.battleForm.cry,
       });
     }
+    if (this.destroyed) return;
     if (this.spec.intro) await this.introCard(this.spec.intro);
+    if (this.destroyed) return;
     const banner = new Container();
     const band = new Graphics().rect(-200, -90, W + 400, 180).fill(C.ink);
     band.rotation = -0.06;
@@ -1016,6 +1057,7 @@ export class BattleScene extends Scene {
   }
 
   speech(ship: Container, who: string, line: string, dur = 2) {
+    if (this.destroyed || ship.destroyed) return;
     const c = new Container();
     const t = txt(line, { fontFamily: F.comic, fontSize: 26, fill: C.ink, wordWrap: true, wordWrapWidth: 380 });
     const n = txt(who.toUpperCase(), { fontFamily: F.poster, fontSize: 18, fill: C.pinkHot });
@@ -1035,6 +1077,8 @@ export class BattleScene extends Scene {
 
   // ---------------------------------------------------------------- turns
   async playerTurn(): Promise<void> {
+    // a replaced scene's coroutine (QA-P3: «reading 'clear'» on its destroyed Graphics) stops here
+    if (this.destroyed) return;
     if (this.sim.winner !== null) return this.finish();
     // a fresh turn: the volley never aims at last turn's (enemy) impact on our own ship
     this.volleyTarget = null;
@@ -1043,6 +1087,16 @@ export class BattleScene extends Scene {
     await this.playQueued();
     await this.checkBossPhase();
     if (this.sim.winner !== null) return this.finish();
+    // EL FINAL «A oscuras»: on its turn, a single input over Canelo — «MIRA» (tap, or he looks by himself) ends the fight
+    const mira = this.spec.final?.mira;
+    if (mira && this.sim.turn >= mira.turn) {
+      await miraPrompt(this as unknown as FinalFxHost, mira);
+      if (this.sim.winner === null) {
+        this.sim.winner = 0;
+        this.sim.reason = 'momento';
+      }
+      return this.finish();
+    }
     this.shotsLeft = this.sim.extraShots(0);
     const avail = this.sim.shooters(0);
     if (!avail.find((c) => c.def.uid === this.selected)) this.selected = avail[0]?.def.uid ?? '';
@@ -1077,6 +1131,7 @@ export class BattleScene extends Scene {
   }
 
   async enemyTurn(): Promise<void> {
+    if (this.destroyed) return;
     if (this.sim.winner !== null) return this.finish();
     this.phase = 'enemy';
     this.refreshCards();
@@ -1160,7 +1215,7 @@ export class BattleScene extends Scene {
     this.aimReadout.visible = false;
     if (this.phase === 'aim') {
       const o = this.sim.muzzle(0, this.selected);
-      const paths = this.sim.buildPaths(this.currentShot(), o, this.aim.angle, this.aim.power, this.sim.wind, 0);
+      const paths = this.sim.buildPaths(this.currentShot(), o, this.mareoFx ? this.mareoFx.aimAngle(this.aim.angle, true) : this.aim.angle, this.aim.power, this.sim.wind, 0);
       this.lastShot = { angle: this.aim.angle, power: this.aim.power, pts: paths[0]?.points ?? [], shooter: this.selected };
     }
     const bc = this.selected ? this.catViews.get(this.selected) : undefined;
@@ -1182,7 +1237,8 @@ export class BattleScene extends Scene {
   drawAim() {
     const shot = this.currentShot();
     const o = this.sim.muzzle(0, this.selected);
-    const paths = this.sim.buildPaths(shot, o, this.aim.angle, this.aim.power, this.sim.wind, 0);
+    // MAREO: the guide sways — it shows the arc the shot takes if you let go now
+    const paths = this.sim.buildPaths(shot, o, this.mareoFx ? this.mareoFx.aimAngle(this.aim.angle) : this.aim.angle, this.aim.power, this.sim.wind, 0);
     const g = this.aimG;
     g.clear();
     const meta = this.spec.meta;
@@ -1220,6 +1276,7 @@ export class BattleScene extends Scene {
 
   /** dotted ghost of the previous player shot, with its numbers at the end of the arc */
   drawLastShot(k = 1) {
+    if (this.destroyed) return;
     const g = this.lastAimG;
     g.clear();
     this.lastLabel.visible = false;
@@ -1258,7 +1315,7 @@ export class BattleScene extends Scene {
     }
     this.lastElevation = -this.aim.angle;
     this.turnShooter = this.selected;
-    const res = this.sim.fire(0, this.selected, this.aim.angle, this.aim.power, ult, undefined, sincro ? { sincro } : undefined);
+    const res = this.sim.fire(0, this.selected, this.aim.angle, this.aim.power, ult, undefined, sincro || this.mareoFx ? { ...(sincro ? { sincro } : {}), ...(this.mareoFx?.input() ?? {}) } : undefined);
     this.refreshCards();
     // the volley concentrates on the FIRST hit of this turn (same rule as the headless sim)
     this.volleyTarget = volleyAim(this.volleyTarget, res.events, 0);
@@ -1470,7 +1527,7 @@ export class BattleScene extends Scene {
 
   // ---------------------------------------------------------------- animation of events
   async playTicks(ev: BattleEvent[]) {
-    if (!ev.length) return;
+    if (!ev.length || this.destroyed) return;
     for (const e of ev) this.applyEvent(e);
     const slow = ev.some((e) => e.k === 'boss' && ['grab', 'heal', 'fly', 'submerge', 'surface', 'eyeOpen', 'suddenDeath', 'throw'].includes(e.what));
     // a cataclysm's warning: give its banner and the marks on your ship time to land
@@ -1490,7 +1547,10 @@ export class BattleScene extends Scene {
     glow.scale.set(shot.trajectory === 'beam' ? 0.7 : 0.5);
     const core = new Graphics();
     const cataGlow = cataProjectile(shot, core);
-    if (cataGlow !== null) {
+    if (cataGlow === null && mareoProjectile(shot, core)) {
+      // La Borracha: a bottle from the alley
+      glow.tint = 0x2e7d4f;
+    } else if (cataGlow !== null) {
       // a cataclysm's meteor / the moon itself
       glow.scale.set(cataGlow);
       glow.tint = shot.id === 'cata_moon' ? 0xdfe6ff : 0xff6a1a;
@@ -1707,6 +1767,7 @@ export class BattleScene extends Scene {
   }
 
   applyEvent(e: BattleEvent) {
+    this.mareoFx?.onEvent(e);
     switch (e.k) {
       case 'cell': {
         const v = this.ships[e.side];
@@ -2438,7 +2499,10 @@ export class BattleScene extends Scene {
   async finish(): Promise<void> {
     if (this.phase === 'end') return;
     this.phase = 'end';
-    this.music?.onFinish(this.sim.winner === 0);
+    // EL FINAL: a quiet win — no jingle, no confetti, no end card (the story's film takes over: F32, MIRA)
+    const quiet = this.sim.winner === 0 && !!this.spec.final?.quietWin;
+    if (quiet) audioApi.release(1.2);
+    else this.music?.onFinish(this.sim.winner === 0);
     this.refreshCards();
     const won = this.sim.winner === 0;
     if (this.spec.boss) {
@@ -2449,11 +2513,15 @@ export class BattleScene extends Scene {
     // the last core of the Primer Mar falls: the prologue's blow closes the circle — STARFALL
     if (won && this.spec.boss?.id === 'leviathan') await this.finale();
     this.rain?.setOn(false);
-    this.celebrate(won);
+    if (!quiet) this.celebrate(won);
     await this.sinkSequence(won ? 1 : 0);
     const reasonTxt =
       this.sim.reason === 'retreat'
         ? 'SE FUE… PERO SE ACUERDA DE TI'
+        : this.sim.reason === 'condicion'
+        ? won
+          ? '¡SE LE ACABÓ LA RONDA!'
+          : 'SE ACABÓ LA RONDA: NO CUMPLISTE LA CONDICIÓN'
         : this.sim.reason === 'momento'
         ? '¡LA PELEA ES TUYA!'
         : this.sim.reason === 'core'
@@ -2487,7 +2555,7 @@ export class BattleScene extends Scene {
     const mvpCat = mvpUid ? G.s.cats.find((c) => c.uid === mvpUid) : undefined;
     const layer = new Container();
     this.overlay.addChild(layer);
-    await playBattleEnd(layer, { won, reason: reasonTxt, rows, repair, mvp: mvpCat ? { species: mvpCat.species, name: mvpCat.name } : null });
+    if (!quiet) await playBattleEnd(layer, { won, reason: reasonTxt, rows, repair, mvp: mvpCat ? { species: mvpCat.species, name: mvpCat.name } : null });
     {
       const result: BattleResult = {
         won,
@@ -2589,6 +2657,7 @@ export class BattleScene extends Scene {
 
   override update(dt: number) {
     this.t += dt;
+    this.darkFx?.update(dt);
     for (const v of this.ships) if (!this.sinking.has(v)) v.bob(dt * time.scale);
     // the sea breeze is part of the fight: fur, tails and ears drift with the battle wind
     const wind = this.sim.wind / 70;
@@ -2624,6 +2693,8 @@ export class BattleScene extends Scene {
     this.camRoot.scale.set(z);
     this.camRoot.position.set(W / 2 - cx * z, H / 2 - cy * z);
     if (this.sky) this.sky.wind = this.sim?.wind ?? 0;
+    // MAREO: the guide keeps swaying while you hold the aim
+    if (this.mareoFx && this.dragging && this.phase === 'aim' && this.mareoFx.wantsRedraw()) this.drawAim();
   }
 }
 

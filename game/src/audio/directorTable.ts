@@ -51,6 +51,8 @@ export type Target =
       loop: boolean;
       sync: boolean;
       section?: string;
+      /** a cue's start position in the file (s): CueOpts.at */
+      at?: number;
       source: 'listen' | 'cue' | 'island' | 'state';
     };
 
@@ -141,7 +143,7 @@ export function resolveTarget(t: DirectorTable, i: DirectorInput): Target {
   if (i.listen && i.has(i.listen.ref)) return { kind: 'track', ref: i.listen.ref, fade: 1.2, quantize: 'now', loop: !!i.listen.loop, sync: false, source: 'listen' };
   if (i.cue && i.has(i.cue.ref)) {
     const o = i.cue.opts;
-    return { kind: 'track', ref: i.cue.ref, fade: o.fadeIn ?? D.fade, quantize: o.quantize ?? D.quantize, loop: o.loop ?? D.loop, sync: !!o.sync, section: o.section, source: 'cue' };
+    return { kind: 'track', ref: i.cue.ref, fade: o.fadeIn ?? D.fade, quantize: o.quantize ?? D.quantize, loop: o.loop ?? D.loop, sync: !!o.sync, section: o.section, at: o.at, source: 'cue' };
   }
   if (!i.partII) {
     const mood = t.partI[i.state] ?? (i.state === 'silence' || i.state === 'title' ? 'silence' : 'island');

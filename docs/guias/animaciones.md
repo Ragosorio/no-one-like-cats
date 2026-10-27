@@ -4,7 +4,7 @@ Aquí se explica cómo se mueven las cosas en NO ONE LIKE CATS: los gatos que pa
 
 Regla de oro antes de empezar: **el gato no es un sprite que se tuerce, es una pintura que actúa**. Si lo tratas como actor (anticipación, reacción, recuperación), se ve vivo. Si lo tratas como imagen que rota, se ve como PowerPoint de 2004.
 
-Guías hermanas: [agregar-gato.md](agregar-gato.md) · [agregar-elemento.md](agregar-elemento.md) · [agregar-historia.md](agregar-historia.md) · [agregar-barco.md](agregar-barco.md) · [arquitectura.md](arquitectura.md) · [CONTRIBUTING](../../CONTRIBUTING.md)
+Guías hermanas: [agregar-gato.md](agregar-gato.md) · [agregar-elemento.md](agregar-elemento.md) · [agregar-historia.md](agregar-historia.md) · [agregar-barco.md](agregar-barco.md) · [arquitectura.md](arquitectura.md) · [cines-y-estados.md](cines-y-estados.md) (escenas con cámara y mundo) · [agregar-momento.md](agregar-momento.md) (Momentos musicales) · [rutas-de-desarrollo.md](rutas-de-desarrollo.md) · [CONTRIBUTING](../../CONTRIBUTING.md)
 
 ---
 
@@ -116,7 +116,7 @@ Los actos espontáneos no arrancan si el gato camina, duerme o está en medio de
 
 ### 2.4 Los rigs (`catRigs.json`)
 
-Es un JSON de una línea; para mirarlo usa node. Hoy hay 33 rigs:
+Es un JSON de una línea; para mirarlo usa node. Hay un rig por pintura (los 120 gatos, las formas de Canelo, Luzterna y las pinturas nuevas en prueba):
 
 ```bash
 node -e 'const r=require("./game/src/data/catRigs.json"); console.log(JSON.stringify(r["alien_galaxy_cat"]))'
@@ -149,7 +149,7 @@ Qué hace el código con cada campo (todo en píxeles de la pintura, 700x700):
 | `tail` | `{ pts: [x,y][], r }` o `null` | Polilínea de la columna de la cola, de la base (`pts[0]`, pivote) a la punta, y su radio. La amplitud crece hacia la punta y se calcula en píxeles de recorrido, no en radianes (colas largas y cortas se mueven parecido). Nunca arrastra la cara. Colas con `r > 60` se mueven 25 % menos. |
 | `floats` | `[cx, cy, r][]` | Objetos sueltos que flotan en su lugar (cristales, linternas). Cada uno tiene su fase de bamboleo y se va con el viento. |
 
-Rarezas reales que conviene saber: `mecha_neon_cat` tiene `eyes: []` (no parpadea; está bien, es un robot), y aunque el tipo permite `tail: null`, hoy los 33 tienen cola.
+Rarezas reales que conviene saber: `mecha_neon_cat` y `djbigotes_dj_cat` tienen `eyes: []` (no parpadean, a propósito), y aunque el tipo permite `tail: null`, hoy todos tienen cola.
 
 Los rigs se autoran en [MAI SVG](https://github.com/Ragosorio/MAI-SVG) (`exports/game-rigs/<slug>.rig.json` dentro de tu copia de MAI, fuera de este repo) y se compactan en `catRigs.json`. Un gato sin rig no explota: se dibuja como un quad de 2x2 y se comporta como un sprite quieto. Cómo agregar un gato nuevo con su rig está en [agregar-gato.md](agregar-gato.md).
 
@@ -306,7 +306,10 @@ Todas son rutas de la URL del juego (`npm run dev` dentro de `game/`, o el build
 | `&rig=1` | Dibuja el rig encima: cabeza y cuello en amarillo, orejas en rojo, ojos en verde, cola en magenta, flotantes en cian. Indispensable para revisar un rig nuevo. |
 | `?scene=fxlab` | **SECUENCIAS FX** (`scenes/FxLab.ts`): elige un gato con `&cat=<slug o id>` o con los botones `<` `>` y dispara revelar (normal, duplicado, holo), elemento nuevo, invocar x1/x10, estrellas 3/4/5 o la portada de victoria. Las opciones de cada secuencia están armadas a mano en `FxLab.ts`, igual que las pasa el juego. |
 | `?scene=art` | ArtLab "DIMENSIONES": cuatro gatos en forma isla, cómic, Battle Form y manga tinta, y un botón **REVELAR** que lanza `playCatReveal` con `regal_cosmic_cat` legendario. |
+| `?momento=<id>` / `?momento=lab` | Un Momento musical suelto y el laboratorio de su horneado (solo dev). Ver [agregar-momento.md](agregar-momento.md). |
 | `?realtime=1` | Se suma a cualquiera; solo en dev. |
+
+Todas las rutas, con partidas de prueba y capturas sin pantalla: [rutas-de-desarrollo.md](rutas-de-desarrollo.md).
 
 En la consola del navegador, `?scene=catlive` deja `window.__catlab = { puppets, slugs }`:
 

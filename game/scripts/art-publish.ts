@@ -18,7 +18,7 @@
 import { createHash } from 'node:crypto';
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
-import { artConfig, artTier, basesFor, filesForArtSite, shardKey, shardOf, type ArtSiteTiers } from '../src/art/artPaths.ts';
+import { artConfig, artTier, basesFor, filesForArtSite, shardFor, shardKey, type ArtSiteTiers } from '../src/art/artPaths.ts';
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -115,7 +115,7 @@ async function check() {
   const byBase = new Map<string, string[]>();
   for (const f of local) {
     const bases = basesFor(f, cfg);
-    const abs = new URL(bases[shardOf(shardKey(f), bases.length)], site).href;
+    const abs = new URL(bases[shardFor(shardKey(f), bases.length)], site).href;
     byBase.set(abs, [...(byBase.get(abs) ?? []), f]);
   }
   let errors = 0;

@@ -7,13 +7,14 @@
  *   mythic     holográfico + glitch
  *   heroic     carmesí + laureles dorados (premios del Podio)
  *   divine     nácar iridiscente + halo (los "rotos")
+ *   multidimensional  caja abierta de cartón + marco iridiscente con las paletas de las cinco cajas (Parte III)
  *   primordial negro con ruido de otra dimensión + color del elemento
  *   neutral    ficha sin rareza conocida (silueta)
  *   back       carta sellada
  */
 import { Texture } from 'pixi.js';
 
-export type PrintStyle = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic' | 'heroic' | 'divine' | 'primordial' | 'neutral' | 'back' | 'backSecret';
+export type PrintStyle = 'common' | 'rare' | 'epic' | 'legendary' | 'multidimensional' | 'mythic' | 'heroic' | 'divine' | 'primordial' | 'neutral' | 'back' | 'backSecret';
 
 export interface CardLayout {
   b: number;
@@ -160,6 +161,65 @@ export function cardFace(style: PrintStyle, w: number, h: number, accent = 0xff2
       grain(g, W, H, 26);
       strokeRect(g, win.x, win.y, win.w, win.h, 2 * s, '#3569A3');
       g.fillStyle = '#3569A3';
+      g.fillRect(pl.x, pl.y, pl.w, 3 * s);
+      break;
+    }
+    // Parte III · MULTIDIMENSIONAL (06 §1.3): an OPEN BOX — kraft cardboard, two flaps folded out at the top — and an
+    // iridescent frame made of the five boxes' palettes (beer, comic, shōnen, ink, neon) in misregistered halftone
+    case 'multidimensional': {
+      const DIMS5 = [0xe8a33d, 0x2a5db0, 0xff7a1a, 0x8a5a3a, 0xff2e88];
+      g.fillStyle = '#D6B784';
+      g.fillRect(0, 0, W, H);
+      // corrugated cardboard: faint flutes
+      g.fillStyle = 'rgba(110,76,36,0.10)';
+      for (let x = 0; x < W; x += 4 * s) g.fillRect(x, 0, 1.2 * s, H);
+      g.fillStyle = '#FBF5EA';
+      g.fillRect(win.x, win.y, win.w, win.h);
+      g.globalCompositeOperation = 'multiply';
+      // five diagonal bands, one per box, each in its own screen angle
+      DIMS5.forEach((c, i) =>
+        halftone(g, win.x, win.y, win.w, win.h, 8 * s, rgba(c, 0.5), 15 + i * 31, (u, v) => 0.44 * Math.max(0, 1 - Math.abs((u * 0.55 + v * 0.45) * 5 - i - 0.5) / 1.15)),
+      );
+      const ig = g.createLinearGradient(0, 0, W, H);
+      [...DIMS5, DIMS5[0]].forEach((c, i, a) => ig.addColorStop(i / (a.length - 1), hex(c)));
+      ring(g, W, H, b, ig);
+      const ig2 = g.createLinearGradient(W, 0, 0, H);
+      [...DIMS5].reverse().forEach((c, i, a) => ig2.addColorStop(i / (a.length - 1), rgba(c, 0.55)));
+      ring(g, W, H, b, ig2, 2.5 * s, -2 * s);
+      g.globalCompositeOperation = 'source-over';
+      // the open box: two flaps folded outward over the top corners, with their fold line
+      const fw = W * 0.22;
+      const fh = H * 0.11;
+      for (const left of [true, false]) {
+        const x0 = left ? 0 : W;
+        const dir = left ? 1 : -1;
+        g.beginPath();
+        g.moveTo(x0, 0);
+        g.lineTo(x0 + dir * fw, 0);
+        g.lineTo(x0, fh);
+        g.closePath();
+        g.fillStyle = '#C49A60';
+        g.fill();
+        g.setLineDash([3 * s, 2.5 * s]);
+        g.lineWidth = 1.4 * s;
+        g.strokeStyle = '#7a5a2e';
+        g.beginPath();
+        g.moveTo(x0 + dir * fw, 0);
+        g.lineTo(x0, fh);
+        g.stroke();
+        g.setLineDash([]);
+      }
+      // a strip of tape that held the box shut, torn open
+      g.save();
+      g.translate(W / 2, b * 0.5);
+      g.rotate(-0.04);
+      g.fillStyle = 'rgba(255,250,235,0.55)';
+      g.fillRect(-W * 0.14, -b * 0.55, W * 0.28, b * 1.1);
+      g.restore();
+      grain(g, W, H, 12);
+      strokeRect(g, 0, 0, W, H, 2.5 * s, '#171317');
+      strokeRect(g, win.x, win.y, win.w, win.h, 2 * s, '#171317');
+      g.fillStyle = ig;
       g.fillRect(pl.x, pl.y, pl.w, 3 * s);
       break;
     }

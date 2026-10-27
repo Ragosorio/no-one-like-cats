@@ -190,7 +190,8 @@ export class BattleTopBar extends Container {
     this.wind.anchor.set(0.5);
     this.wind.position.set(960, 40);
     this.windArrow.position.set(960, 72);
-    this.turn = txt('TURNO 1', { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink });
+    // a paper outline: readable over a daylight sky and over a night one (the Borracha's, QA-PORCION)
+    this.turn = txt('TURNO 1', { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink, stroke: { color: C.paper, width: 4, join: 'round' } });
     this.turn.anchor.set(0.5, 0);
     this.turn.position.set(960, 98);
     this.addChild(wbg, this.wind, this.windArrow, this.hullA, this.hullB, this.turn);

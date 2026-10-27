@@ -85,6 +85,19 @@ Reglas de un parche:
 4. El sistema dueño importa el módulo desde `state/index.ts` para que el parche quede registrado antes de cargar.
 5. Devuelve una frase corta en español (tono del juego) si el jugador debe enterarse; si no, nada.
 
+### Contenido de una parte nueva (módulos que solo agregan)
+
+Las partes nuevas no editan `content.json`: traen su contenido en módulos (`data/rupturas/*.json` en la Parte II,
+`data/gateras/*.json` en la Parte III) que `content.ts` une con `mergeContent`. La unión **solo agrega**: en desarrollo
+y en las pruebas truena si un módulo intenta sobrescribir un valor de la Parte I o repetir un `id`.
+
+Lo que una parte guarda en la partida va en una **sección opcional** de `G.s.ext` (por ejemplo `ext.momentos`,
+`ext.rupturas`, `ext.gateras`):
+
+- una partida que nunca tocó esa parte queda idéntica;
+- se normaliza en cada carga y la normalización solo repara (limita números, conserva claves desconocidas), nunca resta;
+- si la sección está rota, se aparta en otra clave (como `ext.gaterasBroken`) en vez de borrarse.
+
 ### Novedades
 
 ```ts
@@ -112,12 +125,32 @@ Etiquetas: `NUEVO`, `ARREGLO`, `CAMBIO`, `BALANCE`. Escribe para jugadores, no p
 El jugador las ve en **Ajustes › RESPALDOS**, donde también puede copiar su partida como texto y pegarla
 en otro navegador o en la app instalada.
 
+### El Baúl (`core/vault.ts`)
+
+Encima de esos respaldos:
+
+1. **Historial** en IndexedDB: una copia cada 10 minutos de juego, al ocultar la pestaña y **antes de cualquier cosa
+   que reemplace la partida** (pegar, restaurar, partida nueva). Guarda las 15 más nuevas y una por día durante 30 días,
+   cada una con un resumen (Reino, gatos, horas) para reconocer "la buena".
+2. **Una carpeta del jugador** (Chrome y Edge, File System Access): `NoOneLikeCats.nocat` y una copia diaria en
+   `respaldos/`. Son archivos reales: borrar los datos del navegador no los toca.
+3. **Archivos `.nocat`** para descargar y abrir en cualquier lado (JSON legible).
+4. `navigator.storage.persist()`, para que el navegador no desaloje el almacenamiento del juego.
+
+Y dos candados contra pisar progreso:
+
+- **Una sola pestaña escribe** a la vez (Web Locks, `ui/saveGuard.ts`). Las demás muestran un aviso y ofrecen recargar.
+- `G.save()` **nunca guarda una partida con menos tiempo de juego** que la que ya está en disco: una pestaña vieja o
+  una copia de otro dispositivo no puede borrar progreso. **No quites este candado.**
+
+Todo código nuevo que reemplace la partida llama antes a `snapshot(motivo)`.
+
 Si una pestaña vieja abre una partida escrita por una versión **más nueva**, juega pero **no guarda**
 (`G.newerSave`) y ofrece recargar. Así una versión vieja jamás pisa datos nuevos.
 
 ## Checklist antes de subir
 
-- [ ] `npm run build` pasa (typecheck incluido).
+- [ ] `npm run typecheck`, `npm test` y `npm run build` pasan.
 - [ ] Probé con una partida vieja: `?save=post-boss3` (fixtures en `game/test-saves/`) y con un juego nuevo.
 - [ ] Si cambié reglas que una partida ya usa → hay parche.
 - [ ] Si cambié la forma de datos guardados → hay migración y subí `SAVE_VERSION`.

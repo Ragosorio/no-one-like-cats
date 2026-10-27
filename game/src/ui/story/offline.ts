@@ -16,6 +16,7 @@ import { sparkles } from '../../fx/juice';
 import type { OfflineSummary } from '../../state/ext/story';
 import { clean, loadingTip, sysMsg, tone } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
+import { luzternaPortraitOk } from './ghost';
 import { destroyDeep, settle } from './tweens';
 import { screenRect } from '../screen';
 import { markToastAvoid } from '../toastAvoid';
@@ -168,6 +169,8 @@ export async function offlineReport(layer: Container, s: OfflineSummary, opts: {
 
     // Luzterna + buttons
     const lz = new LuzternaPortrait(250, 0.9);
+    // Parte III: after her death her face never shows by accident (ui/story/ghost.ts)
+    lz.visible = luzternaPortraitOk();
     lz.position.set(PW - 140, PH + 40);
     const say = txt(sysMsg('regreso_jugador', { oro: fmt(s.gold), v: s.glasses }), {
       fontFamily: F.ui,

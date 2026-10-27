@@ -102,13 +102,17 @@ export class TitleScene extends Scene {
     t1.position.set(70, 70);
     t2.position.set(70, 290);
     // a save already in the Parte II (Part I's «Fin», H30, behind it) no longer says «Capítulo 1» on the cover
+    // … and one already in the Parte III (H65 done: the page is cold, Canelo went to the bar) says so
     let partII = false;
+    let partIII = false;
     try {
-      partII = !!readSave<{ missions?: { done?: string[] } }>()?.state?.missions?.done?.includes('H30');
+      const m = readSave<{ missions?: { done?: string[]; active?: string[] } }>()?.state?.missions;
+      partII = !!m?.done?.includes('H30');
+      partIII = !!m?.done?.includes('H65');
     } catch {
-      partII = false;
+      partII = partIII = false;
     }
-    const meta = txt(partII ? 'PARTE II — LA MAREA IMPOSIBLE' : 'CAPÍTULO 1 — EL PRIMER MAR', { fontFamily: F.ui, fontWeight: '700', fontSize: 26, fill: C.pinkHot });
+    const meta = txt(partIII ? 'PARTE III — FUERA DE LA CAJA' : partII ? 'PARTE II — LA MAREA IMPOSIBLE' : 'CAPÍTULO 1 — EL PRIMER MAR', { fontFamily: F.ui, fontWeight: '700', fontSize: 26, fill: C.pinkHot });
     meta.position.set(78, 50);
     const tag = txt('CUTE CATS.\nTERRIBLE CONSEQUENCES.', { fontFamily: F.poster, fontSize: 52, fill: C.ink, lineHeight: 56 });
     tag.position.set(78, 640);

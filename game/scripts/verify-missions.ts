@@ -62,7 +62,7 @@ for (const file of walk(SRC)) {
   for (const m of code.matchAll(/flags\[\s*(['"`])((?:(?!\1).)*)\1\s*\]\s*=/g)) flags.push({ re: toRe(m[2]), src: m[2], where });
 }
 // dynamic flag sources: mission unlocks + boss unlocks are flagged verbatim (missions.ts complete / campaign bossRewards)
-for (const m of content.missions) for (const u of m.unlocks ?? []) if (!/^[HCKE]\d\d$/.test(u)) flags.push({ re: toRe(u), src: u, where: `missions ${m.id}.unlocks` });
+for (const m of content.missions) for (const u of m.unlocks ?? []) if (!/^[HCKE]\d{2,3}$/.test(u)) flags.push({ re: toRe(u), src: u, where: `missions ${m.id}.unlocks` });
 for (const b of balance.bosses ?? []) for (const u of b.unlocks ?? []) flags.push({ re: toRe(u), src: u, where: `balance boss ${b.name}` });
 
 const emitted = (list: Emit[], key: string) => list.filter((e) => e.re.test(key));
@@ -128,7 +128,7 @@ const pad = (s: string, n: number) => (s + ' '.repeat(n)).slice(0, n);
 console.log(`\nMISIONES ${ALL ? '(todas)' : 'hasta H13 · C22 · K23 · E17'} — ${rows.length} revisadas\n`);
 for (const r of rows) {
   const mark = r.status === 'OK' ? '✔' : r.status === 'DORMIDA' ? '…' : '✖';
-  console.log(`${mark} ${pad(r.id, 4)} ${pad(r.status, 14)} ${pad(r.goal, 22)} ${r.notes.filter((x) => !x.includes('←')).join(' · ')}`);
+  console.log(`${mark} ${pad(r.id, 5)} ${pad(r.status, 14)} ${pad(r.goal, 22)} ${r.notes.filter((x) => !x.includes('←')).join(' · ')}`);
 }
 const bad = rows.filter((r) => r.status === 'FALTA' || r.status === 'SIN EVALUADOR');
 console.log(`\nResumen: ${rows.length - bad.length} OK/dormidas · ${bad.length} con faltantes · ${unsupported} sin evaluador`);

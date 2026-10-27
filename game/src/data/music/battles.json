@@ -260,6 +260,51 @@
       ],
       "victory": { "track": "hemkade.battle", "section": "outro", "quantize": "bar", "narrative": true, "unlock": { "song": "amb.hilos", "source": "El Umbral", "delaySec": 6 } }
     },
+    "p3d_borracha_1": {
+      "$doc": "Parte III · La Borracha B-1 «Hipo-Mart» — el loop de batalla de Drunck (variación de D: drunck.battle, su propio material). Si la pista faltara, sigue la música que había (nunca falla).",
+      "extends": "fiesta",
+      "track": "drunck.battle", "startSection": "verse"
+    },
+    "p3d_borracha_2": {
+      "$doc": "Parte III · La Borracha B-2 «La Donería» — el loop de batalla de Drunck (variación de D: drunck.battle, su propio material). Si la pista faltara, sigue la música que había (nunca falla).",
+      "extends": "fiesta",
+      "track": "drunck.battle", "startSection": "verse"
+    },
+    "p3d_borracha_3": {
+      "$doc": "Parte III · La Borracha B-3 «Callejón de las botellas» — el loop de batalla de Drunck (variación de D: drunck.battle, su propio material). Si la pista faltara, sigue la música que había (nunca falla).",
+      "extends": "fiesta",
+      "track": "drunck.battle", "startSection": "verse"
+    },
+    "p3d_borracha_4": {
+      "$doc": "Parte III · La Borracha B-4 «Karaoke» — el loop de batalla de Drunck (variación de D: drunck.battle, su propio material). Si la pista faltara, sigue la música que había (nunca falla).",
+      "extends": "fiesta",
+      "track": "drunck.battle", "startSection": "verse"
+    },
+    "p3d_borracha_5": {
+      "$doc": "Parte III · La Borracha B-5 «Oficial Dona (élite)» — el loop de batalla de Drunck (variación de D: drunck.battle, su propio material). Si la pista faltara, sigue la música que había (nunca falla).",
+      "extends": "fiesta",
+      "track": "drunck.battle", "startSection": "drop"
+    },
+    "p3d_borracha_6": {
+      "$doc": "Parte III · La Borracha B-6 «Planta embotelladora» — el loop de batalla de Drunck (MECÁNICAS-IMPL; MÚSICA puede darle su propio plan). Si la pista faltara, sigue la música que había (nunca falla).",
+      "extends": "fiesta",
+      "track": "drunck.battle", "startSection": "verse"
+    },
+    "p3d_borracha_7": {
+      "$doc": "Parte III · La Borracha B-7 «El parque de la resaca» — el loop de batalla de Drunck (MECÁNICAS-IMPL; MÚSICA puede darle su propio plan). Si la pista faltara, sigue la música que había (nunca falla).",
+      "extends": "fiesta",
+      "track": "drunck.battle", "startSection": "verse"
+    },
+    "p3d_borracha_8": {
+      "$doc": "Parte III · La Borracha B-8 «La fila del baño» — el loop de batalla de Drunck (MECÁNICAS-IMPL; MÚSICA puede darle su propio plan). Si la pista faltara, sigue la música que había (nunca falla).",
+      "extends": "fiesta",
+      "track": "drunck.battle", "startSection": "verse"
+    },
+    "p3d_borracha_9": {
+      "$doc": "Parte III · La Borracha B-9 «El Cadenero (jefe)» — el loop de batalla de Drunck (MECÁNICAS-IMPL; MÚSICA puede darle su propio plan). Si la pista faltara, sigue la música que había (nunca falla).",
+      "extends": "fiesta",
+      "track": "drunck.battle", "startSection": "drop"
+    },
     "ruptura_leviatan": {
       "$doc": "H57 El Leviatán Invertido — Hemkade «Capas del cielo» (remix) por fases: mar = drop en loop; cielo = climax (el arpegio una octava arriba); grieta astral = breakdown (la melodía sola) → build_2 → climax otra vez; liberación (al ganar) = el remate (outro), narrativo. Las fases llegan por la señal del mecanismo FASES (battle/fases.ts onFase → 'fase:<id>'). Desbloquea el remix. (MOMENTO: hemkade en el cambio de capa, oleada3Flow.ts.)",
       "extends": "epico",

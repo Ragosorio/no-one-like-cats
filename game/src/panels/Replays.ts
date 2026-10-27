@@ -13,6 +13,8 @@ import { G } from '../state/game';
 import { ScrollBox } from './collection/ui';
 // MOMENTOS MUSICALES already completed (src/momentos): replays can be left from their pause menu
 import { seenMomentos } from '../momentos/registry';
+import { seenFilms, replayFilm } from '../app/stageIntro';
+import { asMemory } from '../ui/story/ghost';
 import '../momentos/songs';
 
 export function openReplays() {
@@ -21,6 +23,8 @@ export function openReplays() {
     { id: '__prologo', title: 'Prólogo' },
     ...seenScenes(),
     ...seenMomentos(G.s as unknown as { ext?: Record<string, unknown> }).map((x) => ({ id: `momento:${x.id}`, title: `♪ ${x.title}` })),
+    // Parte III: the films already watched (app/stageIntro.ts › seenFilms: `film:<id>` in ext.gateras.seen)
+    ...seenFilms().map((x) => ({ id: x.id, title: `▶ ${x.title}` })),
   ];
   const rows = Math.max(1, list.length);
   const ROW = 78;
@@ -64,11 +68,15 @@ export function openReplays() {
       if (box.wasDrag) return;
       sfx('click');
       m.close();
-      if (e.id === '__prologo') void import('../app/story').then((st) => st.replayPrologue());
-      // the finale's Momento replays through the finale (its story lines, nothing persisted: app/o4Finale.ts)
-      else if (e.id === 'momento:yonose_todo') void import('../app/o4Finale').then((f) => f.playFinale({ replay: true, from: 'mentira' }));
-      else if (e.id.startsWith('momento:')) void import('../momentos').then((mo) => mo.playMomento(e.id.slice(8), { replay: true }));
-      else void replayScene(e.id);
+      // «Volver a ver» is the one place she may still be seen after her death: a memory (ui/story/ghost.ts)
+      void asMemory(async () => {
+        if (e.id === '__prologo') await import('../app/story').then((st) => st.replayPrologue());
+        // the finale's Momento replays through the finale (its story lines, nothing persisted: app/o4Finale.ts)
+        else if (e.id === 'momento:yonose_todo') await import('../app/o4Finale').then((f) => f.playFinale({ replay: true, from: 'mentira' }));
+        else if (e.id.startsWith('momento:')) await import('../momentos').then((mo) => mo.playMomento(e.id.slice(8), { replay: true }));
+        else if (e.id.startsWith('film:')) await replayFilm(e.id.slice(5));
+        else await replayScene(e.id);
+      });
     });
     box.content.addChild(row);
   });

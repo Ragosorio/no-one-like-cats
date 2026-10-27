@@ -19,7 +19,9 @@ export type ShipStyleId =
   | 'library' // Biblioteca Hundida (zone 4)
   | 'bone' // La Marea Sin Nombre (zone 6)
   | 'noctis' // Bandera Negra (event)
-  | 'void'; // ??? (nave de NADIE)
+  | 'void' // ??? (nave de NADIE)
+  // Parte III · the boxes
+  | 'borracha'; // La Borracha (a 90s TV cartoon: beer amber, donut pink, bottle green, night blue — never yellow skin)
 
 export type EmblemKind = 'catSkull' | 'ratSkull' | 'crescent' | 'paw' | 'duck' | 'tower' | 'kraken' | 'book' | 'fishbone' | 'mask' | 'question';
 export type HullPattern = 'planks' | 'panels' | 'logs' | 'varnish' | 'stone' | 'rubber' | 'bookshelf' | 'ribs' | 'lacquer' | 'coral' | 'static';
@@ -458,6 +460,32 @@ export const STYLES: Record<ShipStyleId, ShipStyle> = {
     crystal: { base: 0xff2e88, shadow: 0x8a0f48, light: 0xffb3d6 },
     rust: false,
     feat: F({ pattern: 'static', rail: 'none', portholes: 'none', anchor: false, lifeRing: false, scroll: false, waterStripe: false, bowsprit: false, extras: ['glitch'], debris: 'glitch', noInterior: true, outlineGlow: 0xff2e88 }),
+  },
+  /** Parte III · La Borracha: a bar on a hull — night-blue paint, beer-amber trim and windows, donut-pink sails, bottle-green glass. */
+  borracha: {
+    ...pirate,
+    id: 'borracha',
+    ink: 0x14121c,
+    hull: { base: 0x2a3d6e, shadow: 0x1b2a4a, deep: 0x101a30, light: 0x4a62a0, plank: 0x16223e },
+    bottom: 0x2e7d4f,
+    stripe: 0xe8a33d,
+    trim: { base: 0xe8a33d, shadow: 0xa86d1e, light: 0xffd38a },
+    accent: { base: 0xf59ac0, shadow: 0xc0628a, light: 0xffd0e2 },
+    metal: { base: 0x3a3f52, shadow: 0x22252f, light: 0x6b7290 },
+    wood: { base: 0x8a5a32, shadow: 0x5a3a1e, light: 0xb57c4a },
+    interior: { base: 0x120e18, rib: 0x2a2236, shade: 0x08060c },
+    cabin: { wall: 0xe8a33d, wallShadow: 0xa86d1e, roof: 0xf59ac0, roofShadow: 0xc0628a, door: 0x1b2a4a },
+    window: { glass: 0x2a1c10, glow: 0xffc06a },
+    sail: { base: 0xf59ac0, shadow: 0xc0628a, light: 0xffd0e2, stitch: 0x8a3a5e, emblem: 0x1b2a4a, emblemShade: 0x101a30, ragged: false, patches: true },
+    flag: { base: 0x2e7d4f, shadow: 0x1d5233, emblem: 0xffd38a },
+    emblem: 'paw',
+    core: { base: 0xe8a33d, light: 0xffe0a8, glow: 0xffb84a },
+    muzzle: 0xffb84a,
+    crystal: { base: 0x3fa86a, shadow: 0x2e7d4f, light: 0xb8f0cc },
+    neon: [0xf59ac0, 0xe8a33d],
+    grime: 0.3,
+    rust: false,
+    feat: F({ pattern: 'varnish', portholes: 'glow', sailDeco: 'sock', gloss: 0.35, debris: 'wood' }),
   },
 };
 

@@ -1,0 +1,90 @@
+# A · CIMIENTOS-HISTORIA — porción vertical de la Parte III
+
+- **Qué estoy haciendo**: terminado. Puntos 1 a 10 entregados (los pendientes, abajo).
+- **Hecho**:
+  - **A1 LISTO (seguridad de la Parte II).**
+    - `state/sys/rupturasLedger.ts`: `PART2_LAST = 65`; `isPart2Mission` solo H31–H65; nuevo `isAfterPart2Mission` (H66+).
+    - `state/sys/rupturasReset.ts`: `isPart2Beat` solo b31–b65 (b66+ nunca, aunque esté en una tabla). Guarda nueva: `applyRupturasReset()` devuelve `'parte3'` y no toca nada si la partida tiene H66+ hecha o activa.
+    - `tests/rupturasReset.test.ts` (8): la fixture `rupturas-raro` traía H77/H99/b77 como «basura»; ahora son ids de la Parte III. La prueba (8) corre con esos ids quitados y la nueva (8b) comprueba que la partida con H77 queda intacta.
+    - `tests/gaterasCimientos.test.ts`: rangos, registro de premios, plan y guarda con una partida con H66–H68.
+  - **A3 LISTO (hablantes).** En `ui/story/text.ts`:
+    - `CANELO` (`kind: 'cat'`, banda naranja). La placa usa el nombre que le puso el jugador y el retrato, la pintura de su forma activa (`setSpeakerHook`, instalado en `app/story.ts` → `caneloSpeaker`, con `catSlug()`).
+    - `HIPÓLITO` → `hipolito_tavern_cat` y `DOÑA ESPUMA` → `espuma_bartender_cat` (`kind: 'cat'`): arte candidato, pendiente de aprobación del dueño (aviso del coordinador).
+    - `OYENTE` (`kind: 'oyente'` nuevo): sin placa ni retrato.
+    - `BITÁCORA` (`kind: 'system'`, sin retrato).
+  - En `ui/dialog.ts`:
+    - OYENTE se dibuja como globo blanco redondo a la derecha, con la cola saliendo por el borde derecho, y cambia de tipografía en cada línea (`nextOyenteStyle()`, `OYENTE_FONTS` y `OYENTE_BALLOON` exportados, por si C los quiere en el Momento).
+    - BITÁCORA se ve como hoja de cuaderno (renglones azules, margen rojo y letra a mano azul).
+    - `tip()` ya no pone «LUZTERNA» a un hablante sin nombre.
+  - `personalize()` (en `app/story.ts`) aplica «grumete → Capi» también a BITÁCORA.
+  - **Datos** `data/gateras/historia.json` (fusionado en `data/content.ts`; `MissionDef.card` y el tipo `MissionCard` nuevos): H66–H69 con `card` (`pasa`, `importa`, `queremos`, `ahi`, `cambio`, `kicker` opcional) y `why` sin premios. Beats `b66_bar` (28 líneas), `b67_salida` (25), `b67_despierta` (3), `b68_carta` (6) y `b69_manana` (5).
+  - **Hablante extra** `OFICIAL DONA` (B-5) con retrato STAND_IN `fanguito_mud_cat` hasta que B fije la especie del capitán.
+  - **`ui/story/gaterasScript.ts`**: `P3_ON_NEW`, `P3_ON_DONE`, `P3_COVERED`, `P3_WHEN` y los índices de líneas para C y B (`BAR_LINES` + `barSceneB(choice)`, `SALIDA_LINES`, `DESPIERTA_LINES`, `CARTA_LINES`, `CARTA_INTRO_KEY`, `MANANA_LINES`). Las tarjetas son refs `special: 'card'` con claves `p3_tarjeta_<id>` y `p3_cambio_<id>`.
+  - **`app/story.ts`**:
+    - fusiona las tablas;
+    - `where()` reconoce `'cajas'` cuando la escena tiene `storyStage === 'cajas'`;
+    - campo `after` (un ref no está listo hasta que se vea otra clave);
+    - las misiones con `card` no usan el panel MISIÓN COMPLETA: su panel es CAMBIÓ, con el premio chico abajo;
+    - «La última vez…» al volver después de 8 h o más.
+  - **`panels/Bitacora.ts`**: `showMissionCard`, `showP3Card(id, phase)` (para C), `missionCardBlock` (MISIONES), `openBitacora()` y `playUltimaVez()`.
+  - **`panels/Missions.ts`**: las misiones de la Parte III muestran la tarjeta en vez de «— Luzterna».
+  - **`state/sys/gaterasWorld.ts`**:
+    - estados `p3_marca_fria` (130) y `p3_rasgadura` (131);
+    - `registro000Estado()` y `withRegistroEstado()`;
+    - `paginaTibia()` y `paginaLlama()`;
+    - `luzternaFallecida()` (H93) y `voiceFor()`, que es solo la base: todavía no se apaga nada;
+    - `bitacoraEntries()`, `ultimaVez()` y `ultimaVezDue()`.
+  - **`ui/story/o4Pagina.ts`**:
+    - vapor de la marca tibia y `coolDown()`;
+    - la gatera al pie del faro, rasgada después del despertar;
+    - `hairToGatera()`;
+    - la dona en la palmera de la balsa;
+    - targets de cine `pagina`, `gatera` y `palmera`;
+    - `setPaginaP3Tap` y `setGateraTap` (este es para B).
+  - **`ui/story/gaterasCines.ts`**:
+    - cines `p3_fria`, `p3_pelo` y `p3_despierta` (esta con Volver a ver);
+    - `enterH66()`: tocar la página → pelo → negro → `playBarPrologue()` de C (import opcional con glob).
+  - **REGISTRO 000**: el Catdex y las 4 islas 3D dicen DESPERTANDO después de H65 y DESPIERTO después del despertar.
+  - **Fixture** `test-saves/h65-normal.json`, generada con `scripts/make-h65-fixture.ts` (`npx vite-node`):
+    - parte de `rupturas-o4` y juega la Oleada 4 con el código real;
+    - isla normal: 17.0 M/s, 123 B de oro (~2 h), Reino 44, 46 especies y 13 hábitats (11 tier 8), puestos con `buildHabitat`/`upgradeHabitat`;
+    - al cargar, el juego activa H66 solo.
+  - **Robustez** (`ui/dialog.ts`): un retrato o rig roto ya no congela un diálogo; la línea sale sin cara.
+  - **IR de H66** (`scenes/IslandScene.ts`, una línea): lleva la cámara al faro, igual que H31.
+  - **Pruebas de la Parte II ajustadas** (cambian porque ya existe H66):
+    - `tests/rupturasReset.test.ts` (8) y (8b);
+    - `tests/rupturasO4.test.ts`: después de H65 el mundo es `p3_marca_fria`, y el reinicio a mano quita H66 de `active` antes.
+  - **Verificación**:
+    - `tests/gaterasCimientos.test.ts`: 21 pruebas, entre ellas la de partida veterana de la Parte II y de la Parte I sin cambios;
+    - `verify-missions --all`: 166 OK;
+    - suite completa: 613/614. Falla solo `artBase` (shards), del agente de arte, que está a medias.
+  - **Capturas** (fuera del repo, `<scratch>/a-cimientos/out/`):
+    - la marca tibia que se enfría y la tarjeta de H66;
+    - el pelo que va a la gatera, el negro y el bar de C;
+    - `p3_despierta` completa;
+    - CANELO, OYENTE, HIPÓLITO y BITÁCORA;
+    - MISIONES con la tarjeta, la Bitácora, «La última vez…», la tarjeta CAMBIÓ y el Catdex con DESPIERTO.
+- **Falta / pendiente**:
+  1. **Arte**: `espuma_bartender_cat` en `data/catRigs.json` no trae `floats` (su `PuppetModel` revienta en `rig.floats.forEach`). El diálogo ya no se congela, pero Doña Espuma sale sin retrato hasta que se arregle el rig (archivo del agente de arte).
+  2. **Arte**: el retrato de OFICIAL DONA es STAND_IN (`fanguito_mud_cat`) hasta que B fije la especie del capitán.
+  3. **Visual**: la cámara de la isla no acerca más de ~1.0, así que las tomas cerradas de la gatera y de la dona se ven de lejos. La dona en la palmera de la balsa queda medio tapada por el globo y el cubo brillante de esta isla.
+  4. La Bitácora mínima no trae «El hilo» ni las fichas de personajes (03 §4.2 y §4.4): no eran de esta porción.
+  5. `voiceFor()` es solo la base: ninguna superficie lo consulta todavía.
+- **Decisiones**:
+  - REGISTRO 000 dice DESPIERTO desde la escena del despertar (`b67_despierta`) o con H68+ hecha. No lo dice desde que aparece H66, para no adelantar la escena D3.
+  - Después de H65 dice «despertando» en el Catdex **y** en las 4 islas 3D (arregla c-11).
+  - `p3_marca_fria` dura de H66 a H68, mientras no se vea el despertar.
+  - Una tarjeta «nueva» de una misión que ya está hecha se salta.
+- **Para C**:
+  - Entre el remate y la calle, llama `await showP3Card('H66','done')` y `await showP3Card('H67','new')` (`panels/Bitacora.ts`). Si no las llamas, la tarjeta de H67 se salta (ya estaría hecha) y CAMBIÓ de H66 sale al volver a la isla, después del despertar.
+  - `tsc`: `momentos/songs/drunck/scenes.ts:178` usa `.destroyed` en un filtro.
+- **Para B**:
+  - `setGateraTap(fn)` sirve para entrar a la Carta desde la gatera del faro.
+  - Un botón para `openBitacora()` en la Carta.
+  - Las líneas M2–M6 están en `CARTA_LINES`.
+  - `b69_manana` b/c salen solas en la Carta: cuando se gana B-2 y cuando se gana B-4.
+- **Cómo retomar**:
+  - `cd game && npx vitest run tests/gaterasCimientos.test.ts tests/rupturasReset.test.ts tests/rupturasO4.test.ts`.
+  - Fixture: `npx vite-node scripts/make-h65-fixture.ts`.
+  - Capturas: `<scratch>/a-cimientos/shot.mjs` + `s*.json`, con Vite en 5601 (`vite.a.config.ts`).
+- **Última actualización**: 2026-10-13 ~11:40

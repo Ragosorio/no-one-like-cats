@@ -1,0 +1,81 @@
+name: Idea
+description: Una mecánica, un elemento, una zona, un cambio grande o chiquito. No necesitas programar.
+title: "[Idea] "
+labels: ["idea", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¡Gracias por pensar en el juego! Cuéntala como se la contarías a un amigo: no tiene que estar completa.
+
+        Antes de escribir, échale un ojo a los valores del proyecto en [CONTRIBUTING.md](https://github.com/Ragosorio/no-one-like-cats/blob/main/CONTRIBUTING.md). **Sin spoilers en el título**: si tu idea toca la historia, cuéntala aquí abajo.
+
+  - type: input
+    id: resumen
+    attributes:
+      label: La idea en una frase
+      placeholder: "Un elemento Cocina: los gatos lanzan sartenes que dejan a los barcos «empanizados»."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: ¿Qué parte del juego toca?
+      multiple: true
+      options:
+        - Gatos
+        - Elementos
+        - Combate y barcos
+        - Isla, hábitats y economía
+        - Historia, misiones y diálogos
+        - Cines y escenas
+        - Momentos musicales y música
+        - Arte y estilo
+        - Interfaz
+        - Rendimiento o teléfonos
+        - Otra cosa
+    validations:
+      required: true
+
+  - type: textarea
+    id: por-que
+    attributes:
+      label: Por qué haría el juego más divertido
+      description: ¿Qué momento nuevo vive el jugador? ¿Qué decisión interesante le da? ¿Qué animación le sacaría una sonrisa?
+    validations:
+      required: true
+
+  - type: textarea
+    id: como
+    attributes:
+      label: Cómo funcionaría
+      description: Lo que sepas. Reglas, números, cómo se ve, de dónde sale, cuándo aparece.
+
+  - type: checkboxes
+    id: valores
+    attributes:
+      label: Los valores del juego
+      description: Si alguna no se cumple, cuéntanos abajo por qué y lo platicamos.
+      options:
+        - label: "Gratis: no pide dinero, ni anuncios, ni compras."
+        - label: "Sin energía ni relojes que presionan («espera o sigue jugando»)."
+        - label: "Si hay azar, las probabilidades se pueden mostrar completas."
+        - label: "Se puede hacer con SVG o dibujado en código (sin imágenes raster)."
+        - label: "No le quita nada a las partidas que ya existen."
+
+  - type: textarea
+    id: referencias
+    attributes:
+      label: Referencias (opcional)
+      description: Juegos, películas, anime, cómics o canciones que te inspiraron. Puedes arrastrar imágenes aquí; en el issue están bien.
+
+  - type: dropdown
+    id: quien
+    attributes:
+      label: ¿Te gustaría hacerla tú?
+      description: Las guías están en docs/guias/ y el mapa de la documentación en docs/INDICE.md.
+      options:
+        - Sí, me animo a mandar un PR
+        - Puedo ayudar con una parte (arte, texto, música, pruebas)
+        - Prefiero que la tome alguien más

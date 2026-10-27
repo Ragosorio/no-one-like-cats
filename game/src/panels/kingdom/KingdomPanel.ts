@@ -6,6 +6,7 @@
  *  · automation cards: ACTIVA (what it does + where it lives), SIGUIENTE (progress), locked (Reino N)
  * Pure reads: G.s.kl / klXp + content.kingdomMilestones + content.automation.
  */
+import { luzternaFallecida } from '../../state/sys/gaterasWorld';
 import { Container, FederatedPointerEvent, Graphics, Text, TilingSprite } from 'pixi.js';
 import gsap from 'gsap';
 import { Modal } from '../../ui/modal';
@@ -209,7 +210,7 @@ class KingdomView {
       t.position.set(x0, 116 + i * 30);
       c.addChild(t);
     });
-    const q = txt(`«${QUIPS[(kl * 7 + G.s.missions.done.length) % QUIPS.length]}» — Luzterna`, { fontFamily: F.serif, fontStyle: 'italic', fontSize: 19, fill: C.inkBlue, wordWrap: true, wordWrapWidth: 560 });
+    const q = txt(`«${QUIPS[(kl * 7 + G.s.missions.done.length) % QUIPS.length]}» ${luzternaFallecida() ? '— L.' : '— Luzterna'}`, { fontFamily: F.serif, fontStyle: 'italic', fontSize: 19, fill: C.inkBlue, wordWrap: true, wordWrapWidth: 560 });
     q.position.set(x0, 116 + lines.length * 30 + 12);
     c.addChild(q);
   }

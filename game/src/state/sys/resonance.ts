@@ -7,9 +7,10 @@ import { CATS, CONTENT, catDef, CatDef } from '../../data/content';
 import { BAL, RarityId, duplicateOrbs } from '../econ';
 import { adopt, cat as getCat, collState, MUTATIONS, MutationDef, rollTrait } from './cats';
 import { Rng } from '../../core/rng';
+import { poolableCat } from './multidim';
 
 // heroic / divine parents count like a mythic (their own rank never makes a resonance juicier)
-const RANK: Record<RarityId, number> = { common: 0, rare: 1, epic: 2, legendary: 3, mythic: 4, heroic: 4, divine: 4 };
+const RANK: Record<RarityId, number> = { common: 0, rare: 1, epic: 2, legendary: 3, multidimensional: 3, mythic: 4, heroic: 4, divine: 4 };
 type Bucket = 'common' | 'rare' | 'epic' | 'legendary' | 'secret';
 
 export interface OddsRow {
@@ -48,7 +49,8 @@ export function oddsFor(aUid: string, bUid: string): OddsTable {
   const pool: Record<Bucket, string[]> = { common: [], rare: [], epic: [], legendary: [], secret: [] };
   const missing: string[] = [];
   for (const c of CATS) {
-    if (c.secret || c.rarity === 'mythic' || c.rarity === 'heroic' || c.rarity === 'divine' || storyLocked(c)) continue;
+    // Parte III: a Multidimensional or any cat of the boxes never resonates, not even as a duplicate (multidim.ts poolableCat)
+    if (c.secret || c.rarity === 'mythic' || c.rarity === 'heroic' || c.rarity === 'divine' || !poolableCat(c) || storyLocked(c)) continue;
     if (!subset(c.elements, U)) {
       continue;
     }
@@ -69,7 +71,7 @@ export function oddsFor(aUid: string, bUid: string): OddsTable {
       if (secretConditionMet(c, a.species, b.species, a.level, b.level, a.stars, b.stars, U)) pool.secret.push(c.id);
       continue;
     }
-    if ((c.rarity === 'epic' || (c.rarity === 'legendary' && c.primordial)) && !storyLocked(c) && subset(c.elements, disc) && subset(c.elements, U)) {
+    if ((c.rarity === 'epic' || (c.rarity === 'legendary' && c.primordial)) && poolableCat(c) && !storyLocked(c) && subset(c.elements, disc) && subset(c.elements, U)) {
       if (!pool.epic.includes(c.id) && !pool.legendary.includes(c.id)) pool.secret.push(c.id);
     }
   }

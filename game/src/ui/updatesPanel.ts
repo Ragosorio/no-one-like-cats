@@ -2,6 +2,7 @@
  * NOVEDADES panel: the update notes a save hasn't seen yet + what the retro patches did to THIS save.
  * Opened once after loading an old save (app/story.ts › maybeIntro) and any time from Ajustes.
  */
+import { dueloMuted, luzternaAllowed } from './story/ghost';
 import { Container, Graphics } from 'pixi.js';
 import { Modal } from './modal';
 import { Button, txt, poster } from './widgets';
@@ -24,6 +25,8 @@ export function markUpdatesSeen() {
 
 /** something to tell this save? (unseen notes, or patches that touched it this session) */
 export function hasNews() {
+  // the mourning (SADIE → «Continuará»): 0 NOVEDADES (a recovered save still says so: that's the player's island)
+  if (dueloMuted() && !G.loadInfo.recovered) return false;
   return unseenUpdates().length > 0 || patchNotes.length > 0 || G.loadInfo.recovered;
 }
 
@@ -66,10 +69,12 @@ export function openUpdates(all = false): Promise<void> {
     date.alpha = 0.6;
     date.position.set(head.width + 18, 16);
     sec.addChild(head, date);
-    const lz = txt(`LUZTERNA: ${n.luzterna}`, { fontFamily: F.serif, fontStyle: 'italic', fontSize: 20, fill: C.ink, wordWrap: true, wordWrapWidth: W2 - 40 });
+    // Parte III: after her death the notes have no voice of hers (ui/story/ghost.ts); the changes stay
+    const lz = txt(luzternaAllowed() ? `LUZTERNA: ${n.luzterna}` : '', { fontFamily: F.serif, fontStyle: 'italic', fontSize: 20, fill: C.ink, wordWrap: true, wordWrapWidth: W2 - 40 });
     lz.position.set(0, head.height + 4);
+    lz.visible = luzternaAllowed();
     sec.addChild(lz);
-    let yy = lz.y + lz.height + 14;
+    let yy = lz.visible ? lz.y + lz.height + 14 : head.height + 14;
     for (const it of n.items) {
       const tag = new Container();
       const tt = txt(it.tag, { fontFamily: F.poster, fontSize: 18, fill: C.ink, letterSpacing: 1 });

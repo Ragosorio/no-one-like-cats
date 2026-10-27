@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Platicar una idea o preguntar
+    url: https://github.com/Ragosorio/no-one-like-cats/discussions
+    about: Ideas a medio cocinar, preguntas y conversaciones. Ahí se platica antes de abrir un issue.
+  - name: Cómo colaborar
+    url: https://github.com/Ragosorio/no-one-like-cats/blob/main/CONTRIBUTING.md
+    about: Valores, tono, reglas de oro y por dónde empezar según tu perfil.
+  - name: Índice de la documentación
+    url: https://github.com/Ragosorio/no-one-like-cats/blob/main/docs/INDICE.md
+    about: Guías, estilos de arte, repositorios y el diseño de cada parte.
+  - name: Jugar NO ONE LIKE CATS
+    url: https://ragosorio.github.io/no-one-like-cats/
+    about: La versión publicada, para revisar si tu bug sigue ahí.

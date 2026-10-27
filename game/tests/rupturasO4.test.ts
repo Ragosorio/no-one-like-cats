@@ -519,15 +519,18 @@ describe('Oleada 4 — the whole wave', () => {
     for (const sp of ['c_almohadon', 'c_polvillo', 'r_tachon', 'l_bisagra']) expect(G.s.cats.some((c) => c.species === sp), sp).toBe(true);
     expect(rewardClaimed('cat:mission_H60')).toBe(true);
     expect(G.s.gems).toBeGreaterThan(gems0);
-    // the world after the Parte II, and the page that stays by your faro
-    expect(world()).toBe('o4_epilogo');
+    // the world after the Parte II, and the page that stays by your faro. Parte III (docs/part-iii/11) starts right
+    // after: H66 appears and its world state (p3_marca_fria, band 130+) takes over; without it, the epilogue
+    const p2World = () => W.currentWorldState({ ...G.s, missions: { ...G.s.missions, active: G.s.missions.active.filter((m) => !/^H(6[6-9]|[7-9]\d)$/.test(m)) } }).id;
+    expect(p2World()).toBe('o4_epilogo');
+    expect(world()).toBe(active('H66') ? 'p3_marca_fria' : 'o4_epilogo');
     expect(PAGE.pageModeFor(G.s)).toBe('rest');
     // it all survives a reload
     G.save();
     G.load();
     checkMissions();
     expect(IDS.every(done)).toBe(true);
-    expect(world()).toBe('o4_epilogo');
+    expect(p2World()).toBe('o4_epilogo');
   });
 
   it('the world follows the story (derived): a state per mission, the faro invites only after the page came down', () => {
@@ -582,9 +585,11 @@ describe('Oleada 4 — the whole wave', () => {
     const counts = (sp: string) => G.s.cats.filter((c) => c.species === sp).length;
     const polvillo = counts('c_polvillo');
     for (const k of ['battle:umbral_suenos', 'battle:umbral_correctores', 'battle:umbral_final', 'cat:umbral_suenos', 'cat:mission_H60']) expect(rewardClaimed(k), k).toBe(true);
-    // the narrative reset of a save that played ALL of Parte II (the patch is forever; here it runs again by hand)
+    // the narrative reset of a save that played ALL of Parte II (the patch is forever; here it runs again by hand).
+    // From before Parte III: a save with H66+ is never reset (tests/gaterasCimientos.test.ts)
     delete (G.s.ext!.rupturas as Record<string, unknown>).reset;
     G.s.patches = G.s.patches.filter((p) => p !== RESET_PATCH_ID);
+    G.s.missions.active = G.s.missions.active.filter((m) => !/^H(6[6-9]|[7-9]\d)$/.test(m));
     expect(applyRupturasReset({ backup: false })).toBe('reiniciado');
     expect(G.s.missions.done.filter((m) => /^H(3[1-9]|[4-6]\d)$/.test(m))).toEqual([]);
     expect(G.has('oleada4_fin') || G.has('region:umbral') || G.has('won_umbral_final')).toBe(false);

@@ -57,6 +57,13 @@ export interface RunOpts {
   beforeCut?: () => void;
   /** dev trace */
   onReady?: (r: MomentoRun) => void;
+  /**
+   * (FILM-ACTO3, optional) a SEGUE: from song time `at` the music goes on in another track `ref` (from its position
+   * `from`) — e.g. No wey → its bridge into DISTOR. The clock never notices: the driver reports the segue deck's
+   * position mapped back onto the song (at + p − from) and cues it for any song time ≥ at. Needs |at − from| larger
+   * than the segue's own length (a heard position is told apart by which anchor it is nearer). Absent = unchanged.
+   */
+  segue?: { ref: string; at: number; from: number };
 }
 
 export interface SyncSample {
@@ -111,11 +118,22 @@ export class MomentoRun {
     if (this.score.warnings.length) console.warn(`[momento] ${def.id}:`, this.score.warnings);
     this.core = new MomentoCore(this.score, o.autoplay ?? 'none');
     this.quality = o.quality ?? 'high';
+    const sg = o.segue;
     const driver: AudioDriver = {
       usable: () => !!audio.ctx && audio.ctx.state === 'running',
-      trackTime: () => audioApi.trackTime(),
-      current: () => audioApi.currentTrack(),
-      cue: (at, q) => audioApi.cue(def.track, { at, sync: true, quantize: q, fadeIn: 0.01, fadeOut: q === 'bar' ? 0.03 : 0.25, narrative: true, restart: true, loop: false }),
+      trackTime: () => {
+        const t = audioApi.trackTime();
+        // the segue deck is heard: its position, on the song's time line
+        return sg && t !== null && audioApi.currentTrack() === sg.ref && Math.abs(t - sg.from) < Math.abs(t - sg.at) ? sg.at + (t - sg.from) : t;
+      },
+      current: () => {
+        const c = audioApi.currentTrack();
+        return sg && c === sg.ref ? def.track : c;
+      },
+      cue: (at, q) =>
+        sg && at >= sg.at - 0.01
+          ? audioApi.cue(sg.ref, { at: sg.from + (at - sg.at), sync: true, quantize: q, fadeIn: 0.01, fadeOut: q === 'bar' ? 0.03 : 0.25, narrative: true, restart: true, loop: false })
+          : audioApi.cue(def.track, { at, sync: true, quantize: q, fadeIn: 0.01, fadeOut: q === 'bar' ? 0.03 : 0.25, narrative: true, restart: true, loop: false }),
       pause: (on) => audioApi.pauseMusic(on),
       offset: () => Math.max(-0.2, Math.min(0.2, (Number(settings.rhythmOffsetMs) || 0) / 1000)),
       now: () => performance.now(),
@@ -385,7 +403,8 @@ export class MomentoRun {
     const u = p.u;
     const g = k.pal.grade;
     const live = k.fx.impact > 0 || k.fx.flash > 0.001 || k.fx.aberr > 0.01;
-    const high = this.quality === 'high';
+    // a stage with its own grade (film mode, src/film) keeps the toolkit pass for impacts / flashes only
+    const high = this.quality === 'high' && !this.stage?.ownGrade;
     u.uGrade = high ? 1 : 0;
     u.uSat = g.sat;
     u.uTone = g.tone;

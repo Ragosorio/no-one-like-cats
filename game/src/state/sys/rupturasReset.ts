@@ -39,7 +39,7 @@ import historiaO1 from '../../data/rupturas/historia.json';
 import historiaO2 from '../../data/rupturas/historia-o2.json';
 import historiaO3 from '../../data/rupturas/historia-o3.json';
 import historiaO4 from '../../data/rupturas/historia-o4.json';
-import { PART2_FIRST, claimReward, isPart2Mission, resetApplied, rupturasExt } from './rupturasLedger';
+import { PART2_FIRST, claimReward, isAfterPart2Mission, isPart2Mission, resetApplied, rupturasExt } from './rupturasLedger';
 
 /** forever id (never reuse, never rename). A later reset is a NEW id + RESET_V bump. */
 export const RESET_PATCH_ID = '2026-10-rupturas-reinicio-v2';
@@ -69,13 +69,15 @@ function part2BeatIds(): Set<string> {
   return ids;
 }
 /**
- * `b31_estrellas#a` → `b31_estrellas`; Part II = a known Part II beat, the b31…b199 numbering (Part I ends at b30),
- * or the CARTA's «¡NUEVA ISLA!» ink (MapScene marks `carta_<region>` the first time an island shows up).
+ * `b31_estrellas#a` → `b31_estrellas`; Part II = a known Part II beat, the b31…b65 numbering (Part I ends at b30,
+ * Parte III starts at b66: docs/part-iii/11 §2 A1), or the CARTA's «¡NUEVA ISLA!» ink (MapScene marks
+ * `carta_<region>` the first time an island shows up).
  */
 export function isPart2Beat(key: string, known = part2BeatIds()): boolean {
   const base = String(key).split('#')[0];
+  if (/^b(6[6-9]|[7-9]\d|\d{3})_/.test(base)) return false; // Parte III+ (b66…): never Part II, whatever the tables say
   if (base.startsWith('carta_') && (REGION_IDS as readonly string[]).includes(base.slice(6))) return true;
-  return known.has(base) || /^b(3[1-9]|[4-9]\d|1\d\d)_/.test(base);
+  return known.has(base) || /^b(3[1-9]|[45]\d|6[0-5])_/.test(base);
 }
 
 /** the story battles of Part II (Oleada 1 «ruptura_*» + any later wave's, by their mission) */
@@ -174,7 +176,7 @@ export function planReset(): ResetPlan {
   return plan;
 }
 
-export type ResetOutcome = 'parte1' | 'ya-aplicado' | 'sin-progreso' | 'reiniciado' | 'error';
+export type ResetOutcome = 'parte1' | 'parte3' | 'ya-aplicado' | 'sin-progreso' | 'reiniciado' | 'error';
 
 // ------------------------------------------------------------------ the backup (before any mutation)
 /** the island exactly as it is now, marked with this patch so restoring it never resets it again */
@@ -212,6 +214,8 @@ export function applyRupturasReset(opts: { backup?: boolean; at?: number } = {})
     const s = G.s;
     if (!s || !isObj(s.missions) || !strs(s.missions.done).includes('H30')) return 'parte1';
     if (resetApplied(RESET_V)) return 'ya-aplicado';
+    // a save that already lives in Parte III (H66+ done or active) is never sent back to H31 (docs/part-iii/08 §6.1)
+    if ([...strs(s.missions.done), ...strs(s.missions.active)].some(isAfterPart2Mission)) return 'parte3';
     const plan = planReset();
     if (!plan.progress) return 'sin-progreso';
     const at = opts.at ?? Date.now();

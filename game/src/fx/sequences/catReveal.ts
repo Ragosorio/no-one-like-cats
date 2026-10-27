@@ -64,7 +64,7 @@ export interface RevealOpts {
 
 export type RevealResult = 'continue' | 'catdex' | 'repeat';
 
-const RANK: Record<Rarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3, primordial: 4, mythic: 5, heroic: 5, divine: 6 };
+const RANK: Record<Rarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3, multidimensional: 3, primordial: 4, mythic: 5, heroic: 5, divine: 6 };
 
 function fxOf(el: string) {
   return el === 'storm' ? ELEMENT_FX.electric : elementFx(el);

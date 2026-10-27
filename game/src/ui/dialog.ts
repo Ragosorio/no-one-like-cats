@@ -22,6 +22,7 @@ import { halftoneTexture, paperTexture } from '../art/textures';
 import { InkFilter } from '../fx/filters';
 import { clean, isDirection, speaker, Speaker } from './story/text';
 import { LuzternaPortrait, makePortrait, Portrait, preloadStoryArt } from './story/portrait';
+import { dueloMuted, ghostLines, luzternaPortraitOk, tipSpeaker } from './story/ghost';
 import { destroyDeep, settle } from './story/tweens';
 import { followView, screenRect } from './screen';
 import { hushed, whenCalm } from './hush';
@@ -165,6 +166,28 @@ const BOX_TOP = { x: 430, y: 70, w: 1390, h: 236 };
 const TEXT_STYLE = new TextStyle({ fontFamily: F.ui, fontWeight: '700', fontSize: 33, fill: C.ink, lineHeight: 45 });
 const SYS_STYLE = new TextStyle({ fontFamily: F.ui, fontWeight: '700', fontSize: 34, fill: C.paper, lineHeight: 46, letterSpacing: 1 });
 const CAP_STYLE = new TextStyle({ fontFamily: F.poster, fontSize: 46, fill: C.ink, lineHeight: 54, letterSpacing: 0 });
+/** BITÁCORA (Parte III): Luzterna's notebook — paper box, handwriting in blue ink, no face (docs/part-iii/08 §6) */
+const BIT_STYLE = new TextStyle({ fontFamily: F.brush, fontSize: 32, fill: C.inkBlue, lineHeight: 46, letterSpacing: 0.5 });
+
+// ------------------------------------------------------------------ OYENTE (Parte III · docs/part-iii/04 §0)
+/** the listener's balloon: no tag, no portrait, its tail leaves through the right edge of the screen */
+export const OYENTE_BALLOON = { w: 640, h: 150 };
+/** «¿Y luego?» in a different typeface each time it's said (part of the joke, 04 §0) */
+export const OYENTE_FONTS: TextStyle[] = [
+  new TextStyle({ fontFamily: F.comic, fontSize: 54, fill: C.ink, lineHeight: 60, letterSpacing: 2 }),
+  new TextStyle({ fontFamily: F.serif, fontStyle: 'italic', fontWeight: '700', fontSize: 50, fill: C.ink, lineHeight: 58 }),
+  new TextStyle({ fontFamily: F.brush, fontSize: 48, fill: C.ink, lineHeight: 58 }),
+  new TextStyle({ fontFamily: F.heavy, fontSize: 42, fill: C.ink, lineHeight: 54 }),
+  new TextStyle({ fontFamily: F.news, fontSize: 56, fill: C.ink, lineHeight: 62 }),
+  new TextStyle({ fontFamily: F.bebas, fontSize: 62, fill: C.ink, lineHeight: 64, letterSpacing: 4 }),
+  new TextStyle({ fontFamily: F.glitch, fontSize: 48, fill: C.ink, lineHeight: 58 }),
+  new TextStyle({ fontFamily: F.ui, fontWeight: '700', fontSize: 46, fill: C.ink, lineHeight: 56, letterSpacing: -1 }),
+];
+let oyenteN = 0;
+/** the next OYENTE typeface (cycles; never the same twice in a row). The Momento's own balloons may use it too. */
+export function nextOyenteStyle(): TextStyle {
+  return OYENTE_FONTS[oyenteN++ % OYENTE_FONTS.length];
+}
 
 class SpeechBox extends Container {
   bg = new Graphics();
@@ -192,25 +215,69 @@ class SpeechBox extends Container {
     this.addChild(this.tail, this.bg, this.dots, this.body, this.tag, this.arrow);
     gsap.to(this.arrow, { y: '+=8', duration: 0.35, yoyo: true, repeat: -1, ease: 'sine.inOut' });
   }
-  style(sp: Speaker, withPortrait: boolean) {
-    const sys = sp.kind === 'system';
-    const fill = sys ? sp.box : sp.box;
+  /** the text box this speaker writes in: x, y and the wrap width (OYENTE: its balloon on the right) */
+  textRect(sp: Speaker) {
     const { x, y, w, h } = this.B;
+    if (sp.kind === 'oyente') {
+      const { w: bw, h: bh } = OYENTE_BALLOON;
+      return { x: x + w - bw + 44, y: y + (h - bh) / 2 + 30, w: bw - 88 };
+    }
+    return { x: x + 46, y: y + 34, w: w - 110 };
+  }
+  /** OYENTE (Parte III): a round white balloon on the right, no tag, no portrait; the tail exits the screen right */
+  private styleOyente(sp: Speaker, bodyStyle: TextStyle) {
+    const { x, y, w, h } = this.B;
+    const { w: bw, h: bh } = OYENTE_BALLOON;
+    const bx = x + w - bw;
+    const by = y + (h - bh) / 2;
+    this.bg.clear();
+    this.bg.roundRect(bx + 10, by + 10, bw, bh, 70).fill(C.ink);
+    this.bg.roundRect(bx, by, bw, bh, 70).fill(sp.box).stroke({ width: 5, color: C.ink, alignment: 1 });
+    this.dots.visible = false;
+    this.tail.clear();
+    // the tail points off-frame (whoever talks is to Canelo's right, out of shot): far past the 1920 box
+    this.tail.poly([bx + bw - 60, by + 34, W + 900, by + bh / 2 + 40, bx + bw - 60, by + bh - 40]).fill(sp.box).stroke({ width: 5, color: C.ink, join: 'round' });
+    this.tail.rect(bx + bw - 90, by + 38, 40, bh - 82).fill(sp.box);
+    this.addChildAt(this.tail, this.getChildIndex(this.bg) + 1);
+    this.body.style = bodyStyle;
+    const r = this.textRect(sp);
+    this.body.position.set(r.x, by + (bh - (bodyStyle.lineHeight || bodyStyle.fontSize as number)) / 2);
+    this.arrow.style.fill = C.ink;
+    this.arrow.position.set(bx + bw - 44, by + bh - 26);
+    this.tag.visible = false;
+  }
+  style(sp: Speaker, withPortrait: boolean, oyenteStyle?: TextStyle) {
+    if (sp.kind === 'oyente') return this.styleOyente(sp, oyenteStyle ?? OYENTE_FONTS[0]);
+    // (back from an OYENTE balloon: the tail goes behind the box again, the text and arrow to their place)
+    if (this.getChildIndex(this.tail) !== 0) this.addChildAt(this.tail, 0);
+    this.dots.visible = true;
+    const bit = sp.id === 'bitacora';
+    const sys = sp.kind === 'system' && !bit;
+    const fill = sp.box;
+    const { x, y, w, h } = this.B;
+    const r = this.textRect(sp);
+    this.body.position.set(r.x, r.y);
+    this.arrow.position.set(x + w - 40, y + h - 30);
     this.bg.clear();
     this.bg.rect(x + 12, y + 12, w, h).fill(sys ? C.pinkHot : C.ink);
     this.bg.rect(x, y, w, h).fill(fill).stroke({ width: 5, color: C.ink, alignment: 1 });
+    if (bit) {
+      // a notebook page: blue rules and a red margin (the farera's handwriting goes on top)
+      for (let ly = y + 34 + 46; ly < y + h - 10; ly += 46) this.bg.moveTo(x + 24, ly).lineTo(x + w - 24, ly).stroke({ width: 2, color: 0x7fa6c9, alpha: 0.55 });
+      this.bg.moveTo(x + 34, y + 8).lineTo(x + 34, y + h - 8).stroke({ width: 2, color: C.red, alpha: 0.45 });
+    }
     // inner rule (printed comic panel)
-    this.bg.rect(x + 12, y + 12, w - 24, h - 24).stroke({ width: 2, color: sys ? C.cyan : C.ink, alpha: sys ? 0.5 : 0.25 });
+    else this.bg.rect(x + 12, y + 12, w - 24, h - 24).stroke({ width: 2, color: sys ? C.cyan : C.ink, alpha: sys ? 0.5 : 0.25 });
     this.dots.position.set(x + w - 352, y + h - 132);
     this.dots.texture = halftoneTexture(sys ? C.cyan : C.pinkHot, 12, 3);
-    this.dots.alpha = sys ? 0.18 : 0.22;
+    this.dots.alpha = bit ? 0 : sys ? 0.18 : 0.22;
     this.tail.clear();
     if (withPortrait) {
       this.tail.poly([x + 8, y + 70, x - 70, y + 150, x + 8, y + 140]).fill(fill).stroke({ width: 5, color: C.ink, join: 'round' });
       // hide the tail's inner stroke where it meets the box
       this.tail.rect(x - 1, y + 74, 10, 62).fill(fill);
     }
-    this.body.style = sys ? SYS_STYLE : TEXT_STYLE;
+    this.body.style = bit ? BIT_STYLE : sys ? SYS_STYLE : TEXT_STYLE;
     this.arrow.style.fill = sys ? C.cyan : C.ink;
     // name tag
     this.tag.visible = !!sp.name;
@@ -241,6 +308,16 @@ class CaptionBox extends Container {
   }
 }
 
+/** makePortrait, but a broken painting or rig (data still being made) gives no face instead of an exception */
+function safePortrait(sp: Speaker, size: number): Portrait | null {
+  try {
+    return makePortrait(sp, size);
+  } catch (e) {
+    console.warn('[dialog] retrato no disponible:', sp.slug, e);
+    return null;
+  }
+}
+
 // ------------------------------------------------------------------ say()
 /**
  * Blocking dialog. Resolves when the last line is dismissed (or SALTAR / Esc).
@@ -248,6 +325,8 @@ class CaptionBox extends Container {
  */
 export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
   if (!lines.length) return;
+  // Parte III: after her death a line of hers is a written memory (the Bitácora), never her voice or face (story/ghost.ts)
+  lines = ghostLines(lines);
   const needSlugs = [...new Set(lines.map(([s]) => speaker(s).slug).filter((s): s is string => !!s))];
   await preloadStoryArt(needSlugs);
   _blocking++;
@@ -403,7 +482,8 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
       }
       portraitId = sp.id;
       if (wantPortrait) {
-        portrait = makePortrait(sp, top ? 400 : sp.kind === 'luzterna' ? 500 : 440);
+        // a broken painting / rig must never freeze a dialog: the line goes on without a face
+        portrait = safePortrait(sp, top ? 400 : sp.kind === 'luzterna' ? 500 : 440);
         if (portrait) {
           portrait.position.set(250, top ? BX.y + BX.h + 90 : H + (sp.kind === 'luzterna' ? 40 : 20));
           portraitLayer.addChild(portrait);
@@ -413,7 +493,7 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
     }
     portrait?.talk();
     box.visible = true;
-    box.style(sp, !!portrait);
+    box.style(sp, !!portrait, sp.kind === 'oyente' ? nextOyenteStyle() : undefined);
     if (!boxShown) {
       boxShown = true;
       sfx('pop');
@@ -425,7 +505,7 @@ export async function say(lines: Line[], opts: SayOpts = {}): Promise<void> {
     }
     cap.visible = false;
     box.arrow.visible = false;
-    await typeAndWait(box.body, text, box.body.style as TextStyle, BX.w - 110, cps, sp, () => (box.arrow.visible = true));
+    await typeAndWait(box.body, text, box.body.style as TextStyle, box.textRect(sp).w, cps, sp, () => (box.arrow.visible = true));
   }
 
   // out (input is released right away; the fade can't hang even if the layer dies meanwhile)
@@ -490,7 +570,9 @@ export const TIP_POS = { x: 70, y: H - 200 };
 export function tip(text: string, o: { speaker?: string; dur?: number; title?: string; force?: boolean } = {}) {
   // a scene is playing (src/ui/hush.ts): gameplay tips wait for it to end; the scene's own corner lines pass (force)
   if (!o.force && whenCalm(() => tip(text, o), `tip:${text}`)) return;
-  const req = { text, speaker: o.speaker ?? 'LUZTERNA', dur: o.dur, title: o.title, force: o.force };
+  // Parte III: the mourning keeps quiet; after her death the corner voice is the Bitácora's (story/ghost.ts)
+  if (!o.force && dueloMuted()) return;
+  const req = { text, speaker: tipSpeaker(o.speaker), dur: o.dur, title: o.title, force: o.force };
   if (tipQueue.some((q) => q.text === text)) return;
   tipQueue.push(req);
   if (!tipShowing) void nextTip();
@@ -525,7 +607,8 @@ async function nextTip() {
   tipShowing = c;
   layer.addChild(c);
   const text = clean(req.text);
-  const style = new TextStyle({ fontFamily: F.ui, fontWeight: '700', fontSize: 25, fill: C.ink, lineHeight: 33 });
+  const bit = sp.id === 'bitacora';
+  const style = new TextStyle({ fontFamily: bit ? F.brush : F.ui, fontWeight: bit ? 'normal' : '700', fontSize: bit ? 26 : 25, fill: bit ? C.inkBlue : C.ink, lineHeight: bit ? 36 : 33 });
   const full = wrap(text, style, 520);
   const m = CanvasTextMetrics.measureText(full, style);
   const titleT = req.title ? txt(clean(req.title), { fontFamily: F.poster, fontSize: 30, fill: C.ink }) : null;
@@ -541,7 +624,8 @@ async function nextTip() {
   g.poly([bx + 2, by + bh - 52, bx - 34, by + bh - 6, bx + 2, by + bh - 22]).fill(sp.box).stroke({ width: 4, color: C.ink, join: 'round' });
   g.rect(bx, by, bw, bh).fill(sp.box).stroke({ width: 4, color: C.ink, alignment: 1 });
   g.rect(bx - 1, by + bh - 50, 8, 26).fill(sp.box);
-  const name = txt(req.title ? 'NUEVA MISIÓN' : sp.name || 'LUZTERNA', { fontFamily: F.poster, fontSize: 20, fill: C.pinkHot, letterSpacing: 1 });
+  // a nameless voice (OYENTE) stays nameless; only an unregistered blank falls back to the guide's name
+  const name = txt(req.title ? 'NUEVA MISIÓN' : sp.kind === 'oyente' ? '' : sp.name || (luzternaPortraitOk() ? 'LUZTERNA' : 'BITÁCORA'), { fontFamily: F.poster, fontSize: 20, fill: C.pinkHot, letterSpacing: 1 });
   name.position.set(bx + 20, by + 8);
   const body = new Text({ text: '', style, resolution: 2 });
   body.position.set(bx + 22, by + 34 + th);
@@ -553,8 +637,8 @@ async function nextTip() {
   }
   c.addChild(bubble);
   let port: Portrait | null = null;
-  if (sp.kind === 'luzterna') port = new LuzternaPortrait(230, 0.9);
-  else port = makePortrait(sp, 210);
+  if (sp.kind === 'luzterna' && luzternaPortraitOk()) port = new LuzternaPortrait(230, 0.9);
+  else port = safePortrait(sp, 210);
   if (port) {
     port.position.set(80, 46);
     c.addChild(port);

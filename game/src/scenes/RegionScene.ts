@@ -30,6 +30,7 @@ import { RegionStage } from '../regions/cineStage';
 import { setCineStage } from '../cine';
 import { Modal } from '../ui/modal';
 import { scenes } from '../core/scenes';
+import { RARITY_H } from '../art/rarityHeight';
 
 const LOADERS: Record<RegionId, () => Promise<{ region: RegionDef }>> = {
   paginas: () => import('../regions/paginas'),
@@ -43,7 +44,6 @@ const LOADERS: Record<RegionId, () => Promise<{ region: RegionDef }>> = {
   umbral: () => import('../regions/umbral'),
 };
 
-const RARITY_H: Record<string, number> = { common: 2.4, rare: 2.5, epic: 2.7, legendary: 3.1, mythic: 3.2, heroic: 3.0, divine: 3.3 };
 const KIND_COLOR: Record<POI['kind'], number> = { battle: C.red, activity: 0xffd23f, lore: C.paper, exit: C.ink };
 
 /** which 3D quality to start with: the player's choice, or a sane default the auto tier refines */

@@ -11,6 +11,7 @@ import { grShotValue } from './gravedad';
 import { skyTargetMul } from './cielo';
 import { umShotValue } from './umbral';
 import { sealValue } from './cataclysm';
+import { mareoShotValue } from './mareo';
 
 export type Personality = 'clumsy' | 'sniper' | 'tuner' | 'calculator' | 'avenger' | 'looter' | 'demolisher' | 'elementalist';
 
@@ -198,6 +199,8 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
         if (score > 0) score *= umShotValue(b, side, s.shot);
         // Parte II · Oleada 2: Gravedad on purpose (open a POZO; finish a broken module so it falls off)
         if (score > 0) score *= grShotValue(b, side, s.shot, paths);
+        // Parte III · La Borracha: a shot that lands on their donut feeds them (mareo.ts)
+        if (score > 0) score *= mareoShotValue(b, side, paths);
         if (score > 0) {
           const end = paths[0].points[paths[0].points.length - 1];
           options.push({ shooter: s.id, ult: s.ult, shot: s.shot, angle, power, score, tx: end.x, ty: end.y });

@@ -114,6 +114,19 @@ async function route(scene: string | null, fresh: boolean) {
       const { goRegion } = await import('./app/flow');
       return goRegion(new URLSearchParams(location.search).get('region') ?? 'paginas');
     }
+    case 'caja': {
+      // dev only: ?scene=caja&set=bar|calle (&cine=p3_bar_a) — Parte III, La Borracha (app/gaterasFlow.ts)
+      if (!import.meta.env.DEV) return goTitle();
+      bootGame();
+      return (await import('./app/gaterasFlow')).devCaja(new URLSearchParams(location.search));
+    }
+    case 'cajas': {
+      // dev only: ?scene=cajas (&save=h65-normal) — Parte III, la Carta de las Cajas (scenes/GaterasMapScene.ts)
+      if (!import.meta.env.DEV) return goTitle();
+      bootGame();
+      (await import('./state/sys/gateras')).setGaterasDev(true);
+      return (await import('./app/cajasFlow')).goCajas('none');
+    }
     default:
       return goTitle();
   }
@@ -136,6 +149,7 @@ async function boot() {
   initOleada2(); // Parte II · Oleada 2: the H48 choice, Hélice joining, the sky preflight (app/oleada2Flow.ts)
   initOleada3(); // Parte II · Oleada 3: the Taller Cometa, the seal / card / logbook, Maneki, the void preflight (app/oleada3Flow.ts)
   initOleada4(); // Parte II · Oleada 4: Ecos, the page by the faro, Polvillo, the strikethroughs, the credits (app/oleada4Flow.ts)
+  void import('./app/cajasFlow').then((m) => m.initCajas()); // Parte III: the gatera by your faro (once the Borracha is open)
   window.addEventListener('pointerdown', () => audio.unlock());
   // the economy clock runs whenever a save is loaded (island, map, battles…)
   // dev: ?speed=4 runs the economy clock 4× faster (pacing tests); battles stay real-time
@@ -174,6 +188,11 @@ async function boot() {
   if (import.meta.env.DEV && q.get('momento')) {
     bootGame();
     return (await import('./momentos/dev')).devMomento(q.get('momento')!);
+  }
+  // ?film=demo (DEV): a film standalone (Parte III «Películas», src/film/dev.ts); &scrub=1 → __film.render(m)
+  if (import.meta.env.DEV && q.get('film')) {
+    bootGame();
+    return (await import('./film/dev')).devFilm(q.get('film')!);
   }
   // ?stage=2-9: boot the save and jump straight into that campaign battle (dev)
   if (import.meta.env.DEV && q.get('stage')) {

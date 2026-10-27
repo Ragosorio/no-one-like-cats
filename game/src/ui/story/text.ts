@@ -4,6 +4,7 @@
  */
 import { settings } from '../../core/settings';
 import { C } from '../theme';
+import { STANDINS } from '../../film/standins';
 
 // ------------------------------------------------------------------ tone filter
 /** same joke, other vocabulary (09 §6.3). Order matters: longer phrases first. */
@@ -73,7 +74,11 @@ export function tone(familiar: string, sinFiltro?: string) {
 }
 
 // ------------------------------------------------------------------ speakers
-export type SpeakerKind = 'luzterna' | 'cat' | 'caption' | 'system' | 'newspaper';
+/**
+ * `oyente` (Parte III, docs/part-iii/04 §0): the listener nobody may see before the punchline — a balloon with NO name
+ * tag and NO portrait, its tail leaving through the right edge of the screen (ui/dialog.ts draws it).
+ */
+export type SpeakerKind = 'luzterna' | 'cat' | 'caption' | 'system' | 'newspaper' | 'oyente';
 
 export interface Speaker {
   id: string;
@@ -140,11 +145,71 @@ const SPEAKERS: Record<string, Speaker> = {
   DUERMEVELA: { id: 'duermevela', name: 'CAPITANA DUERMEVELA', kind: 'cat', slug: 'duermevela_dreamcaptain_cat', band: 0x8f7ad8, bandText: 0xfff6dc, box: 0xf1ebff, pitch: 0.8, treat: 'rival' },
   'LA REDACCIÓN': { id: 'redaccion', name: 'LA REDACCIÓN', kind: 'system', band: 0xffffff, bandText: C.ink, box: 0x3a4048, pitch: 0.95 },
   BISAGRA: { id: 'bisagra', name: 'BISAGRA', kind: 'cat', slug: 'bisagra_hinge_cat', band: 0x2a2140, bandText: 0xc9a8ff, box: 0xede6ff, pitch: 0.65, treat: 'boss' },
+  // Parte III · porción vertical (docs/part-iii/04, 11 §1). Canelo speaks ONLY away from home (inside a box); his name
+  // tag follows the name the player gave him (setSpeakerNameHook, app/story.ts). Orange band: never the fallback's look.
+  CANELO: { id: 'canelo', name: 'CANELO', kind: 'cat', slug: 'canelo_cozy_cat', band: C.orange, bandText: C.ink, box: 0xfff0e0, pitch: 0.85, treat: 'ally' },
+  // candidate paintings (public/cats-svg, rigged: pending the owner's approval, docs/part-iii/06 §4.1–4.2)
+  HIPÓLITO: { id: 'hipolito', name: 'HIPÓLITO', kind: 'cat', slug: 'hipolito_tavern_cat', band: 0xd9a441, bandText: C.ink, box: 0xfff4d6, pitch: 0.55, treat: 'ally' },
+  'DOÑA ESPUMA': { id: 'espuma', name: 'DOÑA ESPUMA', kind: 'cat', slug: 'espuma_bartender_cat', band: 0x2f6b4f, bandText: 0xfff4d6, box: 0xf4f1e6, pitch: 0.9, treat: 'ally' },
+  // the elite of the Borracha's first route (B-5, docs/part-iii/05 §10): an existing Earth cat with a cap. STAND_IN
+  // portrait until B fixes the captain's species
+  'OFICIAL DONA': { id: 'oficialdona', name: 'OFICIAL DONA', kind: 'cat', slug: 'dona_police_cat', band: 0x2b3f7a, bandText: 0xffd77a, box: 0xfdf0dc, pitch: 0.8, treat: 'rival' },
+  // Parte III · Acto I (docs/part-iii/historia-v2/guiones/acto-1/00-indice.md §3.4): their approved paintings, the same
+  // as in the films (film/standins.ts; FILM-CAST, 2026-10-27). Grafitera is the Part II cat. PÚBLICO and CATDEX: no face.
+  BORRÓN: { id: 'borron', name: 'BORRÓN', kind: 'cat', slug: STANDINS.borron, band: 0x1a1a24, bandText: 0x9fe0ff, box: 0xeef2f8, pitch: 0.75, treat: 'ally' },
+  HOMIAU: { id: 'homiau', name: 'HOMIAU', kind: 'cat', slug: STANDINS.homiau, band: 0xffd84a, bandText: C.ink, box: 0xfff6c8, pitch: 0.7, treat: 'ally' },
+  EMIAU: { id: 'emiau', name: 'EMIAU', kind: 'cat', slug: STANDINS.emiau, band: 0xd9d9d9, bandText: C.ink, box: 0xf2f2f2, pitch: 1.05, treat: 'rival' },
+  'EL CADENERO': { id: 'cadenero', name: 'EL CADENERO', kind: 'cat', slug: 'cadenero_bouncer_cat', band: C.ink, bandText: 0xffd400, box: 0xeae1d3, pitch: 0.5, treat: 'rival' },
+  GRAFITERA: { id: 'grafitera', name: 'GRAFITERA', kind: 'cat', slug: 'grafitera_spray_cat', band: 0x2b2140, bandText: 0xff7ab8, box: 0xf6e8ff, pitch: 1.2, treat: 'ally' },
+  VECINO: { id: 'vecino', name: 'UN VECINO', kind: 'cat', slug: 'margarita_daisy_cat', band: 0x6b5a44, bandText: C.paper, box: 0xf3ead2, pitch: 1.1, treat: 'ally' },
+  // ⚠️ the finale (H93–H97, historia-v2/guiones/final): the same faces as the films (film/standins.ts, one table for every
+  // act): La Mano = her stand-in, the strike-through cat · Itō = his painting. CERITO never speaks
+  'LA MANO': { id: 'la_mano', name: 'LA MANO', kind: 'cat', slug: STANDINS.mano, band: 0xf2efe8, bandText: C.ink, box: 0xf4f1ea, pitch: 0.6, treat: 'rival' },
+  ITŌ: { id: 'ito', name: 'ITŌ', kind: 'cat', slug: STANDINS.ito, band: 0x2a2440, bandText: 0xf6e8c8, box: 0xf3eadb, pitch: 0.8, treat: 'ally' },
+  // Actos II–IV (historia-v2/guiones/acto-2…4): the approved paintings, the same as in the films (FILM-CAST); the
+  // characters still without art (Cruceta, Esquirla, Firma, the gang) wear the SAME stand-in the films give them
+  PANDILLERO: { id: 'pandillero', name: 'UN PANDILLERO', kind: 'cat', slug: 'sombrita_shadow_cat', band: 0x3a2a1c, bandText: C.paper, box: 0xf1e6d2, pitch: 1.0, treat: 'rival' },
+  'GATO ARAÑA': { id: 'gato_arana', name: 'GATO ARAÑA', kind: 'cat', slug: STANDINS.aranya, band: 0xc8102e, bandText: C.paper, box: 0xfde8e8, pitch: 1.25, treat: 'ally' },
+  VOCEADOR: { id: 'voceador', name: 'EL VOCEADOR', kind: 'cat', slug: 'cometin_stardust_cat', band: 0xf3e3a2, bandText: C.ink, box: 0xfff8dc, pitch: 1.4, treat: 'ally' },
+  CRUCETA: { id: 'cruceta', name: 'CRUCETA', kind: 'cat', slug: STANDINS.cruceta, band: 0x1f3d7a, bandText: 0xffd400, box: 0xe8eef8, pitch: 0.85, treat: 'rival' },
+  MURCIÉGATO: { id: 'murciegato', name: 'MURCIÉGATO', kind: 'cat', slug: STANDINS.murciegato, band: 0x14121e, bandText: 0xf6e8c8, box: 0xe9e6f2, pitch: 0.7, treat: 'ally' },
+  'SUPER SIAMÉS': { id: 'super_siames', name: 'SUPER SIAMÉS', kind: 'cat', slug: 'supersiames_aura_cat', band: 0x2f6fd6, bandText: C.paper, box: 0xeaf1ff, pitch: 1.0, treat: 'ally' },
+  'EL RIVAL': { id: 'el_rival', name: 'EL RIVAL', kind: 'cat', slug: 'bigoton_rival_cat', band: 0xff5a1f, bandText: C.ink, box: 0xfff0e6, pitch: 1.1, treat: 'rival' },
+  'HARRY GATTER': { id: 'harry_gatter', name: 'HARRY GATTER', kind: 'cat', slug: 'harrygatter_wand_cat', band: 0x5a1f2a, bandText: 0xf3d27a, box: 0xf6ecdc, pitch: 1.15, treat: 'ally' },
+  'DON GATOTE': { id: 'don_gatote', name: 'DON GATOTE', kind: 'cat', slug: 'golem_moss_cat', band: 0x4a5a2a, bandText: C.paper, box: 0xeef2e0, pitch: 0.6, treat: 'ally' },
+  GARBANCITO: { id: 'garbancito', name: 'GARBANCITO', kind: 'cat', slug: 'garbancito_tiny_cat', band: 0xd9b45a, bandText: C.ink, box: 0xfff6dc, pitch: 1.5, treat: 'ally' },
+  ESQUIRLA: { id: 'esquirla', name: 'ESQUIRLA', kind: 'cat', slug: STANDINS.esquirla, band: 0x9b1fff, bandText: 0x00e5ff, box: 0xf2e8ff, pitch: 1.2, treat: 'rival' },
+  FIRMA: { id: 'firma', name: 'FIRMA', kind: 'cat', slug: STANDINS.firma, band: 0xd4a017, bandText: C.ink, box: 0xfff6d8, pitch: 1.1, treat: 'rival' },
+  'GATO MALO': { id: 'gato_malo', name: 'GATO MALO', kind: 'cat', slug: 'gatomalo_bunny_cat', band: 0x111111, bandText: 0xff2e88, box: 0xf3e8f0, pitch: 0.9, treat: 'ally' },
+  'TAILOR SWIFT': { id: 'tailor_swift', name: 'TAILOR SWIFT', kind: 'cat', slug: 'tailor_eras_cat', band: 0xff7ab8, bandText: C.ink, box: 0xffeef6, pitch: 1.3, treat: 'ally' },
+  PÚBLICO: { id: 'publico', name: 'EL PÚBLICO', kind: 'system', band: 0xffd400, bandText: C.ink, box: C.ink, pitch: 1.3 },
+  // the listener of the bar (04 §0): no name, no face, ever — only «¿Y luego?», in a different typeface each time
+  OYENTE: { id: 'oyente', name: '', kind: 'oyente', band: C.paper, bandText: C.ink, box: 0xffffff, pitch: 0.95 },
+  // Luzterna's notebook (03 §4, 08 §6): written, never a face — paper and handwriting (ui/dialog.ts)
+  BITÁCORA: { id: 'bitacora', name: 'BITÁCORA', kind: 'system', band: 0xf3ead2, bandText: C.inkBlue, box: 0xf6efdc, pitch: 1.2 },
 };
+
+/**
+ * A speaker that depends on the save (CANELO: the name the player gave him, the painting of his active form):
+ * app/story.ts installs it. Only `name` and `slug` can change; a registered speaker never loses its kind.
+ */
+let speakerHook: ((key: string) => { name?: string; slug?: string } | undefined) | null = null;
+export function setSpeakerHook(fn: ((key: string) => { name?: string; slug?: string } | undefined) | null) {
+  speakerHook = fn;
+}
 
 export function speaker(id: string): Speaker {
   const k = id.toUpperCase();
-  return SPEAKERS[k] ?? { id: k.toLowerCase(), name: k, kind: 'cat', slug: 'canelo_cozy_cat', band: C.ink, bandText: C.paper, box: C.paper, pitch: 1, treat: 'ally' };
+  const sp = SPEAKERS[k];
+  if (!sp) return { id: k.toLowerCase(), name: k, kind: 'cat', slug: 'canelo_cozy_cat', band: C.ink, bandText: C.paper, box: C.paper, pitch: 1, treat: 'ally' };
+  let o: { name?: string; slug?: string } | undefined;
+  try {
+    o = speakerHook?.(k);
+  } catch {
+    o = undefined;
+  }
+  if (!o || (!o.name && !o.slug)) return sp;
+  return { ...sp, ...(o.name ? { name: o.name } : {}), ...(o.slug && sp.slug ? { slug: o.slug } : {}) };
 }
 
 /** stage directions like "(El cielo se oscurece…)" are performed, not shown */

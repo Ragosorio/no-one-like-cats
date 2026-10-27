@@ -62,6 +62,8 @@ import {
 import { drawGoldenPage } from './paginas/pageArt';
 import { BIOS, DIARIO, HOW, LOOSE, REGISTRO_CARD, REGISTRO_LINES } from './paginas/lore';
 import { looseFlag, nextPage, pagesLeft, type PageReader } from './paginas/readPages';
+import { withRegistroEstado } from '../state/sys/gaterasWorld';
+import { RARITY_H } from '../art/rarityHeight';
 
 /** the region's lens: warm paper days, sepia haze, ink-blue nights (never black: cats must read) */
 const SKY: SkyKey[] = [
@@ -85,7 +87,6 @@ const devWeather = (qs?.get('weather') ?? undefined) as RegionDef['weather'];
 const DOCK_END = new THREE.Vector3(SPOT.dock.x1, SPOT.dock.y, SPOT.dock.z1);
 /** where Canelo's page lands (page 213, on the line of the spine stairs) */
 const REST = new THREE.Vector3(SPOT.ramp.x, pageHeight(SPOT.ramp.x, 3.2), 3.2);
-const RARITY_H: Record<string, number> = { common: 2.4, rare: 2.5, epic: 2.7, legendary: 3.1 };
 const TRAITS: Record<string, Record<string, number>> = {
   perezoso: { playful: 0.2, curious: 0.25 },
   travieso: { playful: 0.9, curious: 0.7 },
@@ -454,7 +455,7 @@ async function buildPaginas(ctx: RegionCtx): Promise<RegionBuild> {
     registro.blob.visible = false;
     registro.root.visible = false;
   }
-  ctx.describe.set('registro000', { title: 'REGISTRO 000', text: REGISTRO_CARD });
+  ctx.describe.set('registro000', { title: 'REGISTRO 000', text: withRegistroEstado(REGISTRO_CARD) });
   let regGone = false;
   let regGlitch = -1;
 

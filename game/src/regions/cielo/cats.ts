@@ -8,6 +8,7 @@ import type { RegionCtx } from '../types';
 import type { PaperCat } from '../../engine/world/paperCat';
 import { artSlug, catLiteUrl, standInTint } from '../../art/catArt';
 import { CAT_BY_ID } from '../../data/content';
+import { RARITY_H } from '../../art/rarityHeight';
 
 const EL: Record<string, string> = {
   fire: 'Fuego',
@@ -26,7 +27,6 @@ const EL: Record<string, string> = {
   crystal: 'Cristal',
   gravity: 'Gravedad',
 };
-const RARITY_H: Record<string, number> = { common: 2.4, rare: 2.5, epic: 2.7, legendary: 3.1, mythic: 3.2, heroic: 3.0, divine: 3.3 };
 const TRAITS: Record<string, Record<string, number>> = {
   perezoso: { playful: 0.2, curious: 0.25 },
   dormilon: { playful: 0.2, curious: 0.4 },

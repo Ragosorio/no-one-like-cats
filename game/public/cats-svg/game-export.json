@@ -490,6 +490,175 @@
     "zarpa_pirate_cat": {
       "bytesIn": 9622464,
       "bytesOut": 6996662
+    },
+    "espuma_bartender_cat": {
+      "bytesIn": 2704992,
+      "bytesOut": 1971767
+    },
+    "hipolito_tavern_cat": {
+      "bytesIn": 4801068,
+      "bytesOut": 3547252
+    },
+    "dona_police_cat": {
+      "bytesIn": 4461284,
+      "bytesOut": 3300424
+    },
+    "homiau_donut_cat": {
+      "bytesIn": 3562161,
+      "bytesOut": 2615403
+    },
+    "murciegato_cowl_cat": {
+      "bytesIn": 4580748,
+      "bytesOut": 3333691
+    },
+    "gatarana_web_cat": {
+      "bytesIn": 2615491,
+      "bytesOut": 1843482,
+      "preset": "balanced-color-preserved"
+    },
+    "ovillo_yarnarms_cat": {
+      "bytesIn": 8066976,
+      "bytesOut": 5926687
+    },
+    "estambre_yarnstorm_cat": {
+      "bytesIn": 9043702,
+      "bytesOut": 6724808
+    },
+    "supersiames_aura_cat": {
+      "bytesIn": 3335557,
+      "bytesOut": 2358792,
+      "preset": "balanced-color-preserved"
+    },
+    "harrygatter_wand_cat": {
+      "bytesIn": 2319145,
+      "bytesOut": 1627856,
+      "preset": "balanced-color-preserved"
+    },
+    "emiau_rapper_cat": {
+      "bytesIn": 4315148,
+      "bytesOut": 3172225
+    },
+    "gatomalo_bunny_cat": {
+      "bytesIn": 5556666,
+      "bytesOut": 4099000
+    },
+    "tailor_eras_cat": {
+      "bytesIn": 2429270,
+      "bytesOut": 1702083,
+      "preset": "balanced-color-preserved"
+    },
+    "maneki_janitor_cat": {
+      "bytesIn": 2293022,
+      "bytesOut": 1625830,
+      "preset": "balanced-color-preserved"
+    },
+    "bigoton_rival_cat": {
+      "bytesIn": 3347346,
+      "bytesOut": 2445680
+    },
+    "sonrisa_grin_cat": {
+      "bytesIn": 2641700,
+      "bytesOut": 1829305,
+      "preset": "balanced-color-preserved"
+    },
+    "sirsimon_ghost_cat": {
+      "bytesIn": 2541375,
+      "bytesOut": 1788206,
+      "preset": "balanced-color-preserved"
+    },
+    "garbancito_tiny_cat": {
+      "bytesIn": 2906965,
+      "bytesOut": 2033976,
+      "preset": "balanced-color-preserved"
+    },
+    "gatzilla_kaiju_cat": {
+      "bytesIn": 2791007,
+      "bytesOut": 1991161,
+      "preset": "balanced-color-preserved"
+    },
+    "gatoconda_smile_cat": {
+      "bytesIn": 1990326,
+      "bytesOut": 1444848,
+      "preset": "balanced-color-preserved"
+    },
+    "gritito_scream_cat": {
+      "bytesIn": 1685823,
+      "bytesOut": 1214014,
+      "preset": "balanced-color-preserved"
+    },
+    "gatarana_noir_cat": {
+      "bytesIn": 2604856,
+      "bytesOut": 1859890,
+      "preset": "balanced-color-preserved"
+    },
+    "gatarana_blanca_cat": {
+      "bytesIn": 5154954,
+      "bytesOut": 3779677
+    },
+    "gatarana_2099_cat": {
+      "bytesIn": 2236540,
+      "bytesOut": 1614924,
+      "preset": "balanced-color-preserved"
+    },
+    "cadenero_bouncer_cat": {
+      "bytesIn": 3707059,
+      "bytesOut": 2728303
+    },
+    "borron_inkblot_cat": {
+      "bytesIn": 4078526,
+      "bytesOut": 2981466
+    },
+    "lobo_grandma_cat": {
+      "bytesIn": 4112665,
+      "bytesOut": 2891148,
+      "preset": "balanced-color-preserved"
+    },
+    "encuadernadora_needle_cat": {
+      "bytesIn": 2501288,
+      "bytesOut": 1751712,
+      "preset": "balanced-color-preserved"
+    },
+    "manager_backstage_cat": {
+      "bytesIn": 4404210,
+      "bytesOut": 3223053
+    },
+    "gatemson_editor_cat": {
+      "bytesIn": 2274067,
+      "bytesOut": 1611491,
+      "preset": "balanced-color-preserved"
+    },
+    "bocina_boombox_cat": {
+      "bytesIn": 4806758,
+      "bytesOut": 3564419
+    },
+    "scratch_dj_cat": {
+      "bytesIn": 4758917,
+      "bytesOut": 3499386
+    },
+    "vangato_sunflower_cat": {
+      "bytesIn": 4262501,
+      "bytesOut": 3050776,
+      "preset": "balanced-color-preserved"
+    },
+    "billie_whisper_cat": {
+      "bytesIn": 4339239,
+      "bytesOut": 3175559
+    },
+    "comecroquetas_pellet_cat": {
+      "bytesIn": 2524260,
+      "bytesOut": 1818441
+    },
+    "cerito_fur_cat": {
+      "bytesIn": 3326332,
+      "bytesOut": 2434968
+    },
+    "cerito_static_cat": {
+      "bytesIn": 3119365,
+      "bytesOut": 2275714
+    },
+    "ito_threads_cat": {
+      "bytesIn": 3537156,
+      "bytesOut": 2566728
     }
   }
 }

@@ -20,6 +20,8 @@ import { C, F } from '../theme';
 import { Button, poster, txt } from '../widgets';
 import { G } from '../../state/game';
 import { CATS } from '../../data/content';
+// the Catdex's own total (a Parte III box cat only counts once the Parte III began: state/sys/cats.ts dexVisible)
+import { dexTotal } from '../../state/ext/collection';
 import { livingCat, preloadCats } from '../../art/catArt';
 import { ART } from '../../art/livingCat';
 import { slugOf } from '../../art/tint';
@@ -106,7 +108,7 @@ export function creditsData(): CreditsData {
     crewSlugs: crewSlugs.length ? crewSlugs : [slugOf('c_canelo')],
     stats: [
       `Islas que nadie había dibujado y tú pisaste: ${islands}.`,
-      `Gatos que recordaron otra vida: ${ecosAwakeCount()}. Gatos en tu Catdex: ${registered}/${CATS.length}.`,
+      `Gatos que recordaron otra vida: ${ecosAwakeCount()}. Gatos en tu Catdex: ${registered}/${dexTotal()}.`,
       `Canciones en tu FONOTECA: ${songs.filter((x) => x.inFonoteca).length}/${SONGS.length}.`,
       `Última hora: ${caneloName} sigue dormido encima de una página. Nadie se atreve a moverlo.`,
     ],

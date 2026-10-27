@@ -19,6 +19,7 @@ import { catDef, MissionDef } from '../../data/content';
 import type { MissionReward } from '../../state/sys/missions';
 import { clean, doneQuip } from './text';
 import { LuzternaPortrait, preloadStoryArt } from './portrait';
+import { luzternaPortraitOk } from './ghost';
 import { onomatopoeia, sparkles } from '../../fx/juice';
 import { destroyDeep, settle } from './tweens';
 import { onTapInside } from '../dialog';
@@ -186,6 +187,8 @@ export async function missionPanel(layer: Container, items: DoneItem[], short: b
     qb.position.set(158, PH - qt.height - 34);
     panel.addChild(qb);
     const lz = new LuzternaPortrait(150, 0.9);
+    // Parte III: after her death her face never shows by accident (ui/story/ghost.ts)
+    lz.visible = luzternaPortraitOk();
     lz.position.set(70, PH + 18);
     panel.addChild(lz);
     gsap.from(qb, { alpha: 0, x: qb.x - 20, duration: 0.25, delay: 0.7 });

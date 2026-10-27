@@ -17,8 +17,8 @@ import { addSkyCat } from '../cielo/cats';
 import { elLook } from '../fronteras/kit';
 import type { DreamIsle } from './layout';
 import { GALLEON, PLAZA, height } from './layout';
+import { RARITY_H } from '../../art/rarityHeight';
 
-const RARITY_H: Record<string, number> = { common: 2.4, rare: 2.5, epic: 2.7, legendary: 3.1, mythic: 3.2, heroic: 3.0, divine: 3.3 };
 const at = (x: number, z: number) => new THREE.Vector3(x, height(x, z), z);
 
 const DREAMS: Record<string, string> = {

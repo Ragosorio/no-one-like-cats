@@ -257,6 +257,11 @@ export interface StageApi {
    * whether they are needed this frame (default: always) — off frames cost nothing. The stage owns / destroys them.
    */
   post?: { filters: import('pixi.js').Filter[]; live?(k: Kit): boolean };
+  /**
+   * (optional) the stage grades the picture itself (film mode, src/film): the toolkit post then runs only on the
+   * frames with an impact / flash / aberration, without its grade and screentone. Default: the toolkit grades.
+   */
+  ownGrade?: boolean;
   destroy(): void;
 }
 

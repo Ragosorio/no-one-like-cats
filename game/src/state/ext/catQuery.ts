@@ -9,12 +9,13 @@
  */
 import { G, OwnedCat } from '../game';
 import { CatDef, catDef, SHIP_BY_ID } from '../../data/content';
-import { BAL, RarityId } from '../econ';
+import type { RarityId } from '../econ';
 import { catPow } from '../sys/cats';
 import { habitat } from '../sys/island';
 import { busyCats } from '../sys/resonance';
 import { catBusy, resonanceQueue } from '../sys/workforce';
 import { ELEMENT_NAME } from '../../data/elementsMeta';
+import { categoryOrder, rarityRank } from '../sys/multidim';
 
 export type CatSort = 'power' | 'level' | 'name' | 'rarity' | 'recent' | 'stars';
 export const SORT_LABEL: Record<CatSort, string> = {
@@ -60,13 +61,14 @@ export function catTier(def: CatDef): string {
 /** tiers present among these cats, lowest → highest (the RAREZA filter chips) */
 export function tiersAmong(cats: OwnedCat[]): string[] {
   const set = new Set(cats.map((c) => catTier(catDef(c.species))));
-  const rank = (t: string) => (t === 'primordial' ? (BAL.rarities.order as string[]).indexOf('legendary') + 0.5 : (BAL.rarities.order as string[]).indexOf(t));
+  // the CATEGORY order (state/sys/multidim.ts): the power order, a Parte III Multidimensional last (only with P3_MULTIDIM)
+  const order = categoryOrder() as string[];
+  const rank = (t: string) => (t === 'primordial' ? order.indexOf('legendary') + 0.5 : order.indexOf(t) < 0 ? order.length : order.indexOf(t));
   return [...set].sort((a, b) => rank(a) - rank(b));
 }
 
 export function rarityRankOf(def: CatDef) {
-  const order = BAL.rarities.order as string[];
-  return order.indexOf(def.rarity) + (def.primordial ? 0.5 : 0);
+  return rarityRank(def.rarity, !!def.primordial);
 }
 
 export interface CatWhere {

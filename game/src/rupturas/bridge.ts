@@ -6,6 +6,7 @@
  * (stars, level), with element variety. Never writes, never migrates, never touches backups.
  */
 import type { CastDef } from './cast';
+import { rarityHeight } from '../art/rarityHeight';
 
 export const SAVE_KEY = 'nolc-save-v1';
 
@@ -70,7 +71,6 @@ export function parseIsland(env: unknown, species: Map<string, SpeciesInfo>, sou
   return { source, kl: Number(st.kl) || 0, catCount: cats.length, catdex, habitatElements: habs, cats };
 }
 
-const RARITY_H: Record<string, number> = { common: 2.4, rare: 2.5, epic: 2.7, legendary: 3.1, mythic: 3.2, heroic: 3.0, divine: 3.3 };
 
 /** stable 0..1 from a string (traits must not change between visits) */
 function h01(s: string, salt: number) {
@@ -116,7 +116,7 @@ export function pickCast(island: BridgeIsland, max: number, lite: (slug: string)
       name: c.name,
       slug: c.info.slug,
       url: lite(c.info.slug),
-      height: c.species === 'c_canelo' ? 2.6 : RARITY_H[c.info.rarity] ?? 2.5,
+      height: c.species === 'c_canelo' ? 2.6 : rarityHeight(c.info.rarity),
       tags,
       traits: { playful: calm ? 0.2 + h01(c.uid, 1) * 0.3 : 0.4 + h01(c.uid, 2) * 0.6, curious: h01(c.uid, 3) },
       meta: `${c.info.elements.join(' + ')} · ${c.info.rarity} · Nv ${c.level}${c.stars ? ` · ★${c.stars}` : ''}. De tu partida (solo lectura).`,

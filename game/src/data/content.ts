@@ -14,10 +14,22 @@ import especiesO3 from './rupturas/especies-o3.json';
 import historiaO3 from './rupturas/historia-o3.json';
 import especiesO4 from './rupturas/especies-o4.json';
 import historiaO4 from './rupturas/historia-o4.json';
+// Parte III — the vertical slice (docs/part-iii/11): its story lives in data/gateras/
+import gaterasHistoria from './gateras/historia.json';
+// Parte III — its collectible cats (GATOS-DATOS: docs/part-iii/mecanicas-v2/05-gatos-coleccionables.md). Appended AFTER
+// every older species, so no Catdex number moves. A MULTIDIMENSIONAL only merges with the flag on (state/sys/multidim.ts)
+import gaterasEspecies from './gateras/especies.json';
+import { P3_MULTIDIM } from '../state/sys/multidim';
 
+const p3Especies = {
+  ...gaterasEspecies,
+  cats: (gaterasEspecies.cats as { rarity: string }[]).filter((c) => P3_MULTIDIM.on || c.rarity !== 'multidimensional'),
+};
 const raw = mergeContent(base as unknown as Record<string, unknown>, rupturasEspecies as Record<string, unknown>,
   rupturasHistoria as Record<string, unknown>,
   ...([especiesO2, historiaO2, especiesO3, historiaO3, especiesO4, historiaO4] as Record<string, unknown>[]),
+  gaterasHistoria as Record<string, unknown>,
+  p3Especies as Record<string, unknown>,
 );
 // materials[] is an id-keyed array, so a module can't reach into a material's `mult`: a new element brings its hull
 // multipliers as `materialMult[element][material]` (rupturas/especies.json) and they're folded in here — only where
@@ -87,6 +99,33 @@ export interface CatDef {
   obtain: { source: string; how: string };
   hint: string | null;
   lore: string;
+  /** Parte III: its box (`p3d_borracha`…) or the pass-through multiverse it comes from (`pinceles`, `pantalla`, `pixel`, `mitos`) */
+  origin?: string;
+  /** Parte III: how it is collected — data, not code (state/sys/p3cats.ts; docs/part-iii/mecanicas-v2/05-gatos-coleccionables.md) */
+  p3?: P3Source;
+}
+/**
+ * Where a Parte III cat comes from (mecanicas-v2/02-loop.md §4): never the Portal, the Casino nor the Resonance.
+ *   historia   `mission` done → the whole cat, once
+ *   etapa      the FIRST win of `dim`/`node` (an élite's captain, a stage the story marks)
+ *   rescate    a win of `dim`/`node` while `after` holds (`mission:H77`): the node shows it on its card
+ *   actividad  `mission` done or `flag` set; `orbs` pays its orbs per activity battle on the way (before it joins)
+ *   recordar   after the story (`after: mission:H97`): a win of `dim`/`node`, or `anyWin` of the Carta
+ */
+export interface P3Source {
+  kind: 'historia' | 'etapa' | 'rescate' | 'actividad' | 'recordar';
+  dim?: string;
+  node?: string;
+  after?: string;
+  mission?: string;
+  flag?: string;
+  anyWin?: boolean;
+  /** the Catdex knows it as a RUMOR once this holds (`mission:H70`: Borrón's file) */
+  rumor?: string;
+  /** a rescue whose node is on the main route: a win from BEFORE its requirement also counts once it holds (Homiau) */
+  catchUp?: boolean;
+  /** activity orbs: per activity battle won (`beats`: the flow's battle steps) or per locale of a box's Ronda (`ronda`) */
+  orbs?: { beats?: string[]; ronda?: string };
 }
 export interface ElementDef {
   id: string;
@@ -116,6 +155,18 @@ export interface MissionDef {
   /** what the mission is FOR (shown under the goal + in the glossary) */
   why?: string;
   estTime?: string;
+  /** Parte III: the Bitácora's 5-field card (docs/part-iii/03 §3; panels/Bitacora.ts) */
+  card?: MissionCard;
+}
+/** PASA · IMPORTA · QUEREMOS · AHÍ when the mission appears; CAMBIÓ when it's done (one line each) */
+export interface MissionCard {
+  pasa: string;
+  importa: string;
+  queremos: string;
+  ahi: string;
+  cambio: string;
+  /** a heading over CAMBIÓ («GATERA DESCUBIERTA · …») */
+  kicker?: string;
 }
 export interface StageDef {
   stage: string;

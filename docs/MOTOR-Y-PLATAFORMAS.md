@@ -26,7 +26,9 @@ Es un análisis de ingeniería honesto, no un folleto. Los datos de tiendas, pre
 | PixiJS | 8.22 (`game/package.json`: `^8.22.0`) | Render 2D por GPU: sprites, `Graphics`, texto, mallas deformables, filtros. |
 | GSAP | 3.15 | Todas las animaciones y secuencias (timelines). |
 | pixi-filters | 6.1 | RGB split, glitch, contorno, etc. Más nuestros shaders propios (`InkFilter`, `ComicFilter` en `game/src/fx/filters.ts`). |
+| three.js | 0.186 (`game/package.json`: `^0.186.1`) | Desde la Parte II: las islas 3D (`game/src/engine/`, `game/src/regions/`) y un Momento musical, cada uno en su propio canvas. Los gatos siguen siendo las mismas pinturas MAI, montadas como cartón con su malla (`engine/world/paperCat.ts`). Detalle: [part-ii/07-arquitectura-motor.md](part-ii/07-arquitectura-motor.md). |
 | Vite + TypeScript | Vite 8, TS 7 | Build y servidor de desarrollo. |
+| vitest | 3 | Las pruebas (`npm test`, `game/tests/`). |
 | PWA | `public/manifest.webmanifest`, `public/sw.js` | Instalable, pantalla completa, funciona sin internet. |
 
 El renderer está fijado a WebGL: `preference: 'webgl'` en `game/src/core/App.ts`. Pantalla lógica de 1920×1080 que se escala a cualquier ventana.

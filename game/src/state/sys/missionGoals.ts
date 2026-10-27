@@ -130,6 +130,11 @@ export const TRIGGER_KINDS: Record<string, { how: string; key?: (v: string) => s
  * Missions whose feature does not exist yet stay dormant (not shown, not pinned) until the gate
  * flag appears — instead of sitting in the HUD as an impossible task. `flags` = any of them opens it.
  */
+/** the flag that wakes the finale (H93–H97): set by whoever integrates H92, and by the h93-final fixture */
+export const FINAL_GATE = 'p3_final';
 export const MISSION_GATES: Record<string, { flags: string[]; why: string }> = {
   E11: { flags: ['gambit_open'], why: 'La Mesa del Gato (Cat’s Gambit) llega en M3: su dueño debe poner el flag gambit_open al abrir la mesa.' },
+  // ⚠️ Parte III · EL FINAL (H93–H97): complete in the data, DORMANT until the Actos II–IV land (their chain ends in H92).
+  // FINAL_GATE is set by whoever integrates H92 (and by test-saves/h93-final.json, scripts/make-act-fixtures.ts)
+  ...Object.fromEntries(['H93', 'H94', 'H95', 'H96', 'H97'].map((id) => [id, { flags: [FINAL_GATE], why: 'El final de la Parte III espera a los Actos II–IV (su cadena termina en H92): quien integre H92 pone el flag p3_final.' }])),
 };

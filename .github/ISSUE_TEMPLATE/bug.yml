@@ -1,0 +1,96 @@
+name: Bug
+description: Algo se rompió, se ve raro o no hace lo que debería.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por avisar: cada bug reportado es un gato menos que se cae del barco.
+
+        Si es sobre la historia, describe el lugar sin contar giros en el título (otros jugadores lo van a leer).
+
+  - type: textarea
+    id: que-paso
+    attributes:
+      label: Qué pasó
+      description: Cuéntalo como se lo contarías a un amigo.
+      placeholder: "Le di a DISPARAR y el gato se fue volando fuera del barco."
+    validations:
+      required: true
+
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Qué esperabas que pasara
+
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Cómo repetirlo
+      placeholder: |
+        1. Abrí la isla
+        2. Entré a la batalla 2-4
+        3. ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: donde-juegas
+    attributes:
+      label: ¿Dónde jugabas?
+      options:
+        - La página publicada (ragosorio.github.io/no-one-like-cats)
+        - La app instalada (PWA)
+        - Mi copia local (npm run dev)
+    validations:
+      required: true
+
+  - type: input
+    id: dispositivo
+    attributes:
+      label: Dispositivo
+      placeholder: "iPhone 13, laptop con Windows, Android Samsung A52…"
+    validations:
+      required: true
+
+  - type: input
+    id: navegador
+    attributes:
+      label: Navegador
+      placeholder: "Safari, Chrome, Edge, Firefox…"
+    validations:
+      required: true
+
+  - type: input
+    id: parte
+    attributes:
+      label: ¿En qué parte del juego?
+      placeholder: "La isla, la batalla 2-4, la Catdex, una isla 3D, el casino…"
+
+  - type: input
+    id: cuando
+    attributes:
+      label: Cuándo pasó
+      description: La fecha aproximada nos dice qué versión tenías.
+
+  - type: checkboxes
+    id: ajustes
+    attributes:
+      label: Ajustes que tenías activados (si te acuerdas)
+      options:
+        - label: Reducir movimiento
+        - label: Reducir destellos
+        - label: Sin sonido
+
+  - type: textarea
+    id: capturas
+    attributes:
+      label: Capturas o video
+      description: Arrastra aquí una captura o un video corto. Ayuda muchísimo. Se quedan en el issue, nunca en el repo.
+
+  - type: textarea
+    id: partida
+    attributes:
+      label: Tu partida (opcional)
+      description: Si el bug depende de tu partida, en Ajustes › RESPALDOS puedes copiarla como texto; pégala en un archivo adjunto. Solo trae tus gatos y tu progreso, ningún dato personal.

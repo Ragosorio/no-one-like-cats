@@ -18,6 +18,7 @@ import {
   starMult,
   starOrbs,
 } from '../econ';
+import { isP3Cat } from './multidim';
 
 export function catsOwned() {
   return G.s.cats;
@@ -216,8 +217,18 @@ export function dexStatus(species: string): DexStatus {
   const s = G.s.catdex[species];
   if (s) return s;
   const def = catDef(species);
-  if (def.secret) return 'unknown';
+  // Parte III: a box cat is a sealed card until the story (or its orbs) names it — never a silhouette that spoils it
+  if (def.secret || isP3Cat(def)) return 'unknown';
   return def.elements.every((e) => G.s.elements.includes(e)) ? 'silhouette' : 'unknown';
+}
+/**
+ * Does the Catdex show this species at all? Parte III: a box cat only once the Parte III began (a sealed card) or once
+ * it's known — a save that never opened a gatera sees the exact Catdex it had (count, numbers, order).
+ */
+export function dexVisible(species: string): boolean {
+  const def = catDef(species);
+  if (!isP3Cat(def)) return true;
+  return !!G.s.catdex[species] || !!G.s.ext?.gateras || G.s.missions.done.includes('H66');
 }
 export function setsCompleted() {
   return CONTENT.catdexSets.filter((s) => s.cats.every((id) => G.s.catdex[id] === 'registered'));

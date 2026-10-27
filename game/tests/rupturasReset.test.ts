@@ -465,26 +465,47 @@ describe('robustness', () => {
   });
 
   it('(8) inconsistent records (H38 done without H36, active+done, unknown ids, no ext) end up sane', () => {
-    load('rupturas-raro', { skipReset: true });
+    // rupturas-raro also carries H77 / H99 / b77_*: since Parte III (docs/part-iii/11 §2 A1) those ids are NOT
+    // Part II. The Part II variant of the same junk (H66+ stripped) is reset as before; H66+ is covered below.
+    const env = envOf('rupturas-raro');
+    const p3 = (xs: string[]) => xs.filter((id) => !L.isAfterPart2Mission(id));
+    const em = env.state.missions;
+    for (const k of ['done', 'active', 'pinned', 'seenLines']) em[k] = p3(em[k] ?? []);
+    em.progress = Object.fromEntries(Object.entries(em.progress ?? {}).filter(([k]) => !L.isAfterPart2Mission(k.split(':')[0])));
+    load('rupturas-raro', { skipReset: true, env: clone(env) });
     const inv0 = inventory();
     expect(G.s.ext?.rupturas).toBeUndefined();
     expect(envOf('rupturas-raro').state.ext).toBeUndefined();
-    load('rupturas-raro');
+    load('rupturas-raro', { env: clone(env) });
     expect(patchNotes).toContain(X.RESET_NOTE);
     const m = G.s.missions;
     for (const list of [m.done, m.active, m.pinned, m.seenLines]) expect(list.filter(L.isPart2Mission)).toEqual([]);
     expect(Object.keys(m.progress).filter((k) => L.isPart2Mission(k.split(':')[0]))).toEqual([]);
-    expect(G.s.beatsSeen.filter((b) => b.startsWith('b77_'))).toEqual([]);
+    // b77_* is a Parte III beat number now: the Part II reset leaves it alone
+    expect(G.s.beatsSeen.filter((b) => b.startsWith('b77_'))).toEqual(['b77_inventado#a', 'b77_inventado']);
     expect(G.s.flags['won_ruptura_inventada']).toBeUndefined();
     expect(G.s.flags['region:inventada']).toBeUndefined();
     expect(inventory()).toEqual(inv0);
     const c = claimed();
     expect(c).toContain('mission:H38');
-    expect(c).toContain('mission:H77');
+    expect(c).not.toContain('mission:H77');
     expect(c).not.toContain('mission:H36');
     expect(c).toContain('battle:ruptura_madrenacar'); // won (flag) even though H40 wasn't marked done
     checkMissions();
     expect(G.s.missions.active.filter(L.isPart2Mission)).toEqual(['H31']);
+  });
+
+  it('(8b) a save with Parte III ids (H66+ done or active) is never sent back to H31: untouched, no ledger', () => {
+    load('rupturas-raro', { skipReset: true });
+    const before = JSON.stringify(G.s);
+    expect(G.s.missions.done).toContain('H77');
+    expect(X.applyRupturasReset({ backup: false })).toBe('parte3');
+    expect(JSON.stringify(G.s)).toBe(before);
+    load('rupturas-raro');
+    expect(patchNotes).not.toContain(X.RESET_NOTE);
+    expect(G.s.missions.done).toContain('H77');
+    expect(G.s.missions.done).toContain('H38');
+    expect(claimed()).toEqual([]);
   });
 
   it('never throws, never touches a save it cannot read, and skips the copy when storage is tight', () => {

@@ -47,6 +47,8 @@ export const RARITY = {
   rare: { name: 'RARO', color: 0x3569a3, glow: 0x6fa8ff },
   epic: { name: 'ÉPICO', color: 0xff2e88, glow: 0xff7ab8 },
   legendary: { name: 'LEGENDARIO', color: 0xb89558, glow: 0xffd77a },
+  /** Parte III (P3_MULTIDIM, apagada): la rareza propia de los gatos de otras cajas — state/sys/multidim.ts */
+  multidimensional: { name: 'MULTIDIMENSIONAL', color: 0x2fb7c4, glow: 0xf59ac0 },
   mythic: { name: 'MÍTICO', color: 0x8a5cff, glow: 0x00e5ff },
   heroic: { name: 'HEROICO', color: 0xb3122e, glow: 0xffc94a },
   divine: { name: 'DIVINO', color: 0x2f9a96, glow: 0xfff3e6 },

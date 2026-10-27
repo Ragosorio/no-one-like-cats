@@ -13,7 +13,7 @@ partir de la rejilla. El `.gitignore` bloquea `png/jpg/webp/gif/avif/bmp` a prop
 cargan más rápido, se pueden animar y romper pedacito por pedacito, y no cuestan nada.
 
 Guías hermanas: [agregar-gato.md](agregar-gato.md), [agregar-elemento.md](agregar-elemento.md),
-[agregar-historia.md](agregar-historia.md), [animaciones.md](animaciones.md),
+[agregar-historia.md](agregar-historia.md), [animaciones.md](animaciones.md), [rutas-de-desarrollo.md](rutas-de-desarrollo.md),
 [arquitectura.md](arquitectura.md), [../ACTUALIZACIONES.md](../ACTUALIZACIONES.md) y
 [../../CONTRIBUTING.md](../../CONTRIBUTING.md).
 
@@ -278,14 +278,21 @@ Para conectarlo:
 1. Agrega el plano a `STORY_SHIPS`.
 2. En `buildSiege()` (`state/sys/campaign.ts`), la cadena `if (key === '1-1') ... else if (isBoss && zone === N)`
    elige el plano y, si aplica, armas especiales (`enemyShots`).
-3. Mecánicas de jefe: `BossConfig.id` en `battle/sim.ts` es la unión `'sardina' | 'gargoyle' | 'kraken'`.
+3. Mecánicas de jefe: `BossConfig.id` en `battle/sim.ts` es la unión `'sardina' | 'gargoyle' | 'kraken' | 'arcanist' | 'star' | 'leviathan'`.
    Un jefe con reglas nuevas necesita su id ahí, su lógica en el sim, el mapeo zona → id en `buildSiege()`
    y su texto en `BOSS_INTRO`.
 4. Las piezas que no son celdas (alas, tentáculos, burbujas) se dibujan en `battle/boss/rigs.ts` con
    `Graphics`, animadas a 12 fps con la clase `Stepped`. `BattleScene` las monta.
 5. Los datos narrativos (nombre, fases, frases, `enrageTurn`, `ai`) van en `content.json` → `bosses`.
 
-Hoy solo los jefes 1-3 tienen barco a mano; los demás caen al generador con un tamaño mínimo de 16x10.
+Hoy los seis jefes de zona tienen barco a mano (`sardina_furiosa`, `risco_flotante`, `kraken`, `biblioteca_errante`,
+`cometa`, `leviatan`), y la etapa 1-1 usa `patito`. Si un jefe no tiene plano, cae al generador con un tamaño mínimo
+de 16x10.
+
+**Reglas por batalla.** `buildSiege()` también recibe `rules` (`StageRules` en `battle/sim.ts`): así las batallas de
+la Parte II suman cielo, fases o reglas de sueños, y las de la Parte III la regla de su dimensión (por ejemplo
+`mareo`, en `battle/mareo.ts`). Cada regla es un módulo puro que el simulador llama con ganchos chiquitos, para que la
+estimación de victoria juegue exactamente la misma pelea. Ver [dimensiones-y-gateras.md](dimensiones-y-gateras.md#5-las-batallas).
 
 ## Receta 4: nuevo módulo
 

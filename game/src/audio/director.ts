@@ -135,6 +135,7 @@ export class Director {
         quantize: t.quantize,
         loop: t.loop,
         section: t.section,
+        at: t.at,
         sync: t.sync,
         // the Fonoteca's «repeat one» repeats the whole song (a stream), not the game's loop region
         // (ext) …except a track with in-sync layers (src/audio/layers.ts): those need the decoded deck's sample clock

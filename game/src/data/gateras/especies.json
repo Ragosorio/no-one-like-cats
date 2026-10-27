@@ -1,0 +1,2945 @@
+{
+ "$comment": "Parte III «Fuera de la Caja» — los gatos coleccionables (GATOS-DATOS, 2026-10-27; ⚠️ spoilers). Se fusiona sobre content.json con mergeContent (solo agrega; data/content.ts). Fuentes de diseño: docs/part-iii/arte-v2/02-catalogo-v2.md (nombres, rareza, multiverso), mecanicas-v2/02-loop.md §4 y §7.4 (cómo se consiguen) y mecanicas-v2/05-gatos-coleccionables.md (la tabla gato → dónde → cómo). obtain.source 'p3:<fuente>': NUNCA salen del Portal, el Casino, la Resonancia ni la tienda de gatos (state/sys/p3cats.ts isP3Cat). Cada gato trae su fuente en `p3` (datos, no código): historia (misión hecha), etapa (primera victoria de un nodo marcado: los capitanes de las élites y las etapas que dice la historia), rescate (una victoria de un nodo después de un requisito), actividad (orbes por batalla y el gato al completarla), recordar (después de H97). `origin` = su caja (o el multiverso de paso: pinceles, pantalla, pixel, mitos). Los MULTIDIMENSIONALES (prefijo x_) solo se fusionan con la bandera P3_MULTIDIM (encendida: state/sys/multidim.ts).",
+ "cats": [
+  {
+   "id": "r_dona",
+   "name": "Oficial Dona",
+   "epithet": "la Ley de la Caja",
+   "art": {
+    "slug": "dona_police_cat",
+    "tint": null,
+    "aura": [
+     "#e85d8a",
+     "#2a3d6e",
+     "#f6e7c1"
+    ]
+   },
+   "elements": [
+    "earth"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "gloton",
+   "battleForm": {
+    "name": "OFICIAL DONA — DONUT PATROL FORM",
+    "cry": "¡ALTO AHÍ!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Dona Reglamentaria",
+     "cry": "¡Alto ahí! …¿Esa dona es tuya?",
+     "archetype": "roca",
+     "element": "earth",
+     "dmg": 56,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 2,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una dona dura como piedra: atraviesa 2 celdas."
+    },
+    "ultimate": {
+     "name": "DONUT PATROL! (ドーナツ巡回)",
+     "effect": "Una lluvia de donas reglamentarias en abanico. Cada una atraviesa 2 celdas.",
+     "dmg": 48,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Se cura comiendo donas. Por eso nunca tiene donas.",
+    "star3": "★3: su dona atraviesa una celda más.",
+    "star5": "★5: DONUT PATROL! suelta una dona extra."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "La Borracha · B-5: se queda contigo cuando le ganas (con todo y dona).",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Placa sin letras, gorra torcida y algo rosa en la pata.",
+   "lore": "La única autoridad de la Borracha. Patrulla de la panadería a la comisaría y de regreso, por si acaso. Dice que la dona es evidencia. La evidencia nunca llega a la comisaría.",
+   "balanceName": "Oficial Dona",
+   "origin": "p3d_borracha",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_borracha",
+    "node": "5"
+   }
+  },
+  {
+   "id": "x_homiau",
+   "name": "Homiau Gatson",
+   "epithet": "el del Sillón",
+   "art": {
+    "slug": "homiau_donut_cat",
+    "tint": null,
+    "aura": [
+     "#ffd521",
+     "#f59ac0",
+     "#6ab0e0"
+    ]
+   },
+   "elements": [
+    "earth"
+   ],
+   "rarity": "multidimensional",
+   "primordial": false,
+   "secret": false,
+   "role": "tanque",
+   "worker": null,
+   "trait": "gloton",
+   "battleForm": {
+    "name": "HOMIAU — COUCH POTATO FORM",
+    "cry": "DONUT OF DESTINY!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.tanque.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Dona de la Suerte",
+     "cry": "¡Mmmmh… rosquilla de la victoria!",
+     "archetype": "bola_rebote",
+     "element": "earth",
+     "dmg": 84,
+     "radius": 1.5,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 2,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una dona rosa con chispas que rebota dos veces. Nadie sabe cómo atina; él tampoco."
+    },
+    "ultimate": {
+     "name": "DONUT OF DESTINY! (運命のドーナツ)",
+     "effect": "Una dona gigante cae del cielo y rebota por todo el barco rival. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Tiene una suerte absurda que confunde con talento. A veces la suerte también lo confunde.",
+    "star3": "★3: la dona rebota una vez más.",
+    "star5": "★5: DONUT OF DESTINY! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:rescate",
+    "how": "La Borracha · B-6, la Planta embotelladora: después de «La resaca», ayúdalo a recuperar su dona de la suerte.",
+    "balanceSource": "p3:rescate"
+   },
+   "hint": "Todo amarillo, dos pelitos y una dona rosa con chispas.",
+   "lore": "El vecino del sillón. Flojo, glotón y de buen corazón. Perdió su dona de la suerte en la planta embotelladora y desde entonces todo le sale bien, lo cual lo tiene muy preocupado.",
+   "balanceName": "Homiau Gatson",
+   "origin": "p3d_borracha",
+   "p3": {
+    "kind": "rescate",
+    "dim": "p3d_borracha",
+    "node": "6",
+    "after": "mission:H72",
+    "catchUp": true
+   }
+  },
+  {
+   "id": "r_hipolito",
+   "name": "Hipólito",
+   "epithet": "el de la Barra",
+   "art": {
+    "slug": "hipolito_tavern_cat",
+    "tint": null,
+    "aura": [
+     "#e8a33d",
+     "#f6e7c1",
+     "#2a3d6e"
+    ]
+   },
+   "elements": [
+    "water"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "tanque",
+   "worker": null,
+   "trait": "dormilon",
+   "battleForm": {
+    "name": "HIPÓLITO — LAST CALL FORM",
+    "cry": "¿Y LUEGO?"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.tanque.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Tarro Volador",
+     "cry": "¿Y luego?",
+     "archetype": "bola_rebote",
+     "element": "water",
+     "dmg": 52,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 1,
+     "pierce": 0,
+     "status": "mojado",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un tarro de espuma que rebota una vez y deja todo Mojado."
+    },
+    "ultimate": {
+     "name": "LAST CALL! (閉店)",
+     "effect": "Tres tarros en abanico que rebotan y mojan todo lo que tocan.",
+     "dmg": 50,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Duerme de pie. Si se queda dormido a bordo, nadie nota la diferencia.",
+    "star3": "★3: el tarro rebota una vez más.",
+    "star5": "★5: LAST CALL! lanza un tarro extra."
+   },
+   "obtain": {
+    "source": "p3:historia",
+    "how": "La Borracha: se une al terminar «La Batalla de Gatos». Los sigue dormido.",
+    "balanceSource": "p3:historia"
+   },
+   "hint": "Siempre pregunta «¿Y luego?». Nunca escucha la respuesta.",
+   "lore": "Duerme de pie en la barra de La Última Ronda desde antes de que hubiera barra. No se acuerda de nada y es buena gente. Una noche, sin despertar del todo, se subió a tu barco. Nadie se atrevió a bajarlo.",
+   "balanceName": "Hipólito",
+   "origin": "p3d_borracha",
+   "p3": {
+    "kind": "historia",
+    "mission": "H73"
+   }
+  },
+  {
+   "id": "e_espuma",
+   "name": "Doña Espuma",
+   "epithet": "la Cantinera",
+   "art": {
+    "slug": "espuma_bartender_cat",
+    "tint": null,
+    "aura": [
+     "#f6e7c1",
+     "#e8a33d",
+     "#1b2a4a"
+    ]
+   },
+   "elements": [
+    "water"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "soporte",
+   "worker": null,
+   "trait": "chismoso",
+   "battleForm": {
+    "name": "DOÑA ESPUMA — LAST ROUND FORM",
+    "cry": "¡LA CASA INVITA!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.soporte.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Trapo Exprimido",
+     "cry": "Empieza por las catorce rondas.",
+     "archetype": "rafaga",
+     "element": "water",
+     "dmg": 64,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "mojado",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Exprime el trapo de la barra: una ráfaga que moja todo lo que cruza."
+    },
+    "ultimate": {
+     "name": "ON THE HOUSE! (おごり)",
+     "effect": "Una ronda para todos: tres chorros de espuma en abanico que mojan y empujan. Una vez por batalla.",
+     "dmg": 72,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Limpia el mismo vaso desde hace años. Ya brilla, pero ella sigue.",
+    "star3": "★3: la ráfaga moja un turno más.",
+    "star5": "★5: ON THE HOUSE! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:actividad",
+    "how": "La Borracha · La Ronda: cada local que ganas deja orbes suyos; al cerrar la primera ronda completa, deja la barra y se viene.",
+    "balanceSource": "p3:actividad"
+   },
+   "hint": "Lo ha visto todo. No se acuerda de nada. Sirve igual.",
+   "lore": "Atiende La Última Ronda con un trapo, un vaso y una paciencia que no se acaba. Sabe lo que vas a pedir antes que tú. Si le preguntas por Canelo, saca la libreta de las catorce rondas.",
+   "balanceName": "Doña Espuma",
+   "origin": "p3d_borracha",
+   "p3": {
+    "kind": "actividad",
+    "flag": "ronda_borracha_1",
+    "orbs": {
+     "ronda": "p3d_borracha"
+    }
+   }
+  },
+  {
+   "id": "e_cadenero",
+   "name": "El Cadenero",
+   "epithet": "el de la Puerta",
+   "art": {
+    "slug": "cadenero_bouncer_cat",
+    "tint": null,
+    "aura": [
+     "#2b2b33",
+     "#c8102e",
+     "#e8a33d"
+    ]
+   },
+   "elements": [
+    "earth"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "tanque",
+   "worker": null,
+   "trait": "bravucon",
+   "battleForm": {
+    "name": "EL CADENERO — VIP LIST FORM",
+    "cry": "¡NO PASAS!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.tanque.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Cordón Rojo",
+     "cry": "Esta noche no pasa nadie.",
+     "archetype": "roca",
+     "element": "earth",
+     "dmg": 66,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 2,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Revolea el poste del cordón rojo: atraviesa 2 celdas."
+    },
+    "ultimate": {
+     "name": "VIP LIST! (リスト)",
+     "effect": "Te cierra la puerta en la cara: tres postes en abanico que atraviesan 2 celdas cada uno. Una vez por batalla.",
+     "dmg": 70,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Brazos cruzados, lentecitos oscuros, cero sonrisas. Adentro es un amor (nadie ha entrado a comprobarlo).",
+    "star3": "★3: el poste atraviesa una celda más.",
+    "star5": "★5: VIP LIST! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:recordar",
+    "how": "Después de todo: vuelve a la puerta del baño de La Última Ronda (B-9). Esta vez te abre.",
+    "balanceSource": "p3:recordar"
+   },
+   "hint": "Cuida una puerta. No dice de qué.",
+   "lore": "Cuidaba la puerta del baño del bar porque le daba miedo lo que había detrás. Cuando por fin la cruzaste, descubrió que lo que más miedo le daba era quedarse sin nadie a quién no dejar pasar.",
+   "balanceName": "El Cadenero",
+   "origin": "p3d_borracha",
+   "p3": {
+    "kind": "recordar",
+    "dim": "p3d_borracha",
+    "node": "9",
+    "after": "mission:H97"
+   }
+  },
+  {
+   "id": "m_borron",
+   "name": "Borrón",
+   "epithet": "el que se Quedó",
+   "art": {
+    "slug": "borron_inkblot_cat",
+    "tint": null,
+    "aura": [
+     "#1a1520",
+     "#f4efe6",
+     "#e85d8a"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "mythic",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "gloton",
+   "battleForm": {
+    "name": "BORRÓN — INKBLOT FORM",
+    "cry": "¡HIC!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.mythic",
+    "powerBase": "balance:rarities.power_base.mythic",
+    "foodMult": "balance:rarities.food_mult.mythic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Mancha de Tinta",
+     "cry": "Si lo digo, me borran otra línea.",
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 72,
+     "radius": 1.4,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "maldito",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un manchón de tinta que no se ve en el aire y maldice donde cae."
+    },
+    "ultimate": {
+     "name": "INKBLOT! (墨染め)",
+     "effect": "Tres manchas de tinta en abanico que maldicen lo que tocan. Una vez por batalla.",
+     "dmg": 72,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Le falta una línea en su ficha. Cada tanto, otra. Él sigue pidiendo la misma dona.",
+    "star3": "★3: la mancha es más grande.",
+    "star5": "★5: INKBLOT! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:recordar",
+    "how": "Después de todo: búscalo en La Donería de la Borracha (B-2). Sigue ahí.",
+    "balanceSource": "p3:recordar"
+   },
+   "hint": "Una mano blanca marcada en la pata y una dona mordida.",
+   "lore": "Bajó a las cajas a atrapar un folio y descubrió las donas. Ya no quiso volver. Se le olvidan cosas y lo sabe; por eso pide siempre la misma dona, para tener algo que sí recuerde.",
+   "balanceName": "Borrón",
+   "origin": "p3d_borracha",
+   "p3": {
+    "kind": "recordar",
+    "dim": "p3d_borracha",
+    "node": "2",
+    "after": "mission:H97",
+    "rumor": "mission:H70"
+   }
+  },
+  {
+   "id": "c_gritito",
+   "name": "El Gritito",
+   "epithet": "el del Pánico",
+   "art": {
+    "slug": "gritito_scream_cat",
+    "tint": null,
+    "aura": [
+     "#e8742e",
+     "#2a4d6e",
+     "#f2c230"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "common",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "miedoso",
+   "battleForm": {
+    "name": "EL GRITITO — PANIC FORM",
+    "cry": "¡AAAAAH!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.common",
+    "powerBase": "balance:rarities.power_base.common",
+    "foodMult": "balance:rarities.food_mult.common",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 0,
+    "shot": {
+     "name": "Grito Ondulado",
+     "cry": "¡AAAAAH!… perdón, vi el precio de las croquetas.",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 50,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 4,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un grito en ondas naranjas que atraviesa paredes y Aturde a cada gato cuyo camarote cruza."
+    },
+    "ultimate": {
+     "name": "PANIC WAVE! (パニック)",
+     "effect": "Un grito tan largo que dobla el cielo: una onda que cruza el barco y Aturde.",
+     "dmg": 40,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Todo le da pánico: la aspiradora, el pepino, el lunes.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: el grito deja Aturdido 1 turno más."
+   },
+   "obtain": {
+    "source": "p3:recordar",
+    "how": "Después de todo: se le oye gritar en El parque de la resaca de la Borracha (B-7).",
+    "balanceSource": "p3:recordar"
+   },
+   "hint": "Patas en las mejillas, boca en «O» y el cuerpo ondulado.",
+   "lore": "Salió del Museo gritando y no ha parado. Es un gato alargado y ondulado, como si lo hubieran pintado durante un temblor. Le tiene miedo a todo menos a gritar, que le sale divino.",
+   "balanceName": "El Gritito",
+   "origin": "pinceles",
+   "p3": {
+    "kind": "recordar",
+    "dim": "p3d_borracha",
+    "node": "7",
+    "after": "mission:H97"
+   }
+  },
+  {
+   "id": "e_ovillo",
+   "name": "Doctor Ovillo",
+   "epithet": "el de los Cuatro Brazos",
+   "art": {
+    "slug": "ovillo_yarnarms_cat",
+    "tint": null,
+    "aura": [
+     "#4f7a3a",
+     "#c9a227",
+     "#2b2f3a"
+    ]
+   },
+   "elements": [
+    "earth"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "rencoroso",
+   "battleForm": {
+    "name": "DOCTOR OVILLO — TANGLE FORM",
+    "cry": "TANGLE TIME!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Ovillo Mecánico",
+     "cry": "¡Ocho patas no son nada: yo tengo cuatro ovillos más!",
+     "archetype": "runa",
+     "element": "earth",
+     "dmg": 66,
+     "radius": 1.1,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un brazo mecánico lanza un ovillo que persigue a su objetivo."
+    },
+    "ultimate": {
+     "name": "TANGLE TIME! (絡まり)",
+     "effect": "Cuatro ovillos teledirigidos a la vez, uno por brazo. Una vez por batalla.",
+     "dmg": 70,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Ofendido porque nadie lo invita a nada. Enreda todo lo que toca, empezando por las invitaciones.",
+    "star3": "★3: el ovillo explota un poco más grande.",
+    "star5": "★5: TANGLE TIME! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "Ciudad Mayúscula · S-5: el jefe de la Pandilla del Ovillo se queda contigo cuando le ganas.",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Cuatro brazos mecánicos, lentes redondos y una gabardina verde.",
+   "lore": "Científico de Ciudad Mayúscula. Se construyó cuatro brazos para tejer más rápido y ahora no puede rascarse sin enredarse. Dice que es un villano. Su pandilla dice que en el fondo es un pan de Dios con mal genio.",
+   "balanceName": "Doctor Ovillo",
+   "origin": "p3d_superheroes",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_superheroes",
+    "node": "5"
+   }
+  },
+  {
+   "id": "x_gatarana",
+   "name": "Gato Araña",
+   "epithet": "el del Barrio",
+   "art": {
+    "slug": "gatarana_web_cat",
+    "tint": null,
+    "aura": [
+     "#d8262f",
+     "#2a5db0",
+     "#f4f4f4"
+    ]
+   },
+   "elements": [
+    "nature"
+   ],
+   "rarity": "multidimensional",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "travieso",
+   "battleForm": {
+    "name": "GATO ARAÑA — HOMEMADE HERO FORM",
+    "cry": "¡TELARAÑAZO!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Telaraña Casera",
+     "cry": "Un gran poder… da mucha hambre.",
+     "archetype": "semilla",
+     "element": "nature",
+     "dmg": 84,
+     "radius": 1.4,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "enraizado",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una bola de telaraña casera que deja todo Enraizado (pegajoso) donde cae."
+    },
+    "ultimate": {
+     "name": "TELARAÑAZO! (蜘蛛の巣)",
+     "effect": "Teje una red sobre el barco rival: cuatro bolas de telaraña que dejan todo Enraizado. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Se hizo el traje él solo. Se nota. Le queda perfecto.",
+    "star3": "★3: la telaraña enraíza un turno más.",
+    "star5": "★5: TELARAÑAZO! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:historia",
+    "how": "Ciudad Mayúscula: se une al terminar «Villanos sueltos».",
+    "balanceSource": "p3:historia"
+   },
+   "hint": "Un gorro tejido con una telaraña cosida y un suéter azul. Se agacha como trepador.",
+   "lore": "Gatito bromista del barrio. Lo picó una araña, se la comió y ahora tiene sus poderes (y un poco de indigestión). Se cose sus propios trajes. Las costuras torcidas son sentido arácnido.",
+   "balanceName": "Gato Araña",
+   "origin": "p3d_superheroes",
+   "p3": {
+    "kind": "historia",
+    "mission": "H76"
+   }
+  },
+  {
+   "id": "r_gatemson",
+   "name": "J. J. Gatemson",
+   "epithet": "el Director",
+   "art": {
+    "slug": "gatemson_editor_cat",
+    "tint": null,
+    "aura": [
+     "#7a7f8a",
+     "#f4f4f4",
+     "#c8102e"
+    ]
+   },
+   "elements": [
+    "storm"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "rencoroso",
+   "battleForm": {
+    "name": "J. J. GATEMSON — HEADLINE FORM",
+    "cry": "¡EXTRA! ¡EXTRA!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Periódico Enrollado",
+     "cry": "¡Quiero fotos de ese gato araña en mi escritorio! ¡YA!",
+     "archetype": "rafaga",
+     "element": "storm",
+     "dmg": 54,
+     "radius": 1.1,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "cargado",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un periodicazo con la edición de la mañana: una ráfaga que deja Cargado."
+    },
+    "ultimate": {
+     "name": "FRONT PAGE! (一面)",
+     "effect": "La portada entera, enrollada: tres periodicazos en abanico que dejan Cargado.",
+     "dmg": 45,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Odia a los héroes enmascarados. Vende más cuando los culpa. No ve la contradicción.",
+    "star3": "★3: la ráfaga empuja más lejos.",
+    "star5": "★5: FRONT PAGE! suelta un periodicazo extra."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "Ciudad Mayúscula · S-8, la torre de El Clarín Viñeta: gánale en su torre y se viene (por la exclusiva).",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Pelo en cepillo con canas y un periódico enrollado. Grita.",
+   "lore": "Director de El Clarín Viñeta. Grita los titulares antes de escribirlos y escribe los titulares antes de que pase nada. Se subió a tu barco «solo para la nota». Lleva tres semanas a bordo.",
+   "balanceName": "J. J. Gatemson",
+   "origin": "p3d_superheroes",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_superheroes",
+    "node": "8"
+   }
+  },
+  {
+   "id": "x_murciegato",
+   "name": "Murciégato",
+   "epithet": "el de la Capucha",
+   "art": {
+    "slug": "murciegato_cowl_cat",
+    "tint": null,
+    "aura": [
+     "#2b2f3a",
+     "#c9b458",
+     "#8a96a8"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "multidimensional",
+   "primordial": false,
+   "secret": false,
+   "role": "francotirador",
+   "worker": null,
+   "trait": "rencoroso",
+   "battleForm": {
+    "name": "MURCIÉGATO — NIGHT DETECTIVE FORM",
+    "cry": "FISHBONE-RANG!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Espina-rang",
+     "cry": "La noche no es mía. Es de los gatos: nosotros sí vemos.",
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 86,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un búmeran de espina de pescado que vuela a oscuras: no se ve hasta que pega."
+    },
+    "ultimate": {
+     "name": "NIGHT SHIFT! (夜勤)",
+     "effect": "Apaga la luz: tres espinas-rang invisibles en abanico. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Más gadgets que amigos. Le tiene miedo al baño del bar (nadie pregunta por qué).",
+    "star3": "★3: la espina-rang explota un poco más grande.",
+    "star5": "★5: NIGHT SHIFT! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:historia",
+    "how": "Ciudad Mayúscula: se une al terminar «Cruceta».",
+    "balanceSource": "p3:historia"
+   },
+   "hint": "Capucha con orejas, capa de borde de ala y un emblema de espina de pescado.",
+   "lore": "Detective nocturno de Ciudad Mayúscula. Huérfano, millonario y con un cinturón para cada problema, menos para hacer amigos. Ve en la oscuridad como cualquier gato, pero lo dice con más drama.",
+   "balanceName": "Murciégato",
+   "origin": "p3d_superheroes",
+   "p3": {
+    "kind": "historia",
+    "mission": "H77"
+   }
+  },
+  {
+   "id": "e_estambre",
+   "name": "El Estambre",
+   "epithet": "el que se Deshace",
+   "art": {
+    "slug": "estambre_yarnstorm_cat",
+    "tint": null,
+    "aura": [
+     "#6b7a3a",
+     "#d9c79a",
+     "#3a2a16"
+    ]
+   },
+   "elements": [
+    "earth"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "demoledor",
+   "worker": null,
+   "trait": "bravucon",
+   "battleForm": {
+    "name": "EL ESTAMBRE — YARNSTORM FORM",
+    "cry": "YARNSTORM!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.demoledor.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Puño de Ovillo",
+     "cry": "¡Te voy a enredar hasta las orejas!",
+     "archetype": "roca",
+     "element": "earth",
+     "dmg": 70,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 2,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un puño de lana apretada que atraviesa 2 celdas."
+    },
+    "ultimate": {
+     "name": "YARNSTORM! (毛糸の嵐)",
+     "effect": "Se deshace en un remolino de estambre que golpea el casco en abanico. Una vez por batalla.",
+     "dmg": 75,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Matón de barrio hecho de lana: se deshace y se vuelve a enrollar. Odia a los gatos (le jalan el hilo).",
+    "star3": "★3: el puño atraviesa una celda más.",
+    "star5": "★5: YARNSTORM! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:rescate",
+    "how": "Ciudad Mayúscula: después de «Cruceta» se vuelve a escapar. Gánale otra vez en su encuentro.",
+    "balanceSource": "p3:rescate"
+   },
+   "hint": "La mitad de abajo es un remolino de estambre.",
+   "lore": "Villano suelto de Ciudad Mayúscula. Mitad gato, mitad remolino de estambre verde oliva. Cada vez que lo derrotan se deshace, y cada vez que nadie lo mira, se vuelve a enrollar.",
+   "balanceName": "El Estambre",
+   "origin": "p3d_superheroes",
+   "p3": {
+    "kind": "rescate",
+    "dim": "p3d_superheroes",
+    "node": "eestambre",
+    "after": "mission:H77"
+   }
+  },
+  {
+   "id": "r_gatarana_noir",
+   "name": "Gato Araña Noir",
+   "epithet": "el de la Gabardina",
+   "art": {
+    "slug": "gatarana_noir_cat",
+    "tint": null,
+    "aura": [
+     "#3a3d46",
+     "#b8bcc6",
+     "#8c2f2f"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "francotirador",
+   "worker": null,
+   "trait": "callejero",
+   "battleForm": {
+    "name": "GATO ARAÑA NOIR — RAINY NIGHT FORM",
+    "cry": "NOCHE DE LLUVIA."
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Telaraña Gris",
+     "cry": "Era una noche oscura. Bueno, eran las tres de la tarde.",
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 58,
+     "radius": 1.1,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una telaraña gris que no se ve en la lluvia hasta que pega."
+    },
+    "ultimate": {
+     "name": "RAINY NIGHT! (雨の夜)",
+     "effect": "Tres telarañas grises en abanico, a oscuras.",
+     "dmg": 45,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Habla como narrador de radio. Hasta para pedir croquetas.",
+    "star3": "★3: la telaraña es más grande.",
+    "star5": "★5: RAINY NIGHT! suelta una telaraña extra."
+   },
+   "obtain": {
+    "source": "p3:rescate",
+    "how": "Ciudad Mayúscula · S-6, Rescate en la azotea: después de «Cruceta», cayó ahí por la rasgadura.",
+    "balanceSource": "p3:rescate"
+   },
+   "hint": "Gabardina, sombrero y gafas de aviador sobre la máscara.",
+   "lore": "Viene de otra versión de la misma caja, una donde siempre llueve y todo es gris. Narra su vida en voz alta, con pausas dramáticas. «Era una noche oscura», dice, a las tres de la tarde.",
+   "balanceName": "Gato Araña Noir",
+   "origin": "p3d_superheroes",
+   "p3": {
+    "kind": "rescate",
+    "dim": "p3d_superheroes",
+    "node": "6",
+    "after": "mission:H77"
+   }
+  },
+  {
+   "id": "r_gatarana_blanca",
+   "name": "Gata Araña",
+   "epithet": "la de la Capucha Blanca",
+   "art": {
+    "slug": "gatarana_blanca_cat",
+    "tint": null,
+    "aura": [
+     "#f4f4f4",
+     "#ff8fb8",
+     "#1a1a1a"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "presumido",
+   "battleForm": {
+    "name": "GATA ARAÑA — BALLET DROP FORM",
+    "cry": "¡PLIÉ!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Baquetazo",
+     "cry": "Uno, dos, tres… ¡y vuelta!",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 52,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 3,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Toca la batería colgada de cabeza: una onda que atraviesa paredes y Aturde."
+    },
+    "ultimate": {
+     "name": "BALLET DROP! (バレエ)",
+     "effect": "Baja colgada de un hilo y suelta tres ondas en abanico que Aturden.",
+     "dmg": 45,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Baterista y bailarina. Cuelga de cabeza como si fuera ballet, porque lo es.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: la onda deja Aturdido 1 turno más."
+   },
+   "obtain": {
+    "source": "p3:rescate",
+    "how": "Ciudad Mayúscula · S-4, El puente: después de «Cruceta», está colgada debajo. Gánale ahí.",
+    "balanceSource": "p3:rescate"
+   },
+   "hint": "Capucha blanca, traje blanco, rosa y negro. Cuelga de cabeza.",
+   "lore": "Otra Gata Araña, de otra versión de la caja. En la suya, la araña que la picó se volvió baterista. Toca colgada del techo y nunca pierde el ritmo, aunque se le suba la sangre a las orejas.",
+   "balanceName": "Gata Araña",
+   "origin": "p3d_superheroes",
+   "p3": {
+    "kind": "rescate",
+    "dim": "p3d_superheroes",
+    "node": "4",
+    "after": "mission:H77"
+   }
+  },
+  {
+   "id": "r_gatarana_2099",
+   "name": "Gato Araña 2099",
+   "epithet": "el del Futuro",
+   "art": {
+    "slug": "gatarana_2099_cat",
+    "tint": null,
+    "aura": [
+     "#1c2a6e",
+     "#d8262f",
+     "#3ad1ff"
+    ]
+   },
+   "elements": [
+    "storm"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "francotirador",
+   "worker": null,
+   "trait": "impaciente",
+   "battleForm": {
+    "name": "GATO ARAÑA 2099 — NEON CLAW FORM",
+    "cry": "NEON CLAW!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Garra de Neón",
+     "cry": "En mi año esto ya es antiguo.",
+     "archetype": "rayo",
+     "element": "storm",
+     "dmg": 56,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "cargado",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un zarpazo de luz que viaja recto y deja Cargado."
+    },
+    "ultimate": {
+     "name": "NEON CLAW! (ネオン爪)",
+     "effect": "Tres zarpazos de neón en abanico que dejan Cargado.",
+     "dmg": 45,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Viene del futuro. Dice que allá las croquetas son de luz. Las de aquí le gustan más.",
+    "star3": "★3: el zarpazo carga un turno más.",
+    "star5": "★5: NEON CLAW! suelta un zarpazo extra."
+   },
+   "obtain": {
+    "source": "p3:rescate",
+    "how": "Ciudad Mayúscula · S-7, el Laboratorio: después de «Cruceta», apareció entre los tubos de ensayo. Gánale ahí.",
+    "balanceSource": "p3:rescate"
+   },
+   "hint": "Traje azul oscuro con una huella roja grande y garras.",
+   "lore": "Llegó del año 2099 por la misma rasgadura que los otros. Tiene garras de verdad, capa de membrana y una prisa enorme por volver, aunque no sabe a qué. En su futuro, dice, los gatos ya mandan. «Como aquí», le contestan.",
+   "balanceName": "Gato Araña 2099",
+   "origin": "p3d_superheroes",
+   "p3": {
+    "kind": "rescate",
+    "dim": "p3d_superheroes",
+    "node": "7",
+    "after": "mission:H77"
+   }
+  },
+  {
+   "id": "l_gatzilla",
+   "name": "Gatzilla",
+   "epithet": "el de la Siesta",
+   "art": {
+    "slug": "gatzilla_kaiju_cat",
+    "tint": null,
+    "aura": [
+     "#5f7a5a",
+     "#a8b8a0",
+     "#2b2f2a"
+    ]
+   },
+   "elements": [
+    "earth"
+   ],
+   "rarity": "legendary",
+   "primordial": false,
+   "secret": false,
+   "role": "demoledor",
+   "worker": null,
+   "trait": "dormilon",
+   "battleForm": {
+    "name": "GATZILLA — KAIJU NAP FORM",
+    "cry": "GAAAATZ!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+    "powerBase": "balance:rarities.power_base.legendary",
+    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.demoledor.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Pisotón de Cartón",
+     "cry": "¡GAAAATZ…!",
+     "archetype": "roca",
+     "element": "earth",
+     "dmg": 85,
+     "radius": 1.6,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 3,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un pisotón que atraviesa 3 celdas y tumba edificios de cartón."
+    },
+    "ultimate": {
+     "name": "KAIJU NAP! (怪獣昼寝)",
+     "effect": "Se acuesta encima del barco rival: tres pisotones que atraviesan todo. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Monstruo de película de los 50. En el fondo solo quería una siesta en la ciudad tibia.",
+    "star3": "★3: el pisotón es más grande.",
+    "star5": "★5: KAIJU NAP! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:recordar",
+    "how": "Después de todo: algo enorme se asoma en el Muelle industrial de Ciudad Mayúscula (S-3).",
+    "balanceSource": "p3:recordar"
+   },
+   "hint": "Placas dentadas en el lomo y un edificio de cartón bajo la pata.",
+   "lore": "Llegó de la caja del cine, la de las películas en blanco y negro con efectos de cartón. Pisa ciudades sin querer: solo buscaba un lugar tibio para dormir. Ahora duerme en tu isla. La isla está nerviosa.",
+   "balanceName": "Gatzilla",
+   "origin": "pantalla",
+   "p3": {
+    "kind": "recordar",
+    "dim": "p3d_superheroes",
+    "node": "3",
+    "after": "mission:H97"
+   }
+  },
+  {
+   "id": "l_bigoton",
+   "name": "Príncipe Bigotón",
+   "epithet": "el Rival que no te Conoce",
+   "art": {
+    "slug": "bigoton_rival_cat",
+    "tint": null,
+    "aura": [
+     "#2a3d8c",
+     "#f4f4f4",
+     "#e8c547"
+    ]
+   },
+   "elements": [
+    "fire"
+   ],
+   "rarity": "legendary",
+   "primordial": false,
+   "secret": false,
+   "role": "francotirador",
+   "worker": null,
+   "trait": "presumido",
+   "battleForm": {
+    "name": "PRÍNCIPE BIGOTÓN — PRIDE FLASH FORM",
+    "cry": "¡TÚ VAS ATRÁS!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+    "powerBase": "balance:rarities.power_base.legendary",
+    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.francotirador.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Destello Real",
+     "cry": "No es rivalidad. Es que tú vas atrás.",
+     "archetype": "rayo",
+     "element": "fire",
+     "dmg": 84,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "ardiendo",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un rayo de orgullo puro que viaja recto y deja Ardiendo."
+    },
+    "ultimate": {
+     "name": "PRIDE FLASH! (誇りの閃光)",
+     "effect": "Junta las palmas y suelta un rayo enorme que cruza el barco. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Siempre queda segundo y nunca lo admite. Dice que te dejó ganar. A todos.",
+    "star3": "★3: el rayo arde un turno más.",
+    "star5": "★5: PRIDE FLASH! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "Mar Shōnen · A-5: «el rival que no te conoce» se une cuando le ganas. Dice que fue a propósito.",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Pelaje en flama alta, brazos cruzados y hombreras doradas.",
+   "lore": "Cree que eres su rival desde la infancia. No te había visto nunca. Te persigue por el torneo jurando revancha, y cuando le ganas se une a tu tripulación «para vigilarte de cerca».",
+   "balanceName": "Príncipe Bigotón",
+   "origin": "p3d_anime",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_anime",
+    "node": "a5"
+   }
+  },
+  {
+   "id": "x_supersiames",
+   "name": "Super Siamés",
+   "epithet": "el del Amanecer",
+   "art": {
+    "slug": "supersiames_aura_cat",
+    "tint": null,
+    "aura": [
+     "#ffcf3a",
+     "#e8442e",
+     "#3a5fb0"
+    ]
+   },
+   "elements": [
+    "fire"
+   ],
+   "rarity": "multidimensional",
+   "primordial": false,
+   "secret": false,
+   "role": "demoledor",
+   "worker": null,
+   "trait": "impaciente",
+   "battleForm": {
+    "name": "SUPER SIAMÉS — GOLDEN FUR FORM",
+    "cry": "NINE LIVES WAVE!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.demoledor.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Onda de Bigote",
+     "cry": "¡Mi poder pasó de nueve! …Nueve vidas, digo.",
+     "archetype": "rayo",
+     "element": "fire",
+     "dmg": 86,
+     "radius": 1.4,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "ardiendo",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Junta las patas y suelta una onda de luz que viaja recto y deja Ardiendo."
+    },
+    "ultimate": {
+     "name": "NINE LIVES WAVE! (九命波)",
+     "effect": "Se vuelve dorado y erizado y suelta una onda gigante que cruza el barco. Una vez por batalla.",
+     "dmg": 105,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Entrena con Canelo al amanecer. Canelo lo copia mal y los dos están muy orgullosos.",
+    "star3": "★3: la onda arde un turno más.",
+    "star5": "★5: NINE LIVES WAVE! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:actividad",
+    "how": "Mar Shōnen · Entrenamiento: cada arco deja orbes suyos; al terminar los tres, entrena contigo para siempre.",
+    "balanceSource": "p3:actividad"
+   },
+   "hint": "Un siamés que se vuelve dorado y erizado, con una cinta roja en la cintura.",
+   "lore": "Llegó al Mar Shōnen por una pelea y se quedó por la comida. Grita el nombre de cada ataque, incluso cuando ataca su plato. Cuando se enoja se pone dorado y erizado. Cuando tiene hambre, también.",
+   "balanceName": "Super Siamés",
+   "origin": "p3d_anime",
+   "p3": {
+    "kind": "actividad",
+    "mission": "H80",
+    "orbs": {
+     "beats": [
+      "b80_arco1",
+      "b80_arco2",
+      "b80_arco3"
+     ]
+    }
+   }
+  },
+  {
+   "id": "e_comecroquetas",
+   "name": "Comecroquetas",
+   "epithet": "el Redondo",
+   "art": {
+    "slug": "comecroquetas_pellet_cat",
+    "tint": null,
+    "aura": [
+     "#ffd521",
+     "#1a1a6e",
+     "#ff5fa2"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "gloton",
+   "battleForm": {
+    "name": "COMECROQUETAS — WAKA FORM",
+    "cry": "WAKA-MIAU!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Croqueta en Fila",
+     "cry": "¡Waka-miau, waka-miau!",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 66,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 6,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Avanza en línea recta comiéndose todo: la onda atraviesa paredes y Aturde."
+    },
+    "ultimate": {
+     "name": "POWER PELLET! (パワー)",
+     "effect": "Se come la croqueta grande: tres ondas en abanico que atraviesan todo. Una vez por batalla.",
+     "dmg": 70,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Solo piensa en croquetas en fila. Huye de los fantasmas hasta que se come la grande.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: POWER PELLET! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:recordar",
+    "how": "Después de todo: hay una maquinita junto a La convocatoria del Mar Shōnen (A-1).",
+    "balanceSource": "p3:recordar"
+   },
+   "hint": "Amarillo, perfectamente redondo y con la boca en cuña.",
+   "lore": "Salió de una maquinita de la caja de los videojuegos y no sabe volver. Es un círculo perfecto con un hambre perfecta. Si ve una fila de croquetas, la sigue. Si ve un fantasma, corre: tiene una teoría y no la quiere comprobar.",
+   "balanceName": "Comecroquetas",
+   "origin": "pixel",
+   "p3": {
+    "kind": "recordar",
+    "dim": "p3d_anime",
+    "node": "a1",
+    "after": "mission:H97"
+   }
+  },
+  {
+   "id": "x_harrygatter",
+   "name": "Harry Gatter",
+   "epithet": "el que Maulló",
+   "art": {
+    "slug": "harrygatter_wand_cat",
+    "tint": null,
+    "aura": [
+     "#1b1b2a",
+     "#c9a227",
+     "#8b1e2b"
+    ]
+   },
+   "elements": [
+    "magic"
+   ],
+   "rarity": "multidimensional",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "curioso",
+   "battleForm": {
+    "name": "HARRY GATTER — WHISKER WAND FORM",
+    "cry": "WHISKER WAND!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Chispa de Bigote",
+     "cry": "¡Expelliarmiau!… no, espera, esa no es.",
+     "archetype": "runa",
+     "element": "magic",
+     "dmg": 86,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "maldito",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un hechizo con la varita-bigote que persigue a su objetivo y lo deja Maldito."
+    },
+    "ultimate": {
+     "name": "WHISKER WAND! (ひげの杖)",
+     "effect": "Tres hechizos teledirigidos a la vez que dejan Maldito. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Llegó tarde a su propia caja porque se quedó leyendo. Sigue leyendo.",
+    "star3": "★3: la maldición dura un turno más.",
+    "star5": "★5: WHISKER WAND! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "Ex Libris · L-1, El colegio: estaba varado ahí; se viene contigo cuando ganas.",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Lentes redondos, túnica escolar y un rayito en el pelaje de la frente.",
+   "lore": "Estudiante de la caja de los libros. Se quedó varado en el colegio cuando las páginas se mezclaron. Es buenísimo con la varita y malísimo con los horarios. Dice que el rayito de la frente es de nacimiento. Es de nacimiento.",
+   "balanceName": "Harry Gatter",
+   "origin": "p3d_libros",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_libros",
+    "node": "l1"
+   }
+  },
+  {
+   "id": "e_encuadernadora",
+   "name": "La Encuadernadora",
+   "epithet": "la que Cose Historias",
+   "art": {
+    "slug": "encuadernadora_needle_cat",
+    "tint": null,
+    "aura": [
+     "#8a5a3a",
+     "#c8102e",
+     "#f2e6cf"
+    ]
+   },
+   "elements": [
+    "magic"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "presumido",
+   "battleForm": {
+    "name": "LA ENCUADERNADORA — STITCH FORM",
+    "cry": "¡COSTURA!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Aguja Curva",
+     "cry": "Quieto, que te coso a un cuento aburrido.",
+     "archetype": "haz",
+     "element": "magic",
+     "dmg": 66,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 3,
+     "status": "maldito",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una aguja con hilo rojo que atraviesa 3 celdas y las deja cosidas (Maldito)."
+    },
+    "ultimate": {
+     "name": "BOUND TOGETHER! (製本)",
+     "effect": "Cose dos capítulos juntos: tres agujas en abanico que atraviesan y maldicen. Una vez por batalla.",
+     "dmg": 72,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Cose cuentos que no van juntos y dice que así quedan mejor. Nunca quedan mejor.",
+    "star3": "★3: la aguja atraviesa una celda más.",
+    "star5": "★5: BOUND TOGETHER! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "Ex Libris · L-5: se queda contigo cuando le ganas.",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Una aguja curva gigante con hilo rojo y hombreras de lomos cosidos.",
+   "lore": "Encuadernadora de la Biblioteca. Le gustan tanto los libros que los cose entre sí: la sirena con el detective, el dragón con la receta de flan. Dice que lo hace por el bien de la historia. La historia no fue consultada.",
+   "balanceName": "La Encuadernadora",
+   "origin": "p3d_libros",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_libros",
+    "node": "l5"
+   }
+  },
+  {
+   "id": "r_garbancito",
+   "name": "Garbancito",
+   "epithet": "el Diminuto",
+   "art": {
+    "slug": "garbancito_tiny_cat",
+    "tint": null,
+    "aura": [
+     "#e8d29a",
+     "#c8102e",
+     "#2a2a2a"
+    ]
+   },
+   "elements": [
+    "void"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "bravucon",
+   "battleForm": {
+    "name": "GARBANCITO — TINY HERO FORM",
+    "cry": "¡PACHÍN!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Latita Chiquita",
+     "cry": "¡Pachín, pachín, pachín! …perdón, ese era mi cuento.",
+     "archetype": "borrado",
+     "element": "void",
+     "dmg": 54,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 2,
+     "status": "vacio",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una latita de aerosol del tamaño de un garbanzo: borra 2 celdas."
+    },
+    "ultimate": {
+     "name": "TINY BUT BRAVE! (小さな勇者)",
+     "effect": "Tres latitas en abanico que borran 2 celdas cada una.",
+     "dmg": 45,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Tan chiquito que nadie lo ve; tan valiente que no se entera.",
+    "star3": "★3: la latita borra una celda más.",
+    "star5": "★5: TINY BUT BRAVE! suelta una latita extra."
+   },
+   "obtain": {
+    "source": "p3:actividad",
+    "how": "Ex Libris · Finales perdidos: cada cuento devuelto deja orbes suyos; cuando devuelves los tres, se viene contigo.",
+    "balanceSource": "p3:actividad"
+   },
+   "hint": "Más chico que un garbanzo, con una página rota de pañoleta.",
+   "lore": "Era un Disruptor diminuto: pintaba puertas en las cajas con una latita de su tamaño. Perdió el final de su cuento y casi se queda sin historia. Ahora viaja contigo, escondido en la bufanda de Canelo. Canelo no lo sabe.",
+   "balanceName": "Garbancito",
+   "origin": "p3d_libros",
+   "p3": {
+    "kind": "actividad",
+    "mission": "H84",
+    "orbs": {
+     "beats": [
+      "b84_cuento1",
+      "b84_cuento2",
+      "b84_cuento3"
+     ]
+    }
+   }
+  },
+  {
+   "id": "e_sirsimon",
+   "name": "Sir Simón de Gatterville",
+   "epithet": "el Fantasma Cansado",
+   "art": {
+    "slug": "sirsimon_ghost_cat",
+    "tint": null,
+    "aura": [
+     "#a8c4e0",
+     "#6b5a4a",
+     "#e85d6a"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "dormilon",
+   "battleForm": {
+    "name": "SIR SIMÓN — CHAIN RATTLE FORM",
+    "cry": "¡BUUU!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Cadena Fantasma",
+     "cry": "¡Buuu!… perdón, es la costumbre. ¿Me dejan dormir?",
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 66,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": "maldito",
+     "statusTurns": 2,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Arrastra una cadena que no se ve hasta que pega y deja Maldito."
+    },
+    "ultimate": {
+     "name": "CHAIN RATTLE! (鎖の音)",
+     "effect": "Hace sonar todas sus cadenas: tres golpes invisibles en abanico que maldicen. Una vez por batalla.",
+     "dmg": 70,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Fantasma de cuento que solo quiere descansar. Asusta por costumbre y pide perdón por educación.",
+    "star3": "★3: la maldición dura un turno más.",
+    "star5": "★5: CHAIN RATTLE! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "Ex Libris · L-8, La azotea: un fantasma que solo quiere dormir; se viene contigo cuando ganas.",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Fantasma azul pálido en armadura oxidada, con cadenas.",
+   "lore": "Lleva trescientos años asustando en el mismo castillo de cuento y está agotado. Tiene una mancha en la armadura que no se quita con nada (es mermelada, jura). Le preguntó a Luzterna si prefería cadenas o linterna. Ella dijo linterna. Él se quedó pensando.",
+   "balanceName": "Sir Simón de Gatterville",
+   "origin": "p3d_libros",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_libros",
+    "node": "l8"
+   }
+  },
+  {
+   "id": "e_sonrisa",
+   "name": "Sonrisa",
+   "epithet": "la que se Desvanece",
+   "art": {
+    "slug": "sonrisa_grin_cat",
+    "tint": null,
+    "aura": [
+     "#d9a441",
+     "#7a4a2a",
+     "#f2e6cf"
+    ]
+   },
+   "elements": [
+    "void"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "travieso",
+   "battleForm": {
+    "name": "SONRISA — VANISHING GRIN FORM",
+    "cry": "¡AQUÍ NO HAY NADIE!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Sonrisa Suelta",
+     "cry": "Aquí todos estamos un poco locos. Yo un poco más.",
+     "archetype": "borrado",
+     "element": "void",
+     "dmg": 66,
+     "radius": 1.1,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 2,
+     "status": "vacio",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Deja su sonrisa flotando donde pega: borra 2 celdas."
+    },
+    "ultimate": {
+     "name": "VANISHING GRIN! (消える笑み)",
+     "effect": "Desaparece entera salvo la sonrisa: tres mordidas en abanico que borran celdas. Una vez por batalla.",
+     "dmg": 72,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Deja su sonrisa cuando se va. A veces se va y la sonrisa se queda a cenar.",
+    "star3": "★3: la mordida borra una celda más.",
+    "star5": "★5: VANISHING GRIN! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:rescate",
+    "how": "Ex Libris · L-3, Capítulo perdido: después de «Finales perdidos», a veces aparece una sonrisa sola. Gánale ahí.",
+    "balanceSource": "p3:rescate"
+   },
+   "hint": "Una sonrisa enorme en media luna, rayas miel y café, sentada en una rama.",
+   "lore": "Vive en una rama de un cuento viejo y aparece cuando le da la gana. Contesta las preguntas con otras preguntas y las adivinanzas con siestas. Nadie la ha visto entera al mismo tiempo; ella dice que tampoco.",
+   "balanceName": "Sonrisa",
+   "origin": "p3d_libros",
+   "p3": {
+    "kind": "rescate",
+    "dim": "p3d_libros",
+    "node": "l3",
+    "after": "mission:H84"
+   }
+  },
+  {
+   "id": "e_lobo",
+   "name": "El Lobo",
+   "epithet": "el de la Abuela",
+   "art": {
+    "slug": "lobo_grandma_cat",
+    "tint": null,
+    "aura": [
+     "#7a7f8a",
+     "#f2efe6",
+     "#c9a227"
+    ]
+   },
+   "elements": [
+    "shadow"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "demoledor",
+   "worker": null,
+   "trait": "rencoroso",
+   "battleForm": {
+    "name": "EL LOBO — BIG BAD FORM",
+    "cry": "¡PARA ASUSTARTE MEJOR!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.demoledor.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Zarpazo de Cuento",
+     "cry": "¿Para qué tan grandes los bigotes? …Para asustarte mejor.",
+     "archetype": "sombra",
+     "element": "shadow",
+     "dmg": 70,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un zarpazo que sale de debajo del camisón: no se ve hasta que pega."
+    },
+    "ultimate": {
+     "name": "BIG BAD HOWL! (大きな遠吠え)",
+     "effect": "Sopla y sopla: tres zarpazos invisibles en abanico. Una vez por batalla.",
+     "dmg": 75,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Se salió de su cuento con el camisón de la abuela puesto. No se lo ha quitado. Le queda bien.",
+    "star3": "★3: el zarpazo es más grande.",
+    "star5": "★5: BIG BAD HOWL! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:recordar",
+    "how": "Después de todo: El bosque del cuento de Ex Libris (L-2). Alguien le escribió otra página.",
+    "balanceSource": "p3:recordar"
+   },
+   "hint": "Gorro de dormir de encaje, camisón de abuela y una sonrisa de dientes.",
+   "lore": "Se escapó del cuento de la caperuza y acorraló a los más chiquitos de la Biblioteca. Alguien le escribió FIN. Tiempo después, alguien más le escribió otra página: ahora cuida el bosque y se pone el camisón solo los domingos.",
+   "balanceName": "El Lobo",
+   "origin": "p3d_libros",
+   "p3": {
+    "kind": "recordar",
+    "dim": "p3d_libros",
+    "node": "l2",
+    "after": "mission:H97"
+   }
+  },
+  {
+   "id": "e_gatoconda",
+   "name": "La Gatoconda",
+   "epithet": "la de la Sonrisa Enigmática",
+   "art": {
+    "slug": "gatoconda_smile_cat",
+    "tint": null,
+    "aura": [
+     "#5a6b3a",
+     "#c9a46a",
+     "#2a2418"
+    ]
+   },
+   "elements": [
+    "time"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "tanque",
+   "worker": null,
+   "trait": "presumido",
+   "battleForm": {
+    "name": "LA GATOCONDA — SFUMATO FORM",
+    "cry": "…"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.tanque.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Mirada que te Sigue",
+     "cry": "…",
+     "archetype": "reloj",
+     "element": "time",
+     "dmg": 64,
+     "radius": 1.3,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 1,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Te sigue con la mirada: un golpe lento que rebota una vez."
+    },
+    "ultimate": {
+     "name": "SFUMATO! (スフマート)",
+     "effect": "Todo se vuelve neblina verde-café: tres golpes en abanico que rebotan. Una vez por batalla.",
+     "dmg": 70,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Nadie sabe si está feliz. Ella no lo va a decir.",
+    "star3": "★3: el golpe rebota una vez más.",
+    "star5": "★5: SFUMATO! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:recordar",
+    "how": "Después de todo: se escapó del Museo y se escondió en La novela de piratas de Ex Libris (L-4).",
+    "balanceSource": "p3:recordar"
+   },
+   "hint": "Patas cruzadas, velo oscuro y una sonrisa que nadie entiende.",
+   "lore": "Llegó de la caja de los pintores, el Museo, donde posó quinientos años sin moverse. Se escapó para estirar las patas. Te sigue con la mirada desde cualquier rincón de la isla. Es lindo. También es raro.",
+   "balanceName": "La Gatoconda",
+   "origin": "pinceles",
+   "p3": {
+    "kind": "recordar",
+    "dim": "p3d_libros",
+    "node": "l4",
+    "after": "mission:H97"
+   }
+  },
+  {
+   "id": "r_bocina",
+   "name": "Bocina",
+   "epithet": "el del Estéreo",
+   "art": {
+    "slug": "bocina_boombox_cat",
+    "tint": null,
+    "aura": [
+     "#1a1a1a",
+     "#f4f4f4",
+     "#ff7a1a"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "tanque",
+   "worker": null,
+   "trait": "perezoso",
+   "battleForm": {
+    "name": "BOCINA — BOOMBOX FORM",
+    "cry": "¡SÚBELE!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.tanque.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Bajo Profundo",
+     "cry": "¡Súbele!",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 50,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 4,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "El estéreo a medio volumen: una onda que atraviesa paredes y Aturde."
+    },
+    "ultimate": {
+     "name": "BASS DROP! (重低音)",
+     "effect": "El estéreo a todo volumen: una onda que cruza el barco y Aturde a cada gato cuyo camarote toca.",
+     "dmg": 45,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "No rapea. Pone el ritmo y asiente. Con eso basta.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: el bajo deja Aturdido 1 turno más."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "La Gira · P-2, Telonero: la pandilla de EMIAU calienta el escenario; se une cuando ganas.",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Un estéreo enorme al hombro y cero prisa.",
+   "lore": "El grandote de la pandilla de EMIAU. Carga el estéreo a todas partes y nunca lo prende fuerte, salvo cuando alguien dice «súbele». Siempre hay alguien que dice «súbele».",
+   "balanceName": "Bocina",
+   "origin": "p3d_pop",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_pop",
+    "node": "p2"
+   }
+  },
+  {
+   "id": "e_manager",
+   "name": "El Mánager",
+   "epithet": "el de la Lista",
+   "art": {
+    "slug": "manager_backstage_cat",
+    "tint": null,
+    "aura": [
+     "#7a2a8c",
+     "#f2e6cf",
+     "#1a1a1a"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "controlador",
+   "worker": null,
+   "trait": "impaciente",
+   "battleForm": {
+    "name": "EL MÁNAGER — BACKSTAGE FORM",
+    "cry": "¡NO ESTÁS EN LA LISTA!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.controlador.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Sujetapapeles",
+     "cry": "¡Tú no estás en la lista!",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 64,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 3,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un sujetapapeles lanzado con prisa: la onda atraviesa paredes y Aturde."
+    },
+    "ultimate": {
+     "name": "SOLD OUT! (完売)",
+     "effect": "Todo vendido, nadie entra: tres ondas en abanico que Aturden. Una vez por batalla.",
+     "dmg": 70,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Todo es «para ayer». Nadie entra al backstage sin su gafete. Ni él: se le olvidó el suyo.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: SOLD OUT! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "La Gira · P-5: se queda contigo cuando le ganas (y te cobra comisión).",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Audífono de diadema, lentes oscuros, sujetapapeles y gafetes sin letras.",
+   "lore": "Mánager de la gira. Habla por el audífono, por el celular y contigo al mismo tiempo, y las tres conversaciones son sobre horarios. Se unió a tu tripulación porque «alguien tiene que organizar esto». Ya le hizo un horario a la siesta de Canelo.",
+   "balanceName": "El Mánager",
+   "origin": "p3d_pop",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_pop",
+    "node": "p5"
+   }
+  },
+  {
+   "id": "l_emiau",
+   "name": "EMIAU",
+   "epithet": "«Slim Bigotes»",
+   "art": {
+    "slug": "emiau_rapper_cat",
+    "tint": null,
+    "aura": [
+     "#f2efe6",
+     "#9a9fa8",
+     "#1a1a1a"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "legendary",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "rencoroso",
+   "battleForm": {
+    "name": "EMIAU — CUADRA 8 FORM",
+    "cry": "MIC DROP!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
+    "powerBase": "balance:rarities.power_base.legendary",
+    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Rima de Acero",
+     "cry": "¿Te acuerdas de anoche? Yo sí. De todo.",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 85,
+     "radius": 1.1,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 5,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una rima tan rápida que atraviesa paredes y Aturde a quien la escucha."
+    },
+    "ultimate": {
+     "name": "MIC DROP! (マイクドロップ)",
+     "effect": "Suelta el micrófono: una onda que cruza el barco entero y Aturde a cada gato cuyo camarote toca. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "El único sobrio de la Borracha: siempre se acordó de todo. Por eso está enojado.",
+    "star3": "★3: la rima cruza 2 celdas más.",
+    "star5": "★5: MIC DROP! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:historia",
+    "how": "La Gira: se une al terminar «Backstage», de telonero.",
+    "balanceSource": "p3:historia"
+   },
+   "hint": "Pelaje rubio platinado al ras, camiseta sin mangas y una cadena con espina de pescado.",
+   "lore": "Rey de las batallas de rap de La Cuadra 8. Mientras todos olvidaban sus noches, él se acordaba de cada una, palabra por palabra. Le ganaste en su propio escenario y lo perdonaste. No se lo esperaba. Ahora abre tus shows.",
+   "balanceName": "EMIAU",
+   "origin": "p3d_pop",
+   "p3": {
+    "kind": "historia",
+    "mission": "H89"
+   }
+  },
+  {
+   "id": "x_gatomalo",
+   "name": "Gato Malo",
+   "epithet": "el del Gorro de Conejo",
+   "art": {
+    "slug": "gatomalo_bunny_cat",
+    "tint": null,
+    "aura": [
+     "#f5a8c8",
+     "#1a1a1a",
+     "#f2c94c"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "multidimensional",
+   "primordial": false,
+   "secret": false,
+   "role": "demoledor",
+   "worker": null,
+   "trait": "presumido",
+   "battleForm": {
+    "name": "GATO MALO — LUCHA LIBRE FORM",
+    "cry": "¡ESTO ES LUCHA!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.demoledor.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Zanahoria Dorada",
+     "cry": "¡Esto no es baile, es lucha!",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 86,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 4,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Revolea su dije de zanahoria dorada: una onda que atraviesa paredes y Aturde."
+    },
+    "ultimate": {
+     "name": "TOPE SUICIDA! (トペ)",
+     "effect": "Se lanza desde las cuerdas: una onda gigante que cruza el barco y Aturde a todos los que toca. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Se viste como quiere y le cambia el género a todo. Hasta a la ulti.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: TOPE SUICIDA! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "La Gira · P-6: se une al terminar el primer show.",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Gorro de pescador con orejas de conejo, lentes oscuros y uñas de colores.",
+   "lore": "Estrella de otra caja, de gira en una que no es la suya. Mezcla el escenario con el cuadrilátero y nadie se queja. Sus uñas cambian de color según el humor. Hoy, verde. Mañana, verde también: le gustó.",
+   "balanceName": "Gato Malo",
+   "origin": "p3d_pop",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_pop",
+    "node": "p6"
+   }
+  },
+  {
+   "id": "x_tailorswift",
+   "name": "Tailor Swift",
+   "epithet": "la de las Eras",
+   "art": {
+    "slug": "tailor_eras_cat",
+    "tint": null,
+    "aura": [
+     "#c8a2e8",
+     "#f2d16b",
+     "#d8262f"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "multidimensional",
+   "primordial": false,
+   "secret": false,
+   "role": "soporte",
+   "worker": null,
+   "trait": "rencoroso",
+   "battleForm": {
+    "name": "TAILOR SWIFT — NEW ERA FORM",
+    "cry": "¡NUEVA ERA!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.soporte.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Lentejuela Afilada",
+     "cry": "Esto va a ser canción. Y tú vas a salir en ella.",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 84,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 4,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una lentejuela que suena: la onda atraviesa paredes y Aturde."
+    },
+    "ultimate": {
+     "name": "NEW ERA! (新時代)",
+     "effect": "Cambia de era a media batalla: tres ondas en abanico que Aturden. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Todo lo que le haces termina siendo una canción. Cuidado con lo que le haces.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: NEW ERA! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:etapa",
+    "how": "La Gira · P-8: se une en el escenario principal.",
+    "balanceSource": "p3:etapa"
+   },
+   "hint": "Vestido de lentejuelas, micrófono de cristal y pulseras de la amistad.",
+   "lore": "Estrella de otra caja, de gira en esta. Tiene una canción para cada cosa que le pasa y le pasan muchas cosas. Te regala una pulsera de la amistad el primer día. El segundo, ya te escribió un disco.",
+   "balanceName": "Tailor Swift",
+   "origin": "p3d_pop",
+   "p3": {
+    "kind": "etapa",
+    "dim": "p3d_pop",
+    "node": "p8"
+   }
+  },
+  {
+   "id": "x_billiebigotish",
+   "name": "Billie Bigotish",
+   "epithet": "la del Susurro",
+   "art": {
+    "slug": "billie_whisper_cat",
+    "tint": null,
+    "aura": [
+     "#1a1a1a",
+     "#7cff4f",
+     "#6b7a8f"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "multidimensional",
+   "primordial": false,
+   "secret": false,
+   "role": "soporte",
+   "worker": null,
+   "trait": "dormilon",
+   "battleForm": {
+    "name": "BILLIE BIGOTISH — WHISPER FORM",
+    "cry": "SHHH."
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.soporte.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Susurro",
+     "cry": "Shhh. Lo bonito se dice bajito.",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 84,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 4,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Canta tan bajito que la onda atraviesa paredes y Aturde a quien se acerca a escuchar."
+    },
+    "ultimate": {
+     "name": "LULLABY! (子守唄)",
+     "effect": "Una canción de cuna en susurros: tres ondas en abanico que Aturden. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Canta tan bajito que los demás gatos se acercan… y se duermen.",
+    "star3": "★3: el susurro deja Aturdido 1 turno más.",
+    "star5": "★5: LULLABY! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:rescate",
+    "how": "La Gira: cada fecha de «La gira» deja orbes suyos; después, búscala en la fila de Firma de autógrafos (P-4).",
+    "balanceSource": "p3:rescate"
+   },
+   "hint": "Pelo negro con raíces verde neón, sudadera gigante y el micrófono bajo.",
+   "lore": "Estrella de otra caja que se escapó del ruido de la gira y se escondió en la fila de autógrafos, donde nadie la buscaba. Habla poco y canta menos fuerte. Los gatos de tu isla se duermen en su regazo sin pedir permiso.",
+   "balanceName": "Billie Bigotish",
+   "origin": "p3d_pop",
+   "p3": {
+    "kind": "rescate",
+    "dim": "p3d_pop",
+    "node": "p4",
+    "after": "mission:H90",
+    "orbs": {
+     "beats": [
+      "b90_show1",
+      "b90_show2",
+      "b90_show3"
+     ]
+    }
+   }
+  },
+  {
+   "id": "r_scratch",
+   "name": "Scratch",
+   "epithet": "el DJ",
+   "art": {
+    "slug": "scratch_dj_cat",
+    "tint": null,
+    "aura": [
+     "#e8742e",
+     "#1a1a1a",
+     "#3ad1ff"
+    ]
+   },
+   "elements": [
+    "sound"
+   ],
+   "rarity": "rare",
+   "primordial": false,
+   "secret": false,
+   "role": "artillero",
+   "worker": null,
+   "trait": "impaciente",
+   "battleForm": {
+    "name": "SCRATCH — WIKI-WIKI FORM",
+    "cry": "¡WIKI-WIKI-MIAU!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
+    "powerBase": "balance:rarities.power_base.rare",
+    "foodMult": "balance:rarities.food_mult.rare",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.artillero.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Disco Rayado",
+     "cry": "¡Wiki-wiki-miau!",
+     "archetype": "onda",
+     "element": "sound",
+     "dmg": 54,
+     "radius": 1.0,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 3,
+     "status": "aturdido",
+     "statusTurns": 1,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Un disco que sale girando: la onda atraviesa paredes y Aturde a quien cruza."
+    },
+    "ultimate": {
+     "name": "SCRATCH ATTACK! (スクラッチ)",
+     "effect": "Tres discos rayados en abanico: cada onda Aturde a los gatos cuyos camarotes cruza.",
+     "dmg": 45,
+     "meterCost": 100,
+     "usesPerBattle": null,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Rasguña discos en vez de sillones. El sillón se lo agradece.",
+    "star3": "★3: la onda cruza 2 celdas más.",
+    "star5": "★5: el disco deja Aturdido 1 turno más."
+   },
+   "obtain": {
+    "source": "p3:rescate",
+    "how": "La Gira · P-1, Prueba de sonido: después de «Backstage», se queda probando el micrófono. Gánale ahí.",
+    "balanceSource": "p3:rescate"
+   },
+   "hint": "Audífonos enormes al cuello y una tornamesa portátil.",
+   "lore": "El DJ de la pandilla de EMIAU. Flaco, nervioso y con el ritmo en las uñas. Si lo dejas solo con una tornamesa, rasguña. Si lo dejas solo con un sillón, también, pero en el beat.",
+   "balanceName": "Scratch",
+   "origin": "p3d_pop",
+   "p3": {
+    "kind": "rescate",
+    "dim": "p3d_pop",
+    "node": "p1",
+    "after": "mission:H89"
+   }
+  },
+  {
+   "id": "x_vangato",
+   "name": "Vincent van Gato",
+   "epithet": "el de los Remolinos",
+   "art": {
+    "slug": "vangato_sunflower_cat",
+    "tint": null,
+    "aura": [
+     "#2a4d9c",
+     "#f2c230",
+     "#e07b28"
+    ]
+   },
+   "elements": [
+    "light"
+   ],
+   "rarity": "multidimensional",
+   "primordial": false,
+   "secret": false,
+   "role": "soporte",
+   "worker": null,
+   "trait": "curioso",
+   "battleForm": {
+    "name": "VAN GATO — STARRY SWIRL FORM",
+    "cry": "¡MIRA ESE CIELO!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.soporte.hp",
+    "recarga": 2,
+    "shot": {
+     "name": "Pincelada en Remolino",
+     "cry": "¡Mira ese cielo! …No, el otro. El que se mueve.",
+     "archetype": "haz",
+     "element": "light",
+     "dmg": 84,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 0,
+     "pierce": 3,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una pincelada de luz amarilla que atraviesa 3 celdas."
+    },
+    "ultimate": {
+     "name": "STARRY SWIRL! (星の渦)",
+     "effect": "Pinta un cielo entero en remolinos: tres haces de luz en abanico que atraviesan. Una vez por batalla.",
+     "dmg": 100,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Ve remolinos en todo: en el cielo, en la leche, en tu cara.",
+    "star3": "★3: el haz atraviesa una celda más.",
+    "star5": "★5: STARRY SWIRL! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:recordar",
+    "how": "Después de todo: una noche llena de remolinos en el Segundo show de La Gira (P-7).",
+    "balanceSource": "p3:recordar"
+   },
+   "hint": "Atigrado pelirrojo, sombrero de paja, un girasol y pinceladas que se mueven.",
+   "lore": "Llegó del Museo con un girasol en la pata y pintura en los bigotes. Pinta el cielo de tu isla todas las noches y nunca le queda igual. Dice que el cielo se mueve. Lo raro es que, cuando él está, sí se mueve.",
+   "balanceName": "Vincent van Gato",
+   "origin": "pinceles",
+   "p3": {
+    "kind": "recordar",
+    "dim": "p3d_pop",
+    "node": "p7",
+    "after": "mission:H97"
+   }
+  },
+  {
+   "id": "e_maneki",
+   "name": "Maneki",
+   "epithet": "la Conserje",
+   "art": {
+    "slug": "maneki_janitor_cat",
+    "tint": null,
+    "aura": [
+     "#c8102e",
+     "#f2c230",
+     "#f4efe6"
+    ]
+   },
+   "elements": [
+    "time"
+   ],
+   "rarity": "epic",
+   "primordial": false,
+   "secret": false,
+   "role": "soporte",
+   "worker": null,
+   "trait": "leal",
+   "battleForm": {
+    "name": "MANEKI — LUCKY SWEEP FORM",
+    "cry": "¡NADA ES GRATIS!"
+   },
+   "economy": {
+    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
+    "powerBase": "balance:rarities.power_base.epic",
+    "foodMult": "balance:rarities.food_mult.epic",
+    "goldMod": null,
+    "note": null,
+    "gambitMod": null
+   },
+   "combat": {
+    "hpBase": "roles.soporte.hp",
+    "recarga": 1,
+    "shot": {
+     "name": "Moneda Koban",
+     "cry": "La escoba no se paga sola.",
+     "archetype": "reloj",
+     "element": "time",
+     "dmg": 62,
+     "radius": 1.2,
+     "projectiles": 1,
+     "spreadDeg": 0,
+     "bounces": 1,
+     "pierce": 0,
+     "status": null,
+     "statusTurns": 0,
+     "gravityMul": 1.0,
+     "speedMul": 1.0,
+     "special": "Una moneda dorada que rebota una vez. Siempre cae del lado que ella quiere."
+    },
+    "ultimate": {
+     "name": "LUCKY SWEEP! (招き掃除)",
+     "effect": "Barre la cubierta rival con la escoba: tres monedas en abanico que rebotan. Una vez por batalla.",
+     "dmg": 70,
+     "meterCost": 100,
+     "usesPerBattle": 1,
+     "chargeTurns": 0,
+     "structureCap": 0.35
+    },
+    "limitation": null,
+    "passive": "Barre las cajas desde siempre. Nada es gratis, pero todo es justo.",
+    "star3": "★3: la moneda rebota una vez más.",
+    "star5": "★5: LUCKY SWEEP! se puede usar 2 veces por batalla."
+   },
+   "obtain": {
+    "source": "p3:recordar",
+    "how": "Después de todo: gana cualquier batalla de la Carta de las Cajas y la conserje vuelve a barrer… contigo.",
+    "balanceSource": "p3:recordar"
+   },
+   "hint": "Pata alzada que llama, collar rojo con cascabel y un llavero gigante.",
+   "lore": "La conserje de las cajas. Tiene la llave de todas las gateras y una escoba que no presta. Te cobró cada puerta, una por una, y te dio el cambio exacto. Cuando todo terminó, dejó la escoba recargada en tu faro y se quedó. Nadie le pagó por eso.",
+   "balanceName": "Maneki",
+   "origin": "mitos",
+   "p3": {
+    "kind": "recordar",
+    "anyWin": true,
+    "after": "mission:H97"
+   }
+  }
+ ]
+}

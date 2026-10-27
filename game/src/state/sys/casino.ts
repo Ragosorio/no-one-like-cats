@@ -19,6 +19,7 @@ import { CATS, CatDef, catDef } from '../../data/content';
 import { adopt } from './cats';
 import { ACC_BY_ID, AccRarity, addAccessory, rollAccessory } from './accessories';
 import { registerPatch } from '../patches';
+import { poolableCat } from './multidim';
 
 export type Cur = 'gold' | 'gems' | 'chips';
 export type GameId = 'slot' | 'roulette' | 'gacha' | 'caja' | 'plinko' | 'dice' | 'scratch' | 'boxes' | 'bingo' | 'hilo' | 'eterno';
@@ -832,6 +833,9 @@ export function eligibleCats(): CatDef[] {
     if (c.secret) return false;
     const src = c.obtain?.source ?? '';
     if (src.startsWith('heroic') || src.startsWith('podio') || c.rarity === 'heroic' || c.rarity === 'divine') return false;
+    // Parte III: a MULTIDIMENSIONAL — and any cat of the boxes — never comes out of the Casino nor the Portal
+    // (state/sys/multidim.ts poolableCat: they come from the story, a rescue or an activity)
+    if (!poolableCat(c)) return false;
     if (src.startsWith('boss:') && bosses < Number(src.split(':')[1])) return false;
     // Parte II: the story's primordials (Bibliotecario, Madre Nácar) only after you got the original (resonance.ts storyLocked)
     if (src.startsWith('ruptura:') && G.s.catdex[c.id] !== 'registered') return false;

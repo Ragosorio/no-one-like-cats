@@ -1,0 +1,2387 @@
+{
+  "$doc": "LA CARTA DE LAS CAJAS (Parte III): las 5 dimensiones del segundo mapa y las etapas de cada una. Espacio de nombres propio: NADA de esto entra a content.enemies (eso rompe la Parte I). Lo lee state/sys/gateras.ts (precios, huellas, desbloqueo), state/sys/gaterasBattles.ts (batallas con buildSiege) y scenes/GaterasMapScene.ts (dibujo). Geometría en coordenadas de la carta (1920 de ancho, como el Diario del Mar); `stages[].at` es relativo (0..1) a la pantalla de la región. `playable: false` = se ve bloqueada en esta porción. `$…` = comentarios (suplentes, borradores). Diseño: docs/part-iii/05-mapa-y-dimensiones.md §1–4 y §10.",
+  "version": 1,
+  "huellas": {
+    "firstWin": 3,
+    "boss": 10
+  },
+  "island": {
+    "x": 960,
+    "y": 600,
+    "r": 96,
+    "faro": [
+      992,
+      548
+    ]
+  },
+  "dims": [
+    {
+      "id": "p3d_borracha",
+      "order": 1,
+      "name": "LA BORRACHA",
+      "sub": "La Última Ronda",
+      "code": "B",
+      "look": "tv",
+      "gatera": "LA GATERA DE LA CERVEZA",
+      "music": "drunck.barra",
+      "price": {
+        "secs": 900,
+        "floor": 4500000000,
+        "huellas": 0
+      },
+      "story": "H68",
+      "box": {
+        "x": 40,
+        "y": 600,
+        "w": 700,
+        "h": 440
+      },
+      "screen": {
+        "x": 76,
+        "y": 640,
+        "w": 520,
+        "h": 340
+      },
+      "tear": [
+        [
+          868,
+          648
+        ],
+        [
+          742,
+          742
+        ]
+      ],
+      "smell": "huele a cerveza",
+      "palette": {
+        "beer": "#e8a33d",
+        "donut": "#f59ac0",
+        "bottle": "#2e7d4f",
+        "night": "#1b2a4a"
+      },
+      "notes": [
+        {
+          "text": "huele a cerveza",
+          "at": [
+            470,
+            1050
+          ],
+          "rot": -0.04
+        },
+        {
+          "text": "lo demás: cuando\nsigamos el rastro",
+          "at": [
+            852,
+            968
+          ],
+          "rot": -0.05
+        }
+      ],
+      "$nodes": "Desvío «Trastienda» (3 nodos que salen de B-3, aparecen al terminar la primera Ronda) y La Ronda (actividad, se abre al ganar B-5). Esquema de nodos: state/sys/gateras.ts (requires / revealedBy). Condiciones de bar: battle/ronda.ts",
+      "nodes": [
+        {
+          "id": "a1",
+          "kind": "actividad",
+          "name": "La Ronda",
+          "playable": true,
+          "at": [
+            0.2,
+            0.3
+          ],
+          "requires": [
+            "5"
+          ],
+          "teach": "Cuatro locales, una condición de bar en cada uno. Al terminar la ronda, la caja se acuerda… y aparece la trastienda"
+        },
+        {
+          "id": "d1",
+          "kind": "desvio",
+          "name": "La trastienda",
+          "playable": true,
+          "at": [
+            0.52,
+            0.66
+          ],
+          "requires": [
+            "3"
+          ],
+          "revealedBy": "flag:ronda_borracha_1",
+          "captain": "r_fanguito",
+          "captainName": "El de las cajas",
+          "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio",
+          "line": "Aquí atrás se guarda lo que la noche no quiere ver. Rápido, que viene el dueño.",
+          "$line": "BORRADOR (MECÁNICAS-IMPL): texto provisional hasta que NARRATIVA lo escriba",
+          "crew": [
+            "r_fanguito",
+            "c_espumita",
+            "c_burbujas"
+          ],
+          "archetype": "pesquero",
+          "personality": "afinador",
+          "ai": "corsario",
+          "powerMul": 0.85,
+          "hpMulX": 1.0,
+          "mareo": {
+            "sway": 4,
+            "period": 2.6,
+            "drift": 1
+          },
+          "conditions": [
+            "ultimaYNosVamos"
+          ],
+          "turns": 3,
+          "teach": "Variante corta: gana en 3 turnos",
+          "stamp": "caja"
+        },
+        {
+          "id": "d2",
+          "kind": "desvio",
+          "name": "La azotea",
+          "playable": true,
+          "at": [
+            0.66,
+            0.8
+          ],
+          "requires": [
+            "d1"
+          ],
+          "revealedBy": "flag:ronda_borracha_1",
+          "captain": "r_marejada",
+          "captainName": "La que mira la luna",
+          "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio",
+          "line": "Desde aquí arriba se ve toda la caja. No me tires nada, que se cae.",
+          "$line": "BORRADOR (MECÁNICAS-IMPL): texto provisional hasta que NARRATIVA lo escriba",
+          "crew": [
+            "r_marejada",
+            "c_burbujas",
+            "c_gelatino"
+          ],
+          "archetype": "chalupa",
+          "personality": "torpe",
+          "ai": "corsario",
+          "powerMul": 0.9,
+          "hpMulX": 1.8,
+          "mareo": {
+            "sway": 5,
+            "period": 3,
+            "drift": 1.2
+          },
+          "conditions": [
+            "sinDerramar"
+          ],
+          "teach": "Variante limpia: no pierdas ni un módulo",
+          "stamp": "antena"
+        },
+        {
+          "id": "d3",
+          "kind": "desvio",
+          "name": "El estacionamiento",
+          "playable": true,
+          "at": [
+            0.8,
+            0.84
+          ],
+          "requires": [
+            "d2"
+          ],
+          "revealedBy": "flag:ronda_borracha_1",
+          "captain": "e_vaporronin",
+          "captainName": "El valet",
+          "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio",
+          "line": "¿Don Bombín? Está en el maletero. Si lo quieres, gánatelo.",
+          "$line": "BORRADOR (MECÁNICAS-IMPL): texto provisional hasta que NARRATIVA lo escriba",
+          "crew": [
+            "e_vaporronin",
+            "c_espumita",
+            "r_neblino"
+          ],
+          "archetype": "catapulta",
+          "personality": "calculador",
+          "ai": "capitan",
+          "powerMul": 1.0,
+          "hpMulX": 2.4,
+          "mareo": {
+            "sway": 4.5,
+            "period": 2.4,
+            "drift": 1.2,
+            "botellas": {
+              "side": 0,
+              "first": 2,
+              "every": 3,
+              "n": 3,
+              "power": 0.5
+            }
+          },
+          "teach": "El rescate de Don Bombín",
+          "reward": "rescate_don_bombin",
+          "$reward": "El rescate se entrega cuando exista la pintura de Don Bombín (ARTE); hoy la etapa da huellas y oro",
+          "stamp": "llavero"
+        },
+        {
+          "id": "ebrecha",
+          "kind": "encuentro",
+          "name": "La Última Ronda",
+          "playable": true,
+          "at": [
+            0.66,
+            0.66
+          ],
+          "requires": [],
+          "revealedBy": "mission:H70",
+          "$doc": "H71 «NINGUNA CAJA ES HOGAR» — Acto I de NARRATIVA (docs/part-iii/historia-v2/02-mapa.md §3; guiones/acto-1/). Regla «sillas voladoras»: escombro que se mece y tapa un tiro (fases.env.bodies con drift y hp)",
+          "captain": "e_brecha",
+          "captainName": "Brecha",
+          "line": "Ninguna caja es hogar.",
+          "crew": [
+            "e_brecha",
+            "r_ecomudo",
+            "c_voltio",
+            "r_plasmin"
+          ],
+          "archetype": "lancha_polvora",
+          "personality": "vengativo",
+          "ai": "capitan",
+          "powerMul": 1.6,
+          "hpMulX": 3.4,
+          "mareo": {
+            "sway": 4,
+            "period": 2.6,
+            "drift": 1
+          },
+          "fases": {
+            "side": 1,
+            "phases": [
+              {
+                "id": "sillas",
+                "name": "SILLAS VOLADORAS",
+                "banner": false,
+                "env": {
+                  "layer": "sea",
+                  "bodies": [
+                    {
+                      "dx": -140,
+                      "up": 150,
+                      "r": 32,
+                      "hp": 40,
+                      "drift": {
+                        "dx": 90,
+                        "every": 3
+                      },
+                      "look": "debris"
+                    },
+                    {
+                      "dx": 40,
+                      "up": 230,
+                      "r": 28,
+                      "hp": 40,
+                      "drift": {
+                        "dx": -80,
+                        "every": 4
+                      },
+                      "look": "debris"
+                    },
+                    {
+                      "dx": 170,
+                      "up": 120,
+                      "r": 28,
+                      "hp": 40,
+                      "drift": {
+                        "dx": 70,
+                        "every": 2
+                      },
+                      "look": "debris"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "teach": "SILLAS VOLADORAS: las sillas flotan con el Mareo y tapan un tiro antes de romperse",
+          "film": "F03",
+          "stakes": "El rastro del chiquito. Le dicen «La Llave». Qué feo.",
+          "stamp": "grafiti",
+          "band": "jefe"
+        },
+        {
+          "id": "eemiau",
+          "kind": "encuentro",
+          "name": "La Batalla de Gatos",
+          "playable": true,
+          "at": [
+            0.44,
+            0.44
+          ],
+          "requires": [],
+          "revealedBy": "mission:H72",
+          "$doc": "H73 «La Batalla de Gatos» — Acto I de NARRATIVA (docs/part-iii/historia-v2/02-mapa.md §3; guiones/acto-1/). Regla «Rima» (battle/barRules.ts). La fase 1 se juega; la canción (F06 EM%EN) cierra la batalla: la fase 2 al 50 % termina la pelea (endsBattle, reason momento) y F06 suena al volver a la Carta",
+          "captain": "l_emiau",
+          "captainName": "EMIAU",
+          "$captain": "GATOS-DATOS (2026-10-27): ya es el gato propio (data/gateras/especies.json); antes, suplente s_caos. Su pandilla: Scratch (Sonido) toma el lugar de Tamborín (Sonido): 2 de Sonido, como antes de medir; con 1 la pelea quedaba en 100 %/96 % (h65/raros40). Medido a 48 peleas: antes 83 %/69 %, ahora 94 %/69 %. Bocina no cabe: serían 3 de Sonido (02-loop §6.4). (Nota vieja: SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — EMIAU usa a Caos (neón); su pandilla de La Cuadra 8, especies existentes)",
+          "line": "¿Quieren que se vaya? Que suba. En la Batalla, lo que se dice arriba se respeta.",
+          "crew": [
+            "l_emiau",
+            "c_chispa",
+            "r_magmito",
+            "r_scratch"
+          ],
+          "archetype": "nave_cometa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.7,
+          "hpMulX": 3.6,
+          "mareo": {
+            "sway": 3.5,
+            "period": 2.8,
+            "drift": 0.8
+          },
+          "rima": {
+            "boo": 0.8,
+            "combo": 1.1
+          },
+          "fases": {
+            "side": 1,
+            "phases": [
+              {
+                "id": "emiau_batalla",
+                "name": "LA BATALLA",
+                "banner": false
+              },
+              {
+                "id": "emen",
+                "name": "CUADRA 8",
+                "at": {
+                  "hp": 0.5
+                },
+                "endsBattle": true
+              }
+            ]
+          },
+          "teach": "RIMA: repite el elemento y te abuchean; varía y te aplauden",
+          "film": "F05",
+          "stakes": "Que el barrio nos dé la espalda. Y la dignidad del gordo (poca).",
+          "stamp": "micro_dorado",
+          "band": "jefe"
+        }
+      ],
+      "ronda": {
+        "node": "a1",
+        "name": "La Ronda",
+        "reveals": "ronda_borracha_1",
+        "powerMul": 0.75,
+        "hpMul": 0.5,
+        "$doc": "La Ronda (05 §4): 4 locales con una condición de bar sembrada por ext.gateras.acts.p3d_borracha.seed + la ronda; terminar la primera revela el desvío. Batallas cortas: la etapa base (base), más liviana",
+        "locales": [
+          {
+            "id": "r1",
+            "name": "La Última Ronda",
+            "base": 3,
+            "hpMul": 0.85
+          },
+          {
+            "id": "r2",
+            "name": "La Donería",
+            "base": 2
+          },
+          {
+            "id": "r3",
+            "name": "El Hipo-Mart",
+            "base": 1
+          },
+          {
+            "id": "r4",
+            "name": "El karaoke",
+            "base": 4,
+            "powerMul": 0.75,
+            "hpMul": 0.8
+          }
+        ]
+      }
+    },
+    {
+      "id": "p3d_superheroes",
+      "order": 2,
+      "name": "CIUDAD MAYÚSCULA",
+      "sub": "Superhéroes",
+      "look": "sheet",
+      "price": {
+        "secs": 1800,
+        "floor": 9000000000,
+        "huellas": 25
+      },
+      "story": "mission:H74",
+      "$story": "La venta se abre al terminar H74 «El Cadenero» (02-mapa §3). Mientras la caja no tenga etapas en los datos, Maneki no la vende (state/sys/gateras.ts storyAllows: sin contenido no hay gatera)",
+      "box": {
+        "x": 60,
+        "y": 178,
+        "w": 500,
+        "h": 326
+      },
+      "screen": {
+        "x": 90,
+        "y": 208,
+        "w": 440,
+        "h": 266
+      },
+      "tear": [
+        [
+          230,
+          598
+        ],
+        [
+          262,
+          506
+        ]
+      ],
+      "code": "S",
+      "gatera": "LA GATERA DEL CÓMIC",
+      "music": "fut.vineta",
+      "smell": "huele a tinta fresca",
+      "palette": {
+        "ink": "#16120f",
+        "cyan": "#00a8e0",
+        "magenta": "#e8308a",
+        "yellow": "#ffd400"
+      },
+      "battle": {
+        "palette": {
+          "skyTop": 2760540,
+          "skyBottom": 15235130,
+          "sea": 2047354,
+          "seaDark": 1321050
+        }
+      },
+      "rules": {
+        "onomatopeya": {
+          "frac": 0.07,
+          "ttl": 2
+        }
+      },
+      "$rules": "Regla de la caja: ONOMATOPEYA (02-loop §3.2; battle/actRules.ts)",
+      "nodes": [
+        {
+          "id": "eestambre",
+          "label": "HISTORIA",
+          "name": "El Estambre",
+          "kind": "encuentro",
+          "playable": true,
+          "at": [
+            0.3,
+            0.88
+          ],
+          "requires": [],
+          "captain": "e_estambre",
+          "crew": [
+            "e_estambre",
+            "c_musgo",
+            "c_caramelo",
+            "r_nenufar"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 2.6,
+          "hpMulX": 4.2,
+          "revealedBy": "mission:H75",
+          "captainName": "El Estambre",
+          "$captain": "GATOS-DATOS (2026-10-27): ya es el gato propio (data/gateras/especies.json); antes, suplente r_origami. (Nota vieja: SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — El Estambre usa a Origami)",
+          "band": "jefe",
+          "rules": {
+            "enredo": {
+              "side": 0,
+              "dur": 1
+            }
+          },
+          "film": "F10",
+          "teach": "ENREDO: sus tiros enredan uno de tus cañones; la barcaza civil está detrás de ti",
+          "stakes": "Los civiles. Y nuestra cara en el periódico.",
+          "stamp": "estambre",
+          "$doc": "H76 «Villanos sueltos» (guiones/acto-2/h76): proteger la barcaza civil + enredo. La barcaza y el grado de daño no están (se cuenta como pelea normal); el enredo sí."
+        }
+      ]
+    },
+    {
+      "id": "p3d_anime",
+      "order": 3,
+      "name": "MAR SHŌNEN",
+      "sub": "Anime",
+      "look": "sheet",
+      "price": {
+        "secs": 2700,
+        "floor": 13500000000,
+        "huellas": 25
+      },
+      "box": {
+        "x": 700,
+        "y": 168,
+        "w": 520,
+        "h": 270
+      },
+      "screen": {
+        "x": 730,
+        "y": 198,
+        "w": 460,
+        "h": 210
+      },
+      "tear": [
+        [
+          562,
+          338
+        ],
+        [
+          698,
+          300
+        ]
+      ],
+      "code": "A",
+      "gatera": "LA GATERA DEL TORNEO",
+      "music": "daria.calle",
+      "smell": "huele a arena de dojo",
+      "story": "mission:H78",
+      "shape": "bracket",
+      "$story": "Se abre con H79 «El Gran Torneo» (02-mapa §4): Maneki vende la llave del torneo",
+      "palette": {
+        "ink": "#1b1b2f",
+        "sky": "#7ec8e3",
+        "aura": "#ff2e88",
+        "gold": "#f5c542"
+      },
+      "battle": {
+        "palette": {
+          "skyTop": 8308963,
+          "skyBottom": 16181448,
+          "sea": 2781104,
+          "seaDark": 1723008
+        }
+      },
+      "rules": {
+        "poder": {
+          "mul": 1.25,
+          "below": 0.5
+        }
+      },
+      "$rules": "Regla de la caja: PODER (02-loop §3.3; battle/actRules.ts). Forma: llave de torneo (02-loop §2.1): a1 → a2 y a3 → a4 → a5 → a6 y a7 → a8 → a9",
+      "nodes": [
+        {
+          "id": "a1",
+          "label": "A-1",
+          "n": 1,
+          "name": "La convocatoria",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.06,
+            0.5
+          ],
+          "requires": [],
+          "captain": "c_chispa",
+          "crew": [
+            "c_chispa",
+            "c_tanquecito"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "grumete",
+          "powerMul": 1.25,
+          "hpMulX": 1.8,
+          "teach": "Aquí, bajo la mitad de la vida, cada gato carga aura una vez",
+          "stamp": "banda"
+        },
+        {
+          "id": "a2",
+          "label": "A-2",
+          "n": 2,
+          "name": "Islote de los piratas",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.2,
+            0.24
+          ],
+          "requires": [
+            "a1"
+          ],
+          "captain": "r_magmito",
+          "crew": [
+            "r_magmito",
+            "c_terron",
+            "c_nimbo"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "grumete",
+          "powerMul": 1.35,
+          "hpMulX": 2.0,
+          "stamp": "banda"
+        },
+        {
+          "id": "a3",
+          "label": "A-3",
+          "n": 3,
+          "name": "La aldea",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.2,
+            0.76
+          ],
+          "requires": [
+            "a1"
+          ],
+          "captain": "r_pimenton",
+          "crew": [
+            "r_pimenton",
+            "c_brote",
+            "c_voltio"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.35,
+          "hpMulX": 2.0,
+          "stamp": "banda"
+        },
+        {
+          "id": "a4",
+          "label": "A-4",
+          "n": 4,
+          "name": "Preliminares",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.34,
+            0.5
+          ],
+          "requires": [
+            "a2",
+            "a3"
+          ],
+          "captain": "r_plasmin",
+          "crew": [
+            "r_plasmin",
+            "r_neblino",
+            "c_chispa"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.5,
+          "hpMulX": 2.4,
+          "stamp": "banda"
+        },
+        {
+          "id": "a5",
+          "label": "A-5",
+          "n": 5,
+          "name": "El rival que no te conoce",
+          "kind": "elite",
+          "playable": true,
+          "at": [
+            0.5,
+            0.5
+          ],
+          "requires": [
+            "a4"
+          ],
+          "captain": "l_bigoton",
+          "crew": [
+            "l_bigoton",
+            "e_rencor",
+            "e_vaporronin",
+            "r_djbigotes"
+          ],
+          "archetype": "chalupa",
+          "personality": "calculador",
+          "ai": "capitan",
+          "powerMul": 1.9,
+          "hpMulX": 3.4,
+          "captainName": "El rival",
+          "$captain": "GATOS-DATOS (2026-10-27): ya es el gato propio (data/gateras/especies.json); antes, suplente l_ignis. (Nota vieja: SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — El rival usa a Ignis)",
+          "line": "¡Por fin nos volvemos a ver, mi rival de la infancia!",
+          "film": "F13",
+          "teach": "Grita frases de reencuentro en cada turno; ninguna es verdad",
+          "stakes": "La gatera. Si perdemos, Cerito se queda solo del otro lado.",
+          "stamp": "rival",
+          "band": "jefe",
+          "cata": {
+            "id": "sun",
+            "first": 2,
+            "every": 3,
+            "power": 0.6
+          }
+        },
+        {
+          "id": "a6",
+          "label": "A-6",
+          "n": 6,
+          "name": "Cuartos de final",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.64,
+            0.24
+          ],
+          "requires": [
+            "a5"
+          ],
+          "captain": "e_infernal",
+          "crew": [
+            "e_infernal",
+            "r_solar",
+            "r_arenita"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.7,
+          "hpMulX": 2.6,
+          "stamp": "banda"
+        },
+        {
+          "id": "a7",
+          "label": "A-7",
+          "n": 7,
+          "name": "Semifinal",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.64,
+            0.76
+          ],
+          "requires": [
+            "a5"
+          ],
+          "captain": "e_brecha",
+          "crew": [
+            "e_brecha",
+            "r_helice",
+            "r_plasmin"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.7,
+          "hpMulX": 2.6,
+          "captainName": "Brecha",
+          "teach": "Brecha pelea limpio",
+          "stamp": "banda"
+        },
+        {
+          "id": "a8",
+          "label": "A-8",
+          "n": 8,
+          "name": "Esquirla hace trampa",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.78,
+            0.5
+          ],
+          "requires": [
+            "a6",
+            "a7"
+          ],
+          "captain": "s_quizas",
+          "crew": [
+            "s_quizas",
+            "r_marejada",
+            "e_rencor"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.85,
+          "hpMulX": 2.8,
+          "captainName": "Esquirla",
+          "captainArt": "neon_glitch_cat",
+          "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — Esquirla usa a Quizás",
+          "stamp": "banda"
+        },
+        {
+          "id": "a9",
+          "label": "A-9",
+          "n": 9,
+          "name": "Itō",
+          "kind": "boss",
+          "playable": true,
+          "at": [
+            0.93,
+            0.5
+          ],
+          "requires": [
+            "a8",
+            "mission:H80"
+          ],
+          "captain": "r_arcanito",
+          "crew": [
+            "r_arcanito",
+            "l_medianoche",
+            "e_pendulo",
+            "e_tempano"
+          ],
+          "archetype": "chalupa",
+          "personality": "calculador",
+          "ai": "capitan",
+          "powerMul": 5.0,
+          "hpMulX": 8.0,
+          "captainName": "Itō",
+          "captainArt": "ito_threads_cat",
+          "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — Itō usa a Arcanito (como en las películas de CINE)",
+          "band": "jefe",
+          "rules": {
+            "duelo": true
+          },
+          "fases": {
+            "side": 1,
+            "phases": [
+              {
+                "id": "daria_pelea",
+                "name": "UNA SOLA LÍNEA",
+                "banner": false
+              },
+              {
+                "id": "daria",
+                "name": "UNA SOLA LÍNEA",
+                "at": {
+                  "hp": 0.5
+                },
+                "endsBattle": true
+              }
+            ]
+          },
+          "$fases": "La fase 1 se juega; F16 «Daria» cierra la batalla (endsBattle al 50 %, reason momento)",
+          "film": "F15",
+          "teach": "DUELO LIMPIO: un golpe cada uno",
+          "stakes": "La gatera. Y que Itō olvide algo por nuestra culpa.",
+          "stamp": "hilo",
+          "$calibracion": "DUELO LIMPIO quita los cañonazos de los dos lados y la fase cierra al 50 %: el multiplicador alto compensa (h65 75 %, raros40 92 %, 12 peleas)"
+        }
+      ]
+    },
+    {
+      "id": "p3d_libros",
+      "order": 4,
+      "name": "EX LIBRIS",
+      "sub": "Libros",
+      "look": "sheet",
+      "price": {
+        "secs": 3600,
+        "floor": 18000000000,
+        "huellas": 25
+      },
+      "box": {
+        "x": 1360,
+        "y": 178,
+        "w": 500,
+        "h": 326
+      },
+      "screen": {
+        "x": 1390,
+        "y": 208,
+        "w": 440,
+        "h": 266
+      },
+      "tear": [
+        [
+          1222,
+          300
+        ],
+        [
+          1358,
+          338
+        ]
+      ],
+      "code": "L",
+      "gatera": "LA GATERA DE LA BIBLIOTECA",
+      "music": "no_wey.melodia",
+      "smell": "huele a papel viejo",
+      "story": "mission:H82",
+      "shape": "shelf",
+      "$story": "Se abre al terminar H82 «La Mano» (02-mapa §4: se abre la gatera a Libros)",
+      "palette": {
+        "ink": "#2a1d14",
+        "paper": "#f3e7cf",
+        "leather": "#7a3b1e",
+        "gold": "#c8a24a"
+      },
+      "battle": {
+        "palette": {
+          "skyTop": 3811868,
+          "skyBottom": 13153418,
+          "sea": 2767434,
+          "seaDark": 1713200
+        }
+      },
+      "rules": {
+        "capitulos": {
+          "every": 3,
+          "order": [
+            "lluvia",
+            "calma",
+            "raiz"
+          ]
+        }
+      },
+      "$rules": "Regla de la caja: CAPÍTULOS (02-loop §3.4; battle/actRules.ts). Forma: estante (02-loop §2.1): l1 → l2, l3, l4 en el orden que elijas → l5 → el índice (l6) → l7 → l8 → l9",
+      "nodes": [
+        {
+          "id": "l1",
+          "label": "L-1",
+          "n": 1,
+          "name": "El colegio",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.08,
+            0.5
+          ],
+          "requires": [],
+          "captain": "c_linterna",
+          "crew": [
+            "c_linterna",
+            "c_marcapaginas"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "grumete",
+          "powerMul": 1.3,
+          "hpMulX": 1.9,
+          "teach": "Cada 3 turnos la batalla pasa de página: lluvia, calma, raíz",
+          "stamp": "exlibris"
+        },
+        {
+          "id": "l2",
+          "label": "L-2",
+          "n": 2,
+          "name": "El bosque del cuento",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.24,
+            0.2
+          ],
+          "requires": [
+            "l1"
+          ],
+          "captain": "r_raizvieja",
+          "crew": [
+            "r_raizvieja",
+            "c_brote",
+            "c_musgo"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.45,
+          "hpMulX": 2.1,
+          "stamp": "exlibris"
+        },
+        {
+          "id": "l3",
+          "label": "L-3",
+          "n": 3,
+          "name": "Capítulo perdido",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.24,
+            0.5
+          ],
+          "requires": [
+            "l1"
+          ],
+          "captain": "r_origami",
+          "crew": [
+            "r_origami",
+            "c_caramelo",
+            "c_nimbo"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.45,
+          "hpMulX": 2.1,
+          "stamp": "exlibris"
+        },
+        {
+          "id": "l4",
+          "label": "L-4",
+          "n": 4,
+          "name": "La novela de piratas",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.24,
+            0.8
+          ],
+          "requires": [
+            "l1"
+          ],
+          "captain": "r_marejada",
+          "crew": [
+            "r_marejada",
+            "c_espumita",
+            "r_mareaenc"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.45,
+          "hpMulX": 2.1,
+          "stamp": "exlibris"
+        },
+        {
+          "id": "l5",
+          "label": "L-5",
+          "n": 5,
+          "name": "La Encuadernadora",
+          "kind": "elite",
+          "playable": true,
+          "at": [
+            0.42,
+            0.5
+          ],
+          "requires": [
+            "l2",
+            "l3",
+            "l4"
+          ],
+          "captain": "e_encuadernadora",
+          "crew": [
+            "e_encuadernadora",
+            "r_tintero",
+            "r_origami",
+            "c_marcapaginas"
+          ],
+          "archetype": "chalupa",
+          "personality": "calculador",
+          "ai": "capitan",
+          "powerMul": 1.48,
+          "hpMulX": 2.9,
+          "captainName": "La Encuadernadora",
+          "$captain": "GATOS-DATOS (2026-10-27): ya es el gato propio (data/gateras/especies.json); antes, suplente e_archivista. (Nota vieja: SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — La Encuadernadora usa a Archivista)",
+          "film": "F18",
+          "teach": "Escribe dos capítulos juntos",
+          "stakes": "Que nos cosa a un cuento ajeno.",
+          "stamp": "costura",
+          "$rules": "Su regla propia propuesta («Costura») no está: la regla de la caja ya cambia cada capítulo (MECÁNICAS-IMPL, simple)",
+          "band": "jefe",
+          "cata": {
+            "id": "tide",
+            "first": 2,
+            "every": 3,
+            "power": 0.6
+          }
+        },
+        {
+          "id": "l6",
+          "label": "L-6",
+          "n": 6,
+          "name": "El índice",
+          "kind": "encuentro",
+          "playable": true,
+          "at": [
+            0.58,
+            0.3
+          ],
+          "requires": [
+            "l5",
+            "mission:H84"
+          ],
+          "captain": "r_tachon",
+          "crew": [
+            "r_tachon",
+            "r_tintero",
+            "e_titiritera"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.9,
+          "hpMulX": 2.4,
+          "captainName": "La biblioteca se derrumba",
+          "rules": {
+            "retreat": {
+              "side": 1,
+              "turn": 4
+            }
+          },
+          "film": "F20",
+          "fases": {
+            "side": 1,
+            "phases": [
+              {
+                "id": "estantes1",
+                "name": "SE CAEN LOS ESTANTES",
+                "banner": false,
+                "env": {
+                  "bodies": [
+                    {
+                      "dx": -60,
+                      "up": 260,
+                      "r": 54,
+                      "hp": 2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "estantes2",
+                "name": "SE CAEN MÁS",
+                "at": {
+                  "turn": 2
+                },
+                "telegraph": "Cae otro estante entre los barcos",
+                "env": {
+                  "bodies": [
+                    {
+                      "dx": -60,
+                      "up": 260,
+                      "r": 54,
+                      "hp": 2
+                    },
+                    {
+                      "dx": 70,
+                      "up": 180,
+                      "r": 60,
+                      "hp": 2
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "estantes3",
+                "name": "SE VIENE ABAJO",
+                "at": {
+                  "turn": 3
+                },
+                "telegraph": "La biblioteca se derrumba",
+                "env": {
+                  "bodies": [
+                    {
+                      "dx": -60,
+                      "up": 260,
+                      "r": 54,
+                      "hp": 2
+                    },
+                    {
+                      "dx": 70,
+                      "up": 180,
+                      "r": 60,
+                      "hp": 2
+                    },
+                    {
+                      "dx": 0,
+                      "up": 340,
+                      "r": 66,
+                      "hp": 3
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "teach": "SOBREVIVE 4 TURNOS mientras caen estantes: ganar es salir",
+          "stakes": "La primera ficha de Cerito. Y el gordo, que ya no aguanta otra caja.",
+          "stamp": "indice",
+          "$doc": "H85 (guiones/acto-3/h85): la batalla especial. retreat del lado 1 al turno 4 = sobrevives 4 turnos y sales; estantes como cuerpos (fases.ts) que se acumulan"
+        },
+        {
+          "id": "l7",
+          "label": "L-7",
+          "n": 7,
+          "name": "Los Correctores",
+          "kind": "encuentro",
+          "playable": true,
+          "at": [
+            0.72,
+            0.3
+          ],
+          "requires": [
+            "l6",
+            "mission:H86"
+          ],
+          "captain": "e_pendulo",
+          "crew": [
+            "e_pendulo",
+            "r_espejito",
+            "r_vitral",
+            "c_destello"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 3.2,
+          "hpMulX": 4.4,
+          "captainName": "Los Correctores",
+          "band": "jefe",
+          "luz": true,
+          "rules": {
+            "correccion": {
+              "side": 0,
+              "every": 2,
+              "dur": 2
+            }
+          },
+          "fases": {
+            "side": 1,
+            "phases": [
+              {
+                "id": "nowey_pelea",
+                "name": "EL EXPEDIENTE",
+                "banner": false
+              },
+              {
+                "id": "nowey",
+                "name": "EL EXPEDIENTE",
+                "at": {
+                  "hp": 0.5
+                },
+                "endsBattle": true
+              }
+            ]
+          },
+          "$fases": "La fase 1 se juega, comandada por Luzterna (su luz dibuja las trayectorias: luz); F23 «No wey» cierra la batalla",
+          "film": "F22",
+          "teach": "CORRECCIÓN: cada 2 turnos blanquean uno de tus cañones. Su linterna dibuja tus trayectorias",
+          "stakes": "Que me corrijan la decisión. (Y los muelles.)",
+          "stamp": "expediente"
+        },
+        {
+          "id": "l8",
+          "label": "L-8",
+          "n": 8,
+          "name": "La azotea",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.84,
+            0.62
+          ],
+          "requires": [
+            "l7"
+          ],
+          "captain": "e_sirsimon",
+          "crew": [
+            "e_sirsimon",
+            "r_helice",
+            "e_cascada"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.9,
+          "hpMulX": 2.9,
+          "stamp": "exlibris",
+          "$captain": "GATOS-DATOS (2026-10-27): ya es el gato propio (data/gateras/especies.json); antes, suplente r_kage. Sir Simón de Gatterville espera en La azotea (Sombra por Sombra: el mismo control).",
+          "captainName": "Sir Simón de Gatterville"
+        },
+        {
+          "id": "l9",
+          "label": "L-9",
+          "n": 9,
+          "name": "Esquirla",
+          "kind": "boss",
+          "playable": true,
+          "at": [
+            0.93,
+            0.3
+          ],
+          "requires": [
+            "l8",
+            "mission:H87"
+          ],
+          "captain": "s_quizas",
+          "crew": [
+            "s_quizas",
+            "e_devoradora",
+            "l_tronador",
+            "e_rencor"
+          ],
+          "archetype": "chalupa",
+          "personality": "calculador",
+          "ai": "capitan",
+          "powerMul": 2.6,
+          "hpMulX": 4.8,
+          "captainName": "Esquirla",
+          "captainArt": "neon_glitch_cat",
+          "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — Esquirla usa a Quizás",
+          "band": "jefe",
+          "rules": {
+            "esquirlas": {
+              "side": 0,
+              "per": 0.15,
+              "max": 3
+            }
+          },
+          "ayuda": {
+            "side": 1,
+            "turn": 2
+          },
+          "fases": {
+            "side": 1,
+            "phases": [
+              {
+                "id": "distor_pelea",
+                "name": "DATAMOSH",
+                "banner": false
+              },
+              {
+                "id": "distor",
+                "name": "DATAMOSH",
+                "at": {
+                  "hp": 0.5
+                },
+                "endsBattle": true
+              }
+            ]
+          },
+          "$fases": "La fase 1 se juega; F25 «DISTOR» cierra la batalla. Brecha (si le diste el mapa en H87) o Bisagra ayuda un turno",
+          "film": "F24",
+          "teach": "ESQUIRLAS: sus golpes te dejan astillas; un tiro de LUZ las saca",
+          "stakes": "Que rompa todas las cajas con Cerito.",
+          "stamp": "glitch"
+        }
+      ]
+    },
+    {
+      "id": "p3d_pop",
+      "order": 5,
+      "name": "LA GIRA",
+      "sub": "POP",
+      "look": "sheet",
+      "price": {
+        "secs": 4500,
+        "floor": 22500000000,
+        "huellas": 25
+      },
+      "box": {
+        "x": 1180,
+        "y": 600,
+        "w": 700,
+        "h": 440
+      },
+      "screen": {
+        "x": 1210,
+        "y": 630,
+        "w": 640,
+        "h": 380
+      },
+      "tear": [
+        [
+          1610,
+          506
+        ],
+        [
+          1580,
+          598
+        ]
+      ],
+      "home": [
+        [
+          1178,
+          720
+        ],
+        [
+          1054,
+          646
+        ]
+      ],
+      "code": "P",
+      "gatera": "LA GATERA DEL ESCENARIO",
+      "music": "xti.gira",
+      "smell": "huele a confeti",
+      "story": "mission:H88",
+      "shape": "tour",
+      "$story": "Se abre al terminar H88 «La ruptura» (02-mapa §5: se abre la gatera a POP)",
+      "palette": {
+        "ink": "#14101e",
+        "neon": "#ff2e88",
+        "cyan": "#00e5ff",
+        "gold": "#ffd400"
+      },
+      "battle": {
+        "palette": {
+          "skyTop": 1314846,
+          "skyBottom": 5906286,
+          "sea": 2036800,
+          "seaDark": 985636
+        }
+      },
+      "rules": {
+        "ritmo": {
+          "mul": 1.3,
+          "onBeat": 0.5
+        }
+      },
+      "$rules": "Regla de la caja: RITMO (02-loop §3.5; battle/actRules.ts): la estimación cuenta la mitad de los tiros en el beat. Forma: gira (02-loop §2.1): p1 → p2, p3, p4 en el orden que elijas → p5 → p6 y p7 → p8 → el escenario principal (p9)",
+      "nodes": [
+        {
+          "id": "p1",
+          "label": "P-1",
+          "n": 1,
+          "name": "Prueba de sonido",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.08,
+            0.5
+          ],
+          "requires": [],
+          "captain": "c_chispa",
+          "crew": [
+            "c_chispa",
+            "c_tanquecito"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "grumete",
+          "powerMul": 1.3,
+          "hpMulX": 1.9,
+          "teach": "Dos gatos del mismo elemento a bordo hacen SINCRO en el beat",
+          "stamp": "pase"
+        },
+        {
+          "id": "p2",
+          "label": "P-2",
+          "n": 2,
+          "name": "Telonero",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.24,
+            0.2
+          ],
+          "requires": [
+            "p1"
+          ],
+          "captain": "c_voltio",
+          "crew": [
+            "c_voltio",
+            "c_nimbo",
+            "c_destello"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.45,
+          "hpMulX": 2.1,
+          "stamp": "pase"
+        },
+        {
+          "id": "p3",
+          "label": "P-3",
+          "n": 3,
+          "name": "Camerinos",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.24,
+            0.5
+          ],
+          "requires": [
+            "p1"
+          ],
+          "captain": "c_gelatino",
+          "crew": [
+            "c_gelatino",
+            "c_burbujas",
+            "r_neblino"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.45,
+          "hpMulX": 2.1,
+          "stamp": "pase"
+        },
+        {
+          "id": "p4",
+          "label": "P-4",
+          "n": 4,
+          "name": "Firma de autógrafos",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.24,
+            0.8
+          ],
+          "requires": [
+            "p1"
+          ],
+          "captain": "c_brote",
+          "crew": [
+            "c_brote",
+            "c_musgo",
+            "r_nenufar"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.45,
+          "hpMulX": 2.1,
+          "stamp": "pase"
+        },
+        {
+          "id": "p5",
+          "label": "P-5",
+          "n": 5,
+          "name": "El mánager",
+          "kind": "elite",
+          "playable": true,
+          "at": [
+            0.42,
+            0.5
+          ],
+          "requires": [
+            "p2",
+            "p3",
+            "p4"
+          ],
+          "captain": "e_manager",
+          "crew": [
+            "e_manager",
+            "e_vaporronin",
+            "r_plasmin",
+            "c_chispa"
+          ],
+          "archetype": "chalupa",
+          "personality": "calculador",
+          "ai": "capitan",
+          "powerMul": 2.2,
+          "hpMulX": 3.7,
+          "captainName": "El mánager",
+          "$captain": "GATOS-DATOS (2026-10-27): ya es el gato propio (data/gateras/especies.json); antes, suplente e_pendulo. Sonido por Tiempo: un gato de control por otro. (Nota vieja: SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — El mánager usa a Péndulo)",
+          "rules": {
+            "ritmo": {
+              "mul": 1.3,
+              "onBeat": 0.5,
+              "accel": {
+                "every": 3,
+                "onBeat": 0.35
+              }
+            }
+          },
+          "film": "F26",
+          "teach": "«Revisa horarios»: cada tercer turno el beat se acelera",
+          "stakes": "La gira. Si perdemos, Firma hace su show sin nosotros.",
+          "stamp": "horario",
+          "band": "jefe",
+          "cata": {
+            "id": "moon",
+            "first": 2,
+            "every": 3,
+            "power": 0.6
+          }
+        },
+        {
+          "id": "p6",
+          "label": "P-6",
+          "n": 6,
+          "name": "Primer show",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.6,
+            0.24
+          ],
+          "requires": [
+            "p5"
+          ],
+          "captain": "l_headliner",
+          "crew": [
+            "l_headliner",
+            "r_solar",
+            "c_chispa"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.75,
+          "hpMulX": 2.7,
+          "stamp": "pase"
+        },
+        {
+          "id": "p7",
+          "label": "P-7",
+          "n": 7,
+          "name": "Segundo show",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.6,
+            0.76
+          ],
+          "requires": [
+            "p5"
+          ],
+          "captain": "e_galaxia",
+          "crew": [
+            "e_galaxia",
+            "r_astral",
+            "c_lunita"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.75,
+          "hpMulX": 2.7,
+          "stamp": "pase"
+        },
+        {
+          "id": "p8",
+          "label": "P-8",
+          "n": 8,
+          "name": "Escenario principal",
+          "kind": "stage",
+          "playable": true,
+          "at": [
+            0.78,
+            0.5
+          ],
+          "requires": [
+            "p6",
+            "p7"
+          ],
+          "captain": "e_prismarina",
+          "crew": [
+            "e_prismarina",
+            "r_espejito",
+            "r_farolillo"
+          ],
+          "archetype": "chalupa",
+          "personality": "afinador",
+          "ai": "capitan",
+          "powerMul": 1.9,
+          "hpMulX": 3.0,
+          "stamp": "pase"
+        },
+        {
+          "id": "p9",
+          "label": "P-9",
+          "n": 9,
+          "name": "Firma",
+          "kind": "boss",
+          "playable": true,
+          "at": [
+            0.93,
+            0.5
+          ],
+          "requires": [
+            "p8",
+            "mission:H90"
+          ],
+          "captain": "e_diva",
+          "crew": [
+            "e_diva",
+            "l_aurea",
+            "e_faro",
+            "r_kage"
+          ],
+          "archetype": "chalupa",
+          "personality": "calculador",
+          "ai": "capitan",
+          "powerMul": 4.5,
+          "hpMulX": 7.0,
+          "captainName": "Firma",
+          "captainArt": "aurea_halo_cat",
+          "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — Firma usa a Diva",
+          "band": "jefe",
+          "rules": {
+            "pose": {
+              "side": 1,
+              "mul": 0.6
+            }
+          },
+          "fases": {
+            "side": 1,
+            "phases": [
+              {
+                "id": "nogame_pelea",
+                "name": "EL SHOW",
+                "banner": false
+              },
+              {
+                "id": "nogame",
+                "name": "EL SHOW",
+                "at": {
+                  "hp": 0.5
+                },
+                "endsBattle": true
+              }
+            ]
+          },
+          "$fases": "La fase 1 se juega; F29 «NO G@ME NO LIF€» cierra la batalla",
+          "film": "F28",
+          "teach": "POSE DE PORTADA: cada vez que la dañas, posa y gana un escudo",
+          "stakes": "Cerito, en el escenario principal.",
+          "stamp": "portada",
+          "$calibracion": "POSE + RITMO y la fase que cierra al 50 %: el multiplicador alto compensa (h65 75 %, raros40 58 %, 12 peleas)"
+        }
+      ]
+    }
+  ],
+  "stages": {
+    "p3d_borracha": [
+      {
+        "n": 1,
+        "name": "Hipo-Mart",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.08,
+          0.83
+        ],
+        "captain": "c_gelatino",
+        "captainName": "Gelatino «el del mostrador»",
+        "line": "¿Va a pagar eso? Hip. Aquí todo se paga… menos lo que se rompe.",
+        "crew": [
+          "c_gelatino",
+          "c_burbujas"
+        ],
+        "archetype": "chalupa",
+        "personality": "torpe",
+        "ai": "grumete",
+        "powerMul": 0.85,
+        "mareo": {
+          "sway": 3,
+          "period": 3.2,
+          "drift": 0.6
+        },
+        "teach": "Enseña el Mareo: la guía se balancea; espera el centro del vaivén",
+        "hpMulX": 1.6,
+        "stamp": "ticket"
+      },
+      {
+        "n": 2,
+        "name": "La Donería",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.2,
+          0.92
+        ],
+        "captain": "c_brote",
+        "captainName": "Brote «el panadero»",
+        "line": "Recién salidas del horno. No se toca la mercancía. Bueno… yo sí.",
+        "crew": [
+          "c_brote",
+          "c_musgo",
+          "c_burbujas"
+        ],
+        "archetype": "pesquero",
+        "personality": "afinador",
+        "ai": "corsario",
+        "powerMul": 0.92,
+        "mareo": {
+          "sway": 4,
+          "period": 2.8,
+          "drift": 1,
+          "donas": {
+            "side": 1,
+            "n": 1,
+            "heal": 0.08,
+            "catHeal": 0.2
+          }
+        },
+        "teach": "Enseña que las donas curan: hay una en su cubierta y si le das, se cura él",
+        "note": {
+          "text": "las donas NO se tocan (son de él)",
+          "at": [
+            0.14,
+            0.66
+          ],
+          "rot": 0.05
+        },
+        "hpMulX": 1.8,
+        "stamp": "dona"
+      },
+      {
+        "n": 3,
+        "name": "Callejón de las botellas",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.36,
+          0.81
+        ],
+        "captain": "c_espumita",
+        "captainName": "Espumita «la del callejón»",
+        "line": "Este callejón es mío. Las botellas también. ¡Ahí te van!",
+        "crew": [
+          "c_espumita",
+          "r_fanguito",
+          "c_burbujas"
+        ],
+        "archetype": "biblioteca",
+        "personality": "vengativo",
+        "ai": "capitan",
+        "powerMul": 1,
+        "mareo": {
+          "sway": 4,
+          "period": 2.6,
+          "drift": 1,
+          "botellas": {
+            "side": 0,
+            "first": 2,
+            "every": 3,
+            "n": 3,
+            "power": 0.5
+          }
+        },
+        "teach": "Primera pelea de verdad; las botellas son escombro",
+        "note": {
+          "text": "vidrio. ojo con las patas",
+          "at": [
+            0.56,
+            0.92
+          ],
+          "rot": -0.04
+        },
+        "hpMulX": 2.2,
+        "stamp": "botella"
+      },
+      {
+        "n": 4,
+        "name": "Karaoke",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.42,
+          0.58
+        ],
+        "captain": "r_djbigotes",
+        "captainName": "DJ Bigotes «el de las cuatro de la mañana»",
+        "line": "¡Otra! ¡Otra! …y después otra. Nadie se va hasta que cante el capitán.",
+        "crew": [
+          "r_djbigotes",
+          "c_tamborin",
+          "r_marejada"
+        ],
+        "archetype": "nave_cometa",
+        "personality": "afinador",
+        "ai": "capitan",
+        "powerMul": 1.05,
+        "mareo": {
+          "sway": 4,
+          "period": 2.6,
+          "drift": 1,
+          "ultSlow": {
+            "side": 1,
+            "mul": 0.8
+          }
+        },
+        "teach": "Variedad: los enemigos cantan y su ulti tarda un turno más",
+        "hpMulX": 2.6,
+        "stamp": "micro",
+        "teaches": [
+          "sound"
+        ],
+        "$teaches": "B-4 ENSEÑA el control (02 §6.4): puede traer hasta 2 gatos de Sonido, sin otra regla encima"
+      },
+      {
+        "n": 5,
+        "name": "Oficial Dona",
+        "kind": "elite",
+        "playable": true,
+        "at": [
+          0.34,
+          0.36
+        ],
+        "captain": "r_dona",
+        "captainName": "Oficial Dona",
+        "captainArt": "dona_police_cat",
+        "$captainArt": "La especie ya es r_dona (Oficial Dona, aprobada); captainArt queda igual a su slug (dona_police_cat).",
+        "line": "Alto ahí. Esta caja tiene reglas. La primera: no hay reglas. La segunda: no toquen mis donas.",
+        "crew": [
+          "r_dona",
+          "c_guijarro",
+          "r_iman",
+          "c_musgo"
+        ],
+        "archetype": "fortin_piedra",
+        "personality": "calculador",
+        "ai": "capitan",
+        "powerMul": 1.15,
+        "band": "jefe",
+        "hpMulX": 3.2,
+        "mareo": {
+          "sway": 4.5,
+          "period": 2.4,
+          "drift": 1.2,
+          "donas": {
+            "side": 1,
+            "n": 3,
+            "heal": 0.06,
+            "catHeal": 0.2
+          }
+        },
+        "teach": "Primer muro: aprender a priorizar módulos (y a no darle a las donas)",
+        "stamp": "placa",
+        "cata": {
+          "id": "moon",
+          "first": 2,
+          "every": 3,
+          "power": 0.6
+        },
+        "$cata": "El poder de la caja en la élite (02 §6.3): un cataclismo que pega según TU casco (cataSize). Un Gorrión casi ni lo siente; el Bastión recibe todo",
+        "film": "F01",
+        "stakes": "Las huellas. Y la paciencia del gordo.",
+        "$captain": "GATOS-DATOS (2026-10-27): ya es el gato propio (data/gateras/especies.json); antes, suplente c_terron."
+      },
+      {
+        "n": 6,
+        "name": "Planta embotelladora",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.48,
+          0.2
+        ],
+        "captain": "e_vaporronin",
+        "captainName": "La Embotelladora",
+        "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio (docs/part-iii/agentes/MECANICAS-IMPL.md) — La Embotelladora usa a Vapor Ronin",
+        "line": "Aquí se embotella todo lo que la noche olvida. Y hoy sobra vidrio.",
+        "$line": "BORRADOR (MECÁNICAS-IMPL, oleada 2): texto provisional hasta que NARRATIVA lo escriba",
+        "crew": [
+          "e_vaporronin",
+          "r_marejada",
+          "c_espumita",
+          "r_neblino"
+        ],
+        "archetype": "catapulta",
+        "personality": "calculador",
+        "ai": "capitan",
+        "powerMul": 1.0,
+        "hpMulX": 2.6,
+        "mareo": {
+          "sway": 4.5,
+          "period": 2.4,
+          "drift": 1.2,
+          "botellas": {
+            "side": 0,
+            "first": 2,
+            "every": 2,
+            "n": 4,
+            "power": 0.6
+          }
+        },
+        "teach": "Ganar rápido: las botellas caen cada 2 turnos (el cataclismo de botellas)",
+        "stamp": "corcholata"
+      },
+      {
+        "n": 7,
+        "name": "El parque de la resaca",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.62,
+          0.26
+        ],
+        "captain": "e_titiritera",
+        "captainName": "Don Bombín",
+        "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio (docs/part-iii/agentes/MECANICAS-IMPL.md) — Don Bombín usa a Titiritera",
+        "line": "Shhh. No grites. La luz duele… y el sonido también.",
+        "$line": "BORRADOR (MECÁNICAS-IMPL, oleada 2): texto provisional hasta que NARRATIVA lo escriba",
+        "$look": "La mañana en blanco y negro (cine mudo, 05 §4): lo dibuja la escena/película, no el simulador",
+        "crew": [
+          "e_titiritera",
+          "r_kage",
+          "c_sombrita",
+          "r_sonambulo"
+        ],
+        "archetype": "galera_raices",
+        "personality": "afinador",
+        "ai": "capitan",
+        "powerMul": 1.0,
+        "hpMulX": 2.8,
+        "mareo": {
+          "sway": 6,
+          "period": 3.6,
+          "drift": 1.6
+        },
+        "teach": "Paciencia: el vaivén es lento y ancho; la Sombra apuñala detrás de los escudos",
+        "stamp": "lentes"
+      },
+      {
+        "n": 8,
+        "name": "La fila del baño",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.74,
+          0.42
+        ],
+        "captain": "e_diva",
+        "captainName": "La que no sale del baño",
+        "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio (docs/part-iii/agentes/MECANICAS-IMPL.md) — usa a Diva (el ÚNICO gato de Sonido: con 4 la tripulación piso caía a 25 %, 02 §3.1)",
+        "line": "¡Ocupado! ¿Cuánto llevas esperando? Yo, toda la noche.",
+        "$line": "BORRADOR (MECÁNICAS-IMPL, oleada 2): texto provisional hasta que NARRATIVA lo escriba",
+        "crew": [
+          "e_diva",
+          "r_marejada",
+          "c_espumita",
+          "r_fanguito"
+        ],
+        "archetype": "nave_cometa",
+        "personality": "vengativo",
+        "ai": "capitan",
+        "powerMul": 1.05,
+        "hpMulX": 3.0,
+        "mareo": {
+          "sway": 4.5,
+          "period": 2.4,
+          "drift": 1.2,
+          "donas": {
+            "side": 1,
+            "n": 2,
+            "heal": 0.06,
+            "catHeal": 0.2
+          },
+          "ultSlow": {
+            "side": 1,
+            "mul": 0.8
+          },
+          "botellas": {
+            "side": 0,
+            "first": 3,
+            "every": 3,
+            "n": 3,
+            "power": 0.5
+          }
+        },
+        "teach": "Repaso: donas, karaoke y botellas a la vez; su capitana aturde cantando (Sonido)",
+        "note": {
+          "text": "NO entres al baño…\nok, sí entra",
+          "at": [
+            0.86,
+            0.15
+          ],
+          "rot": 0.06
+        },
+        "stamp": "llave"
+      },
+      {
+        "n": 9,
+        "name": "El Cadenero",
+        "kind": "boss",
+        "playable": true,
+        "at": [
+          0.88,
+          0.6
+        ],
+        "captain": "e_cadenero",
+        "captainName": "El Cadenero",
+        "$captain": "GATOS-DATOS (2026-10-27): ya es el gato propio (data/gateras/especies.json); antes, suplente e_bastion. (Nota vieja: SUPLENTE: especie existente hasta que ARTE pinte al gato propio (docs/part-iii/agentes/MECANICAS-IMPL.md) — El Cadenero usa a Bastión (épico))",
+        "line": "Esta noche no pasa nadie.",
+        "crew": [
+          "e_cadenero",
+          "e_golem",
+          "r_contrapeso",
+          "e_infernal"
+        ],
+        "archetype": "fortin_piedra",
+        "personality": "calculador",
+        "ai": "capitan",
+        "powerMul": 1.2,
+        "band": "jefe",
+        "hpMulX": 4.0,
+        "mareo": {
+          "sway": 5,
+          "period": 2.2,
+          "drift": 1.3,
+          "donas": {
+            "side": 1,
+            "n": 2,
+            "heal": 0.06,
+            "catHeal": 0.2
+          },
+          "botellas": {
+            "side": 0,
+            "first": 2,
+            "every": 3,
+            "n": 3,
+            "power": 0.6
+          }
+        },
+        "fases": {
+          "side": 1,
+          "phases": [
+            {
+              "id": "cadenero_puerta",
+              "name": "LA PUERTA",
+              "banner": false
+            },
+            {
+              "id": "cadenero_cierra",
+              "name": "¡CIERRA LA PUERTA!",
+              "at": {
+                "hp": 0.5
+              },
+              "telegraph": "Sin viento, y le llueven más botellas a tu barco",
+              "env": {
+                "calm": true,
+                "layer": "sea"
+              },
+              "effects": [
+                "mareoPuerta"
+              ]
+            }
+          ]
+        },
+        "$fases": "Fase 2 al 50 %: cierra la puerta (02 §3.1) — calma (viento 0) y botellas cada turno, una más (battle/mareo.ts FASE_EFFECTS.mareoPuerta). Sus botellas son su poder: sin cataclismo extra",
+        "teach": "Todo lo aprendido. A la mitad cierra la puerta: sin viento y más botellas",
+        "film": "F07",
+        "stakes": "El rastro. Y que el gordo vuelva a hacer fila para el baño.",
+        "stamp": "pulsera",
+        "story": "mission:H73",
+        "$story": "El Cadenero es la batalla de H74 (NARRATIVA): se abre cuando la historia llega (H73 hecha), no antes",
+        "vip": {
+          "side": 0,
+          "captain": "e0"
+        },
+        "$vip": "Regla «Lista VIP» (F07, H74): cada turno El Cadenero revisa a tu gato más fuerte y ese no dispara; derribarlo acaba la lista (battle/barRules.ts)"
+      }
+    ],
+    "p3d_superheroes": [
+      {
+        "n": 1,
+        "name": "La señal",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.08,
+          0.2
+        ],
+        "captain": "c_voltio",
+        "crew": [
+          "c_voltio",
+          "c_destello"
+        ],
+        "archetype": "chalupa",
+        "personality": "afinador",
+        "ai": "grumete",
+        "powerMul": 1.2,
+        "hpMulX": 1.8,
+        "teach": "Aquí los golpes hacen ruido. Y el ruido se queda. Escóndete detrás.",
+        "stamp": "globo"
+      },
+      {
+        "n": 2,
+        "name": "Barrio bajo",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.3,
+          0.2
+        ],
+        "captain": "c_chispa",
+        "crew": [
+          "c_chispa",
+          "c_terron",
+          "c_nimbo"
+        ],
+        "archetype": "chalupa",
+        "personality": "afinador",
+        "ai": "grumete",
+        "powerMul": 1.3,
+        "hpMulX": 2.0,
+        "stamp": "globo"
+      },
+      {
+        "n": 3,
+        "name": "Muelle industrial",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.52,
+          0.2
+        ],
+        "captain": "r_iman",
+        "crew": [
+          "r_iman",
+          "c_guijarro",
+          "c_voltio"
+        ],
+        "archetype": "chalupa",
+        "personality": "afinador",
+        "ai": "capitan",
+        "powerMul": 1.4,
+        "hpMulX": 2.2,
+        "stamp": "globo"
+      },
+      {
+        "n": 4,
+        "name": "El puente",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.76,
+          0.2
+        ],
+        "captain": "r_plasmin",
+        "crew": [
+          "r_plasmin",
+          "r_vitral",
+          "c_nimbo"
+        ],
+        "archetype": "chalupa",
+        "personality": "afinador",
+        "ai": "capitan",
+        "powerMul": 1.5,
+        "hpMulX": 2.4,
+        "stamp": "globo"
+      },
+      {
+        "n": 5,
+        "name": "La Pandilla del Ovillo",
+        "kind": "elite",
+        "playable": true,
+        "at": [
+          0.18,
+          0.62
+        ],
+        "captain": "e_ovillo",
+        "crew": [
+          "e_ovillo",
+          "c_chispa",
+          "c_brote",
+          "r_kage"
+        ],
+        "archetype": "chalupa",
+        "personality": "calculador",
+        "ai": "capitan",
+        "powerMul": 2.2,
+        "hpMulX": 3.8,
+        "captainName": "La Pandilla del Ovillo",
+        "$captain": "GATOS-DATOS (2026-10-27): ya es el gato propio (data/gateras/especies.json); antes, suplente e_rencor. (Nota vieja: SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — la Pandilla usa a Rencor, Chispa, Brote y Kage)",
+        "film": "F09",
+        "teach": "La pandilla se esconde detrás de sus propias letras",
+        "stakes": "Que se enfríe el rastro. Y que nos confundan con villanos.",
+        "stamp": "ovillo",
+        "band": "jefe",
+        "cata": {
+          "id": "meteors",
+          "first": 2,
+          "every": 3,
+          "power": 0.6
+        }
+      },
+      {
+        "n": 6,
+        "name": "Rescate en la azotea",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.4,
+          0.62
+        ],
+        "captain": "r_runachispa",
+        "crew": [
+          "r_runachispa",
+          "c_destello",
+          "r_kage"
+        ],
+        "archetype": "chalupa",
+        "personality": "afinador",
+        "ai": "capitan",
+        "powerMul": 1.6,
+        "hpMulX": 2.6,
+        "stamp": "globo"
+      },
+      {
+        "n": 7,
+        "name": "Laboratorio",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.6,
+          0.62
+        ],
+        "captain": "r_cyberbloom",
+        "crew": [
+          "r_cyberbloom",
+          "r_helice",
+          "c_tic"
+        ],
+        "archetype": "chalupa",
+        "personality": "afinador",
+        "ai": "capitan",
+        "powerMul": 1.7,
+        "hpMulX": 2.8,
+        "stamp": "globo"
+      },
+      {
+        "n": 8,
+        "name": "La torre de El Clarín",
+        "kind": "normal",
+        "playable": true,
+        "at": [
+          0.8,
+          0.62
+        ],
+        "captain": "e_meteoro",
+        "crew": [
+          "e_meteoro",
+          "r_marejada",
+          "r_tachon"
+        ],
+        "archetype": "chalupa",
+        "personality": "afinador",
+        "ai": "capitan",
+        "powerMul": 1.8,
+        "hpMulX": 3.0,
+        "stamp": "globo"
+      },
+      {
+        "n": 9,
+        "name": "Cruceta",
+        "kind": "boss",
+        "playable": true,
+        "at": [
+          0.9,
+          0.86
+        ],
+        "captain": "e_supernova",
+        "crew": [
+          "e_supernova",
+          "l_tronador",
+          "e_faro",
+          "r_kage"
+        ],
+        "archetype": "chalupa",
+        "personality": "calculador",
+        "ai": "capitan",
+        "powerMul": 2.3,
+        "hpMulX": 4.6,
+        "captainName": "Cruceta",
+        "captainArt": "storybook_ink_cat",
+        "$captain": "SUPLENTE: especie existente hasta que ARTE pinte al gato propio (el arte nuevo no está aprobado) — Cruceta usa a Supernova",
+        "line": "¡Esta ciudad no le teme a ninguna bruja!",
+        "band": "jefe",
+        "story": "mission:H76",
+        "rules": {
+          "pausas": [
+            {
+              "side": 1,
+              "turn": 3,
+              "kind": "rescate"
+            }
+          ]
+        },
+        "film": "F11",
+        "teach": "Usa sus letras de escudo. A la mitad se va a salvar a un gatito: un turno sin pelear",
+        "stakes": "La azotea donde cayó el chiquito.",
+        "stamp": "cruceta"
+      }
+    ]
+  },
+  "later": {
+    "$doc": "Lo que NO entra todavía: los 2 encargos y los encuentros. El desvío «Trastienda» y La Ronda ya se juegan (dims[].nodes, dims[].ronda). Ver docs/part-iii/agentes/MECANICAS-IMPL.md.",
+    "desvio": {
+      "from": 3,
+      "name": "Trastienda",
+      "nodes": 3
+    },
+    "actividad": "La Ronda"
+  }
+}

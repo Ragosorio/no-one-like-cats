@@ -368,6 +368,18 @@ const SFX = {
   ],
   purr: [{ wave: 'sawtooth', freq: 28, dur: 0.8, vol: 0.12, lp: 300, vib: 4, attack: 0.1 }],
   paper: [{ wave: 'noise', freq: 2.5, to: 1, dur: 0.18, vol: 0.18, hp: 1500, attack: 0.02 }],
+  /** a pen nib scratching, amplified (Parte III, La Mano's stroke: the same sound in H93 and in the blow of H94) */
+  nib: [
+    { wave: 'noise', freq: 3, to: 1.6, dur: 0.22, vol: 0.22, hp: 2400, attack: 0.01 },
+    { wave: 'noise', freq: 2.2, to: 3.4, dur: 0.18, vol: 0.2, hp: 2000, delay: 0.24 },
+    { wave: 'sawtooth', freq: 140, to: 90, dur: 0.4, vol: 0.06, lp: 900, delay: 0.02 },
+    { wave: 'noise', freq: 3.6, to: 1.2, dur: 0.3, vol: 0.24, hp: 2600, delay: 0.46 },
+  ],
+  /** a soft graphite pencil, one stroke (Parte III, «Continuará.»: the Capi's hand — the nib's opposite, unamplified) */
+  pencil: [
+    { wave: 'noise', freq: 4.2, to: 3.1, dur: 0.11, vol: 0.07, hp: 3400, attack: 0.008 },
+    { wave: 'noise', freq: 3.4, to: 4.4, dur: 0.07, vol: 0.045, hp: 3800, delay: 0.12 },
+  ],
   glitch: [
     { wave: 'square', freq: 60, to: 2000, dur: 0.08, vol: 0.12 },
     { wave: 'noise', freq: 5, dur: 0.1, vol: 0.12, delay: 0.05, hp: 3000 },

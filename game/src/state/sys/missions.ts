@@ -13,6 +13,9 @@ import { KO_RANKS } from './ranks';
 import { GoalSpec, MISSION_GATES, goalCounters, goalSupported } from './missionGoals';
 import { claimMissionReward, missionRewardClaimed } from './rupturasLedger';
 
+/** a mission id: chain letter + 2–3 digits (H01…H99, H100…: the Parte IV starts at H100 — mecanicas-v2/03 §1.1) */
+export const MISSION_ID_RE = /^[HCKE]\d{2,3}$/;
+
 type GoalEval = { cur: number; need: number };
 
 // dev guard: every goal type in content must have an evaluator (node scripts/verify-missions.ts for the full report)
@@ -227,7 +230,9 @@ export function checkMissions() {
       }
     }
     for (const id of [...s.active]) {
-      const m = MISSION_BY_ID.get(id)!;
+      // an id this build doesn't know (a later build's mission, an old save's stray H99) waits: never evaluated, never lost
+      const m = MISSION_BY_ID.get(id);
+      if (!m) continue;
       const e = evalGoal(m);
       if (e.cur >= e.need) {
         complete(m);
@@ -277,7 +282,8 @@ function complete(m: MissionDef): MissionReward {
   if (out.food) G.add('food', out.food, 'mission');
   if (out.gems) G.add('gems', out.gems, 'mission');
   if (out.orbs) G.addOrbs(out.orbs.species, out.orbs.n);
-  for (const u of m.unlocks) if (!/^[HCKE]\d\d$/.test(u)) G.flag(u);
+  // a mission id (H66, H100…: 2–3 digits, docs/part-iii/mecanicas-v2/03 §1.1) is a chain link, never a flag
+  for (const u of m.unlocks) if (!MISSION_ID_RE.test(u)) G.flag(u);
   claimMissionReward(m.id);
   G.count('missions_done');
   lastRewards.set(m.id, out);

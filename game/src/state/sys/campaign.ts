@@ -18,6 +18,7 @@ import { battleCatFrom } from '../../battle/catShots';
 import { activeFormId } from './forms';
 import { bareSpecies } from './missionGoals';
 import { weaponShot } from '../../battle/weapons';
+import { isP3Cat } from './multidim';
 import type { BattleSpec, BattleResult, BattleIntro } from '../../scenes/BattleScene';
 import type { BossConfig, StageRules } from '../../battle/sim';
 import type { ShotDef } from '../../battle/types';
@@ -212,7 +213,8 @@ function bossCrew(zone: number): string[] {
   if (zone === 5) return ['c_cometin', 'e_supernova', 'c_voltio', 'c_lunita'];
   if (zone === 6) return ['r_astral', 'r_arcanito', 'r_solar'];
   const els = b.elements.length ? b.elements : ZONES[zone - 1].elements;
-  const crewIds = CATS.filter((c) => c.rarity === 'common' && els.includes(c.elements[0])).map((c) => c.id);
+  // (never a cat of the Parte III boxes: El Gritito is a Sonido common — multidim.ts isP3Cat)
+  const crewIds = CATS.filter((c) => c.rarity === 'common' && !isP3Cat(c) && els.includes(c.elements[0])).map((c) => c.id);
   return [captain, ...crewIds.slice(0, 2)];
 }
 
@@ -250,6 +252,12 @@ interface SiegeInput {
   enemyStars?: number;
   /** story battles: at least this many cat rooms on a generated ship (so a 4-cat crew fights whole). Unset = the archetype's */
   catrooms?: number;
+  /**
+   * Parte III «LA CAJA TE MIDE» (mecanicas-v2/02 §6.3): the enemy crew mirrors your crew's quality — its cats' attack ×
+   * f, their hp and its cannon × √f, f = clamp((your mean base shot dmg / theirs)^k, 1, cap). Unset (every Part I / II
+   * battle): nothing changes.
+   */
+  mirror?: { k: number; cap: number };
 }
 
 const BOSS_INTRO: Record<number, { lines: string[]; weak: string }> = {
@@ -485,7 +493,21 @@ export function buildSiege(o: SiegeInput, onEnd: (r: BattleResult) => void): Bat
     suddenDeath: o.suddenDeath ?? (isBoss && zone === 6 ? 20 : isBoss && zone >= 4 ? 13 : undefined),
     onEnd,
   };
+  if (o.mirror) applyMirror(spec, o.mirror);
   return spec;
+}
+
+/** «la caja te mide» (SiegeInput.mirror): pure on the spec's cats (species base shot), deterministic */
+function applyMirror(spec: BattleSpec, m: { k: number; cap: number }) {
+  const q = (ids: string[]) => ids.reduce((a, id) => a + catDef(id).combat.shot.dmg, 0) / Math.max(1, ids.length);
+  const qp = q(spec.player.cats.map((c) => c.catId));
+  const qe = q(spec.enemy.cats.map((c) => c.catId));
+  const f = qe > 0 ? Math.max(1, Math.min(m.cap, Math.pow(qp / qe, m.k))) : 1;
+  if (!(f > 1)) return;
+  const r = Math.sqrt(f);
+  spec.enemy.cats = spec.enemy.cats.map((c) => ({ ...c, atk: Math.round(c.atk * f), hp: Math.round(c.hp * r) }));
+  spec.enemy.cannonAtk = Math.round(spec.enemy.cannonAtk * r);
+  spec.meta!.mirror = f;
 }
 
 /**

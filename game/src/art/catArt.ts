@@ -151,6 +151,8 @@ function loadLite(raw: string): Promise<Texture> {
 const svgTex = new Map<string, Texture>();
 const svgState = new Map<string, 'queued' | 'loading' | 'failed'>();
 const svgWaiters = new Map<string, Set<(t: Texture) => void>>();
+/** who waits to hear that a full-detail vector can't load (a film's preload stops waiting and keeps the lite one) */
+const svgFailWaiters = new Map<string, Set<() => void>>();
 const svgQueue: string[] = [];
 let svgActive = 0;
 
@@ -169,7 +171,12 @@ function pumpSvg() {
           svgWaiters.delete(slug);
           ws?.forEach((cb) => cb(tex));
         })
-        .catch(() => svgState.set(slug, 'failed'))
+        .catch(() => {
+          svgState.set(slug, 'failed');
+          const fs = svgFailWaiters.get(slug);
+          svgFailWaiters.delete(slug);
+          fs?.forEach((cb) => cb());
+        })
         .finally(() => {
           svgActive--;
           pumpSvg();
@@ -202,6 +209,22 @@ export function onCatArt(raw: string, cb: (t: Texture) => void): () => void {
   if (!set) svgWaiters.set(slug, (set = new Set()));
   set.add(cb);
   return () => svgWaiters.get(slug)?.delete(cb);
+}
+
+/**
+ * `cb` runs when the full-detail vector of `raw` FAILED to load (now if it already did: 404 on an art host that doesn't
+ * have it yet, offline). Additive: nothing else changes. Returns an unsubscribe.
+ */
+export function onCatArtFailed(raw: string, cb: () => void): () => void {
+  const slug = artSlug(raw);
+  if (svgState.get(slug) === 'failed') {
+    cb();
+    return () => undefined;
+  }
+  let set = svgFailWaiters.get(slug);
+  if (!set) svgFailWaiters.set(slug, (set = new Set()));
+  set.add(cb);
+  return () => svgFailWaiters.get(slug)?.delete(cb);
 }
 
 export async function loadCatTexture(slug: string): Promise<Texture> {

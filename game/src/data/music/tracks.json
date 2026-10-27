@@ -208,6 +208,21 @@
     "beatmap": "beatmaps/liky_fight.battle.json",
     "lufs": -16.55,
     "note": "Remix de batalla: los stems reordenados (intro de percusión, verso con la batería del coro y sin melodía, drop 40–47, break 32–34, clímax 56–63) + acordeón nuevo con el gancho, comping, palmas, güira e impactos. Loop 28 compases (51,3 s); clímax y remate final como secciones."
+   },
+   {
+    "id": "liky_fight.amanecer",
+    "file": "music/liky_fight.amanecer.m4a",
+    "kind": "ambient",
+    "title": "La llama vuelve",
+    "durationSec": 45.019,
+    "loop": {
+     "start": 5.443288,
+     "end": 40.618844
+    },
+    "bpm": 109.167,
+    "gainDb": 0,
+    "lufs": -18.02,
+    "note": "El tema de Canelo para F34 «Antes del amanecer». Canelo = LIKY FIGHT (doc 18 §5.1; su melodía es la del Eco y la de la forma Canelo Astral). Material propio: stems de la Parte II (melodía «other» + bajo, SIN batería). 0–4 s: «un acorde, bajito» (el primer tiempo de c33 estirado ×6, con sala larga); 4,5 s: entra el tema completo (c17–c32, precoro y coro) estirado ×1,2 (109,2 BPM), paso bajo 9 kHz, sala (18 %), en loop hasta que la película lo corte en seco (A8). Nunca suena en la noche sin Canelo (F33)."
    }
   ],
   "loop": {
@@ -556,6 +571,626 @@
   "hint": "Lo dice con rabia y con cariño."
  },
  {
+  "id": "drunck",
+  "title": "Drunck",
+  "file": "music/drunck.m4a",
+  "durationSec": 72.777,
+  "bpm": 165,
+  "key": "Si♭ menor",
+  "beatmap": "beatmaps/drunck.json",
+  "variations": [
+   {
+    "id": "drunck.original",
+    "file": "music/drunck.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "drunck.barra",
+    "file": "music/drunck.barra.m4a",
+    "kind": "ambient",
+    "title": "Desde la calle",
+    "durationSec": 27.636,
+    "loop": {
+     "start": 1.455306,
+     "end": 24.728027
+    },
+    "bpm": 165,
+    "gainDb": 0,
+    "beatmap": "beatmaps/drunck.barra.json",
+    "lufs": -18.0,
+    "note": "Cama sin timbres nuevos: c9–c24 de la original (Drop A + B, con el respiro de c16 y el corte de c24,649) con paso bajo de 4.º orden a 280 Hz: queda solo el rumble del bombo, como la fiesta oída desde la calle. 16 compases a 165."
+   },
+   {
+    "id": "drunck.resaca",
+    "file": "music/drunck.resaca.m4a",
+    "kind": "ambient",
+    "title": "Bajo la almohada",
+    "durationSec": 55.273,
+    "loop": {
+     "start": 2.906122,
+     "end": 49.451565
+    },
+    "bpm": 82.5,
+    "gainDb": 0,
+    "beatmap": "beatmaps/drunck.resaca.json",
+    "lufs": -18.01,
+    "note": "Cama sin timbres nuevos: la parte armónica (HPSS) de c9–c24 —el sinte, sin los clics del bombo ni los hats—, paso alto 4.º orden a 160 Hz (fuera el cuerpo del bombo) y paso bajo 4.º orden a 700 Hz (+ 900 Hz suave), estirada ×2 con rubberband R3 (misma altura, 82,5 BPM) y una sala oscura; nivelado lento en el respiro de c16. Como oída a través de una almohada. 16 compases a 82,5 (los 16 de la canción, al doble de largo)."
+   },
+   {
+    "id": "drunck.battle",
+    "file": "music/drunck.battle.m4a",
+    "kind": "battle",
+    "title": "Última ronda",
+    "durationSec": 46.036,
+    "loop": {
+     "start": 2.907256,
+     "end": 40.725442
+    },
+    "bpm": 165,
+    "gainDb": 0,
+    "beatmap": "beatmaps/drunck.battle.json",
+    "lufs": -16.54,
+    "note": "Remix de batalla sin timbres nuevos, por compases de la mezcla: intro c5–c6 (los hipos) · verso = c33–c40 (solo batería, respiro y redoble) · drop = Drop A c9–c15 · break = respiro c16 + el sinte de la intro (c7–c8: golpe y redoble) · clímax = C c25–c32 (build-up encima de todo) · remate c47–c48 + el corte seco con su cola. Loop 26 compases (37,8 s); la vuelta c32 → c33 es la de la canción."
+   },
+   {
+    "id": "drunck.cinemudo",
+    "file": "music/drunck.cinemudo.m4a",
+    "kind": "ambient",
+    "title": "En el cine mudo",
+    "durationSec": 36.0,
+    "loop": {
+     "start": 2.909093,
+     "end": 26.181814
+    },
+    "bpm": 82.5,
+    "gainDb": 0,
+    "lufs": -18.0,
+    "note": "Para F04 (cine mudo de los años 20, «drunck.resaca en piano de cine mudo»): piano vertical (Salamander) con una segunda cuerda desafinada (retardo modulado: piano de cantina), Si♭ menor a 82,5 BPM (el tempo de «Bajo la almohada»), stride con los «hipos» del bombo de la intro de Drunck (el anticipo de c2,875 → c3 y el redoble de c4,75) y una melodía que resbala cromática hacia abajo; banda de fonógrafo. Es un arreglo nuevo con el material de Drunck (tonalidad, tempo y ritmo de su intro): el timbre de piano lo pidió la ficha de F04."
+   }
+  ],
+  "loop": {
+   "start": 11.639592,
+   "end": 58.185034
+  },
+  "cover": {
+   "palette": [
+    "#1A0F14",
+    "#E8A33D",
+    "#F2EBD3",
+    "#7B2D8E",
+    "#3FC1C9"
+   ],
+   "motif": "espiral en el fondo de un tarro: la espuma que se vuelve mar"
+  },
+  "moods": [
+   "hardstyle",
+   "frenético",
+   "eufórico",
+   "mareado",
+   "recuerdo"
+  ],
+  "lufs": -16.0,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 3209481,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Alguien pide la última ronda."
+ },
+ {
+  "id": "emen",
+  "title": "EM%EN",
+  "file": "music/emen.m4a",
+  "durationSec": 187.787,
+  "bpm": 103,
+  "key": "Mi♭ menor",
+  "beatmap": "beatmaps/emen.json",
+  "variations": [
+   {
+    "id": "emen.original",
+    "file": "music/emen.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "emen.publico",
+    "file": "music/emen.publico.m4a",
+    "kind": "ambient",
+    "title": "El público espera",
+    "durationSec": 25.631,
+    "loop": {
+     "start": 2.32746,
+     "end": 20.968231
+    },
+    "bpm": 103.0,
+    "gainDb": 0,
+    "lufs": -18.0,
+    "note": "Isla de EM%EN: c1–c8 de la mezcla tal cual (bajo, stab, guitarra, hats, coro «Chant», Console Choir y atmósfera; sin batería), paso bajo suave a 9 kHz y una sala corta (15 %). 8 compases a 103. Presentación F05."
+   }
+  ],
+  "loop": null,
+  "cover": {
+   "palette": [
+    "#151515",
+    "#F2F2F2",
+    "#9E9E9E",
+    "#E63946",
+    "#F4D35E"
+   ],
+   "motif": "un micrófono en el piso de un estacionamiento, bajo una sola luz"
+  },
+  "moods": [
+   "batalla",
+   "callejero",
+   "tenso",
+   "orgulloso",
+   "confesión"
+  ],
+  "lufs": -16.1,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 8281422,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Hay batalla en la Cuadra 8."
+ },
+ {
+  "id": "oh_shit",
+  "title": "OH SHIT",
+  "file": "music/oh_shit.m4a",
+  "durationSec": 201.948,
+  "bpm": 145,
+  "key": "Mi menor",
+  "beatmap": "beatmaps/oh_shit.json",
+  "variations": [
+   {
+    "id": "oh_shit.original",
+    "file": "music/oh_shit.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "oh_shit.antes",
+    "file": "music/oh_shit.antes.m4a",
+    "kind": "ambient",
+    "title": "Antes de caer",
+    "durationSec": 18.207,
+    "loop": {
+     "start": 1.653719,
+     "end": 14.895102
+    },
+    "bpm": 145.0,
+    "gainDb": 0,
+    "lufs": -18.04,
+    "note": "Isla de OH SHIT: c37–c44 de la mezcla (textura «Texturex», bajo «Kandy» y la melodía «Coil» picada en c37, c40 y c41,125; sin beat), paso bajo a 7 kHz y sala (20 %). 8 compases a 145. Presentación F07."
+   }
+  ],
+  "loop": null,
+  "cover": {
+   "palette": [
+    "#1B1B2F",
+    "#FF6B35",
+    "#4ECDC4",
+    "#FFE66D",
+    "#F7FFF7"
+   ],
+   "motif": "una pantalla que se raja como vidrio y deja ver otro universo"
+  },
+  "moods": [
+   "caída",
+   "caótico",
+   "animado",
+   "vértigo",
+   "multiverso"
+  ],
+  "lufs": -16.1,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 8905911,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Se cae de universo en universo."
+ },
+ {
+  "id": "daria",
+  "title": "Daria",
+  "file": "music/daria.m4a",
+  "durationSec": 146.363,
+  "bpm": 134,
+  "key": "Do menor",
+  "beatmap": "beatmaps/daria.json",
+  "variations": [
+   {
+    "id": "daria.original",
+    "file": "music/daria.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "daria.calle",
+    "file": "music/daria.calle.m4a",
+    "kind": "ambient",
+    "title": "Calle fría",
+    "durationSec": 19.701,
+    "loop": {
+     "start": 1.788503,
+     "end": 16.116871
+    },
+    "bpm": 134.0,
+    "gainDb": 0,
+    "lufs": -18.0,
+    "note": "Daria sin batería ni voz: stems «other» (piano de vinilo + shimmer) y bajo 808 en paso bajo (140 Hz) de c9–c16, sala corta (12 %). 8 compases a 134. Presentación F13."
+   },
+   {
+    "id": "daria.piano",
+    "file": "music/daria.piano.m4a",
+    "kind": "ambient",
+    "title": "Piano de vinilo",
+    "durationSec": 29.552,
+    "loop": {
+     "start": 2.686893,
+     "end": 24.179433
+    },
+    "bpm": 89.333,
+    "gainDb": 0,
+    "lufs": -18.0,
+    "note": "Daria reducida al piano: stem «other» de c9–c16 (piano de vinilo + shimmer, sin 808, sin batería, sin voz), estirado ×1,5 con rubberband R3 (misma altura, 89,3 BPM), paso bajo 6 kHz y sala (25 %). Películas F14 y F15."
+   }
+  ],
+  "loop": null,
+  "cover": {
+   "palette": [
+    "#101418",
+    "#C9D1D9",
+    "#5B6B7A",
+    "#B23A48",
+    "#E8E2D0"
+   ],
+   "motif": "una sola línea de tinta que cruza el papel"
+  },
+  "moods": [
+   "frío",
+   "concentrado",
+   "duelo",
+   "nocturno",
+   "filo"
+  ],
+  "lufs": -16.0,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 6454597,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Un duelo de una sola línea."
+ },
+ {
+  "id": "no_wey",
+  "title": "No wey",
+  "file": "music/no_wey.m4a",
+  "durationSec": 226.928,
+  "bpm": 74,
+  "key": "Fa♯ menor",
+  "beatmap": "beatmaps/no_wey.json",
+  "variations": [
+   {
+    "id": "no_wey.original",
+    "file": "music/no_wey.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "no_wey.melodia",
+    "file": "music/no_wey.melodia.m4a",
+    "kind": "ambient",
+    "title": "La melodía",
+    "durationSec": 35.676,
+    "loop": {
+     "start": 3.242018,
+     "end": 29.187959
+    },
+    "bpm": 74.0,
+    "gainDb": 0,
+    "lufs": -18.0,
+    "note": "Isla de No wey: c45–c52 de la mezcla (la melodía «Boop» sola y, desde c49, el segundo bajo), sala corta (10 %). 8 compases a 74. Presentación F18."
+   },
+   {
+    "id": "no_wey.nodije",
+    "file": "music/no_wey.nodije.m4a",
+    "kind": "ambient",
+    "title": "Lo que no dije",
+    "durationSec": 45.405,
+    "loop": {
+     "start": 6.485397,
+     "end": 32.431338
+    },
+    "bpm": 37.0,
+    "gainDb": 0,
+    "lufs": -18.0,
+    "note": "Isla de No wey: c45–c48, la melodía sola, estirada ×2 con rubberband R3 (misma altura, 37 BPM), paso bajo 5 kHz y sala oscura (30 %). 4 compases de la canción al doble de largo. Presentación F22 (la batalla de Luzterna)."
+   },
+   {
+    "id": "no_wey.puente",
+    "file": "music/no_wey.puente.m4a",
+    "kind": "stinger",
+    "title": "Puente a DISTOR",
+    "durationSec": 21.622,
+    "bpm": 74,
+    "gainDb": 0,
+    "lufs": -22.8,
+    "note": "Puente No wey → DISTOR para la cola de F23 (misma tónica F♯m, tempo 3:2). Empieza en No wey c65 con la MISMA ganancia que no_wey.m4a (la película puede cambiar de pista ahí sin que se note); desde c69 entra la isla de DISTOR c1–c4 (808 + sinte + FX) a 111 BPM, de −18 dB a 0 dB en 4,5 tiempos, bajo la última nota de No wey, con la ganancia de distor.m4a. Termina en el compás 5 de DISTOR. Sin loop. Después sigue «Señal rota» (F24)."
+   }
+  ],
+  "loop": null,
+  "cover": {
+   "palette": [
+    "#120E14",
+    "#D94F70",
+    "#2B2335",
+    "#F5E9DA",
+    "#6C5B7B"
+   ],
+   "motif": "un sello de «NO» estampado en rojo sobre un expediente"
+  },
+  "moods": [
+   "oscuro",
+   "desafiante",
+   "orgulloso",
+   "lento",
+   "firme"
+  ],
+  "lufs": -16.0,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 10007538,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Alguien que siempre dijo que no."
+ },
+ {
+  "id": "distor",
+  "title": "DISTOR",
+  "file": "music/distor.m4a",
+  "durationSec": 173.855,
+  "bpm": 112,
+  "key": "Fa♯ menor",
+  "beatmap": "beatmaps/distor.json",
+  "variations": [
+   {
+    "id": "distor.original",
+    "file": "music/distor.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "distor.senal",
+    "file": "music/distor.senal.m4a",
+    "kind": "ambient",
+    "title": "Señal rota",
+    "durationSec": 38.571,
+    "loop": {
+     "start": 25.713946,
+     "end": 34.285374
+    },
+    "bpm": 112,
+    "gainDb": 0,
+    "lufs": -18.04,
+    "note": "DISTOR c1–c4 (isla: 808 «Boom Li Do» + sinte «Future Flu» + FX, sin batería). Los 12 primeros compases repiten la isla con un paso bajo que se abre de 300 Hz a abierto (la señal pirata que entra); después, loop de los 4 compases abiertos. 112 BPM. Presentación F24."
+   }
+  ],
+  "loop": null,
+  "cover": {
+   "palette": [
+    "#0A0A0F",
+    "#00F0FF",
+    "#FF2E88",
+    "#1F1F2E",
+    "#F5F5F5"
+   ],
+   "motif": "una página de libro que se deshace en píxeles"
+  },
+  "moods": [
+   "distorsionado",
+   "futurista",
+   "agresivo",
+   "glitch",
+   "ruptura"
+  ],
+  "lufs": -16.1,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 7667015,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Una señal que se rompe."
+ },
+ {
+  "id": "no_game",
+  "title": "NO G@ME NO LIF€",
+  "file": "music/no_game.m4a",
+  "durationSec": 205.944,
+  "bpm": 90,
+  "key": "Fa♯ menor",
+  "beatmap": "beatmaps/no_game.json",
+  "variations": [
+   {
+    "id": "no_game.original",
+    "file": "music/no_game.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "no_game.start",
+    "file": "music/no_game.start.m4a",
+    "kind": "ambient",
+    "title": "PRESS START",
+    "durationSec": 29.333,
+    "loop": {
+     "start": 2.66576,
+     "end": 23.999093
+    },
+    "bpm": 90.0,
+    "gainDb": 0,
+    "lufs": -18.01,
+    "note": "NO G@ME sin batería: el arpegio «Rich Life» + 808 de c1–c2 dos veces y el piano «Blast» + 808 de c53–c56 (el 808 tiene periodo de 2 compases y las uniones caen en su fase). Sin el sinte distorsionado. 8 compases a 90. Presentación F28."
+   }
+  ],
+  "loop": null,
+  "cover": {
+   "palette": [
+    "#1A1033",
+    "#FFD23F",
+    "#EE4266",
+    "#3BCEAC",
+    "#F7F7FF"
+   ],
+   "motif": "una pantalla de inicio con un botón que parpadea"
+  },
+  "moods": [
+   "pop",
+   "energético",
+   "trampa",
+   "videojuego",
+   "distorsión"
+  ],
+  "lufs": -16.1,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 9082143,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "PRESS START."
+ },
+ {
+  "id": "xti",
+  "title": "xti es amor",
+  "file": "music/xti.m4a",
+  "durationSec": 198.021,
+  "bpm": 140,
+  "key": "Fa♯ mayor",
+  "beatmap": "beatmaps/xti.json",
+  "variations": [
+   {
+    "id": "xti.original",
+    "file": "music/xti.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "xti.pad",
+    "file": "music/xti.pad.m4a",
+    "kind": "ambient",
+    "title": "Pad de la noche",
+    "durationSec": 18.857,
+    "loop": {
+     "start": 1.715873,
+     "end": 15.430159
+    },
+    "bpm": 140.0,
+    "gainDb": 0,
+    "lufs": -18.0,
+    "note": "Isla de xti es amor: c73–c80, el pad solo (Bmaj7 – F♯maj7 – G♯m7 – A♯m7) tal cual, con sala oscura (22 %). 8 compases a 140. Película F12."
+   },
+   {
+    "id": "xti.gira",
+    "file": "music/xti.gira.m4a",
+    "kind": "ambient",
+    "title": "De gira",
+    "durationSec": 18.857,
+    "loop": {
+     "start": 1.714399,
+     "end": 15.428685
+    },
+    "bpm": 140.0,
+    "gainDb": 0,
+    "lufs": -18.03,
+    "note": "xti es amor en tutti: c49–c56 de la mezcla (pad, songstarter, bembé, bajo, caja y hat abierto) tal cual, sin sala. 8 compases a 140. Presentación F26 y base del karaoke de F27."
+   }
+  ],
+  "loop": null,
+  "cover": {
+   "palette": [
+    "#0B1736",
+    "#F3C969",
+    "#2E5AAC",
+    "#F7F3E3",
+    "#C2563B"
+   ],
+   "motif": "un cielo de remolinos sobre un pueblo dormido"
+  },
+  "moods": [
+   "cálido",
+   "nocturno",
+   "tierno",
+   "tranquilo",
+   "despedida"
+  ],
+  "lufs": -16.1,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 8732725,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Una noche que nadie quiere que termine."
+ },
+ {
+  "id": "sadie",
+  "title": "SADIE",
+  "file": "music/sadie.m4a",
+  "durationSec": 172.9,
+  "bpm": 50,
+  "key": "Re menor",
+  "beatmap": "beatmaps/sadie.json",
+  "variations": [
+   {
+    "id": "sadie.original",
+    "file": "music/sadie.m4a",
+    "kind": "original",
+    "title": "Original"
+   },
+   {
+    "id": "sadie.luz",
+    "file": "music/sadie.luz.m4a",
+    "kind": "ambient",
+    "title": "Antes de la luz",
+    "durationSec": 50.4,
+    "loop": {
+     "start": 7.197415,
+     "end": 35.997415
+    },
+    "bpm": 33.333,
+    "gainDb": 0,
+    "lufs": -20.0,
+    "note": "SADIE c33–c36: el piano limpio solo (un pase del loop de piano de 4 compases), estirado ×1,5 con rubberband R3 (misma altura, 33,3 BPM), paso bajo 5 kHz y sala cálida (30 %). SOLO para la vigilia (F38) y los créditos (F39): nunca antes del golpe."
+   }
+  ],
+  "loop": null,
+  "cover": {
+   "palette": [
+    "#0E1420",
+    "#E9E4D8",
+    "#7A8CA8",
+    "#F2B04A",
+    "#3A2E4D"
+   ],
+   "motif": "un círculo de luz proyectado que se agranda en una pared oscura"
+  },
+  "moods": [
+   "triste",
+   "incremental",
+   "piano",
+   "cuerdas",
+   "silencio"
+  ],
+  "lufs": -17.8,
+  "sync": {
+   "sampleRate": 44100,
+   "sourceSamples": 7624889,
+   "encoderDelaySamples": 2112
+  },
+  "hint": "Cuando todo se queda en silencio."
+ },
+ {
   "id": "amb",
   "title": "Otras grabaciones",
   "file": "music/amb.motivo.m4a",
@@ -741,6 +1376,120 @@
     "durationSec": 7.2,
     "gainDb": 0,
     "note": "Remate nuevo (COMPOSER, doc 30): la célula Si–Do♯–Re desafinada resbala medio tono y cae afinada en Si♭–Do–Re♭ → Si♭m. Suena en los créditos (stinger registro_000_despertando)."
+   },
+   {
+    "id": "amb.vocacion",
+    "file": "music/amb.vocacion.m4a",
+    "kind": "ambient",
+    "title": "La Vocación",
+    "durationSec": 90.0,
+    "loop": null,
+    "bpm": 60,
+    "gainDb": 0,
+    "lufs": -18.0,
+    "note": "Composición nueva (MUSICA-V2) para F17 (H82, Caravaggio): órgano de tubos (GeneralUser GS) y cuerdas graves (VSCO 2 CE: contrabajos, chelos, violas), Do menor, 90 s sin loop, cortada a los cues del guion: órgano muy grave al entrar (V1), cuerdas graves con el rayo (V2), una nota sostenida en La creación de Adán (V4), La♭ mayor cuando la linterna se interpone (V5), napolitano y dominante con la gota que rebota (V7–V8), silencio de órgano cuando La Mano mira a Canelo (V9, con la célula de Canelo Re–Si♭–Sol casi inaudible en las violas), vuelve y se apaga (V10–V11), nada (V12)."
+   },
+   {
+    "id": "amb.plan",
+    "file": "music/amb.plan.m4a",
+    "kind": "ambient",
+    "title": "El plan",
+    "durationSec": 90.0,
+    "loop": null,
+    "bpm": 72,
+    "gainDb": 0,
+    "lufs": -18.0,
+    "note": "Composición nueva (MUSICA-V2) para F21 (H86, cuaderno de Leonardo): laúd (guitarra de nailon de GeneralUser GS con arpa VSCO muy baja) y cuerdas (VSCO 2 CE), Re menor/dórico a 72 BPM (pavana sobre Rem–Do–Si♭–La), 90 s sin loop: una nota (P1), punteo (P3), entran las cuerdas (P4), un tiempo de silencio (P5), la célula de Canelo en el laúd cuando aparece su ojo, cuerdas tensas en trémolo (P7), una nota grave (P12), trémolo de mandolina mientras arde el papel (P13) y corte en seco a los 84 s («No, wey», P14)."
+   },
+   {
+    "id": "fut.vineta",
+    "file": "music/fut.vineta.m4a",
+    "kind": "ambient",
+    "title": "Viñeta",
+    "durationSec": 54.526,
+    "loop": {
+     "start": 5.05263,
+     "end": 45.473673
+    },
+    "bpm": 95,
+    "gainDb": 0,
+    "lufs": -18.02,
+    "note": "Composición nueva (MUSICA-V2, kit de COMPOSITOR-FUTURO) para F09 (cómic moderno): Sol menor, 95 BPM boom-bap; contrabajo y chelos en pizzicato, batería GM, trompas con el motivo del futuro 1–5–4–3 (Sol–Re–Do–Si♭) y su respuesta, trompetas con el motivo en la parte B, violines spiccato, glockenspiel de viñeta y un crash en cada «página» (cada 4 compases). Intro 2 · loop 16 · final 2."
+   },
+   {
+    "id": "fut.vineta.noticiero",
+    "file": "music/fut.vineta.noticiero.m4a",
+    "kind": "ambient",
+    "title": "Viñeta · noticiero",
+    "durationSec": 54.526,
+    "loop": {
+     "start": 5.05263,
+     "end": 45.473673
+    },
+    "bpm": 95,
+    "gainDb": 0,
+    "lufs": -17.98,
+    "note": "fut.vineta + fanfarria de trompetas en cuartas abiertas en cada página y redoble de caja antes de cada una («metales de noticiero»). Para F10 (el periódico que gira)."
+   },
+   {
+    "id": "fut.vineta.mono",
+    "file": "music/fut.vineta.mono.m4a",
+    "kind": "ambient",
+    "title": "Viñeta · mono",
+    "durationSec": 54.526,
+    "loop": {
+     "start": 5.05263,
+     "end": 45.473673
+    },
+    "bpm": 95,
+    "gainDb": 0,
+    "lufs": -18.01,
+    "note": "fut.vineta en mono, banda 200–4200 Hz y saturación suave: el cómic de Edad de Plata impreso. Para F11."
+   },
+   {
+    "id": "fut.fosa.niebla",
+    "file": "music/fut.fosa.niebla.m4a",
+    "kind": "ambient",
+    "title": "La fosa · niebla",
+    "durationSec": 92.0,
+    "loop": {
+     "start": 4.0,
+     "end": 84.0
+    },
+    "bpm": 60,
+    "gainDb": 0,
+    "lufs": -18.02,
+    "note": "«La fosa» (COMPOSITOR-FUTURO) re-mezclada para el bosque de Doré (F19): sin el sonar ni las burbujas (lo literal del fondo del mar); quedan el pad, el contrabajo con arco, el cristal y el canto deformado del motivo 1–5–4–3, ahora lejano y filtrado a 1,1 kHz, como un aullido en la niebla. Do♯ menor / La lidio, 60 BPM, loop de 20 compases de 4 s."
+   },
+   {
+    "id": "fut.fosa.latido",
+    "file": "music/fut.fosa.latido.m4a",
+    "kind": "ambient",
+    "title": "La fosa · latido",
+    "durationSec": 92.0,
+    "loop": {
+     "start": 4.0,
+     "end": 84.0
+    },
+    "bpm": 60,
+    "gainDb": 0,
+    "lufs": -18.02,
+    "note": "fut.fosa.niebla + un latido (foley propio de clib) en cada tiempo, a 60 BPM. Para F20 (el índice, expresionismo: «fut.fosa con un latido»)."
+   },
+   {
+    "id": "fut.jefe.grave",
+    "file": "music/fut.jefe.grave.m4a",
+    "kind": "ambient",
+    "title": "Ojo del huracán · grave",
+    "durationSec": 58.4,
+    "loop": {
+     "start": 6.4,
+     "end": 51.2
+    },
+    "bpm": 150,
+    "gainDb": 0,
+    "lufs": -18.01,
+    "note": "«Ojo del huracán» (COMPOSITOR-FUTURO, batalla de jefe en Re menor, 150 BPM, 3+3+2) re-mezclado grave para F31: sin glockenspiel, batería −6 dB, trémolo, metales, coro y graves al frente, paso bajo 1,6 kHz y sala de 3 s. La tormenta la pone la película. Intro 4 · loop 28 · final 2."
    }
   ],
   "loop": null,

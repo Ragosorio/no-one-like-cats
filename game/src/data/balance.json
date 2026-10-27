@@ -215,6 +215,7 @@
       "rare": "Raro",
       "epic": "Epico",
       "legendary": "Legendario",
+      "multidimensional": "Multidimensional",
       "mythic": "Mitico",
       "heroic": "Heroico",
       "divine": "Divino"
@@ -224,6 +225,7 @@
       "rare": 0.8,
       "epic": 1.3,
       "legendary": 2.1,
+      "multidimensional": 2.4,
       "mythic": 3.2,
       "heroic": 3.6,
       "divine": 4.4
@@ -233,6 +235,7 @@
       "rare": 5.6,
       "epic": 6.2,
       "legendary": 6.8,
+      "multidimensional": 6.9,
       "mythic": 7.4,
       "heroic": 7.6,
       "divine": 7.9
@@ -242,6 +245,7 @@
       "rare": 1.25,
       "epic": 1.6,
       "legendary": 2.0,
+      "multidimensional": 2.2,
       "mythic": 2.4,
       "heroic": 2.6,
       "divine": 3.0
@@ -251,6 +255,7 @@
       "rare": 20,
       "epic": 35,
       "legendary": 60,
+      "multidimensional": 80,
       "mythic": 100,
       "heroic": 120,
       "divine": 160
@@ -260,6 +265,7 @@
       "rare": 15,
       "epic": 25,
       "legendary": 40,
+      "multidimensional": 45,
       "mythic": 60,
       "heroic": 55,
       "divine": 70
@@ -269,6 +275,7 @@
       "rare": 1,
       "epic": 2,
       "legendary": 2,
+      "multidimensional": 3,
       "mythic": 3,
       "heroic": 4,
       "divine": 6
@@ -1982,6 +1989,7 @@
         "rare": 0.05,
         "epic": 0.1,
         "legendary": 0.18,
+        "multidimensional": 0.2,
         "mythic": 0.25,
         "heroic": 0.3,
         "divine": 0.4

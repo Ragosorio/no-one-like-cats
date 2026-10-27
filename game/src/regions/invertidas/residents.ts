@@ -13,6 +13,7 @@ import type { PaperCat } from '../../engine/world/paperCat';
 import { catLiteUrl } from '../../art/catArt';
 import { addSkyCat, type SkyCat } from '../cielo/cats';
 import { ANCHOR, height } from './layout';
+import { withRegistroEstado } from '../../state/sys/gaterasWorld';
 
 const at = (x: number, z: number) => new THREE.Vector3(x, height(x, z), z);
 
@@ -60,7 +61,7 @@ export async function residents(ctx: RegionCtx, perch: THREE.Vector3): Promise<I
     registro.root.visible = false;
     registro.facing = 1;
   }
-  ctx.describe.set('registro000', { title: 'REGISTRO 000 · FOLIO 000', text: 'Especie: desconocida · Elemento: ninguno · Rareza: no aplica · Estado: observando.\n\nSentado en la punta de un islote al revés, mirando hacia abajo. Hacia el mar. Hacia tu isla. Cuando te acercas, ya no está.' });
+  ctx.describe.set('registro000', { title: 'REGISTRO 000 · FOLIO 000', text: withRegistroEstado('Especie: desconocida · Elemento: ninguno · Rareza: no aplica · Estado: observando.\n\nSentado en la punta de un islote al revés, mirando hacia abajo. Hacia el mar. Hacia tu isla. Cuando te acercas, ya no está.') });
 
   let flick = 0;
   const tmp = new THREE.Vector3();

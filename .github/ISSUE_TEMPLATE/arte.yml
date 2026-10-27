@@ -1,0 +1,99 @@
+name: Arte
+description: Propón una pintura, un rediseño o un estilo nuevo (con o sin dibujo).
+title: "[Arte] "
+labels: ["arte"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¡Gracias por dibujar para el juego! Antes de empezar, mira los estilos que ya existen en [docs/arte/ESTILOS.md](https://github.com/Ragosorio/no-one-like-cats/blob/main/docs/arte/ESTILOS.md) y cómo se entrega un gato en [docs/arte/DIRECCION-ARTE-PARTE-2.md](https://github.com/Ragosorio/no-one-like-cats/blob/main/docs/arte/DIRECCION-ARTE-PARTE-2.md).
+
+        Aquí en el issue puedes adjuntar PNG o JPG sin problema. **En el repo solo entra SVG**: el juego no usa imágenes raster. Tu pintura se pasa a vector con [MAI SVG](https://github.com/Ragosorio/MAI-SVG); si no sabes usarlo, te ayudamos.
+
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: ¿Qué propones?
+      options:
+        - Un gato nuevo
+        - Un rediseño de un gato que ya existe
+        - Una forma o evolución de un gato
+        - Un estilo nuevo (para un elemento, un Momento, una dimensión o una lente)
+        - Una insignia, un ícono o una pieza de interfaz
+        - Otra cosa
+    validations:
+      required: true
+
+  - type: input
+    id: gato
+    attributes:
+      label: ¿Para qué gato?
+      description: Su nombre, su id o su slug (por ejemplo, Canelo, c_canelo o canelo_cozy_cat), o «nuevo».
+      placeholder: "nuevo"
+
+  - type: dropdown
+    id: estilo
+    attributes:
+      label: ¿En qué estilo?
+      description: Están todos en docs/arte/ESTILOS.md.
+      options:
+        - El gato pintado de siempre
+        - La dimensión de un elemento
+        - El diorama de la Parte II
+        - Un Momento musical
+        - Una dimensión de la Parte III
+        - Un estilo que todavía no existe
+        - No sé, ayúdenme a elegir
+    validations:
+      required: true
+
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descríbelo
+      description: Silueta, pose, colores (si tienes los hex, mejor), pelaje, accesorios, qué cuenta de su personalidad.
+      placeholder: "Gata calicó naranja con una bengala encendida en el hocico; la punta de la cola es un cerillo. Naranja #FF6A1A, crema y amarillo chispa."
+    validations:
+      required: true
+
+  - type: textarea
+    id: referencias
+    attributes:
+      label: Referencias
+      description: Imágenes o enlaces que te inspiran. Si es el estilo de un artista vivo, necesitas su permiso.
+
+  - type: textarea
+    id: dibujo
+    attributes:
+      label: Tu dibujo (si ya lo tienes)
+      description: Arrastra aquí tu PNG o tu SVG. Ideal 1024×1024 o más, fondo transparente, gato completo.
+
+  - type: checkboxes
+    id: animable
+    attributes:
+      label: Para que se pueda animar
+      description: No es obligatorio para proponer, pero sí para que entre al juego.
+      options:
+        - label: "Vista de 3/4 mirando un poco a la izquierda, gato completo, nada cortado."
+        - label: "Los dos ojos abiertos y visibles (así parpadea)."
+        - label: "La cola visible y lejos de la cara."
+        - label: "Fondo transparente: sin piso, sin sombra proyectada, sin texto ni firma."
+
+  - type: dropdown
+    id: mai
+    attributes:
+      label: ¿Puedes pasarlo a SVG con MAI SVG?
+      options:
+        - Sí, mando el SVG completo y el ligero
+        - No, necesito ayuda con eso
+        - Todavía no hay dibujo
+
+  - type: checkboxes
+    id: derechos
+    attributes:
+      label: Derechos
+      options:
+        - label: "El arte es mío, o tengo permiso explícito del autor para publicarlo bajo la licencia MIT del proyecto."
+          required: true
+        - label: "No copia personajes con derechos de autor ni imita el estilo de un artista vivo sin su permiso."
+          required: true

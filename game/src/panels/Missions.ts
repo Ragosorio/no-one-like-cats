@@ -1,4 +1,5 @@
 /** Misiones (EDITORIAL SUIZO + caption amarilla): 4 chains, current mission, progress, reward, pin (max 3). */
+import { luzternaFallecida, voiceFor } from '../state/sys/gaterasWorld';
 import '../island/safety';
 import { Container, Graphics } from 'pixi.js';
 import gsap from 'gsap';
@@ -16,6 +17,7 @@ import { sfx } from '../core/audio';
 import { CHAIN_META } from '../ui/hud/MissionPins';
 import { bar, wrapText } from './island/ui';
 import { openGlossary, openMissionHelp, whatIsThisButton } from '../ui/story/glossary';
+import { missionCardBlock } from './Bitacora';
 
 const CHAINS: MissionDef['chain'][] = ['historia', 'capitan', 'criador', 'explorador'];
 
@@ -127,8 +129,15 @@ function missionCard(mi: MissionDef, w: number, rerender: () => void, compact = 
   goal.position.set(16, y);
   inner.addChild(goal);
   y += goal.height + 6;
+  // Parte III: the Bitácora's card says what it's for (PASA · IMPORTA · QUEREMOS · AHÍ), not a signed line (panels/Bitacora)
+  if (mi.card && !compact) {
+    const blk = missionCardBlock(mi, w - 32, G.s.missions.done.includes(mi.id));
+    blk.position.set(16, y);
+    inner.addChild(blk);
+    y += blk.height + 8;
+  }
   // what it's for (content.json › missions[].why) + the glossary for its jargon
-  if (mi.why && !compact) {
+  else if (mi.why && !compact) {
     const why = wrapText(`Para qué: ${mi.why}`, w - 32, 14, F.ui, C.ink, { fontStyle: 'italic' });
     why.alpha = 0.85;
     why.position.set(16, y);
@@ -176,9 +185,10 @@ function missionCard(mi: MissionDef, w: number, rerender: () => void, compact = 
     rx += 40 + v.width + 8;
   }
   y += 40;
-  if (mi.line) {
+  if (mi.line && !mi.card) {
     const cap = new Graphics();
-    const lt = wrapText(`«${mi.line}» — Luzterna`, w - 52, 15, F.ui, C.ink, { fontStyle: 'italic' });
+    // ⚠️ Parte III: after her death, what she wrote keeps its words, signed as a memory (gaterasWorld.voiceFor)
+    const lt = wrapText(`«${mi.line}» ${luzternaFallecida() ? voiceFor('mision_firma', G.s, { mission: mi.id }).signature : '— Luzterna'}`, w - 52, 15, F.ui, C.ink, { fontStyle: 'italic' });
     cap.rect(0, 0, w - 32, lt.height + 16).fill(C.yellow).stroke({ width: 2.5, color: C.ink });
     cap.position.set(16, y);
     lt.position.set(26, y + 8);

@@ -1,0 +1,2215 @@
+{
+  "$comment": "Parte III · porción vertical «Una noche nomás» — misiones H66–H74 y H93–H97 y sus beats (H70–H74: Acto I de NARRATIVA; H93–H97: el final, ⚠️ dormido detrás de MISSION_GATES hasta que lleguen los Actos II–IV, guiones en docs/part-iii/historia-v2/guiones/final/; textos literales de docs/part-iii/historia-v2/guiones/acto-1/; integración MECÁNICAS-IMPL) (docs/part-iii/11 §1, guion en docs/part-iii/04, tarjetas en docs/part-iii/03 §3). Se fusiona sobre content.json en data/content.ts (solo agrega). Cada misión trae su `card` de 5 campos (PASA, IMPORTA, QUEREMOS, AHÍ al aparecer; CAMBIÓ al terminar). El `why` nunca usa el premio como motivo. Cuándo suena cada beat y qué índices lee cada escena: ui/story/gaterasScript.ts. Las escenas del bar y la calle (b66_bar, b67_salida) las dirige C (app/gaterasFlow.ts); el despertar (b67_despierta) es la cine p3_despierta; la Carta (b68_carta) la usa B en GaterasMapScene.",
+  "missions": [
+    {
+      "id": "H66",
+      "chain": "historia",
+      "title": "La última ronda",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_bar",
+        "text": "Toca LA PÁGINA, en el suelo al pie del faro, y sigue el pelo de Canelo hasta donde se fue."
+      },
+      "trigger": "mission:H65",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "line": "La marca de Canelo en la página ya está fría. Eso no me gusta.",
+      "why": "Canelo se levantó de la página por primera vez y nadie sabe adónde fue. Su pelo lleva a una gatera chiquita en la base del faro.",
+      "card": {
+        "pasa": "Canelo no está en la página",
+        "importa": "Es la primera vez que se va",
+        "queremos": "Saber dónde está",
+        "ahi": "Su pelo lleva a una gatera junto al faro",
+        "cambio": "Se fue a olvidar. Y habla",
+        "kicker": "GATERA DESCUBIERTA · La Última Ronda · Dimensión Borracha"
+      },
+      "estTime": "~7:00"
+    },
+    {
+      "id": "H67",
+      "chain": "historia",
+      "title": "¿Dónde andabas, gordo?",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_salida",
+        "text": "Saca a Canelo del bar y llévalo derechito hasta la gatera del fondo del callejón."
+      },
+      "trigger": "mission:H66",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "line": "Te seguí el pelo, gordo. Ahora caminas derecho.",
+      "why": "Canelo anda borracho en otra caja y la página quedó sola. Hay que llevarlo a casa por la gatera del callejón.",
+      "card": {
+        "pasa": "Canelo anda borracho en otra caja",
+        "importa": "La página quedó sola",
+        "queremos": "Llevarlo a casa",
+        "ahi": "La gatera de vuelta está al fondo del callejón",
+        "cambio": "REGISTRO 000 despertó y siguió a Canelo"
+      },
+      "estTime": "~6:00"
+    },
+    {
+      "id": "H68",
+      "chain": "historia",
+      "title": "La Carta de las Cajas",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_gatera_borracha",
+        "text": "En la Carta de las Cajas, pídele a Maneki que abra la gatera de la Borracha."
+      },
+      "trigger": "mission:H67",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "line": "Era farera. Mi trabajo era que nadie se perdiera.",
+      "why": "Algo cruzó la gatera detrás de Canelo y dejó rasgaduras con huellitas. Luzterna dibuja una carta para no perdernos; la primera rasgadura lleva al bar.",
+      "card": {
+        "pasa": "Hay rasgaduras con huellitas",
+        "importa": "Por ahí se derraman las cajas",
+        "queremos": "Hacer una carta para no perdernos",
+        "ahi": "La primera rasgadura está en el bar",
+        "cambio": "La Carta de las Cajas existe; la Borracha está abierta"
+      },
+      "estTime": "~6:00"
+    },
+    {
+      "id": "H69",
+      "chain": "historia",
+      "title": "La mañana que no llegó",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_borracha_5",
+        "text": "En la Carta de las Cajas, sigue las huellas por la ruta de la Borracha (B-1 a B-5) y vence al Oficial Dona."
+      },
+      "trigger": "mission:H68",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 8
+      },
+      "unlocks": [],
+      "line": "Esta caja se reinicia cada mañana. Hoy no se reinició.",
+      "why": "En la Borracha la mañana no llegó: algo pasó por ahí y dejó marca. Las huellitas entran a la ruta del Hipo-Mart y siguen calle abajo.",
+      "card": {
+        "pasa": "En la Borracha la mañana no reinició",
+        "importa": "Algo pasó por aquí y dejó marca",
+        "queremos": "Seguir las huellas",
+        "ahi": "Las huellas entran a la ruta del Hipo-Mart",
+        "cambio": "REGISTRO 000 rompe todo lo que cruza"
+      },
+      "estTime": "~25:00"
+    },
+    {
+      "id": "H70",
+      "chain": "historia",
+      "title": "Borrón",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_borron",
+        "text": "En la Carta, sigue las huellas hasta la Donería: ahí llora un gato con una mano marcada en la pata."
+      },
+      "trigger": "mission:H69",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "line": "Mira su pata.",
+      "why": "Las huellas de REGISTRO 000 llevan a la Donería, y ahí llora un gato con una mano marcada en la pata. Puede saber qué es REGISTRO 000.",
+      "card": {
+        "pasa": "Hay un gato con una mano en la pata",
+        "importa": "Puede saber qué es REGISTRO 000",
+        "queremos": "Que nos cuente",
+        "ahi": "Está en la Donería y no se quiere ir",
+        "cambio": "Los Titiriteros bajaron como gatos. Y olvidan"
+      },
+      "estTime": "~13:00"
+    },
+    {
+      "id": "H71",
+      "chain": "historia",
+      "title": "NINGUNA CAJA ES HOGAR",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_borracha_ebrecha",
+        "text": "En la Carta, entra a La Última Ronda y vence a Brecha y a los Disruptores."
+      },
+      "trigger": "mission:H70",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 8
+      },
+      "unlocks": [],
+      "line": "El rastro del chiquito. Le dicen «La Llave». Qué feo.",
+      "why": "Los Disruptores regresaron a La Última Ronda y quieren a REGISTRO 000. Que no se lo lleven.",
+      "card": {
+        "pasa": "Los Disruptores regresaron",
+        "importa": "Quieren a REGISTRO 000",
+        "queremos": "Que no se lo lleven",
+        "ahi": "Están en La Última Ronda",
+        "cambio": "Le dicen «La Llave». Grafitera duda"
+      },
+      "estTime": "~20:00"
+    },
+    {
+      "id": "H72",
+      "chain": "historia",
+      "title": "La resaca",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_resaca",
+        "text": "Es de mañana en la Borracha: ayuda a Canelo a encontrar su bufanda."
+      },
+      "trigger": "mission:H71",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "line": "No me estoy riendo. Estoy… brillando.",
+      "why": "Canelo perdió la bufanda en la noche más larga de la Borracha. Hay que encontrarla antes de que Luzterna se ría.",
+      "card": {
+        "pasa": "Canelo perdió la bufanda",
+        "importa": "(Es Canelo)",
+        "queremos": "Encontrarla antes de que me ría",
+        "ahi": "Está en algún lugar de la Borracha",
+        "cambio": "Mi linterna apunta sola a las rasgaduras"
+      },
+      "estTime": "~17:00"
+    },
+    {
+      "id": "H73",
+      "chain": "historia",
+      "title": "La Batalla de Gatos",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_borracha_eemiau",
+        "text": "En la Carta, sube a la Batalla de Gatos y vence a EMIAU y su pandilla."
+      },
+      "trigger": "mission:H72",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 8
+      },
+      "unlocks": [],
+      "line": "Te ven perfecto, gordo.",
+      "why": "El barrio culpa al gato naranja de que ya nadie olvida, y sin el barrio no hay rasgadura. En la Batalla de Gatos, lo que se dice arriba se respeta.",
+      "card": {
+        "pasa": "El barrio culpa a Canelo de que ya nadie olvida",
+        "importa": "Sin el barrio no encontramos la rasgadura",
+        "queremos": "Que lo escuchen",
+        "ahi": "En la Batalla de Gatos lo que se dice arriba se respeta",
+        "cambio": "Canelo dijo que fue él. Y que paga él"
+      },
+      "estTime": "~28:00"
+    },
+    {
+      "id": "H74",
+      "chain": "historia",
+      "title": "El Cadenero",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_borracha_9",
+        "text": "En la Carta, sigue la ruta hasta el fondo del bar y pasa al Cadenero."
+      },
+      "trigger": "mission:H73",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 10
+      },
+      "unlocks": [],
+      "line": "Yo no paso sin el gordo.",
+      "why": "La rasgadura está detrás del baño del bar, y El Cadenero no deja pasar a nadie desde esa noche. Si no la cruzamos, perdemos el rastro.",
+      "card": {
+        "pasa": "La rasgadura está detrás del baño del bar",
+        "importa": "Si no la cruzamos, perdemos el rastro",
+        "queremos": "Pasar al Cadenero",
+        "ahi": "Es la puerta del baño (sí)",
+        "cambio": "Las cajas son muchas cajas. Y alguien viene siguiendo una luz"
+      },
+      "estTime": "~32:00"
+    },
+    {
+      "id": "H75",
+      "chain": "historia",
+      "title": "La Gato-señal",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_superheroes_5",
+        "text": "En la Carta, abre Ciudad Mayúscula y vence a La Pandilla del Ovillo."
+      },
+      "trigger": "mission:H74",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 8
+      },
+      "unlocks": [],
+      "why": "El chiquito cruzó a una ciudad de cómic y ahí la gente está en peligro. La Gato-señal ilumina dónde cayó.",
+      "card": {
+        "pasa": "El chiquito cruzó a una ciudad de cómic",
+        "importa": "Ahí la gente está en peligro",
+        "queremos": "Encontrar el rastro",
+        "ahi": "La Gato-señal ilumina dónde cayó",
+        "cambio": "Mi luz «llama» a los que la ven"
+      },
+      "estTime": "~27:00"
+    },
+    {
+      "id": "H76",
+      "chain": "historia",
+      "title": "Villanos sueltos",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_superheroes_eestambre",
+        "text": "Hay villanos sueltos: en la Carta, vence a El Estambre."
+      },
+      "trigger": "mission:H75",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 8
+      },
+      "unlocks": [],
+      "why": "Hay villanos sueltos por el derrame y por los Disruptores. La ciudad pide ayuda.",
+      "card": {
+        "pasa": "Hay villanos sueltos",
+        "importa": "Por el derrame y por los Disruptores",
+        "queremos": "Ayudar a los civiles",
+        "ahi": "La ciudad pide ayuda",
+        "cambio": "La ciudad cree que somos villanos. (Salimos feos en la foto)"
+      },
+      "estTime": "~27:00"
+    },
+    {
+      "id": "H77",
+      "chain": "historia",
+      "title": "Cruceta",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_superheroes_9",
+        "text": "En la Carta, llega a la azotea y enfrenta a Cruceta."
+      },
+      "trigger": "mission:H76",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 10
+      },
+      "unlocks": [],
+      "why": "Cruceta nos persigue: es Titiritero y nos culpa. Que nos deje pasar.",
+      "card": {
+        "pasa": "Cruceta nos persigue",
+        "importa": "Es Titiritero y nos culpa",
+        "queremos": "Que nos deje pasar",
+        "ahi": "Cuida la azotea donde cayó 000",
+        "cambio": "Los Titiriteros sangran tinta. Llegan los Multidimensionales"
+      },
+      "estTime": "~27:00"
+    },
+    {
+      "id": "H78",
+      "chain": "historia",
+      "title": "Cerito",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_cerito",
+        "text": "De noche, en tu isla: 000 se acerca al faro."
+      },
+      "trigger": "mission:H77",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "why": "000 se acerca al faro. Por primera vez lo vemos de cerca.",
+      "card": {
+        "pasa": "000 se acerca al faro",
+        "importa": "Por primera vez lo vemos de cerca",
+        "queremos": "Que confíe",
+        "ahi": "Mi luz está ahí",
+        "cambio": "Se llama Cerito. Duerme en la luz"
+      },
+      "estTime": "~13:00"
+    },
+    {
+      "id": "H79",
+      "chain": "historia",
+      "title": "El Gran Torneo",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_anime_a5",
+        "text": "Abre el Mar Shōnen con Maneki y vence a El rival que no te conoce."
+      },
+      "trigger": "mission:H78",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 8
+      },
+      "unlocks": [],
+      "why": "Cerito cruzó a un mar de torneos, y la única gatera se gana peleando.",
+      "card": {
+        "pasa": "Cerito cruzó a un mar de torneos",
+        "importa": "La única gatera se gana peleando",
+        "queremos": "Ganar el torneo",
+        "ahi": "Es el único camino",
+        "cambio": "Los luchadores son gatos varados"
+      },
+      "estTime": "~32:00"
+    },
+    {
+      "id": "H80",
+      "chain": "historia",
+      "title": "Entrenamiento",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_entrenamiento",
+        "text": "Entrena con Luzterna: los tres arcos del Entrenamiento."
+      },
+      "trigger": "mission:H79",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "why": "Canelo quiere una técnica secreta. Necesitamos ser más fuertes.",
+      "card": {
+        "pasa": "Canelo quiere una técnica secreta",
+        "importa": "Necesitamos ser más fuertes",
+        "queremos": "Entrenar",
+        "ahi": "Aquí se entrena gritando",
+        "cambio": "El gordo me enseñó a gritar. Ya no me callo"
+      },
+      "estTime": "~17:00"
+    },
+    {
+      "id": "H81",
+      "chain": "historia",
+      "title": "Itō",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_anime_a9",
+        "text": "La final del torneo: en la Carta, vence a Itō sin trampa."
+      },
+      "trigger": "mission:H80",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 10
+      },
+      "unlocks": [],
+      "why": "La final es contra Itō. Es Titiritero, pero pelea limpio.",
+      "card": {
+        "pasa": "La final es contra Itō",
+        "importa": "Es Titiritero, pero pelea limpio",
+        "queremos": "Ganarle sin trampa",
+        "ahi": "Es la final",
+        "cambio": "Los Titiriteros olvidan cuando pierden"
+      },
+      "estTime": "~22:00"
+    },
+    {
+      "id": "H82",
+      "chain": "historia",
+      "title": "La Mano",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_vocacion",
+        "text": "La Mano bajó por nosotros: no entregues a Cerito."
+      },
+      "trigger": "mission:H81",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "why": "La Mano bajó por nosotros. Quiere a Cerito.",
+      "card": {
+        "pasa": "La Mano bajó por nosotros",
+        "importa": "Quiere a Cerito",
+        "queremos": "No entregarlo",
+        "ahi": "Está en la gatera del torneo",
+        "cambio": "Le dije que no. Itō se fue. Y miró al gordo"
+      },
+      "estTime": "~11:00"
+    },
+    {
+      "id": "H83",
+      "chain": "historia",
+      "title": "Ex Libris",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_libros_l5",
+        "text": "Abre Ex Libris y vence a La Encuadernadora."
+      },
+      "trigger": "mission:H82",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 8
+      },
+      "unlocks": [],
+      "why": "La Mano huyó a Libros, y ahí todavía puede escribir.",
+      "card": {
+        "pasa": "La Mano huyó a Libros",
+        "importa": "Ahí todavía puede escribir",
+        "queremos": "Alcanzarla antes de que escriba",
+        "ahi": "Es la caja de la tinta",
+        "cambio": "Aquí la tinta todavía obedece. Mala señal"
+      },
+      "estTime": "~27:00"
+    },
+    {
+      "id": "H84",
+      "chain": "historia",
+      "title": "Finales perdidos",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_finales",
+        "text": "Devuelve los finales de los tres cuentos."
+      },
+      "trigger": "mission:H83",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "why": "Los cuentos pierden su final, y un Disruptor chiquito perdió el suyo.",
+      "card": {
+        "pasa": "Los cuentos pierden su final",
+        "importa": "Un Disruptor chiquito perdió el suyo",
+        "queremos": "Devolver los finales",
+        "ahi": "Están en la Biblioteca",
+        "cambio": "Lo que se derrama, se termina. Brecha entendió"
+      },
+      "estTime": "~27:00"
+    },
+    {
+      "id": "H85",
+      "chain": "historia",
+      "title": "La ficha original",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_libros_l6",
+        "text": "Al fondo de la Biblioteca, en el índice: encuentra la primera ficha de Cerito."
+      },
+      "trigger": "mission:H84",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 8
+      },
+      "unlocks": [],
+      "why": "En el índice está la primera ficha de Cerito. Puede decir quién lo escribió.",
+      "card": {
+        "pasa": "En el índice está la primera ficha de Cerito",
+        "importa": "Puede decir quién lo escribió",
+        "queremos": "Encontrarla",
+        "ahi": "Al fondo de la Biblioteca",
+        "cambio": "Tiene la letra del Capi. El gordo se desmayó"
+      },
+      "estTime": "~22:00"
+    },
+    {
+      "id": "H86",
+      "chain": "historia",
+      "title": "Lo que la luz trajo",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_luz_trajo",
+        "text": "La Mano quiere hablar con la farera: escucha."
+      },
+      "trigger": "mission:H85",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "why": "La Mano quiere hablar conmigo. Sabe algo de mi linterna.",
+      "card": {
+        "pasa": "La Mano quiere hablar conmigo",
+        "importa": "Sabe algo de mi linterna",
+        "queremos": "Escuchar",
+        "ahi": "El índice",
+        "cambio": "Mi luz los trajo. No la voy a apagar"
+      },
+      "estTime": "~11:00"
+    },
+    {
+      "id": "H87",
+      "chain": "historia",
+      "title": "No, wey",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_libros_l7",
+        "text": "Los Correctores bloquean el muelle de Libros: sácalos."
+      },
+      "trigger": "mission:H86",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 10
+      },
+      "unlocks": [],
+      "why": "Los Correctores quieren quitarle la elección. Bloquean el muelle.",
+      "card": {
+        "pasa": "Los Correctores quieren «corregirme»",
+        "importa": "Quieren quitarme la elección",
+        "queremos": "Sacarlos",
+        "ahi": "Bloquean el muelle",
+        "cambio": "Sé pelear. (Ya sabía)"
+      },
+      "estTime": "~32:00"
+    },
+    {
+      "id": "H88",
+      "chain": "historia",
+      "title": "La ruptura",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_libros_l9",
+        "text": "Esquirla tiene la rasgadura a POP: detenla."
+      },
+      "trigger": "mission:H87",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 10
+      },
+      "unlocks": [],
+      "why": "Esquirla quiere romper todo con Cerito, y los Disruptores se pelean.",
+      "card": {
+        "pasa": "Esquirla quiere romper todo con Cerito",
+        "importa": "Los Disruptores se pelean",
+        "queremos": "Detenerla",
+        "ahi": "Tiene la rasgadura a POP",
+        "cambio": "Los Disruptores se partieron"
+      },
+      "estTime": "~22:00"
+    },
+    {
+      "id": "H89",
+      "chain": "historia",
+      "title": "Backstage",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_pop_p5",
+        "text": "Abre La Gira y vence a El mánager."
+      },
+      "trigger": "mission:H88",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 8
+      },
+      "unlocks": [],
+      "why": "Esquirla huyó a POP, y Firma también está aquí.",
+      "card": {
+        "pasa": "Esquirla huyó a POP",
+        "importa": "Firma también está aquí",
+        "queremos": "Encontrarlas",
+        "ahi": "POP es un escenario gigante",
+        "cambio": "Hay estrellas de otras cajas de gira"
+      },
+      "estTime": "~27:00"
+    },
+    {
+      "id": "H90",
+      "chain": "historia",
+      "title": "La gira",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_gira",
+        "text": "Infíltrate en la gira: las tres fechas."
+      },
+      "trigger": "mission:H89",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "why": "Firma anuncia un show con «un invitado sin forma». Habla de Cerito.",
+      "card": {
+        "pasa": "Firma anuncia un show con «un invitado sin forma»",
+        "importa": "Habla de Cerito",
+        "queremos": "Infiltrarnos en la gira",
+        "ahi": "La gira es la única entrada",
+        "cambio": "Tengo una foto del viaje. El gordo salió con la boca llena"
+      },
+      "estTime": "~27:00"
+    },
+    {
+      "id": "H91",
+      "chain": "historia",
+      "title": "Firma",
+      "goal": {
+        "type": "win_battle",
+        "battle": "p3d_pop_p9",
+        "text": "En el escenario principal: rompe la trampa de Firma."
+      },
+      "trigger": "mission:H90",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 10
+      },
+      "unlocks": [],
+      "why": "El show es una trampa. Cerito puede caer.",
+      "card": {
+        "pasa": "El show es una trampa",
+        "importa": "Cerito puede caer",
+        "queremos": "Romper la trampa",
+        "ahi": "Es en el escenario principal",
+        "cambio": "La Mano sabe dónde duerme Cerito"
+      },
+      "estTime": "~27:00"
+    },
+    {
+      "id": "H92",
+      "chain": "historia",
+      "title": "La noche estrellada",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_noche_estrellada",
+        "text": "Vuelve a casa. Siéntate con ella junto al faro."
+      },
+      "trigger": "mission:H91",
+      "purpose": "story",
+      "reward": {
+        "std": true,
+        "gems": 5
+      },
+      "unlocks": [],
+      "why": "Volvemos a casa. Hace mucho que no dormimos en casa.",
+      "card": {
+        "pasa": "Volvemos a casa",
+        "importa": "Hace mucho que no dormimos en casa",
+        "queremos": "Descansar",
+        "ahi": "Es tu isla",
+        "cambio": "Cerito ya duerme toda la noche"
+      },
+      "estTime": "~13:00"
+    },
+    {
+      "id": "H93",
+      "chain": "historia",
+      "title": "La noche más oscura",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_asedio",
+        "text": "Rompe el asedio: hunde los barcos de Cruceta y Firma."
+      },
+      "trigger": "mission:H92",
+      "purpose": "story",
+      "reward": {
+        "std": false
+      },
+      "unlocks": [],
+      "why": "Vienen esta noche, por Cerito y por la luz. Que no se lo lleven: es casa.",
+      "card": {
+        "pasa": "Vienen esta noche",
+        "importa": "Vienen por Cerito y por la luz",
+        "queremos": "Que no se lo lleven",
+        "ahi": "Es casa",
+        "cambio": "SIN LLAMA."
+      },
+      "estTime": "~22:00"
+    },
+    {
+      "id": "H94",
+      "chain": "historia",
+      "title": "Sin llama",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_sin_llama",
+        "text": "El gordo no se levanta. Quédate con él, junto a su palmera."
+      },
+      "trigger": "mission:H93",
+      "purpose": "story",
+      "reward": {
+        "std": false
+      },
+      "unlocks": [],
+      "why": "Es el gordo. Que vuelva.",
+      "card": {
+        "pasa": "El gordo no se levanta",
+        "importa": "Es el gordo",
+        "queremos": "Que vuelva",
+        "ahi": "Es su palmera",
+        "cambio": "Luzterna murió. Cerito eligió ser gato"
+      },
+      "estTime": "~30:00"
+    },
+    {
+      "id": "H95",
+      "chain": "historia",
+      "title": "Lo que no se ve",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_vigilia",
+        "text": "La pelea terminó. Quédate con ella un rato, junto a su faro."
+      },
+      "trigger": "mission:H94",
+      "purpose": "story",
+      "reward": {
+        "std": false
+      },
+      "unlocks": [],
+      "why": "La pelea terminó. Ella no. La isla está a oscuras.",
+      "card": {
+        "pasa": "La pelea terminó. Ella no",
+        "importa": "La isla está a oscuras",
+        "queremos": "Quedarnos con ella un rato",
+        "ahi": "Es su faro",
+        "cambio": "La Mano se olvidó de su nombre. Los gatos velaron toda la noche"
+      },
+      "estTime": "~12:00"
+    },
+    {
+      "id": "H96",
+      "chain": "historia",
+      "title": "El recado",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_recado",
+        "text": "Canelo está en el faro. Cumple lo que le prometiste en la Parte I."
+      },
+      "trigger": "mission:H95",
+      "purpose": "story",
+      "reward": {
+        "std": false
+      },
+      "unlocks": [],
+      "why": "Ella ya no está. Le prometiste algo en la Parte I.",
+      "card": {
+        "pasa": "Ella ya no está",
+        "importa": "Le prometiste algo en la Parte I",
+        "queremos": "Cumplir",
+        "ahi": "Canelo está en el faro",
+        "cambio": "El faro tiene luz de nuevo. No la suya"
+      },
+      "estTime": "~17:00"
+    },
+    {
+      "id": "H97",
+      "chain": "historia",
+      "title": "La última ronda",
+      "goal": {
+        "type": "use_feature",
+        "feature": "p3_ultima_ronda",
+        "text": "Canelo volvió al bar. Acompáñalo a La Última Ronda."
+      },
+      "trigger": "mission:H96",
+      "purpose": "story",
+      "reward": {
+        "std": false
+      },
+      "unlocks": [],
+      "why": "Canelo volvió al bar. Ahí empezó todo.",
+      "card": {
+        "pasa": "Canelo volvió al bar",
+        "importa": "Ahí empezó todo",
+        "queremos": "Acompañarlo",
+        "ahi": "La Última Ronda",
+        "cambio": "Se acuerda. Todos los días"
+      },
+      "estTime": "~5:00"
+    }
+  ],
+  "story": {
+    "beats": [
+      {
+        "id": "b66_bar",
+        "time": "H66: al tocar la página (escena A → Momento «Drunck» → escena B → remate)",
+        "trigger": "H66",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "La última ronda",
+        "$scene": "La Última Ronda, de noche, lluvia de caricatura (04 §2, §4, §4.1). Canelo de perfil mirando SIEMPRE a su derecha; el OYENTE es un globo sin nombre que entra por el borde derecho y solo dice «¿Y luego?». La cámara nunca pasa a la derecha de Canelo hasta el remate. A: [0–4] (A2, A3, A4, A5, A7); el trago largo (A8) abre el Momento. B: [5–8] (B1, B2, B3, B5), luego UNA de las variantes B5′ según mentira:* [9 perfecto, 10 romper, 11 nada, 12 sin elección], luego [13–19] (B6, B7, B8, B9′, B10, B11, B12), [20] (B13: gira el cuerpo entero). Remate: [21–27] (R2, R4, R5, R7, R8, R9, R10). Pulido (13 §3.2, §3.4): las líneas largas se partieron en dos con una acción en medio; las segundas mitades y la línea nueva de la gatera van AL FINAL [28–40] para que ningún índice anterior se mueva: [28, 29] la regla de las gateras (dibuja una puertita en la espuma), [30] segunda mitad de A5 (tras la portada), [31] de B3 (la tele con dos pescados), [32, 33] de B5 (la cátsup; las manos de luz), [34] de B7 (tras el lápiz de Espuma), [35, 36, 37] de B8 (se guarda la goma; el gis solo; PISAPAPELES), [38] de B9′ (las rayas se multiplican), [39] de B10 (el haz azul), [40] de B11 (bajo la bufanda). Índices en ui/story/gaterasScript.ts › BAR_LINES.",
+        "lines": [
+          ["CANELO", "Tú no me juzgas. Por eso te quiero."],
+          ["CANELO", "¿Que qué hago aquí? Vine a olvidar, compa. A eso viene uno a un bar."],
+          ["OYENTE", "¿Y luego?"],
+          ["CANELO", "¿Cómo que «y luego»? ¿No sabes quién soy?"],
+          ["CANELO", "Va, te lo cuento. Pero rápido, que se me calienta."],
+          ["CANELO", "Y eso fue lo que pasó."],
+          ["OYENTE", "¿Y luego?"],
+          ["CANELO", "¿Luego? Llevo no sé cuántas noches encima de esa hoja."],
+          ["CANELO", "Los blancos quieren un mundo sin errores."],
+          ["CANELO", "…el Capi quería escribir «un mundo perfecto». Bonito deseo. Me dio miedo."],
+          ["CANELO", "…el Capi quería escribir «rompan todo». Le entendí. Pero no."],
+          ["CANELO", "…el Capi quería dejarla en blanco. Es el único que me entendió."],
+          ["CANELO", "…el Capi nomás me miraba."],
+          ["OYENTE", "¿Y luego?"],
+          ["CANELO", "Luego me dormí encima. Porque nadie puede escribir debajo de un gato dormido."],
+          ["CANELO", "¿Sabes qué es lo peor? Que ya entendí todo. La niebla borraba para que nadie escribiera encima."],
+          ["CANELO", "Dicen que tenemos nueve vidas. Yo ya gasté como ocho."],
+          ["CANELO", "Y la Luz… su linterna manda señal para afuera."],
+          ["CANELO", "…Yo nomás quería una noche sin que nadie me viera."],
+          ["OYENTE", "¿Y luego?"],
+          ["CANELO", "Oye… gracias por escuchar. De verdad. Nadie me había escuchado así nunca."],
+          ["HIPÓLITO", "…¿Y luego?"],
+          ["DOÑA ESPUMA", "No te oye, gordo. Dice «¿y luego?» dormido. Lleva así desde la parte del pato."],
+          ["CANELO", "…¿DESDE EL PATO?"],
+          ["HIPÓLITO", "…¿Y luego?"],
+          ["CANELO", "Luego me voy. Apúntamelo, Espuma."],
+          ["DOÑA ESPUMA", "Van catorce."],
+          ["CANELO", "Redondéale a diez."],
+          ["CANELO", "Las cajas tienen gateras, compa. Puertitas."],
+          ["CANELO", "Nadie las ve porque nadie se quiere ir."],
+          ["CANELO", "…No, no sabes. Mejor. Aquí nadie sabe nada. Por eso me gusta."],
+          ["CANELO", "Todos esperando que yo decida. ¡Yo! Que no sé decidir entre pescado y pescado."],
+          ["CANELO", "Los grafiteros, romper todas las cajas."],
+          ["CANELO", "Las manos de luz escriben y no dan la cara. Y el Capi…"],
+          ["CANELO", "Esa ley la inventé yo. Bueno, ya existía. Pero la usé yo."],
+          ["CANELO", "La salvamos y le quitamos la goma."],
+          ["CANELO", "Ahora todo se escribe solo."],
+          ["CANELO", "Y yo soy el pisapapeles."],
+          ["CANELO", "…Bueno, no sé contar. Igual ya voy en la once."],
+          ["CANELO", "Ella la dejó prendida, porque así es ella: cuida dejando que la vean."],
+          ["CANELO", "Una noche. ¿Qué puede pasar en una noche?"]
+        ]
+      },
+      {
+        "id": "b67_salida",
+        "time": "H67: la salida del bar, la caminata y el vínculo",
+        "trigger": "H67",
+        "style": "CARICATURA DE TV (La Borracha) · Luzterna horneada en caricatura",
+        "title": "¿Dónde andabas, gordo?",
+        "$scene": "La calle de La Última Ronda, de noche (04 §5). Salida: [0–3] (L1, L3, L4, L5; L2 es la luz azul que se acerca). Caminata interactiva en 4 tramos que no se pueden fallar: tramo 1 [4–6], tramo 2 [7–9], tramo 3 [10–13], tramo 4 [14–17] (Luzterna se detiene antes). El vínculo frente a la gatera pintada: [18–23] (V1, V2, V3); V4 sin diálogo (se guarda un hilo de la bufanda); [24] V5, bajito, mirando al bar. Índices en ui/story/gaterasScript.ts › SALIDA_LINES.",
+        "lines": [
+          ["CANELO", "¡Y no vuelvo! …Mañana vuelvo."],
+          ["LUZTERNA", "Canelo."],
+          ["CANELO", "¿Luz? ¿Qué haces aquí? Esta caja es de borrachos. Tú estás muerta. No combina."],
+          ["LUZTERNA", "Te seguí el pelo. Dejaste pelo en TRES cajas, gordo."],
+          ["LUZTERNA", "¿Sabes qué hora es?"],
+          ["CANELO", "La hora de otra."],
+          ["LUZTERNA", "Es la hora en que un gato decente está durmiendo ENCIMA DE SU PÁGINA."],
+          ["CANELO", "Ya dormí encima. Muchas noches. Me duele la panza de tanto decidir."],
+          ["LUZTERNA", "Derecho. DERECHO. Eso no es derecho, eso es una opinión."],
+          ["CANELO", "El piso se mueve."],
+          ["LUZTERNA", "El piso no se mueve. Tú te mueves. Yo floto. Aquí lo único estable es el piso."],
+          ["CANELO", "¿Y si un día me voy a una caja y no vuelvo?"],
+          ["LUZTERNA", "Te voy a buscar. Es mi trabajo. Y a mí ya no me puede pasar nada, gordo: ya me pasó todo."],
+          ["CANELO", "…Perdón por irme, Luz."],
+          ["LUZTERNA", "Es la primera vez que te oigo, ¿sabes? Toda la vida hablándote y tú nomás «mrr»."],
+          ["CANELO", "En casa no se puede. Aquí sí."],
+          ["LUZTERNA", "Pues habla más seguido. Aunque sea para pedir perdón."],
+          ["CANELO", "No te acostumbres."],
+          ["CANELO", "Luz… ¿tú cómo le hiciste? Para cargar esa linterna tanto tiempo."],
+          ["LUZTERNA", "No le hice. Me morí. No te lo recomiendo."],
+          ["LUZTERNA", "Y esa bufanda… ¿todavía?"],
+          ["CANELO", "Es mi bufanda."],
+          ["LUZTERNA", "Es horrible."],
+          ["CANELO", "Por eso es mía."],
+          ["LUZTERNA", "Una noche. Ojalá."]
+        ]
+      },
+      {
+        "id": "b67_despierta",
+        "time": "H67 cumplida: en tu isla, de noche (cine p3_despierta)",
+        "trigger": "H67",
+        "style": "TU ISLA DE NOCHE",
+        "title": "El despertar",
+        "$scene": "04 §6. Canelo y Luzterna salen por la gatera del faro. D1: la marca de la página está fría (sin vapor). D2: el peñasco de REGISTRO 000, vacío. D3: el Catdex se abre solo: «ESTADO: ~~despertando~~ DESPIERTO», con la letra de los márgenes. D4: la gatera del faro rasgada, con bordes de estática; huellitas a las que se les borran las orillas. D4′: la llamita de la cola de Canelo tiembla y baja un instante; nadie lo comenta. [0] D5. D6: Canelo no contesta, solo maúlla (en casa no habla) → [1]. D7: cae una dona y queda ensartada en la palmera de Canelo → [2]. Después, la Bitácora escribe CAMBIÓ.",
+        "lines": [
+          ["LUZTERNA", "¿Canelo? ¿Qué ves?"],
+          ["LUZTERNA", "…Ya sé. Aquí no se puede."],
+          ["LUZTERNA", "…¿Eso es una dona?"]
+        ]
+      },
+      {
+        "id": "b68_carta",
+        "time": "H68: en el faro por la mañana (a) · en la Carta de las Cajas (b)",
+        "trigger": "H68",
+        "style": "CUADERNO DE FARERA",
+        "title": "La Carta de las Cajas",
+        "$scene": "04 §7. [0] M1: tu isla, mañana; Luzterna en el faro con un cuaderno, pasa hojas en blanco. En la Carta (GaterasMapScene, B): [1] M2 mientras su mano dibuja tu isla, el faro y cinco rasgaduras (cuatro en blanco, «aquí no he llegado»); [2–3] M3–M4 Maneki entra barriendo y saca un llavero enorme; [4] M5 nota en el margen después de pagar (UI de compra, primera vez); [5] M6 la rasgadura de la Borracha se cose como gatera y aparece B-1. M7: la Bitácora se abre sola con la tarjeta de H69. Índices en ui/story/gaterasScript.ts › CARTA_LINES.",
+        "lines": [
+          ["LUZTERNA", "Si mi gato cruza cajas y algo lo sigue, yo necesito una carta. Era farera. Mi trabajo era que nadie se perdiera."],
+          ["LUZTERNA", "Cinco rasgaduras. Huellitas en todas. Solo una huele a cerveza."],
+          ["MANEKI", "Ay, perdón. Costumbre. ¿Van a cruzar? Las gateras tienen cerradura, y yo tengo las llaves. Barrí cajas mucho tiempo."],
+          ["MANEKI", "La de la cerveza se las abro barata. La escoba no se paga sola."],
+          ["LUZTERNA", "Le pagamos a una conserje con llaves. Esto ya es un negocio."],
+          ["LUZTERNA", "Cada vez que ganes ahí, junta sus huellas. Con suficientes, le sigo el rastro y te dibujo el siguiente pedazo."]
+        ]
+      },
+      {
+        "id": "b69_manana",
+        "time": "H69: antes de B-1 (a) · después de B-2 (b) · antes de B-5 (c)",
+        "trigger": "H69",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "La mañana que no llegó",
+        "$scene": "05 §10. [0] antes de B-1, con la tarjeta de H69. [1–2] después de ganar B-2: un vecino, en mímica, señala las huellitas. [3–4] antes de B-5 (la élite): el Oficial Dona. Índices en ui/story/gaterasScript.ts › MANANA_LINES.",
+        "lines": [
+          ["LUZTERNA", "Capi, esta caja se reinicia cada mañana. Hoy no se reinició. Alguien pasó por aquí y rompió el botón."],
+          ["CAPTION", "Un vecino, en mímica, señala las huellitas en la banqueta."],
+          ["LUZTERNA", "¿Ves? No son de gato normal. Se le borran las orillas."],
+          ["OFICIAL DONA", "Alto ahí. Esta caja tiene reglas. La primera: no hay reglas. La segunda: no toquen mis donas."],
+          ["LUZTERNA", "Le acabas de dar el plan, oficial."]
+        ]
+      },
+      {
+        "id": "b70_doneria",
+        "time": "H70: la Donería (escenas A y B, con la elección de dona)",
+        "trigger": "H70",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "Borrón",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h70-borron.md (A, B). [0] A1 · [1] A3 · [2] A4 · [3–9] B1–B5 · elección (b70_donas) · [10–11] B7a glaseada · [12–13] B7b chocolate · [14–16] B7c chispas · [17–18] B8. Índices: app/acto1Flow.ts › ACTO1_LINES.",
+        "lines": [
+          ["CAPTION", "La Donería, de noche. Las huellitas cruzan un charco y entran por la puerta."],
+          ["CANELO", "¿Ese llora con una dona?"],
+          ["LUZTERNA", "Mira su pata."],
+          ["BORRÓN", "¡No estoy! ¡Hic!"],
+          ["HOMIAU", "Sí está. Lleva tres horas aquí. Y doce donas."],
+          ["LUZTERNA", "¿Tú eres de los que escriben? Esperaba más barba."],
+          ["BORRÓN", "Y yo esperaba más donas. Y aquí estoy."],
+          ["BORRÓN", "Esa era mía."],
+          ["CANELO", "Ahora es de los dos. Así es abajo."],
+          ["HOMIAU", "Para que deje de llorar. Elijan. Menos la de chispas."],
+          ["BORRÓN", "Simple. Como allá arriba. Todo blanco… ¡hic!… me da nostalgia."],
+          ["CANELO", "¡Te dije!"],
+          ["BORRÓN", "Oscura. Como la tinta. Esta me entiende."],
+          ["LUZTERNA", "¡Te dije!"],
+          ["HOMIAU", "¡Mi dona!"],
+          ["BORRÓN", "Colores. Allá arriba no había colores. Gracias."],
+          ["HOMIAU", "…De nada."],
+          ["LUZTERNA", "Ahora sí. ¿Quién eres?"],
+          ["BORRÓN", "Me llamo Borrón. Antes era una mano."]
+        ]
+      },
+      {
+        "id": "b70_sombras",
+        "time": "H70: F02 «El precio de bajar» (si la película no está registrada, estas líneas)",
+        "trigger": "H70",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "El precio de bajar",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h70-borron.md (F02). Respaldo en diálogo de la película F02 (teatro de sombras): F02-1, F02-2, F02-4, F02-5, F02-6, F02-7, F02-8.",
+        "lines": [
+          ["BORRÓN", "Allá arriba éramos manos."],
+          ["BORRÓN", "Y el folio cero se nos escapó."],
+          ["BORRÓN", "Para cruzar cajas hay que ser gato. Así que nos escribimos gatos."],
+          ["HOMIAU", "Ooooh."],
+          ["BORRÓN", "Pero al bajar, se pierde el lápiz."],
+          ["BORRÓN", "Y abajo todo se acaba. ¡Hic!"],
+          ["BORRÓN", "Y cada vez que pierdes, se te olvida algo."]
+        ]
+      },
+      {
+        "id": "b70_ficha",
+        "time": "H70: lo que quieren y lo que se le olvida (escena C)",
+        "trigger": "H70",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "Borrón",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h70-borron.md (C). [0–5] C1–C3 · [6] C4 la ficha (interfaz del Catdex) · [7–9] C5 · [10] C6.",
+        "lines": [
+          ["BORRÓN", "Mis jefes quieren al folio cero de regreso. En blanco. Para que las cajas sanen."],
+          ["LUZTERNA", "¿Y tú?"],
+          ["BORRÓN", "Yo quiero otra dona."],
+          ["BORRÓN", "Allá arriba no matábamos a nadie, ¡hic! Nomás arreglábamos finales."],
+          ["CANELO", "¿Y abajo?"],
+          ["BORRÓN", "Abajo nos comemos las donas."],
+          ["CATDEX", "BORRÓN · TITIRITERO ENCARNADO. Antes: una mano. Caja: la Borracha. Le gustan: las donas. Le da miedo: volver. Su color favorito: ~~azul~~. Su nombre de antes: —"],
+          ["BORRÓN", "¿De qué hablábamos?"],
+          ["HOMIAU", "De donas."],
+          ["BORRÓN", "Ah. Las donas. Esas no se me olvidan."],
+          ["LUZTERNA", "Huele a pintura fresca."]
+        ]
+      },
+      {
+        "id": "b71_cierre",
+        "time": "H71 cumplida: La Última Ronda después de la pelea (escena de cierre)",
+        "trigger": "H71",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "NINGUNA CAJA ES HOGAR",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h71-ninguna-caja.md (cierre X1–X12). La silla que atraviesa a Luzterna (X7) es un gag visual sin comentario: aquí solo queda su línea.",
+        "lines": [
+          ["DOÑA ESPUMA", "Lo que pasa en La Última Ronda se olvida en La Última Ronda. …Ya no, ¿verdad?"],
+          ["BRECHA", "Las cajas se están rompiendo solas. Llevamos años intentando. Y lo hizo un gatito."],
+          ["BRECHA", "Ustedes le dicen REGISTRO 000. Nosotros, La Llave."],
+          ["LUZTERNA", "Todavía no tiene nombre. Y no es una llave."],
+          ["GRAFITERA", "Brecha… ¿y si tienen razón ellos?"],
+          ["BRECHA", "Tú también te vas a dar cuenta, Grafi. Ninguna caja es hogar."],
+          ["CANELO", "Mi caja sí es hogar. Tiene palmera."],
+          ["CAPTION", "Brecha agarra una silla rota y se la avienta a Canelo. Canelo se agacha a tiempo."],
+          ["LUZTERNA", "…y otra cosa, gordo: ¡agáchate cuando te avienten sillas!"],
+          ["LUZTERNA", "¿Qué? ¿Tengo algo?"],
+          ["BRECHA", "Las manos de arriba ya tienen cara. Ahora sí se les puede pegar."],
+          ["CAPTION", "Junto a la puerta del baño, El Cadenero no se movió en toda la pelea. Por la rendija sale estática."],
+          ["CANELO", "¿Y ese?"],
+          ["DOÑA ESPUMA", "El Cadenero. Desde anoche no deja entrar a nadie al baño."]
+        ]
+      },
+      {
+        "id": "b72_resaca",
+        "time": "H72: F04 «La mañana en blanco y negro», seis películas f04_prologo … f04_epilogo (la que no esté registrada: sus intertítulos)",
+        "trigger": "H72",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "La resaca",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h72-la-resaca.md (F04). [0–3] prólogo · [4–7] Donería · [8–9] Hipo-Mart · [10–13] parque · [14–16] La Última Ronda (se abre al final) · [17–19] epílogo (pasada 5, R7: sin «Es mi bufanda / Es horrible»; queda el gesto con el haz). Índices: app/acto1Flow.ts › ACTO1_LINES.",
+        "lines": [
+          ["CAPTION", "A LA MAÑANA SIGUIENTE…"],
+          ["CANELO", "¡MI BUFANDA!"],
+          ["LUZTERNA", "No me estoy riendo. Estoy… brillando."],
+          ["CAPTION", "¿DÓNDE QUEDÓ LA BUFANDA?"],
+          ["HOMIAU", "¡ME ACUERDO DE ANOCHE!"],
+          ["HOMIAU", "¡NUNCA ME ACUERDO DE ANOCHE! ¡ERA LO MEJOR DE MI VIDA!"],
+          ["CANELO", "¿Y mi bufanda?"],
+          ["HOMIAU", "Pregúntale a la tienda. Ahí compraste hielo. Mucho hielo."],
+          ["LUZTERNA", "¡Uy! Casi."],
+          ["LUZTERNA", "¿Y tú qué miras?"],
+          ["CANELO", "Luz… ¿tú te acuerdas de cuando estabas viva?"],
+          ["LUZTERNA", "Del faro de mi papá. Del pan dulce. De que nadie me hacía caso."],
+          ["LUZTERNA", "…O sea, igual que ahora."],
+          ["LUZTERNA", "Huele a cuando estaba viva."],
+          ["CANELO", "¡ESE ES MI…!"],
+          ["DOÑA ESPUMA", "Era un trapo."],
+          ["HIPÓLITO", "¿Y luego?"],
+          ["CAPTION", "En la azotea, Canelo duerme con la bufanda chueca. Luzterna se la acomoda con el haz de la linterna."],
+          ["CAPTION", "(Ella no duerme. Nunca duerme.)"],
+          ["CAPTION", "FIN DEL PRIMER ROLLO"]
+        ]
+      },
+      {
+        "id": "b73_entrada",
+        "time": "H73: la turba frente al bar (escena de entrada)",
+        "trigger": "H73",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "La Batalla de Gatos",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h73-batalla-de-gatos.md (entrada T1–T7).",
+        "lines": [
+          ["CAPTION", "Una turba de vecinos con antorchas frente al bar. Carteles: «QUEREMOS OLVIDAR» · «DEVUÉLVANNOS LA MAÑANA» · «FUERA EL GATO NARANJA»."],
+          ["VECINO", "¡Me acuerdo de que canté en el karaoke! ¡ME ACUERDO!"],
+          ["CAPTION", "Homiau sostiene el único cartel distinto: «YO SÍ ME QUIERO ACORDAR»."],
+          ["CANELO", "No me ven. No me ven."],
+          ["LUZTERNA", "Te ven perfecto, gordo."],
+          ["EMIAU", "¿Quieren que se vaya? Que suba. En la Batalla, lo que se dice arriba se respeta."],
+          ["PÚBLICO", "¡BATALLA! ¡BATALLA!"],
+          ["LUZTERNA", "Ve."]
+        ]
+      },
+      {
+        "id": "b73_emen",
+        "time": "H73: F06 «Cuadra 8» (EM%EN, completa; si la película no está registrada, estas barras)",
+        "trigger": "H73",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "Cuadra 8",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h73-batalla-de-gatos.md (F06). Respaldo en diálogo de las barras (en pantalla, sin voz): versos del campeón, la confesión (la luz de la linterna la deja ver), la respuesta, la promesa y el remate de Doña Espuma (pasada 4, Q4: Luzterna no contesta).",
+        "lines": [
+          ["OFICIAL DONA", "¡EL CAMPEÓN!"],
+          ["EMIAU", "Llegaste anoche… con hambre de olvido, catorce rondas… y ni un «gracias, amigo»."],
+          ["EMIAU", "Tu casa esperando, tu hoja en el suelo, y tú en la barra… llorándole al hielo."],
+          ["PÚBLICO", "¡UUUUUH!"],
+          ["EMIAU", "Desde que llegaste… aquí nadie olvida: la noche se queda… pegada a la vida."],
+          ["EMIAU", "Gato de fuego… con llama de vela: vete a tu caja… que nadie te espera."],
+          ["EMIAU", "Tu turno, pisapapeles."],
+          ["CAPTION", "Canelo mira la salida. Da un paso hacia ella. Al fondo, el haz azul de la linterna cruza al público y cae sobre él como un foco."],
+          ["CANELO", "Sí. Me fui. Vine a olvidar. Por mí despertó lo que despertó."],
+          ["CANELO", "Por mí ustedes se acuerdan de todo."],
+          ["CANELO", "Y saben qué…"],
+          ["CANELO", "Acordarse cuesta, olvidar sale caro; vine a olvidarlo… y me salió al revés, claro."],
+          ["CANELO", "Homiau, ¿de qué te acuerdas?"],
+          ["HOMIAU", "¡Del cumpleaños de mi hija!"],
+          ["CANELO", "Lo bueno también se queda… no nomás la cruda fija."],
+          ["CANELO", "Tú siempre te acordaste… de todo, solito; ahora somos muchos: ya no estás solito."],
+          ["CANELO", "Si esto lo rompí yo, lo arreglo yo; y si alguien paga… pago yo."],
+          ["HIPÓLITO", "¿Y luego?"],
+          ["DOÑA ESPUMA", "Empieza por las catorce rondas."]
+        ]
+      },
+      {
+        "id": "b73_despues",
+        "time": "H73: después de la batalla (cierre en calma: un plano quieto, sin música)",
+        "trigger": "H73",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "La Batalla de Gatos",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h73-batalla-de-gatos.md (cierre Z1–Z6). [0] Z1, plano quieto de 5–8 s sin música · [1–5] Z2–Z4 · [6–7] Z5 (Hipólito los sigue) · [8] Z6, el cartel.",
+        "lines": [
+          ["CAPTION", "El karaoke vacío. El micrófono en el suelo. Confeti que todavía cae. Solo la lluvia."],
+          ["EMIAU", "Yo nunca tomo. Por eso siempre me acordé de todo. Era el único."],
+          ["CANELO", "Debió ser horrible."],
+          ["EMIAU", "Lo que buscan está detrás del baño de La Última Ronda. El Cadenero no deja entrar a nadie desde esa noche."],
+          ["CANELO", "¿Y por qué no?"],
+          ["EMIAU", "Le tiene miedo a lo que suena ahí adentro."],
+          ["CAPTION", "Hipólito se levanta dormido y los sigue, tambaleándose, con su tarro."],
+          ["LUZTERNA", "…Bueno. Uno más."],
+          ["CAPTION", "El cartel del poste: «SE BUSCA: CANELO · YA NO DEBE NADA». Y abajo, con otra letra: «(debe 13)»."]
+        ]
+      },
+      {
+        "id": "b74_lista",
+        "time": "H74: la lista (escena de entrada, frente a la puerta del baño)",
+        "trigger": "H74",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "El Cadenero",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h74-el-cadenero-y-oh-shit.md (entrada L1–L4).",
+        "lines": [
+          ["CAPTION", "El fondo de La Última Ronda. El Cadenero tapa entera la puerta del baño: lentes oscuros, camiseta de «STAFF», tabla con una lista."],
+          ["EL CADENERO", "¿Nombre?"],
+          ["CANELO", "Canelo."],
+          ["EL CADENERO", "No estás."],
+          ["CANELO", "¡Debo catorce rondas! ¡Claro que estoy!"],
+          ["EL CADENERO", "Esta noche no pasa nadie."],
+          ["LUZTERNA", "Yo no paso sin el gordo. Así que, o pasamos los dos, o te vamos a… convencer."]
+        ]
+      },
+      {
+        "id": "b74_aviso",
+        "time": "H74 cumplida: el aviso (en silencio: solo el zumbido del neón)",
+        "trigger": "H74",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "El Cadenero",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h74-el-cadenero-y-oh-shit.md (aviso W1–W9). Sin música. Pasada 4 (Q5): Borrón mira SOLO la llama de Canelo. Pasada 5 (R7): W7 lo dice CANELO mirándose la cola («¿Cuál luz?») y Luzterna no dice nada; W8 sin hipo: miedo («Si lo digo, me borran otra línea») y una línea de su ficha parpadea.",
+        "lines": [
+          ["EL CADENERO", "Desde esa noche, ahí adentro suena de todo. Sirenas. Gritos de caricatura. Un gato que grita en un puente."],
+          ["CANELO", "Gracias por cuidar la puerta, grandote."],
+          ["EL CADENERO", "No la cuidaba. Me escondía de ella."],
+          ["CAPTION", "Borrón entra con una caja de donas y se queda en la penumbra."],
+          ["BORRÓN", "No sigan. Mis jefes vienen siguiendo una luz."],
+          ["CAPTION", "Borrón mira la cola de Canelo. La llamita parpadea, como vela con corriente."],
+          ["CANELO", "¿Cuál luz?"],
+          ["BORRÓN", "Si lo digo, me borran otra línea."],
+          ["CAPTION", "Una línea de la ficha de Borrón parpadea."],
+          ["CAPTION", "Canelo pone la pata en la manija de la puerta del baño. Voltea a ver a Luzterna. Ella asiente."]
+        ]
+      },
+      {
+        "id": "b74_ohshit",
+        "time": "H74 cumplida: F08 «Caída por el multiverso» (OH SHIT, fragmento; si la película no está registrada, estas líneas)",
+        "trigger": "H74",
+        "style": "CARICATURA DE TV (La Borracha)",
+        "title": "Caída por el multiverso",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-1/h74-el-cadenero-y-oh-shit.md (F08). Respaldo en diálogo: la caída por los universos, sin voz (el «OH SH—» solo existe escrito).",
+        "lines": [
+          ["CANELO", "¿Listos?"],
+          ["LUZTERNA", "No."],
+          ["CANELO", "Una noche nomás, dijo."],
+          ["CAPTION", "Saltan a la rasgadura. El vidrio de la tele se cae a pedazos; Luzterna agarra a Canelo de la bufanda. Caen por un cómic noir, por una telaraña, por un anime…"],
+          ["CAPTION", "«OH, #@!%» · «¡OH, MICH—!» · «¿¡NANI!?»"],
+          ["CAPTION", "…y aterrizan en una ciudad de cómic. La linterna, sin querer, pinta un gato en las nubes."]
+        ]
+      },
+      {
+        "id": "b93_pp",
+        "time": "H93: F31 PP «Se acerca una luz» (si la película no está registrada, estas líneas)",
+        "trigger": "H93",
+        "style": "TU ISLA · REALISMO CON TORMENTA",
+        "title": "Se acerca una luz",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h93-la-noche-mas-oscura.md (F31, T1–T9). [0] T1 · [1] T3 Itō · [2] T5 · [3] T6 la regla · [4] T7 · [5] T9 LO QUE ARRIESGAMOS (la Bitácora, con la letra de ella; ella no se anota).",
+        "lines": [
+          ["CAPTION", "TU ISLA"],
+          ["ITŌ", "Vienen esta noche. Por los ojos del gato."],
+          ["ITŌ", "No voy a pelear contra ellos. Tampoco con ustedes."],
+          ["CAPTION", "EL ASEDIO: HUNDIR A LOS DOS"],
+          ["CAPTION", "Itō se inclina solo ante Canelo, hondo. A nadie más. Se va por la gatera sin mirar atrás."],
+          ["CAPTION", "LO QUE ARRIESGAMOS: A Canelo. A Cerito. La isla no: esa no se la damos a nadie."]
+        ]
+      },
+      {
+        "id": "b93_caida",
+        "time": "H93: F32 PH «La caída», cierra el asedio sin pantalla de victoria (si la película no está registrada, estas líneas)",
+        "trigger": "H93",
+        "style": "TU ISLA · REALISMO CON TORMENTA",
+        "title": "La caída",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h93-la-noche-mas-oscura.md (F32, K1–K11). Sin música desde K6. [0] K2 · [1] K3 · [2] K4 · [3] K5 · [4] K6 · [5] K7–K8 · [6] K9.",
+        "lines": [
+          ["CAPTION", "Los dos barcos se hunden. El barco de tinta sale de la niebla. La Mano baja a la playa y mira a Canelo. Solo a él."],
+          ["LA MANO", "Lo sostiene tu mirada, gato. Ciérrala."],
+          ["LUZTERNA", "Al gordo no."],
+          ["CAPTION", "El trazo negro da la vuelta a la burbuja… y alcanza la punta de la cola de Canelo, que quedó fuera de la luz."],
+          ["CAPTION", "La llama se apaga."],
+          ["CAPTION", "Canelo cae de lado, despacio. Su bufanda se le resbala del cuello y queda en el suelo. No se levanta."],
+          ["CAPTION", "La Mano vuelve a su barco sin una palabra. El barco se queda anclado frente a la isla."]
+        ]
+      },
+      {
+        "id": "b94_noche",
+        "time": "H94: F33 PH «La noche sin Canelo» (escena interactiva, sin reloj; si la película no está registrada, estas líneas y el faro)",
+        "trigger": "H94",
+        "style": "TU ISLA DE NOCHE · SIN MÚSICA",
+        "title": "La noche sin Canelo",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h94-sin-llama.md (F33, N1–N11). Pasada 5 R1 (sin el plano que bajaba a su espalda) y pasada 6 S2 (el recado completo, a Canelo caído, que no la oye). [0] N1 · [1] N2 · [2] N4 · [3] N5–N8 · [4–5] N9 · [6] N11 el faro.",
+        "lines": [
+          ["CAPTION", "Canelo en el suelo, de lado, sin llama. Su bufanda, donde cayó. Luzterna flota junto a él, quieta."],
+          ["CAPTION", "Intenta prenderle la llama con su linterna. Nada. Más cerca. Nada. Una tercera vez, con las dos manos en la linterna. No alcanza."],
+          ["CAPTION", "Los gatos llegan uno a uno: Hipólito le deja su tarro al lado; Grafitera le pinta una llamita en una piedra; Maneki barre alrededor; Cerito se acurruca junto a su cola."],
+          ["CAPTION", "En la proa del barco de tinta, anclado, La Mano vigila. Entrecierra los ojos mirando a Canelo: comprueba que sigan cerrados."],
+          ["LUZTERNA", "Gordo… tu bufanda… siempre me…"],
+          ["LUZTERNA", "…me pareció horrible."],
+          ["CAPTION", "El faro brilla un poco más."]
+        ]
+      },
+      {
+        "id": "b94_amanecer",
+        "time": "H94: F34 PH «Antes del amanecer», el regreso, el alivio (1/3), el golpe (2/3) y el trazo (3/3); en medio, el desayuno opcional (R8)",
+        "trigger": "H94",
+        "style": "TU ISLA · REALISMO DE MADRUGADA",
+        "title": "Antes del amanecer",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h94-sin-llama.md (F34, A1–A12). Pasadas 4 (Q3, Q8), 5 (R2, R4, R6, R8), 6 (S1) y 7 (deuda falsa pagada: la chispa de Cerito y el haz de ella, juntos; un vidrio de la linterna se queda negro; «Me debes un vidrio, gordo.»). La regla de H67 no se dice. Índices en app/finalFlow.ts (FINAL_LINES): con DEUDA_FALSA, regreso [0–8], golpe [9–13], trazo [11–13]; sin ella (el control medido), regreso [14, 2, 5–8] y la misma cola. [0–1] A1–A2b · [2] A4 · [3–4] A4b · [5] A5 · [6–8] A6 · [9–13] A7–A12 · [14] A1–A2 sin la deuda.",
+        "lines": [
+          ["CAPTION", "Cerito se levanta, camina hasta la cola de Canelo y la toca con la nariz. Una chispa, que tiembla y se apaga. Otra, más débil."],
+          ["CAPTION", "Luzterna baja flotando y le pega el haz a la cola, junto a la nariz de Cerito. Juntos, la chispa prende: la llama vuelve… chiquita. Uno de los vidrios de la linterna se pone negro, con un «tic», y ya no se aclara."],
+          ["CAPTION", "CANELO · LLAMA 30 %"],
+          ["LUZTERNA", "Me debes un vidrio, gordo."],
+          ["CAPTION", "(Canelo maúlla, ofendido)"],
+          ["CAPTION", "El barco de tinta leva anclas y se va, de espaldas, a contraluz del sol. Los gatos lo abuchean desde la orilla."],
+          ["LUZTERNA", "¡Gordo! ¡Me diste el susto de mi vida! ¡Nunca más te mueres sin avisar!"],
+          ["LUZTERNA", "¡Y eso no es desayuno, es un atentado!"],
+          ["CAPTION", "(Canelo maúlla)"],
+          ["CAPTION", "Luzterna levanta la linterna sobre todos, contenta. La luz envuelve a Canelo y a Cerito; su espalda queda en sombra."],
+          ["LA MANO", "La luz cuida lo que alumbra. A quien la carga, no."],
+          ["LA MANO", "…Entonces la luz primero."],
+          ["LUZTERNA", "…y tú, si te vuelves a morir, te mato—"],
+          ["LUZTERNA", "…Ah."],
+          ["CAPTION", "Cerito se levanta, camina hasta la cola de Canelo y la toca con la nariz. Una chispa. Después la llama… chiquita."]
+        ]
+      },
+      {
+        "id": "b94_sadie",
+        "time": "H94: F35 PC SADIE «Linterna mágica», completa (si la película no está registrada, estas líneas). Su beat se guarda en el primer acorde: SADIE nunca se repite",
+        "trigger": "H94",
+        "style": "LINTERNA MÁGICA",
+        "title": "Linterna mágica",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h94-sin-llama.md (F35, S1–S22). Desde S1: 0 premios, 0 jingles, 0 NOVEDADES, 0 tips, 0 chistes. [0] S2 · [1] S8 · [2] S10 · [3] S15 · [4] S16 · [5] S17 · [6] S19 · [7] S21–S22.",
+        "lines": [
+          ["CAPTION", "El haz rajado de la linterna empieza a proyectar: una niña al pie del faro apagado de su papá prende una vela."],
+          ["LUZTERNA", "No la voy a soltar, Capi. Esta vez no es que se me olvide."],
+          ["LUZTERNA", "¿Esto es lo que ve la gente cuando se muere? …Qué cursi."],
+          ["CAPTION", "Baja el haz y deja que Canelo llegue. Se arrodilla junto a Cerito y le pone la mano en la cabeza."],
+          ["LUZTERNA", "Cuida la página, gordo. Y no te la comas."],
+          ["CAPTION", "La linterna se rompe. Ella no suelta. De su manga cae al suelo una bufanda tejida a mano, naranja y horrible, sin terminar del todo."],
+          ["CAPTION", "(Canelo maúlla)"],
+          ["CAPTION", "Negro. En el negro, los ojos de tus gatos se encienden de a dos."]
+        ]
+      },
+      {
+        "id": "b94_oscuras",
+        "time": "H94: la fase «A oscuras» (3 turnos, sin derrota posible; «MIRA» en el turno 3)",
+        "trigger": "H94",
+        "style": "BATALLA A OSCURAS",
+        "title": "A oscuras",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h94-sin-llama.md (fase «A oscuras», O1–O2; pasada 5 R9b). Objetivo en la interfaz: «Que no se lleven a Cerito» (nunca «protégela»). [0] el objetivo · [1] el input.",
+        "lines": [
+          ["CAPTION", "Que no se lleven a Cerito"],
+          ["CAPTION", "MIRA"]
+        ]
+      },
+      {
+        "id": "b94_ojos",
+        "time": "H94: F36 PH «MIRA» y los ojos de casa (si la película no está registrada, estas líneas)",
+        "trigger": "H94",
+        "style": "VISIÓN DE GATO",
+        "title": "MIRA",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h94-sin-llama.md (O3–O6). Sin pantalla de victoria. [0] O3 · [1] la ficha de Cerito · [2] O4–O5.",
+        "lines": [
+          ["CAPTION", "En los ojos de Canelo, la isla a oscuras se ve como de día. Cerito, claro, sin estática, mira a Canelo… y elige pelaje: gris perla, con el cero en la frente."],
+          ["CAPTION", "ESPECIE: gato (por ahora)"],
+          ["CAPTION", "Se encienden los ojos de todos tus gatos alrededor del faro. Los barcos de tinta se detienen. La Mano mira los ojos. Se queda quieta. Baja la uña."]
+        ]
+      },
+      {
+        "id": "b95_mano",
+        "time": "H95: F37 PH «La Mano» (si la película no está registrada, estas líneas)",
+        "trigger": "H95",
+        "style": "TINTA QUE SE BORRA",
+        "title": "La Mano",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h95-lo-que-no-se-ve.md (F37, M1–M10). Pasadas 3 (P8), 4 (Q9, Q11), 5 (R9a) y 6 (S4). [0] M2 · [1] M3–M4 · [2] M5 · [3] M6 · [4] M7 · [5] M8 · [6] M9–M10.",
+        "lines": [
+          ["CAPTION", "Canelo recoge del suelo la bufanda que ella tejía y se la pone encima de la suya, despacio."],
+          ["CAPTION", "Canelo se planta frente a La Mano. Detrás de él, los ojos de todos tus gatos se encienden y la miran. Nadie se mueve. Ella baja la cabeza."],
+          ["CAPTION", "Cerito, ya gato, se le acerca y la huele. Ella levanta la uña para tacharlo… la tinta se vuelve gris y transparente, y el trazo no deja marca."],
+          ["CAPTION", "Su ficha se borra línea por línea: «Antes: una mano» · «Caja: los libros» · «Postura: una luz contra mil mundos» · y la última, su nombre."],
+          ["LA MANO", "Lo vi. Lo vi en la oscuridad."],
+          ["BORRÓN", "Así le pasó a Itō. El que ve ya no puede tachar."],
+          ["CAPTION", "La Mano recoge la linterna rota, no sabe prenderla, y la deja en el escalón del faro, con cuidado. Una gota de tinta cae en la arena."]
+        ]
+      },
+      {
+        "id": "b95_vigilia",
+        "time": "H95: F38 PH «La vigilia» (sin reloj; si la película no está registrada, estas líneas y «Seguir»)",
+        "trigger": "H95",
+        "style": "LA VIGILIA",
+        "title": "La vigilia",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h95-lo-que-no-se-ve.md (F38, V1–V6). Cada gato, un gesto (no una línea). [0] V1 · [1] V2 · [2] V5.",
+        "lines": [
+          ["CAPTION", "Al pie del faro apagado: la linterna rota en el escalón. Los gatos se acercan solos, cada uno a su tiempo."],
+          ["CAPTION", "Nadie: «…». Maneki no barre: deja la escoba apoyada. Hipólito, despierto, se sienta sin tarro. Grafitera pinta un faro chiquito en la pared, con luz azul."],
+          ["CAPTION", "Canelo, con las dos bufandas, se acuesta junto a la linterna rota. No duerme."]
+        ]
+      },
+      {
+        "id": "b96_recado",
+        "time": "H96: F39 PH «El recado», DÍSELO (si la película no está registrada: la nota de la Parte I, el botón y estas líneas)",
+        "trigger": "H96",
+        "style": "LA PINTURA DEL JUEGO",
+        "title": "El recado",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h96-el-recado.md (F39, R2–R5). Pasadas 4 (Q10) y 6 (S2). [0] R2 la nota de la Parte I (ui/story/script.ts, zona 6) · [1] el aviso · [2] lo que ella le dijo en H94 (en gris) · [3] R4 · [4] R5.",
+        "lines": [
+          ["CAPTION", "…Si algo me pasa, {name}, dile a Canelo que su bufanda siempre me pareció horrible. Con cariño."],
+          ["CAPTION", "Te lo pidió hace mucho. Antes del Primer Mar."],
+          ["CAPTION", "Gordo… tu bufanda… siempre me… …me pareció horrible."],
+          ["BITÁCORA", "Dice que tu bufanda siempre le pareció horrible. Con cariño."],
+          ["CAPTION", "Canelo no responde con palabras. Hunde la cara en la bufanda de ella. Se acuesta."]
+        ]
+      },
+      {
+        "id": "b96_luz",
+        "time": "H96: el faro naranja (F39, R6–R10)",
+        "trigger": "H96",
+        "style": "LA PINTURA DEL JUEGO",
+        "title": "El faro",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h96-el-recado.md (R6–R10). [0] R6 · [1] R8 · [2] R10.",
+        "lines": [
+          ["CAPTION", "Canelo pone la linterna rota en el estante del faro, con la pata, despacio."],
+          ["CAPTION", "Sube al faro y lo prende con su propia llama, la chiquita, la que le volvió esa madrugada. Cuesta. Prende. La luz es naranja."],
+          ["CAPTION", "Nadie puede escribir debajo de un gato dormido. Y este no se va a ir."]
+        ]
+      },
+      {
+        "id": "b96_creditos",
+        "time": "H96: créditos sobre la Carta que ella dibujó (F39, R11–R12)",
+        "trigger": "H96",
+        "style": "LA CARTA DE LAS CAJAS",
+        "title": "Créditos",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h96-el-recado.md (R11–R12). Los créditos como datos (los mismos de la película de CINE).",
+        "lines": [
+          ["CAPTION", "NO ONE LIKE CATS · PARTE III · FUERA DE LA CAJA"],
+          ["CAPTION", "Las canciones: originales del autor"],
+          ["CAPTION", "A mi familia."]
+        ]
+      },
+      {
+        "id": "b96_continuara",
+        "time": "H96: «Continuará» (F39, R13): aquí termina el duelo",
+        "trigger": "H96",
+        "style": "LA CARTA DE LAS CAJAS",
+        "title": "Continuará",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h96-el-recado.md (R13). Sin música ni fanfarria.",
+        "lines": [
+          ["CAPTION", "Continuará."]
+        ]
+      },
+      {
+        "id": "b97_bar",
+        "time": "H97: F40 PH «La última ronda» (la próxima vez que abres la Carta; si la película no está registrada, estas líneas)",
+        "trigger": "H97",
+        "style": "LA BORRACHA LAVADA · 4:3",
+        "title": "La última ronda",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/final/h97-la-ultima-ronda.md (F40, U1–U12). La regla de H67 no se dice. [0] U1 · [1] U2–U3 · [2] U5–U6 · [3–5] U7–U9 · [6] U11.",
+        "lines": [
+          ["CAPTION", "El letrero de LA ÚLTIMA RONDA, de día, apagado. La A ya no parpadea."],
+          ["CAPTION", "En una esquina, La Mano, sola, con un vaso del trago que borra la noche. No lo ha tocado. En la barra, Homiau con su dona, sin comérsela, e Hipólito, despierto."],
+          ["CAPTION", "Doña Espuma le sirve a Canelo el mismo trago, sin preguntar. Él lo aparta con la pata, despacio. El vaso llega al borde y cae solo."],
+          ["CANELO", "Ella siempre venía a buscarme."],
+          ["HIPÓLITO", "¿Y luego?"],
+          ["CANELO", "Luego me acuerdo de ella. Todos los días."],
+          ["CAPTION", "La Mano mira su vaso. No lo toma."]
+        ]
+      },
+      {
+        "id": "b75_llegada",
+        "time": "H75: Escena de llegada · «Mientras tanto…» (≈ 1 min)",
+        "trigger": "H75",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "La llegada",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h75-la-gato-senal.md («Escena de llegada · «Mientras tanto…» (≈ 1 min)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "CIUDAD MAYÚSCULA. DONDE NADIE DUERME… PORQUE SIEMPRE HAY ALGUIEN GRITANDO."],
+          ["CANELO", "Luz… ¿eso lo haces tú?"],
+          ["LUZTERNA", "Al parecer, sí. Qué guapa me veo en las nubes."],
+          ["CAPTION", "ALGUIEN VIO LA SEÑAL."],
+          ["CANELO", "Huele a pescado. Y a tinta."]
+        ]
+      },
+      {
+        "id": "b75_pp",
+        "time": "H75: F09 · PP «Ciudad Mayúscula» (40 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H75",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "Ciudad Mayúscula",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h75-la-gato-senal.md («F09 · PP «Ciudad Mayúscula» (40 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "LOS HÉROES VEN UNA SEÑAL QUE NADIE PRENDIÓ."],
+          ["CAPTION", "Y ALGO DEJÓ HUELLAS QUE NO SON DE NADIE."],
+          ["CAPTION", "LA PANDILLA DEL OVILLO"],
+          ["CAPTION", "AQUÍ EL RUIDO SE QUEDA. ÚSALO."],
+          ["CAPTION", "LO QUE ARRIESGAMOS: Que se enfríe el rastro. Y que nos confundan con villanos."]
+        ]
+      },
+      {
+        "id": "b75_cierre",
+        "time": "H75: Escena de cierre · La primera noche en la ciudad (≈ 40 s)",
+        "trigger": "H75",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "La primera noche en la ciudad",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h75-la-gato-senal.md («Escena de cierre · La primera noche en la ciudad (≈ 40 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["PANDILLERO", "El gatito raro se fue para allá. Rompió la cárcel de los malos. Bueno… la rompieron otros. Él nomás pasó."],
+          ["CANELO", "¿Qué otros?"],
+          ["CAPTION", "DESDE ESA NOCHE, LA SEÑAL SE PRENDE SOLA."],
+          ["LUZTERNA", "Yo no le pedí que llamara a nadie."]
+        ]
+      },
+      {
+        "id": "b76_pp",
+        "time": "H76: F10 · PP «Villanos sueltos» (30 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H76",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "Villanos sueltos",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h76-villanos-sueltos.md («F10 · PP «Villanos sueltos» (30 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "¡FUGA EN LA CÁRCEL DE VILLANOS!"],
+          ["CAPTION", "LOS DISRUPTORES: \"QUE RESPIREN\""],
+          ["CAPTION", "¡LA BARCAZA DEL MUELLE 9, ATRAPADA!"],
+          ["CAPTION", "EL ESTAMBRE ANDA SUELTO"],
+          ["CAPTION", "¿FORASTEROS O VILLANOS?"],
+          ["CAPTION", "LO QUE ARRIESGAMOS: Los civiles. Y nuestra cara en el periódico."]
+        ]
+      },
+      {
+        "id": "b76_arana",
+        "time": "H76: Escena · Gato Araña (≈ 1 min 10 s)",
+        "trigger": "H76",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "Gato Araña",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h76-villanos-sueltos.md («Escena · Gato Araña (≈ 1 min 10 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "¡Ayuda!"],
+          ["CANELO", "¡Voy! ¡Voooy!"],
+          ["GATO ARAÑA", "Un gran poder… da mucha hambre. ¿Alguien trae atún?"],
+          ["CANELO", "Tengo medio. El otro medio ya me lo comí."],
+          ["GATO ARAÑA", "Los grafiteros abrieron la cárcel. Dijeron que los villanos también merecen aire."],
+          ["GATO ARAÑA", "Y sí respiran. Por toda la ciudad."],
+          ["LUZTERNA", "Rompes una caja para que salga lo bueno… y sale todo."],
+          ["GATO ARAÑA", "Me apunto. Ustedes rompen cosas sin querer; yo las arreglo con cinta. Hacemos buen equipo."],
+          ["CAPTION", "GATO ARAÑA · SE UNE A LA TRIPULACIÓN"]
+        ]
+      },
+      {
+        "id": "b76_portada",
+        "time": "H76: Escena · La portada (≈ 25 s)",
+        "trigger": "H76",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "La portada",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h76-villanos-sueltos.md («Escena · La portada (≈ 25 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["VOCEADOR", "¡Extra, extra! ¡Los forasteros otra vez!"],
+          ["CANELO", "Salí feo."],
+          ["LUZTERNA", "Saliste como eres."]
+        ]
+      },
+      {
+        "id": "b77_pp",
+        "time": "H77: F11 · PP «Cruceta» (40 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H77",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "Cruceta",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h77-cruceta.md («F11 · PP «Cruceta» (40 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "¡CRUCETA CONTRA LA BANDA DEL GATO QUE ROMPE CIUDADES!"],
+          ["CAPTION", "¡Esta ciudad no le teme a ninguna bruja!"],
+          ["CAPTION", "¡EN ESTA AZOTEA CAYÓ EL GATO QUE ROMPE LA CIUDAD!"],
+          ["CAPTION", "¡EL GORDO PIERDE SU FUEGO!"],
+          ["CAPTION", "¡NI EN LA BATALLA OLVIDA A SU CIUDAD!"],
+          ["CAPTION", "LO QUE ARRIESGAMOS: La azotea donde cayó el chiquito."]
+        ]
+      },
+      {
+        "id": "b77_tinta",
+        "time": "H77: Escena · La tinta (≈ 50 s)",
+        "trigger": "H77",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "La tinta",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h77-cruceta.md («Escena · La tinta (≈ 50 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CRUCETA", "Esto… no estaba en mi guion. Allá arriba no se sangraba."],
+          ["CANELO", "Tápate con esto. Es horrible pero absorbe."],
+          ["CRUCETA", "Ustedes rompen la ciudad. Yo la cuido. Esto no se acaba aquí."],
+          ["VOCEADOR", "¡Extra! ¿QUIÉN ES EL GATO QUE ROMPE LA CIUDAD?"]
+        ]
+      },
+      {
+        "id": "b77_murciegato",
+        "time": "H77: Escena · Murciégato (≈ 1 min 10 s)",
+        "trigger": "H77",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "Murciégato",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h77-cruceta.md («Escena · Murciégato (≈ 1 min 10 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "ÉL VIO LA SEÑAL LA PRIMERA NOCHE."],
+          ["GATO ARAÑA", "¡Es él! El de la cornisa. Nunca habla."],
+          ["MURCIÉGATO", "¿Ustedes prenden esa luz?"],
+          ["LUZTERNA", "Se prende sola. Tiene carácter."],
+          ["MURCIÉGATO", "La noche no es mía. Es de los gatos: nosotros sí vemos."],
+          ["CANELO", "…¿Siempre los tuve así?"],
+          ["MURCIÉGATO", "El gato que rompe la ciudad no es malo. Tiene miedo. Lo voy a ayudar a buscarlo."],
+          ["CAPTION", "MURCIÉGATO · MULTIDIMENSIONAL"],
+          ["CAPTION", "MULTIDIMENSIONAL: Gatos que se cayeron de su versión a otra. No son de aquí ni de allá. Cambian las reglas de la pelea, no los números. (Murciégato no habla mucho. Me cae bien.)"]
+        ]
+      },
+      {
+        "id": "b78_doc",
+        "time": "H78: F12 · PH «Cerito» (80 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H78",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "Cerito",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h78-cerito.md («F12 · PH «Cerito» (80 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "Isla del Capi · 2:13 a. m."],
+          ["LUZTERNA", "Aquí, en su hábitat natural…"],
+          ["LUZTERNA", "…el REGISTRO 000. Tímido. Nocturno. Rompe cosas."],
+          ["LUZTERNA", "Se asusta. Retrocede. Típico."],
+          ["LUZTERNA", "Y aquí, el gordo. Ellos no necesitan cámara, Capi. Ven en lo oscuro."],
+          ["LUZTERNA", "Si el gordo deja de verlo… se borra un poquito."],
+          ["LUZTERNA", "…Shhh."],
+          ["LUZTERNA", "Te voy a decir Cerito."],
+          ["LUZTERNA", "¿Dónde la quiere el señor?"],
+          ["LUZTERNA", "Y al gordo también. Que se le enfría la panza."],
+          ["LUZTERNA", "¿Sabes por qué nunca apago la linterna?"],
+          ["LUZTERNA", "Me da miedo la oscuridad."],
+          ["LUZTERNA", "Una farera miedosa. Qué chiste."],
+          ["CAPTION", "Cerito: población, 1."]
+        ]
+      },
+      {
+        "id": "b79_maneki",
+        "time": "H79: Escena · Maneki en la Carta (≈ 40 s)",
+        "trigger": "H79",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "Maneki en la Carta",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h79-el-gran-torneo.md («Escena · Maneki en la Carta (≈ 40 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["MANEKI", "¿Al mar de las peleas? Esa llave es cara. Ahí todos gritan."],
+          ["LUZTERNA", "Otra vez la conserje. Ya le debemos el sueldo de un año."],
+          ["MANEKI", "Un gato no puede ver por dos mucho tiempo, Capi. Y las nueve vidas no sirven para esto: esto se cobra de la vida de verdad."],
+          ["CANELO", "Yo veo perfecto. Veo un pescado allá. · (no hay pescado)"],
+          ["MANEKI", "Duerme cuando puedas, gordo."]
+        ]
+      },
+      {
+        "id": "b79_llegada",
+        "time": "H79: Escena de llegada · El Mar Shōnen (≈ 45 s)",
+        "trigger": "H79",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "El Mar Shōnen",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h79-el-gran-torneo.md («Escena de llegada · El Mar Shōnen (≈ 45 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "EL MAR SHŌNEN"],
+          ["SUPER SIAMÉS", "Tu guardia está bien. Tu panza, no."],
+          ["SUPER SIAMÉS", "La única puerta de este mar está en la arena. Se la lleva el campeón. Todos los de aquí venimos de otro lado y no podemos volver."],
+          ["LUZTERNA", "Entonces vamos a ganar. Yo me encargo de gritar."]
+        ]
+      },
+      {
+        "id": "b79_pp",
+        "time": "H79: F13 · PP «El Gran Torneo» (30 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H79",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "El Gran Torneo",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h79-el-gran-torneo.md («F13 · PP «El Gran Torneo» (30 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "¡EN EL PRÓXIMO EPISODIO…!"],
+          ["CAPTION", "¡EL GRAN TORNEO DEL MAR SHŌNEN!"],
+          ["CAPTION", "¡SOLO EL CAMPEÓN CRUZA!"],
+          ["CAPTION", "¡\"POR FIN NOS VOLVEMOS A VER, MI RIVAL DE LA INFANCIA\"! (NUNCA LO HABÍAMOS VISTO)"],
+          ["CAPTION", "¡PODER!"],
+          ["CAPTION", "LO QUE ARRIESGAMOS: La gatera. Si perdemos, Cerito se queda solo del otro lado."]
+        ]
+      },
+      {
+        "id": "b79_llave",
+        "time": "H79: Escena de cierre · La llave (≈ 35 s)",
+        "trigger": "H79",
+        "style": "CIUDAD MAYÚSCULA / MAR SHŌNEN",
+        "title": "La llave",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h79-el-gran-torneo.md («Escena de cierre · La llave (≈ 35 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["EL RIVAL", "¡Te volviste muy fuerte desde aquel verano!"],
+          ["CANELO", "…¿Cuál verano?"],
+          ["SUPER SIAMÉS", "Ninguno de nosotros es de aquí. El derrame nos tiró en este mar."],
+          ["CAPTION", "CONTINUARÁ EN EL PRÓXIMO EPISODIO"]
+        ]
+      },
+      {
+        "id": "b80_apertura",
+        "time": "H80: Escena de apertura · «Yo seré tu sensei» (≈ 25 s)",
+        "trigger": "H80",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Yo seré tu sensei",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h80-entrenamiento.md («Escena de apertura · «Yo seré tu sensei» (≈ 25 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CANELO", "Quiero una técnica secreta. Todos aquí tienen una. Yo nomás tengo hambre."],
+          ["LUZTERNA", "Yo seré tu sensei."],
+          ["CANELO", "Tú no sabes pelear."],
+          ["LUZTERNA", "Ni tú. Empezamos parejos."]
+        ]
+      },
+      {
+        "id": "b80_tiras",
+        "time": "H80: F14 · PH «Entrenamiento» (3 tiras, ~20 s cada una) (si la película no está registrada, estas líneas)",
+        "trigger": "H80",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Entrenamiento",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h80-entrenamiento.md («F14 · PH «Entrenamiento» (3 tiras, ~20 s cada una)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["LUZTERNA", "Lección uno: apunta con el corazón."],
+          ["SUPER SIAMÉS", "…Con el corazón de OTRO."],
+          ["LUZTERNA", "Lección dos: el ninja es invisible."],
+          ["LUZTERNA", "Esa lección era para ti."],
+          ["CANELO", "Aquí los ataques se gritan. Si no gritas, no cuenta."],
+          ["LUZTERNA", "…rayo…"],
+          ["CANELO", "¡MÁS FUERTE!"],
+          ["LUZTERNA", "¡RAYO DE… LUZ… TERNA! (en letras enormes)"]
+        ]
+      },
+      {
+        "id": "b80_tecnica",
+        "time": "H80: Escena de cierre · La técnica (≈ 30 s)",
+        "trigger": "H80",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La técnica",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h80-entrenamiento.md («Escena de cierre · La técnica (≈ 30 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CANELO", "¡FUEGO… DE… PESCADO!"],
+          ["LUZTERNA", "Tu técnica es malísima."],
+          ["CANELO", "La tuya también. Pero gritada."],
+          ["CAPTION", "CONTINUARÁ EN EL PRÓXIMO EPISODIO"]
+        ]
+      },
+      {
+        "id": "b81_pp",
+        "time": "H81: F15 · PP «Itō» (40 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H81",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Itō",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h81-ito.md («F15 · PP «Itō» (40 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "LA FINAL"],
+          ["CAPTION", "ITŌ · TITIRITERO · PELEA DE FRENTE"],
+          ["CAPTION", "EL CAMPEÓN CRUZA. LOS DEMÁS SE QUEDAN."],
+          ["CAPTION", "DUELO LIMPIO: UN GOLPE CADA UNO."],
+          ["CAPTION", "LO QUE ARRIESGAMOS: La gatera. Y que Itō olvide algo por nuestra culpa."]
+        ]
+      },
+      {
+        "id": "b81_daria",
+        "time": "H81: F16 · PC Daria «Una sola línea» (c25 → fin · 1:43) (si la película no está registrada, estas líneas)",
+        "trigger": "H81",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Una sola línea",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h81-ito.md («F16 · PC Daria «Una sola línea» (c25 → fin · 1:43)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["ITŌ", "Al gato no. Así no."],
+          ["ITŌ", "Perdón. Sigamos."],
+          ["CAPTION", "¡Cru—"],
+          ["CAPTION", "¡Cru—"],
+          ["CANELO", "…¿A quién llamabas?"],
+          ["ITŌ", "No sé."]
+        ]
+      },
+      {
+        "id": "b81_ficha",
+        "time": "H81: Escena · La ficha de Itō (≈ 35 s)",
+        "trigger": "H81",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La ficha de Itō",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h81-ito.md («Escena · La ficha de Itō (≈ 35 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["ITŌ", "Perdí. Y se me fue algo. No sé qué era."],
+          ["CANELO", "Peleaste derecho. Eso no se te olvida."],
+          ["CAPTION", "CONTINUARÁ EN EL PRÓXIMO EPISODIO"]
+        ]
+      },
+      {
+        "id": "b82_vocacion",
+        "time": "H82: F17 · PH «La Vocación» (90 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H82",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La Vocación",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h82-la-mano.md («F17 · PH «La Vocación» (90 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["LA MANO", "Lo cierro todo. Sin dolor. Las cajas sanan. Solo denme al que no tiene forma."],
+          ["LUZTERNA", "No."],
+          ["LA MANO", "Ese gato ve demasiado."],
+          ["ITŌ", "Mi cacería terminó."]
+        ]
+      },
+      {
+        "id": "b82_huella",
+        "time": "H82: Escena de cierre · La huella (≈ 40 s)",
+        "trigger": "H82",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La huella",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-2/h82-la-mano.md («Escena de cierre · La huella (≈ 40 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CANELO", "¿Qué quiso decir con que veo demasiado?"],
+          ["LUZTERNA", "Que eres chismoso."],
+          ["CAPTION", "CONTINUARÁ EN EL PRÓXIMO EPISODIO"]
+        ]
+      },
+      {
+        "id": "b83_llegada",
+        "time": "H83: Escena A · La llegada (≈ 1 min)",
+        "trigger": "H83",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La llegada",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h83-ex-libris.md («Escena A · La llegada (≈ 1 min)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "EX LIBRIS"],
+          ["CANELO", "¿Por qué hablo en letras?"],
+          ["LUZTERNA", "Porque estás en un libro, gordo. Y escribes feo."],
+          ["HARRY GATTER", "¿Ustedes también se salieron de su libro?"],
+          ["HARRY GATTER", "Desde que se rompieron las cajas, los cuentos se mezclan. Mi colegio está en un libro de piratas. Y mi final, en ninguno."],
+          ["LUZTERNA", "¿Viste pasar a una gata pálida con una uña de tinta?"],
+          ["HARRY GATTER", "Al índice. Dicen que ahí la tinta todavía obedece."]
+        ]
+      },
+      {
+        "id": "b83_pp",
+        "time": "H83: F18 · PP «La Encuadernadora» (35 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H83",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La Encuadernadora",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h83-ex-libris.md («F18 · PP «La Encuadernadora» (35 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "EX LIBRIS · EL TALLER DE ENCUADERNACIÓN"],
+          ["CAPTION", "LA MANO SE ESCONDE DONDE LA TINTA OBEDECE"],
+          ["CAPTION", "SI ESCRIBE, PUEDE ATRAPARLO"],
+          ["CAPTION", "LA ENCUADERNADORA"],
+          ["CAPTION", "CAPÍTULOS: CADA 3 TURNOS, OTRA REGLA"],
+          ["CAPTION", "LO QUE ARRIESGAMOS: Que nos cosa a un cuento ajeno. (Yo no quiero salir en uno de princesas.) Y el gordo: cada libro que cruzamos le baja la llama, y se cansa cada vez más rápido."]
+        ]
+      },
+      {
+        "id": "b83_costuras",
+        "time": "H83: Escena C · Las costuras (≈ 50 s)",
+        "trigger": "H83",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Las costuras",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h83-ex-libris.md («Escena C · Las costuras (≈ 50 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["DON GATOTE", "«¡Gigante!» · (es un ventilador)"],
+          ["HARRY GATTER", "¡Dos capítulos! Ya casi tengo recreo."],
+          ["LUZTERNA", "Aquí la tinta todavía obedece. Mala señal."],
+          ["CAPTION", "EL LOBO: (no está)"],
+          ["LUZTERNA", "Se salió. Como todos."]
+        ]
+      },
+      {
+        "id": "b84_tarjeta",
+        "time": "H84: Tarjeta de actividad · «Finales perdidos» (10 s)",
+        "trigger": "H84",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Finales perdidos",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h84-finales-perdidos.md («Tarjeta de actividad · «Finales perdidos» (10 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "FINALES PERDIDOS"],
+          ["LUZTERNA", "Se les cayó el final. Vamos a ponérselo."]
+        ]
+      },
+      {
+        "id": "b84_derrame",
+        "time": "H84: F19 · PH «Lo que se derrama, se termina» (75 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H84",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Lo que se derrama, se termina",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h84-finales-perdidos.md («F19 · PH «Lo que se derrama, se termina» (75 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "¡GRRR!"],
+          ["BRECHA", "¡Garba!"],
+          ["LA MANO", "Lo que se derrama, se termina."],
+          ["CANELO", "¡LUZ!"],
+          ["CAPTION", "El Canelo de esta caja no volvió. Lo buscaron…"],
+          ["LA MANO", "Ese también es un borrador."],
+          ["LUZTERNA", "Es otro Canelo, gordo. De otra caja."]
+        ]
+      },
+      {
+        "id": "b84_testamento",
+        "time": "H84: Escena C · El testamento (≈ 45 s)",
+        "trigger": "H84",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "El testamento",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h84-finales-perdidos.md («Escena C · El testamento (≈ 45 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "Si no vuelvo de una caja: la palmera es de Cerito. Que no lo dejen solo. Mi bufanda, que la usen de trapo en el bar. Y díganle a la Luz que gracias por buscarme siempre."]
+        ]
+      },
+      {
+        "id": "b84_brecha",
+        "time": "H84: Escena D · Brecha (≈ 35 s)",
+        "trigger": "H84",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Brecha",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h84-finales-perdidos.md («Escena D · Brecha (≈ 35 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["BRECHA", "Rompimos una caja para que respirara. Y al lado se le salió el lobo a otro cuento."],
+          ["LUZTERNA", "Una caja rota no libera a nadie. Lo derrama."],
+          ["BRECHA", "…Ya me di cuenta."],
+          ["BRECHA", "Esquirla no va a querer oír esto."]
+        ]
+      },
+      {
+        "id": "b85_pp",
+        "time": "H85: F20 · PP «El índice» (30 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H85",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "El índice",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h85-la-ficha-original.md («F20 · PP «El índice» (30 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "EL ÍNDICE"],
+          ["CAPTION", "AQUÍ ESTÁ LA PRIMERA FICHA DE CERITO"],
+          ["CAPTION", "PUEDE DECIR QUIÉN LO ESCRIBIÓ"],
+          ["CAPTION", "LA BIBLIOTECA SE DERRUMBA · AGUANTEN 4 TURNOS"],
+          ["CAPTION", "LO QUE ARRIESGAMOS: La ficha. Y salir antes de que se caiga todo. Si Cerito rompe esta caja, el gordo no aguanta."]
+        ]
+      },
+      {
+        "id": "b85_ficha",
+        "time": "H85: Escena A · La ficha (≈ 1 min)",
+        "trigger": "H85",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La ficha",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h85-la-ficha-original.md («Escena A · La ficha (≈ 1 min)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "REGISTRO 000"],
+          ["LUZTERNA", "Capi… esta es tu letra."],
+          ["LA MANO", "Un personaje que escribe. El peor delito del Archivo."],
+          ["LA MANO", "Dámela, farera."],
+          ["LUZTERNA", "¡Corran!"]
+        ]
+      },
+      {
+        "id": "b85_oscuridad",
+        "time": "H85: Escena B · La oscuridad (≈ 75 s)",
+        "trigger": "H85",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La oscuridad",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h85-la-ficha-original.md («Escena B · La oscuridad (≈ 75 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["LUZTERNA", "¿Gordo?"]
+        ]
+      },
+      {
+        "id": "b85_grua",
+        "time": "H85: Escena C · La grúa de luz (≈ 45 s)",
+        "trigger": "H85",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La grúa de luz",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h85-la-ficha-original.md («Escena C · La grúa de luz (≈ 45 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CANELO", "Luz… ¿ya llegamos?"],
+          ["LUZTERNA", "Ya, gordo. Duérmete."],
+          ["CAPTION", "Folio 000. Ver margen."]
+        ]
+      },
+      {
+        "id": "b86_recado",
+        "time": "H86: Escena A · El recado (≈ 30 s)",
+        "trigger": "H86",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "El recado",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h86-lo-que-la-luz-trajo.md («Escena A · El recado (≈ 30 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "Farera. Sola. En el índice."],
+          ["LUZTERNA", "Voy sola. Tú duermes. Es una orden de capitana."],
+          ["CANELO", "No eres capitana."],
+          ["LUZTERNA", "Pues hoy sí."]
+        ]
+      },
+      {
+        "id": "b86_plan",
+        "time": "H86: F21 · PH «El plan» (90 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H86",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "El plan",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h86-lo-que-la-luz-trajo.md («F21 · PH «El plan» (90 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["LA MANO", "Tu luz salía de la caja. Arriba la vimos."],
+          ["LA MANO", "Bajamos por ella."],
+          ["LUZTERNA", "…Yo los traje."],
+          ["LA MANO", "A una posibilidad la sostienen dos cosas: una luz que la guíe y unos ojos que la vean. Sin luz ni ojos, vuelve a vacante."],
+          ["CAPTION", "Sin luz ni ojos, vuelve a vacante."],
+          ["LA MANO", "Apaga la luz. Y ciérrale los ojos al gato."],
+          ["LUZTERNA", "¿Y si no?"],
+          ["LUZTERNA", "No, wey."]
+        ]
+      },
+      {
+        "id": "b86_regreso",
+        "time": "H86: Escena C · El regreso (≈ 40 s)",
+        "trigger": "H86",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "El regreso",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h86-lo-que-la-luz-trajo.md («Escena C · El regreso (≈ 40 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["LUZTERNA", "Tus ojos. Le dije que no."],
+          ["LUZTERNA", "Ya, gordo. Duérmete. Yo vigilo."]
+        ]
+      },
+      {
+        "id": "b87_pp",
+        "time": "H87: F22 · PP «La corrección» (40 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H87",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La corrección",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h87-no-wey.md («F22 · PP «La corrección» (40 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "EL MUELLE DE LIBROS · PLANO 1:100"],
+          ["CAPTION", "FLOTA DE CORRECCIÓN · 12 UNIDADES"],
+          ["CAPTION", "EXPEDIENTE · SUJETOS: una farera muerta que habla y su tripulación · ERRORES: 6 · ACCIÓN: CORREGIR"],
+          ["CAPTION", "REGLA: CORRECCIÓN · CADA 2 TURNOS, UN MÓDULO EN BLANCO"],
+          ["CAPTION", "LO QUE ARRIESGAMOS: Que me corrijan la decisión. (Y los muelles.) Y el gordo: si Cerito rompe otra caja, no aguanta."]
+        ]
+      },
+      {
+        "id": "b87_nowey",
+        "time": "H87: F23 · PC No wey «El expediente» (3:47 completa + cola de ≈ 8 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H87",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "El expediente",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h87-no-wey.md («F23 · PC No wey «El expediente» (3:47 completa + cola de ≈ 8 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "EXPEDIENTE: LA FARERA Y SU TRIPULACIÓN. ERRORES: 6."],
+          ["CAPTION", "CARGO 1: SACAR A UN GATO DE DONDE QUERÍA ESTAR."],
+          ["CAPTION", "Culpable."],
+          ["CAPTION", "UNA LUZ MENOS. UN ERROR MENOS."],
+          ["CAPTION", "CARGO 2: ILUMINAR A QUIEN QUERÍA ESCONDERSE."],
+          ["CAPTION", "Culpable."],
+          ["CAPTION", "CARGO 3: PONERLE NOMBRE A LO QUE NO TIENE FORMA."],
+          ["CAPTION", "Culpable. Se llama Cerito."],
+          ["CAPTION", "CARGO 4: APAGAR LA LUZ PARA ESCONDER UN ERROR."],
+          ["CAPTION", "Culpable. Y lo vuelvo a hacer."],
+          ["LA MANO", "La luz no se deja apagar. Entonces, los ojos."],
+          ["CAPTION", "CARGO 5: NEGARSE A UNA AUTORA."],
+          ["CAPTION", "Culpable."],
+          ["CANELO", "Culpable."],
+          ["CANELO", "Dale, Luz."],
+          ["CAPTION", "SENTENCIA: LOS OJOS"],
+          ["CAPTION", "NO, WEY."]
+        ]
+      },
+      {
+        "id": "b87_azotea",
+        "time": "H87: Escena C · La azotea (≈ 70 s)",
+        "trigger": "H87",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La azotea",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h87-no-wey.md («Escena C · La azotea (≈ 70 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "PLAN: 1. Esconder al gordo y a Cerito en el faro. 2. Cerrar la gatera. 3. Comprar donas."],
+          ["CANELO", "¿Por qué donas?"],
+          ["LUZTERNA", "Porque si vienen, que nos encuentren comiendo."],
+          ["BRECHA", "Esquirla se fue con la mitad de los nuestros. Va por Cerito."],
+          ["BRECHA", "Con tu mapa de las gateras la puedo encontrar antes que ella encuentre a nadie. O me lo niegas, y lo entiendo."],
+          ["CAPTION", "Dale el mapa"],
+          ["CAPTION", "No se lo des"],
+          ["LUZTERNA", "Si lo rayas, te rayo."],
+          ["BRECHA", "Trato."],
+          ["LUZTERNA", "Todavía no. Lo siento."],
+          ["BRECHA", "Yo tampoco me lo daría."]
+        ]
+      },
+      {
+        "id": "b88_pp",
+        "time": "H88: F24 · PP «Señal pirata» (35 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H88",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Señal pirata",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h88-la-ruptura.md («F24 · PP «Señal pirata» (35 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "EX LIBRIS · LA SECCIÓN PROHIBIDA"],
+          ["CAPTION", "ESTA SEÑAL ES DE LOS DISRUPTORES. NINGUNA CAJA ES HOGAR. LA LLAVE ES NUESTRA."],
+          ["CAPTION", "CON LA LLAVE, TODAS LAS CAJAS SE ABREN A LA VEZ"],
+          ["CAPTION", "ESQUIRLAS"],
+          ["CAPTION", "LO QUE ARRIESGAMOS: Cerito. Si lo usa de llave, se rompen todas las cajas a la vez. Y el gordo con ellas: no aguanta otra caja rota."]
+        ]
+      },
+      {
+        "id": "b88_distor",
+        "time": "H88: F25 · PC DISTOR «Datamosh» (c25 → fin · 2:02) (si la película no está registrada, estas líneas)",
+        "trigger": "H88",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Datamosh",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h88-la-ruptura.md («F25 · PC DISTOR «Datamosh» (c25 → fin · 2:02)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["HARRY GATTER", "¡Mi capítulo!"],
+          ["GARBANCITO", "¡Esquirla, para! ¡A mí ya se me perdió el final!"],
+          ["ESQUIRLA", "Mejor. Así nadie te lo escribe."],
+          ["BRECHA", "Una caja rota no libera a nadie, Esqui. Lo derrama."],
+          ["ESQUIRLA", "Entonces que se derrame todo."]
+        ]
+      },
+      {
+        "id": "b88_queda",
+        "time": "H88: Escena C · Lo que queda (≈ 45 s)",
+        "trigger": "H88",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "Lo que queda",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-3/h88-la-ruptura.md («Escena C · Lo que queda (≈ 45 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["BRECHA", "Se fue a POP. Va por la llave otra vez."],
+          ["GRAFITERA", "Yo me quedo contigo."],
+          ["LUZTERNA", "Una más, gordo. Con música."]
+        ]
+      },
+      {
+        "id": "b89_llegada",
+        "time": "H89: Escena de llegada · La caja que suena (≈ 1 min)",
+        "trigger": "H89",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "La caja que suena",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-4/h89-backstage.md («Escena de llegada · La caja que suena (≈ 1 min)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["FIRMA", "Esta noche, el show más grande del Archivo. Con un invitado especial. Un invitado… que no tiene forma."],
+          ["LUZTERNA", "«Que no tiene forma.» Habla de Cerito."],
+          ["GATO MALO", "Hoy me visto de conejo. Mañana, de lo que me dé la gana."],
+          ["TAILOR SWIFT", "Esto va a ser canción. Y tú vas a salir en ella."],
+          ["CANELO", "¿Hay bufé? Dime que hay bufé."]
+        ]
+      },
+      {
+        "id": "b89_pp",
+        "time": "H89: F26 · PP «El mánager» (30 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H89",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "El mánager",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-4/h89-backstage.md («F26 · PP «El mánager» (30 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "FIRMA · GATO MALO · TAILOR SWIFT · EMIAU (telonero)"],
+          ["CAPTION", "y un invitado sin forma"],
+          ["CAPTION", "EL MÁNAGER · SIN PASE NO HAY PASO"],
+          ["CAPTION", "REGLA: RITMO. Dispara en el beat."],
+          ["CAPTION", "LO QUE ARRIESGAMOS: Que nos saquen de la gira antes del show. El gordo dice que \"sería una tragedia\". Lo dice por el bufé."]
+        ]
+      },
+      {
+        "id": "b89_telonero",
+        "time": "H89: Escena · El telonero (≈ 50 s)",
+        "trigger": "H89",
+        "style": "EX LIBRIS / LA GIRA",
+        "title": "El telonero",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-4/h89-backstage.md («Escena · El telonero (≈ 50 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["EMIAU", "Gordo."],
+          ["CANELO", "Slim."],
+          ["EMIAU", "Después de la batalla se abrió un hoyo en el karaoke. Olía a música. Lo seguí."],
+          ["EMIAU", "Firma ensaya con una caja de vidrio vacía. Le habla como si hubiera alguien adentro."],
+          ["LUZTERNA", "Cerito sigue a la luz más fuerte. Y aquí todo es luz."],
+          ["EMIAU", "Les debo una barra. Voy con ustedes."]
+        ]
+      },
+      {
+        "id": "b90_fechas",
+        "time": "H90: Tarjetas de actividad · Las 3 fechas (5–10 s cada una)",
+        "trigger": "H90",
+        "style": "TU ISLA",
+        "title": "Las 3 fechas",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-4/h90-la-gira.md («Tarjetas de actividad · Las 3 fechas (5–10 s cada una)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "FECHA 1 · ESTADIO NEÓN"],
+          ["CAPTION", "FECHA 2 · ESTADIO PASTEL"],
+          ["CAPTION", "FECHA 3 · ESTADIO ESPEJO"]
+        ]
+      },
+      {
+        "id": "b90_karaoke",
+        "time": "H90: F27 · PH «Karaoke» (70 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H90",
+        "style": "TU ISLA",
+        "title": "Karaoke",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-4/h90-la-gira.md («F27 · PH «Karaoke» (70 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "Gato gordo, gato naranja, / se comió mi pan y mi esperanza."],
+          ["CANELO", "¡Fuera! ¡Fuera! …No, quédate, pero cállate. · Letras: «Duerme en la palmera, ronca en el mar, / y si le pides algo, se pone a… roncar.»"],
+          ["CAPTION", "¡Gato gordo, gato naranja!"],
+          ["CAPTION", "Fantasma flaca, fantasma azul…"],
+          ["CAPTION", "…¡que canta mejor que tú!"],
+          ["LUZTERNA", "Algún día quiero oír a este gordo hablar en casa. Aunque sea para pedir pescado."]
+        ]
+      },
+      {
+        "id": "b91_pp",
+        "time": "H91: F28 · PP «Firma» (35 s) (si la película no está registrada, estas líneas)",
+        "trigger": "H91",
+        "style": "TU ISLA",
+        "title": "Firma",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-4/h91-firma.md («F28 · PP «Firma» (35 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "FIRMA: \"EL SHOW MÁS GRANDE DEL ARCHIVO\""],
+          ["CAPTION", "ESTA NOCHE · ESCENARIO PRINCIPAL"],
+          ["CAPTION", "EL INVITADO SIN FORMA"],
+          ["CAPTION", "REGLA: POSE DE PORTADA. Cada golpe, una pose. Cada pose, un escudo."],
+          ["CAPTION", "3 · 2 · 1…"],
+          ["CAPTION", "LO QUE ARRIESGAMOS: Cerito. Y el gordo: cada caja que se rompe le baja la llama."]
+        ]
+      },
+      {
+        "id": "b91_show",
+        "time": "H91: F29 · PC NO G@ME NO LIF€ «El show» (3:26, completa) (si la película no está registrada, estas líneas)",
+        "trigger": "H91",
+        "style": "TU ISLA",
+        "title": "El show",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-4/h91-firma.md («F29 · PC NO G@ME NO LIF€ «El show» (3:26, completa)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "FIRMA · EL SHOW MÁS GRANDE DEL ARCHIVO"],
+          ["CAPTION", "PRESS START"],
+          ["CAPTION", "JUGADOR 1: FIRMA · PREMIO: CERITO"],
+          ["CAPTION", "PREMIO: CERITO"],
+          ["CAPTION", "JUGADOR 2: ?"],
+          ["FIRMA", "¡Y ahora, nuestro invitado sin forma!"],
+          ["CAPTION", "ESTA LLAVE ES NUESTRA"],
+          ["FIRMA", "Este show no era para él."]
+        ]
+      },
+      {
+        "id": "b91_despues",
+        "time": "H91: Después (≈ 40 s)",
+        "trigger": "H91",
+        "style": "TU ISLA",
+        "title": "Después",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-4/h91-firma.md («Después (≈ 40 s)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["FIRMA", "Ese invitado no era mío. Nunca lo fue."],
+          ["LUZTERNA", "Ya sé."],
+          ["FIRMA", "…Gracias, farera."],
+          ["LUZTERNA", "Nos vio, Capi. La Mano ya sabe dónde duerme."]
+        ]
+      },
+      {
+        "id": "b92_xti",
+        "time": "H92: F30 · PC xti es amor «La noche estrellada» (3:18, completa) (si la película no está registrada, estas líneas)",
+        "trigger": "H92",
+        "style": "TU ISLA",
+        "title": "La noche estrellada",
+        "$scene": "Guion: docs/part-iii/historia-v2/guiones/acto-4/h92-la-noche-estrellada.md («F30 · PC xti es amor «La noche estrellada» (3:18, completa)»). Líneas literales extraídas del guion (MECÁNICAS-IMPL).",
+        "lines": [
+          ["CAPTION", "La noche estrellada"],
+          ["CRONOS", "Vi el final. Una bufanda en el suelo y alguien que no se levanta."]
+        ]
+      }
+    ]
+  }
+}

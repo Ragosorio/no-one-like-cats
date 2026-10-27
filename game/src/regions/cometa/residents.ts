@@ -18,6 +18,7 @@ import { CAT_BY_ID } from '../../data/content';
 import especiesO3 from '../../data/rupturas/especies-o3.json';
 import { addSkyCat, type SkyCat } from '../cielo/cats';
 import { CRATER, DOCKS, PERCH, PLAZA, RAIL, REFINERY, TELESCOPE, height } from './layout';
+import { withRegistroEstado } from '../../state/sys/gaterasWorld';
 
 const at = (x: number, z: number) => new THREE.Vector3(x, height(x, z), z);
 
@@ -107,7 +108,7 @@ export async function residents(ctx: RegionCtx, counter: THREE.Vector3): Promise
     registro.root.visible = false;
     registro.facing = 1;
   }
-  ctx.describe.set('registro000', { title: 'REGISTRO 000 · FOLIO 000', text: 'Especie: desconocida · Elemento: ninguno · Rareza: no aplica · Estado: observando.\n\nSentado en una piedra suelta que se va quedando atrás del cometa. Mira hacia abajo, muy abajo. Cuando te acercas, ya no está.' });
+  ctx.describe.set('registro000', { title: 'REGISTRO 000 · FOLIO 000', text: withRegistroEstado('Especie: desconocida · Elemento: ninguno · Rareza: no aplica · Estado: observando.\n\nSentado en una piedra suelta que se va quedando atrás del cometa. Mira hacia abajo, muy abajo. Cuando te acercas, ya no está.') });
 
   let flick = 0;
   let weldT = 0;
