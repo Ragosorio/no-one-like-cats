@@ -340,3 +340,37 @@ Nada commiteado ni publicado. Las decisiones del dueño están listadas en el re
 - Menores abiertos: en la vista general a 1600×900 la columna de misiones tapa casi toda Superhéroes; en Anime los nodos ganados se ven poco sobre el fondo oscuro; la fixture `rupturas-raro` trae H77/b77 inventadas que chocan con misiones reales.
 
 **Publicación:** commit en `main` y activación de `nolc-arte-2` en el orden de `12-hosting` §4.
+
+## 11. Revelaciones Multidimensionales (2026-10-27, después de publicar)
+
+**Pedido del dueño, jugando en vivo:** que la revelación de cada gato Multidimensional sea mucho más épica y única («si es de Homero, con donas; si es de Spiderman, también»).
+
+**Qué se hizo:**
+- `game/src/fx/sequences/multiverse/`: un universo por gato, un archivo cada uno. El kit común está en `kit.ts` y el índice por especie en `index.ts`. Todo está dibujado; no hay ráster.
+- `catReveal.ts`: si la rareza es Multidimensional y la especie tiene universo, la secuencia sigue así:
+  1. Se rompe el sello.
+  2. El universo toma la pantalla 2,2 s (`SIG_LEN`) alrededor de la silueta.
+  3. Llega la reimpresión, con la placa del universo encima de MULTIDIMENSIONAL; esa palabra después se atenúa.
+  4. El color de la revelación es el remate del universo.
+- Los gatos repetidos traen el universo al instante, sin tiempo extra. «Reducir movimiento» lo deja quieto y «Reducir destellos» quita los parpadeos.
+
+| Gato | Universo (placa) | Toma de pantalla | Remate |
+|---|---|---|---|
+| Homiau Gatson | UNIVERSO AMARILLO | Cielo con nubes, una dona gigante que entra rodando y queda de disco, lluvia de donas | Estallido de donas y chispas, «¡WUJÚ!» |
+| Gato Araña | VERSO ARÁCNIDO | Ciudad roja y azul en cómic, telaraña tejida, él entra columpiándose, sentido arácnido | Telarañas pegadas a la cámara, «¡THWIP! ¡THWIP!» |
+| Murciégato | UNIVERSO NOCTURNO | Un murciélago barre la pantalla, la silueta contra la luna llena, la señal en las nubes, enjambre | «¡KA-POW!», «¡ZAS!», «¡BIFF!» de los 60 y la cámara se inclina |
+| Super Siamés | UNIVERSO SÚPER | Atardecer de anime, aura dorada, rocas que flotan, grieta, «¡AAAAH!» que se alarga | Onda de choque dorada, «¡PASÓ DE NUEVE!… vidas, digo.» |
+| Harry Gatter | UNIVERSO MÁGICO | Castillo de noche, velas flotantes, remolino de cartas con lacre, rayo dorado | Estela de varita, «¡EXPELLIARMIAU!», bolita dorada con alas |
+| Gato Malo | UNIVERSO REGGAETÓN | Atardecer tropical, aro de neón, dembow sintetizado, ecualizador, letrero de neón | Corazones, «¡ESTO NO ES BAILE, ES LUCHA!» |
+| Tailor Swift | LA GIRA DE LAS ERAS | Estadio con celulares encendidos, un barrido de color por era, pulseras «MIAU» y «13», lentejuelas | Fuegos artificiales, «¡ESTO VA A SER CANCIÓN!» |
+| Billie Bigotish | UNIVERSO SUSURRO | Apagón, foco verde, susurros, escurrimientos verdes, dos latidos | Golpe de bajo y «duh.» en neón |
+| Vincent van Gato | UNIVERSO PINCEL | El cielo se pinta solo en remolinos, estrellas con halo, ciprés, remolino detrás | Girasoles que florecen y su firma |
+
+**Verificado:**
+- `tsc` limpio; `vitest` 1010 pasan, con `tests/p3MultiverseReveal.test.ts` (cada Multidimensional tiene su universo).
+- Los 9 se probaron sin pantalla en FxLab de tres formas: normal, «Reducir movimiento y destellos» y repetido. Todos cierran sin errores de consola.
+- 60 fps parejos, con un hueco máximo de 17 ms entre cuadros. Las placas se leen, y las palabras del remate quedan abajo a la izquierda, sin chocar con la caja de la historia ni con el nombre.
+- Video de vista previa (74 s, sin audio) en `~/Desktop/No one - raster (fuera del repo)/revelaciones-multidimensionales/`.
+- NOVEDADES: `2026-10-27-multiversos`.
+
+**Estado:** sin commit; la publicación espera el OK del dueño.

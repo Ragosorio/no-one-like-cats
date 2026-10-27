@@ -19,6 +19,8 @@ import { dnaIcon, killTree } from '../../panels/collection/ui';
 import { elementIcon } from '../../ui/elementIcon';
 import { rainbowTile } from '../../panels/collection/printTextures';
 import { screenRect } from '../../ui/screen';
+import { signatureOf } from './multiverse';
+import { SIG_LEN, plate, slam, type SigCtx } from './multiverse/kit';
 
 export interface RevealOpts {
   slug: string;
@@ -89,6 +91,9 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     const t4 = o.rarity === 'mythic' || o.rarity === 'primordial' || o.rarity === 'heroic' || o.rarity === 'divine' || !!o.secret;
     const dup = o.duplicateOrbs !== undefined;
     const reduce = settings.reduceMotion;
+    /** a MULTIDIMENSIONAL cat with art brings its universe (multiverse/): it holds the screen SIG_LEN s after the break */
+    const sig = o.rarity === 'multidimensional' ? signatureOf(o.species) : null;
+    const sigT = sig && !dup ? SIG_LEN : 0;
     const mutId = o.mutationId ?? null;
     const mutLook = mutationLook(mutId);
     const mutName = o.mutation ?? mutationShort(mutId);
@@ -97,7 +102,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     /** the mutation beat adds time after the chips */
     const mutExtra = hasMut ? (dup ? 0.9 : 1.1) : 0;
     /** legendary / mythic / primordial reprint the stage dark */
-    const darkStage = o.rarity === 'legendary' || o.rarity === 'mythic' || o.rarity === 'primordial' || o.rarity === 'heroic';
+    const darkStage = o.rarity === 'legendary' || o.rarity === 'mythic' || o.rarity === 'primordial' || o.rarity === 'heroic' || !!sig?.dark;
     /** heroic / divine: the reveal waits an extra beat (the laurels close / the sky goes white) */
     const bigBeat = (o.rarity === 'heroic' || o.rarity === 'divine') && !dup ? 0.35 : 0;
 
@@ -179,6 +184,17 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     root.addChild(nameLayer);
     const uiLayer = new Container();
     root.addChild(uiLayer);
+    // the cat's universe: over the paper and the side blocks / between the disc and the cat / over the cat
+    let sctx: SigCtx | null = null;
+    if (sig) {
+      const back = new Container();
+      const behind = new Container();
+      const fg = new Container();
+      root.addChildAt(back, root.children.indexOf(bigRarity));
+      root.addChildAt(behind, root.children.indexOf(glow));
+      root.addChildAt(fg, root.children.indexOf(stampLayer));
+      sctx = { root, back, behind, fg, circle, cat: catNode, CY, catY: CY - 10, shaker, reduce, flashes: !settings.reduceFlashes, short: dup };
+    }
 
     let skipped = false;
     let canSkip = false;
@@ -300,12 +316,26 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       [],
       tBreak,
     );
+    if (sig && sctx) {
+      const ctx = sctx;
+      tl.call(
+        () => {
+          if (sig.dark) {
+            serial.style.fill = C.paper;
+            coords.style.fill = C.yellow;
+          }
+          sig.open(ctx);
+        },
+        [],
+        tBreak + 0.05,
+      );
+    }
     // silhouette squash & stretch (sy 0.6 → 1.15 → 1.0)
     tl.fromTo(catNode.scale, { x: baseScale * 1.25, y: baseScale * 0.6 }, { x: baseScale * 0.95, y: baseScale * 1.15, duration: 0.12, ease: 'power2.out' }, tBreak + 0.02);
     tl.to(catNode.scale, { x: baseScale, y: baseScale, duration: 0.4, ease: 'elastic.out(1.1,0.45)' }, tBreak + 0.14);
 
     // element stamps (2000–2600) + color bars sweeping
-    const tEl = dup ? 0.6 : 2.0;
+    const tEl = (dup ? 0.6 : 2.0) + sigT;
     o.elements.forEach((el, i) => {
       tl.call(
         () => {
@@ -348,11 +378,11 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     });
 
     // rarity reprint (2600–3300)
-    const tR = (dup ? 0.8 : 2.6) + (o.rarity === 'mythic' && !dup ? 0.25 : 0) + bigBeat;
+    const tR = (dup ? 0.8 : 2.6) + (o.rarity === 'mythic' && !dup ? 0.25 : 0) + bigBeat + sigT;
     // (mythic: the extra 250 ms before tR are left in total silence)
     const FW = 600;
     const FH = 660;
-    const frameColor = o.rarity === 'common' ? C.ink : o.rarity === 'rare' ? C.megaBlue : o.rarity === 'epic' ? C.pinkHot : o.rarity === 'legendary' ? 0xd9b25e : o.rarity === 'primordial' ? fxCol.main : o.rarity === 'heroic' ? 0xffc94a : o.rarity === 'divine' ? 0xe8c46a : C.cyan;
+    const frameColor = sig ? sig.frame : o.rarity === 'common' ? C.ink : o.rarity === 'rare' ? C.megaBlue : o.rarity === 'epic' ? C.pinkHot : o.rarity === 'legendary' ? 0xd9b25e : o.rarity === 'primordial' ? fxCol.main : o.rarity === 'heroic' ? 0xffc94a : o.rarity === 'divine' ? 0xe8c46a : C.cyan;
     const drawFrame = (k: number) => {
       if (frameG.destroyed) return;
       const per = 2 * (FW + FH);
@@ -465,6 +495,21 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
             divineBeat();
             break;
           }
+          case 'multidimensional': {
+            // its universe is already on screen: the reprint stamps where it's from
+            if (sig) {
+              const lum = ((sig.frame >> 16) & 255) * 0.299 + ((sig.frame >> 8) & 255) * 0.587 + (sig.frame & 255) * 0.114;
+              const tag = plate(sig.tag, sig.frame, C.ink, 46, lum > 165 ? C.ink : C.paper);
+              slam(nameLayer, tag, W / 2, CY - 372, -0.04);
+              foilSweep(root, sig.frame);
+              // the big word lands, then steps back so the universe shows
+              gsap.to(bigRarity, { alpha: 0.3, duration: 0.8, delay: 1.1 });
+            } else {
+              glitchBurst(root, 0.5);
+              foilSweep(root, 0x9ff7ff);
+            }
+            break;
+          }
           case 'primordial': {
             bg.tint = 0x0b0b0d;
             const n = new TilingSprite({ texture: noiseTile(), width: W, height: H });
@@ -499,7 +544,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     );
 
     // fill color (3300–4200): halftone-ish dissolve + name letter by letter
-    const tN = (dup ? 1.0 : 3.3) + extra + bigBeat;
+    const tN = (dup ? 1.0 : 3.3) + extra + bigBeat + sigT;
     if (!dup) tl.to(sil, { mix: 0, duration: 0.35, ease: 'power2.out' }, tN);
     tl.call(
       () => {
@@ -563,8 +608,14 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       tN + 0.2,
     );
 
+    // the universe's payoff lands with the color
+    if (sig && sctx) {
+      const ctx = sctx;
+      tl.call(() => sig.payoff(ctx), [], tN + 0.05);
+    }
+
     // chips + mutation + card flies to its catdex slot (4200–4600)
-    const tC = (dup ? 1.15 : 4.2) + extra + bigBeat;
+    const tC = (dup ? 1.15 : 4.2) + extra + bigBeat + sigT;
     if (!dup)
       tl.call(
         () => {
@@ -590,7 +641,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     if (hasMut) tl.call(() => mutationBeat(), [], tC + (dup ? 0.15 : 0.45));
     if (o.holo) tl.call(() => holoBeat(), [], tN + 0.35);
 
-    const tDone = (dup ? 1.4 : 4.6) + extra + mutExtra + bigBeat;
+    const tDone = (dup ? 1.4 : 4.6) + extra + mutExtra + bigBeat + sigT;
     const hint = txt('CLIC PARA CONTINUAR', { fontFamily: F.poster, fontSize: 28, fill: darkStage ? C.paper : C.ink });
     hint.anchor.set(0.5);
     hint.position.set(W / 2, H - 38);

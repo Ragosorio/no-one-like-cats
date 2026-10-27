@@ -20,6 +20,17 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-27-multiversos',
+    date: '2026-10-27',
+    title: 'Revelaciones Multidimensionales',
+    luzterna: 'Los gatos que vienen de otras cajas no llegan solos, gordo: traen su mundo pegado a los bigotes. Míralos bien cuando se presenten.',
+    items: [
+      { tag: 'NUEVO', text: 'Cada gato Multidimensional se revela a su manera: llega con su propio mundo, sus efectos y su grito. Ninguno se parece a otro.' },
+      { tag: 'NUEVO', text: 'Los que ya tienes los puedes volver a ver en el Catdex, con VER REVELACIÓN.' },
+      { tag: 'CAMBIO', text: 'Con «Reducir movimiento» o «Reducir destellos» en Ajustes, el mundo de cada gato aparece completo y tranquilo, sin parpadeos.' },
+    ],
+  },
+  {
     id: '2026-10-27-fuera-de-la-caja',
     date: '2026-10-27',
     title: 'PARTE III · Fuera de la Caja',
