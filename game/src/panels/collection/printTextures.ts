@@ -7,7 +7,7 @@
  *   mythic     holográfico + glitch
  *   heroic     carmesí + laureles dorados (premios del Podio)
  *   divine     nácar iridiscente + halo (los "rotos")
- *   multidimensional  caja abierta de cartón + marco iridiscente con las paletas de las cinco cajas (Parte III)
+ *   multidimensional  marco metálico del color de SU universo + la franja de las cinco cajas + placa oscura (Parte III)
  *   primordial negro con ruido de otra dimensión + color del elemento
  *   neutral    ficha sin rareza conocida (silueta)
  *   back       carta sellada
@@ -100,15 +100,15 @@ function ring(g: Ctx, w: number, h: number, b: number, fill: string | CanvasGrad
   g.restore();
 }
 
-function strokeRect(g: Ctx, x: number, y: number, w: number, h: number, width: number, color: string) {
+function strokeRect(g: Ctx, x: number, y: number, w: number, h: number, width: number, color: string | CanvasGradient) {
   g.lineWidth = width;
   g.strokeStyle = color;
   g.strokeRect(x + width / 2, y + width / 2, w - width, h - width);
 }
 
-/** card face texture (w×h logical; baked at 2×). `accent` = element color for primordial */
+/** card face texture (w×h logical; baked at 2×). `accent` = element color for primordial, the universe's frame for multidimensional */
 export function cardFace(style: PrintStyle, w: number, h: number, accent = 0xff2e88): Texture {
-  const key = `${style}|${w}|${h}|${style === 'primordial' ? accent : 0}`;
+  const key = `${style}|${w}|${h}|${style === 'primordial' || style === 'multidimensional' ? accent : 0}`;
   const hit = cache.get(key);
   if (hit) return hit;
   const W = Math.round(w * SS);
@@ -164,63 +164,82 @@ export function cardFace(style: PrintStyle, w: number, h: number, accent = 0xff2
       g.fillRect(pl.x, pl.y, pl.w, 3 * s);
       break;
     }
-    // Parte III · MULTIDIMENSIONAL (06 §1.3): an OPEN BOX — kraft cardboard, two flaps folded out at the top — and an
-    // iridescent frame made of the five boxes' palettes (beer, comic, shōnen, ink, neon) in misregistered halftone
+    // Parte III · MULTIDIMENSIONAL (06 §1.3; 2026-10-28 «que se note como tarjetas únicas»): a collector's card. A metallic
+    // frame in the universe's own color (`accent` = Signature.frame: gold, silver, chrome pink, toxic green…), the five
+    // boxes' palettes (beer, comic, shōnen, ink, neon) as a pinstripe around the window and the edge — the family mark —
+    // and a dark plate. The universe's art fills the window (CatCard), the foil moves over it.
     case 'multidimensional': {
       const DIMS5 = [0xe8a33d, 0x2a5db0, 0xff7a1a, 0x8a5a3a, 0xff2e88];
-      g.fillStyle = '#D6B784';
+      const mixc = (a: number, b2: number, k: number) => {
+        const ch = (sh: number) => Math.round(((a >> sh) & 255) + ((((b2 >> sh) & 255) - ((a >> sh) & 255)) * k));
+        return (ch(16) << 16) | (ch(8) << 8) | ch(0);
+      };
+      const lit = (k: number) => hex(mixc(accent, 0xffffff, k));
+      const shd = (k: number) => hex(mixc(accent, 0x0d0a12, k));
+      g.fillStyle = '#151019';
       g.fillRect(0, 0, W, H);
-      // corrugated cardboard: faint flutes
-      g.fillStyle = 'rgba(110,76,36,0.10)';
-      for (let x = 0; x < W; x += 4 * s) g.fillRect(x, 0, 1.2 * s, H);
-      g.fillStyle = '#FBF5EA';
+      // the window's own color (only a rumor shows it, under the dimmed universe)
+      g.fillStyle = shd(0.7);
       g.fillRect(win.x, win.y, win.w, win.h);
-      g.globalCompositeOperation = 'multiply';
-      // five diagonal bands, one per box, each in its own screen angle
-      DIMS5.forEach((c, i) =>
-        halftone(g, win.x, win.y, win.w, win.h, 8 * s, rgba(c, 0.5), 15 + i * 31, (u, v) => 0.44 * Math.max(0, 1 - Math.abs((u * 0.55 + v * 0.45) * 5 - i - 0.5) / 1.15)),
-      );
+      // the metal: diagonal bands of light and shade in the universe's color
+      const lg = g.createLinearGradient(0, 0, W, H);
+      const stops: [number, string][] = [
+        [0, shd(0.45)],
+        [0.14, lit(0.6)],
+        [0.3, hex(accent)],
+        [0.46, lit(0.85)],
+        [0.6, shd(0.25)],
+        [0.78, lit(0.45)],
+        [1, shd(0.5)],
+      ];
+      for (const [o, c] of stops) lg.addColorStop(o, c);
+      ring(g, W, H, b, lg);
+      // engraved guilloché lines on the metal
+      g.save();
+      g.beginPath();
+      g.rect(0, 0, W, H);
+      g.rect(b, b, W - 2 * b, H - 2 * b);
+      g.clip('evenodd');
+      g.strokeStyle = rgba(0x0d0a12, 0.16);
+      g.lineWidth = 0.8 * s;
+      for (let i = -H; i < W + H; i += 3.2 * s) {
+        g.beginPath();
+        g.moveTo(i, 0);
+        g.lineTo(i - H * 0.6, H);
+        g.stroke();
+      }
+      g.restore();
+      // the plate: dark, with a halftone of the universe's color fading up from the bottom
+      g.fillStyle = '#141018';
+      g.fillRect(pl.x, pl.y, pl.w, pl.h);
+      halftone(g, pl.x, pl.y, pl.w, pl.h, 5 * s, rgba(accent, 0.3), 30, (_u, v) => 0.05 + 0.35 * v);
+      // the family mark: the five boxes' palettes as a pinstripe around the window and inside the edge
       const ig = g.createLinearGradient(0, 0, W, H);
       [...DIMS5, DIMS5[0]].forEach((c, i, a) => ig.addColorStop(i / (a.length - 1), hex(c)));
-      ring(g, W, H, b, ig);
-      const ig2 = g.createLinearGradient(W, 0, 0, H);
-      [...DIMS5].reverse().forEach((c, i, a) => ig2.addColorStop(i / (a.length - 1), rgba(c, 0.55)));
-      ring(g, W, H, b, ig2, 2.5 * s, -2 * s);
-      g.globalCompositeOperation = 'source-over';
-      // the open box: two flaps folded outward over the top corners, with their fold line
-      const fw = W * 0.22;
-      const fh = H * 0.11;
-      for (const left of [true, false]) {
-        const x0 = left ? 0 : W;
-        const dir = left ? 1 : -1;
-        g.beginPath();
-        g.moveTo(x0, 0);
-        g.lineTo(x0 + dir * fw, 0);
-        g.lineTo(x0, fh);
-        g.closePath();
-        g.fillStyle = '#C49A60';
-        g.fill();
-        g.setLineDash([3 * s, 2.5 * s]);
-        g.lineWidth = 1.4 * s;
-        g.strokeStyle = '#7a5a2e';
-        g.beginPath();
-        g.moveTo(x0 + dir * fw, 0);
-        g.lineTo(x0, fh);
-        g.stroke();
-        g.setLineDash([]);
-      }
-      // a strip of tape that held the box shut, torn open
-      g.save();
-      g.translate(W / 2, b * 0.5);
-      g.rotate(-0.04);
-      g.fillStyle = 'rgba(255,250,235,0.55)';
-      g.fillRect(-W * 0.14, -b * 0.55, W * 0.28, b * 1.1);
-      g.restore();
-      grain(g, W, H, 12);
-      strokeRect(g, 0, 0, W, H, 2.5 * s, '#171317');
-      strokeRect(g, win.x, win.y, win.w, win.h, 2 * s, '#171317');
+      strokeRect(g, win.x - 3 * s, win.y - 3 * s, win.w + 6 * s, win.h + 6 * s, 2 * s, ig);
+      strokeRect(g, 2.4 * s, 2.4 * s, W - 4.8 * s, H - 4.8 * s, 1.4 * s, ig);
       g.fillStyle = ig;
-      g.fillRect(pl.x, pl.y, pl.w, 3 * s);
+      g.fillRect(pl.x, pl.y, pl.w, 2.5 * s);
+      // corner rivets: tiny diamonds in light metal
+      g.fillStyle = lit(0.9);
+      for (const [cx, cy] of [
+        [b * 0.5, b * 0.5],
+        [W - b * 0.5, b * 0.5],
+        [W - b * 0.5, H - b * 0.5],
+        [b * 0.5, H - b * 0.5],
+      ]) {
+        const rr = Math.max(2 * s, b * 0.3);
+        g.beginPath();
+        g.moveTo(cx, cy - rr);
+        g.lineTo(cx + rr, cy);
+        g.lineTo(cx, cy + rr);
+        g.lineTo(cx - rr, cy);
+        g.closePath();
+        g.fill();
+      }
+      grain(g, W, H, 8);
+      strokeRect(g, 0, 0, W, H, 2.5 * s, '#0d0a12');
+      strokeRect(g, win.x, win.y, win.w, win.h, 2 * s, '#0d0a12');
       break;
     }
     case 'epic': {

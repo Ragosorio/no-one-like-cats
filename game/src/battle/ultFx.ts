@@ -17,6 +17,7 @@ import type { BattleEvent, Battle } from './sim';
 import type { BattleCat } from '../art/catArt';
 import { CELL } from './ship';
 import { screenRect } from '../ui/screen';
+import { mdAt, mdPre } from './fx/multidimFx';
 
 const INK = 0x171317;
 type UltEv = Extract<BattleEvent, { k: 'ultfx' }>;
@@ -44,7 +45,7 @@ function reveal(ctx: UltCtx, kind: 'sun' | 'horizon') {
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /** set pieces that play BEFORE the projectiles fly (BattleScene.PRE_FX adds these) */
-export const ULT_PRE_FX = ['cutlass', 'yokozuna', 'valkyrie', 'grimoire', 'horizon', 'sundown', 'senjin', 'bigbang', 'aurora', 'cathedral', 'midnight', 'wallofsound', 'nobody', 'timestop'] as const;
+export const ULT_PRE_FX = ['cutlass', 'yokozuna', 'valkyrie', 'grimoire', 'horizon', 'sundown', 'senjin', 'bigbang', 'aurora', 'cathedral', 'midnight', 'wallofsound', 'nobody', 'timestop', 'md'] as const;
 /** a falling sun / the Big Bang's black screen waiting (from the pre set piece) for the impact event */
 let pendingSun: Container | null = null;
 let pendingVoid: Container | null = null;
@@ -158,6 +159,10 @@ function banner(ctx: UltCtx, text: string, color: number, sub?: string, bandColo
 export async function preUlt(ctx: UltCtx, e: UltEv) {
   const fast = settings.reduceMotion;
   switch (e.fx) {
+    // Parte III · a Multidimensional power: its stamp in its universe's color + the cat's own set piece (fx/multidimFx.ts)
+    case 'md':
+      await mdPre(ctx, e);
+      break;
     case 'sun': {
       banner(ctx, '¡EL SOL SE CAE!', 0xffd400, 'STELLAR DECREE: STARFALL');
       const glow = screenRect(0xffb02e);
@@ -705,6 +710,8 @@ export async function preUlt(ctx: UltCtx, e: UltEv) {
 
 /** when its event comes up (impact time) */
 export function atUlt(ctx: UltCtx, e: UltEv) {
+  // Parte III · the beats inside the Multidimensional powers (fx/multidimFx.ts)
+  if (e.fx.startsWith('md')) return mdAt(ctx, e);
   switch (e.fx) {
     case 'blackhole': {
       sfx('bigboom', 0.5);

@@ -239,7 +239,8 @@ export function variantSprite(species: string, size: number, o: { decals?: boole
   const root = new Container();
   const inner = new Container();
   const tex = catTexture(slug);
-  const k = (size / Math.max(1, tex.width || 700)) * (t?.scale ?? 1) * (mut?.scale ?? 1);
+  // a painting still on its way is a 1×1 stand-in: size it as the 700px painting it will be (else ×700 when it lands)
+  const k = (size / (tex.width > 1 ? tex.width : 700)) * (t?.scale ?? 1) * (mut?.scale ?? 1);
   inner.scale.set(k);
   // "corona" decal = solar corona glow behind the painting
   if (t?.decal === 'corona') {

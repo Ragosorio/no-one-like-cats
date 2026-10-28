@@ -6,6 +6,7 @@ import { C, F } from '../../../ui/theme';
 import { txt } from '../../../ui/widgets';
 import { sfx } from '../../../core/audio';
 import { type Signature, type SigCtx, arrive, cheer, cover, drizzle, every, fall, later, word } from './kit';
+import { bands, glow, liveLoop, seeded, sparkle } from '../../../panels/collection/cardArt';
 
 const PINK = 0xff7ac0;
 /** one color per era */
@@ -174,5 +175,52 @@ export const tailorswift: Signature = {
     );
     cheer(c, '¡ESTO VA A SER CANCIÓN!', PINK, 90, 2);
     drizzle(c, c.fg, () => sequin(Math.floor(Math.random() * 4)), 0.18, 3.2);
+  },
+  card(w, h, live) {
+    const k = new Container();
+    const m = Math.min(w, h);
+    const cx = w / 2;
+    const cy = h * 0.54;
+    const r = seeded(17);
+    k.addChild(bands(new Graphics(), 0, 0, w, h, [0x0e0720, 0x160c2e, 0x2a1450], 14));
+    // the rig's light beams
+    const beams = Array.from({ length: 6 }, (_, i) => {
+      const b = new Graphics().poly([-m * 0.012, 0, m * 0.012, 0, m * 0.15, h * 1.15, -m * 0.15, h * 1.15]).fill({ color: [PINK, 0xc9a6ff, 0xffe08a][i % 3], alpha: 0.18 });
+      b.position.set(w * (0.08 + i * 0.168), -2);
+      b.rotation = (i % 2 ? 1 : -1) * 0.3;
+      b.blendMode = 'add';
+      k.addChild(b);
+      return { b, r0: b.rotation, p: i * 0.7 };
+    });
+    // the spotlight pool where she stands
+    k.addChild(glow(new Graphics(), cx, cy, m * 0.5, 0xfff1f8, 0.55));
+    // sequins in the eras' colors
+    const seq = new Graphics();
+    k.addChild(seq);
+    const sq = Array.from({ length: 16 }, (_, i) => ({ x: r() * w, y: r() * h * 0.7, s: m * (0.012 + r() * 0.018), c: ERAS[i % ERAS.length], p: r() * 6 }));
+    // the stage's LED edge: one color per era
+    const stage = new Graphics();
+    const sy = h * 0.84;
+    stage.rect(0, sy, w, h - sy).fill(0x0a0618);
+    const segW = w / ERAS.length;
+    ERAS.forEach((c, i) => stage.rect(i * segW, sy, segW + 1, Math.max(2, m * 0.02)).fill(c === 0x2a2a2a ? 0x5a5a6a : c));
+    k.addChild(stage);
+    const crowd = new Graphics();
+    for (let i = 0; i < 42; i++) crowd.circle((i / 41) * w * 1.04 - w * 0.02, h - m * 0.01 - (i % 3) * m * 0.035, m * (0.04 + (i % 4) * 0.006)).fill(0x05030c);
+    k.addChild(crowd);
+    const phones = new Graphics();
+    k.addChild(phones);
+    const ph = Array.from({ length: 50 }, () => [r() * w, h - m * 0.02 - r() * h * 0.13] as const);
+    const draw = (t: number) => {
+      if (phones.destroyed) return;
+      phones.clear();
+      for (const [x, y] of ph) phones.circle(x, y, Math.max(0.8, m * 0.006)).fill({ color: 0xfff6d8, alpha: 0.35 + Math.random() * 0.65 });
+      seq.clear();
+      for (const s of sq) sparkle(seq, s.x, s.y, s.s * (0.7 + 0.5 * Math.abs(Math.sin(t * 2 + s.p))), s.c, 0.9);
+      for (const b of beams) b.b.rotation = b.r0 * Math.cos(t * 0.9 + b.p);
+    };
+    if (live) liveLoop(k, draw, 12);
+    else draw(0.4);
+    return k;
   },
 };

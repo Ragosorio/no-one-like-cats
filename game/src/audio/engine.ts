@@ -111,6 +111,12 @@ export function installAudio() {
     }, undefined),
     pauseMusic: safe('pauseMusic', (p: boolean) => player.setPaused(p), undefined),
     musicBoost: safe('musicBoost', (db: number) => player.setBoost(db), undefined),
+    quiet: safe('quiet', (on: boolean, o?: { key?: string; fade?: number }) => director.quiet(o?.key ?? 'api', on, o?.fade ?? 1.2), undefined),
+    keepLooping: safe('keepLooping', (id: string) => {
+      const r = resolveTrack(id);
+      return !!r && player.loopCurrent(r.ref);
+    }, false),
+    nowPlaying: safe('nowPlaying', () => player.current(), null),
     solo: safe('solo', (on: boolean, o?: { fade?: number; key?: string; decks?: boolean }) => {
       const fade = o?.fade ?? 0.25;
       if (audio.solo(o?.key ?? 'api', on, fade) && o?.decks) player.hushDecks(on, fade);

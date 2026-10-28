@@ -100,3 +100,40 @@ export class FilmLoader {
     this.done = null;
   }
 }
+
+/**
+ * (agent FINAL) the BARE cover: plain black, no title, no leader — for a film that continues the one before it (the
+ * story already has the screen black: «A oscuras» → «MIRA»). Same surface as FilmLoader.
+ */
+export class BareLoader {
+  readonly root = new Container();
+  private t = 0;
+  private fading = -1;
+  private done: (() => void) | null = null;
+  constructor(host: Container, view: { x: number; y: number; w: number; h: number }) {
+    this.root.addChild(new Graphics().rect(view.x - 10, view.y - 10, view.w + 20, view.h + 20).fill(0x000000));
+    host.addChild(this.root);
+    Ticker.shared.add(this.tick, this);
+  }
+  progress(_p: number, _label: string) {}
+  private tick(tk: Ticker) {
+    this.t += tk.deltaMS / 1000;
+    if (this.fading < 0) return;
+    this.fading += Math.min(0.1, tk.deltaMS / 1000);
+    this.root.alpha = Math.max(0, 1 - this.fading / 0.35);
+    if (this.fading >= 0.35) this.destroy();
+  }
+  hide(): Promise<void> {
+    return new Promise((res) => {
+      this.done = res;
+      this.fading = 0;
+    });
+  }
+  destroy() {
+    if (this.root.destroyed) return;
+    Ticker.shared.remove(this.tick, this);
+    this.root.destroy({ children: true });
+    this.done?.();
+    this.done = null;
+  }
+}

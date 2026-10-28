@@ -26,6 +26,13 @@ export interface BakeJob {
 }
 
 const nextFrame = () => new Promise<void>((r) => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(() => r()) : setTimeout(r, 0)));
+/** an idle moment of the main thread (at most 250 ms away) */
+const idle = () =>
+  new Promise<void>((r) => {
+    const ric = (globalThis as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => void }).requestIdleCallback;
+    if (ric) ric(() => r(), { timeout: 250 });
+    else setTimeout(r, 16);
+  });
 
 export class Baker {
   private jobs: BakeJob[] = [];
@@ -52,8 +59,12 @@ export class Baker {
     return this.jobs.length;
   }
 
-  /** run every queued job (more can be queued while running: they run too) */
-  async run(progress?: (p: number, label: string) => void) {
+  /**
+   * run every queued job (more can be queued while running: they run too). `polite` (a film warmed ahead while another
+   * one plays, agent FINAL): two frames and an idle moment between jobs, so the film on screen keeps its frames — asked
+   * before every job when it is a function (nothing playing any more → full speed)
+   */
+  async run(progress?: (p: number, label: string) => void, polite: boolean | (() => boolean) = false) {
     let i = 0;
     while (this.jobs.length) {
       const j = this.jobs.shift()!;
@@ -72,6 +83,10 @@ export class Baker {
       i++;
       progress?.(i / (i + this.jobs.length), j.label);
       await nextFrame();
+      if (typeof polite === 'function' ? polite() : polite) {
+        await nextFrame();
+        await idle();
+      }
     }
   }
 

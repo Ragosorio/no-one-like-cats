@@ -94,6 +94,7 @@ import type { ShipModel } from './ship';
 import { p2Blind, p2CanStop, p2Deaf, p2Heard, p2Night, p2SetNight } from './multiverso';
 import { crRaiseFacet } from './cristal';
 import { grFirstMass } from './gravedad';
+import { mdOn, mdWorth } from './multidim';
 
 export interface UltCtx {
   side: 0 | 1;
@@ -129,9 +130,9 @@ export function ultBudgetFrac(catId: string, stars = 1) {
   }
 }
 
-const FLAMMABLE = new Set(['wood', 'bone', 'canvas']);
+export const FLAMMABLE = new Set(['wood', 'bone', 'canvas']);
 /** a capped structure hit on one cell (destroy + module report + view event); returns the damage dealt */
-function cut(b: Battle, side: number, c: Cell, raw: number, ev: BattleEvent[], path: number, at: number) {
+export function cut(b: Battle, side: number, c: Cell, raw: number, ev: BattleEvent[], path: number, at: number) {
   const dmg = b.cap(side, Math.max(0, Math.round(raw)));
   if (dmg <= 0) return 0;
   b.hurtCell(side, c, dmg);
@@ -144,30 +145,30 @@ function cut(b: Battle, side: number, c: Cell, raw: number, ev: BattleEvent[], p
   ev.push({ k: 'cell', side, cell: c, dmg, destroyed, path, at });
   return dmg;
 }
-function collapse(b: Battle, side: number, ev: BattleEvent[], path: number, at: number) {
+export function collapse(b: Battle, side: number, ev: BattleEvent[], path: number, at: number) {
   for (const ch of b.sides[side].ship.collapse()) {
     ev.push({ k: 'chunk', side, cells: ch, path, at });
     for (const c of ch) if (c.module !== undefined) b.reportModule(side, c.module, ev, path, at);
   }
 }
 /** the element a cat hits other cats with (its shot's element, as the sim knows it) */
-function catEl(c: CatState): ElementId {
+export function catEl(c: CatState): ElementId {
   return c.def.shot.element ?? c.def.elements[0] ?? 'neutral';
 }
-const isBossVs = (b: Battle, side: number) => b.cfg.boss?.side === side;
+export const isBossVs = (b: Battle, side: number) => b.cfg.boss?.side === side;
 /** shrink the running ultimate budget (a divine's own cast cap vs a boss) */
 function capBudget(b: Battle, side: number, frac: number) {
   if (!b.budget || b.budget.side !== side) return;
   b.budget.left = Math.min(b.budget.left, Math.round((b.sides[side].ship.initialMax?.[0] ?? 0) * frac));
 }
 /** top of a side's ship (world y) */
-function shipTop(b: Battle, side: number) {
+export function shipTop(b: Battle, side: number) {
   return b.sides[side].setup.origin.y;
 }
 
-const clamp = (v: number, a: number, z: number) => Math.max(a, Math.min(z, v));
+export const clamp = (v: number, a: number, z: number) => Math.max(a, Math.min(z, v));
 /** would removing `c` leave any OTHER cell hanging (not linked to the bottom row)? (ship.collapse rule) */
-function holdsShip(ship: ShipModel, c: Cell) {
+export function holdsShip(ship: ShipModel, c: Cell) {
   const seen = new Set<Cell>([c]);
   const stack: Cell[] = [];
   for (let x = 0; x < ship.cols; x++) {
@@ -191,24 +192,24 @@ function holdsShip(ship: ShipModel, c: Cell) {
 }
 
 /** where the plain ult shot would land (x, y) */
-function landing(b: Battle, o: UltCtx, shot = o.shot) {
+export function landing(b: Battle, o: UltCtx, shot = o.shot) {
   const p = b.buildPaths(shot, o.origin, o.angle, o.power, o.wind, o.side)[0];
   const i = p.impacts.length ? p.impacts[p.impacts.length - 1] : p.points.length - 1;
   return p.points[i];
 }
 
-function normal(b: Battle, o: UltCtx, shot: ShotDef = o.shot) {
+export function normal(b: Battle, o: UltCtx, shot: ShotDef = o.shot) {
   const paths = b.buildPaths(shot, o.origin, o.angle, o.power, o.wind, o.side);
   b.resolvePaths(o.side, shot, o.atk, paths, o.events);
   return paths;
 }
 
-function endOf(p: ShotPath) {
+export function endOf(p: ShotPath) {
   return { path: 0, at: p.points.length - 1 };
 }
 
 /** world x range of a side's ship */
-function shipSpan(b: Battle, side: number) {
+export function shipSpan(b: Battle, side: number) {
   const s = b.sides[side];
   return { x0: s.setup.origin.x + CELL * 0.5, x1: s.setup.origin.x + (s.ship.cols - 0.5) * CELL };
 }
@@ -1035,6 +1036,8 @@ export const ULTS: Record<string, UltFn> = {
  * the meter thief waits for meters worth stealing.
  */
 export function ultWorth(b: Battle, c: CatState): boolean {
+  // a Multidimensional in YOUR crew fires its own power (multidim.ts)
+  if (mdOn(b, c)) return mdWorth(b, c);
   const enemy = 1 - c.side;
   const es = b.sides[enemy];
   const alive = es.cats.filter((k) => !k.ko && !b.isFlying(k));

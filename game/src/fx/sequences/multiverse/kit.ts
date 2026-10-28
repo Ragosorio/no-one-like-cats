@@ -51,6 +51,12 @@ export interface Signature {
   open(c: SigCtx): void;
   /** at the color fill: the universe's payoff */
   payoff(c: SigCtx): void;
+  /**
+   * the Catdex card's universe (its own art behind the painting): a Container sized to the art window (w×h, origin at its
+   * top-left; the card clips it). `live` = the detail page (it may animate itself, cleaning up when destroyed); otherwise
+   * static (the grid draws up to 155 cards — keep it cheap: a few Graphics, no tickers).
+   */
+  card?(w: number, h: number, live: boolean): Container;
 }
 
 export const alive = (c: SigCtx) => !c.root.destroyed;

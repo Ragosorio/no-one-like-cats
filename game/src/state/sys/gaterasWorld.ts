@@ -124,9 +124,9 @@ registerWorldState({
   priority: 133,
   wave: 'P3',
   blend: 6,
-  note: 'Desde la muerte de Luzterna (SADIE) hasta que Canelo prende el faro (H96): el faro apagado, la isla a oscuras.',
+  note: 'Desde la muerte de Luzterna (SADIE) hasta que Canelo prende el faro (H96): el faro apagado, la isla a oscuras y en silencio (el dueño, 2026-10-28: silencio total en la isla durante el duelo; solo el mar).',
   when: (s) => luzternaFallecida(s) && !done(s, 'H96'),
-  look: { exposure: 0.82, saturation: 0.72, tint: 0xdfe4ee, lift: 0x05070c, faro: 0, lights: 0.3, stars: 0.12, dayLife: 0.35, vignette: 0.2, cats: 0.4, music: 'emotional' },
+  look: { exposure: 0.82, saturation: 0.72, tint: 0xdfe4ee, lift: 0x05070c, faro: 0, lights: 0.3, stars: 0.12, dayLife: 0.35, vignette: 0.2, cats: 0.4, music: 'silence' },
 });
 registerWorldState({
   id: P3_FINAL_STATES.faroNaranja,

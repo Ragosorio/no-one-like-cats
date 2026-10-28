@@ -26,7 +26,8 @@ export abstract class Scene extends Container {
   update(_dt: number): void {}
 }
 
-export type Transition = 'blocks' | 'iris' | 'none';
+/** 'black' (agent FINAL): a plain fade through black, no sound — the Parte III finale's cuts (never the comic wipe) */
+export type Transition = 'blocks' | 'iris' | 'black' | 'none';
 
 /** the longest a transition stays closed waiting for the next scene's first picture (Scene.coverUntil) */
 export const COVER_WAIT_MS = 1000;
@@ -75,6 +76,7 @@ class SceneManager {
       return;
     }
     if (transition === 'blocks') await this.blocksIn();
+    else if (transition === 'black') await this.blackIn();
     else await this.irisIn();
     this.swap(next);
     // PERF (Parte III): the new scene's first frames are the heavy ones (its paintings decoded, its Graphics
@@ -83,8 +85,34 @@ class SceneManager {
     if (next.coverUntil) await Promise.race([next.coverUntil.catch(() => undefined), new Promise((r) => setTimeout(r, COVER_WAIT_MS))]);
     await coveredFrames(2);
     if (transition === 'blocks') await this.blocksOut();
+    else if (transition === 'black') await this.blackOut();
     else await this.irisOut();
     this.busy = false;
+  }
+
+  private black?: Graphics;
+  private blackIn() {
+    const v = game.view;
+    const g = new Graphics().rect(v.x - 10, v.y - 10, v.w + 20, v.h + 20).fill(0x000000);
+    g.alpha = 0;
+    this.fxLayer.addChild(g);
+    this.black = g;
+    return new Promise<void>((res) => gsap.to(g, { alpha: 1, duration: 0.35, ease: 'power1.in', onComplete: res }));
+  }
+  private blackOut() {
+    const g = this.black!;
+    this.black = undefined;
+    return new Promise<void>((res) =>
+      gsap.to(g, {
+        alpha: 0,
+        duration: 0.6,
+        ease: 'power1.out',
+        onComplete: () => {
+          g.destroy();
+          res();
+        },
+      }),
+    );
   }
 
   private swap(next: Scene) {

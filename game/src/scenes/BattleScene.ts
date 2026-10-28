@@ -45,6 +45,9 @@ import { NZ_RAGE, NZ_SHOUT, nzChips } from '../battle/ruido';
 import { mareoChips } from '../battle/mareo';
 import { rondaChips } from '../battle/ronda';
 import { barChips } from '../battle/barRules';
+// Parte III · the MULTIDIMENSIONAL powers: their chips, their cut-in color (battle/multidim.ts, battle/fx/multidimFx.ts)
+import { mdChips, mdExtraShots, mdOn } from '../battle/multidim';
+import { mdColor } from '../battle/fx/multidimFx';
 import { MareoFx, mareoProjectile } from '../battle/mareoFx';
 // Parte II · Oleada 2: the sky layer (rules battle/cielo.ts, look battle/fx/cieloFx.ts)
 import { skyAwake, skyChips } from '../battle/cielo';
@@ -804,6 +807,12 @@ export class BattleScene extends Scene {
     // Parte III · Acto I: RIMA (EMIAU) · LISTA VIP (El Cadenero) — battle/barRules.ts
     pItems.push(...barChips(this.sim));
     pItems.push(...actChips(this.sim));
+    // Parte III · the Multidimensional powers' rules on the field (the luck, the flow, the eras, the sleep, the swirl…)
+    {
+      const [mde, mdp] = mdChips(this.sim);
+      items.push(...mde);
+      pItems.push(...mdp);
+    }
     const ps = this.sim.sides[0];
     if (ps.bubbleKind) pItems.push(ps.bubble > 0 ? { text: `BURBUJA x${ps.bubble}`, color: C.cyan } : { text: 'BURBUJA: RECARGA', color: 0x8a95a3 });
     if (ps.buffs.stone > 0) pItems.push({ text: `CORAZÓN DE PIEDRA ${ps.buffs.stone}`, color: 0xc4bdab });
@@ -1330,7 +1339,7 @@ export class BattleScene extends Scene {
         this.selected = avail[0].def.uid;
         for (const c of this.cards) c.setSelected(c.cat?.def.uid === this.selected);
         this.refreshCards();
-        this.turnBanner('¡OTRO GATO! (GORRIÓN)', C.mint);
+        this.turnBanner(mdExtraShots(this.sim, 0) > 0 ? '¡OTRO GATO! (2099)' : '¡OTRO GATO! (GORRIÓN)', C.mint);
         return;
       }
     }
@@ -1346,10 +1355,12 @@ export class BattleScene extends Scene {
   // ---------------------------------------------------------------- ultimate cut-in (storyboard d, compact)
   async ultCutIn(c: CatState) {
     const fx = elementFx(c.def.elements[0]);
+    // a Multidimensional power (your crew): the band takes its universe's color
+    const md = mdOn(this.sim, c);
     const layer = new Container();
     this.overlay.addChild(layer);
     const dim = screenRect({ color: C.ink, alpha: 0.75 });
-    const band = new Graphics().rect(-300, -170, W + 600, 340).fill(fx.main).stroke({ width: 8, color: C.ink });
+    const band = new Graphics().rect(-300, -170, W + 600, 340).fill(md ? mdColor(c.def.catId) : fx.main).stroke({ width: 8, color: C.ink });
     band.rotation = -0.12;
     band.position.set(W / 2, H / 2);
     const cat = new BattleCat(c.def.slug, c.def.elements[0], 420, c.side === 1);
@@ -1360,7 +1371,7 @@ export class BattleScene extends Scene {
     name.rotation = -0.12;
     name.position.set(c.side === 0 ? W / 2 + 300 : W / 2 - 300, H / 2 - 20);
     if (name.width > 1100) name.scale.set(1100 / name.width);
-    const who = txt(`${c.def.name.toUpperCase()} — BATTLE FORM`, { fontFamily: F.poster, fontSize: 34, fill: C.ink });
+    const who = txt(`${c.def.name.toUpperCase()} — ${md ? 'PODER MULTIDIMENSIONAL' : 'BATTLE FORM'}`, { fontFamily: F.poster, fontSize: 34, fill: C.ink });
     who.anchor.set(0.5);
     who.rotation = -0.12;
     who.position.set(name.x, H / 2 + 90);

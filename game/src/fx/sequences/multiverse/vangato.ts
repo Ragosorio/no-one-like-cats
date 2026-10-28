@@ -6,6 +6,7 @@ import { C, F } from '../../../ui/theme';
 import { txt } from '../../../ui/widgets';
 import { sfx } from '../../../core/audio';
 import { type Signature, type SigCtx, cover, later, score, word } from './kit';
+import { liveLoop, seeded } from '../../../panels/collection/cardArt';
 
 const BLUE = 0x1b3a8a;
 const YELLOW = 0xf6d55c;
@@ -99,6 +100,74 @@ function sunflower(r: number): Container {
   for (let i = 0; i < 18; i++) head.circle(Math.cos(i * 2.4) * r * 0.4 * Math.sqrt(i / 18), Math.sin(i * 2.4) * r * 0.4 * Math.sqrt(i / 18), 3).fill(0x3f2410);
   k.addChild(head);
   return k;
+}
+
+
+/** the card's swirls: [x, y, strength] as fractions of the card (upper left, upper right) */
+const VORTEX_CARD: [number, number, number][] = [
+  [0.24, 0.24, 1],
+  [0.8, 0.17, 0.75],
+  [0.55, 0.08, 0.4],
+];
+
+/** the card's sky: brush strokes along the swirls, sized to the card (the same painting at any size) */
+function brushSky(g: Graphics, w: number, h: number, bottom: number) {
+  const m = Math.min(w, h);
+  const sp = Math.max(6, m / 19);
+  const S = m / 1080;
+  const vort = VORTEX_CARD.map(([x, y, s]) => [x * w, y * h, s] as const);
+  const r = seeded(21);
+  for (let y = sp * 0.4; y < bottom; y += sp * 0.82)
+    for (let x = -sp; x < w + sp; x += sp) {
+      const jx = x + (r() - 0.5) * sp * 0.5;
+      const jy = y + (r() - 0.5) * sp * 0.5;
+      let dx = 0.6;
+      let dy = 0.05 * Math.sin((jx / w) * 12);
+      let near = 0;
+      for (const [vx, vy, s] of vort) {
+        const rx = jx - vx;
+        const ry = jy - vy;
+        const d2 = rx * rx + ry * ry + 900 * S * S;
+        const kk = (s * 26000 * S) / d2;
+        dx += -ry * kk * 0.01;
+        dy += rx * kk * 0.01;
+        near = Math.max(near, (s * 160 * S) / Math.sqrt(d2));
+      }
+      const L = Math.hypot(dx, dy) || 1;
+      const ux = dx / L;
+      const uy = dy / L;
+      const len = sp * (0.8 + r() * 0.5);
+      const ci = Math.min(SKY.length - 1, Math.floor(near * 3.2 + (jy < h * 0.37 ? 1 : 0) + r() * 1.5));
+      const mx = jx + ux * len * 0.5 - uy * sp * 0.15;
+      const my = jy + uy * len * 0.5 + ux * sp * 0.15;
+      g.poly(dab(jx, jy, mx, my, jx + ux * len, jy + uy * len, sp * 0.15)).fill(SKY[ci]);
+    }
+}
+
+/**
+ * one brush stroke as a filled polygon along the quadratic (x0,y0)→(x1,y1) via (mx,my), tapered at both ends. A stroked
+ * curve with round caps tessellates to ~180 vertices; the detail page's full-width sky has ~1,300 of them, and Pixi's
+ * pooled batchers grow to fit the biggest Graphics and never shrink (the Catdex kept ~5 MB per visit). This is 12 points.
+ */
+function dab(x0: number, y0: number, mx: number, my: number, x1: number, y1: number, hw: number): number[] {
+  const N = 5;
+  const left: number[] = [];
+  const right: number[] = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const a = (1 - t) * (1 - t);
+    const b = 2 * (1 - t) * t;
+    const c = t * t;
+    const px = a * x0 + b * mx + c * x1;
+    const py = a * y0 + b * my + c * y1;
+    const tx = 2 * (1 - t) * (mx - x0) + 2 * t * (x1 - mx);
+    const ty = 2 * (1 - t) * (my - y0) + 2 * t * (y1 - my);
+    const tl = Math.hypot(tx, ty) || 1;
+    const w = hw * (0.35 + 0.65 * Math.sin(Math.PI * t));
+    left.push(px - (ty / tl) * w, py + (tx / tl) * w);
+    right.unshift(px + (ty / tl) * w, py - (tx / tl) * w);
+  }
+  return [...left, ...right];
 }
 
 export const vangato: Signature = {
@@ -208,5 +277,80 @@ export const vangato: Signature = {
     c.fg.addChild(sig);
     if (!c.reduce) gsap.fromTo(sig, { alpha: 0 }, { alpha: 1, duration: 0.5, delay: 0.5 });
     later(c, 0.5, () => sfx('pencil', 1.1));
+  },
+  card(w, h, live) {
+    const k = new Container();
+    const m = Math.min(w, h);
+    const cx = w / 2;
+    const cy = h * 0.54;
+    const sky = new Graphics().rect(0, 0, w, h).fill(BLUE);
+    brushSky(sky, w, h, h * 0.84);
+    k.addChild(sky);
+    // the moon and its halos, top right
+    const moon = new Graphics();
+    const mr = m * 0.075;
+    moon.circle(0, 0, mr * 1.45).stroke({ width: mr * 0.18, color: 0xe8e2b0, alpha: 0.6 }).circle(0, 0, mr * 1.85).stroke({ width: mr * 0.14, color: YELLOW, alpha: 0.35 });
+    moon.circle(0, 0, mr).fill(YELLOW).circle(-mr * 0.38, -mr * 0.17, mr * 0.86).cut();
+    moon.position.set(w * 0.88, h * 0.14);
+    k.addChild(moon);
+    // the great swirl behind him
+    const R = m * 0.47;
+    const sw = swirl();
+    sw.scale.set(R / 334);
+    sw.position.set(cx, cy);
+    sw.alpha = 0.9;
+    k.addChild(sw);
+    // stars with their halos
+    const stars = (
+      [
+        [0.14, 0.1, 0.032],
+        [0.32, 0.2, 0.024],
+        [0.52, 0.09, 0.028],
+        [0.63, 0.36, 0.022],
+        [0.73, 0.28, 0.026],
+        [0.9, 0.38, 0.024],
+        [0.08, 0.4, 0.02],
+        [0.42, 0.43, 0.018],
+      ] as const
+    ).map(([fx, fy, fr]) => {
+      const s = star(16);
+      s.scale.set((fr * m) / 16);
+      s.position.set(fx * w, fy * h);
+      k.addChild(s);
+      return { s, base: (fr * m) / 16, p: fx * 17 };
+    });
+    // the village asleep below
+    const vy = h * 0.84;
+    const village = new Graphics().poly([0, vy, w * 0.16, vy - h * 0.03, w * 0.36, vy - h * 0.005, w * 0.57, vy - h * 0.035, w * 0.78, vy - h * 0.01, w, vy - h * 0.03, w, h, 0, h]).fill(0x1a2340);
+    const hw = Math.max(4, w * 0.026);
+    for (let i = 0; i * hw * 1.32 < w * 0.72; i++) {
+      const x = w * 0.2 + i * hw * 1.32;
+      const hh = hw * (0.8 + (i % 4) * 0.3);
+      const by = h * 0.95;
+      village.rect(x, by - hh, hw, hh).fill(0x2a3a6a).poly([x - hw * 0.1, by - hh, x + hw / 2, by - hh - hw * 0.6, x + hw * 1.1, by - hh]).fill(0x16204a);
+      if (i % 3) village.rect(x + hw * 0.36, by - hh + hw * 0.26, hw * 0.28, hw * 0.28).fill(YELLOW);
+    }
+    k.addChild(village);
+    // the cypress, a dark green flame on the left
+    const cyp = cypress();
+    cyp.scale.set((h * 0.86) / 820);
+    cyp.position.set(w * 0.09, h);
+    k.addChild(cyp);
+    // two sunflowers at the foot of the canvas
+    for (const [fx, fy, fr] of [
+      [0.9, 0.94, 0.085],
+      [0.78, 1.0, 0.06],
+    ] as const) {
+      const f = sunflower(62);
+      f.scale.set((fr * m) / 62);
+      f.position.set(fx * w, fy * h);
+      k.addChild(f);
+    }
+    if (live)
+      liveLoop(k, (t) => {
+        sw.rotation = t * 0.18;
+        for (const s of stars) s.s.scale.set(s.base * (1 + 0.1 * Math.sin(t * 2.2 + s.p)));
+      });
+    return k;
   },
 };

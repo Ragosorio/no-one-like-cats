@@ -56,6 +56,9 @@ import { openHomeless } from './island/HomelessPanel';
 import { Registro000Sheet, registroArrival, registroArrivalDue, registroCard } from './collection/registro000';
 import { openRegistro000, registro000Visible } from '../state/sys/rupturas';
 import { checkMissions } from '../state/sys/missions';
+import { cardSkin, DIMS5, powerPanel, type CardSkin } from './collection/multidimCard';
+import { glow, liveLoop, lum, mix, seeded, seedOf, sparkle } from './collection/cardArt';
+import { MULTIDIM_POWER_NOTE, multidimPower } from '../data/multidimPowers';
 
 type TabId = 'cats' | 'sets' | 'grimorio';
 
@@ -672,6 +675,10 @@ interface DetailHooks {
 }
 
 class DetailSheet extends Container {
+  /** a MULTIDIMENSIONAL (registered or rumor): its universe takes the sheet (multidimCard.ts) */
+  private skin: CardSkin | null = null;
+  /** body text color: ink on paper, paper on a universe */
+  private ink: number = C.ink;
   constructor(species: string, hooks: DetailHooks) {
     super();
     const def = catDef(species);
@@ -680,20 +687,25 @@ class DetailSheet extends Container {
     const rar = printRarity(species);
     const owned = ownedOf(species);
     const idx = CATS.findIndex((c) => c.id === species) + 1;
+    const skin = (this.skin = known ? cardSkin(species) : null);
+    if (skin) this.ink = C.paper;
 
-    const bg = new Graphics().rect(-28, -22, IW + 56, IH + 44).fill(C.paper);
+    const bg = new Graphics().rect(-28, -22, IW + 56, IH + 44).fill(skin ? 0x0d0a12 : C.paper);
     bg.eventMode = 'static';
     this.addChild(bg);
-    const band = new Graphics().rect(-28, -22, 520, IH + 44).fill(st === 'registered' ? rarityBand(rar) : C.ink);
-    this.addChild(band);
-    const circle = new Graphics().circle(240, 470, 250).fill({ color: st === 'registered' ? C.pink : C.pinkHot, alpha: st === 'registered' ? 0.95 : 0.35 });
-    const wm = poster(String(idx).padStart(2, '0'), 560, C.ink, { letterSpacing: -20 });
-    wm.alpha = 0.05;
+    if (skin) this.backdrop(skin, st !== 'registered');
+    else {
+      const band = new Graphics().rect(-28, -22, 520, IH + 44).fill(st === 'registered' ? rarityBand(rar) : C.ink);
+      const circle = new Graphics().circle(240, 470, 250).fill({ color: st === 'registered' ? C.pink : C.pinkHot, alpha: st === 'registered' ? 0.95 : 0.35 });
+      this.addChild(band, circle);
+    }
+    const wm = poster(String(idx).padStart(2, '0'), 560, skin ? C.paper : C.ink, { letterSpacing: -20 });
+    wm.alpha = skin ? 0.06 : 0.05;
     wm.anchor.set(1, 1);
     wm.position.set(IW + 20, IH + 150);
     const wmMask = new Graphics().rect(-28, -22, IW + 56, IH + 44).fill(0xffffff);
     wm.mask = wmMask;
-    this.addChild(circle, wm, wmMask);
+    this.addChild(wm, wmMask);
 
     // nav
     const back = new Button('‹ VOLVER', hooks.onBack, { w: 170, h: 54, size: 26, color: C.paper });
@@ -705,12 +717,20 @@ class DetailSheet extends Container {
     this.addChild(back, prev, next);
 
     // big card
-    const card = new CatCard(species, { w: 400, h: 540, hires: true, stars: owned?.stars, level: owned?.level, mutation: owned?.mutation, holo: !!owned?.holo });
+    if (skin) this.addChild(glow(new Graphics(), 240, 360, 340, skin.frame, 0.4));
+    const card = new CatCard(species, { w: 400, h: 540, hires: true, stars: owned?.stars, level: owned?.level, mutation: owned?.mutation, holo: !!owned?.holo, liveUniverse: !!skin && st === 'registered' });
     card.position.set(40, 90);
     card.rotation = -0.025;
     this.addChild(card);
     gsap.from(card, { rotation: -0.2, alpha: 0, duration: 0.35, ease: 'back.out(1.8)' });
-    const num = poster(`Nº ${String(idx).padStart(2, '0')} / ${dexTotal()}`, 34, C.paper);
+    // a collectible on its stand: it floats, barely
+    if (skin)
+      liveLoop(card, (t) => {
+        if (t < 0.45) return;
+        card.y = 90 + Math.sin((t - 0.45) * 1.1) * 5;
+        card.rotation = -0.025 + Math.sin((t - 0.45) * 0.7) * 0.008;
+      });
+    const num = poster(`Nº ${String(idx).padStart(2, '0')} / ${dexTotal()}`, 34, C.paper, skin ? { stroke: { color: 0x0d0a12, width: 6 } } : {});
     num.position.set(40, 650);
     const stc = chip(statusLabel(st), { bg: st === 'registered' ? C.green : st === 'rumor' ? C.red : C.ink, fg: C.paper, size: 16, font: F.poster });
     stc.position.set(40, 700);
@@ -719,14 +739,32 @@ class DetailSheet extends Container {
     const X = 520;
     const RW = IW - X;
     // name
-    const name = poster(known ? def.name.toUpperCase() : '???', 96, C.ink, { letterSpacing: -2 });
+    const name = poster(known ? def.name.toUpperCase() : '???', 96, skin ? C.paper : C.ink, skin ? { letterSpacing: -2, stroke: { color: 0x0d0a12, width: 10 } } : { letterSpacing: -2 });
     name.position.set(X, -24);
     fitText(name, RW - 300);
+    if (skin) {
+      // a collector's print: the name doubled in its universe's color, offset like a misregistered plate
+      const nsh = poster(def.name.toUpperCase(), 96, skin.frame, { letterSpacing: -2, stroke: { color: 0x0d0a12, width: 10 } });
+      nsh.scale.copyFrom(name.scale);
+      nsh.position.set(X + 7, -24 + 7);
+      this.addChild(nsh);
+    }
     this.addChild(name);
     if (known) {
-      const ep = txt(def.epithet, { fontFamily: F.serif, fontStyle: 'italic', fontSize: 30, fill: C.ink, padding: 8 });
+      const ep = txt(def.epithet, { fontFamily: F.serif, fontStyle: 'italic', fontSize: 30, fill: skin ? C.paper : C.ink, padding: 8, ...(skin ? { stroke: { color: 0x0d0a12, width: 6 } } : {}) });
       ep.position.set(X + 4, 112);
       this.addChild(ep);
+    }
+    // a Multidimensional's REVELACIÓN is its universe: the big button, top right, breathing in its color
+    if (skin && st === 'registered') {
+      const light = lum(skin.frame) > 150;
+      const rb = new Button('REVELACIÓN', hooks.onReplay, { w: 290, h: 74, size: 34, color: skin.frame, textColor: light ? C.ink : C.paper });
+      rb.position.set(IW - 300, -10);
+      const halo = new Graphics();
+      for (let i = 3; i >= 1; i--) halo.rect(-i * 7, -i * 7, 290 + i * 14, 74 + i * 14).fill({ color: skin.frame, alpha: 0.16 });
+      halo.position.copyFrom(rb.position);
+      liveLoop(halo, (t) => (halo.alpha = 0.55 + 0.45 * Math.sin(t * 2.4)));
+      this.addChild(halo, rb);
     }
     // chips row
     let cx = X;
@@ -749,16 +787,67 @@ class DetailSheet extends Container {
     }
 
     const top = 220;
+    if (skin) {
+      // the reading side: a dark glass over the universe, edged in its color
+      const glass = new Graphics();
+      glass.rect(X - 22 + 8, top - 18 + 8, IW - X + 36, IH - top + 30).fill({ color: 0x000000, alpha: 0.45 });
+      glass.rect(X - 22, top - 18, IW - X + 36, IH - top + 30).fill({ color: 0x120e18, alpha: 0.86 }).stroke({ width: 3, color: skin.frame, alpha: 0.9 });
+      const sw = (IW - X + 36) / DIMS5.length;
+      DIMS5.forEach((c, i) => glass.rect(X - 22 + i * sw, top - 18, sw, 4).fill(c));
+      this.addChildAt(glass, this.getChildIndex(card));
+    }
     if (st === 'registered') this.registeredInfo(species, X, top, RW, hooks);
     else if (st === 'rumor') this.rumorInfo(species, X, top, RW);
     else this.lockedInfo(species, st, X, top, RW);
   }
 
+  /**
+   * MULTIDIMENSIONAL: its universe takes the whole sheet (live), darkening toward the reading side, with motes in its
+   * color and the five boxes' drifting up (still with Reducir movimiento: liveLoop draws one frame).
+   */
+  private backdrop(skin: CardSkin, rumor: boolean) {
+    const x0 = -28;
+    const y0 = -22;
+    const bw = IW + 56;
+    const bh = IH + 44;
+    // the universe's heart (its disc: the donut, the moon, the swirl…) sits behind the big card: the art is drawn wide
+    // enough that its center lands on the card and it still covers the whole sheet (only sideways: at the sheet's own
+    // height the universe's things keep a sane size, and its heart lands on the card's lower half)
+    const fx = 240 - x0;
+    const W2 = Math.ceil(2 * Math.max(fx, bw - fx));
+    const uni = skin.art(W2, bh, !rumor);
+    uni.position.set(x0 + fx - W2 / 2, y0);
+    // a rumor only hints at its universe (as its card does): dimmed and still
+    if (rumor) uni.tint = 0x56506a;
+    const um = new Graphics().rect(x0, y0, bw, bh).fill(0xffffff);
+    uni.mask = um;
+    const shade = new Graphics();
+    const N = 28;
+    for (let i = 0; i < N; i++) {
+      const k = i / (N - 1);
+      shade.rect(x0 + (bw * i) / N, y0, bw / N + 1, bh).fill({ color: 0x0d0a12, alpha: 0.1 + 0.42 * k * k });
+    }
+    shade.rect(x0, y0, bw, 70).fill({ color: 0x0d0a12, alpha: 0.18 });
+    const motes = new Graphics();
+    const r = seeded(seedOf(skin.tag));
+    const ms = Array.from({ length: rumor ? 12 : 40 }, (_, i) => ({ x: x0 + r() * bw, y: r() * bh, s: 2.5 + r() * 5, v: 14 + r() * 34, c: i % 3 ? skin.frame : DIMS5[i % 5], p: r() * 6 }));
+    this.addChild(uni, um, shade, motes);
+    liveLoop(motes, (t) => {
+      motes.clear();
+      for (const m of ms) {
+        const y = y0 + ((((m.y - t * m.v) % bh) + bh) % bh);
+        sparkle(motes, m.x + Math.sin(t * 0.8 + m.p) * 14, y, m.s, m.c, 0.3 + 0.3 * Math.sin(t * 2 + m.p));
+      }
+    });
+  }
+
   private section(title: string, body: string, x: number, y: number, w: number, o: { color?: number; italic?: boolean; size?: number } = {}) {
-    const t = txt(title, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: o.color ?? C.pinkHot, letterSpacing: 3 });
+    // on a universe's dark glass, the ink titles take the universe's color
+    const tc = this.skin && o.color === C.ink ? mix(this.skin.frame, 0xffffff, 0.35) : (o.color ?? C.pinkHot);
+    const t = txt(title, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: tc, letterSpacing: 3 });
     t.position.set(x, y);
     if (/\{(fire|water|nature|earth|storm|magic|cosmic|ice|sound|shadow|time|light|void|crystal)\}/.test(body)) {
-      const ib = iconText(body, { fontFamily: F.ui, fontSize: o.size ?? 20, fill: C.ink }, { wrap: w });
+      const ib = iconText(body, { fontFamily: F.ui, fontSize: o.size ?? 20, fill: this.ink }, { wrap: w });
       ib.position.set(x, y + 20);
       this.addChild(t, ib);
       return y + 20 + ib.height + 18;
@@ -768,7 +857,7 @@ class DetailSheet extends Container {
       fontStyle: o.italic ? 'italic' : 'normal',
       padding: o.italic ? 6 : 0,
       fontSize: o.size ?? 20,
-      fill: C.ink,
+      fill: this.ink,
       wordWrap: true,
       wordWrapWidth: w,
       lineHeight: (o.size ?? 20) * 1.3,
@@ -791,7 +880,10 @@ class DetailSheet extends Container {
     const sw = (RW - 30) / 4;
     stats.forEach(([k, v], i) => {
       const x = X + i * (sw + 10);
-      const g = new Graphics().rect(x, top, sw, 74).fill(i === 0 ? C.ink : C.paper).stroke({ width: 3, color: C.ink });
+      const g = new Graphics()
+        .rect(x, top, sw, 74)
+        .fill(i === 0 ? C.ink : C.paper)
+        .stroke({ width: 3, color: this.skin && i === 0 ? this.skin.frame : C.ink });
       const kt = txt(k, { fontFamily: F.ui, fontWeight: '700', fontSize: 13, fill: i === 0 ? C.paper : C.ink, letterSpacing: 2 });
       kt.position.set(x + 10, top + 6);
       const vt = poster(v, 38, i === 0 ? C.yellow : C.ink);
@@ -811,7 +903,14 @@ class DetailSheet extends Container {
       .join(' · ');
     yA = this.section(`ATAQUE · ${shot.name.toUpperCase()}`, `${shot.special ?? ''}${shotLine ? `\n${shotLine}` : ''}`, X, yA, colW);
     const ult = def.combat.ultimate;
-    yA = this.section(`ULTIMATE · ${ult.name}`, `${ult.effect}${ult.usesPerBattle ? `  (${ult.usesPerBattle}× por batalla)` : ''}`, X, yA, colW, { color: C.red });
+    // Parte III: a Multidimensional's ultimate is its PODER MULTIDIMENSIONAL (data/multidimPowers.ts): its own panel
+    const pw = this.skin ? multidimPower(species) : null;
+    if (this.skin && pw) {
+      const pp = powerPanel({ power: pw, frame: this.skin.frame, w: colW, maxH: IH - 96 - 30 - 22 - yA, uses: ult.usesPerBattle ?? undefined, note: MULTIDIM_POWER_NOTE });
+      pp.position.set(X, yA + 4);
+      this.addChild(pp);
+      yA += 4 + pp.height + 26;
+    } else yA = this.section(`ULTIMATE · ${ult.name}`, `${ult.effect}${ult.usesPerBattle ? `  (${ult.usesPerBattle}× por batalla)` : ''}`, X, yA, colW, { color: C.red });
     const lim = limitationText(def);
     if (lim) yA = this.section('LIMITACIÓN', lim, X, yA, colW, { color: C.ink });
 
@@ -831,6 +930,7 @@ class DetailSheet extends Container {
       const need = starNeed(owned);
       const have = G.s.orbs[species] ?? 0;
       const strip = new Graphics().rect(X, yo - 30, colW, 114).fill(C.ink);
+      if (this.skin) strip.stroke({ width: 3, color: this.skin.frame });
       const t1 = poster(`TU ${owned.name.toUpperCase()} · NV ${owned.level}`, 32, C.paper);
       t1.position.set(X + 14, yo - 28);
       const stars = '★'.repeat(owned.stars) + '☆'.repeat(Math.max(0, 6 - owned.stars));
@@ -866,13 +966,16 @@ class DetailSheet extends Container {
       else add(new Button('DARLE CASA', () => openHomeless(owned.uid), { w: 170, h: 60, size: 22, color: C.yellow }), 170);
       const can = canStarUp(owned, collState().usePrisma !== false);
       add(new Button(can ? '¡ALTAR!' : 'ALTAR', () => hooks.onAltar(owned.uid), { w: 130, h: 60, size: 26, color: can ? C.pinkHot : C.paper, textColor: can ? C.paper : C.ink }), 130);
-      const rep = new Button('REVELACIÓN', hooks.onReplay, { w: 170, h: 60, size: 22, color: C.pink });
-      if (bx + 170 <= X + RW) add(rep, 170);
-      else {
-        rep.position.set(XB, yo - 54);
-        this.addChild(rep);
+      // (a Multidimensional's REVELACIÓN is the big button at the top)
+      if (!this.skin) {
+        const rep = new Button('REVELACIÓN', hooks.onReplay, { w: 170, h: 60, size: 22, color: C.pink });
+        if (bx + 170 <= X + RW) add(rep, 170);
+        else {
+          rep.position.set(XB, yo - 54);
+          this.addChild(rep);
+        }
       }
-    } else {
+    } else if (!this.skin) {
       const rep = new Button('VER REVELACIÓN', hooks.onReplay, { w: 260, h: 60, size: 26, color: C.pink });
       rep.position.set(XB, yo + 12);
       this.addChild(rep);
@@ -901,7 +1004,14 @@ class DetailSheet extends Container {
     const orbs = G.s.orbs[species] ?? 0;
     if (orbs) y = this.section('ORBES GUARDADOS', `Tienes ${orbs} orbes de ${def.name}. Te esperan en el Altar.`, X, y, colW + 120, { color: 0xb8862a });
     const lore = hintFor(def);
-    if (lore) this.section('SE DICE QUE…', lore, X, y, colW + 120, { italic: true, color: C.ink, size: 22 });
+    if (lore) y = this.section('SE DICE QUE…', lore, X, y, colW + 120, { italic: true, color: C.ink, size: 22 });
+    // Parte III: a rumored Multidimensional has a power you can't read yet
+    const pw = this.skin ? multidimPower(species) : null;
+    if (this.skin && pw && y + 120 < IH - 226) {
+      const pp = powerPanel({ power: pw, frame: this.skin.frame, w: colW + 120, maxH: 140, locked: true });
+      pp.position.set(X, y + 4);
+      this.addChild(pp);
+    }
     this.lockedStats(X, IH - 210, RW);
   }
 
@@ -946,7 +1056,7 @@ class DetailSheet extends Container {
       vt.position.set(x + 10, y + 20);
       this.addChild(g, kt, vt);
     });
-    const t: Text = txt('Regístralo para leer su ficha completa.', { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: C.ink });
+    const t: Text = txt('Regístralo para leer su ficha completa.', { fontFamily: F.ui, fontWeight: '700', fontSize: 16, fill: this.ink });
     t.position.set(X, y + 90);
     this.addChild(t);
   }

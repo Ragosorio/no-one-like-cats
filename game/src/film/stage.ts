@@ -197,6 +197,8 @@ export interface FilmStageOpts {
   live?: boolean;
   /** device px per design px */
   pxScale: number;
+  /** (agent FINAL) baked while another film plays: the baker leaves room between its jobs (Baker.run polite) */
+  polite?: boolean | (() => boolean);
 }
 
 export class FilmStage implements StageApi {
@@ -326,7 +328,7 @@ export class FilmStage implements StageApi {
       b.add(`scene:${s.id}`, `escena ${i + 1}`, () => this.buildScene(s, i, setMods.get(s.id)));
     });
     b.add('core:warm', 'calentando la proyección', () => this.warmAll());
-    await b.run(this.o.onProgress);
+    await b.run(this.o.onProgress, this.o.polite ?? false);
     const done = b.done;
     this.missing = bakeManifest(film).filter((j) => !done.has(j));
     if (this.missing.length) console.warn('[film] faltan horneados', this.missing);

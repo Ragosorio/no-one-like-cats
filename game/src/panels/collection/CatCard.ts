@@ -15,6 +15,9 @@ import { elementIcon } from '../../ui/elementIcon';
 import { dnaIcon } from './ui';
 import { cardFace, cardLayout, CardLayout, noiseTile, rainbowTile, sheenTexture, PrintStyle } from './printTextures';
 import { portrait, variantSprite } from './art';
+import { cardSkin, multidimGem, tagPlate, universeTexture, type CardSkin } from './multidimCard';
+import { glow, lum, mix } from './cardArt';
+import { settings } from '../../core/settings';
 
 export interface CatCardOpts {
   w?: number;
@@ -35,6 +38,8 @@ export interface CatCardOpts {
   mutation?: string | null;
   /** foil/holographic variant (OwnedCat.holo, gacha) */
   holo?: boolean;
+  /** a MULTIDIMENSIONAL card's universe animates in its window (the Catdex detail page); otherwise it's a baked texture */
+  liveUniverse?: boolean;
 }
 
 const live = new Set<CatCard>();
@@ -76,6 +81,9 @@ export class CatCard extends Container {
   private glitchBars?: Graphics;
   private halo?: Graphics;
   private portraitNode?: Container;
+  /** a MULTIDIMENSIONAL card (registered or rumor): its universe's skin (multidimCard.ts) */
+  readonly skin: CardSkin | null;
+  private prism?: TilingSprite;
   private phase = Math.random() * 10;
   private lastStep = -1;
 
@@ -93,13 +101,21 @@ export class CatCard extends Container {
     const known = this.status === 'registered' || this.status === 'rumor';
     const accent = elColor(def.elements[0]);
     this.style = this.status === 'unknown' ? (def.secret ? 'backSecret' : 'back') : known ? this.rarity : 'neutral';
-    const dark = this.style === 'legendary' || this.style === 'mythic' || this.style === 'primordial' || this.style === 'heroic';
+    const skin = (this.skin = known && this.style === 'multidimensional' ? cardSkin(species) : null);
+    const dark = this.style === 'legendary' || this.style === 'mythic' || this.style === 'primordial' || this.style === 'heroic' || !!skin;
 
     // shadow block
     const sh = new Graphics().rect(Math.max(4, w * 0.035), Math.max(4, w * 0.035), w, h).fill({ color: C.ink, alpha: 0.9 });
-    const face = new Sprite(cardFace(this.style, w, h, accent));
+    const face = new Sprite(cardFace(this.style, w, h, skin ? skin.frame : accent));
     face.width = w;
     face.height = h;
+    if (skin) {
+      // a Multidimensional glows in its universe's color: it pops out of a grid of paper cards
+      const aura = new Graphics();
+      const d = Math.max(2, w * 0.018);
+      for (let i = 4; i >= 1; i--) aura.rect(-d * i, -d * i, w + d * i * 2, h + d * i * 2).fill({ color: skin.frame, alpha: 0.09 });
+      this.addChild(aura);
+    }
     this.addChild(sh, face);
 
     if (this.status === 'unknown') {
@@ -114,6 +130,7 @@ export class CatCard extends Container {
     const size = L.win.w * 1.04;
     const cx = L.win.x + L.win.w / 2;
     const cy = L.win.y + L.win.h * 0.54;
+    if (skin) this.buildUniverse(skin, !!o.liveUniverse, cx, cy);
     let node: Container;
     if (this.status === 'registered') {
       if (o.hires) {
@@ -175,7 +192,8 @@ export class CatCard extends Container {
     }
 
     // ---- plate: name + rarity
-    const nameColor = dark ? (this.style === 'primordial' ? accent : this.style === 'legendary' || this.style === 'heroic' ? 0xffd77a : C.white) : C.ink;
+    const skinName = skin ? (lum(skin.frame) > 100 ? skin.frame : mix(skin.frame, 0xffffff, 0.55)) : 0;
+    const nameColor = skin ? skinName : dark ? (this.style === 'primordial' ? accent : this.style === 'legendary' || this.style === 'heroic' ? 0xffd77a : C.white) : C.ink;
     const name = known ? def.name.toUpperCase() : '???';
     const nt = txt(name, { fontFamily: F.poster, fontSize: Math.round(L.plate.h * 0.46), fill: nameColor, letterSpacing: 0.5 });
     nt.anchor.set(0.5, 0);
@@ -203,10 +221,44 @@ export class CatCard extends Container {
       this.addChild(q);
     }
     if (o.ribbon || this.status === 'rumor') this.addRibbon(o.ribbon ?? 'RUMOR');
+    if (skin) this.addGem(skin);
 
     this.addChild(this.fx);
     if (o.live !== false && known) this.buildLive(accent);
     if (o.holo && this.status === 'registered') this.buildHolo();
+  }
+
+  /** MULTIDIMENSIONAL: its universe fills the window behind the painting (baked once per species × size; live on the detail page) */
+  private buildUniverse(skin: CardSkin, live: boolean, cx: number, cy: number) {
+    const { L } = this;
+    const uni: Container = live ? skin.art(L.win.w, L.win.h, true) : new Sprite(universeTexture(this.species, L.win.w, L.win.h));
+    uni.position.set(L.win.x, L.win.y);
+    this.art.addChild(uni);
+    if (this.status === 'rumor') {
+      // a rumor only hints at its universe: dimmed, as if seen through the cardboard
+      uni.tint = 0x4c4658;
+      return;
+    }
+    // a soft light behind the cat and its shadow on the ground: the painting reads on any universe
+    const g = new Graphics();
+    glow(g, cx, cy - L.win.h * 0.04, L.win.w * 0.46, 0xffffff, skin.dark ? 0.42 : 0.3);
+    g.ellipse(cx, L.win.y + L.win.h * 0.93, L.win.w * 0.3, L.win.h * 0.05).fill({ color: 0x0d0a12, alpha: 0.35 });
+    this.art.addChild(g);
+  }
+
+  /** MULTIDIMENSIONAL: the set symbol on the top edge (a big card: the universe's plate, «UNIVERSO AMARILLO») */
+  private addGem(skin: CardSkin) {
+    const { cw: w, L } = this;
+    if (w >= 300) {
+      const p = tagPlate(skin.tag, skin.frame, Math.round(w * 0.045));
+      if (p.width > w * 0.8) p.scale.set((w * 0.8) / p.width);
+      p.position.set(w / 2, 0);
+      this.addChild(p);
+    } else {
+      const gem = multidimGem(Math.max(16, w * 0.15), skin.frame);
+      gem.position.set(w / 2, L.b * 0.55);
+      this.addChild(gem);
+    }
   }
 
   /** foil variant: rainbow sheen over the whole card + "HOLO" corner */
@@ -374,6 +426,48 @@ export class CatCard extends Container {
       n.blendMode = 'add';
       this.fx.addChild(n);
       this.noise = n;
+    } else if (this.style === 'multidimensional') {
+      // an iridescent frame + a glint (a prism band and a streak of the universe's light) crossing the card
+      const frame = this.skin?.frame ?? 0x2fb7c4;
+      const b = this.L.b;
+      const ringMask = new Graphics()
+        .rect(0, 0, w, h)
+        .fill(0xffffff)
+        .rect(b, b, w - b * 2, h - b * 2)
+        .cut();
+      const holo = new TilingSprite({ texture: rainbowTile(), width: w, height: h });
+      holo.alpha = 0.3;
+      holo.blendMode = 'add';
+      holo.tileScale.set(Math.max(1, w / 150), 1);
+      holo.mask = ringMask;
+      this.fx.addChild(holo, ringMask);
+      this.holo = holo;
+      const prism = new TilingSprite({ texture: rainbowTile(), width: w * 0.5, height: h * 2.4 });
+      prism.anchor.set(0.5);
+      prism.rotation = -0.55;
+      prism.alpha = 0.24;
+      prism.blendMode = 'add';
+      prism.tileScale.set((w * 0.5) / 256, 1);
+      this.fx.addChild(prism);
+      this.prism = prism;
+      const s = new Sprite(sheenTexture());
+      s.anchor.set(0.5);
+      s.width = w * 0.42;
+      s.height = h * 2.3;
+      s.rotation = -0.55;
+      s.blendMode = 'add';
+      s.alpha = 0.6;
+      s.tint = mix(frame, 0xffffff, 0.6);
+      this.fx.addChild(s);
+      this.addChild(mask);
+      this.fx.mask = mask;
+      this.sheen = s;
+      if (settings.reduceMotion) {
+        // Reducir movimiento: the foil holds still, a glint resting across the card
+        s.position.set(w * 0.32, h / 2);
+        prism.position.set(w * 0.24, h / 2);
+        return;
+      }
     } else if (this.style === 'epic') {
       const s = new Sprite(sheenTexture());
       s.anchor.set(0.5);
@@ -398,12 +492,13 @@ export class CatCard extends Container {
     const { cw: w, ch: h } = this;
     const tt = t + this.phase;
     if (this.sheen) {
-      const period = this.style === 'mythic' ? 2.2 : this.style === 'divine' ? 4.2 : 3.2;
+      const period = this.style === 'mythic' ? 2.2 : this.style === 'divine' ? 4.2 : this.style === 'multidimensional' ? 3.8 : 3.2;
       const k = (tt % period) / period;
       this.sheen.x = -w * 0.6 + k * w * 2.2;
       this.sheen.y = h / 2;
+      if (this.prism) this.prism.position.set(this.sheen.x - w * 0.1, h / 2);
     }
-    if (this.holo) this.holo.tilePosition.x = tt * (this.style === 'divine' ? 18 : 60);
+    if (this.holo) this.holo.tilePosition.x = tt * (this.style === 'divine' ? 18 : this.style === 'multidimensional' ? 36 : 60);
     if (this.halo) {
       this.halo.alpha = 0.55 + 0.45 * Math.sin(tt * 2.2);
       this.halo.y = this.L.win.y + this.L.win.h * 0.16 + Math.sin(tt * 1.3) * this.ch * 0.006;

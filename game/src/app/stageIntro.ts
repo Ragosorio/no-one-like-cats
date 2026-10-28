@@ -70,7 +70,28 @@ export interface FilmPort {
   has(id: string): boolean;
   /** every registered id (lets a story ask for «f31» before CINE names it «f31_…») */
   ids?(): string[];
-  play(idOrDef: string | object, o: { seen: boolean }): Promise<{ end: 'done' | 'exited' | 'aborted'; /** the film's optional inputs (FilmResult.inputs) */ inputs?: Record<string, string> } | null>;
+  play(idOrDef: string | object, o: { seen: boolean } & FilmHandOff): Promise<{ end: 'done' | 'exited' | 'aborted'; /** the film's optional inputs (FilmResult.inputs) */ inputs?: Record<string, string> } | null>;
+  /** (agent FINAL, optional) warm a film ahead: it starts on the cut, without the loading screen */
+  preload?(id: string, o: { seen: boolean; after?: number }): Promise<boolean>;
+  /** (optional) let a held last frame go (fade s); resolves when gone */
+  releaseHold?(fade?: number): Promise<void>;
+  /** (optional) a film's last frame is still up */
+  holding?(): boolean;
+  /** (optional) drop warm films (one, or all) */
+  drop?(id?: string): void;
+}
+/**
+ * (agent FINAL) how a story film hands over to what follows: `hold` keeps its last frame up (the next film mounts over
+ * it, or releaseFilmHold lets it go — a scene can change under it); `next` runs on its last frame, before the film gives
+ * the music back (the caller sets the music that comes next: a state, a quiet hold)
+ */
+export interface FilmHandOff {
+  hold?: boolean;
+  next?: () => void;
+  /** not warm yet: wait on plain black, not the titled loading screen */
+  bare?: boolean;
+  /** the flow takes the film's song over when it ends (FilmDef.keep) */
+  keep?: boolean;
 }
 let port: FilmPort | null = null;
 let portTried = false;
@@ -84,7 +105,15 @@ async function filmPort(): Promise<FilmPort | null> {
   portTried = true;
   try {
     const f = await import('../film');
-    port = { has: (id) => !!f.getFilm(id), ids: () => f.filmIds(), play: (idOrDef, o) => f.playFilm(idOrDef as Parameters<typeof f.playFilm>[0], { seen: o.seen }) };
+    port = {
+      has: (id) => !!f.getFilm(id),
+      ids: () => f.filmIds(),
+      play: (idOrDef, o) => f.playFilm(idOrDef as Parameters<typeof f.playFilm>[0], { seen: o.seen, hold: o.hold, next: o.next, bare: o.bare, keep: o.keep }),
+      preload: (id, o) => f.preloadFilm(id, o),
+      releaseHold: (fade) => f.releaseFilmHold(fade),
+      holding: () => f.filmHolding(),
+      drop: (id) => f.dropPreloads(id),
+    };
   } catch (e) {
     console.warn('[presentación] el motor de películas no cargó: queda la tarjeta animada', e);
     port = null;
@@ -244,12 +273,12 @@ export async function playStoryFilm(
   /** the film played: its optional inputs and how it ended (a flow keeps a choice the film already asked, H78) */
   onPlayed?: (inputs: Record<string, string>, end: 'done' | 'exited') => void,
   /** `seen`: how the film may be left, decided by the caller (a flow that lists it in «Volver a ver» before it plays) */
-  o: { seen?: boolean } = {},
+  o: { seen?: boolean } & FilmHandOff = {},
 ): Promise<'film' | 'fallback' | 'interrupted'> {
   const fp = await filmPort();
   id = (await resolveStoryFilm(id)) ?? id;
   if (fp?.has(id)) {
-    const r = await fp.play(id, { seen: o.seen ?? filmSeen(id) }).catch((e) => {
+    const r = await fp.play(id, { seen: o.seen ?? filmSeen(id), hold: o.hold, next: o.next, bare: o.bare, keep: o.keep }).catch((e) => {
       console.warn('[película] falló: queda el respaldo', id, e);
       return null;
     });
@@ -264,8 +293,35 @@ export async function playStoryFilm(
       return 'film';
     }
   }
+  // a film's held frame never stays over a fallback (its lines are dialog on the game's screen)
+  await fp?.releaseHold?.(0.4);
   await fallback();
   return 'fallback';
+}
+
+// ------------------------------------------------------------------ (agent FINAL) warm films and held frames, for the flows
+/** warm a story film ahead (by its story id: `f36` → `f36_mira`); false when it isn't registered or can't warm */
+export async function preloadStoryFilm(id: string, o: { seen?: boolean; after?: number } = {}): Promise<boolean> {
+  const fp = await filmPort();
+  if (!fp?.preload) return false;
+  const rid = await resolveStoryFilm(id);
+  if (!rid) return false;
+  return fp.preload(rid, { seen: o.seen ?? filmSeen(rid), after: o.after }).catch(() => false);
+}
+/** let a story film's held last frame go (fade s) */
+export async function releaseStoryHold(fade = 0): Promise<void> {
+  const fp = await filmPort();
+  await fp?.releaseHold?.(fade);
+}
+/** a story film's last frame is still on screen */
+export async function storyHolding(): Promise<boolean> {
+  const fp = await filmPort();
+  return !!fp?.holding?.();
+}
+/** drop warm story films (by registered id, or all) */
+export async function dropStoryPreloads(id?: string): Promise<void> {
+  const fp = await filmPort();
+  fp?.drop?.(id);
 }
 
 /** the Acto I films and their spoiler-safe titles («Volver a ver»; historia-v2/03-peliculas.md F01–F08) */

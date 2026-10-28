@@ -20,6 +20,21 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-28-cartas-y-poderes',
+    date: '2026-10-28',
+    title: 'Cartas y Poderes Multidimensionales',
+    luzterna: '¿Viste a los que se parecen a alguien, gordo? No es casualidad: vienen de otras cajas. Ahora se les nota en la carta… y en cómo pelean.',
+    items: [
+      { tag: 'NUEVO', text: 'Todos los gatos que hacen referencia a algo ya son Multidimensionales: ahora son 25, y cada uno llega con su propio mundo cuando se revela.' },
+      { tag: 'NUEVO', text: 'Sus cartas en el Catdex son únicas: su mundo detrás del gato, un marco metálico de su color y un brillo que la cruza. En su ficha, su mundo se mueve de fondo.' },
+      { tag: 'NUEVO', text: 'Cada Multidimensional tiene un PODER propio y muy fuerte, que es su ulti: cada uno cambia la pelea a su manera. Solo despierta en tu tripulación.' },
+      { tag: 'BALANCE', text: 'Los que podían usar su ulti sin límite ahora la usan una vez por batalla, pero mucho más fuerte (con ★5, dos veces).' },
+      { tag: 'CAMBIO', text: 'Los gatos que pasaron a Multidimensionales conservan su nivel, estrellas y orbes. Ahora producen más oro, y su siguiente estrella pide más orbes.' },
+      { tag: 'ARREGLO', text: 'El final de la Parte III corre de corrido: sin pantallas de carga entre escenas y con la música correcta en cada una.' },
+      { tag: 'ARREGLO', text: 'Si abrías la ficha de un gato antes de que cargara su pintura, la carta grande salía en blanco. Ya no.' },
+    ],
+  },
+  {
     id: '2026-10-27-multiversos',
     date: '2026-10-27',
     title: 'Revelaciones Multidimensionales',

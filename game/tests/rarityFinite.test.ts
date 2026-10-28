@@ -96,10 +96,10 @@ describe('every rarity table answers a finite number for every rarity', () => {
 });
 
 describe('P3_MULTIDIM (ON since 2026-10-27, GATOS-DATOS): the Multidimensionals with approved art', () => {
-  it('on by default: the species of the rarity are exactly the 9 with art; the dormant slots have none', () => {
+  it('on by default: the 9 with art + the 16 reference cats of the Parte III (2026-10-28, the owner); the dormant slots have none', () => {
     MD.P3_MULTIDIM.on = true;
     const md = CATS.filter((c) => c.rarity === ('multidimensional' as string)).map((c) => c.id);
-    expect(md).toEqual(['x_homiau', 'x_gatarana', 'x_murciegato', 'x_supersiames', 'x_harrygatter', 'x_gatomalo', 'x_tailorswift', 'x_billiebigotish', 'x_vangato']);
+    expect(md).toEqual(['x_homiau', 'c_gritito', 'e_ovillo', 'x_gatarana', 'r_gatemson', 'x_murciegato', 'e_estambre', 'r_gatarana_noir', 'r_gatarana_blanca', 'r_gatarana_2099', 'l_gatzilla', 'l_bigoton', 'x_supersiames', 'e_comecroquetas', 'x_harrygatter', 'r_garbancito', 'e_sirsimon', 'e_sonrisa', 'e_gatoconda', 'l_emiau', 'x_gatomalo', 'x_tailorswift', 'x_billiebigotish', 'x_vangato', 'e_maneki']);
     // Michi-Wan, Lince, Bastet and El Michito del Barril wait for their art (02-catalogo-v2 §1.2): no species
     for (const id of ['x_michiwan', 'x_lince', 'x_bastet', 'x_michavo']) expect(CAT_BY_ID.has(id), id).toBe(false);
     for (const id of md) expect(existsSync(new URL(`../public/cats-svg/lite/${CAT_BY_ID.get(id)!.art.slug}.svg`, import.meta.url)), id).toBe(true);

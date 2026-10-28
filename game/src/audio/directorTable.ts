@@ -159,6 +159,16 @@ export function resolveTarget(t: DirectorTable, i: DirectorInput): Target {
   return mood === 'silence' ? { kind: 'silence', fade, source: 'state' } : { kind: 'procedural', mood, fade, source: 'state' };
 }
 
+/**
+ * (agent FINAL) a QUIET hold over a resolved target: the game's own music (a state's track, the island's, a procedural
+ * mood) becomes silence; a cue (a film's song) and a listen (the Fonoteca) stay. Pure.
+ */
+export function quietOver(t: Target, quiet: boolean): Target {
+  if (!quiet || t.kind === 'silence') return t;
+  if (t.kind === 'track' && (t.source === 'cue' || t.source === 'listen')) return t;
+  return { kind: 'silence', fade: t.fade, source: 'state' };
+}
+
 /** two targets mean the same music (no restart, no crossfade) */
 export function sameTarget(a: Target | null, b: Target | null) {
   if (!a || !b || a.kind !== b.kind) return false;

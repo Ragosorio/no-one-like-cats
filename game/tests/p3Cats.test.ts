@@ -282,7 +282,7 @@ describe('repeats: orbs of the box’s Multidimensional you have, 35 % seeded', 
     expect(hits / 400).toBeGreaterThan(0.27);
     expect(hits / 400).toBeLessThan(0.43);
     // another box's Multidimensional never drops here
-    expect(P3.multidimOf('p3d_superheroes')).toEqual(['x_gatarana', 'x_murciegato']);
+    expect(P3.multidimOf('p3d_superheroes')).toEqual(['e_ovillo', 'x_gatarana', 'r_gatemson', 'x_murciegato', 'e_estambre', 'r_gatarana_noir', 'r_gatarana_blanca', 'r_gatarana_2099']);
   });
 
   it('a real repeat win pays them through applyGateraResult (and its toast / stamp can say so)', () => {
@@ -310,12 +310,13 @@ describe('the reveal and the flag', () => {
     expect(w('r_dona').key).toBe('p3cat_r_dona');
   });
 
-  it('MULTIDIMENSIONAL is on: between legendary and mythic in power, last in the interface, 9 species', () => {
+  it('MULTIDIMENSIONAL is on: between legendary and mythic in power, last in the interface, 25 species (every reference cat)', () => {
     expect(MD.P3_MULTIDIM.on).toBe(true);
     const o = MD.rarityOrder();
     expect(o.indexOf('multidimensional')).toBe(o.indexOf('legendary') + 1);
     expect(MD.categoryOrder().at(-1)).toBe('multidimensional');
-    expect(CATS.filter((c) => c.rarity === 'multidimensional').length).toBe(9);
-    expect(CATS.filter((c) => c.rarity === 'multidimensional').every((c) => c.id.startsWith('x_') && MD.isP3Cat(c))).toBe(true);
+    expect(CATS.filter((c) => c.rarity === 'multidimensional').length).toBe(25);
+    // all from the Parte III (never the Portal, the Casino nor the Resonance); the ids never changed (saves keep them)
+    expect(CATS.filter((c) => c.rarity === 'multidimensional').every((c) => MD.isP3Cat(c))).toBe(true);
   });
 });

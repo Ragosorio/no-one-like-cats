@@ -111,6 +111,15 @@ export interface AudioApi {
    * e.g. setLayers('amb.suenos', { calido: 1, magia: 0.6 }, { fade: 3 }). No-op for tracks without layers.
    */
   setLayers(trackId: string, gains: Record<string, number> | null, opts?: { fade?: number }): void;
+  /**
+   * (ext, agent FINAL) keyed QUIET holds (default key 'api'): while any is on, the game's own music (states, the
+   * island's, the procedural moods) is silent; cues and the Fonoteca still play. The Parte III finale: «Música: ninguna».
+   */
+  quiet(on: boolean, opts?: { key?: string; fade?: number }): void;
+  /** (ext, agent FINAL) the track playing now goes on looping at its loop points from where it is (FilmDef.keep) */
+  keepLooping(trackId: string): boolean;
+  /** (ext, agent FINAL) the deck playing now: its canonical ref and file position (s); null when none */
+  nowPlaying(): { ref: string; pos: number } | null;
 }
 
 const noop = () => undefined;
@@ -134,6 +143,9 @@ const impl: AudioApi = {
   musicBoost: noop,
   solo: noop,
   setLayers: noop,
+  quiet: noop,
+  keepLooping: () => false,
+  nowPlaying: () => null,
 };
 
 /** the live implementation (installed by src/audio/engine.ts at boot) */

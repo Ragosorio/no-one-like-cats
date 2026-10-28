@@ -373,4 +373,85 @@ Nada commiteado ni publicado. Las decisiones del dueño están listadas en el re
 - Video de vista previa (74 s, sin audio) en `~/Desktop/No one - raster (fuera del repo)/revelaciones-multidimensionales/`.
 - NOVEDADES: `2026-10-27-multiversos`.
 
-**Estado:** sin commit; la publicación espera el OK del dueño.
+**Estado:** publicado en vivo el 2026-10-27 (9acd84f), con el OK del dueño («subelo a la partida ya»).
+
+## 12. Cartas, poderes, 16 universos más y el final fluido (2026-10-28)
+
+**Lo que pidió el dueño** (con capturas del Catdex): «que sea mas epico la muestra de la vista previa, que se note como tarjetas unicas… y que sus poderes tambien sean unicos, y muy poderosos… y que todos los gatos que sean referencia a algo… tambien sean multidimensionales… que tengan su propia animacion». Además, sobre la batalla final: «se pierden la gracia de las escenas… muchas pantallas de carga y se pierde esa sensación de "puta murio"… deberia ser mas fluida y con la musica correcta».
+
+Lo hicieron cinco agentes en paralelo; cada uno dejó su estado en `docs/part-iii/agentes/<AGENTE>.md`.
+
+**Reclasificación** (`data/gateras/especies.json`, rareza y referencias `balance:rarities.multidimensional`). 16 gatos de referencia pasan a Multidimensionales, así que ahora son 25:
+- e_comecroquetas, l_bigoton, l_gatzilla, l_emiau, e_ovillo, e_estambre;
+- r_gatarana_noir, r_gatarana_blanca, r_gatarana_2099, r_gatemson;
+- c_gritito, e_gatoconda, e_sonrisa, e_sirsimon, r_garbancito, e_maneki.
+
+Quedaron fuera, a la espera de lo que diga el dueño, tres guiños sin parodia concreta: Hipólito, Oficial Dona y el s_maneki «Mochi Maneki» de la Parte I.
+
+Efectos sobre las partidas:
+- Los gatos conservan nivel, estrellas y orbes.
+- Producen más oro (base 2,4/s) y la estrella siguiente pide 45 orbes.
+- Sus stats en batalla no cambian, porque salen de `combat`.
+
+**Universos** (`fx/sequences/multiverse/`; UNIVERSOS-A con `kitA.ts`, UNIVERSOS-B con `kitB.ts`). Los 16 tienen `open`, `payoff` y `card()`, y `PENDING` quedó vacío.
+
+| Gato | Placa | Idea |
+|---|---|---|
+| Comecroquetas | UNIVERSO ARCADE | laberinto de neón, fantasmas-gato, la croqueta de poder cae en el relleno de color: «¡WAKA-MIAU!» |
+| Príncipe Bigotón | UNIVERSO PRÍNCIPE | visor de poder hasta «¡MÁS DE 8000!», aura violeta, rayo: «¡SOY EL PRÍNCIPE!» |
+| Doctor Ovillo | UNIVERSO TENTÁCULO | laboratorio, brazos de estambre, reactor-ovillo: «¡HORA DE ENREDAR!» |
+| El Estambre | UNIVERSO TOLVANERA | dunas de lana, la silueta se deshace y se teje: «¡TORMENTA DE ESTAMBRE!» |
+| Gato Araña Noir | UNIVERSO NOIR | blanco y negro con lluvia, máquina de escribir: «NOCHE DE LLUVIA» |
+| Gata Araña | UNIVERSO PUNK | escenario pastel, cuenta de baquetas, baja colgada: «¡PLIÉ!» |
+| Gato Araña 2099 | UNIVERSO 2099 | megaciudad synthwave, escaneo holográfico: «¡GARRA NEÓN!» |
+| J. J. Gatemson | UNIVERSO PRIMERA PLANA | redacción, portadas girando: «¡EXTRA! ¡EXTRA!» |
+| Gatzilla | UNIVERSO KAIJU | película de medianoche, ciudad de cartón, aliento atómico azul: «¡GATZILLAAA!» |
+| EMIAU | BATALLA DE GALLOS | sótano en grises, barras, aerosol rojo: «MIC DROP.» |
+| El Gritito | UNIVERSO ALARIDO | cielo en ondas, el puente, el grito mudo: «¡AAAAAH!» |
+| La Gatoconda | UNIVERSO MUSEO | sala con flashes prohibidos, retratos que miran: «¿…SONRIÓ?» |
+| Sonrisa | UNIVERSO MARAVILLAS | primero la sonrisa sola, espiral de tablero: «¡AQUÍ NO HAY NADIE!» |
+| Sir Simón | UNIVERSO EMBRUJADO | salón gótico, la mancha que vuelve: «¡BUUU!» (…qué cansancio) |
+| Garbancito | UNIVERSO DIMINUTO | todo gigante, el buey: «¡PACHÍN!» ×3 |
+| Maneki | UNIVERSO FORTUNA | taquilla de laca, gatitos que saludan, koban: «¡SUERTE!» |
+
+**Cartas** (CARTAS: `panels/collection/multidimCard.ts`, `cardArt.ts`, `CatCard.ts`, `printTextures.ts`, `Catdex.ts`):
+- Cuadrícula: universo horneado una vez por especie y tamaño, marco metálico del color del universo, franja de las cinco cajas, foil y gema.
+- Ficha: universo animado de fondo, carta flotante y panel «PODER MULTIDIMENSIONAL», que reemplaza al bloque ULTIMATE.
+- Rumor: universo atenuado y poder «???».
+- Respaldo genérico: túnel de cajas.
+- Arreglo previo: la carta grande salía en blanco si la pintura no había cargado (`art.ts`).
+
+**Poderes** (PODERES: `battle/multidim.ts`, `battle/fx/multidimFx.ts`, `data/multidimPowers.ts`, `docs/part-iii/mecanicas-v2/07-poderes-multidimensionales.md`):
+- 25 poderes con mecánica propia; cada uno es la ulti del gato. Los textos están en `MULTIDIM_POWERS`.
+- Solo en el lado 0 (el jugador). Como rivales, EMIAU, Bigotón, Ovillo, Estambre y Sir Simón quedan idénticos: lo comprueba una prueba por gato, y la bitácora de H63 sale igual a la de HEAD.
+- Tope de estructura: 45 % (35 % legendarios, 40 % míticos) y 18 % contra jefes.
+- Las seis ultis ilimitadas pasan a 1× por batalla (2× con ★5).
+
+**El final** (FINAL: `app/finalFlow.ts`, `app/stageIntro.ts`, `film/*`, `audio/*`, `core/scenes.ts`, `momentos/runner.ts`, `data/music/*`). Se midió completo, antes y después:
+- **Antes:** 12–13 cargas, 4 telones, la canción de la isla 243 s debajo de películas en silencio (también bajo la muerte) y el chiptune de la Parte I en el asedio.
+- **Ahora:** 0 cargas entre películas, porque la siguiente se precarga y el último cuadro se sostiene.
+- **Asedio:** «Ojo del huracán» (`fut.jefe`, composición de COMPOSITOR-FUTURO), una sola toma para las dos peleas, que se corta en seco en K6 de «La caída».
+- **Silencio:** de «La caída» a «Continuará» se mantiene el silencio (`audioApi.quiet`); solo suenan las canciones de las películas.
+- **Canelo:** su tema es una sola toma hasta el trazo.
+- Videos en `~/Desktop/No one - raster (fuera del repo)/final-fluido/`.
+
+**Integración** (el coordinador):
+- `finalFlow.playStoryFlow`: un flujo interrumpido («Más tarde», un error) ya no deja la isla en silencio, porque su silencio se suelta solo.
+- **Fuga de memoria en el Catdex:** cada vuelta por las 25 fichas retenía unos 9 MB.
+  - Causa: Pixi guarda en una reserva un batcher por cada Graphics de más de 400 vértices, y esos batchers crecen sin encogerse nunca. El cielo de Van Gato en la ficha tenía 230 mil vértices en una sola Graphics, y la laca de Maneki 114 mil.
+  - Arreglo: las pinceladas son ahora polígonos (`dab`) y las escamas, polígonos de 16 lados. Quedan en 99 mil y 55 mil vértices por ficha.
+  - Lo que queda: unos 3 MB por vuelta completa, con tope en el tamaño de la reserva. Sin cierres con la colección completa registrada.
+- **Verificado:**
+  - `tsc` limpio, `vitest` con 1084 pruebas y `verify-missions` (194 OK o dormidas).
+  - Estrés del Catdex con todo registrado: cuadrícula entera más las 25 fichas, tres veces, sin errores.
+- NOVEDADES: `2026-10-28-cartas-y-poderes`.
+
+**Lo que decidió el dueño** (2026-10-28, «subelo a la partida ya»):
+- Hipólito, Oficial Dona y Mochi Maneki **no** pasan a Multidimensionales.
+- «Ojo del huracán» se queda para el asedio.
+- Silencio total en la isla durante el duelo: `p3_sin_luz` pasa a `music: 'silence'` (solo queda el mar).
+- El balance se queda como está por ahora.
+- Siguen abiertas las películas en silencio de los actos II–IV (`h85_oscuridad`), que aún dejan sonar la música del juego.
+
+**Estado:** publicado con el OK del dueño (ver el commit «feat(multidimensionales)»).
+

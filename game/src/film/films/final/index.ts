@@ -51,6 +51,20 @@ export const F32_CAIDA: FilmDef = {
   title: 'La caída',
   kind: 'interlude',
   track: null,
+  // (agent FINAL) «la de batalla se adelgaza → corte total cuando se apaga la llama» (h93 K1–K6): the siege's take of
+  // «Ojo del huracán» goes on under the fall, crossfaded to its grave mix at the same bar (it «loses layers»), quieter
+  // shot by shot, and cut DEAD at K6 (17 s, the flame goes out). After it: only the rain.
+  carry: {
+    to: 'fut.jefe.grave',
+    duck: [
+      [0, 0],
+      [4, 5],
+      [8, 11],
+      [14, 14],
+      [16.9, 17],
+    ],
+    cut: 17,
+  },
   loader: { style: 'default', caption: 'PELÍCULA' },
   scenes: [
     {
@@ -159,6 +173,9 @@ export const F34_AMANECER: FilmDef = {
   // catches on that entry (REGRESO.catchAt). With the debt, A1 stays almost silent: the chord is ducked under the walk
   track: 'liky_fight.amanecer',
   quiet: DEUDA_FALSA ? [[0, 2.2]] : undefined,
+  // (agent FINAL) the theme does not stop with the film: it loops on under the breakfast («en bucle suave», A6b) and
+  // the blow rides it (F34_GOLPE.join) until La Mano's stroke cuts it dry (A9) — one take, no restart
+  keep: true,
   loader: { style: 'davinci', caption: 'PELÍCULA' },
   scenes: [
     {
@@ -229,9 +246,11 @@ export const F34_GOLPE: FilmDef = {
   id: 'f34_golpe',
   title: 'Antes del amanecer (II)',
   kind: 'interlude',
-  // the theme goes on, lower — and stops DRY at A8 (the end of this film)
+  // the theme goes on, lower — and stops DRY at A8 (the end of this film). (agent FINAL) It RIDES the deck the dawn left
+  // looping (join: no restart at 20 s, «el tema sigue, más bajo»); only without it (a reload) does it start at `from`
   track: 'liky_fight.amanecer',
   from: 20,
+  join: { db: 4 },
   cutDry: true,
   loader: { style: 'default', caption: 'PELÍCULA' },
   scenes: [

@@ -6,6 +6,7 @@ import { C } from '../../../ui/theme';
 import { sfx } from '../../../core/audio';
 import { sparkles } from '../../juice';
 import { type Signature, type SigCtx, arrive, backlight, cheer, cover, every, flashOf, later, score, word } from './kit';
+import { bands, glow, liveLoop, seeded } from '../../../panels/collection/cardArt';
 
 const GOLD = 0xffd56b;
 
@@ -76,6 +77,17 @@ function goldenBall(): Container {
   const b = new Graphics().circle(0, 0, 13).fill(GOLD).stroke({ width: 3, color: C.ink });
   k.addChild(wl, wr, b);
   gsap.to([wl.scale, wr.scale], { y: 0.2, duration: 0.05, yoyo: true, repeat: -1 });
+  return k;
+}
+
+
+/** the winged golden ball, still (the card's: no wing tween of its own) */
+function ballStill(): Container {
+  const k = new Container();
+  const wl = new Graphics().ellipse(-22, -6, 20, 8).fill({ color: 0xffffff, alpha: 0.9 }).stroke({ width: 2, color: C.ink });
+  const wr = new Graphics().ellipse(22, -6, 20, 8).fill({ color: 0xffffff, alpha: 0.9 }).stroke({ width: 2, color: C.ink });
+  const b = new Graphics().circle(0, 0, 13).fill(GOLD).stroke({ width: 3, color: C.ink });
+  k.addChild(wl, wr, b);
   return k;
 }
 
@@ -176,5 +188,73 @@ export const harrygatter: Signature = {
       ball.position.set(W / 2 + Math.sin(t * 1.3) * 560 + Math.sin(t * 4.1) * 60, c.CY - 120 + Math.sin(t * 2.2) * 260);
       ball.rotation = Math.sin(t * 3) * 0.3;
     });
+  },
+  card(w, h, live) {
+    const k = new Container();
+    const m = Math.min(w, h);
+    const cx = w / 2;
+    const cy = h * 0.54;
+    const r = seeded(13);
+    const sky = bands(new Graphics(), 0, 0, w, h, [0x110c30, 0x1a1440, 0x2e2264], 14);
+    for (let i = 0; i < 54; i++) sky.circle(r() * w, r() * h * 0.7, Math.max(0.6, m * (0.003 + r() * 0.005))).fill({ color: 0xffffff, alpha: 0.4 + r() * 0.5 });
+    const moon = new Graphics().circle(0, 0, m * 0.07).fill(0xfff2c4).circle(m * 0.026, -m * 0.014, m * 0.062).cut();
+    moon.position.set(w * 0.86, h * 0.14);
+    k.addChild(sky, moon);
+    // lumos: a violet light behind him
+    k.addChild(glow(new Graphics(), cx, cy, m * 0.52, 0x9f8cff, 0.85));
+    // the castle on its hill
+    const castle = new Graphics();
+    const base = h * 0.88;
+    castle.poly([0, h, 0, base, w * 0.2, base - h * 0.02, w * 0.42, base, w * 0.62, base - h * 0.03, w * 0.83, base, w, base - h * 0.01, w, h]).fill(0x0a0820);
+    for (const [fx, fh, fw] of [
+      [0.08, 0.16, 0.045],
+      [0.17, 0.28, 0.06],
+      [0.26, 0.2, 0.04],
+      [0.74, 0.25, 0.055],
+      [0.84, 0.34, 0.07],
+      [0.94, 0.2, 0.045],
+    ] as const) {
+      const x = fx * w;
+      const th = fh * h;
+      const tw = Math.max(5, fw * w);
+      castle.rect(x - tw / 2, base - th, tw, th).fill(0x0a0820);
+      castle.poly([x - tw / 2 - tw * 0.2, base - th, x, base - th - tw * 1.6, x + tw / 2 + tw * 0.2, base - th]).fill(0x0a0820);
+      for (let y = base - th + tw * 0.5; y < base - tw * 0.4; y += tw * 0.95) castle.rect(x - tw * 0.1, y, tw * 0.2, tw * 0.33).fill({ color: 0xffc85a, alpha: 0.85 });
+    }
+    k.addChild(castle);
+    // floating candles
+    const candles = Array.from({ length: 7 }, (_, i) => {
+      const c = candle();
+      c.scale.set((m * 0.13) / 62);
+      c.position.set(w * (0.07 + (i / 6) * 0.86) + (r() - 0.5) * w * 0.04, h * (0.14 + r() * 0.28));
+      k.addChild(c);
+      return { c, y0: c.y, p: r() * 6 };
+    });
+    // sealed letters whirling around him
+    const letters = Array.from({ length: 4 }, (_, i) => {
+      const l = letter();
+      l.scale.set((m * 0.14) / 72);
+      k.addChild(l);
+      return { l, a0: (i / 4) * Math.PI * 2 + 0.5 };
+    });
+    const ball = ballStill();
+    ball.scale.set((m * 0.09) / 64);
+    k.addChild(ball);
+    const place = (t: number) => {
+      for (const s of letters) {
+        const a = s.a0 + t * 0.35;
+        s.l.position.set(cx + Math.cos(a) * m * 0.47, cy + Math.sin(a) * m * 0.36);
+        s.l.rotation = Math.sin(a) * 0.4;
+      }
+      ball.position.set(cx + Math.sin(t * 1.3) * w * 0.36, h * 0.3 + Math.sin(t * 2.1) * h * 0.12);
+    };
+    place(0.6);
+    if (live)
+      liveLoop(k, (t) => {
+        place(0.6 + t);
+        for (const c of candles) c.c.y = c.y0 + Math.sin(t * 1.4 + c.p) * m * 0.02;
+        ball.children[0].scale.y = ball.children[1].scale.y = 0.2 + 0.8 * Math.abs(Math.sin(t * 30));
+      });
+    return k;
   },
 };

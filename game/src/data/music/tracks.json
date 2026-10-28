@@ -1490,6 +1490,21 @@
     "gainDb": 0,
     "lufs": -18.01,
     "note": "«Ojo del huracán» (COMPOSITOR-FUTURO, batalla de jefe en Re menor, 150 BPM, 3+3+2) re-mezclado grave para F31: sin glockenspiel, batería −6 dB, trémolo, metales, coro y graves al frente, paso bajo 1,6 kHz y sala de 3 s. La tormenta la pone la película. Intro 4 · loop 28 · final 2."
+   },
+   {
+    "id": "fut.jefe",
+    "file": "music/fut.jefe.m4a",
+    "kind": "battle",
+    "title": "Ojo del huracán",
+    "durationSec": 58.4,
+    "loop": {
+     "start": 6.4,
+     "end": 51.2
+    },
+    "bpm": 150,
+    "gainDb": -1.3,
+    "lufs": -16.7,
+    "note": "«Ojo del huracán» completa (COMPOSITOR-FUTURO, batalla de jefe en Re menor, 150 BPM, 3+3+2; maestro en audio-derivados/futuro). EL FINAL (agente FINAL): la música de «El asedio» (H93, las dos peleas seguidas, sin reiniciar). Es la misma pieza que fut.jefe.grave (mismos compases): F31 la presenta grave bajo la tormenta, la batalla la toca entera y F32 «La caída» vuelve a la mezcla grave en la misma posición («pierde capas») hasta el corte total en K6. Intro 4 · loop 28 · final 2."
    }
   ],
   "loop": null,

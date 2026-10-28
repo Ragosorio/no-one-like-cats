@@ -7,6 +7,7 @@ import { txt } from '../../../ui/widgets';
 import { sfx } from '../../../core/audio';
 import { speedLines } from '../../juice';
 import { type Signature, type SigCtx, CHEER, SIG_LEN, arrive, bolt, cheer, cover, every, flashOf, later, score, word } from './kit';
+import { liveLoop, seeded } from '../../../panels/collection/cardArt';
 
 const GOLD = 0xffd23a;
 
@@ -173,5 +174,66 @@ export const supersiames: Signature = {
     }
     cheer(c, '¡PASÓ DE NUEVE!', GOLD, 110, 1.6);
     later(c, 1.0, () => word(c, CHEER[0] + 40, CHEER[1] + 110, '…vidas, digo.', C.paper, 46, 1.8, F.ui));
+  },
+  card(w, h, live) {
+    const k = new Container();
+    const m = Math.min(w, h);
+    const cx = w / 2;
+    const cy = h * 0.54;
+    const hz = h * 0.72;
+    const sky = new Graphics();
+    const sb = [0xff7a1a, 0xff8d24, 0xffa032, 0xffb444, 0xffc657, 0xffd36b];
+    sb.forEach((b, i) => sky.rect(0, (i * hz) / sb.length, w, hz / sb.length + 1).fill(b));
+    k.addChild(sky);
+    const mesas = new Graphics();
+    mesas
+      .poly([0, hz, w * 0.06, hz - h * 0.15, w * 0.17, hz - h * 0.16, w * 0.22, hz])
+      .poly([w * 0.72, hz, w * 0.76, hz - h * 0.19, w * 0.89, hz - h * 0.2, w * 0.93, hz])
+      .poly([w * 0.27, hz, w * 0.31, hz - h * 0.08, w * 0.4, hz - h * 0.085, w * 0.43, hz])
+      .fill(0xa8582a);
+    k.addChild(mesas);
+    const ground = new Graphics().rect(0, hz, w, h - hz).fill(0xc77a3a);
+    for (let i = 0; i < 6; i++) ground.rect(0, hz + (h - hz) * (0.12 + i * 0.15), w, Math.max(1, m * 0.006)).fill({ color: 0xa8612b, alpha: 0.5 });
+    k.addChild(ground);
+    // the ground cracks under him
+    const cr = new Graphics();
+    for (let i = 0; i < 6; i++) {
+      const dir = i % 2 ? 1 : -1;
+      bolt(cr, cx, hz + (h - hz) * 0.35, cx + dir * (w * 0.16 + i * w * 0.05), hz + (h - hz) * (0.25 + i * 0.12), C.ink, Math.max(1, m * (0.012 - i * 0.001)), 7, m * 0.04);
+    }
+    k.addChild(cr);
+    // the golden aura (drawn at the reveal's size, scaled to the card)
+    const au = new Graphics();
+    const AS = h / 890;
+    au.scale.set(AS);
+    au.position.set(cx, cy + h * 0.06);
+    k.addChild(au);
+    const sparks = new Graphics();
+    k.addChild(sparks);
+    // rocks floating up
+    const r = seeded(3);
+    const rocks = Array.from({ length: 7 }, (_, i) => {
+      const g = rock(30);
+      g.scale.set((m * (0.03 + r() * 0.035)) / 30);
+      const side = i % 2 ? 1 : -1;
+      g.position.set(cx + side * (m * 0.3 + r() * Math.max(m * 0.1, w / 2 - m * 0.3)), h * (0.2 + r() * 0.55));
+      g.rotation = r() * 6;
+      k.addChild(g);
+      return { g, y0: g.y, p: r() * 6 };
+    });
+    if (live)
+      liveLoop(k, (t) => {
+        aura(au, t, 1);
+        for (const p of rocks) p.g.y = p.y0 + Math.sin(t * 1.6 + p.p) * m * 0.02;
+        sparks.clear();
+        if (Math.random() < 0.35) {
+          const a = Math.random() * Math.PI * 2;
+          const x0 = cx + Math.cos(a) * m * 0.2;
+          const y0 = cy + Math.sin(a) * m * 0.3;
+          bolt(sparks, x0, y0, x0 + Math.cos(a) * m * 0.14, y0 + Math.sin(a) * m * 0.14, 0xbfe9ff, Math.max(1, m * 0.006), 5, m * 0.03);
+        }
+      });
+    else aura(au, 0.7, 1);
+    return k;
   },
 };

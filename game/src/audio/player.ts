@@ -283,6 +283,22 @@ export class Deck {
     this.buffer = buf;
   }
 
+  /** (agent FINAL) a deck that was playing through goes on looping at its loop points (the whole file without them) */
+  keepLooping() {
+    if (this.looping) return;
+    this.looping = true;
+    if (this.kind === 'buffer' && this.src && this.buffer) {
+      const L = validLoop(this.loop);
+      this.src.loop = true;
+      if (L && L.end <= this.buffer.duration + 0.01) {
+        this.src.loopStart = L.start;
+        this.src.loopEnd = Math.min(L.end, this.buffer.duration);
+      }
+      return;
+    }
+    if (this.el) this.el.loop = true;
+  }
+
   /** start rendering at ctx time `when`, from unwrapped/file position `at` */
   start(when: number, at: number, loop: boolean) {
     const ctx = this.ctx;
@@ -710,6 +726,23 @@ export class MusicPlayer {
     if (!c || !ctx) return;
     c.seek(p);
     if (this.synced === c) this.sched.jump(c.uAt(ctx.currentTime));
+  }
+
+  /**
+   * (agent FINAL) the deck playing `ref` goes on LOOPING at its loop points from where it is (no restart, no gap): a
+   * film handed its song to what follows (FilmDef.keep). false when that ref isn't the current deck.
+   */
+  loopCurrent(ref: string): boolean {
+    const d = this.cur;
+    if (!d || d.ref.ref !== ref || (d.state !== 'playing' && d.state !== 'scheduled' && d.state !== 'paused')) return false;
+    d.keepLooping();
+    return true;
+  }
+  /** (agent FINAL) the current deck's ref and its position in the file (s), as rendered now */
+  current(): { ref: string; pos: number } | null {
+    const d = this.cur;
+    if (!d || d.state === 'stopped' || d.state === 'stopping') return null;
+    return { ref: d.ref.ref, pos: d.position() };
   }
 
   /** seconds since the synced track started, as HEARD (null when nothing synced plays) */

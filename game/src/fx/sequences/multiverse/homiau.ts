@@ -5,6 +5,7 @@ import { W } from '../../../core/App';
 import { C } from '../../../ui/theme';
 import { sfx } from '../../../core/audio';
 import { type Signature, type SigCtx, arrive, burst, cheer, cover, drizzle, every, fall, later, score, word } from './kit';
+import { bands, liveLoop, rays, seeded } from '../../../panels/collection/cardArt';
 
 const SKY = 0x6ec6f0;
 const DOUGH = 0xe3a65b;
@@ -56,6 +57,22 @@ function cloud(w: number): Graphics {
   for (const [x, y, r] of bumps) g.circle(x * w, y * w + 0.05 * w, r * w).fill(0xbfe6f8);
   for (const [x, y, r] of bumps) g.circle(x * w, y * w, r * w).fill(0xffffff);
   g.rect(-0.46 * w, 0, 1.46 * w, 0.18 * w).fill(SKY);
+  return g;
+}
+
+
+/** a puffy cartoon cloud for the card (no flat sky-colored cut: the card's sky is a gradient) */
+function puff(wd: number): Graphics {
+  const g = new Graphics();
+  const bumps: [number, number, number][] = [
+    [-0.28, 0.02, 0.2],
+    [0, -0.08, 0.3],
+    [0.3, -0.14, 0.34],
+    [0.6, -0.04, 0.26],
+    [0.84, 0.04, 0.18],
+  ];
+  for (const [x, y, r] of bumps) g.circle(x * wd, y * wd + 0.05 * wd, r * wd).fill(0xbfe6f8);
+  for (const [x, y, r] of bumps) g.circle(x * wd, y * wd, r * wd).fill(0xffffff);
   return g;
 }
 
@@ -127,5 +144,69 @@ export const homiau: Signature = {
     );
     c.shaker.add(0.35);
     drizzle(c, c.back, () => donut(40 + Math.random() * 26, Math.ceil(Math.random() * 99)), 0.45, 3.4);
+  },
+  card(w, h, live) {
+    const k = new Container();
+    const m = Math.min(w, h);
+    const cx = w / 2;
+    const cy = h * 0.54;
+    const sky = bands(new Graphics(), 0, 0, w, h, [0x3ea8e6, SKY, 0xc4ebfb], 16);
+    rays(sky, cx, cy, Math.hypot(w, h), 16, 0xffffff, 0.13, 0.1);
+    k.addChild(sky);
+    const clouds = (
+      [
+        [0.08, 0.12, 0.42],
+        [0.8, 0.08, 0.5],
+        [0.62, 0.3, 0.26],
+        [-0.04, 0.66, 0.36],
+        [0.9, 0.72, 0.34],
+      ] as const
+    ).map(([fx, fy, s]) => {
+      const g = puff(s * m);
+      g.position.set(fx * w, fy * h);
+      k.addChild(g);
+      return { g, x0: fx * w, v: (0.03 + s * 0.05) * m };
+    });
+    // the giant donut: his disc, as in the reveal
+    const R = m * 0.44;
+    const big = donut(330, 3);
+    big.scale.set(R / 330);
+    big.position.set(cx, cy);
+    k.addChild(big);
+    // donuts raining around him, and sprinkles everywhere
+    const r = seeded(11);
+    const rain = Array.from({ length: 9 }, (_, i) => {
+      const side = i % 2 ? 1 : -1;
+      const d = donut(60, i + 5);
+      d.scale.set((m * (0.07 + r() * 0.06)) / 60);
+      d.position.set(cx + side * (R * 0.9 + r() * Math.max(m * 0.1, w / 2 - R * 0.8)), r() * h);
+      d.rotation = r() * 6;
+      k.addChild(d);
+      return { d, v: m * (0.06 + r() * 0.08), spin: (r() - 0.5) * 2 };
+    });
+    const spr = new Graphics();
+    for (let i = 0; i < 46; i++) {
+      const x = r() * w;
+      const y = r() * h;
+      if (Math.hypot(x - cx, y - cy) < R * 0.95) continue;
+      const a = r() * Math.PI;
+      const L = m * 0.035;
+      spr
+        .moveTo(x - (Math.cos(a) * L) / 2, y - (Math.sin(a) * L) / 2)
+        .lineTo(x + (Math.cos(a) * L) / 2, y + (Math.sin(a) * L) / 2)
+        .stroke({ width: Math.max(1.5, m * 0.012), color: SPRINKLES[i % SPRINKLES.length], cap: 'round' });
+    }
+    k.addChild(spr);
+    if (live)
+      liveLoop(k, (t, dt) => {
+        big.rotation = t * 0.12;
+        for (const c of clouds) c.g.x = ((c.x0 + t * c.v + w * 0.3) % (w * 1.6)) - w * 0.3;
+        for (const p of rain) {
+          p.d.y += p.v * dt;
+          p.d.rotation += p.spin * dt;
+          if (p.d.y > h + m * 0.1) p.d.y = -m * 0.1;
+        }
+      });
+    return k;
   },
 };

@@ -16,7 +16,7 @@ import gsap from 'gsap';
 import { C, F } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { Stepped } from './rigs';
-import type { Part, Portals } from '../sim';
+import type { Part, Portals, Well } from '../sim';
 
 const INK = 0x171317;
 const ORCHID = 0xc77dff;
@@ -262,7 +262,7 @@ export class InkCatFx extends Stepped {
 // ================================================================ Wells / black hole / lure
 export class WellFx extends Stepped {
   private g = new Graphics();
-  constructor(public wx: number, public wy: number, public r: number, public kind: 'well' | 'hole' | 'lure' | 'sun' | 'horizon') {
+  constructor(public wx: number, public wy: number, public r: number, public kind: Well['kind']) {
     super();
     this.addChild(this.g);
     gsap.from(this.scale, { x: 0, y: 0, duration: 0.5, ease: 'back.out(2)' });
@@ -334,6 +334,54 @@ export class WellFx extends Stepped {
       g.circle(x, y, R).fill(0xffd400).stroke({ width: 6, color: INK });
       g.circle(x, y, R * 0.72).fill(0xfff2c0);
       g.circle(x - R * 0.3, y - R * 0.3, R * 0.18).fill({ color: 0xffffff, alpha: 0.9 });
+      return;
+    }
+    if (this.kind === 'swirl') {
+      // Van Gato's starry swirl (a Multidimensional power): blue and yellow brushstrokes spinning over their ship
+      const sp = this.t * 1.4;
+      for (let k = 0; k < 4; k++) {
+        const a0 = sp + (k * Math.PI) / 2;
+        g.moveTo(x + Math.cos(a0) * 24, y + Math.sin(a0) * 12);
+        for (let s = 1; s <= 22; s++) {
+          const rr = 24 + s * (this.r * 0.85 - 24) / 22;
+          const a = a0 + s * 0.26;
+          g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.42);
+        }
+        g.stroke({ width: 12, color: INK, alpha: 0.25 });
+        g.moveTo(x + Math.cos(a0) * 24, y + Math.sin(a0) * 12);
+        for (let s = 1; s <= 22; s++) {
+          const rr = 24 + s * (this.r * 0.85 - 24) / 22;
+          const a = a0 + s * 0.26;
+          g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.42);
+        }
+        g.stroke({ width: 6, color: k % 2 ? 0xf2c14e : 0x3a63d8, alpha: 0.8 });
+      }
+      for (let i = 0; i < 6; i++) {
+        const a = sp * 0.6 + i * 1.05;
+        const rr = this.r * (0.3 + (i % 3) * 0.2);
+        g.circle(x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.42, 9 + 3 * Math.sin(this.t * 5 + i)).fill(0xffe14a).stroke({ width: 3, color: INK });
+      }
+      g.circle(x, y, 26).fill(0xffe9a0).stroke({ width: 4, color: INK });
+      return;
+    }
+    if (this.kind === 'grin') {
+      // Sonrisa's grin (a Multidimensional power): only the smile is left, floating in front of your ship
+      const bob = Math.sin(this.t * 2) * 8;
+      const a = 0.55 + 0.25 * Math.sin(this.t * 3);
+      g.circle(x, y + bob, 74).fill({ color: 0xc77dff, alpha: 0.12 });
+      g.moveTo(x - 70, y + bob - 6).quadraticCurveTo(x, y + bob + 56, x + 70, y + bob - 6).quadraticCurveTo(x, y + bob + 28, x - 70, y + bob - 6).fill({ color: 0xffffff, alpha: a + 0.2 }).stroke({ width: 5, color: INK, alpha: a + 0.2 });
+      for (let i = -3; i <= 3; i++) g.moveTo(x + i * 16, y + bob + 8 - Math.abs(i)).lineTo(x + i * 16, y + bob + 24 - Math.abs(i) * 2).stroke({ width: 3, color: INK, alpha: a });
+      g.circle(x - 30, y + bob - 40, 9).fill({ color: 0xffe14a, alpha: a * 0.7 });
+      g.circle(x + 30, y + bob - 40, 9).fill({ color: 0xffe14a, alpha: a * 0.7 });
+      return;
+    }
+    if (this.kind === 'gaze') {
+      // La Gatoconda's gaze (a Multidimensional power): the sfumato around her cabin and the eye that follows you
+      const p = 0.5 + 0.5 * Math.sin(this.t * 1.6);
+      g.circle(x, y, 90 + 10 * p).fill({ color: 0x8a8a4a, alpha: 0.16 });
+      g.circle(x, y, 150 + 14 * p).fill({ color: 0x6b6b3a, alpha: 0.08 });
+      g.ellipse(x, y - 70, 38, 15).fill({ color: 0xf3ead2, alpha: 0.85 }).stroke({ width: 4, color: INK });
+      g.circle(x + 10 * Math.sin(this.t * 0.9), y - 70, 9).fill(0x4a3a20);
       return;
     }
     const hole = this.kind === 'hole';

@@ -10,7 +10,7 @@ import { audio } from '../core/audio';
 import { music, Mood } from '../core/music';
 import type { CueOpts, MusicState } from './api';
 import { hasTrack, resolveTrack } from './catalog';
-import { DirectorTable, Target, cleanTable, entryFor, resolveTarget, sameTarget } from './directorTable';
+import { DirectorTable, Target, cleanTable, entryFor, quietOver, resolveTarget, sameTarget } from './directorTable';
 import { MusicPlayer } from './player';
 import { islandTrack, partII } from './fonoteca';
 import TABLE_RAW from '../data/music/director.json';
@@ -75,6 +75,24 @@ export class Director {
   get cueRef() {
     return this.cueReq?.ref ?? null;
   }
+  /**
+   * (agent FINAL) keyed QUIET holds: while any is on, the game's own music — the state's track, the island's, the
+   * procedural moods — stays silent; cues (a film's song) and the Fonoteca still play. The Parte III finale holds it
+   * («Música: ninguna»), so a film without its own song is silence, and a released film song falls back to silence
+   * instead of the island's music.
+   */
+  private quiets = new Set<string>();
+  quiet(key: string, on: boolean, fade = 1.2) {
+    const was = this.quiets.size > 0;
+    if (on) this.quiets.add(key);
+    else this.quiets.delete(key);
+    if (was === this.quiets.size > 0) return;
+    this.note(`quiet ${on ? 'on' : 'off'} (${key})`);
+    this.apply(fade);
+  }
+  get quieted() {
+    return this.quiets.size > 0;
+  }
   /** Fonoteca: the player picked something to listen to (wins over everything while set) */
   listen(ref: string, o: { loop?: boolean; onEnd?: () => void } = {}) {
     this.listenReq = { ref, loop: !!o.loop, onEnd: o.onEnd };
@@ -107,7 +125,7 @@ export class Director {
       this.resumeMood = null;
       return;
     }
-    const t = resolveTarget(this.table, {
+    const t0 = resolveTarget(this.table, {
       state: this.state,
       context: this.context,
       partII: partII(),
@@ -117,6 +135,8 @@ export class Director {
       listen: this.listenReq,
       rotation: this.rotation.get(this.state) ?? 0,
     });
+    // a QUIET hold silences everything but a cue / a listen
+    const t: Target = quietOver(t0, this.quiets.size > 0);
     if (!restart && sameTarget(t, this.applied)) {
       // same music — but a stopped deck (ended non-looping cue) must not leave us silent forever
       if (t.kind !== 'track' || this.player.cur) return;
@@ -156,7 +176,8 @@ export class Director {
       return;
     }
     this.resumeMood = null;
-    this.player.stop(t.source === 'partI' ? 0.6 : Math.max(0.3, fade));
+    // (agent FINAL) an explicitly short fade is honoured (a film's «corte en seco» into a quiet hold: silence, dry)
+    this.player.stop(t.source === 'partI' ? 0.6 : Math.max(fadeOverride !== undefined ? 0.03 : 0.3, fade));
     if (t.kind === 'procedural') this.procIn(t.mood, t.source === 'partI' ? 0 : fade);
     else this.procOut(t.source === 'partI' ? 0 : Math.max(0.3, fade), true);
     this.note(`${t.kind}${t.kind === 'procedural' ? ` ${t.mood}` : ''}`);
@@ -236,6 +257,7 @@ export class Director {
       partII: partII(),
       cue: this.cueReq?.ref ?? null,
       listen: this.listenReq?.ref ?? null,
+      quiet: [...this.quiets],
       applied: this.applied,
       procedural: music.mood,
     };

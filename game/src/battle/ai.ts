@@ -12,6 +12,7 @@ import { skyTargetMul } from './cielo';
 import { umShotValue } from './umbral';
 import { sealValue } from './cataclysm';
 import { mareoShotValue } from './mareo';
+import { mdOn } from './multidim';
 
 export type Personality = 'clumsy' | 'sniper' | 'tuner' | 'calculator' | 'avenger' | 'looter' | 'demolisher' | 'elementalist';
 
@@ -52,6 +53,9 @@ export function aiProfile(difficulty: keyof typeof DIFFICULTY, personality?: str
   return { ...base, personality: p };
 }
 
+/** how much more the AI values firing a Multidimensional power than its plain shot's blast (multidim.ts; player side) */
+const MD_AI_VALUE = 2.5;
+
 const MODULE_VALUE: Record<string, number> = { core: 10, catroom: 6, cannon: 4, shield: 5, arcane: 5, powder: 7, mast: 2, engine: 3 };
 
 function gauss(r: Rng) {
@@ -86,10 +90,10 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
   const r = new Rng(seed);
   const enemy = 1 - side;
   const options: { shooter: string; ult: boolean; shot: ShotDef; angle: number; power: number; score: number; tx: number; ty: number }[] = [];
-  const shooters: { id: string; shot: ShotDef; ult: boolean }[] = [];
+  const shooters: { id: string; shot: ShotDef; ult: boolean; md: boolean }[] = [];
   for (const c of b.shooters(side)) {
     const ult = b.canUlt(c) && ultWorth(b, c) && r.chance(profile.ultChance);
-    shooters.push({ id: c.def.uid, shot: ult ? c.def.ultimate! : c.def.shot, ult });
+    shooters.push({ id: c.def.uid, shot: ult ? c.def.ultimate! : c.def.shot, ult, md: ult && mdOn(b, c) });
   }
   if (!shooters.length) return null;
   const pers = profile.personality;
@@ -201,6 +205,8 @@ export function decide(b: Battle, side: 0 | 1, profile: AiProfile, memory: Map<s
         if (score > 0) score *= grShotValue(b, side, s.shot, paths);
         // Parte III · La Borracha: a shot that lands on their donut feeds them (mareo.ts)
         if (score > 0) score *= mareoShotValue(b, side, paths);
+        // a Multidimensional power (your crew only) does far more than its shot's blast shows: take it when it's worth it
+        if (score > 0 && s.md) score *= MD_AI_VALUE;
         if (score > 0) {
           const end = paths[0].points[paths[0].points.length - 1];
           options.push({ shooter: s.id, ult: s.ult, shot: s.shot, angle, power, score, tx: end.x, ty: end.y });

@@ -219,8 +219,10 @@ describe('the texture GC rests while a film plays (texturegc.ts, used by playFil
   it('playFilm pauses it and restores it in its finally', async () => {
     const { readFileSync } = await import('node:fs');
     const src = readFileSync(new URL('../src/film/index.ts', import.meta.url), 'utf8');
-    expect(src).toMatch(/restoreGC = pauseTextureGC\(/);
+    // (agent FINAL) one refcounted pause shared by the playing film, the warm ones and a held last frame
+    expect(src).toMatch(/gcRestore = pauseTextureGC\(/);
+    expect(src).toMatch(/releaseGC = gcHold\(/);
     const fin = src.slice(src.lastIndexOf('} finally {'));
-    expect(fin).toMatch(/restoreGC\?\.\(\)/);
+    expect(fin).toMatch(/releaseGC\?\.\(\)/);
   });
 });

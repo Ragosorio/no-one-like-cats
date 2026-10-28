@@ -104,6 +104,7 @@
     }
   },
   "contexts": {
+    "battle:p3_final": { "tracks": ["fut.jefe", "fut.jefe.grave"], "pick": "first", "loop": true, "quantize": "bar", "fade": 0.9, "procedural": "battle" },
     "explore:cometa": {
       "tracks": [
         "liky_fight.explore",

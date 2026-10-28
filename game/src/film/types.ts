@@ -237,6 +237,23 @@ export interface FilmDef {
   /** the music stops DRY at the film's end (no release fade): «corte en seco» */
   cutDry?: boolean;
   /**
+   * (agent FINAL) its song goes ON after the film ends, looping at the track's loop points: what follows (a playable
+   * piece, the next film with `join`) rides it, and whoever comes last releases it. EL FINAL: Canelo's theme from the
+   * dawn through the breakfast into the blow («el tema de Canelo, en bucle suave… sigue, más bajo… se corta en seco»).
+   */
+  keep?: boolean;
+  /**
+   * (agent FINAL) when its track is already playing (kept by the film before), the film rides that deck from where it
+   * is — no restart, its own clock — ducked `db`; otherwise it plays its track from `from` as usual.
+   */
+  join?: { db?: number };
+  /**
+   * (agent FINAL) a film without its own track that CARRIES the music playing when it starts (a battle's): optionally
+   * crossfaded to `to` at the same file position (a thinner mix of the same piece: «pierde capas»), ducked along `duck`
+   * ([film s, dB] points, linear in between), and cut dry at `cut` (film s) — after the cut, silence until the film ends.
+   */
+  carry?: { to?: string; duck?: [number, number][]; cut?: number };
+  /**
    * film-time windows [from, to] (s) where the film's own music goes quiet (ducked deep, live runs only, always
    * released when the film ends) — e.g. the empty stadium after the karaoke (FILM-ACTO4). Absent = no change.
    */

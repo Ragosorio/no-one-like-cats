@@ -6,6 +6,7 @@ import { C } from '../../../ui/theme';
 import { sfx } from '../../../core/audio';
 import { halftoneTexture } from '../../../art/textures';
 import { type Signature, type SigCtx, arrive, cheer, cover, every, later, score, word } from './kit';
+import { liveLoop, seeded } from '../../../panels/collection/cardArt';
 
 const RED = 0xd7262e;
 const BLUE = 0x1f4fb4;
@@ -187,5 +188,43 @@ export const gatarana: Signature = {
     );
     cheer(c, '¡THWIP! ¡THWIP!', 0xffffff, 110, 1.6);
     c.shaker.add(0.3);
+  },
+  card(w, h, live) {
+    const k = new Container();
+    const m = Math.min(w, h);
+    const cx = w / 2;
+    const cy = h * 0.54;
+    // the red/blue split of the comic city, in halftone
+    k.addChild(new Graphics().rect(0, 0, w, h).fill(BLUE).poly([0, 0, w, 0, w, h * 0.2, 0, h * 0.84]).fill(RED));
+    const dots = new TilingSprite({ texture: halftoneTexture(C.ink, 14, 3), width: w, height: h });
+    dots.tileScale.set(Math.max(0.35, m / 900));
+    dots.alpha = 0.18;
+    k.addChild(dots);
+    // the skyline seen from a rooftop
+    const r = seeded(5);
+    const sky = new Graphics();
+    let x = -w * 0.02;
+    while (x < w) {
+      const bw = w * (0.06 + r() * 0.06);
+      const bh = h * (0.14 + r() * 0.26);
+      sky.rect(x, h - bh, bw, bh).fill(NIGHT);
+      const ww = Math.max(1.5, bw * 0.14);
+      const wh = ww * 1.3;
+      for (let wy = h - bh + wh; wy < h - wh; wy += wh * 2.1) for (let wx = x + ww; wx < x + bw - ww * 1.5; wx += ww * 2) if (r() < 0.4) sky.rect(wx, wy, ww, wh).fill(0xffd76a);
+      x += bw + w * 0.006;
+    }
+    k.addChild(sky);
+    // the web spun behind him (drawn at 360 so its threads stay bold when scaled)
+    const wg = new Graphics();
+    web(wg, 360, 1);
+    const base = (m * 0.64) / 360;
+    wg.scale.set(base);
+    wg.position.set(cx, cy);
+    k.addChild(wg);
+    // his line, out of the top of the card
+    const line = new Graphics().moveTo(cx + m * 0.34, -2).lineTo(cx + m * 0.12, cy - m * 0.36).stroke({ width: Math.max(1.5, m * 0.012), color: 0xffffff });
+    k.addChild(line);
+    if (live) liveLoop(k, (t) => wg.scale.set(base * (1 + 0.025 * Math.sin(t * 2))));
+    return k;
   },
 };

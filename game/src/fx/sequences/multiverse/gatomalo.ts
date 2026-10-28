@@ -5,6 +5,7 @@ import { W, H } from '../../../core/App';
 import { C } from '../../../ui/theme';
 import { sfx } from '../../../core/audio';
 import { type Signature, type SigCtx, CHEER, burst, cover, every, later, plate, slam, word } from './kit';
+import { liveLoop } from '../../../panels/collection/cardArt';
 
 const PINK = 0xff3fa4;
 const MINT = 0x39ffb0;
@@ -157,5 +158,84 @@ export const gatomalo: Signature = {
       820,
       1.3,
     );
+  },
+  card(w, h, live) {
+    const k = new Container();
+    const m = Math.min(w, h);
+    const cx = w / 2;
+    const cy = h * 0.54;
+    const hz = h * 0.7;
+    const sky = new Graphics();
+    const sb = [0x2b0f3a, 0x4a1450, 0x7a1f5c, 0xb02a66, 0xd9366e, 0xf5566a, 0xff7a3d, 0xffa040, 0xffc24a];
+    sb.forEach((b, i) => sky.rect(0, (i * hz) / sb.length, w, hz / sb.length + 1).fill(b));
+    k.addChild(sky);
+    // the retro striped sun sitting on the sea
+    const R = m * 0.44;
+    const sun = new Graphics();
+    const pts: number[] = [];
+    for (let i = 0; i <= 48; i++) {
+      const a = Math.PI + (i / 48) * Math.PI;
+      pts.push(cx + Math.cos(a) * R, hz + Math.sin(a) * R);
+    }
+    sun.poly(pts).fill(0xffd04a);
+    for (let i = 0; i < 6; i++) {
+      const y = hz - R * (0.07 + i * 0.12);
+      const th = R * (0.075 - i * 0.01);
+      const hw = Math.sqrt(Math.max(0, R * R - (hz - y) * (hz - y)));
+      sun.rect(cx - hw, y - th / 2, hw * 2, th).fill(0xff7a3d);
+    }
+    k.addChild(sun);
+    const sea = new Graphics().rect(0, hz, w, h - hz).fill(0x10324a);
+    for (let i = 0; i < 7; i++) sea.rect(cx - R * 0.8 + i * R * 0.05, hz + (h - hz) * (0.08 + i * 0.13), R * 1.6 - i * R * 0.1, Math.max(1, m * 0.012)).fill({ color: 0xffb04a, alpha: 0.6 - i * 0.06 });
+    k.addChild(sea);
+    // palms on both sides
+    const palms = new Graphics();
+    for (const [x, dir] of [
+      [w * 0.06, 1],
+      [w * 0.94, -1],
+    ] as const) {
+      const tx = x + dir * m * 0.12;
+      const ty = h * 0.3;
+      palms.moveTo(x, h).quadraticCurveTo(x + dir * m * 0.04, h * 0.6, tx, ty).stroke({ width: m * 0.035, color: 0x12061a, cap: 'round' });
+      for (let i = 0; i < 7; i++) {
+        const a = -Math.PI / 2 + (i - 3) * 0.48;
+        const L = m * 0.24;
+        const ex = tx + Math.cos(a) * L;
+        const ey = ty + Math.sin(a) * L * 0.6 + L * 0.3;
+        palms.poly([tx, ty, (tx + ex) / 2 + Math.sin(a) * L * 0.15, (ty + ey) / 2 - L * 0.17, ex, ey, (tx + ex) / 2 - Math.sin(a) * L * 0.06, (ty + ey) / 2 - L * 0.03]).fill(0x12061a);
+      }
+    }
+    k.addChild(palms);
+    // the neon ring where his disc was
+    const ring = new Graphics();
+    ring.circle(cx, cy, R * 0.92).stroke({ width: m * 0.05, color: PINK, alpha: 0.24 });
+    ring.circle(cx, cy, R * 0.92).stroke({ width: Math.max(1.5, m * 0.012), color: 0xffd0ea });
+    k.addChild(ring);
+    // the neon sign: bunny-ear hat and shades
+    const sg = sign();
+    sg.scale.set((m * 0.3) / 340);
+    sg.position.set(w * 0.8, h * 0.24);
+    sg.rotation = 0.08;
+    k.addChild(sg);
+    // the equalizer along the bottom, to the dembow
+    const eq = new Graphics();
+    k.addChild(eq);
+    const N = 18;
+    const drawEq = (t: number) => {
+      if (eq.destroyed) return;
+      eq.clear();
+      const beat = (t * 1.6) % 1;
+      const kick = Math.exp(-beat * 6) + (beat > 0.75 ? Math.exp(-(beat - 0.75) * 9) * 0.7 : 0);
+      const bw = w / N;
+      for (let i = 0; i < N; i++) {
+        const v = 0.25 + 0.5 * kick * (0.6 + 0.4 * Math.sin(i * 1.7 + t * 3)) + 0.15 * Math.sin(i * 0.9);
+        const bh = h * 0.16 * v;
+        eq.rect(i * bw + bw * 0.15, h - bh, bw * 0.7, bh).fill({ color: i % 2 ? MINT : PINK, alpha: 0.85 });
+      }
+      ring.alpha = 0.75 + 0.25 * kick;
+    };
+    if (live) liveLoop(k, drawEq);
+    else drawEq(0.02);
+    return k;
   },
 };

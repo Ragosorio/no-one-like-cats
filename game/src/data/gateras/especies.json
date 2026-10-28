@@ -140,12 +140,12 @@
     },
     "ultimate": {
      "name": "DONUT OF DESTINY! (運命のドーナツ)",
-     "effect": "Una dona gigante cae del cielo y rebota por todo el barco rival. Una vez por batalla.",
+     "effect": "Una dona gigante cae del cielo donde apuntas y rebota cuatro veces por su barco. Desde ahí, SUERTE DE SOFÁ: uno de cada dos tiros fallados de tu tripulación rebota en el agua y pega igual. Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Tiene una suerte absurda que confunde con talento. A veces la suerte también lo confunde.",
@@ -521,7 +521,7 @@
    "elements": [
     "sound"
    ],
-   "rarity": "common",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "controlador",
@@ -532,9 +532,9 @@
     "cry": "¡AAAAAH!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.common",
-    "powerBase": "balance:rarities.power_base.common",
-    "foodMult": "balance:rarities.food_mult.common",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -561,17 +561,17 @@
     },
     "ultimate": {
      "name": "PANIC WAVE! (パニック)",
-     "effect": "Un grito tan largo que dobla el cielo: una onda que cruza el barco y Aturde.",
-     "dmg": 40,
+     "effect": "Un grito tan largo que dobla el cielo: una onda enorme cruza su barco por la cubierta donde hay más gatos y aturde. Y el PÁNICO se contagia: este turno y el siguiente, el primer golpe que recibe cada gato suyo lo aturde (¡AAAH!), hasta a los Sordos. Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
-     "usesPerBattle": null,
+     "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Todo le da pánico: la aspiradora, el pepino, el lunes.",
     "star3": "★3: la onda cruza 2 celdas más.",
-    "star5": "★5: el grito deja Aturdido 1 turno más."
+    "star5": "★5: PANIC WAVE! se puede usar 2 veces por batalla."
    },
    "obtain": {
     "source": "p3:recordar",
@@ -605,7 +605,7 @@
    "elements": [
     "earth"
    ],
-   "rarity": "epic",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "controlador",
@@ -616,9 +616,9 @@
     "cry": "TANGLE TIME!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
-    "powerBase": "balance:rarities.power_base.epic",
-    "foodMult": "balance:rarities.food_mult.epic",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -645,12 +645,12 @@
     },
     "ultimate": {
      "name": "TANGLE TIME! (絡まり)",
-     "effect": "Cuatro ovillos teledirigidos a la vez, uno por brazo. Una vez por batalla.",
+     "effect": "Cuatro brazos mecánicos agarran sus cuatro módulos más valiosos y aprietan: un cañón no dispara 2 turnos, el gato de un camarote queda atrapado 2 turnos y el núcleo, el escudo o la sala de invocación quedan Malditos (×1.5). Una vez por batalla.",
      "dmg": 70,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Ofendido porque nadie lo invita a nada. Enreda todo lo que toca, empezando por las invitaciones.",
@@ -728,12 +728,12 @@
     },
     "ultimate": {
      "name": "TELARAÑAZO! (蜘蛛の巣)",
-     "effect": "Teje una red sobre el barco rival: cuatro bolas de telaraña que dejan todo Enraizado. Una vez por batalla.",
+     "effect": "Cuatro bolas de telaraña sobre sus camarotes y cañones, y la red cubre todo su barco: todo queda Enraizado, sus cañones se pegan y cada gato suyo queda ENREDADO (pierde su próximo turno). Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Se hizo el traje él solo. Se nota. Le queda perfecto.",
@@ -770,7 +770,7 @@
    "elements": [
     "storm"
    ],
-   "rarity": "rare",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "controlador",
@@ -781,9 +781,9 @@
     "cry": "¡EXTRA! ¡EXTRA!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
-    "powerBase": "balance:rarities.power_base.rare",
-    "foodMult": "balance:rarities.food_mult.rare",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -810,17 +810,17 @@
     },
     "ultimate": {
      "name": "FRONT PAGE! (一面)",
-     "effect": "La portada entera, enrollada: tres periodicazos en abanico que dejan Cargado.",
-     "dmg": 45,
+     "effect": "Tres periodicazos y la portada: «¡ESTE GATO ES UNA AMENAZA!». Su gato con más barra la pierde toda y queda como AMENAZA este turno y el siguiente (recibe ×1.5). Con lo que vende el periódico, tu tripulación gana +30 % de barra. Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
-     "usesPerBattle": null,
+     "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Odia a los héroes enmascarados. Vende más cuando los culpa. No ve la contradicción.",
     "star3": "★3: la ráfaga empuja más lejos.",
-    "star5": "★5: FRONT PAGE! suelta un periodicazo extra."
+    "star5": "★5: FRONT PAGE! se puede usar 2 veces por batalla."
    },
    "obtain": {
     "source": "p3:etapa",
@@ -893,12 +893,12 @@
     },
     "ultimate": {
      "name": "NIGHT SHIFT! (夜勤)",
-     "effect": "Apaga la luz: tres espinas-rang invisibles en abanico. Una vez por batalla.",
+     "effect": "Apaga la luz: tres espinas-rang a sus mejores blancos que pegan de ida y de vuelta. Y la noche se queda: 2 turnos su tripulación queda ECLIPSADA (sin vista previa ni críticos, apunta mucho peor) y los tiros de tu tripulación vuelan sin verse y apuñalan. Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Más gadgets que amigos. Le tiene miedo al baño del bar (nadie pregunta por qué).",
@@ -935,7 +935,7 @@
    "elements": [
     "earth"
    ],
-   "rarity": "epic",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "demoledor",
@@ -946,9 +946,9 @@
     "cry": "YARNSTORM!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
-    "powerBase": "balance:rarities.power_base.epic",
-    "foodMult": "balance:rarities.food_mult.epic",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -975,12 +975,12 @@
     },
     "ultimate": {
      "name": "YARNSTORM! (毛糸の嵐)",
-     "effect": "Se deshace en un remolino de estambre que golpea el casco en abanico. Una vez por batalla.",
+     "effect": "El estambre se vuelve un puño gigante que atraviesa 8 celdas y las deja deshilachadas (Malditas, ×1.5). Y se vuelve a enrollar: recupera la mitad de su vida y se envuelve en 2 capas de lana (2 escudos). Una vez por batalla.",
      "dmg": 75,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Matón de barrio hecho de lana: se deshace y se vuelve a enrollar. Odia a los gatos (le jalan el hilo).",
@@ -1019,7 +1019,7 @@
    "elements": [
     "shadow"
    ],
-   "rarity": "rare",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "francotirador",
@@ -1030,9 +1030,9 @@
     "cry": "NOCHE DE LLUVIA."
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
-    "powerBase": "balance:rarities.power_base.rare",
-    "foodMult": "balance:rarities.food_mult.rare",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -1059,17 +1059,17 @@
     },
     "ultimate": {
      "name": "RAINY NIGHT! (雨の夜)",
-     "effect": "Tres telarañas grises en abanico, a oscuras.",
-     "dmg": 45,
+     "effect": "El mundo se vuelve blanco y negro: la lluvia empapa todo su barco, tres telarañas grises caen sin verse (apuñalan) y su barco y sus gatos pierden el color este turno y el siguiente: todo les pega súper efectivo (×1.5). Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
-     "usesPerBattle": null,
+     "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Habla como narrador de radio. Hasta para pedir croquetas.",
     "star3": "★3: la telaraña es más grande.",
-    "star5": "★5: RAINY NIGHT! suelta una telaraña extra."
+    "star5": "★5: RAINY NIGHT! se puede usar 2 veces por batalla."
    },
    "obtain": {
     "source": "p3:rescate",
@@ -1103,7 +1103,7 @@
    "elements": [
     "sound"
    ],
-   "rarity": "rare",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "artillero",
@@ -1114,9 +1114,9 @@
     "cry": "¡PLIÉ!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
-    "powerBase": "balance:rarities.power_base.rare",
-    "foodMult": "balance:rarities.food_mult.rare",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -1143,17 +1143,17 @@
     },
     "ultimate": {
      "name": "BALLET DROP! (バレエ)",
-     "effect": "Baja colgada de un hilo y suelta tres ondas en abanico que Aturden.",
-     "dmg": 45,
+     "effect": "Baja colgada de un hilo y se balancea de punta a punta de su barco como un péndulo, pasando por sus camarotes y tocando la batería contra todo lo que toca. Cada camarote que cruza queda ATURDIDO, hasta los Sordos y los de Sonido (la batería no se oye: se siente). Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
-     "usesPerBattle": null,
+     "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Baterista y bailarina. Cuelga de cabeza como si fuera ballet, porque lo es.",
     "star3": "★3: la onda cruza 2 celdas más.",
-    "star5": "★5: la onda deja Aturdido 1 turno más."
+    "star5": "★5: BALLET DROP! se puede usar 2 veces por batalla."
    },
    "obtain": {
     "source": "p3:rescate",
@@ -1187,7 +1187,7 @@
    "elements": [
     "storm"
    ],
-   "rarity": "rare",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "francotirador",
@@ -1198,9 +1198,9 @@
     "cry": "NEON CLAW!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
-    "powerBase": "balance:rarities.power_base.rare",
-    "foodMult": "balance:rarities.food_mult.rare",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -1227,17 +1227,17 @@
     },
     "ultimate": {
      "name": "NEON CLAW! (ネオン爪)",
-     "effect": "Tres zarpazos de neón en abanico que dejan Cargado.",
-     "dmg": 45,
+     "effect": "Tres zarpazos de neón cruzan su barco en diagonal, de arriba abajo, y todo lo que tocan queda Cargado. Y desde 2099: en tu próximo turno disparan dos gatos más de tu tripulación. Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
-     "usesPerBattle": null,
+     "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Viene del futuro. Dice que allá las croquetas son de luz. Las de aquí le gustan más.",
     "star3": "★3: el zarpazo carga un turno más.",
-    "star5": "★5: NEON CLAW! suelta un zarpazo extra."
+    "star5": "★5: NEON CLAW! se puede usar 2 veces por batalla."
    },
    "obtain": {
     "source": "p3:rescate",
@@ -1271,7 +1271,7 @@
    "elements": [
     "earth"
    ],
-   "rarity": "legendary",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "demoledor",
@@ -1282,9 +1282,9 @@
     "cry": "GAAAATZ!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
-    "powerBase": "balance:rarities.power_base.legendary",
-    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -1311,12 +1311,12 @@
     },
     "ultimate": {
      "name": "KAIJU NAP! (怪獣昼寝)",
-     "effect": "Se acuesta encima del barco rival: tres pisotones que atraviesan todo. Una vez por batalla.",
+     "effect": "Se acuesta encima de su barco: aplasta la cubierta entera (lo de arriba de cada columna, y lo de abajo a la mitad), apachurra a los gatos de arriba y con su peso los hunde (2 brechas: se inundan). Después se echa una siesta: tarda un turno más en volver a disparar. Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Monstruo de película de los 50. En el fondo solo quería una siesta en la ciudad tibia.",
@@ -1355,7 +1355,7 @@
    "elements": [
     "fire"
    ],
-   "rarity": "legendary",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "francotirador",
@@ -1366,9 +1366,9 @@
     "cry": "¡TÚ VAS ATRÁS!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
-    "powerBase": "balance:rarities.power_base.legendary",
-    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -1395,12 +1395,12 @@
     },
     "ultimate": {
      "name": "PRIDE FLASH! (誇りの閃光)",
-     "effect": "Junta las palmas y suelta un rayo enorme que cruza el barco. Una vez por batalla.",
+     "effect": "Junta las palmas y suelta un rayo doble directo al camarote de su gato más fuerte, su «rival», atravesando todo lo que hay en medio (deja Ardiendo). El rival se come el destello entero, sin escudos. Si cae: «¡te dejé ganar!», y la ulti vuelve con media barra. Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Siempre queda segundo y nunca lo admite. Dice que te dejó ganar. A todos.",
@@ -1478,12 +1478,12 @@
     },
     "ultimate": {
      "name": "NINE LIVES WAVE! (九命波)",
-     "effect": "Se vuelve dorado y erizado y suelta una onda gigante que cruza el barco. Una vez por batalla.",
+     "effect": "Una onda gigante en línea recta que atraviesa TODO su barco a la altura del núcleo y deja Ardiendo. TRANSFORMACIÓN: la primera vez que él o tu barco bajan de la mitad, al empezar tu turno se vuelve SÚPER: se cura 35 %, se le llena la barra (la onda vuelve si ya la usó) y pega ×1.5 el resto de la batalla. Una vez por batalla.",
      "dmg": 105,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Entrena con Canelo al amanecer. Canelo lo copia mal y los dos están muy orgullosos.",
@@ -1527,7 +1527,7 @@
    "elements": [
     "sound"
    ],
-   "rarity": "epic",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "artillero",
@@ -1538,9 +1538,9 @@
     "cry": "WAKA-MIAU!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
-    "powerBase": "balance:rarities.power_base.epic",
-    "foodMult": "balance:rarities.food_mult.epic",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -1567,12 +1567,12 @@
     },
     "ultimate": {
      "name": "POWER PELLET! (パワー)",
-     "effect": "Se come la croqueta grande: tres ondas en abanico que atraviesan todo. Una vez por batalla.",
-     "dmg": 70,
+     "effect": "WAKA: se come su barco como un laberinto (por una cubierta, baja, regresa, baja y sigue: cada celda que cruza). Y sus gatos se vuelven fantasmas azules: hasta tu turno después del próximo, tus golpes contra ellos pegan ×2 y los de ellos ×0.5. Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Solo piensa en croquetas en fila. Huye de los fantasmas hasta que se come la grande.",
@@ -1651,12 +1651,12 @@
     },
     "ultimate": {
      "name": "WHISKER WAND! (ひげの杖)",
-     "effect": "Tres hechizos teledirigidos a la vez que dejan Maldito. Una vez por batalla.",
+     "effect": "Escribe tres hechizos en el aire: ¡EXPELLIARMIAU! (sus cañones quedan desarmados 2 turnos), ¡DESMAYUS! (su gato más fuerte se desmaya y pierde su próximo turno) y ¡BOMBARDA! (un hechizo teledirigido a su núcleo que lo deja Maldito). Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Llegó tarde a su propia caja porque se quedó leyendo. Sigue leyendo.",
@@ -1777,7 +1777,7 @@
    "elements": [
     "void"
    ],
-   "rarity": "rare",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "artillero",
@@ -1788,9 +1788,9 @@
     "cry": "¡PACHÍN!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.rare",
-    "powerBase": "balance:rarities.power_base.rare",
-    "foodMult": "balance:rarities.food_mult.rare",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -1817,17 +1817,17 @@
     },
     "ultimate": {
      "name": "TINY BUT BRAVE! (小さな勇者)",
-     "effect": "Tres latitas en abanico que borran 2 celdas cada una.",
-     "dmg": 45,
+     "effect": "Nadie lo ve llegar (no hay trayectoria): se mete a su barco y rocía su NÚCLEO desde adentro. Cada celda del núcleo pierde el 60 % de lo que le queda y queda BORRADA (nunca se repara). Y sus próximos 2 turnos nadie le puede pegar. Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
-     "usesPerBattle": null,
+     "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Tan chiquito que nadie lo ve; tan valiente que no se entera.",
     "star3": "★3: la latita borra una celda más.",
-    "star5": "★5: TINY BUT BRAVE! suelta una latita extra."
+    "star5": "★5: TINY BUT BRAVE! se puede usar 2 veces por batalla."
    },
    "obtain": {
     "source": "p3:actividad",
@@ -1866,7 +1866,7 @@
    "elements": [
     "shadow"
    ],
-   "rarity": "epic",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "controlador",
@@ -1877,9 +1877,9 @@
     "cry": "¡BUUU!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
-    "powerBase": "balance:rarities.power_base.epic",
-    "foodMult": "balance:rarities.food_mult.epic",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -1906,12 +1906,12 @@
     },
     "ultimate": {
      "name": "CHAIN RATTLE! (鎖の音)",
-     "effect": "Hace sonar todas sus cadenas: tres golpes invisibles en abanico que maldicen. Una vez por batalla.",
+     "effect": "Tres cadenazos invisibles (apuñalan) y sus cadenas atan a toda su tripulación este turno y el siguiente: lo que recibe un gato, los demás lo reciben a la mitad. Y LA MANCHA QUE NUNCA SE QUITA: su núcleo queda Maldito (×1.5) el resto de la batalla. Una vez por batalla.",
      "dmg": 70,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Fantasma de cuento que solo quiere descansar. Asusta por costumbre y pide perdón por educación.",
@@ -1949,7 +1949,7 @@
    "elements": [
     "void"
    ],
-   "rarity": "epic",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "controlador",
@@ -1960,9 +1960,9 @@
     "cry": "¡AQUÍ NO HAY NADIE!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
-    "powerBase": "balance:rarities.power_base.epic",
-    "foodMult": "balance:rarities.food_mult.epic",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -1989,12 +1989,12 @@
     },
     "ultimate": {
      "name": "VANISHING GRIN! (消える笑み)",
-     "effect": "Desaparece entera salvo la sonrisa: tres mordidas en abanico que borran celdas. Una vez por batalla.",
-     "dmg": 72,
+     "effect": "Desaparece toda menos la sonrisa: tres mordidas BORRAN sus tres mejores módulos, menos el núcleo (nunca se reparan; lo que sostiene el barco queda en 1). Y la sonrisa se queda flotando frente a tu barco 2 turnos: se traga hasta 3 tiros de ellos. Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Deja su sonrisa cuando se va. A veces se va y la sonrisa se queda a cenar.",
@@ -2117,7 +2117,7 @@
    "elements": [
     "time"
    ],
-   "rarity": "epic",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "tanque",
@@ -2128,9 +2128,9 @@
     "cry": "…"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
-    "powerBase": "balance:rarities.power_base.epic",
-    "foodMult": "balance:rarities.food_mult.epic",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -2157,12 +2157,12 @@
     },
     "ultimate": {
      "name": "SFUMATO! (スフマート)",
-     "effect": "Todo se vuelve neblina verde-café: tres golpes en abanico que rebotan. Una vez por batalla.",
-     "dmg": 70,
+     "effect": "Tres miradas lentas que rebotan, y sus ojos te siguen: sus próximos 2 turnos, cada tiro de ellos se desvía hacia SU camarote, y ella y su camarote reciben la mitad (el sfumato lo difumina todo). Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Nadie sabe si está feliz. Ella no lo va a decir.",
@@ -2367,7 +2367,7 @@
    "elements": [
     "sound"
    ],
-   "rarity": "legendary",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "artillero",
@@ -2378,9 +2378,9 @@
     "cry": "MIC DROP!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.legendary",
-    "powerBase": "balance:rarities.power_base.legendary",
-    "foodMult": "balance:rarities.food_mult.legendary",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -2407,12 +2407,12 @@
     },
     "ultimate": {
      "name": "MIC DROP! (マイクドロップ)",
-     "effect": "Suelta el micrófono: una onda que cruza el barco entero y Aturde a cada gato cuyo camarote toca. Una vez por batalla.",
+     "effect": "Ocho barras a toda velocidad: ocho ondas cortas, una a cada uno de sus mejores módulos, que atraviesan paredes y aturden. Y suelta el micrófono: SIN RÉPLICA, sus gatos no pueden usar su ulti en sus próximos 2 turnos. Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "El único sobrio de la Borracha: siempre se acordó de todo. Por eso está enojado.",
@@ -2489,12 +2489,12 @@
     },
     "ultimate": {
      "name": "TOPE SUICIDA! (トペ)",
-     "effect": "Se lanza desde las cuerdas: una onda gigante que cruza el barco y Aturde a todos los que toca. Una vez por batalla.",
+     "effect": "Se tira desde las cuerdas sobre el camarote del gato más cercano a donde apuntas: un azotón enorme que aturde. Y luego EL FLOW: tus próximos 3 turnos, cada tiro de un gato tuyo trae su eco (un segundo tiro a la mitad de fuerza). Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Se viste como quiere y le cambia el género a todo. Hasta a la ulti.",
@@ -2572,12 +2572,12 @@
     },
     "ultimate": {
      "name": "NEW ERA! (新時代)",
-     "effect": "Cambia de era a media batalla: tres ondas en abanico que Aturden. Una vez por batalla.",
+     "effect": "Tres ondas en abanico que aturden, y empieza la gira: tus próximos 5 turnos son cinco eras, una por turno. FEARLESS (todos tus tiros ×1.3), RED (dejan Ardiendo), 1989 (+25 % de barra a tu tripulación), REPUTATION (dejan Maldito) y MIDNIGHTS (su tripulación queda Eclipsada). Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Todo lo que le haces termina siendo una canción. Cuidado con lo que le haces.",
@@ -2655,12 +2655,12 @@
     },
     "ultimate": {
      "name": "LULLABY! (子守唄)",
-     "effect": "Una canción de cuna en susurros: tres ondas en abanico que Aturden. Una vez por batalla.",
+     "effect": "Un susurro cruza su barco y todos sus gatos se DUERMEN 2 turnos, hasta los Sordos y los de Sonido (un susurro no es ruido). El que recibe un golpe se despierta: tú eliges a quién le pegas. Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Canta tan bajito que los demás gatos se acercan… y se duermen.",
@@ -2830,12 +2830,12 @@
     },
     "ultimate": {
      "name": "STARRY SWIRL! (星の渦)",
-     "effect": "Pinta un cielo entero en remolinos: tres haces de luz en abanico que atraviesan. Una vez por batalla.",
+     "effect": "Pinta la noche estrellada sobre su barco: once estrellas caen en espiral (luz que perfora) y el REMOLINO se queda encima 2 turnos: cada tiro suyo que lo cruza sale girando. Una vez por batalla.",
      "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Ve remolinos en todo: en el cielo, en la leche, en tu cara.",
@@ -2874,7 +2874,7 @@
    "elements": [
     "time"
    ],
-   "rarity": "epic",
+   "rarity": "multidimensional",
    "primordial": false,
    "secret": false,
    "role": "soporte",
@@ -2885,9 +2885,9 @@
     "cry": "¡NADA ES GRATIS!"
    },
    "economy": {
-    "goldBasePerS": "balance:rarities.gold_base_per_s.epic",
-    "powerBase": "balance:rarities.power_base.epic",
-    "foodMult": "balance:rarities.food_mult.epic",
+    "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+    "powerBase": "balance:rarities.power_base.multidimensional",
+    "foodMult": "balance:rarities.food_mult.multidimensional",
     "goldMod": null,
     "note": null,
     "gambitMod": null
@@ -2914,12 +2914,12 @@
     },
     "ultimate": {
      "name": "LUCKY SWEEP! (招き掃除)",
-     "effect": "Barre la cubierta rival con la escoba: tres monedas en abanico que rebotan. Una vez por batalla.",
-     "dmg": 70,
+     "effect": "Tres monedas koban que rebotan, su pata llama a la suerte (+20 % de barra a tu tripulación) y NADA ES GRATIS: sus próximos 2 turnos, todo lo que rompan de tu lado se anota en su libreta. Después pagan el 80 % en sus mejores módulos (hasta un cuarto de su barco), si ella sigue en pie. Una vez por batalla.",
+     "dmg": 100,
      "meterCost": 100,
      "usesPerBattle": 1,
      "chargeTurns": 0,
-     "structureCap": 0.35
+     "structureCap": 0.45
     },
     "limitation": null,
     "passive": "Barre las cajas desde siempre. Nada es gratis, pero todo es justo.",

@@ -6,6 +6,7 @@ import { C, F } from '../../../ui/theme';
 import { poster, txt } from '../../../ui/widgets';
 import { sfx } from '../../../core/audio';
 import { type Signature, type SigCtx, CHEER, backlight, cover, every, flashOf, later, score } from './kit';
+import { glow, liveLoop } from '../../../panels/collection/cardArt';
 
 const GREEN = 0x8bff2c;
 
@@ -113,5 +114,41 @@ export const billie: Signature = {
       c.fg.addChild(m);
       gsap.to(m, { y: 80 + Math.random() * 300, alpha: 0, duration: 2.4 + Math.random() * 1.5, delay: Math.random() * 0.8, ease: 'sine.out', onComplete: () => m.destroy() });
     }
+  },
+  card(w, h, live) {
+    const k = new Container();
+    const m = Math.min(w, h);
+    const cx = w / 2;
+    const cy = h * 0.54;
+    k.addChild(new Graphics().rect(0, 0, w, h).fill(0x050605));
+    // the green spotlight from above, its pool on the floor, the rim light behind her
+    const cone = new Graphics().poly([cx - m * 0.07, 0, cx + m * 0.07, 0, cx + m * 0.55, h, cx - m * 0.55, h]).fill({ color: GREEN, alpha: 0.1 });
+    cone.blendMode = 'add';
+    k.addChild(cone);
+    k.addChild(new Graphics().ellipse(cx, h * 0.93, m * 0.42, m * 0.07).fill({ color: GREEN, alpha: 0.16 }));
+    k.addChild(glow(new Graphics(), cx, cy, m * 0.5, GREEN, 0.55));
+    // her roots: a green band at the top, dripping
+    const top = h * 0.05;
+    const roots = new Graphics();
+    const pts: number[] = [0, 0, w, 0];
+    for (let x = w; x >= 0; x -= Math.max(4, w / 40)) pts.push(x, top + Math.sin(x * (12 / w)) * m * 0.01);
+    roots.poly(pts).fill(GREEN);
+    k.addChild(roots);
+    const drips = new Graphics();
+    k.addChild(drips);
+    const dd = Array.from({ length: 14 }, (_, i) => ({ x: w * (0.04 + ((i * 0.37) % 0.92)), w: m * (0.012 + (i % 4) * 0.006), max: h * (0.12 + ((i * 131) % 50) / 100), v: 0.05 + ((i * 37) % 60) / 900, p: (i * 0.29) % 1 }));
+    const draw = (t: number) => {
+      if (drips.destroyed) return;
+      drips.clear();
+      for (const d of dd) {
+        const len = d.max * ((d.p + t * d.v) % 1.15 > 1 ? 0 : ((d.p + t * d.v) % 1.15));
+        if (len < 2) continue;
+        drips.roundRect(d.x - d.w / 2, top - 1, d.w, len, d.w / 2).fill(GREEN);
+        drips.circle(d.x, top + len, d.w * 0.85).fill(GREEN);
+      }
+    };
+    if (live) liveLoop(k, draw);
+    else draw(4.2);
+    return k;
   },
 };

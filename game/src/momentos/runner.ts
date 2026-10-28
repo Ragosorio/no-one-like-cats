@@ -64,6 +64,12 @@ export interface RunOpts {
    * than the segue's own length (a heard position is told apart by which anchor it is nearer). Absent = unchanged.
    */
   segue?: { ref: string; at: number; from: number };
+  /**
+   * (agent FINAL, optional) a film warmed ahead (film/index.ts preloadFilm): prepare() builds and bakes everything but
+   * stays off screen and deaf (no root on the host, no key / pointer / visibility listeners) until mount(). Absent =
+   * unchanged: prepare() mounts at its end, as always.
+   */
+  defer?: boolean;
 }
 
 export interface SyncSample {
@@ -284,9 +290,17 @@ export class MomentoRun {
     this.hitCues.sort((a, b) => a.m - b.m);
     this.prompts = new PromptUI(this.k, this.core);
     this.pause = new PauseUI(this.k, !!this.o.replay, (on) => this.setPaused(on), () => this.exit());
-    this.mountInput();
-    this.o.host.addChild(this.root);
+    if (!this.o.defer) this.mount();
     this.frame(0, 0);
+  }
+
+  private mounted = false;
+  /** put the prepared run on screen and give it the player's hands (prepare() does it itself unless `defer`) */
+  mount(host: Container = this.o.host) {
+    if (this.mounted) return;
+    this.mounted = true;
+    this.mountInput();
+    host.addChild(this.root);
   }
 
   private schedule(c: Cue) {
@@ -312,6 +326,7 @@ export class MomentoRun {
 
   /** start the clock (audio was prepared by the caller) and resolve when the Momento ends */
   play(withAudio: boolean): Promise<MomentoResult> {
+    this.mount();
     return new Promise<MomentoResult>((res) => {
       this.done = res;
       if (this.o.scrub) return;

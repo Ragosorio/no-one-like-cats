@@ -34,6 +34,8 @@ import { umAfterFire, umAtkMul, umStartTurn } from './umbral';
 import type { UmbralCfg } from './umbral';
 import { lateBossInit, lateBossStart, lateEnterPhase, wardIntercept, lateCellMul, lateAfterImpact, lateLoss, lateSplash, tickBuffs } from './bossLate';
 import { ULTS, ultBudgetFrac, ultTicks } from './ults';
+// Parte III · the MULTIDIMENSIONAL powers (player side only; rules and the 25 powers in multidim.ts)
+import { MD_TUNE, MD_ULTS, mdAff, mdAfterFire, mdAfterHit, mdAtkMul, mdCatMul, mdCellMul, mdChain, mdDodge, mdEaten, mdEcho, mdExtraShots, mdOn, mdPaths, mdShot, mdSilenced, mdStartTurn } from './multidim';
 import { cataInit, cataStart, cataCrack, sealOpen } from './cataclysm';
 import type { CataCfg, CataId, CataState } from './cataclysm';
 // Parte II · Oleada 3: SINCRO — an explicit player input, never the music itself (rules in sincro.ts)
@@ -349,7 +351,7 @@ export interface Well {
   owner: number;
   /** only bends projectiles fired by this side (Abisa's lure) */
   affects?: number;
-  kind: 'well' | 'hole' | 'lure' | 'sun' | 'horizon';
+  kind: 'well' | 'hole' | 'lure' | 'sun' | 'horizon' | 'swirl' | 'grin' | 'gaze';
   /** event horizon: projectiles of the OTHER side that come this close vanish */
   eat?: number;
   /** view only: not drawn until its ultimate's impact event shows it (the sun has to fall first) */
@@ -776,6 +778,8 @@ export class Battle {
   }
   canUlt(c: CatState) {
     if (!c.def.ultimate || c.ko || c.stunned > 0) return false;
+    // MIC DROP (EMIAU, a Multidimensional power): this crew can't answer
+    if (mdSilenced(this, c.side)) return false;
     const lim = c.def.ultimate.limits?.usesPerBattle;
     if (lim !== undefined && c.ultUsed >= lim) return false;
     const arc = this.sides[c.side].ship.modules.find((m) => m.kind === 'arcane' && !m.tag);
@@ -785,9 +789,11 @@ export class Battle {
   /** extra cat shots this turn (Gorrión turn 1, Bigotes Rotos phase 3) */
   extraShots(side: number) {
     if (dueloLimpio(this)) return 0;
-    if (this.boss && this.cfg.boss?.side === side && this.boss.id === 'sardina' && this.boss.phase === 3) return 1;
-    if (this.turn === 1 && this.sides[side].setup.firstTurnDouble) return 1;
-    return 0;
+    // Gato Araña 2099 (a Multidimensional power): more cats shoot this turn
+    const md = mdExtraShots(this, side);
+    if (this.boss && this.cfg.boss?.side === side && this.boss.id === 'sardina' && this.boss.phase === 3) return 1 + md;
+    if (this.turn === 1 && this.sides[side].setup.firstTurnDouble) return 1 + md;
+    return md;
   }
 
   // ---------- turn flow
@@ -872,6 +878,8 @@ export class Battle {
     // ultimate after-effects (Gea, Eclipse, Merlina's FIN, wells) — same rules for both sides
     ultTicks(this, side, ev);
     tickBuffs(this, side, ev);
+    // the Multidimensional powers' rules: their clocks, the eras, Super Siamés' transformation, Maneki's bill
+    mdStartTurn(this, side, ev);
     // the zone's / boss's cataclysm: lands (if it was warned) or counts down to its next warning
     cataStart(this, side, ev);
     // Parte III · La Borracha: loose donuts fall; the alley's bottles (queued like a cataclysm's volley)
@@ -1266,6 +1274,9 @@ export class Battle {
     atk *= rimaAtkMul(this, side, shot, !!cat, events);
     // Parte III · Actos II–IV: Onomatopeya, Poder, Ritmo, Esquirlas, Pose de portada (actRules.ts)
     atk *= actAtkMul(this, side, shot, cat, events);
+    // Multidimensional powers: Super Siamés ×1.5, the eras (FEARLESS ×1.3, RED, REPUTATION), frightened ghosts ×0.5
+    atk *= mdAtkMul(this, side, cat);
+    shot = mdShot(this, side, shot);
     // Eclipse: the next cat shot of this side hits ×2
     if (cat && s.buffs.empower > 0) {
       atk *= 2;
@@ -1285,19 +1296,27 @@ export class Battle {
     this.sides[side].windNext = 0;
     this.curShooter = cat ?? null;
     let paths: ShotPath[];
-    // a FORM may point its ultimate at another effect (ultKey); everyone else: the species' own
-    const special = ult && cat ? ULTS[cat.def.ultKey ?? cat.def.catId] : undefined;
-    // ultimates can't erase more than a slice of the enemy structure (GDD 2.9.4: 35%, 40% Starfall/Singularidad, bosses 15%)
+    // a Multidimensional in YOUR crew fires its power (multidim.ts); a FORM may point its ultimate at another effect
+    // (ultKey); everyone else: the species' own
+    const mdPower = ult && cat && mdOn(this, cat) ? MD_ULTS[cat.def.catId] : undefined;
+    const special = mdPower ?? (ult && cat ? ULTS[cat.def.ultKey ?? cat.def.catId] : undefined);
+    // ultimates can't erase more than a slice of the enemy structure (GDD 2.9.4: 35%, 40% Starfall/Singularidad, bosses 15%;
+    // a Multidimensional power 45%, bosses 18%)
     if (ult && cat) {
       const foe = this.sides[1 - side];
-      const frac = this.cfg.boss?.side === 1 - side ? 0.15 : ultBudgetFrac(cat.def.ultKey ?? cat.def.catId, cat.def.stars);
+      const vsBoss = this.cfg.boss?.side === 1 - side;
+      const frac = mdPower ? (vsBoss ? MD_TUNE.bossFrac : MD_TUNE.frac) : vsBoss ? 0.15 : ultBudgetFrac(cat.def.ultKey ?? cat.def.catId, cat.def.stars);
       this.budget = { side: 1 - side, left: Math.round((foe.ship.initialMax?.[0] ?? 0) * frac) };
     }
     if (special) {
       paths = special(this, { side, cat: cat!, shot, atk, origin, angle, power, wind: windNow, events });
     } else {
       paths = this.buildPaths(shot, origin, angle, power, windNow, side);
+      // SUERTE DE SOFÁ (Homiau): a miss of that crew may bounce back off the water
+      if (cat && !ult) mdPaths(this, side, shot, paths, events);
       this.resolvePaths(side, shot, atk, paths, events);
+      // EL FLOW (Gato Malo): every cat shot brings its echo
+      if (cat && !ult) paths.push(...mdEcho(this, side, shot, atk, origin, angle, power, windNow, paths.length, events));
     }
     scAfterFire(this, side, shot, atk, events);
     umAfterFire(this, side, shot, events);
@@ -1314,6 +1333,8 @@ export class Battle {
         this.lastShot[side] = { shot, atk, angle, power, origin };
       }
     }
+    // Multidimensional powers: Bigotón's pride gives the flash back; Maneki writes down what they broke
+    mdAfterFire(this, side, cat, ult, events);
     if (isGust(shot) && paths.length) {
       // CORRIENTE: the next enemy projectile drifts (an Ancla ignores it)
       if (!this.sides[1 - side].setup.anchor) this.sides[1 - side].windNext = side === 0 ? 90 : -90;
@@ -1345,6 +1366,8 @@ export class Battle {
       const last = p.points[p.points.length - 1];
       if (p.eaten) {
         events.push({ k: 'ultfx', fx: 'eaten', side, x: last.x, y: last.y, path: pi, at: p.points.length - 1 });
+        // Sonrisa's grin (a Multidimensional power) counts its bites
+        mdEaten(this, side, last.x, last.y);
         return;
       }
       if (!p.impacts.length && last.y >= this.waterY - 4) {
@@ -1449,6 +1472,12 @@ export class Battle {
             }
             if (d >= w.r || d < 6) continue;
             const a = w.k * (1 - d / w.r);
+            if (w.kind === 'swirl') {
+              // Van Gato's starry swirl (a Multidimensional power) doesn't pull: it spins
+              vx += (-dy / d) * a * sdt;
+              vy += (dx / d) * a * sdt;
+              continue;
+            }
             vx += (dx / d) * a * sdt;
             vy += (dy / d) * a * sdt;
           }
@@ -1753,6 +1782,8 @@ export class Battle {
       // Gravedad: a FLOTANDO cell has nothing to brace against (gravedad.ts GR_TUNE.floatMul)
       if (st.grav && a.side !== attSide) mult *= GR_TUNE.floatMul;
       if (st.charged && isRayo(shot)) mult *= 1.25;
+      // Multidimensional powers: a colorless ship (Noir) takes everything super effective; Gatoconda's cabin takes half
+      if (a.side !== attSide) mult = mdCellMul(this, a.side, a.c, mult);
       mult = clampMul(mult);
       // Gárgola: stone skin halves everything except Tierra and Estallido
       if (B?.id === 'gargoyle' && a.side === bossSide && a.c.material === 'stone' && shot.element !== 'earth' && r.name !== 'ESTALLIDO') {
@@ -2078,6 +2109,8 @@ export class Battle {
 
   hitCat(c: CatState, dmg: number, ev: BattleEvent[], path: number, at: number, el: ElementId = 'neutral', direct = false, chained = false) {
     if (c.ko || dmg <= 0) return;
+    // Garbancito (a Multidimensional power): nobody sees him, nobody hits him
+    if (mdDodge(this, c, ev, path, at)) return;
     // Parte 2: fire cracks a frozen cat (×1.5), the void eats its shields / spare life
     const p2m = p2PreHitCat(c, el);
     if (c.shields > 0) {
@@ -2085,7 +2118,8 @@ export class Battle {
       ev.push({ k: 'cat', side: c.side, uid: c.def.uid, dmg: 0, ko: false, shield: true, element: el, fx: { ...c.fx }, path, at });
       return;
     }
-    const aff = el === 'neutral' ? 1 : affinity(el, c.def.elements[0]);
+    // a colorless crew (Gato Araña Noir's power) takes everything super effective
+    const aff = mdAff(this, c, el === 'neutral' ? 1 : affinity(el, c.def.elements[0]));
     let stunned = false;
     // frozen cat + earth / cannon: the ice shatters (x1.5)
     let iceBreak = 1;
@@ -2119,11 +2153,16 @@ export class Battle {
     if (chained && !c.def.elements.includes('electric')) stunned = true;
     // Parte 2: a sound wave stuns (then the cat is SORDO for a while)
     if (p2PostHitCat(this, c, el, 1 - c.side)) stunned = true;
-    const real = Math.round(dmg * aff * iceBreak * p2m * (c.exposed && !direct ? 1.5 : 1) * (c.def.limitation === 'glass' ? 3 : 1));
+    // Multidimensional powers: frightened ghosts ×2, a THREAT ×1.5, La Gatoconda's sfumato ×0.5
+    const real = Math.round(dmg * aff * iceBreak * p2m * (c.exposed && !direct ? 1.5 : 1) * (c.def.limitation === 'glass' ? 3 : 1) * mdCatMul(this, c));
     c.hp -= real;
     c.ultCharge = Math.min(1, c.ultCharge + 0.15 * this.meterMul(c.side));
     const revived = c.hp <= 0 ? this.koOrRevive(c) : false;
+    // …a sleeping cat wakes up, PANIC stuns on the first hit
+    if (mdAfterHit(this, c, real, stunned, ev, path, at)) stunned = true;
     ev.push({ k: 'cat', side: c.side, uid: c.def.uid, dmg: real, ko: c.ko, shield: false, revived, element: el, fx: { ...c.fx }, aff: aff !== 1 ? aff : undefined, stunned: stunned || undefined, path, at });
+    // …and Sir Simón's chains drag the rest of the crew along (half)
+    mdChain(this, c, real, ev, path, at);
   }
 
   /** ultimate meter gain multiplier: without a Summoning Room ults effectively cost 125 */

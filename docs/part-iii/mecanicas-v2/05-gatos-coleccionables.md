@@ -159,7 +159,7 @@ Todas quedan dentro del ruido de una celda de 24 peleas (±10 puntos). No se toc
 - Las reglas de origen, el Cruce y la Ventaja de casa de los Multidimensionales (§4.2).
 - Los 4 huecos Multidimensionales sin arte.
 - Don Bombín, el rescate del desvío «Trastienda»: no tiene arte, y la tarjeta sigue diciendo «cuando llegue su pintura».
-- Las ultis con firma (`battle/ults.ts`) de los legendarios, el mítico y los Multidimensionales: usan `ultFromDef`, como cualquier gato sin firma.
+- Las ultis con firma (`battle/ults.ts`) de los legendarios y el mítico: usan `ultFromDef`, como cualquier gato sin firma. (Los 25 Multidimensionales ya tienen su poder propio, solo en tu tripulación: `07-poderes-multidimensionales.md`, 2026-10-28.)
 - Los sets del Catdex de las cajas (por ejemplo, «El verso arácnido»): un set promete una regla de combate, y eso es balance.
 - La actividad «Patrulla» de Superhéroes no existe; esa caja no tiene gato de actividad.
 - Los rigs los hace ARTE-INTEG. Un gato sin rig se dibuja con su pintura quieta (`art/catArt.ts artSlug`), como siempre.
