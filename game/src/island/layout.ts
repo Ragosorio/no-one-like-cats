@@ -50,7 +50,21 @@ export type DecorKind =
   | 'boulder'
   | 'sakura'
   | 'cactus'
-  | 'lollipop';
+  | 'lollipop'
+  // after the Parte III (data/postp3/islas.json)
+  | 'box'
+  | 'tape'
+  | 'chips'
+  | 'dice'
+  | 'card'
+  | 'pot'
+  | 'marigold'
+  | 'picado'
+  | 'yarn'
+  | 'button'
+  | 'spool'
+  | 'cushion'
+  | 'cloudpuff';
 export interface Decor {
   gx: number;
   gy: number;
@@ -107,13 +121,25 @@ const DECOR_BY_BIOME: Record<string, DecorKind[]> = {
   ruins: ['column', 'column', 'crystal', 'grass'],
   reef: ['coral', 'coral', 'rock', 'star'],
   cosmic: ['star', 'crystal', 'crystal', 'column'],
+  // after the Parte III
+  carton: ['box', 'box', 'tape', 'box', 'box'],
+  felt: ['chips', 'dice', 'card', 'chips', 'chips'],
+  talavera: ['pot', 'pot', 'marigold', 'cactus', 'picado', 'marigold'],
+  yarn: ['yarn', 'yarn', 'button', 'spool', 'yarn'],
+  pillow: ['cushion', 'cloudpuff', 'cushion', 'star', 'cloudpuff'],
 };
 
 let cached: IslandPlan | null = null;
 
 export function islandPlan(): IslandPlan {
-  if (cached) return cached;
-  const regions = islandRegions();
+  return (cached ??= buildIslandPlan(islandRegions()));
+}
+
+/**
+ * The deterministic plan of a region list. Regions are planned in order and every later ring sits far enough out that
+ * the earlier ones plan bit-identical with or without it (tests/islasPost.test.ts checks the old rings tile by tile).
+ */
+export function buildIslandPlan(regions: RegionDef[]): IslandPlan {
   const tiles = generateArchipelago(regions);
   const occ = new Set<string>();
   const ring = new Set<string>();
@@ -328,7 +354,8 @@ export function islandPlan(): IslandPlan {
   // ------------------------------------------------------------ decoration on free land
   for (const p of plans.values()) {
     const kinds = DECOR_BY_BIOME[p.def.biome] ?? DECOR_BY_BIOME.home;
-    const dens = p.def.id === HOME_ID ? 0.2 : 0.34;
+    // the post-Parte III islands are bigger: a lighter hand keeps them readable (and the frame cheap)
+    const dens = p.def.id === HOME_ID ? 0.2 : (p.def.n ?? 0) > 12 ? 0.24 : 0.34;
     for (const t of p.tiles) {
       if (occ.has(key(t.gx, t.gy)) || ring.has(key(t.gx, t.gy))) continue;
       const h = hash2(t.gx, t.gy, 3);
@@ -342,8 +369,7 @@ export function islandPlan(): IslandPlan {
     }
   }
 
-  cached = { tiles, regions, plans, home: { sanctuary, port: port!, altar, mesa, lighthouse, boat, bank } };
-  return cached;
+  return { tiles, regions, plans, home: { sanctuary, port: port!, altar, mesa, lighthouse, boat, bank } };
 }
 
 /** land tiles touching water (for foam / beaches) */
@@ -375,10 +401,11 @@ export function planAscii(p: IslandPlan) {
     if (r.pier) put(r.pier, 'X');
   }
   const letters: Record<string, string> = {};
-  p.regions.forEach((r, i) => (letters[r.id] = 'hbcvpgraeskdo'[i] ?? '?'));
-  for (let y = 0; y < GRID_EXT; y++) {
+  p.regions.forEach((r, i) => (letters[r.id] = 'hbcvpgraeskdoCTVOZ'[i] ?? '?'));
+  const lim = Math.max(GRID_EXT, ...p.regions.map(gridOf));
+  for (let y = 0; y < lim; y++) {
     let line = '';
-    for (let x = 0; x < GRID_EXT; x++) {
+    for (let x = 0; x < lim; x++) {
       const g = glyph.get(key(x, y));
       const t = p.tiles.get(key(x, y));
       line += g ?? (t ? letters[t.region] : '.');

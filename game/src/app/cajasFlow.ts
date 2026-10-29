@@ -47,7 +47,7 @@ export async function startGateraBattle(dim: DimId, n: number | string) {
     const { openRepairGate } = await import('../battle/ui/repairGate');
     if (!(await openRepairGate())) return;
   }
-  const [{ BattleScene }, { buildGateraBattle, applyGateraResult }, { autoCrew, crew }, { simulateEstimate }, { stageIntro }] = await Promise.all([
+  const [{ BattleScene }, { buildGateraBattle, applyGateraResult }, { autoCrew, crew }, { simulateEstimate }, { stageIntro, storyHolding, releaseStoryHold }] = await Promise.all([
     import('../scenes/BattleScene'),
     import('../state/sys/gaterasBattles'),
     import('../state/sys/ship'),
@@ -64,6 +64,8 @@ export async function startGateraBattle(dim: DimId, n: number | string) {
     const loot = applyGateraResult(dim, n, r);
     const stage = typeof n === 'number' || /^\d+$/.test(n) ? Number(n) : null;
     Object.assign(cajasMemo, { dim, n: stage, node: String(n), loot, cleared: loot.first && stage !== null ? stage : null, opened: loot.opened });
+    // (P3-CINE) a won story fight whose close opens with a song film: it warms during the trip back (app/actsFlow.ts)
+    if (r.won) window.setTimeout(() => void import('./actsFlow').then((m) => m.warmAfterWin()).catch(() => undefined), 1500);
     void goCajas().finally(() => (running = false));
   });
   // the honest estimate runs while the presentation plays (the same run as the Carta's card: same key, shared)
@@ -75,7 +77,14 @@ export async function startGateraBattle(dim: DimId, n: number | string) {
     return;
   }
   music.play('battle');
-  await scenes.go(new BattleScene(spec), 'blocks');
+  // (P3-CINE) the presentation film's last frame is still up: the battle is built under it and the frame fades into
+  // it — no Carta flashing between the film and its fight, no comic wipe (the finale's battles do the same)
+  const sc = new BattleScene(spec);
+  if (await storyHolding()) {
+    await scenes.go(sc, 'none');
+    if (sc.coverUntil) await Promise.race([sc.coverUntil.catch(() => undefined), new Promise((r) => setTimeout(r, 1500))]);
+    await releaseStoryHold(0.6);
+  } else await scenes.go(sc, 'blocks');
   void battleSong(spec.meta?.special ?? '');
 }
 

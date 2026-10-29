@@ -45,6 +45,8 @@ export type Ev =
   | 'candy'
   | 'firstLegend'
   | 'gachaMythic'
+  | 'gachaMultidim'
+  | 'multiverso'
   | 'riskHigh'
   | 'riskAll'
   | 'eterno'
@@ -176,6 +178,16 @@ const H: Record<Ev, L[]> = {
   ],
   firstLegend: [{ t: '¡Tu PRIMER legendario! La suerte de principiante existe y está escrita en el cartel.' }, { t: 'Primer legendario. Esto se enmarca.' }],
   gachaMythic: [{ t: '¡¿MÍTICO?! Cierren el casino. No, mejor no, pero... ¡MÍTICO!' }, { t: 'Un MÍTICO. El multiverso se acaba de quedar sin aliento.', sf: '¡MÍTICO, A HUEVO! ¡Que alguien grabe!' }],
+  // after the Parte III only (a Multidimensional never comes out of the casino before): its own rarity, its own line
+  gachaMultidim: [
+    { t: '¡MULTIDIMENSIONAL! Ese no es de esta caja. Ni de la de al lado.' },
+    { t: 'Eso no brilla dorado, {name}: brilla a otro universo. ¡MULTIDIMENSIONAL!' },
+    { t: 'Se coló uno de otra caja. La casa no da reembolsos… ni explicaciones.', sf: '¡MULTIDIMENSIONAL, A HUEVO! Otro universo, otro gato.' },
+  ],
+  multiverso: [
+    { t: 'Cajas conectadas, {name}. Lo que sale de aquí viene de muy, muy lejos.' },
+    { t: 'Aquí todo legendario es de otro universo. Pregúntale al gato de dónde viene; igual no te contesta.' },
+  ],
   riskHigh: [{ t: 'Alto riesgo. Me gusta tu estilo.' }, { t: 'Tres boletos de golpe. Ojalá traigas suerte de gato negro.' }],
   riskAll: [{ t: 'TODO O NADA. El portal te mira con respeto.' }, { t: 'Diez boletos a una sola carta. Qué valor. Qué locura.' }],
   eterno: [{ t: 'Modo ETERNO. Veinte segundos. Después, la moneda al aire más cara del multiverso.' }, { t: 'Ay, {name}. Esto no se apaga solo. Bueno, sí: explotando.', sf: 'ETERNO. Agárrate, que esta madre va a reventar.' }],
@@ -211,6 +223,8 @@ const CHAT: Partial<Record<Ev, string[]>> = {
   gachaEpic: ['ROSA ROSA', 'eso brilla', 'buenaaa'],
   gachaLegend: ['QUÉ SUERTE', 'DORADO!!!', 'CLIP'],
   gachaMythic: ['MÍTICOOOO', 'NO PUEDE SER', 'CLIP CLIP CLIP', 'HISTÓRICO'],
+  gachaMultidim: ['MULTIDIMENSIONAL!!!', 'ese no es de aquí', 'OTRO UNIVERSO', 'CLIP', 'no era dorado, era otra cosa'],
+  multiverso: ['cajas nuevas!!', 'puro multidimensional', 'a ver a ver'],
   firstLegend: ['EL PRIMERO!!', 'suerte de principiante', 'CLIP'],
   escape: ['NOOO SE ESCAPÓ', 'lo vi lo vi', 'casi!!!', 'está cerca, chat'],
   hot: ['racha caliente!!', 'ahora sí', 'dale dale'],

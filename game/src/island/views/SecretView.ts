@@ -324,4 +324,9 @@ const DONE_LINE: Record<number, string> = {
   10: 'La esfinge volvió a dormirse. Ronca en jeroglífico.',
   11: 'Quedan restos de chocolate. Y huellas. Muchas huellas.',
   12: 'El ojo te sigue mirando. Ya te acostumbrarás.',
+  13: 'Sigue habiendo cajas adentro. Nadie ha llegado al fondo. Nadie quiere.',
+  14: 'La ficha quedó de cara. La casa dice que fue suerte.',
+  15: 'El agua sigue cantando en los azulejos.',
+  16: 'Un hilo suelto. No lo jales. NO lo jales.',
+  17: 'La almohada todavía tiene tu forma. Y pelos. Muchos pelos.',
 };

@@ -24,18 +24,39 @@
  *      surprise guaranteed épico that the odds panel never mentioned).
  * Pulls cost Boletos (earned playing / La Caja / Tragamichis) or Ojos de Gato. No real money anywhere.
  * Rewards are granted the moment you pull (the animation only presents them).
+ *
+ * After the Parte III (postP3Unlocked): a fourth banner, MULTIVERSO DESBORDADO (owner 2026-10-29: «un banner de traer
+ * multiversales así los distinguimos»). Every LEGENDARIO or MÍTICO of it is a post MULTIDIMENSIONAL from the Multiverse
+ * (state/sys/postp3.ts multiversoPool: by weight, ×3 the ones you don't have; the MÍTICO line gives one you DON'T have).
+ * Same counters and guarantees as the other cat banners, under its own keys (`multiverso:*`, no migration). Before the
+ * gate it doesn't exist (activeBanners / banner()).
+ *
+ * What a pull SHOWS: `Pull.tier` is the tier the odds drew (the counters and the odds read it); `Pull.look` is what the
+ * result shows (its colour, the machine, the word): a cat of the Multiverse shows its OWN rarity — a Multidimensional is
+ * never painted legendary gold (casino.ts catShowTier).
  */
 import { G } from '../game';
 import { RarityId } from '../econ';
 import { catDef } from '../../data/content';
 import { AccRarity } from './accessories';
-import { Granted, Prize, accPrize, catsOfRarity, cs, foodIncome, gachaCats, grantPrize, income, rand, rollCatPrize, weighted, addTickets, withPostTable } from './casino';
+import { Granted, Prize, accPrize, catShowTier, catsOfRarity, cs, foodIncome, gachaCats, grantPrize, income, rand, rollCatPrize, weighted, addTickets, withPostTable } from './casino';
+import { postP3Unlocked, rollMultiverso } from './postp3';
+import { isPostCat } from './multidim';
 
 export type Tier = 'common' | 'rare' | 'epic' | 'legendary' | 'holo' | 'mythic';
 /** rank order (index ≥ 3 = "legendario o mejor") */
 export const TIER_ORDER: Tier[] = ['common', 'rare', 'epic', 'legendary', 'holo', 'mythic'];
 export const TIER_NAME: Record<Tier, string> = { common: 'COMÚN', rare: 'RARO', epic: 'ÉPICO', legendary: 'LEGENDARIO', holo: 'HOLO', mythic: 'MÍTICO' };
 export const rankOf = (t: Tier) => TIER_ORDER.indexOf(t);
+/**
+ * What a result SHOWS: its tier, or — for a cat of the Multiverse — its own rarity ('multidimensional' has its own look:
+ * ui/theme RARITY.multidimensional). Ranked for the machine's transformation and the summaries: a Multidimensional above
+ * a HOLO foil, a mythic above everything.
+ */
+export type Look = Tier | 'multidimensional';
+export const LOOK_ORDER: Look[] = ['common', 'rare', 'epic', 'legendary', 'holo', 'multidimensional', 'mythic'];
+export const LOOK_NAME: Record<Look, string> = { ...TIER_NAME, multidimensional: 'MULTIDIMENSIONAL' };
+export const lookRank = (l: Look) => LOOK_ORDER.indexOf(l);
 
 interface Entry {
   w: number;
@@ -70,6 +91,15 @@ export interface Banner {
   accent: number;
   accent2: number;
   hasCats: boolean;
+  /** risk modes it offers (default: all three on a cat banner) */
+  modes?: GachaMode[];
+  /** ¡SE ESCAPÓ UN LEGENDARIO! can happen here (default: on a cat banner) */
+  escapes?: boolean;
+  /** the MULTIVERSO banner: its legendary / mythic lines are the Multiverse (no Multiverse share on top: withPostTable) */
+  multiverse?: boolean;
+  /** how its tiers are printed when they mean something else here (the MULTIVERSO's «MULTIDIMENSIONAL») */
+  tierLabel?: Partial<Record<Tier, string>>;
+  tierCol?: Partial<Record<Tier, number>>;
 }
 
 /** the photographer (s_lumen): rate-up inside LEGENDARIO cat rolls while you don't own her */
@@ -222,10 +252,79 @@ export const BANNERS: Banner[] = [
     hasCats: false,
   },
 ];
-export const BANNER_BY_ID = new Map(BANNERS.map((b) => [b.id, b]));
-export function banner(id?: string | null): Banner {
-  return (id && BANNER_BY_ID.get(id)) || BANNERS[0];
+/**
+ * MULTIVERSO DESBORDADO (after the Parte III): «parece que el casino logró conectar más cajas». Priced like the cat
+ * banners (1 boleto · 8 Ojos de Gato, like the MULTIVERSO HOLO), with the HOLO's guarantees (épico every 8, legendary at
+ * the latest in 36 with the ramp from 23, mythic at 140, a cat every 5). Its LEGENDARIO line is a Multidimensional of the
+ * Multiverse (by weight, ×3 the ones you lack) and its MÍTICO line one you DON'T have yet. No HOLO line, no risk modes,
+ * no escapes: every top result here is a Multidimensional, so nothing else can wear its place.
+ */
+export const MULTIVERSO_ID = 'multiverso';
+/** the rarity look of a Multidimensional (ui/theme RARITY.multidimensional: the color and its glow) */
+export const MD_COLOR = 0x2fb7c4;
+export const MD_GLOW = 0xf59ac0;
+const multiversoCat =
+  (missing: boolean) =>
+  (): Prize => {
+    const def = rollMultiverso(rand, missing);
+    // nothing in the Multiverse for you (elements not discovered): a legendary, as any cat banner
+    if (!def) return rollCatPrize(['legendary'], undefined, 0, null, 0.5, true);
+    return { kind: 'cat', n: 1, ref: def.id, holo: false, tier: 'multidimensional' };
+  };
+export const MULTIVERSO: Banner = {
+  id: MULTIVERSO_ID,
+  name: 'MULTIVERSO DESBORDADO',
+  kicker: 'NUEVO · PURO MULTIDIMENSIONAL',
+  tagline: 'Cada legendario o mítico de aquí es un MULTIDIMENSIONAL. La línea mítica te da uno que no tienes. Seguro a más tardar en 36.',
+  gems: 8,
+  tiers: { common: 0.5, rare: 0.31, epic: 0.16, legendary: 0.025, holo: 0, mythic: 0.005 },
+  table: {
+    common: [
+      { w: 25, label: 'Pescaditos (2 min)', make: () => ({ kind: 'food', n: fsec(120), tier: 'common' }) },
+      { w: 25, label: 'Oro (2 min)', make: () => ({ kind: 'gold', n: sec(120), tier: 'common' }) },
+      { w: 25, label: '8 Orbes de Alma', make: () => ({ kind: 'orbs', n: 8, tier: 'common' }) },
+      { w: 25, label: '30 Fichas', make: () => ({ kind: 'chips', n: 30, tier: 'common' }) },
+    ],
+    rare: [
+      { w: 60, label: 'Gato común o raro', make: cat(['common', 'rare'], [0.4, 0.6]), cat: true },
+      { w: 18, label: 'Accesorio raro', make: acc('rare') },
+      { w: 22, label: '1 Orbe Prisma', make: () => ({ kind: 'prisma', n: 1, tier: 'rare' }) },
+    ],
+    epic: [
+      { w: 75, label: 'Gato raro o épico', make: cat(['rare', 'epic'], [0.45, 0.55]), cat: true },
+      { w: 25, label: 'Accesorio épico', make: acc('epic') },
+    ],
+    legendary: [{ w: 100, label: 'MULTIDIMENSIONAL del Multiverso (por peso; x3 si no lo tienes)', make: multiversoCat(false), cat: true }],
+    holo: [],
+    mythic: [{ w: 100, label: 'MULTIDIMENSIONAL que NO tienes (por peso)', make: multiversoCat(true), cat: true }],
+  },
+  epicPity: 8,
+  softPity: 22,
+  hardPity: 36,
+  softStep: 0.07,
+  mythicPity: 140,
+  catPity: 5,
+  accent: MD_COLOR,
+  accent2: MD_GLOW,
+  hasCats: true,
+  modes: ['normal'],
+  escapes: false,
+  multiverse: true,
+  tierLabel: { legendary: 'MULTIDIMENSIONAL', mythic: 'MD QUE TE FALTA' },
+  tierCol: { legendary: MD_COLOR, mythic: MD_GLOW },
+};
+export const BANNER_BY_ID = new Map([...BANNERS, MULTIVERSO].map((b) => [b.id, b]));
+/** the banners on view: the MULTIVERSO joins the cat banners once the Parte III is over (before that it doesn't exist) */
+export function activeBanners(): Banner[] {
+  return G.s && postP3Unlocked() ? [BANNERS[0], BANNERS[1], MULTIVERSO, ...BANNERS.slice(2)] : BANNERS;
 }
+export function banner(id?: string | null): Banner {
+  const b = id ? BANNER_BY_ID.get(id) : undefined;
+  if (b?.multiverse && !(G.s && postP3Unlocked())) return BANNERS[0];
+  return b || BANNERS[0];
+}
+/** how a tier is printed on this banner (the MULTIVERSO's lines mean a Multidimensional) */
+export const tierLabelOf = (b: Banner, t: Tier) => b.tierLabel?.[t] ?? TIER_NAME[t];
 
 // ------------------------------------------------------------------ risk modes (bet size ↔ variance)
 export type GachaMode = 'normal' | 'riesgo' | 'todo';
@@ -259,6 +358,7 @@ export const MODES: Record<GachaMode, ModeDef> = {
   },
 };
 export function modesFor(b: Banner): GachaMode[] {
+  if (b.modes) return [...b.modes];
   return b.hasCats ? ['normal', 'riesgo', 'todo'] : ['normal'];
 }
 
@@ -396,7 +496,10 @@ export function ratesTable(b: Banner, mode: GachaMode = 'normal'): { tier: Tier;
 }
 
 export interface Pull {
+  /** the tier the odds drew (counters, odds, the auto-play's stops) */
   tier: Tier;
+  /** what it SHOWS: the tier, or a Multiverse cat's own rarity (a Multidimensional never wears the legendary gold) */
+  look: Look;
   prize: Prize;
   got: Granted;
   /** a guarantee forced this tier */
@@ -438,10 +541,19 @@ function pullOne(b: Banner, featured: string | null, mode: GachaMode): Pull {
       if (src) entry = src;
     }
   }
-  // after the Parte III a legendary / mythic cat of this banner may come from its Multiverse pool (state/sys/postp3.ts)
-  const prize = withPostTable({ game: 'gacha', sub: b.id }, () => entry.make(featured));
+  // after the Parte III a legendary / mythic cat of this banner may come from its Multiverse pool (state/sys/postp3.ts);
+  // the MULTIVERSO banner's lines ARE the Multiverse (no share on top)
+  const prize = b.multiverse ? entry.make(featured) : withPostTable({ game: 'gacha', sub: b.id }, () => entry.make(featured));
   prize.tier = prize.holo ? 'holo' : tier === 'holo' ? 'legendary' : tier;
-  if (tier === 'mythic' && prize.kind === 'cat') prize.tier = catDef(prize.ref!).rarity === 'mythic' || catDef(prize.ref!).rarity === 'multidimensional' ? 'mythic' : 'holo';
+  if (tier === 'mythic' && prize.kind === 'cat') prize.tier = catDef(prize.ref!).rarity === 'mythic' ? 'mythic' : 'holo';
+  // the cat that came out is what shows (2026-10-29 fix: a Multidimensional of the Multiverse showed the drawn tier's gold)
+  let look: Look = tier;
+  if (prize.kind === 'cat' && prize.ref) {
+    const def = catDef(prize.ref);
+    prize.tier = catShowTier(def, !!prize.holo, prize.tier);
+    // a cat of the Multiverse shows its own rarity (catShowTier); a HOLO foil and every other cat keep the drawn tier's look
+    if (!prize.holo && (prize.tier === 'multidimensional' || isPostCat(def))) look = prize.tier as Look;
+  }
   const got = grantPrize(prize);
   // counters
   const wasHot = pity.hot > 0;
@@ -459,7 +571,7 @@ function pullOne(b: Banner, featured: string | null, mode: GachaMode): Pull {
   if (tier === 'mythic') st.gacha_mythics = (st.gacha_mythics ?? 0) + 1;
   // ¡SE ESCAPÓ! (only normal pulls on cat banners, outside a hot window, with cooldown)
   let escaped: string | undefined;
-  if (rank < 3 && b.hasCats && mode === 'normal' && !wasHot && pity.esc >= ESCAPE.cooldown && rand() < ESCAPE.p) {
+  if (rank < 3 && b.hasCats && b.escapes !== false && mode === 'normal' && !wasHot && pity.esc >= ESCAPE.cooldown && rand() < ESCAPE.p) {
     const legs = catsOfRarity('legendary', true);
     const unowned = legs.filter((c) => G.s.catdex[c.id] !== 'registered');
     const pool = unowned.length ? unowned : legs;
@@ -472,7 +584,7 @@ function pullOne(b: Banner, featured: string | null, mode: GachaMode): Pull {
       st.gacha_escapes = (st.gacha_escapes ?? 0) + 1;
     }
   }
-  return { tier, prize, got, pity: forced, escaped, hot: wasHot, firstLegend, mode };
+  return { tier, look, prize, got, pity: forced, escaped, hot: wasHot, firstLegend, mode };
 }
 
 export type PayWith = 'tickets' | 'gems';
@@ -490,7 +602,7 @@ export function canPull(b: Banner, n: 1 | 10, w: PayWith, mode: GachaMode = 'nor
 /** pay and pull; returns null if it can't be afforded. Risk modes always pull once. */
 export function pull(bannerId: string, n: 1 | 10, w: PayWith, mode: GachaMode = 'normal'): Pull[] | null {
   const b = banner(bannerId);
-  if (!b.hasCats) mode = 'normal';
+  if (!b.hasCats || !modesFor(b).includes(mode)) mode = 'normal';
   if (mode !== 'normal') n = 1;
   if (!canPull(b, n, w, mode)) return null;
   const cost = pullCost(b, n, w, mode);
@@ -504,9 +616,9 @@ export function pull(bannerId: string, n: 1 | 10, w: PayWith, mode: GachaMode = 
   if (n === 10) st.pulls_x10 = (st.pulls_x10 ?? 0) + 1;
   if (mode !== 'normal') st[`pulls_${mode}`] = (st[`pulls_${mode}`] ?? 0) + 1;
   st[`pulls_${b.id}`] = (st[`pulls_${b.id}`] ?? 0) + n;
-  const best = out.reduce((m, p) => Math.max(m, rankOf(p.tier)), 0);
+  const best = out.reduce((m, p) => Math.max(m, lookRank(p.look)), 0);
   const h = cs().hist!;
-  h.unshift({ g: 'gacha', cur: w === 'tickets' ? 'tickets' : 'gems', stake: cost, win: 0, r: `${b.name} ${mode === 'normal' ? `x${n}` : MODES[mode].name} · ${TIER_NAME[TIER_ORDER[best]]}` });
+  h.unshift({ g: 'gacha', cur: w === 'tickets' ? 'tickets' : 'gems', stake: cost, win: 0, r: `${b.name} ${mode === 'normal' ? `x${n}` : MODES[mode].name} · ${LOOK_NAME[LOOK_ORDER[best]]}` });
   if (h.length > 40) h.length = 40;
   G.count('gacha_pulls', n);
   G.save();
@@ -514,8 +626,8 @@ export function pull(bannerId: string, n: 1 | 10, w: PayWith, mode: GachaMode = 
 }
 
 /** presentation helpers */
-export function tierColor(t: Tier): number {
-  return { common: 0xd9cdb8, rare: 0x6fa8ff, epic: 0xff2e88, legendary: 0xffc94a, holo: 0x00e5ff, mythic: 0xff3b1f }[t];
+export function tierColor(t: Look): number {
+  return { common: 0xd9cdb8, rare: 0x6fa8ff, epic: 0xff2e88, legendary: 0xffc94a, holo: 0x00e5ff, mythic: 0xff3b1f, multidimensional: MD_COLOR }[t];
 }
 export function prizeTitle(g: Granted): string {
   if (g.kind === 'cat') return catDef(g.ref!).name;

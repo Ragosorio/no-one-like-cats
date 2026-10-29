@@ -11,7 +11,7 @@ import { W, H } from '../../../core/App';
 import { C, F } from '../../../ui/theme';
 import { txt } from '../../../ui/widgets';
 import { sfx } from '../../../core/audio';
-import { type Signature, type SigCtx, CHEER, backlight, cheer, every, flashOf, later, score, word } from './kit';
+import { type Signature, type SigCtx, CHEER, backlight, cheer, cover, every, flashOf, later, score, word } from './kit';
 import { cardLoop, hideDisc, scanlines } from './kitA';
 
 const CYAN = 0x3ad1ff;
@@ -347,8 +347,8 @@ export const gatarana2099: Signature = {
       gsap.to(sl, { alpha: 0, delay: 1.0, duration: 0.45, onComplete: () => sl.destroy() });
       // the chromatic glitch
       if (c.flashes) {
-        const r = new Graphics().rect(0, 0, W, H).fill({ color: RED, alpha: 0.18 });
-        const b = new Graphics().rect(0, 0, W, H).fill({ color: CYAN, alpha: 0.18 });
+        const r = cover(RED, 0.18);
+        const b = cover(CYAN, 0.18);
         c.fg.addChild(r, b);
         gsap.fromTo(r, { x: -30 }, { x: 0, alpha: 0, duration: 0.35, onComplete: () => r.destroy() });
         gsap.fromTo(b, { x: 30 }, { x: 0, alpha: 0, duration: 0.35, onComplete: () => b.destroy() });

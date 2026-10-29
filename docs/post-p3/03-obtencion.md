@@ -6,9 +6,9 @@
 
 ## 0. En una frase
 
-Cuando la Parte III termina («Continuará»), el Casino del Gato Negro y el Podio se llenan de gatos nuevos. Los **60 Multidimensionales, 20 Míticos y 10 Legendarios** salen de dos lugares:
+Cuando la Parte III termina («Continuará»), el Casino del Gato Negro y el Podio se llenan de gatos nuevos. Los **85 Multidimensionales (60 de la tanda 1 y 25 de la tanda 2), 20 Míticos y 10 Legendarios** salen de dos lugares:
 - las cuatro mesas grandes (Portal, Tragamichis, La Caja y Modo Eterno);
-- la **vitrina** de cada una de las otras siete mesas.
+- la **vitrina** de cada una de las otras siete mesas (solo la tanda 1: las vitrinas se quedan en 8 gatos).
 
 Los **8 Heroicos** los pagan los ocho retos de la **Copa Fuera de la Caja** en el Podio, que siempre se ponen a la altura de tu liga.
 
@@ -35,12 +35,12 @@ Cuando el Portal, la Tragamichis (con fichas, líneas de GATO NEGRO), La Caja (G
 
 | Mesa (post.source) | Gatos | MD · Mít · Leg | Parte / garantía aprobada (antes, provisional) |
 |---|---|---|---|
-| `casino:gacha` · Portal (todos) | 19 | 16 · 2 · 1 | **0.5 / 3** (antes 0.25 / 6) |
-| `casino:gacha:michi` · Portal Michi | 16 | 10 · 4 · 2 | **0.5 / 3** (antes 0.25 / 6) |
-| `casino:gacha:holo` · Multiverso Holo | 16 | 10 · 4 · 2 | **0.5 / 3** (antes 0.25 / 6) |
-| `casino:slot` · Tragamichis | 24 | 15 · 6 · 3 | **0.4 / 4** (antes 0.25 / 6) |
-| `casino:caja` · La Caja | 8 | 5 · 2 · 1 | **0.6 / 2** (antes 0.25 / 4) |
-| `casino:eterno` · Modo Eterno | 7 | 4 · 2 · 1 | **0.75 / 2** (antes 0.5 / 2) |
+| `casino:gacha` · Portal (todos) | 24 | 21 · 2 · 1 | **0.5 / 3** (antes 0.25 / 6) |
+| `casino:gacha:michi` · Portal Michi | 20 | 14 · 4 · 2 | **0.5 / 3** (antes 0.25 / 6) |
+| `casino:gacha:holo` · Multiverso Holo | 20 | 14 · 4 · 2 | **0.5 / 3** (antes 0.25 / 6) |
+| `casino:slot` · Tragamichis | 30 | 21 · 6 · 3 | **0.4 / 4** (antes 0.25 / 6) |
+| `casino:caja` · La Caja | 11 | 8 · 2 · 1 | **0.6 / 2** (antes 0.25 / 4) |
+| `casino:eterno` · Modo Eterno | 10 | 7 · 2 · 1 | **0.75 / 2** (antes 0.5 / 2) |
 
 `POST_CASINO` aprobado (pegar en `data/postp3/reglas.ts`):
 
@@ -59,33 +59,40 @@ Por qué esos números:
 
 **Las 56 fichas de las siete vitrinas también viven en una mesa grande.** Su `post.source` es Portal Michi, Multiverso Holo, Tragamichis o La Caja. Así ningún gato queda en un callejón sin salida, y el validador de hoy los acepta.
 
+**Tanda 2 (DISEÑO-2, 2026-10-29; `05-tanda-2.md`).** Los 25 Multidimensionales nuevos entran **solo a las mesas grandes**, repartidos en proporción a lo que ya tenía cada bolsa: Portal (todos) +5, Portal Michi +4, Multiverso Holo +4, Tragamichis +6, La Caja +3 y Modo Eterno +3, con 5 estrellas (peso 4). **No entran a las vitrinas**: el tiro de vitrina está pensado para 1 legendario, 2 míticos y 5 Multidimensionales, y la pantalla dice «vitrina de 8 gatos». La parte y la garantía de cada mesa **no cambian**: sale un gato del lote igual de seguido, solo que la bolsa es más grande. Su `post.vitrina` es el nombre de su mesa grande (`gacha`, `slot`, `caja` o `eterno`), que el validador ya acepta.
+
 ### 3.2 Bolsas de cada mesa grande
 
-#### `casino:gacha` — Portal (todos) (19)
+#### `casino:gacha` — Portal (todos) (24)
 
 | Gato | Rareza | Peso |
 |---|---|---|
 | Desborde | Legendario | 10 |
 | Brasa Naranja | Mítico | 10 |
 | Vigilia | Mítico | 10 |
+| Bastet | Multidimensional | 10 |
 | Capitán Ahabigotes | Multidimensional | 10 |
 | Capitán Michimérica | Multidimensional | 10 |
+| Cleogatra | Multidimensional | 10 |
 | Doctor Doomiau | Multidimensional | 10 |
 | Don Gatote de la Mancha | Multidimensional | 10 |
 | Frankengato | Multidimensional | 10 |
 | Gatogro | Multidimensional | 10 |
 | Gomitas D. Michi | Multidimensional | 10 |
 | Hierro Michi | Multidimensional | 10 |
+| La Michi de la Perla | Multidimensional | 10 |
 | Luna Lovegata | Multidimensional | 10 |
 | María Gatoñeta | Multidimensional | 10 |
 | Mazingato Z | Multidimensional | 10 |
 | Miautentación | Multidimensional | 10 |
+| Miauzart | Multidimensional | 10 |
 | Michi-Wan ★ | Multidimensional | 4 |
 | Pinomichi | Multidimensional | 10 |
+| Quetzalgatl ★ | Multidimensional | 4 |
 | Sabrina Gatpenter | Multidimensional | 10 |
 | Supermichi ★ | Multidimensional | 4 |
 
-#### `casino:gacha:michi` — Portal Michi (16)
+#### `casino:gacha:michi` — Portal Michi (20)
 
 | Gato | Rareza | Peso |
 |---|---|---|
@@ -100,13 +107,17 @@ Por qué esos números:
 | Gatojo ★ | Multidimensional | 4 |
 | Kagebunyan | Multidimensional | 10 |
 | Lamiau Yamal | Multidimensional | 10 |
+| Lara Croqueta | Multidimensional | 10 |
+| Miaucol Yordan ★ | Multidimensional | 4 |
 | Miaupé | Multidimensional | 10 |
+| Miausagi | Multidimensional | 10 |
 | Miaussi ★ | Multidimensional | 4 |
 | Michi Atom | Multidimensional | 10 |
 | Michi de Pegaso | Multidimensional | 10 |
+| Tanjimiau | Multidimensional | 10 |
 | Un Zarpazo | Multidimensional | 10 |
 
-#### `casino:gacha:holo` — Multiverso Holo (16)
+#### `casino:gacha:holo` — Multiverso Holo (20)
 
 | Gato | Rareza | Peso |
 |---|---|---|
@@ -119,15 +130,19 @@ Por qué esos números:
 | Blumiau | Multidimensional | 10 |
 | Conde Gatula | Multidimensional | 10 |
 | Don Gatoleone ★ | Multidimensional | 4 |
+| El Gatejo | Multidimensional | 10 |
 | El Michipulín Colorado | Multidimensional | 10 |
 | Hermiaune | Multidimensional | 10 |
+| Isaac Miauton | Multidimensional | 10 |
+| La Maullorona | Multidimensional | 10 |
+| Leonardo da Michi ★ | Multidimensional | 4 |
 | Miaunya | Multidimensional | 10 |
 | Ryumiau | Multidimensional | 10 |
 | Sherlock Ronrones | Multidimensional | 10 |
 | The Miauknd | Multidimensional | 10 |
 | Yugi Miauto ★ | Multidimensional | 4 |
 
-#### `casino:slot` — Tragamichis (24)
+#### `casino:slot` — Tragamichis (30)
 
 | Gato | Rareza | Peso |
 |---|---|---|
@@ -144,41 +159,53 @@ Por qué esos números:
 | Daft Miau ★ | Multidimensional | 4 |
 | El Miauki | Multidimensional | 10 |
 | El Michito del Barril ★ | Multidimensional | 4 |
+| El Sombreronrón | Multidimensional | 10 |
+| Felinamente Rubia | Multidimensional | 10 |
 | Hannah Michitana ★ | Multidimensional | 4 |
 | Miaang | Multidimensional | 10 |
 | Miauby-Doo | Multidimensional | 10 |
 | Miaufalda | Multidimensional | 10 |
+| Miauty la Fea | Multidimensional | 10 |
 | Michi Esponja | Multidimensional | 10 |
 | Michiércoles | Multidimensional | 10 |
 | Party Michi | Multidimensional | 10 |
 | Persa Falsa | Multidimensional | 10 |
+| Ricardo Garjona | Multidimensional | 10 |
 | Rick Michez | Multidimensional | 10 |
 | Romiau Santos | Multidimensional | 10 |
+| Shakimiau ★ | Multidimensional | 4 |
 | Ssssmichi | Multidimensional | 10 |
+| Tetrimiau | Multidimensional | 10 |
 
-#### `casino:caja` — La Caja (8)
+#### `casino:caja` — La Caja (11)
 
 | Gato | Rareza | Peso |
 |---|---|---|
 | Moño Dorado | Legendario | 10 |
 | Matrioska | Mítico | 10 |
 | Rendija | Mítico | 10 |
+| Doc Miauwn ★ | Multidimensional | 4 |
+| El Michíncipe | Multidimensional | 10 |
 | Gemichi | Multidimensional | 10 |
+| Mi Pobre Gatito | Multidimensional | 10 |
 | Miaunce ★ | Multidimensional | 4 |
 | Michimpostor | Multidimensional | 10 |
 | Mr. Miaubody | Multidimensional | 10 |
 | Zoomic | Multidimensional | 10 |
 
-#### `casino:eterno` — Modo Eterno (7)
+#### `casino:eterno` — Modo Eterno (10)
 
 | Gato | Rareza | Peso |
 |---|---|---|
 | Sin Frenos | Legendario | 10 |
 | Bucle | Mítico | 10 |
 | Grafito | Mítico | 10 |
+| Capitán Gorrimiau | Multidimensional | 10 |
 | Grrrú | Multidimensional | 10 |
 | Heisenmiau ★ | Multidimensional | 4 |
 | Miaunion | Multidimensional | 10 |
+| Napoleón Bonapata | Multidimensional | 10 |
+| Pinkmiau | Multidimensional | 10 |
 | Post Maulone | Multidimensional | 10 |
 
 
@@ -306,22 +333,27 @@ Las reglas marcadas **«Propuesta»** son balance y el dueño las decide al prob
 
 | Set | Gatos | Regla |
 |---|---|---|
-| **Sábado de Anime** (`set_pp_shonen`) | Gomitas D. Michi, Kagebunyan, Gatojo, Un Zarpazo, Michi de Pegaso, Michi Atom, Mazingato Z, Ryumiau, Miaunya, Yugi Miauto | Propuesta: tus Multidimensionales de anime empiezan cada batalla con 25 de barra. |
+| **Sábado de Anime** (`set_pp_shonen`) | Gomitas D. Michi, Kagebunyan, Gatojo, Un Zarpazo, Michi de Pegaso, Michi Atom, Mazingato Z, Ryumiau, Miaunya, Yugi Miauto, Miausagi, Tanjimiau | Propuesta: tus Multidimensionales de anime empiezan cada batalla con 25 de barra. |
 | **Clásicos de Biblioteca** (`set_pp_biblioteca`) | Don Gatote de la Mancha, Sherlock Ronrones, Frankengato, Conde Gatula, Capitán Ahabigotes, Pinomichi | Colección: los seis clásicos de dominio público. |
 | **Los Tres del Colegio** (`set_pp_colegio`) | Harry Gatter, Hermiaune, Luna Lovegata | Propuesta: con los tres en la tripulación, sus poderes empiezan con 20 de barra. |
-| **Puro Corazón Latino** (`set_pp_latino`) | El Michipulín Colorado, El Michito del Barril, Miaufalda, Condorgato | Colección: la tele, la tira y la historieta de la tarde. |
+| **Puro Corazón Latino** (`set_pp_latino`) | El Michipulín Colorado, El Michito del Barril, Miaufalda, Condorgato, Miauty la Fea | Colección: la tele, la tira y la historieta de la tarde. |
 | **Tarde de Caricaturas** (`set_pp_tarde`) | Michi Esponja, Rick Michez, Miaang, Miauby-Doo, Blumiau, Mr. Miaubody | Colección: la barra de caricaturas completa. |
 | **Función de Estreno** (`set_pp_estreno`) | Gatogro, Grrrú, Miaunion, Mr. Miaubody | Colección: las películas animadas. |
 | **Villanos con Plan** (`set_pp_villanos`) | Grrrú, Miaunion, Doctor Doomiau, Heisenmiau, Don Gatoleone | Colección: todos tienen un plan. Ninguno funciona. |
 | **Liga de Capas** (`set_pp_liga`) | Supermichi, Hierro Michi, Capitán Michimérica, Garritas, Murciégato, Gato Araña | Propuesta: tus superhéroes empiezan cada batalla con 1 escudo. |
-| **Fichas de Consola** (`set_pp_consola`) | Ssssmichi, Michimpostor, Zoomic, Comecroquetas | Colección: los de la maquinita. |
-| **Maratón de Series** (`set_pp_series`) | Hannah Michitana, Miaunce, Heisenmiau, Michiércoles | Colección: un capítulo más y ya. |
+| **Fichas de Consola** (`set_pp_consola`) | Ssssmichi, Michimpostor, Zoomic, Comecroquetas, Tetrimiau, Lara Croqueta | Colección: los de la maquinita. |
+| **Maratón de Series** (`set_pp_series`) | Hannah Michitana, Miaunce, Heisenmiau, Michiércoles, Pinkmiau | Colección: un capítulo más y ya. |
 | **Función de Medianoche** (`set_pp_cine`) | Gemichi, Persa Falsa, Michi-Wan, Don Gatoleone | Colección: palomitas no incluidas. |
-| **Cartel del Festival** (`set_pp_festival`) | Romiau Santos, El Miauki, Post Maulone, Miautentación, Sabrina Gatpenter, Daft Miau, Party Michi, The Miauknd | Colección: el cartel completo (propuesta cosmética: la Tragamichis estrena luces de festival). |
+| **Cartel del Festival** (`set_pp_festival`) | Romiau Santos, El Miauki, Post Maulone, Miautentación, Sabrina Gatpenter, Daft Miau, Party Michi, The Miauknd, Ricardo Garjona, Shakimiau | Colección: el cartel completo (propuesta cosmética: la Tragamichis estrena luces de festival). |
 | **Selección Michi** (`set_pp_seleccion`) | Miaussi, Gatistiano Ronaldo, Miaupé, Lamiau Yamal | Propuesta: en el Podio, tus seleccionados pegan +10 %. |
 | **La Casa Siempre Gana** (`set_pp_casa`) | Pozo Mayor, Bolita, Catarata, Ojos de Serpiente, As Bajo la Manga, La Cantadora, Uña de Oro, Moño Dorado, Desborde, Sin Frenos | Propuesta: el medidor de LA CASA TE DEBE se llena un 10 % más rápido (se imprime en Reglas de la casa). |
 | **Amuletos de la Mesa** (`set_pp_amuletos`) | Trébol, Mala Suerte, Comodín, Doblón | Colección: la buena, la mala y la que quema. |
 | **Lo que Quedó Después** (`set_pp_despues`) | Brasa Naranja, Vigilia, Tinta Gris, Grafito | Colección. |
+| **Leyendas de la Abuela** (`set_pp_leyendas`) | El Sombreronrón, El Gatejo, La Maullorona | Colección: las que te contaban para que no salieras de noche. |
+| **Pirámides** (`set_pp_piramides`) | Bastet, Cleogatra, Quetzalgatl | Colección: dos ríos, dos desiertos, tres pirámides y ningún elevador. |
+| **Clase de Historia** (`set_pp_historia`) | Cleogatra, Napoleón Bonapata, Leonardo da Michi, Isaac Miauton, Miauzart, María Gatoñeta | Colección: entra en el examen del viernes. |
+| **Sala del Museo** (`set_pp_museo`) | La Michi de la Perla, Leonardo da Michi, x_vangato, e_gatoconda, c_gritito | Colección: no toque las obras. |
+| **Noche de Videoclub** (`set_pp_videoclub`) | Mi Pobre Gatito, Felinamente Rubia, Capitán Gorrimiau, Doc Miauwn | Colección: rebobínala antes de devolverla. |
 | **Copa Fuera de la Caja** (`set_pp_copa`) | La Vencidas, Kid Capa, Shinai, Dama Pergamino, B-Girl Bigotes, La Retiaria, Máscara de Oro, Combo Infinito | Propuesta: en el Podio, tus gatos empiezan cada duelo con 25 de barra. |
 
 ## 7. Requiere sistema nuevo (sigue abierto)
@@ -331,7 +363,7 @@ Lo aprobado ya está arriba, en §3–5. Queda abierto:
    - Tabla: común 50 %, raro 30 %, épico 13 %, legendario 4.5 %, mítico 1 % y **MULTIDIMENSIONAL 1.5 %**.
    - Garantías: Multidimensional seguro a los 70 tiros y mítico seguro a los 140.
    - El destacado cambia con tu progreso (el siguiente Multidimensional que te falta), nunca con la fecha.
-   - Los 19 gatos de `casino:gacha` pasarían ahí.
+   - Los 24 gatos de `casino:gacha` pasarían ahí.
 2. **Combos de pareja** (`post.pair`).
    - Grrrú + Miaunion: el rayo congela a dos y los plátanos congelan.
    - Heisenmiau + Pinkmiau, si entra la reserva: la nube pega doble.

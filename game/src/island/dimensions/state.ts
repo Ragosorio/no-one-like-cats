@@ -1,7 +1,8 @@
 /** Shared, read-only snapshot of the dimension world (written by TerrainView, read by Ambient). */
 import type { Plate } from './plates';
 
-export type RegionLook = 'open' | 'veil' | 'available' | 'clearing';
+/** 'hidden': not in this save's world yet (a post-Parte III island before the gate): nothing of it is drawn */
+export type RegionLook = 'open' | 'veil' | 'available' | 'clearing' | 'hidden';
 
 export interface CamInfo {
   cx: number;

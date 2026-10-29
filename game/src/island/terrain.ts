@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite } from 'pixi.js';
+import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { W, H } from '../core/App';
 import { TW, TH, isoToScreen } from './iso';
 import { C } from '../ui/theme';
@@ -128,7 +128,7 @@ export class TerrainView extends Container {
     const mx = 260 / Math.max(0.3, cam.zoom);
     for (const [id, L] of this.layers) {
       const b = L.bounds;
-      const vis = b.x1 > cam.x0 - mx && b.x0 < cam.x1 + mx && b.y1 > cam.y0 - mx && b.y0 < cam.y1 + mx;
+      const vis = L.look !== 'hidden' && b.x1 > cam.x0 - mx && b.x0 < cam.x1 + mx && b.y1 > cam.y0 - mx && b.y0 < cam.y1 + mx;
       L.visible = vis;
       if (!vis) continue;
       L.tick(dt);
@@ -140,7 +140,8 @@ export class TerrainView extends Container {
       s.holder.position.set(dx, dy);
       const x = s.base.x + dx;
       const y = s.base.y + dy;
-      s.holder.visible = x + s.radius > cam.x0 && x - s.radius < cam.x1 && y + s.radius > cam.y0 && y - s.radius < cam.y1;
+      // sealed === null: never drawn (a hidden island has no sky)
+      s.holder.visible = s.sealed !== null && x + s.radius > cam.x0 && x - s.radius < cam.x1 && y + s.radius > cam.y0 && y - s.radius < cam.y1;
     }
   }
 
@@ -149,6 +150,20 @@ export class TerrainView extends Container {
     for (const [id, L] of this.layers) {
       const lk = look(id);
       dimWorld.looks.set(id, lk);
+      // a post-Parte III island before the gate: no rock, no veil, no sky, no fx — the sea where it will be
+      if (lk === 'hidden') {
+        this.fxs.get(id)?.destroy();
+        this.fxs.delete(id);
+        L.hide();
+        const sky = this.skies.get(id);
+        if (sky && sky.sealed !== null) {
+          dropSky(sky.dim, sky.sealed);
+          sky.sealed = null;
+          sky.sprite.texture = Texture.EMPTY;
+        }
+        if (sky) sky.holder.visible = false;
+        continue;
+      }
       if (lk !== L.look) {
         this.fxs.get(id)?.destroy();
         this.fxs.delete(id);
@@ -183,6 +198,7 @@ export class TerrainView extends Container {
     const home = regions[0];
     for (const r of regions.slice(1)) {
       const lk = look(r.id);
+      if (lk === 'hidden') continue;
       const b = this.findBridge(home.id, r.id);
       if (!b) continue;
       const a = isoToScreen(b.ax, b.ay);

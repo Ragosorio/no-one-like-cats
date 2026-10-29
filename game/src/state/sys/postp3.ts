@@ -127,6 +127,59 @@ export function rollPostCat(t: PostTable, rnd: () => number): CatDef | null {
   return pickWeighted(pool, rnd);
 }
 
+// ------------------------------------------------------------------ the Portal's MULTIVERSO banner (state/sys/gacha.ts)
+/**
+ * The MULTIVERSO DESBORDADO banner (owner 2026-10-29): every LEGENDARY / MYTHIC result of it is a post MULTIDIMENSIONAL.
+ * Its pool is every post Multidimensional in the game (whatever its table: the banner is where they all meet), after the
+ * gate, with a weight, every element of it discovered — a new wave of them joins it by itself (postCats()).
+ */
+export function multiversoPool(): CatDef[] {
+  if (!G.s || !postP3Unlocked()) return [];
+  return postCats().filter((c) => c.rarity === 'multidimensional' && !c.secret && Number(c.post?.weight) > 0 && c.elements.every((e) => G.s.elements.includes(e)));
+}
+/** one of them by weight (×3 the ones you don't have); `missing` = only the ones you don't have (all of them once you do) */
+export function rollMultiverso(rnd: () => number, missing = false): CatDef | null {
+  const pool = multiversoPool();
+  if (!pool.length) return null;
+  const lack = missing ? pool.filter((c) => !owns(c.id)) : pool;
+  return pickWeighted(lack.length ? lack : pool, rnd);
+}
+export interface MultiversoOdds {
+  /** P(MULTIDIMENSIONAL line) and P(MD QUE TE FALTA line) of the next pull */
+  pLine: number;
+  pMissing: number;
+  cats: {
+    id: string;
+    name: string;
+    weight: number;
+    owned: boolean;
+    /** given the MULTIDIMENSIONAL line: its chance (weight, ×3 if you don't have it) */
+    inLine: number;
+    /** given the MD QUE TE FALTA line: its chance (0 if you have it, unless you have them all) */
+    inMissing: number;
+    /** this cat on your next pull */
+    next: number;
+  }[];
+}
+/** the MULTIVERSO's pool table (the odds panel): `p` = the next pull's tier odds (legendary, mythic) */
+export function multiversoOdds(p: { legendary: number; mythic: number }): MultiversoOdds | null {
+  const pool = multiversoPool();
+  if (!pool.length) return null;
+  const lack = pool.filter((c) => !owns(c.id));
+  const miss = lack.length ? lack : pool;
+  const tot = pool.reduce((s, c) => s + postWeight(c), 0) || 1;
+  const totM = miss.reduce((s, c) => s + postWeight(c), 0) || 1;
+  return {
+    pLine: p.legendary,
+    pMissing: p.mythic,
+    cats: pool.map((c) => {
+      const inLine = postWeight(c) / tot;
+      const inMissing = miss.includes(c) ? postWeight(c) / totM : 0;
+      return { id: c.id, name: c.name, weight: Number(c.post?.weight), owned: owns(c.id), inLine, inMissing, next: p.legendary * inLine + p.mythic * inMissing };
+    }),
+  };
+}
+
 export interface PostOdds {
   table: PostTable;
   /** «el Portal del Multiverso» (+ the banner) */

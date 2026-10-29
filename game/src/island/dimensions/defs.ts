@@ -3,10 +3,47 @@
  * (ink outlines, flat colour, halftone) but lives in its own style dimension with its own palette,
  * terrain pattern, floating-rock underside, falls, sky and animation.
  */
-export type DimId = 'home' | 'forest' | 'cliff' | 'volcano' | 'ghost' | 'ice' | 'ruins' | 'reef' | 'cosmic' | 'sakura' | 'desert' | 'candy' | 'void';
+export type DimId =
+  | 'home'
+  | 'forest'
+  | 'cliff'
+  | 'volcano'
+  | 'ghost'
+  | 'ice'
+  | 'ruins'
+  | 'reef'
+  | 'cosmic'
+  | 'sakura'
+  | 'desert'
+  | 'candy'
+  | 'void'
+  // after the Parte III (data/postp3/islas.json): the boxes that spilled
+  | 'carton'
+  | 'felt'
+  | 'talavera'
+  | 'yarn'
+  | 'pillow';
 
-export type PatternKind = 'grass' | 'lush' | 'hatch' | 'lava' | 'neon' | 'crystal' | 'pixel' | 'caustic' | 'stars' | 'petals' | 'dunes' | 'sprinkles' | 'negative';
-export type FallKind = 'water' | 'lava' | 'ink' | 'data' | 'neon' | 'ice' | 'prism' | 'stars';
+export type PatternKind =
+  | 'grass'
+  | 'lush'
+  | 'hatch'
+  | 'lava'
+  | 'neon'
+  | 'crystal'
+  | 'pixel'
+  | 'caustic'
+  | 'stars'
+  | 'petals'
+  | 'dunes'
+  | 'sprinkles'
+  | 'negative'
+  | 'corrugated'
+  | 'felt'
+  | 'tiles'
+  | 'knit'
+  | 'quilt';
+export type FallKind = 'water' | 'lava' | 'ink' | 'data' | 'neon' | 'ice' | 'prism' | 'stars' | 'paper' | 'chips' | 'yarn' | 'feather';
 export type SpikeKind = 'round' | 'jagged' | 'crystal' | 'pixel' | 'city';
 
 export interface DimDef {
@@ -357,6 +394,127 @@ const D: Record<DimId, DimDef> = {
     fall: { kind: 'ink', color: 0xf3eee3, core: 0xff2e48, count: 2 },
     accent: 0xff2e48,
     skyKey: 0x0b0a0e,
+  },
+  // ---- after the Parte III: the boxes that spilled (data/postp3/islas.json)
+  // CARTÓN — the biggest box in the world: kraft corrugate, tan tape, red «ESTE LADO ARRIBA» stamps
+  carton: {
+    id: 'carton',
+    name: 'DIMENSIÓN CARTÓN',
+    short: 'CARTÓN',
+    top: 0xd9a868,
+    topAlt: 0xcf9c5c,
+    beach: 0xead0a0,
+    side: 0xb07a42,
+    sideDark: 0x7a4e24,
+    tuft: 0x8a5a2e,
+    ink: 0x2a1a0e,
+    strata: 0xf0d8a8,
+    pattern: 'corrugated',
+    patternFrames: 1,
+    patternAlpha: 1,
+    lagoon: { a: 0x8fd0d8, b: 0x4a98b0, foam: 0xffffff, rim: 0xb07a42, rimDark: 0x7a4e24 },
+    rock: { light: 0xbc8a52, dark: 0x7a4e24, line: 0x4a2e14, accent: 0xe8402e },
+    spikes: 'jagged',
+    depth: 1.15,
+    fall: { kind: 'paper', color: 0xf0dcb4, core: 0xffffff, count: 3 },
+    accent: 0xe8402e,
+    skyKey: 0xd9a868,
+  },
+  // TAPETE — a piece of the casino table that stayed afloat: green felt, gold chalk, mahogany rail, chips and dice
+  felt: {
+    id: 'felt',
+    name: 'DIMENSIÓN TAPETE',
+    short: 'TAPETE',
+    top: 0x1f7f4c,
+    topAlt: 0x1b7344,
+    beach: 0x2c955c,
+    side: 0x5e2c18,
+    sideDark: 0x3a180c,
+    tuft: 0xffd77a,
+    ink: 0x0c1a12,
+    strata: 0xd8b25a,
+    pattern: 'felt',
+    patternFrames: 1,
+    patternAlpha: 1,
+    lagoon: { a: 0x13603a, b: 0x083a20, foam: 0xffd77a, rim: 0x5e2c18, rimDark: 0x3a180c },
+    rock: { light: 0x6e341e, dark: 0x3a180c, line: 0xd8b25a, accent: 0xffd77a },
+    spikes: 'round',
+    depth: 1.1,
+    fall: { kind: 'chips', color: 0xffd77a, core: 0xffffff, count: 3 },
+    accent: 0xffc94a,
+    skyKey: 0x0d3a24,
+  },
+  // TALAVERA — a shady tiled patio: white glaze with cobalt flowers, terracotta, painted pots and papel picado
+  talavera: {
+    id: 'talavera',
+    name: 'DIMENSIÓN TALAVERA',
+    short: 'TALAVERA',
+    top: 0xf5f0e2,
+    topAlt: 0xede6d3,
+    beach: 0xf3dcb4,
+    side: 0xc4633c,
+    sideDark: 0x8a3a20,
+    tuft: 0x2a52b8,
+    ink: 0x1a2440,
+    strata: 0xf5f0e2,
+    pattern: 'tiles',
+    patternFrames: 1,
+    patternAlpha: 1,
+    lagoon: { a: 0x5cc8e0, b: 0x2a78b8, foam: 0xffffff, rim: 0xc4633c, rimDark: 0x8a3a20 },
+    rock: { light: 0xc86c44, dark: 0x8a3a20, line: 0x5a2210, accent: 0x2a52b8 },
+    spikes: 'round',
+    depth: 1.05,
+    fall: { kind: 'water', color: 0xbff0ff, core: 0xffffff, count: 3 },
+    accent: 0x2a52b8,
+    skyKey: 0x5cc8e0,
+  },
+  // TEJIDO — knitted by hand, stitch by stitch: rose wool, cream and mustard stripes, sage ribbing, loose threads below
+  yarn: {
+    id: 'yarn',
+    name: 'DIMENSIÓN TEJIDO',
+    short: 'TEJIDO',
+    top: 0xe8a2b2,
+    topAlt: 0xdf96a7,
+    beach: 0xf4e6d4,
+    side: 0x8fb8a8,
+    sideDark: 0x5c887a,
+    tuft: 0xf4e6d4,
+    ink: 0x3a2430,
+    strata: 0xf4e6d4,
+    pattern: 'knit',
+    patternFrames: 1,
+    patternAlpha: 1,
+    lagoon: { a: 0xa2d8e8, b: 0x5aa0c0, foam: 0xffffff, rim: 0x8fb8a8, rimDark: 0x5c887a },
+    rock: { light: 0x9cc4b4, dark: 0x5c887a, line: 0x3a2430, accent: 0xf2c14e },
+    spikes: 'round',
+    depth: 1.2,
+    fall: { kind: 'yarn', color: 0xe8a2b2, core: 0xf4e6d4, count: 3 },
+    accent: 0xf2c14e,
+    skyKey: 0xf4c9d2,
+  },
+  // SIESTA — the softest island at sea: tufted lavender cushions, a cloud underneath, a night-light moon, a star mobile
+  pillow: {
+    id: 'pillow',
+    name: 'DIMENSIÓN SIESTA',
+    short: 'SIESTA',
+    top: 0xe7e1f7,
+    topAlt: 0xddd5f1,
+    beach: 0xf7f3ff,
+    side: 0xa99bd9,
+    sideDark: 0x7464b0,
+    tuft: 0xffe9a8,
+    ink: 0x2a2050,
+    strata: 0xf7f3ff,
+    pattern: 'quilt',
+    patternFrames: 1,
+    patternAlpha: 1,
+    lagoon: { a: 0x7c8ad8, b: 0x45479a, foam: 0xfff4c8, rim: 0xa99bd9, rimDark: 0x7464b0 },
+    rock: { light: 0xf4f0ff, dark: 0xc6bee6, line: 0x7464b0, accent: 0xffe9a8 },
+    spikes: 'round',
+    depth: 0.95,
+    fall: { kind: 'feather', color: 0xffffff, core: 0xfff4c8, count: 2 },
+    accent: 0xffe066,
+    skyKey: 0x3a3a8a,
   },
 };
 

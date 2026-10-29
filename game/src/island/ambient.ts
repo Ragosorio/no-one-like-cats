@@ -91,6 +91,26 @@ const RECIPES: Record<DimId, Recipe[]> = {
     { kind: 'ash', rate: 2, tex: T('cube'), tint: [0xf3eee3], scale: [0.5, 1.1], life: [5, 8], y: [0, -40], vx: [-4, 4], vy: [-18, -8], alpha: 0.6 },
     { kind: 'mote', rate: 0.8, tex: T('ember'), tint: [0xff2e48], scale: [0.16, 0.3], life: [2, 4], y: [0, -120], vx: [-6, 6], vy: [-10, 4], alpha: 1, add: true },
   ],
+  // ---- after the Parte III
+  carton: [
+    // little boxes float up out of the big one; kraft scraps drift down
+    { kind: 'cube', rate: 1.1, tex: T('cube'), tint: [0xd9a868, 0xead0a0, 0xb07a42], scale: [0.5, 1.0], life: [5, 8], y: [0, -50], vx: [-5, 5], vy: [-20, -10], alpha: 0.95 },
+    { kind: 'ash', rate: 1.4, tex: T('flake'), tint: [0xf0dcb4, 0xd9a868], scale: [0.2, 0.34], life: [4, 7], y: [-220, -340], vx: [8, 20], vy: [16, 30], alpha: 0.9 },
+  ],
+  felt: [
+    { kind: 'twinkle', rate: 3, tex: T('ember'), tint: [0xffd77a, 0xfff4c8, 0xffc94a], scale: [0.14, 0.32], life: [1.6, 3], y: [0, -160], vx: [-4, 4], vy: [-10, 0], alpha: 1, add: true },
+    { kind: 'petal', rate: 1.2, tex: T('shard'), tint: [0xc8102e, 0xffc94a, 0x1f5fbf, 0xffffff], scale: [0.18, 0.3], life: [4, 6], y: [-200, -320], vx: [-10, 10], vy: [18, 30], alpha: 1 },
+  ],
+  talavera: [{ kind: 'petal', rate: 2.2, tex: T('petal'), tint: [0xff7a2e, 0xffc94a, 0xff4f8b, 0x2a52b8], scale: [0.26, 0.42], life: [5, 8], y: [-140, -300], vx: [10, 24], vy: [10, 20], alpha: 0.95 }],
+  yarn: [
+    { kind: 'seed', rate: 1.6, tex: T('seed'), tint: [0xffffff, 0xf4e6d4, 0xf4c9d2], scale: [0.35, 0.55], life: [6, 9], y: [-30, -150], vx: [8, 20], vy: [-8, -2], alpha: 0.95 },
+    { kind: 'petal', rate: 0.8, tex: T('petal'), tint: [0xe8a2b2, 0xf2c14e], scale: [0.22, 0.34], life: [4, 7], y: [-140, -260], vx: [10, 22], vy: [10, 20], alpha: 0.9 },
+  ],
+  pillow: [
+    // feathers drift down, the night twinkles
+    { kind: 'snow', rate: 2.2, tex: T('flake'), tint: [0xffffff, 0xf4f0ff], scale: [0.26, 0.44], life: [6, 9], y: [-240, -380], vx: [-6, 8], vy: [12, 22], alpha: 0.95 },
+    { kind: 'twinkle', rate: 1.8, tex: T('ember'), tint: [0xfff4c8, 0xffe066, 0xc8c0ff], scale: [0.12, 0.28], life: [2, 4], y: [-20, -220], vx: [-4, 4], vy: [-6, 2], alpha: 1, add: true },
+  ],
 };
 const MAX_MOTES = 420;
 
@@ -435,6 +455,11 @@ const CARD: Record<DimId, { font: string; fill: number; bg: number; ink: number;
   desert: { font: F.news, fill: 0x2a1a0a, bg: 0xf6e3b4, ink: 0x2a1a0a, rot: 0.02 },
   candy: { font: F.comic, fill: 0xff2e88, bg: 0xfff6d6, ink: 0x3a1030, rot: -0.03 },
   void: { font: F.heavy, fill: 0xf3eee3, bg: 0x0b0a0e, ink: 0xff2e48, rot: 0 },
+  carton: { font: F.poster, fill: 0x2a1a0e, bg: 0xead0a0, ink: 0xe8402e, rot: -0.03 },
+  felt: { font: F.heavy, fill: 0xffd77a, bg: 0x0f4a2c, ink: 0x0c1a12, rot: 0 },
+  talavera: { font: F.serif, fill: 0x2a52b8, bg: 0xf5f0e2, ink: 0x1a2440, rot: 0.02 },
+  yarn: { font: F.brush, fill: 0x3a2430, bg: 0xf4e6d4, ink: 0xd98698, rot: -0.03 },
+  pillow: { font: F.serif, fill: 0x2a2050, bg: 0xe7e1f7, ink: 0x7464b0, rot: 0.02 },
 };
 function titleCard(d: DimDef): Container {
   const s = CARD[d.id];

@@ -91,6 +91,32 @@ export const DIM_LINES: Partial<Record<DimId, ChatterLine[]>> = {
     { tag: 'pop', a: 'En el espacio nadie te oye maullar.', b: 'Por eso maúllo más fuerte. MIAU.' },
     { tag: 'meta', a: 'Una estrella fugaz. ¡Pide un deseo, {name}!', b: 'Yo pedí atún infinito. Ya veremos.' },
   ],
+  // ---- after the Parte III (data/postp3/islas.json)
+  carton: [
+    { tag: 'mood', a: 'Una isla entera hecha de caja.', b: 'Ya no me voy nunca. Mándenme el correo aquí.' },
+    { tag: 'mood', a: 'Dice ESTE LADO ARRIBA.', b: '…me voy a acostar al revés. Por rebelde.' },
+    { tag: 'meta', a: 'Me metí en una caja y adentro había otra caja.', b: 'Y adentro, otra. Es lo más bonito que me ha pasado.' },
+  ],
+  felt: [
+    { tag: 'mood', a: 'Esta isla huele a apuesta.', b: 'Apuesto mi siesta a que no. …perdí. Ya me dormí.' },
+    { tag: 'meta', a: 'Encontré una ficha en el piso.', b: 'La casa dice que es suya. La casa dice eso de todo.' },
+    { tag: 'polemica', a: 'La suerte no existe.', b: '*tira los dados* …sale doble seis. Ok, existe. Y me quiere.' },
+  ],
+  talavera: [
+    { tag: 'mood', a: 'Qué fresquito está el azulejo.', b: 'No me hablen. Estoy en modo tapete de patio.' },
+    { tag: 'mood', a: 'Hay papel picado y nadie me invitó a la fiesta.', b: 'La fiesta soy yo. Siempre fui yo.' },
+    { tag: 'pop', a: 'Esta maceta es preciosa.', b: '…¿qué pasa si la empujo un poquito? Nada. Solo pregunto.' },
+  ],
+  yarn: [
+    { tag: 'mood', a: 'TODO aquí es estambre.', b: 'Sé que es una prueba. No la voy a pasar.' },
+    { tag: 'meta', a: 'Jalé un hilo y se deshizo media isla.', b: '…no fui yo. Fue el viento. El viento con bigotes.' },
+    { tag: 'mood', a: 'Este piso es un suéter.', b: 'Me voy a quedar dormido aquí y nadie me va a mover.' },
+  ],
+  pillow: [
+    { tag: 'mood', a: 'Cinco minutitos más.', b: '…dije cinco minutitos hace tres horas.' },
+    { tag: 'mood', a: 'Esta isla es una almohada gigante.', b: 'Por fin alguien me entiende.' },
+    { tag: 'meta', a: '{name}, ¿me puedes apagar la luna?', b: 'No, déjala. Me da miedo la oscuridad. Ronroneo de noche.' },
+  ],
 };
 
 /** short shout replies from a second cat (during the beat before the retraction) */

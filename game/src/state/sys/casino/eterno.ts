@@ -6,8 +6,11 @@
  *            stop = no 50/50, no reward, you keep what you won rolling.
  *   20–40 s  SIN FRENOS: it can't be stopped any more. LA SUERTE ETERNA: every round is a WIN (nothing is
  *            paid for them) and the winnings pile up in the BOTÍN, which DOUBLES every 4 s (×2 ×4 ×8 ×16).
+ *            Besides the table's currency, lucky rounds DROP soft resources into the botín too (owner 2026-10-29:
+ *            boletos, gems, pescaditos and gold; jackpots drop more — ETERNO.drops). They double with it.
  *   40 s     it explodes → FAIR 50/50 (crypto RNG, never steered):
- *     WIN  → gold, gems, food, tickets and chips are MULTIPLIED (×2), the botín is added, + 1 special cat
+ *     WIN  → gold, gems, food, tickets and chips are MULTIPLIED (×2), the whole botín is added (every currency it
+ *            holds), + 1 special cat
  *            (legendary 40% · legendary HOLO 35% · mythic 25%; heroic/divine never)
  *     LOSS → exactly these balances become 0: G.s.gold, G.s.gems, G.s.food, casino.tickets, casino.chips
  *            (and the botín is gone). Nothing else is touched.
@@ -20,7 +23,7 @@
  */
 import { G } from '../../game';
 import { RarityId } from '../../econ';
-import { Granted, catsOfRarity, cs, grantPrize, rand, rollCatPrize, withPostTable } from '../casino';
+import { Granted, catsOfRarity, cs, foodIncome, grantPrize, income, rand, rollCatPrize, withPostTable } from '../casino';
 
 export const ETERNO = {
   /** session length (seconds of real time) */
@@ -39,6 +42,28 @@ export const ETERNO = {
   winChance: 0.5,
   /** what the special reward is (shares add to 1; mythic falls back to a legendary HOLO if you can't field one yet) */
   reward: { legendary: 0.4, holo: 0.35, mythic: 0.25 },
+  /**
+   * LA SUERTE ETERNA's extras (owner 2026-10-29: «los premios cuando ya no se puede enfriar deben también dar boletos y
+   * así»). On top of its payout in the table's currency, a lucky round may DROP one soft resource into the botín:
+   *   normal round  `chance` to drop one (by weight): 1 boleto · 1 gema · 30 s of your pescaditos · 30 s of your gold
+   *   jackpot round `jackpotChance` to drop one, twice as big (2 · 2 · 60 s · 60 s)
+   * Gold / pescaditos are seconds of YOUR production (income / foodIncome), like every casino prize, so they scale with
+   * your island and not with the stake. A drop in the table's own currency simply joins the main number.
+   * Expected per session (~170 lucky rounds, ~12 of them jackpots; the doublings weigh the drops ×5 on average):
+   *   before doubling ≈ 6.4 boletos · 4.6 gemas · 110 s of pescaditos · 110 s of gold
+   *   on a WIN        ≈ 32 boletos · 23 gemas · ~9 min of pescaditos · ~9 min of gold  (EV per session: half)
+   * A bonus on top: the main botín (stake × luck × up to ×16) is still the bulk, and a WIN already doubles your balances.
+   */
+  drops: {
+    chance: 0.04,
+    jackpotChance: 0.5,
+    table: [
+      { field: 'tickets', w: 35, n: 1, jackpot: 2 },
+      { field: 'gems', w: 25, n: 1, jackpot: 2 },
+      { field: 'food', w: 20, sec: 30, jackpot: 60 },
+      { field: 'gold', w: 20, sec: 30, jackpot: 60 },
+    ] as { field: 'tickets' | 'gems' | 'food' | 'gold'; w: number; n?: number; sec?: number; jackpot: number }[],
+  },
   /** how many resolved session ids are remembered (only the open one can ever resolve anyway) */
   keepIds: 40,
 } as const;
@@ -76,8 +101,19 @@ export interface EternoSession {
   game: string;
   /** past the lock: it can't be stopped or escaped any more */
   locked?: boolean;
-  /** LA SUERTE ETERNA's winnings (in the table's currency), at stake in the 50/50 */
-  pot?: { cur: EternoField; amount: number; doublings: number };
+  /** LA SUERTE ETERNA's winnings, at stake in the 50/50 */
+  pot?: EternoPot;
+}
+/**
+ * The BOTÍN: `amount` in the table's currency `cur` (the shape every save since 2026-10-08 has) plus, optionally, the
+ * drops of other currencies (`extra`, 2026-10-29). An old save's pot has no `extra`: it is exactly the old botín.
+ */
+export interface EternoPot {
+  cur: EternoField;
+  amount: number;
+  doublings: number;
+  /** drops in currencies other than `cur` (boletos, gems, pescaditos, gold) */
+  extra?: Partial<Record<EternoField, number>>;
 }
 export type EternoOutcome = 'win' | 'loss' | 'stop' | 'abandon';
 export interface EternoRecord {
@@ -94,7 +130,7 @@ export interface EternoRecord {
   before?: Record<EternoField, number>;
   after?: Record<EternoField, number>;
   /** the botín at the explosion (added on a win, gone on a loss) */
-  pot?: { cur: EternoField; amount: number; doublings: number };
+  pot?: EternoPot;
   /** ETERNO_EXTRA balances: before the draw (win: they doubled · loss: they went to 0) */
   extra?: Record<string, number>;
 }
@@ -182,11 +218,62 @@ export function addLuck(id: string, amount: number) {
   if (!o || o.id !== id || !o.locked || !o.pot || !(amount > 0)) return;
   o.pot.amount += amount;
 }
-/** the botín doubles (×2). Saved. */
+/** a resource a lucky round dropped into the botín */
+export interface EternoDrop {
+  field: EternoField;
+  n: number;
+}
+/**
+ * What a lucky round drops on top of its payout (ETERNO.drops), or null. Gold / pescaditos are seconds of production
+ * (`inc`: per second, the casino's income() / foodIncome()); boletos and gems are whole units.
+ */
+export function luckyDrop(jackpot: boolean, r: () => number = rand, inc: { gold: number; food: number } = { gold: income(), food: foodIncome() }): EternoDrop | null {
+  const D = ETERNO.drops;
+  if (!(r() < (jackpot ? D.jackpotChance : D.chance))) return null;
+  const tot = D.table.reduce((s, x) => s + x.w, 0);
+  let x = r() * tot;
+  let e = D.table[D.table.length - 1];
+  for (const it of D.table) {
+    x -= it.w;
+    if (x < 0) {
+      e = it;
+      break;
+    }
+  }
+  if (e.sec !== undefined) {
+    const per = Math.max(0, Number(e.field === 'gold' ? inc.gold : inc.food) || 0);
+    const n = Math.round(per * (jackpot ? e.jackpot : e.sec));
+    return n > 0 ? { field: e.field, n } : null;
+  }
+  return { field: e.field, n: jackpot ? e.jackpot : (e.n ?? 1) };
+}
+/** a drop lands in the botín: the table's currency joins `amount`, any other one the multi-currency part */
+export function addDrop(id: string, d: EternoDrop) {
+  const o = eternoState().open;
+  if (!o || o.id !== id || !o.locked || !o.pot || !(d.n > 0) || !(AT_RISK as readonly string[]).includes(d.field)) return;
+  if (d.field === o.pot.cur) o.pot.amount += d.n;
+  else {
+    const x = (o.pot.extra ??= {});
+    x[d.field] = (x[d.field] ?? 0) + d.n;
+  }
+}
+const num = (v: unknown) => (Number.isFinite(v) && (v as number) > 0 ? (v as number) : 0);
+/** every currency the botín holds (0 for the rest) — an old save's pot (no `extra`) is just its `amount` in `cur` */
+export function potTotals(pot: EternoPot | null | undefined): Record<EternoField, number> {
+  const out: Record<EternoField, number> = { gold: 0, gems: 0, food: 0, tickets: 0, chips: 0 };
+  if (!pot) return out;
+  if ((AT_RISK as readonly string[]).includes(pot.cur)) out[pot.cur] += num(pot.amount);
+  for (const k of AT_RISK) out[k] += num(pot.extra?.[k]);
+  return out;
+}
+/** the botín holds something */
+export const potHasAny = (pot: EternoPot | null | undefined) => AT_RISK.some((k) => potTotals(pot)[k] > 0);
+/** the botín doubles (×2): its main number and every drop it holds. Saved. */
 export function doublePot(id: string) {
   const o = eternoState().open;
   if (!o || o.id !== id || !o.pot) return;
   o.pot.amount *= 2;
+  if (o.pot.extra) for (const k of AT_RISK) if (o.pot.extra[k] !== undefined) o.pot.extra[k] = num(o.pot.extra[k]) * 2;
   o.pot.doublings++;
   G.save();
 }
@@ -247,7 +334,7 @@ export function resolveEterno(id: string, roll: number): EternoResolution | null
   if (!e.open || e.open.id !== id) return null;
   if (!Number.isFinite(roll) || roll < 0 || roll >= 1) return null;
   const win = eternoWins(roll);
-  const pot = e.open.pot ? { ...e.open.pot } : undefined;
+  const pot: EternoPot | undefined = e.open.pot ? { ...e.open.pot, ...(e.open.pot.extra ? { extra: { ...e.open.pot.extra } } : {}) } : undefined;
   const rec: EternoRecord = { id, r: win ? 'win' : 'loss', roll, at: Date.now(), pot };
   // mark first: even if a grant below threw, this session can never resolve again
   remember(e, rec);
@@ -257,7 +344,9 @@ export function resolveEterno(id: string, roll: number): EternoResolution | null
     rec.before = before;
     const c = cs();
     const m = ETERNO.winMultiplier;
-    const potOf = (k: EternoField) => (pot && pot.cur === k ? pot.amount : 0);
+    // the whole botín: its main number and every drop (an old save's pot is just `amount` in `cur`)
+    const tot = potTotals(pot);
+    const potOf = (k: EternoField) => tot[k];
     const whole = (k: EternoField, v: number) => (k === 'gold' || k === 'food' ? v : Math.floor(v));
     G.s.gold = whole('gold', before.gold * m + potOf('gold'));
     G.s.gems = whole('gems', before.gems * m + potOf('gems'));

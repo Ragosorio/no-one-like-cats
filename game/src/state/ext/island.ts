@@ -11,6 +11,7 @@ import {
   builders,
   buildersBusy,
   canHouse,
+  expansionHidden,
   expansionState,
   habitatCap,
   habitatRate,
@@ -31,10 +32,12 @@ export function featureUnlocked(id: AutoFeature) {
 export function expansionByRegion(id: string) {
   return EXPANSIONS.find((e) => e.id === id) ?? null;
 }
-export function regionLook(id: string): 'open' | 'veil' | 'available' | 'clearing' {
+/** 'hidden': a post-Parte III island before the gate — not drawn at all (state/sys/island.ts expansionHidden) */
+export function regionLook(id: string): 'open' | 'veil' | 'available' | 'clearing' | 'hidden' {
   if (id === HOME) return 'open';
   const e = expansionByRegion(id);
   if (!e) return 'veil';
+  if (expansionHidden(e.n)) return 'hidden';
   const st = expansionState(e.n);
   return st === 'cleared' ? 'open' : st === 'clearing' ? 'clearing' : st === 'available' ? 'available' : 'veil';
 }

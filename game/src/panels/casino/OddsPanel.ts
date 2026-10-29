@@ -25,10 +25,10 @@ import {
   UNOWNED_WEIGHT,
   owed,
 } from '../../state/sys/casino';
-import { BEGINNER, ESCAPE, GachaMode, HOT, LUMEN_SHARE, MODES, banner, expectedPulls, modeOdds, modesFor, pityCaps, pityLeft, rampTable, ratesTable, TIER_NAME } from '../../state/sys/gacha';
+import { BEGINNER, ESCAPE, GachaMode, HOT, LUMEN_SHARE, MODES, banner, expectedPulls, modeOdds, modesFor, pityCaps, pityLeft, rampTable, ratesTable, tierLabelOf } from '../../state/sys/gacha';
 import { CP, Seg, clickable, symbolSprite } from './kit';
 import { TIER_COL } from './prizes';
-import { drawPostOdds, openPostOdds, postNote } from './postOdds';
+import { drawPostOdds, openMultiversoOdds, openPostOdds, postNote } from './postOdds';
 import { addVitrinaTab } from './vitrina';
 import { anyVitrinaLive } from '../../state/sys/postVitrina';
 import { POST_VITRINA } from '../../data/postp3/reglas';
@@ -226,10 +226,10 @@ function gachaOdds(root: Container, id: string | undefined, mode0: GachaMode) {
     const caps = pityCaps(bn);
     const lp = now.legendary + now.holo + now.mythic;
     const st = T(
-      `AHORITA: legendario o mejor ${pct(lp)} en tu próximo tiro · garantía en ${pl.legendary} ${pl.legendary === 1 ? 'tiro' : 'tiros'}` +
+      `AHORITA: ${bn.multiverse ? 'MULTIDIMENSIONAL' : 'legendario o mejor'} ${pct(lp)} en tu próximo tiro · garantía en ${pl.legendary} ${pl.legendary === 1 ? 'tiro' : 'tiros'}` +
         (pl.hot ? ` · RACHA CALIENTE: ${pl.hot} tiros` : '') +
         (caps.beginner ? ' · SUERTE DE PRINCIPIANTE activa' : '') +
-        (bn.mythicPity ? ` · MÍTICO garantizado en ${pl.mythic}` : ''),
+        (bn.mythicPity ? ` · ${bn.multiverse ? 'MD QUE TE FALTA' : 'MÍTICO'} garantizado en ${pl.mythic}` : ''),
       17,
       C.pinkHot,
       { wordWrap: true, wordWrapWidth: 1420 },
@@ -238,7 +238,14 @@ function gachaOdds(root: Container, id: string | undefined, mode0: GachaMode) {
     b.addChild(st);
     y0 += 34;
     // after the Parte III: this banner's Multiverse (state/sys/postp3.ts) — one line here, the whole table one tap away
-    const pn = bn.hasCats ? postNote({ game: 'gacha', sub: bn.id }) : null;
+    const pn = bn.hasCats && !bn.multiverse ? postNote({ game: 'gacha', sub: bn.id }) : null;
+    if (bn.multiverse) {
+      const pl = T(`CADA MULTIDIMENSIONAL, CON SU PESO Y SU PROBABILIDAD EXACTA EN TU PRÓXIMO TIRO  ›  VER LOS GATOS`, 16, C.inkBlue);
+      pl.position.set(0, y0 - 8);
+      b.addChild(pl);
+      clickable(pl, () => openMultiversoOdds(modeOdds(bn, 'normal')));
+      y0 += 22;
+    }
     if (pn) {
       const pl = T(`${pn}  ›  VER LOS GATOS DEL MULTIVERSO`, 16, C.inkBlue);
       pl.position.set(0, y0 - 8);
@@ -250,9 +257,10 @@ function gachaOdds(root: Container, id: string | undefined, mode0: GachaMode) {
     let x = 0;
     const colW = Math.floor(1440 / Math.max(4, table.length));
     for (const tier of table) {
-      const band = new Graphics().rect(x, y0, colW - 12, 44).fill(TIER_COL[tier.tier]).stroke({ width: 3, color: C.ink });
-      const tn = P(`${TIER_NAME[tier.tier]} ${pct(tier.p)}`, 22);
+      const band = new Graphics().rect(x, y0, colW - 12, 44).fill(bn.tierCol?.[tier.tier] ?? TIER_COL[tier.tier]).stroke({ width: 3, color: C.ink });
+      const tn = P(`${tierLabelOf(bn, tier.tier)} ${pct(tier.p)}`, 22);
       tn.position.set(x + 10, y0 + 8);
+      if (tn.width > colW - 32) tn.scale.set((colW - 32) / tn.width);
       b.addChild(band, tn);
       tier.items.forEach((it, i) => {
         const y = y0 + 52 + i * 44;
@@ -277,7 +285,13 @@ function gachaOdds(root: Container, id: string | undefined, mode0: GachaMode) {
     const ramp = rampTable(bn);
     const cw = Math.min(22, Math.floor(820 / ramp.length));
     const rh = 110;
-    const rt = T(`RAMPA DE LEGENDARIO+ (normal): tiro a tiro desde tu último legendario · en promedio sale cada ${expectedPulls(bn).toFixed(1)} tiros`, 15, C.ink);
+    const rt = T(
+      bn.multiverse
+        ? `RAMPA DE MULTIDIMENSIONAL: tiro a tiro desde el último · en promedio sale cada ${expectedPulls(bn).toFixed(1)} tiros`
+        : `RAMPA DE LEGENDARIO+ (normal): tiro a tiro desde tu último legendario · en promedio sale cada ${expectedPulls(bn).toFixed(1)} tiros`,
+      15,
+      C.ink,
+    );
     rt.position.set(0, ry);
     b.addChild(rt);
     const g = new Graphics();
@@ -297,7 +311,14 @@ function gachaOdds(root: Container, id: string | undefined, mode0: GachaMode) {
     r3.position.set(ramp.length * cw, ry + rh + 46);
     b.addChild(r1, r2, r3);
     // candy rules (right of the ramp)
-    const candy = bn.hasCats
+    const candy = bn.multiverse
+      ? [
+          'MULTIVERSO DESBORDADO: cada LEGENDARIO o MÍTICO de este portal es un MULTIDIMENSIONAL del Multiverso. La línea MULTIDIMENSIONAL sale por peso (los que NO tienes pesan x3); la línea MD QUE TE FALTA te da uno que todavía no tienes (si ya los tienes todos, cualquiera).',
+          `SUERTE DE PRINCIPIANTE: hasta tu primer legendario del portal, la rampa empieza en el tiro ${BEGINNER.softPity + 1} y es seguro en el ${BEGINNER.hardPity}.`,
+          `Gato garantizado cada ${bn.catPity} tiros. Épico o mejor cada ${bn.epicPity}. MULTIDIMENSIONAL a más tardar en ${bn.hardPity}; MD QUE TE FALTA a más tardar en ${bn.mythicPity}. Sus garantías son suyas: no comparte contadores con los otros portales.`,
+          'Aquí no hay HOLO, ni modos de riesgo, ni legendarios que se escapan: todo lo de arriba es Multidimensional.',
+        ]
+      : bn.hasCats
       ? [
           `SUERTE DE PRINCIPIANTE: hasta tu primer legendario del portal, la rampa empieza en el tiro ${BEGINNER.softPity + 1} y es seguro en el ${BEGINNER.hardPity}.`,
           `¡SE ESCAPÓ!: ${Math.round(ESCAPE.p * 100)}% por tiro normal sin legendario (descansa ${ESCAPE.cooldown} tiros). Deja RASTRO: +${ESCAPE.trail} al contador y RACHA CALIENTE de ${ESCAPE.hot} tiros con legendario x${HOT.legend} y épico x${HOT.epic}.`,
@@ -316,7 +337,9 @@ function gachaOdds(root: Container, id: string | undefined, mode0: GachaMode) {
       cy += t.height + 4;
     }
     const foot = T(
-      'Repetido = Orbes de Alma de esa especie (nunca pierdes). HOLO = foil: +15% oro, +12% poder, +10% vida. Se paga con Boletos u Ojos de Gato, que se ganan jugando. No existe dinero real en este juego.',
+      bn.multiverse
+        ? 'Repetido = Orbes de Alma de esa especie (nunca pierdes). Se paga con Boletos u Ojos de Gato, que se ganan jugando. No existe dinero real en este juego.'
+        : 'Repetido = Orbes de Alma de esa especie (nunca pierdes). HOLO = foil: +15% oro, +12% poder, +10% vida. Se paga con Boletos u Ojos de Gato, que se ganan jugando. No existe dinero real en este juego.',
       14,
       C.inkBlue,
       { wordWrap: true, wordWrapWidth: 1420, lineHeight: 18 },
@@ -335,7 +358,7 @@ function rules(b: Container) {
     'La casa siempre gana en promedio (retorno 95–97%). A cambio, la casa reparte dulces: LA CASA TE DEBE, rachas calientes, legendarios que se escapan y garantías. Todo está escrito en cada mesa.',
     'Más apuesta = más riesgo: menos premios, pero más gordos. Tú eliges. Tu apuesta se queda como la dejaste.',
     'PILOTO AUTOMÁTICO: tira por ti a x1, x2 o x10 hasta que lo pares. Ganar no lo detiene; si quieres, ponle un tope (saldo bajo, número de tiradas, premio gordo, legendario o gato nuevo). Cada tirada se paga.',
-    'MODO ETERNO (40 s): los primeros 20 s la máquina acelera y la puedes ENFRIAR (sales sin premio y sin riesgo). Los últimos 20 s no hay frenos: todas las tiradas ganan gratis y van a un botín que se duplica cada 4 s. Al explotar, 50/50 honesto (azar criptográfico): si ganas, TODO lo tuyo ×2 + el botín + un gato legendario (40%), legendario HOLO (35%) o mítico (25%); si pierdes, tu oro, gemas, pescaditos, boletos y fichas quedan en 0. Tus gatos, barcos, hábitats y progreso nunca se tocan.',
+    'MODO ETERNO (40 s): los primeros 20 s la máquina acelera y la puedes ENFRIAR (sales sin premio y sin riesgo). Los últimos 20 s no hay frenos: todas las tiradas ganan gratis y van a un botín que se duplica cada 4 s; además de la moneda de la mesa, caen boletos, gemas, pescaditos y oro (más en los jackpots), y también se duplican. Al explotar, 50/50 honesto (azar criptográfico): si ganas, TODO lo tuyo ×2 + el botín entero + un gato legendario (40%), legendario HOLO (35%) o mítico (25%); si pierdes, tu oro, gemas, pescaditos, boletos y fichas quedan en 0 y el botín se va. Tus gatos, barcos, hábitats y progreso nunca se tocan.',
     'Mesas: Plinko, Duelo de Dados, Mayor o Menor, Bingo Exprés, Rasca y Gana y Cajas Misteriosas. Cada una trae su TABLA DE PAGOS con la probabilidad exacta de cada resultado y su retorno (94–97%).',
     'Cada tirada de la Tragamichis y la Ruleta es independiente. En el Portal, en cambio, las garantías sí se acumulan: mientras más tiras sin legendario, más cerca está.',
   ];

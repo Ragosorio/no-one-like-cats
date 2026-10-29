@@ -15,10 +15,12 @@ import { CP, chipIcon, halftone, ticketIcon } from './kit';
 import { drawAccessory } from './accessoryArt';
 import { holoSheen } from '../../fx/sequences/gachaHolo';
 import { csfx } from './sfx';
+import { MD, MD_GLOW_COL, mdGem, mdStripe } from './mdLook';
 import type { CasinoCtx } from './ctx';
 
-export const TIER_COL: Record<string, number> = { common: 0xd9cdb8, rare: 0x6fa8ff, epic: 0xff2e88, legendary: 0xffc94a, holo: 0x00e5ff, mythic: 0xff3b1f };
-export const TIER_LABEL: Record<string, string> = { common: 'COMÚN', rare: 'RARO', epic: 'ÉPICO', legendary: 'LEGENDARIO', holo: 'HOLO', mythic: 'MÍTICO' };
+/** the colour / word a prize tier shows; 'multidimensional' = a Multiverse cat (casino.ts catShowTier): its own rarity look */
+export const TIER_COL: Record<string, number> = { common: 0xd9cdb8, rare: 0x6fa8ff, epic: 0xff2e88, legendary: 0xffc94a, holo: 0x00e5ff, mythic: 0xff3b1f, multidimensional: MD };
+export const TIER_LABEL: Record<string, string> = { common: 'COMÚN', rare: 'RARO', epic: 'ÉPICO', legendary: 'LEGENDARIO', holo: 'HOLO', mythic: 'MÍTICO', multidimensional: 'MULTIDIMENSIONAL' };
 
 /** how cat reveals play inside the casino (auto-play speeds) */
 export interface RevealPlan {
@@ -115,9 +117,13 @@ export function prizeCard(g: Granted, w = 200, h = 260): Container {
   bg.rect(0, 0, w, 34).fill(col).stroke({ width: 4, color: CP.ink, alignment: 1 });
   const dots = halftone(w - 8, h - 98, CP.ink, 0.08, 9, 1.6);
   dots.position.set(4, 36);
-  const tl = txt(TIER_LABEL[tier] ?? '', { fontFamily: F.poster, fontSize: 22, fill: CP.ink });
+  const md = tier === 'multidimensional';
+  const tl = txt(TIER_LABEL[tier] ?? '', { fontFamily: F.poster, fontSize: 22, fill: md ? CP.paper : CP.ink, ...(md ? { stroke: { color: CP.ink, width: 3, join: 'round' as const } } : {}) });
   tl.anchor.set(0.5, 0);
   tl.position.set(w / 2, 3);
+  // «MULTIDIMENSIONAL» is long: it fits the band (beside the gem)
+  const maxTl = w - (md ? 52 : 12);
+  if (tl.width > maxTl) tl.scale.set(maxTl / tl.width);
   const art = prizeArt(g, g.kind === 'cat' ? k * 0.78 : k * 0.82);
   art.position.set(w / 2, h * (g.kind === 'cat' ? 0.5 : 0.46));
   const artMask = new Graphics().rect(4, 36, w - 8, h - 98).fill(0xffffff);
@@ -128,6 +134,17 @@ export function prizeCard(g: Granted, w = 200, h = 260): Container {
   name.position.set(w / 2, h - 31);
   if (name.height > 52) name.scale.set(52 / name.height);
   c.addChild(bg, dots, tl, artMask, art, nameBg, name);
+  if (md) {
+    // the Multidimensional frame: its glow inside the ink border, the five boxes' stripe under the band, the box gem
+    const fr = new Graphics();
+    fr.rect(5, 5, w - 10, h - 10).stroke({ width: 3, color: MD_GLOW_COL, alignment: 1 });
+    mdStripe(fr, 4, 34, w - 8, 6);
+    fr.rect(4, h - 66, w - 8, 4).fill(MD_GLOW_COL);
+    const gem = mdGem(Math.max(22, Math.min(34, w * 0.15)));
+    gem.position.set(w - 22, 17);
+    c.addChild(fr, gem);
+    tl.x = w / 2 - 14;
+  }
   if (g.kind === 'cat') {
     const def = catDef(g.ref!);
     def.elements.forEach((e, i) => {
@@ -198,7 +215,8 @@ export async function presentPrizes(ctx: CasinoCtx, granted: Granted[], from: { 
     window.setTimeout(() => {
       if (card.destroyed) return;
       csfx.flip(Math.min(4, tierRank(g.holo ? 'holo' : g.tier)));
-      sparkles(layer, card.x, card.y, TIER_COL[g.holo ? 'holo' : (g.tier ?? 'common')], 8, 120);
+      sparkles(layer, card.x, card.y, TIER_COL[g.holo ? 'holo' : (g.tier ?? 'common')] ?? CP.paper, 8, 120);
+      if (!g.holo && g.tier === 'multidimensional') sparkles(layer, card.x, card.y, MD_GLOW_COL, 8, 150);
     }, 300 + i * 80);
   });
   await wait((o.hold ?? 1500) + n * 80);

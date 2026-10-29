@@ -71,8 +71,8 @@ export interface FilmPort {
   /** every registered id (lets a story ask for «f31» before CINE names it «f31_…») */
   ids?(): string[];
   play(idOrDef: string | object, o: { seen: boolean } & FilmHandOff): Promise<{ end: 'done' | 'exited' | 'aborted'; /** the film's optional inputs (FilmResult.inputs) */ inputs?: Record<string, string> } | null>;
-  /** (agent FINAL, optional) warm a film ahead: it starts on the cut, without the loading screen */
-  preload?(id: string, o: { seen: boolean; after?: number }): Promise<boolean>;
+  /** (agent FINAL, optional) warm a film ahead: it starts on the cut, without the loading screen (P3-CINE: or a def) */
+  preload?(idOrDef: string | object, o: { seen: boolean; after?: number }): Promise<boolean>;
   /** (optional) let a held last frame go (fade s); resolves when gone */
   releaseHold?(fade?: number): Promise<void>;
   /** (optional) a film's last frame is still up */
@@ -92,6 +92,8 @@ export interface FilmHandOff {
   bare?: boolean;
   /** the flow takes the film's song over when it ends (FilmDef.keep) */
   keep?: boolean;
+  /** (P3-CINE) a hard cut into the film: no transformation of the world first (film/morph.ts) */
+  cut?: boolean;
 }
 let port: FilmPort | null = null;
 let portTried = false;
@@ -108,8 +110,8 @@ async function filmPort(): Promise<FilmPort | null> {
     port = {
       has: (id) => !!f.getFilm(id),
       ids: () => f.filmIds(),
-      play: (idOrDef, o) => f.playFilm(idOrDef as Parameters<typeof f.playFilm>[0], { seen: o.seen, hold: o.hold, next: o.next, bare: o.bare, keep: o.keep }),
-      preload: (id, o) => f.preloadFilm(id, o),
+      play: (idOrDef, o) => f.playFilm(idOrDef as Parameters<typeof f.playFilm>[0], { seen: o.seen, hold: o.hold, next: o.next, bare: o.bare, keep: o.keep, cut: o.cut }),
+      preload: (idOrDef, o) => f.preloadFilm(idOrDef as Parameters<typeof f.preloadFilm>[0], o),
       releaseHold: (fade) => f.releaseFilmHold(fade),
       holding: () => f.filmHolding(),
       drop: (id) => f.dropPreloads(id),
@@ -193,6 +195,20 @@ export function briefingData(dim: DimId, n: GateraNode, spec: BattleSpec, o: { d
 
 export type IntroResult = 'go' | 'back';
 
+/** a stage's presentation data with its rule's live demo (the sim computes it) */
+async function stageData(dim: DimId, n: GateraNode, spec: BattleSpec, estimate: () => Estimate | null): Promise<BriefingData> {
+  const def = gateraBattleDef(dim, n);
+  const { ruleDemo, demoFor } = await import('../battle/demo');
+  const rule = demoFor(def?.mareo);
+  let demo: RuleDemo | null = null;
+  try {
+    demo = rule ? ruleDemo(rule, def!.mareo) : null;
+  } catch (e) {
+    console.warn('[presentación] sin demostración de la regla', e);
+  }
+  return briefingData(dim, n, spec, { demo, estimate, huellas: gateraLootPreview(dim, n).huellas });
+}
+
 /**
  * Before a Carta battle (the hook). `spec` is the battle that will play (already built), `estimate` the live numbers
  * of the run the caller launched. Returns 'back' only when the player chose to go back to the Carta from the card.
@@ -204,23 +220,13 @@ export async function stageIntro(dim: DimId, n: GateraNode, spec: BattleSpec, es
   const plan = planIntro(dim, n, (id) => !!idOf(id));
   if (plan.mode === 'none') return 'go';
   const key = introSeenKey(dim, n);
-  const data = async () => {
-    const def = gateraBattleDef(dim, n);
-    const { ruleDemo, demoFor } = await import('../battle/demo');
-    const rule = demoFor(def?.mareo);
-    let demo: RuleDemo | null = null;
-    try {
-      demo = rule ? ruleDemo(rule, def!.mareo) : null;
-    } catch (e) {
-      console.warn('[presentación] sin demostración de la regla', e);
-    }
-    return briefingData(dim, n, spec, { demo, estimate, huellas: gateraLootPreview(dim, n).huellas });
-  };
-  // 1–2: a film (hand-made, or CINE's template filled with the stage's data)
+  const data = () => stageData(dim, n, spec, estimate);
+  // 1–2: a film (hand-made, or CINE's template filled with the stage's data). (P3-CINE) Its last frame holds: the battle
+  // is built under it and the frame fades into it (app/cajasFlow.ts) — no Carta flashing in between, no comic wipe
   if (fp && (plan.mode === 'film' || plan.mode === 'template')) {
     const film = plan.mode === 'film' ? (idOf(plan.filmId!) ?? plan.filmId!) : template?.(await data());
     if (film) {
-      const r = await fp.play(film, { seen: plan.seen }).catch((e) => {
+      const r = await fp.play(film, { seen: plan.seen, hold: true }).catch((e) => {
         console.warn('[presentación] la película falló: queda la tarjeta animada', e);
         return null;
       });
@@ -247,6 +253,52 @@ export async function stageIntro(dim: DimId, n: GateraNode, spec: BattleSpec, es
     console.warn('[presentación] la tarjeta no se pudo mostrar', e);
     return 'go';
   }
+}
+
+// ------------------------------------------------------------------ (P3-CINE) the stage's film warms while its card is read
+let warmStage: string | null = null;
+/**
+ * The Carta opened a stage's card: its presentation film (a registered one, not seen yet) is built and baked while the
+ * player reads the card, so ZARPAR goes straight into the transformation and the film (film/morph.ts). Another card
+ * drops the previous warm-up; a template film (built from the stage's data at ZARPAR) isn't warmed: the transformation
+ * covers it.
+ */
+export async function warmStageFilm(dim: DimId, n: GateraNode): Promise<boolean> {
+  const fp = await filmPort();
+  if (!fp?.preload) return false;
+  const idOf = (id: string) => (fp.has(id) ? id : (fp.ids?.().find((x) => x.startsWith(`${id.toLowerCase()}_`)) ?? null));
+  let plan: IntroPlan;
+  try {
+    plan = planIntro(dim, n, (id) => !!idOf(id));
+  } catch {
+    return false;
+  }
+  // a briefing built from the stage's data (CINE's template): the same data builds the same film at ZARPAR
+  // (gaterasBattles is deterministic; the estimate is read live, from the run the card and ZARPAR share)
+  let film: string | object | null = plan.mode === 'film' && plan.filmId ? idOf(plan.filmId) : null;
+  if (plan.mode === 'template' && template) {
+    try {
+      const [{ buildGateraBattle }, { simulateEstimate }] = await Promise.all([import('../state/sys/gaterasBattles'), import('../state/sys/estimate')]);
+      const spec = buildGateraBattle(dim, n, () => undefined);
+      let latest: Estimate | null = null;
+      void simulateEstimate(spec.meta?.special ?? `${dim}_${n}`, () => buildGateraBattle(dim, n, () => undefined), (e) => (latest = e)).catch(() => undefined);
+      film = template(await stageData(dim, n, spec, () => latest));
+    } catch (e) {
+      console.warn('[presentación] no se pudo preparar la película de la etapa', e);
+      film = null;
+    }
+  }
+  const id = typeof film === 'string' ? film : ((film as { id?: string } | null)?.id ?? null);
+  if (warmStage && warmStage !== id) fp.drop?.(warmStage);
+  warmStage = id;
+  if (!film) return false;
+  return fp.preload(film, { seen: plan.seen }).catch(() => false);
+}
+/** the stage card closed without sailing: its warm film goes */
+export async function dropStageFilm(): Promise<void> {
+  const id = warmStage;
+  warmStage = null;
+  if (id) (await filmPort())?.drop?.(id);
 }
 
 // ------------------------------------------------------------------ story films (a song film, a scene film)
@@ -278,13 +330,16 @@ export async function playStoryFilm(
   const fp = await filmPort();
   id = (await resolveStoryFilm(id)) ?? id;
   if (fp?.has(id)) {
-    const r = await fp.play(id, { seen: o.seen ?? filmSeen(id), hold: o.hold, next: o.next, bare: o.bare, keep: o.keep }).catch((e) => {
+    const r = await fp.play(id, { seen: o.seen ?? filmSeen(id), hold: o.hold, next: o.next, bare: o.bare, keep: o.keep, cut: o.cut }).catch((e) => {
       console.warn('[película] falló: queda el respaldo', id, e);
       return null;
     });
     if (r?.end === 'aborted') return 'interrupted';
     if (r) {
       markSeenG(filmSeenKey(id));
+      // (P3-CINE) a song film: its song goes into the Fonoteca (app/p3Songs.ts; silently during the mourning)
+      const fid = id;
+      void import('./p3Songs').then((m) => m.unlockSongOfFilm(fid)).catch(() => undefined);
       try {
         onPlayed?.(r.inputs ?? {}, r.end);
       } catch (e) {

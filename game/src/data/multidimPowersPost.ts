@@ -3,6 +3,8 @@
  * (docs/post-p3/04-roster.json → post.power, DISEÑO): what the Catdex shows and what battle/multidimPost does. Keyed by
  * species id, registered ahead of the species (data/postp3/especies.json gets them as their art lands): data/multidimPowers.ts
  * merges them. Numbers and changes: docs/post-p3/agentes/PODERES-2.md. Latin American Spanish, the player's voice («tú»).
+ * Tanda 2 (the 25 at the end, agent PODERES-3): written from the roster by scratchpad/poderes3/gen_data_t2.py; changes in
+ * docs/post-p3/agentes/PODERES-3.md.
  */
 import type { MultidimPower } from './multidimPowers';
 
@@ -307,6 +309,133 @@ export const MULTIDIM_POWERS_POST: Record<string, MultidimPower> = {
     short: 'Rosca que entra por la popa: críticos que ignoran escudos',
     text: 'Le pega con rosca por fuera: el balón le da la vuelta a su barco y entra POR LA POPA, a sus 2 módulos de atrás: esos golpes ignoran escudos y son críticos (×1.5) y dejan Flotando lo que tocan.',
   },
+  // ---- tanda 2 (agent PODERES-3, 2026-10-29: docs/post-p3/05-tanda-2.md; changes: docs/post-p3/agentes/PODERES-3.md)
+  xp_sombreronron: {
+    name: 'MIDNIGHT BRAID!',
+    short: 'Tres listones: lo que quede dentro del triángulo, trenzado',
+    text: 'Trenza la medianoche: tus próximos 3 impactos (de cualquier gato tuyo, este turno y los 2 siguientes) clavan un listón en su barco. Con el tercero la trenza se cierra: toda celda suya dentro del triángulo de los tres listones recibe un golpe y queda Enraizada, y los gatos de adentro amanecen con los bigotes trenzados (no ganan barra un turno).',
+  },
+  xp_gatejo: {
+    name: 'TWO CADEJOS!',
+    short: 'Cuida a tus gatos solos y muerde a los suyos que estén solos',
+    text: 'Se parte en dos: el Gatejo blanco cuida a cada gato tuyo que esté solo (sin otro camarote tuyo pegado) y le da 2 escudos; el Gatejo negro va por cada gato suyo que esté solo, le muerde fuerte y lo deja Maldito. Si de un lado nadie está solo, ese espíritu va con el más débil.',
+  },
+  xp_maullorona: {
+    name: 'WEEPING RIVER!',
+    short: 'Siete lagrimones que buscan siempre al gato más herido',
+    text: 'Llora un río: siete lagrimones caen uno por uno sobre sus gatos, cada uno sobre el que tenga menos vida en ese momento, y pegan más mientras más herido esté. Si uno cae, el siguiente lagrimón sigue buscando. Todo lo que tocan queda Mojado.',
+  },
+  xp_quetzalgatl: {
+    name: 'FEATHERED WIND!',
+    short: 'El viento a tu favor 3 turnos y plumas que sellan cañones',
+    text: 'El viento se vuelve suyo: el resto de este turno y tus 3 siguientes sopla con toda su fuerza de tu barco hacia el de ellos, a favor de tus tiros y en contra de los suyos. Y cinco plumas caen en sus cañones: quedan Sellados un turno.',
+  },
+  xp_bastet: {
+    name: 'HOME GUARDIAN!',
+    short: 'Tu barco no baja del 30 % y el sol cobra cada golpe',
+    text: 'Protege la casa: durante sus 3 turnos siguientes ninguna celda tuya baja del 30 % de su vida (los golpes se quedan en la raya). Cada golpe que choca con la raya alimenta el disco de sol, y al final el sol cae sobre su núcleo con todo lo juntado.',
+  },
+  xp_cleogatra: {
+    name: 'THE PEARL WAGER!',
+    short: 'Apuesta 2 turnos de daño: si ganas, golpe enorme y barra',
+    text: 'Apuesta su perla más grande: durante 2 turnos se cuenta el daño. Si tu tripulación le hizo más daño a su barco que ellos al tuyo, gana la apuesta: la perla se disuelve sobre sus 3 mejores módulos con un golpe enorme y tu tripulación gana barra. Si pierde, la perla regresa a su pata y les cae en el núcleo de consolación.',
+  },
+  xp_bonapata: {
+    name: 'GRAND CONQUEST!',
+    short: 'Cada celda que destruyas en 3 turnos te sube el daño',
+    text: 'Clava su bandera: el resto de este turno y tus 2 siguientes, cada celda suya que tu tripulación destruya se vuelve territorio conquistado, y cada territorio sube el daño de toda tu tripulación hasta el final de la batalla. Abre la campaña con un bicornio de fuego donde apuntas.',
+  },
+  xp_leonardo: {
+    name: 'CODEX OF INVENTIONS!',
+    short: 'Una máquina para cada gato: su próximo tiro sale mejorado',
+    text: 'Abre su cuaderno y le inventa una máquina a cada gato tuyo según lo que hace: el próximo tiro de cada uno sale mejorado (más proyectiles, perforación, radio, rebotes, estados más largos, curas, escudos o un tiro repetido).',
+  },
+  xp_perla: {
+    name: 'SOFT WINDOW LIGHT!',
+    short: 'Luz de ventana: cura y repara a todo tu barco 4 turnos',
+    text: 'Abre la ventana: durante tus 4 turnos siguientes entra a tu barco una luz suave que, al empezar cada uno, cura a todos tus gatos y repara tus celdas. Y la perla se cuelga de tu gato más herido y le da escudos.',
+  },
+  xp_miauton: {
+    name: 'LAW OF GRAVITY!',
+    short: 'Sus tiros pesan el doble y los tuyos la mitad, 2 turnos',
+    text: 'Una manzana gigante cae sobre lo más alto de su barco y la gravedad cambia: durante sus 2 turnos siguientes sus tiros pesan el doble y se quedan cortos, y los de tu tripulación pesan la mitad y vuelan rectos y lejos.',
+  },
+  xp_miauzart: {
+    name: 'BRAVO, ENCORE!',
+    short: 'La siguiente ulti de tu tripulación se toca dos veces',
+    text: 'Un minueto de tres notas en abanico que aturde, y el público se pone de pie: la siguiente ulti de otro gato tuyo (en tus 3 turnos siguientes) se toca dos veces: se repite al instante, un poco más bajito.',
+  },
+  xp_miausagi: {
+    name: 'FULL MOON UNITY!',
+    short: 'Rayo de luna: más fuerte por cada elemento de tu tripulación',
+    text: 'Levanta su varita y llama a sus amigas: un rayo de luna llena cae sobre su barco, más grande y más fuerte por cada elemento distinto que haya en tu tripulación. Y por la amistad, cada gato tuyo gana barra.',
+  },
+  xp_tanjimiau: {
+    name: 'FLOWING DRAGON!',
+    short: 'Dragón de agua por el borde de su barco que pega más y más',
+    text: 'Respira hondo y suelta un dragón de agua que le da la vuelta a su barco por el borde, celda por celda, y cada celda que toca le pega más que la anterior. Al final, la caja se abre tantito: su hermanita patea la última celda.',
+  },
+  xp_tetrimiau: {
+    name: 'LINE CLEAR!',
+    short: 'Borra la fila más llena; lo de arriba se golpea al caer',
+    text: 'Cuatro piezas caen sobre su barco y completan una fila: la fila con más celdas de su barco DESAPARECE (solo aguantan, como pilares, las celdas que sostienen algo), y lo que estaba justo arriba se golpea al caer.',
+  },
+  xp_laracroqueta: {
+    name: 'RELIC RAID!',
+    short: 'Saquea: le quita barra a cada gato suyo y te la da a ti',
+    text: 'Se cuelga de su barco con el gancho y saquea la alacena: le quita barra a cada gato suyo y la reparte entre tu tripulación. Antes de irse, le apunta con los dos punteros al gato que más barra tenía.',
+  },
+  xp_pobregatito: {
+    name: 'HOME TRAPS!',
+    short: 'Cuatro trampas escondidas castigan al que te dispara',
+    text: 'Arma la casa: esconde cuatro trampas en celdas de tu barco que el rival no ve. Cuando un tiro suyo toca una celda con trampa, no hace daño y la trampa le pega al que disparó: lata de pintura, perilla caliente, carritos de juguete o la plancha.',
+  },
+  xp_felinamente: {
+    name: 'OBJECTION SUSTAINED!',
+    short: 'Objeción: el estado que te pongan se les regresa a todos',
+    text: 'Arma una objeción: durante sus 3 turnos siguientes, el primer estado que le pongan a un gato tuyo se anula y se les regresa a TODOS sus gatos. Y abre el caso con un libro de leyes gigante sobre el gato suyo que más estados te haya puesto.',
+  },
+  xp_gorrimiau: {
+    name: 'THE COMPASS SAYS TUNA!',
+    short: 'Tus tiros se curvan hacia su gato con más barra 3 turnos',
+    text: 'Abre la brújula que no apunta al norte, sino a lo que más quieres: el resto de este turno y tus 2 siguientes, cada tiro de tu tripulación se curva en el aire hacia el gato suyo con más barra. Si ese gato cae, el capitán se queda con su barra.',
+  },
+  xp_docmiauwn: {
+    name: 'FIX THE PAST!',
+    short: 'Tus tiros fallados de la batalla regresan y esta vez pegan',
+    text: 'Viaja al pasado y arregla tus errores: los tiros de tu tripulación que fallaron en esta batalla regresan del pasado, uno tras otro, y esta vez pegan en su barco, en el punto más cercano a donde iban.',
+  },
+  xp_pinkmiau: {
+    name: 'LAB PARTNER!',
+    short: 'Cada golpe deja un estado extra; con Heisenmiau, doble',
+    text: 'Se pone los goggles y le pasa los frascos al profe: el resto de este turno y tus 2 siguientes, cada golpe de tu tripulación deja en su barco un estado más (Vapor) además del suyo. Si Heisenmiau está en tu tripulación, su química cuenta cada estado doble.',
+  },
+  xp_miauty: {
+    name: 'BALANCE SHEET!',
+    short: 'Cuadra las cuentas: les quita la ventaja y repara tu barco',
+    text: 'Cuadra las cuentas: si a su barco le queda más vida que al tuyo (en proporción), le quita la mitad de la diferencia y con eso repara tu barco. Si vas ganando, cobra intereses: un carpetazo a su núcleo.',
+  },
+  xp_michincipe: {
+    name: 'THE SHEEP IN THE BOX!',
+    short: 'Una caja que trae justo lo que tu barco necesita',
+    text: 'Dibuja una caja con tres agujeritos: adentro está exactamente lo que necesitas. Si tu tripulación está muy herida, la cura; si ellos tienen escudos o barreras, se los quita; si no, el borrego sale a toda velocidad y embiste su núcleo.',
+  },
+  xp_garjona: {
+    name: 'THE STORY GOES ON!',
+    short: 'Todo lo bueno de tu lado dura 2 turnos más',
+    text: 'Cuenta una historia que no se acaba: todo lo bueno de tu lado (escudos, refuerzos, poderes con turnos y los estados que les pusiste) dura 2 turnos más. Y lo que cuenta se vuelve verdad: el gato suyo que más daño te hizo queda Revelado y Marcado.',
+  },
+  xp_shakimiau: {
+    name: 'SEISMIC DANCE!',
+    short: 'Terremoto: derrumba toda celda que quede bajo el 30 %',
+    text: 'Baila tan fuerte que tiembla el mar: cada celda de su barco recibe un golpecito y TODA celda que quede por debajo del 30 % de su vida se derrumba (menos las que sostienen algo).',
+  },
+  xp_miaucol: {
+    name: 'DUNK FROM THE LINE!',
+    short: 'Clavada al núcleo: pega más por cada gato suyo que noqueaste',
+    text: 'Despega desde la línea de tiro libre y clava sobre su núcleo pasando por encima de todo. Pega más por cada gato suyo que tu tripulación ya noqueó en la batalla: un anillo por cada uno, hasta seis. Sin anillos, el clavado además deja Aturdido a su gato con más barra.',
+  },
+  // ---- end of tanda 2
 };
 
 /** each post universe's color (its cat's aura) and tag, while its Signature (fx/sequences/multiverse) isn't drawn */
@@ -371,6 +500,33 @@ export const MDP_UNIVERSE: Record<string, { color: number; tag: string }> = {
   xp_gatistiano: { color: 0xc8102e, tag: 'UNIVERSO DEL SALTO' },
   xp_miaupe: { color: 0x1f2a5a, tag: 'UNIVERSO RELÁMPAGO' },
   xp_lamiau: { color: 0xc8102e, tag: 'UNIVERSO DEL BARRIO' },
+  // ---- tanda 2 (agent PODERES-3)
+  xp_sombreronron: { color: 0x1b1b2f, tag: 'UNIVERSO DE LA LEYENDA' },
+  xp_gatejo: { color: 0x111111, tag: 'UNIVERSO DEL CAMINO DE NOCHE' },
+  xp_maullorona: { color: 0x3a5a8c, tag: 'UNIVERSO DEL RÍO' },
+  xp_quetzalgatl: { color: 0x1f8a5b, tag: 'UNIVERSO DEL CÓDICE' },
+  xp_bastet: { color: 0xe6c34a, tag: 'UNIVERSO DEL TEMPLO' },
+  xp_cleogatra: { color: 0xe6c34a, tag: 'UNIVERSO DEL NILO' },
+  xp_bonapata: { color: 0x1f3a8a, tag: 'UNIVERSO DEL IMPERIO' },
+  xp_leonardo: { color: 0x8b5a2b, tag: 'UNIVERSO DEL GENIO' },
+  xp_perla: { color: 0x1b3f8b, tag: 'UNIVERSO DE LA VENTANA' },
+  xp_miauton: { color: 0x2b2420, tag: 'UNIVERSO DEL MANZANO' },
+  xp_miauzart: { color: 0xc0392b, tag: 'UNIVERSO DEL SALÓN DE CONCIERTOS' },
+  xp_miausagi: { color: 0xffd23f, tag: 'UNIVERSO LUNAR' },
+  xp_tanjimiau: { color: 0x2e7d5b, tag: 'UNIVERSO DE LA RESPIRACIÓN' },
+  xp_tetrimiau: { color: 0xff7f6b, tag: 'UNIVERSO DE LAS PIEZAS' },
+  xp_laracroqueta: { color: 0x2bb3a3, tag: 'UNIVERSO DE LA TUMBA' },
+  xp_pobregatito: { color: 0xd62839, tag: 'UNIVERSO DE LA CASA SOLA' },
+  xp_felinamente: { color: 0xff6fb5, tag: 'UNIVERSO ROSA' },
+  xp_gorrimiau: { color: 0x5b3a2a, tag: 'UNIVERSO DEL MAR MALDITO' },
+  xp_docmiauwn: { color: 0x3a7bd5, tag: 'UNIVERSO DE LA TORRE DEL RELOJ' },
+  xp_pinkmiau: { color: 0x4fc3f7, tag: 'UNIVERSO DE LA CASA RODANTE' },
+  xp_miauty: { color: 0x8b5a2b, tag: 'UNIVERSO DE LA OFICINA' },
+  xp_michincipe: { color: 0xffd23f, tag: 'UNIVERSO DEL ASTEROIDE' },
+  xp_garjona: { color: 0x3b2a1a, tag: 'UNIVERSO DEL TROVADOR' },
+  xp_shakimiau: { color: 0xe6c34a, tag: 'UNIVERSO SÍSMICO' },
+  xp_miaucol: { color: 0xd62839, tag: 'UNIVERSO DE LA DUELA' },
+  // ---- end of tanda 2
 };
 
 /** the post Multidimensionals with a power (registered ahead of their species) */

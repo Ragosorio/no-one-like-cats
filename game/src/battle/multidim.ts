@@ -33,6 +33,8 @@ import { p2Night, p2SetNight } from './multiverso';
 // after the Parte III: the 60 post Multidimensionals' powers and their rules (battle/multidimPost, agent PODERES-2)
 import { mdpAfterFire, mdpAfterHit, mdpCatMul, mdpCellMul, mdpChips, mdpDodge, mdpFeats, mdpShot, mdpStartTurn, mdpWorth, postUlts } from './multidimPost/hooks';
 export { mdAbsorb, mdAfterShot, mdAltPaths, mdBench, mdFire, mdHitAdjust, mdImpact, mdMeterMul } from './multidimPost/hooks';
+// tanda 2 (agent PODERES-3): Bastet's floor (sim.hurtCell) and the aim guide under Miauton's gravity (BattleScene)
+export { mdAimShot, mdFloor } from './multidimPost/hooks';
 
 /** switches and caps (tests flip `on` to prove the enemy side is untouched) */
 export const MD_TUNE = {
@@ -146,6 +148,33 @@ function feat(b: Battle, side: number, k: string, n = 1) {
 /** what the powers did this battle (player side): md_<species> casts and a few counters */
 export function mdFeats(b: Battle): Record<string, number> {
   return { ...S(b).feats, ...mdpFeats(b) };
+}
+/**
+ * after the Parte III (agent PODERES-3, Ricardo Garjona's THE STORY GOES ON!): +n turns to every Parte III clock a side
+ * owns — its flow, its ghost / gaze, and the fright, the colorlessness, the chains, the silence, the panic and the threats
+ * it left on the other side. Never creates the state; returns how many clocks it found.
+ */
+export function mdExtendOwn(b: Battle, side: number, n: number): number {
+  const s = STATE.get(b);
+  if (!s) return 0;
+  const foe = 1 - side;
+  let k = 0;
+  const add = (t: Timer | undefined) => {
+    if (t && on(t)) {
+      t.next += n;
+      k++;
+    }
+  };
+  add(s.flow[side]);
+  add(s.scared[foe]);
+  add(s.noir[foe]);
+  add(s.chains[foe]);
+  add(s.silence[foe]);
+  if (s.panic && s.panic.side === foe) add(s.panic.t);
+  for (const [c, t] of s.threat) if (c.side === foe) add(t);
+  for (const [c, t] of s.ghost) if (c.side === side) add(t);
+  for (const [c, t] of s.gaze) if (c.side === side) add(t);
+  return k;
 }
 
 // ------------------------------------------------------------------ gate

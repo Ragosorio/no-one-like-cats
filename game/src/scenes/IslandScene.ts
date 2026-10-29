@@ -21,7 +21,7 @@ import { toast } from '../ui/modal';
 import { G, Habitat } from '../state/game';
 import { habitatTier } from '../state/econ';
 import { EXPANSIONS, MissionDef } from '../data/content';
-import { HOME, collectHabitat, collectAllBoth, expansionState, harvest, regionsUnlocked, farmPlots, islandBus, bankUnlocked, bankKl, bankState, habitatRate } from '../state/sys/island';
+import { HOME, collectHabitat, collectAllBoth, expansionHidden, expansionState, harvest, regionsUnlocked, farmPlots, islandBus, bankUnlocked, bankKl, bankState, habitatRate } from '../state/sys/island';
 import { secretInfo } from '../state/sys/secrets';
 import { expeditions, readyExpeditions, expeditionsUnlocked, resonanceQueue } from '../state/sys/workforce';
 import { SecretView } from '../island/views/SecretView';
@@ -366,19 +366,23 @@ export class IslandScene extends Scene {
   }
 
   // ================================================================== world construction
+  /** the camera roams the islands this save can see (a post-Parte III island before the gate adds no sea to pan into) */
   private setBounds() {
     let minX = Infinity;
     let maxX = -Infinity;
     let minY = Infinity;
     let maxY = -Infinity;
+    const hidden = new Set(this.plan.regions.filter((r) => this.look(r.id) === 'hidden').map((r) => r.id));
     for (const t of this.plan.tiles.values()) {
+      if (hidden.has(t.region)) continue;
       const p = isoToScreen(t.gx, t.gy);
       minX = Math.min(minX, p.x);
       maxX = Math.max(maxX, p.x);
       minY = Math.min(minY, p.y);
       maxY = Math.max(maxY, p.y);
     }
-    this.cam.bounds = { minX: minX + 200, maxX: maxX - 200, minY: minY + 100, maxY: maxY - 60 };
+    // in place: the Ambient keeps a reference to this object (gulls fly inside it)
+    Object.assign(this.cam.bounds, { minX: minX + 200, maxX: maxX - 200, minY: minY + 100, maxY: maxY - 60 });
   }
 
   /** sandy stepping-stone paths from every home building to a little plaza (cozy structure) */
@@ -448,6 +452,9 @@ export class IslandScene extends Scene {
     this.pathStones = stones;
   }
   private pathStones: { x: number; y: number }[] = [];
+  /** the natural decor by island (built once): islands far off screen skip drawing it (cullFar) */
+  private decorByRegion = new Map<string, Container[]>();
+  private drawnRegion = new Map<string, boolean>();
 
   private buildDecor() {
     this.buildPaths();
@@ -461,6 +468,9 @@ export class IslandScene extends Scene {
         (c as Container & { region?: string }).region = p.def.id;
         c.label = `decor:${p.def.id}`;
         this.objects.addChild(c);
+        let list = this.decorByRegion.get(p.def.id);
+        if (!list) this.decorByRegion.set(p.def.id, (list = []));
+        list.push(c);
       }
   }
 
@@ -593,7 +603,12 @@ export class IslandScene extends Scene {
   private buildPlots() {
     for (const p of this.plan.plans.values()) {
       p.farms.forEach((s) => this.farms.push(new FarmView(s, this.ctx, (v) => this.onFarmTap(v))));
-      if (p.def.id !== HOME) this.expansions.push(new ExpansionView(p, this.ctx, (n) => openExpansionPanel(n, () => this.focusRegion(n))));
+      if (p.def.id !== HOME) {
+        const v = new ExpansionView(p, this.ctx, (n) => openExpansionPanel(n, () => this.focusRegion(n)));
+        // right away: a post-Parte III island before the gate never shows its plaque, not even for a frame
+        v.sync(expansionHidden(v.n) ? 'hidden' : expansionState(v.n));
+        this.expansions.push(v);
+      }
       if (p.secret && p.def.n)
         this.secrets.push(
           new SecretView(p.def.n, p.secret, this.ctx, {
@@ -614,6 +629,9 @@ export class IslandScene extends Scene {
   private redrawTerrain(force = false) {
     const sig = this.plan.regions.map((r) => this.look(r.id)).join(',');
     if (!force && sig === this.lookSig) return;
+    // the post-Parte III islands just came into this save's world (or the scene opened): the camera may roam to them
+    const hid = (q: string) => q.split(',').map((x, i) => (x === 'hidden' ? i : -1)).join();
+    if (this.lookSig && hid(sig) !== hid(this.lookSig)) this.setBounds();
     this.lookSig = sig;
     this.terrain.redraw(this.look);
     this.terrain.drawBridges(this.plan.regions, this.look);
@@ -640,7 +658,7 @@ export class IslandScene extends Scene {
         v.sync(active, f);
       });
     }
-    for (const e of this.expansions) e.sync(expansionState(e.n));
+    for (const e of this.expansions) e.sync(expansionHidden(e.n) ? 'hidden' : expansionState(e.n));
     for (const sv of this.secrets) {
       const reg = this.plan.regions.find((r) => r.n === sv.n)?.id ?? '';
       sv.sync(unlocked.has(reg));
@@ -660,6 +678,24 @@ export class IslandScene extends Scene {
     if (ap) ap.visible = u.altar;
     this.mesa.visible = u.mesa;
     this.syncCats();
+  }
+
+  /**
+   * The archipelago grew past one screen (the post-Parte III ring): an island whose rock is culled off screen
+   * (TerrainView.tick, with a wide margin) doesn't draw its natural decor nor its habitats either. Only `renderable`
+   * changes — `visible` stays owned by the looks (redrawTerrain), DecorLayer's hidden shrubs and the views.
+   */
+  private cullFar() {
+    for (const [region, list] of this.decorByRegion) {
+      const on = this.terrain.layers.get(region)?.visible ?? true;
+      if (this.drawnRegion.get(region) === on) continue;
+      this.drawnRegion.set(region, on);
+      for (const c of list) if (!c.destroyed) c.renderable = on;
+    }
+    for (const v of this.plots) {
+      const on = this.terrain.layers.get(v.region)?.visible ?? true;
+      if (v.drawn !== on) v.setDrawn(on);
+    }
   }
 
   /** one view per habitat (free placement): create, follow moves, drop sold ones */
@@ -1522,6 +1558,7 @@ export class IslandScene extends Scene {
     this.night?.update(dt);
     this.stage?.update(dt);
     this.terrain.tick(dt);
+    this.cullFar();
     this.hud.update(dt);
     this.syncAcc += dt;
     if (this.syncAcc > 0.3) {

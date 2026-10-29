@@ -396,9 +396,13 @@ export function ensureHabitatPositions(): number {
 }
 
 const regionRoomCache = new Map<string, number>();
-/** how many (new, 3×3) habitats an (empty) region holds — what an expansion "gives" (greedy, ignores decor) */
-export function regionRoom(region: string): number {
-  const hit = regionRoomCache.get(region);
+/**
+ * How many habitat yards of `size` (default: a new one's 3×3) an (empty) region holds — what an expansion "gives"
+ * (greedy from its centre, ignores decor; a careful player packs a few more). 5 = the yard of a tier 7+ habitat.
+ */
+export function regionRoom(region: string, size = HAB_SIZE): number {
+  const ck = `${region}|${size}`;
+  const hit = regionRoomCache.get(ck);
   if (hit !== undefined) return hit;
   const plan = islandPlan();
   const rp = plan.plans.get(region);
@@ -407,10 +411,10 @@ export function regionRoom(region: string): number {
   const tiles = [...rp.tiles].sort((a, b) => Math.hypot(a.gx - rp.center.gx, a.gy - rp.center.gy) - Math.hypot(b.gx - rp.center.gx, b.gy - rp.center.gy));
   let n = 0;
   for (const t of tiles) {
-    if (!check(t.gx, t.gy, HAB_SIZE, o).ok) continue;
+    if (!check(t.gx, t.gy, size, o).ok) continue;
     n++;
-    for (let y = t.gy; y < t.gy + HAB_SIZE; y++) for (let x = t.gx; x < t.gx + HAB_SIZE; x++) o.habs.set(key(x, y), '_');
+    for (let y = t.gy; y < t.gy + size; y++) for (let x = t.gx; x < t.gx + size; x++) o.habs.set(key(x, y), '_');
   }
-  regionRoomCache.set(region, n);
+  regionRoomCache.set(ck, n);
   return n;
 }

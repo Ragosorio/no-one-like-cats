@@ -1293,6 +1293,131 @@
       "bytes": 567791,
       "paths": 5499,
       "premultipliedRgbMae": 7.7904
+    },
+    "tetrimiau_block_cat": {
+      "bytes": 479056,
+      "paths": 4314,
+      "premultipliedRgbMae": 4.9791
+    },
+    "pinkmiau_science_cat": {
+      "bytes": 622329,
+      "paths": 6366,
+      "premultipliedRgbMae": 9.2277
+    },
+    "garjona_trova_cat": {
+      "bytes": 577417,
+      "paths": 5882,
+      "premultipliedRgbMae": 8.8027
+    },
+    "laracroqueta_raider_cat": {
+      "bytes": 753896,
+      "paths": 6969,
+      "premultipliedRgbMae": 5.2278
+    },
+    "pobregatito_scream_cat": {
+      "bytes": 681720,
+      "paths": 6770,
+      "premultipliedRgbMae": 9.2265
+    },
+    "felinamente_pink_cat": {
+      "bytes": 487183,
+      "paths": 4920,
+      "premultipliedRgbMae": 10.1011
+    },
+    "miauty_glasses_cat": {
+      "bytes": 522629,
+      "paths": 5182,
+      "premultipliedRgbMae": 7.541
+    },
+    "miaucol_dunk_cat": {
+      "bytes": 407723,
+      "paths": 4435,
+      "premultipliedRgbMae": 8.7358
+    },
+    "tanjimiau_box_cat": {
+      "bytes": 637365,
+      "paths": 6548,
+      "premultipliedRgbMae": 7.0432
+    },
+    "cleogatra_rug_cat": {
+      "bytes": 601198,
+      "paths": 5965,
+      "premultipliedRgbMae": 12.4672
+    },
+    "miausagi_moon_cat": {
+      "bytes": 809419,
+      "paths": 9457,
+      "premultipliedRgbMae": 8.9786
+    },
+    "shakimiau_quake_cat": {
+      "bytes": 750761,
+      "paths": 7447,
+      "premultipliedRgbMae": 9.4142
+    },
+    "gorrimiau_compass_cat": {
+      "bytes": 757520,
+      "paths": 7573,
+      "premultipliedRgbMae": 9.7476
+    },
+    "docmiauwn_time_cat": {
+      "bytes": 743611,
+      "paths": 7547,
+      "premultipliedRgbMae": 12.1534
+    },
+    "michincipe_asteroid_cat": {
+      "bytes": 613847,
+      "paths": 6463,
+      "premultipliedRgbMae": 7.3822
+    },
+    "bastet_sun_cat": {
+      "bytes": 432947,
+      "paths": 4951,
+      "premultipliedRgbMae": 6.1908
+    },
+    "sombreronron_braid_cat": {
+      "bytes": 710751,
+      "paths": 7677,
+      "premultipliedRgbMae": 9.3245
+    },
+    "gatejo_twospirit_cat": {
+      "bytes": 1023035,
+      "paths": 10261,
+      "premultipliedRgbMae": 7.7857
+    },
+    "maullorona_veil_cat": {
+      "bytes": 694561,
+      "paths": 6303,
+      "premultipliedRgbMae": 12.8655
+    },
+    "quetzalgatl_feather_cat": {
+      "bytes": 1029802,
+      "paths": 10762,
+      "premultipliedRgbMae": 9.4393
+    },
+    "bonapata_bicorne_cat": {
+      "bytes": 426261,
+      "paths": 4484,
+      "premultipliedRgbMae": 8.1335
+    },
+    "leonardo_codex_cat": {
+      "bytes": 858648,
+      "paths": 8267,
+      "premultipliedRgbMae": 6.7603
+    },
+    "perla_turban_cat": {
+      "bytes": 536233,
+      "paths": 5470,
+      "premultipliedRgbMae": 5.5056
+    },
+    "miauton_apple_cat": {
+      "bytes": 717792,
+      "paths": 7168,
+      "premultipliedRgbMae": 5.6622
+    },
+    "miauzart_prodigy_cat": {
+      "bytes": 761765,
+      "paths": 7393,
+      "premultipliedRgbMae": 8.65
     }
   }
 }

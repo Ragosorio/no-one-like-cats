@@ -82,7 +82,9 @@ FAM = {
                      color_en='flat saturated fills with a warm studio cast', shading_en='one flat shadow per material and one flat studio-light shape'),
     'mitos': dict(dimension='mitos', style_of_en='Egyptian tomb painting: flat mineral colors, bold contour, gold and lapis',
                   proportions_en='real cat anatomy, regal proportions', line_en='thick contour 10-14 px at 1024',
-                  color_en='flat mineral pigments: ochre, terracotta, lapis, jade, gold, bone white, black', shading_en='at most one flat shadow shape per material'),
+                  color_en='flat mineral pigments: ochre, terracotta, lapis, jade, gold, bone white, black', shading_en='at most one flat shadow shape per material',
+                  # DISEÑO-2 (tanda 2): Mitos es como Pinceles, un estilo por gato (el de su cultura); sin esto el prompt decía «FIRST cat… style anchor»
+                  style_consistency_en='This cat lives in the MITOS box, where each cat keeps the art of ITS culture: follow the reference medium above, not the style of any other cat.'),
     'pinceles': dict(dimension='pinceles', style_of_en='in the manner of an 18th-century rococo court portrait (Vigée Le Brun): soft pastel silks rendered as big flat strokes',
                      proportions_en='mild cartoon: head about one third of the height', line_en="the painter's own contour language, never thinner than 8 px",
                      color_en="the painter's palette in flat strokes, at most 3 values per material", shading_en='a few darker flat strokes laid in the direction of the form; no soft blending',

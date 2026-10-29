@@ -116,10 +116,12 @@ export class ExpansionView {
     }
   }
 
-  sync(st: 'locked' | 'available' | 'clearing' | 'cleared') {
+  /** 'hidden': a post-Parte III island before the gate — no clouds, no plaque, no price, no clock */
+  sync(st: 'locked' | 'available' | 'clearing' | 'cleared' | 'hidden') {
     const e = EXPANSIONS[this.n - 1];
     this.clouds.visible = st === 'locked' || st === 'available';
     this.plaque.visible = st === 'locked' || st === 'available';
+    if (st === 'hidden') this.tether.clear();
     if (this.plaque.visible) this.plaque.show(st === 'available' ? 'available' : 'locked', e.balance.cost, e.balance.kl, G.s.gold >= e.balance.cost);
     if (st !== this.state) {
       const prev = this.state;

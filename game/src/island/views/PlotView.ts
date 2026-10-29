@@ -66,6 +66,13 @@ export class PlotView {
     this.place();
   }
 
+  /** false while its island is off screen (IslandScene.cullFar): nothing of it is drawn, all of it keeps running */
+  drawn = true;
+  setDrawn(on: boolean) {
+    this.drawn = on;
+    for (const c of [this.ground, this.back, this.front, this.coins, this.bubble]) c.renderable = on;
+  }
+
   get id() {
     return this.habitat.id;
   }

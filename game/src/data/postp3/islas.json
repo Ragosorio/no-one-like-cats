@@ -1,0 +1,165 @@
+{
+  "$comment": "Después de la Parte III — las islas que llegaron cuando las cajas se derramaron (state/sys/island.ts expansionHidden; estado y decisiones en docs/post-p3/agentes/ISLAS-POST.md). Expansiones 13+ del MISMO archipiélago: se agregan al final de content.json › expansions (append-only, ids para siempre). Antes de postP3Unlocked() no existen para el jugador: invisibles, sin precio, sin pista. region.cx/cy van en coordenadas de contenido (archipelago.ts las abre ×SPREAD alrededor de casa) y quedan lejos de las islas 1–12, así su terreno, sus parcelas y su laguna no se mueven ni un tile.",
+  "expansions": [
+    {
+      "n": 13,
+      "id": "muelle_carton",
+      "name": "Muelle de Cartón",
+      "biome": "carton",
+      "gate": "postp3",
+      "region": {
+        "cx": 52.303,
+        "cy": 28.0606,
+        "r": 7.0
+      },
+      "balance": {
+        "kl": 40,
+        "cost": 750000000000,
+        "clear_s": 5400,
+        "hab_plots": 0,
+        "farm_plots": 1,
+        "bonus": {
+          "builders": 1,
+          "gold": 0.3
+        },
+        "opens": "4.º Constructor, +30% oro, mucho terreno para hábitats"
+      },
+      "opensDesign": "Un constructor más (para levantar hábitats en paralelo) y +30% de oro. Más terreno que cualquier expansión anterior: espacio de sobra para tus gatos nuevos.",
+      "secret": {
+        "name": "La Caja Sin Fondo",
+        "condition": "Al terminar de limpiar",
+        "content": "La caja más grande del mundo. Adentro hay otra caja. Y otra. Y otra.",
+        "reward": "4 gemas + 2 horas de Ronroneo"
+      },
+      "visual": "Cartón corrugado, cinta canela y sellos de ESTE LADO ARRIBA. Cajas apiladas por todos lados: el paraíso de cualquier gato. Dimensión cartón."
+    },
+    {
+      "n": 14,
+      "id": "tapete_suerte",
+      "name": "Tapete de la Suerte",
+      "biome": "felt",
+      "gate": "postp3",
+      "region": {
+        "cx": 48.6667,
+        "cy": 48.6667,
+        "r": 7.0
+      },
+      "balance": {
+        "kl": 42,
+        "cost": 2500000000000,
+        "clear_s": 7200,
+        "hab_plots": 0,
+        "farm_plots": 1,
+        "bonus": {
+          "gold": 0.4,
+          "catdex_bonus": 0.01
+        },
+        "opens": "+40% oro, Catdex +1% extra por especie"
+      },
+      "opensDesign": "+40% de oro y +1% extra por especie del Catdex. Un pedazo de mesa de casino que se quedó flotando.",
+      "secret": {
+        "name": "La Ficha de la Casa",
+        "condition": "Al terminar de limpiar",
+        "content": "Una ficha gigante de canto. Voltéala: 21 golpecitos.",
+        "reward": "4 gemas + 20 Orbes Prisma"
+      },
+      "visual": "Paño verde de casino con líneas de tiza dorada, pilas de fichas, dados y cartas paradas. Riel de caoba con remaches. Dimensión tapete."
+    },
+    {
+      "n": 15,
+      "id": "patio_talavera",
+      "name": "Patio de Talavera",
+      "biome": "talavera",
+      "gate": "postp3",
+      "region": {
+        "cx": 28.0606,
+        "cy": 51.0909,
+        "r": 7.0
+      },
+      "balance": {
+        "kl": 44,
+        "cost": 7500000000000,
+        "clear_s": 9000,
+        "hab_plots": 0,
+        "farm_plots": 1,
+        "bonus": {
+          "gold": 0.5,
+          "food": 0.3
+        },
+        "opens": "+50% oro, +30% Pescaditos"
+      },
+      "opensDesign": "+50% de oro y +30% de Pescaditos. Un patio de azulejos con sombra, macetas y papel picado.",
+      "secret": {
+        "name": "La Fuente de Azulejos",
+        "condition": "Al terminar de limpiar",
+        "content": "Una fuente pintada a mano. En el fondo brilla algo azul.",
+        "reward": "4 gemas + 40 cristales de Agua"
+      },
+      "visual": "Azulejos blancos con flores azul cobalto, barro rojo, macetas pintadas y banderitas de papel picado. Dimensión talavera."
+    },
+    {
+      "n": 16,
+      "id": "bahia_ovillo",
+      "name": "Bahía Ovillo",
+      "biome": "yarn",
+      "gate": "postp3",
+      "region": {
+        "cx": 12.9091,
+        "cy": 47.4545,
+        "r": 7.0
+      },
+      "balance": {
+        "kl": 46,
+        "cost": 20000000000000,
+        "clear_s": 10800,
+        "hab_plots": 0,
+        "farm_plots": 1,
+        "bonus": {
+          "gold": 0.6,
+          "offline_bank_h": 2
+        },
+        "opens": "+60% oro, Banco del Reino offline +2 h"
+      },
+      "opensDesign": "+60% de oro y el Banco del Reino guarda 2 h más sin ti. Una isla tejida a mano, punto por punto.",
+      "secret": {
+        "name": "El Ovillo sin Fin",
+        "condition": "Al terminar de limpiar",
+        "content": "Un ovillo del tamaño de una casa. Desenrédalo: 30 jaloncitos.",
+        "reward": "5 gemas + 3 horas de Ronroneo"
+      },
+      "visual": "Tierra de lana tejida, botones, agujas de tejer y ovillos gigantes. De la roca cuelgan hilos sueltos. Dimensión tejido."
+    },
+    {
+      "n": 17,
+      "id": "nube_siesta",
+      "name": "Nube Siesta",
+      "biome": "pillow",
+      "gate": "postp3",
+      "region": {
+        "cx": 47.4545,
+        "cy": 12.9091,
+        "r": 7.2
+      },
+      "balance": {
+        "kl": 48,
+        "cost": 50000000000000,
+        "clear_s": 14400,
+        "hab_plots": 0,
+        "farm_plots": 1,
+        "bonus": {
+          "builders": 1,
+          "gold": 0.75
+        },
+        "opens": "5.º Constructor, +75% oro"
+      },
+      "opensDesign": "Otro constructor y +75% de oro. La isla más mullida del mar: aquí se duerme la siesta de verdad.",
+      "secret": {
+        "name": "La Almohada del Rey",
+        "condition": "Al terminar de limpiar",
+        "content": "La almohada más suave del mar. Acuéstate. Cinco minutitos.",
+        "reward": "6 gemas + 30 Orbes Prisma"
+      },
+      "visual": "Cojines acolchados con botones, nubes de plumas, una luna de lamparita y estrellas colgadas de un móvil. Dimensión siesta."
+    }
+  ]
+}

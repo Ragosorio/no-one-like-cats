@@ -10,7 +10,7 @@ import json, os, re, subprocess, sys, glob, shutil, datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import base
 from base import *  # noqa
-import md_anime, md_libros, md_caricaturas, md_comics_juegos, md_pantalla, md_musica_deporte, reservas, originales  # noqa: F401
+import md_anime, md_libros, md_caricaturas, md_comics_juegos, md_pantalla, md_musica_deporte, md_tanda2, reservas, originales  # noqa: F401
 import textos
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -24,7 +24,12 @@ ARTE = os.path.expanduser('~/Desktop/No one - raster (fuera del repo)/arte-nuevo
 PHASE1 = {'gacha': 'casino:gacha', 'slot': 'casino:slot', 'eterno': 'casino:eterno',
           'plinko': 'casino:gacha:michi', 'dice': 'casino:gacha:michi',
           'hilo': 'casino:gacha:holo', 'roulette': 'casino:gacha:holo',
-          'bingo': 'casino:slot', 'scratch': 'casino:slot', 'boxes': 'casino:caja'}
+          'bingo': 'casino:slot', 'scratch': 'casino:slot', 'boxes': 'casino:caja',
+          # tanda 2 (DISEÑO-2): mesas grandes SIN vitrina (las vitrinas se quedan en 8; ver 05-tanda-2.md)
+          'gacha_michi': 'casino:gacha:michi', 'gacha_holo': 'casino:gacha:holo', 'caja': 'casino:caja'}
+# post.vitrina de los venues sin vitrina = el nombre de su mesa grande (el validador del juego acepta las claves de POST_CASINO)
+VIT_OF = {'gacha_michi': 'gacha', 'gacha_holo': 'gacha'}
+TANDA2_MODE = 'tanda2'  # --arte: solo regenera/agrega las entradas de la tanda 2; --arte-todo: el comportamiento viejo (todo el lote)
 SRC_TXT = {'casino:gacha': 'puede salir cuando el Portal te da un gato legendario o mítico (cualquier estandarte)',
            'casino:gacha:michi': 'puede salir cuando el PORTAL MICHI te da un gato legendario o mítico',
            'casino:gacha:holo': 'puede salir cuando el MULTIVERSO HOLO te da un gato legendario o mítico',
@@ -120,12 +125,15 @@ def cat_json(c):
     dmg, uses, cap = ULT[r]
     ult = {'name': f'{uname} ({jp})', 'effect': ueffect, 'dmg': dmg, 'meterCost': 100, 'usesPerBattle': uses, 'chargeTurns': 0, 'structureCap': cap}
     art = c['art']
-    origin = ORIGIN[art['fam']] if 'fam' in art else ('podio' if r == 'heroic' else 'casino')
+    # tanda 2: `origin` propio (leyendas, mitos, historia, ciencia, clasica, telenovela) cuando la ficha lo trae; si no, el de su familia de arte
+    origin = c.get('origin') or (ORIGIN[art['fam']] if 'fam' in art else ('podio' if r == 'heroic' else 'casino'))
     src = table_of(c)
     post = {'kind': 'copa' if r == 'heroic' else 'mesa', 'source': src, 'weight': c.get('w', 10), 'gate': 'postP3Unlocked'}
     if r != 'heroic':
-        post['vitrina'] = c['venue']
+        post['vitrina'] = VIT_OF.get(c['venue'], c['venue'])
         post['star'] = bool(c.get('star'))
+    if c.get('tanda'):
+        post['tanda'] = c['tanda']
     if c.get('sets'):
         post['sets'] = c['sets']
     if c.get('pair'):
@@ -178,8 +186,13 @@ def manifest_md(c, el_dims):
               'palette': a['pal'], 'color_en': fam['color_en'], 'shading_en': fam['shading_en'], 'texture_en': 'NONE painted',
               'pose_en': a['pose'], 'expression_en': a.get('expr', EXPR), 'hero_prop_en': a['prop'], 'rarity_treatment_en': MD_TREAT,
               'rig_notes_en': RIG + a.get('rig', []), 'must_not_include_en': mni, 'corrections_en': []})
-    if fam.get('style_consistency_en'):
-        e['style_consistency_en'] = fam['style_consistency_en']
+    sc = fam.get('style_consistency_en')
+    if a.get('style_of') and fam['dimension'] in ('pinceles', 'mitos'):
+        # un estilo por gato: la frase nombra el medio de ESTE gato (el de la familia decía «rococo» para todos los de Pinceles)
+        sc = (f"This cat lives in the {fam['dimension'].upper()} box, where each cat keeps the style of ITS source: "
+              f"follow the reference medium above ({a['style_of'].split(':')[0]}), not the style of any other cat.")
+    if sc:
+        e['style_consistency_en'] = sc
     e.update({'slug': a['slug'], 'riesgo_moderacion': c['risk'], 'plan_b_es': c['planb'], 'plan_b_en': a.get('planb_en'),
               'reserva': bool(c.get('reserve')), 'post_source': table_of(c)})
     return e
@@ -213,10 +226,34 @@ def load_game():
 def validate(all_json, allc):
     errs = []
     game = load_game()
+    # los gatos del lote que YA están en el juego (data/postp3/especies.json, mismo id y slug) son ellos mismos, no choques
+    shipped = {}
+    pp = os.path.join(GAME_DATA, 'postp3', 'especies.json')
+    if os.path.exists(pp):
+        shipped = {c['id']: c['art']['slug'] for c in json.load(open(pp)).get('cats', [])}
+    game = [c for c in game if not (c['id'] in shipped and any(j['id'] == c['id'] for j in all_json))]
     gids = {c['id'] for c in game}
     gnames = {c['name'].lower() for c in game}
     gslugs = {c['art']['slug'] for c in game}
-    svgs = {os.path.splitext(x)[0] for x in os.listdir(os.path.join(REPO, 'game', 'public', 'cats-svg'))}
+    svgs = {os.path.splitext(x)[0] for x in os.listdir(os.path.join(REPO, 'game', 'public', 'cats-svg'))} - set(shipped.values())
+    for j in all_json:
+        if j['id'] in shipped and shipped[j['id']] != j['art']['slug']:
+            errs.append(f"{j['id']}: ya está en el juego con otro slug ({shipped[j['id']]})")
+    # tanda 2: las reglas del encargo de DISEÑO-2
+    src_by_id = {c['id']: c for c in allc}
+    for j in all_json:
+        c = src_by_id.get(j['id'], {})
+        if not c.get('tanda') or j['rarity'] != 'multidimensional':
+            continue
+        i = j['id']
+        if re.search(r'STARFALL|METEOR|DECREE', j['combat']['ultimate']['name'], re.I): errs.append(f'{i}: nombre de ulti prohibido (STARFALL|METEOR|DECREE)')
+        if len(c['pw']) > 60: errs.append(f"{i}: post.power.short de {len(c['pw'])} caracteres (máx. 60)")
+        if not 3 <= len(c['traits']) <= 5: errs.append(f'{i}: {len(c["traits"])} rasgos (3–5)')
+        if not 3 <= len(c['art']['sig']) <= 5: errs.append(f'{i}: {len(c["art"]["sig"])} signifiers (3–5)')
+        if not c.get('uni') or len(c['uni']) != 3: errs.append(f'{i}: falta el universo')
+        for k in ('planb', 'risk', 'nums', 'pw', 'passive', 'hint'):
+            if not c.get(k): errs.append(f'{i}: falta {k}')
+        if not c['art'].get('planb_en'): errs.append(f'{i}: falta art.planb_en')
     bal = json.load(open(os.path.join(GAME_DATA, 'balance.json')))
     content = json.load(open(os.path.join(GAME_DATA, 'content.json')))
     roles = {r['id'] for r in content['roles']}
@@ -278,11 +315,54 @@ def main():
     open(os.path.join(DOCS, '04-roster.json'), 'a').write('\n')
     textos.write_docs(DOCS, ROSTER, RESERVA, origs, cats, reserve, COPA, PHASE1, LOCK_NAME, table_of)
     print(f'OK: {len(cats)} gatos ({len(ROSTER)} MD, {len(origs)} originales) + {len(reserve)} de reserva. Docs y JSON escritos.')
-    if arte:
-        do_arte(ROSTER + RESERVA, origs)
+    if '--arte-todo' in sys.argv:
+        do_arte(ROSTER + RESERVA, origs, only=None)
+    elif arte:
+        do_arte(ROSTER + RESERVA, origs, only={c['id'] for c in ROSTER + RESERVA + origs if c.get('tanda')})
 
 
-def do_arte(mds, origs):
+def do_arte(mds, origs, only=None):
+    """only=None: el comportamiento viejo (reescribe TODO el lote; borra las correcciones que los agentes de arte pusieron a mano en el
+    manifest). only={ids}: modo tanda 2 (DISEÑO-2, 2026-10-29): reemplaza esas entradas en su lugar (o las agrega al final), compila solo
+    sus prompts y deja intactas las demás entradas, sus prompts y COLA.txt."""
+    if only is not None:
+        return do_arte_parcial(mds, origs, only)
+    do_arte_todo(mds, origs)
+
+
+def do_arte_parcial(mds, origs, only):
+    man_path = os.path.join(ARTE, 'manifest.json')
+    m = json.load(open(man_path))
+    el_dims = {}
+    for a in m['assets']:
+        for d in a.get('element_dimensions') or []:
+            if d.get('dimension'): el_dims.setdefault(d['element'], d['dimension'])
+    entries = [manifest_md(c, el_dims) for c in mds if c['id'] in only] + [manifest_orig(c, el_dims) for c in origs if c['id'] in only]
+    ids = {e['id'] for e in entries}
+    clash = [a['id'] for a in m['assets'] if a['id'] in ids and a.get('folder') != LOTE_DIR]
+    assert not clash, f'ids que ya existen en otro lote: {clash}'
+    bk = os.path.join(ARTE, '_respaldos', f"manifest-antes-tanda2-{datetime.datetime.now():%Y-%m-%d-%H%M%S}.json")
+    shutil.copy(man_path, bk)
+    tmp = os.path.join(HERE, '_entradas-manifest.json')
+    json.dump(entries, open(tmp, 'w'), ensure_ascii=False, indent=2)
+    js = ("const fs=require('fs');const p=process.argv[1];const m=JSON.parse(fs.readFileSync(p,'utf8'));"
+          "const add=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));const by=new Map(add.map(a=>[a.id,a]));let rep=0;"
+          "m.assets=m.assets.map(a=>{if(a.folder==='lote-post-p3'&&by.has(a.id)){const n=by.get(a.id);by.delete(a.id);rep++;"
+          "if(a.corrections_en&&a.corrections_en.length&&!(n.corrections_en&&n.corrections_en.length))n.corrections_en=a.corrections_en;return n;}return a;});"
+          "const nu=[...by.values()];m.assets=m.assets.concat(nu);"
+          "fs.writeFileSync(p,JSON.stringify(m,null,2)+'\\n');console.log('manifest:',m.assets.length,'assets ·',rep,'reemplazadas en su lugar ·',nu.length,'nuevas al final');")
+    subprocess.run(['node', '-e', js, man_path, tmp], check=True)
+    os.remove(tmp)
+    for e in entries:
+        subprocess.run(['node', 'herramientas/compilar.mjs', e['id']], cwd=ARTE, check=True, stdout=subprocess.DEVNULL)
+    open(os.path.join(ARTE, LOTE_DIR, 'COLA-tanda2.txt'), 'w').write(
+        textos.cola(entries).replace('# Cola del lote post-p3 (DISEÑO, 2026-10-28).', '# Cola de la TANDA 2 del lote post-p3 (DISEÑO-2, 2026-10-29).')
+        .replace('./_p3v2/cola.sh <HH:MM> <tamaño de ola> $(grep -v "^#" lote-post-p3/COLA.txt | grep -v "^$" | grep -v "^R ")',
+                 'lote-post-p3/herramientas/cola.sh <tamaño de ola> $(grep -v "^#" lote-post-p3/COLA-tanda2.txt | grep -v "^$")'))
+    print(f'arte (tanda 2): {len(entries)} entradas · respaldo {os.path.basename(bk)} · prompts en prompts/{LOTE_DIR}/ · {LOTE_DIR}/COLA-tanda2.txt')
+
+
+def do_arte_todo(mds, origs):
     man_path = os.path.join(ARTE, 'manifest.json')
     m = json.load(open(man_path))
     el_dims = {}

@@ -4,6 +4,7 @@
  */
 import { Texture } from 'pixi.js';
 import type { DimDef, FallKind, PatternKind } from './defs';
+import { PAT_POST, ROCK_POST, LAG_POST, FALL_POST } from './bakePost';
 
 const cache = new Map<string, Texture>();
 /** iso-aligned pattern size: 4×4 tiles of 128×64 (repeats on the tile lattice) */
@@ -241,6 +242,8 @@ const PAT: Record<PatternKind, (g: G2, w: number, h: number, f: number) => void>
       });
     }
   },
+  // ---- after the Parte III (bakePost.ts)
+  ...PAT_POST,
   grass: (g, w, h) => grassy(g, w, h, false),
   lush: (g, w, h) => grassy(g, w, h, true),
   hatch: (g, w, h, f) => {
@@ -758,6 +761,7 @@ function cubeOutline(g: G2, x: number, y: number, s: number) {
 }
 
 const ROCK: Partial<Record<string, (g: G2, w: number, h: number, f: number, d: DimDef) => void>> = {
+  ...ROCK_POST,
   home: (g, w, h, _f, d) => {
     const r = rng(21);
     strata(g, w, h, r, d.rock.line, 0.35);
@@ -1048,7 +1052,7 @@ const ROCK: Partial<Record<string, (g: G2, w: number, h: number, f: number, d: D
 export function lagoonTex(d: DimDef, frame = 0): Texture {
   return bake(`lag-${d.id}-${frame}`, PW, PH, (g, w, h) => (LAG[d.id] ?? LAG.home)(g, w, h, frame, d));
 }
-export const LAGOON_FRAMES: Record<string, number> = { home: 2, forest: 2, cliff: 3, volcano: 2, ghost: 2, ice: 1, ruins: 2, reef: 2, cosmic: 1 };
+export const LAGOON_FRAMES: Record<string, number> = { home: 2, forest: 2, cliff: 3, volcano: 2, ghost: 2, ice: 1, ruins: 2, reef: 2, cosmic: 1, carton: 2, felt: 2, talavera: 2, yarn: 2, pillow: 1 };
 
 function crests(g: G2, w: number, h: number, f: number, n: number, color: number, alpha: number) {
   const r = rng(51);
@@ -1077,6 +1081,7 @@ function crests(g: G2, w: number, h: number, f: number, n: number, color: number
 }
 
 const LAG: Record<string, (g: G2, w: number, h: number, f: number, d: DimDef) => void> = {
+  ...LAG_POST,
   home: (g, w, h, f) => crests(g, w, h, f, 30, 0xffffff, 0.6),
   forest: (g, w, h, f) => crests(g, w, h, f, 36, 0xffffff, 0.7),
   cliff: (g, w, h, f) => {
@@ -1283,6 +1288,7 @@ function streaks(g: G2, w: number, h: number, seed: number, n: number, cols: num
   }
 }
 const FALL: Record<FallKind, (g: G2, w: number, h: number) => void> = {
+  ...FALL_POST,
   water: (g, w, h) => {
     const grd = g.createLinearGradient(0, 0, w, 0);
     grd.addColorStop(0, rgba(0x7fd8f0, 0));

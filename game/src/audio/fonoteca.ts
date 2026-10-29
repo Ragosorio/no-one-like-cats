@@ -74,8 +74,11 @@ G.afterLoad.push(() => {
   }
 });
 
-/** unlock a song or version (idempotent). True when it was new. */
-export function unlockSong(ref: string, source = ''): boolean {
+/**
+ * unlock a song or version (idempotent). True when it was new. `silent` (P3-CINE): no record card, no stinger, no toast
+ * — the song is marked as already celebrated (the mourning; a save catching up on songs it heard before an update)
+ */
+export function unlockSong(ref: string, source = '', o: { silent?: boolean } = {}): boolean {
   const id = typeof ref === 'string' ? ref.trim() : '';
   if (!id) return false;
   const m = musicExt(true);
@@ -84,10 +87,11 @@ export function unlockSong(ref: string, source = ''): boolean {
   const firstOfSong = !Object.keys(m.unlocked).some((k) => songOf(k) === song);
   m.unlocked[id] = { at: Date.now(), source: String(source ?? '').slice(0, 120) };
   const celebrate = firstOfSong && !m.toasted.includes(song);
-  if (celebrate) m.toasted.push(song);
+  if ((celebrate || o.silent) && !m.toasted.includes(song)) m.toasted.push(song);
   writeMirror(m);
   // persist right away (an unlock must survive a crash) — only a loaded save, never the title's blank state
   if (G.loaded) G.save();
+  if (o.silent) return true;
   const e: UnlockEvent = { ref: id, song, source: m.unlocked[id].source, firstOfSong: celebrate };
   for (const fn of [...listeners]) {
     try {

@@ -16,7 +16,7 @@ import { txt } from '../../../ui/widgets';
 import { sfx } from '../../../core/audio';
 import { destroyTree } from '../../../panels/collection/ui';
 import { liveLoop } from '../../../panels/collection/cardArt';
-import { type Signature, type SigCtx, CHEER, burst, every, flashOf, later, plate, score } from './kit';
+import { type Signature, type SigCtx, CHEER, burst, every, flashOf, later, plate, score, viewIn } from './kit';
 import { hideDisc } from './kitA';
 import { fadeKill, rng, stash, vgrad } from './kitB';
 import { beat, pay } from './kitC';
@@ -259,9 +259,11 @@ export const garritas: Signature = {
     // the rage: the screen pulses red
     beat(c, 1.2, () => {
       const rage = new Graphics();
+      // the real screen's edges (any aspect: kit.ts, top comment)
+      const v = viewIn(c, c.fg);
       for (let i = 0; i < 6; i++) {
         const m = i * 40;
-        rage.rect(0, 0, W, H).fill({ color: 0xd62839, alpha: 0.07 }).rect(m, m, W - m * 2, H - m * 2).cut();
+        rage.rect(v.x, v.y, v.w, v.h).fill({ color: 0xd62839, alpha: 0.07 }).rect(v.x + m, v.y + m, v.w - m * 2, v.h - m * 2).cut();
       }
       c.fg.addChild(rage);
       st.rage = rage;

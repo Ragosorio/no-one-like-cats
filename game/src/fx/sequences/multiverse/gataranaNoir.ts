@@ -11,7 +11,7 @@ import { W, H } from '../../../core/App';
 import { F } from '../../../ui/theme';
 import { txt } from '../../../ui/widgets';
 import { sfx } from '../../../core/audio';
-import { type Signature, type SigCtx, bolt, every, flashOf, later, score } from './kit';
+import { type Signature, type SigCtx, bolt, every, flashOf, later, score, viewIn } from './kit';
 import { cardLoop, hideDisc, typewriter, vignette } from './kitA';
 
 const INK = 0x0c0c0e;
@@ -145,7 +145,10 @@ export const gataranaNoir: Signature = {
     const drops = Array.from({ length: 160 }, (_, i) => ({ x: (i * 211) % W, y: (i * 97) % H, v: 1500 + ((i * 53) % 700), L: 40 + ((i * 29) % 50) }));
     const runs = Array.from({ length: 22 }, (_, i) => ({ x: WX0 + 20 + ((i * 173) % (WX1 - WX0 - 40)), y0: WY0 + ((i * 89) % 300), v: 60 + ((i * 41) % 120) }));
     const grain = new Graphics();
-    const vg = vignette(W, H, 0x000000, 0.75, 7);
+    // over the real screen (any aspect: kit.ts, top comment)
+    const vv = viewIn(c, c.fg);
+    const vg = vignette(vv.w, vv.h, 0x000000, 0.75, 7);
+    vg.position.set(vv.x, vv.y);
     c.fg.addChild(vg, grain);
     const drawRain = (t: number) => {
       if (rain.destroyed) return;
@@ -177,10 +180,11 @@ export const gataranaNoir: Signature = {
     const drawGrain = () => {
       if (grain.destroyed) return;
       grain.clear();
-      for (let i = 0; i < 26; i++) grain.circle(Math.random() * W, Math.random() * H, 1 + Math.random() * 3).fill({ color: Math.random() < 0.5 ? 0xffffff : 0x000000, alpha: 0.35 });
+      const g = viewIn(c, c.fg);
+      for (let i = 0; i < 26; i++) grain.circle(g.x + Math.random() * g.w, g.y + Math.random() * g.h, 1 + Math.random() * 3).fill({ color: Math.random() < 0.5 ? 0xffffff : 0x000000, alpha: 0.35 });
       if (Math.random() < 0.6) {
-        const x = Math.random() * W;
-        grain.rect(x, 0, 2, H).fill({ color: 0xffffff, alpha: 0.12 });
+        const x = g.x + Math.random() * g.w;
+        grain.rect(x, g.y, 2, g.h).fill({ color: 0xffffff, alpha: 0.12 });
       }
     };
     // a soft pale light right behind him (the window's glow) so the silhouette cuts sharp
@@ -205,7 +209,8 @@ export const gataranaNoir: Signature = {
     const I = { r: 300 };
     const drawIris = () => {
       if (iris.destroyed) return;
-      iris.clear().rect(0, 0, W, H).fill(INK).circle(W / 2, c.CY, I.r).cut();
+      const v = viewIn(c, c.fg, 80);
+      iris.clear().rect(v.x, v.y, v.w, v.h).fill(INK).circle(W / 2, c.CY, I.r).cut();
     };
     drawIris();
     gsap.to(I, { r: 1200, duration: 0.7, ease: 'power2.in', onUpdate: drawIris, onComplete: () => iris.destroy() });

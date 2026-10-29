@@ -7,27 +7,34 @@ JSON_COMMENT = ("Después de la Parte III — lote de DISEÑO (2026-10-28; ⚠�
                 "post.source sigue el contrato de SISTEMA (data/postp3/reglas.ts): casino:gacha[:michi|:holo] | casino:slot | casino:caja | casino:eterno | podio:<campeón>. "
                 "post.vitrina = la mesa que propone 03-obtencion.md §6 (Requiere sistema nuevo); hasta entonces vale post.source. "
                 "Los Multidimensionales traen post.power (texto para data/multidimPowers.ts y números para battle/multidim.ts) y post.universe (revelación en fx/sequences/multiverse/). "
-                "`reserve` = 16 Multidimensionales de reserva (mismo esquema; entran solo si se bloquea un titular). `postChampions` → POST_CHAMPIONS; `postCasino` → POST_CASINO (números recomendados). "
+                "`reserve` = los Multidimensionales de reserva que quedan (mismo esquema; entran solo si se bloquea un titular). Tanda 2 (DISEÑO-2, 2026-10-29): 25 Multidimensionales más con post.tanda = 2; salen solo de las 4 mesas grandes (sin vitrina: su post.vitrina es el nombre de su mesa grande). `postChampions` → POST_CHAMPIONS; `postCasino` → POST_CASINO (números recomendados). "
                 "`catdexSets` = sets propuestos (las reglas marcadas «propuesta» son balance: decide el dueño).")
 
-ANIME = ['xp_gomitas', 'xp_kagebunyan', 'xp_gatojo', 'xp_unzarpazo', 'xp_pegaso', 'xp_michiatom', 'xp_mazingato', 'xp_ryumiau', 'xp_miaunya', 'xp_yugi']
+ANIME = ['xp_gomitas', 'xp_kagebunyan', 'xp_gatojo', 'xp_unzarpazo', 'xp_pegaso', 'xp_michiatom', 'xp_mazingato', 'xp_ryumiau', 'xp_miaunya', 'xp_yugi',
+         'xp_miausagi', 'xp_tanjimiau']  # + tanda 2
 SETS = [
     {'id': 'set_pp_shonen', 'name': 'Sábado de Anime', 'cats': ANIME, 'rule': 'Propuesta: tus Multidimensionales de anime empiezan cada batalla con 25 de barra.'},
     {'id': 'set_pp_biblioteca', 'name': 'Clásicos de Biblioteca', 'cats': ['xp_gatote', 'xp_sherlock', 'xp_frankengato', 'xp_gatula', 'xp_ahab', 'xp_pinomichi'], 'rule': 'Colección: los seis clásicos de dominio público.'},
     {'id': 'set_pp_colegio', 'name': 'Los Tres del Colegio', 'cats': ['x_harrygatter', 'xp_hermiaune', 'xp_lunalovegata'], 'rule': 'Propuesta: con los tres en la tripulación, sus poderes empiezan con 20 de barra.'},
-    {'id': 'set_pp_latino', 'name': 'Puro Corazón Latino', 'cats': ['xp_michipulin', 'xp_barril', 'xp_miaufalda', 'xp_condorgato'], 'rule': 'Colección: la tele, la tira y la historieta de la tarde.'},
+    {'id': 'set_pp_latino', 'name': 'Puro Corazón Latino', 'cats': ['xp_michipulin', 'xp_barril', 'xp_miaufalda', 'xp_condorgato', 'xp_miauty'], 'rule': 'Colección: la tele, la tira y la historieta de la tarde.'},
     {'id': 'set_pp_tarde', 'name': 'Tarde de Caricaturas', 'cats': ['xp_esponja', 'xp_rick', 'xp_miaang', 'xp_miauby', 'xp_blumiau', 'xp_miaubody'], 'rule': 'Colección: la barra de caricaturas completa.'},
     {'id': 'set_pp_estreno', 'name': 'Función de Estreno', 'cats': ['xp_gatogro', 'xp_grru', 'xp_miaunion', 'xp_miaubody'], 'rule': 'Colección: las películas animadas.'},
     {'id': 'set_pp_villanos', 'name': 'Villanos con Plan', 'cats': ['xp_grru', 'xp_miaunion', 'xp_doomiau', 'xp_heisenmiau', 'xp_gatoleone'], 'rule': 'Colección: todos tienen un plan. Ninguno funciona.'},
     {'id': 'set_pp_liga', 'name': 'Liga de Capas', 'cats': ['xp_supermichi', 'xp_hierromichi', 'xp_michimerica', 'xp_garritas', 'x_murciegato', 'x_gatarana'], 'rule': 'Propuesta: tus superhéroes empiezan cada batalla con 1 escudo.'},
-    {'id': 'set_pp_consola', 'name': 'Fichas de Consola', 'cats': ['xp_ssssmichi', 'xp_michimpostor', 'xp_zoomic', 'e_comecroquetas'], 'rule': 'Colección: los de la maquinita.'},
-    {'id': 'set_pp_series', 'name': 'Maratón de Series', 'cats': ['xp_hannah', 'xp_miaunce', 'xp_heisenmiau', 'xp_michiercoles'], 'rule': 'Colección: un capítulo más y ya.'},
+    {'id': 'set_pp_consola', 'name': 'Fichas de Consola', 'cats': ['xp_ssssmichi', 'xp_michimpostor', 'xp_zoomic', 'e_comecroquetas', 'xp_tetrimiau', 'xp_laracroqueta'], 'rule': 'Colección: los de la maquinita.'},
+    {'id': 'set_pp_series', 'name': 'Maratón de Series', 'cats': ['xp_hannah', 'xp_miaunce', 'xp_heisenmiau', 'xp_michiercoles', 'xp_pinkmiau'], 'rule': 'Colección: un capítulo más y ya.'},
     {'id': 'set_pp_cine', 'name': 'Función de Medianoche', 'cats': ['xp_gemichi', 'xp_persafalsa', 'xp_michiwan', 'xp_gatoleone'], 'rule': 'Colección: palomitas no incluidas.'},
-    {'id': 'set_pp_festival', 'name': 'Cartel del Festival', 'cats': ['xp_romiau', 'xp_miauki', 'xp_postmaulone', 'xp_miautentacion', 'xp_sabrina', 'xp_daftmiau', 'xp_partymichi', 'xp_miauknd'], 'rule': 'Colección: el cartel completo (propuesta cosmética: la Tragamichis estrena luces de festival).'},
+    {'id': 'set_pp_festival', 'name': 'Cartel del Festival', 'cats': ['xp_romiau', 'xp_miauki', 'xp_postmaulone', 'xp_miautentacion', 'xp_sabrina', 'xp_daftmiau', 'xp_partymichi', 'xp_miauknd', 'xp_garjona', 'xp_shakimiau'], 'rule': 'Colección: el cartel completo (propuesta cosmética: la Tragamichis estrena luces de festival).'},
     {'id': 'set_pp_seleccion', 'name': 'Selección Michi', 'cats': ['xp_miaussi', 'xp_gatistiano', 'xp_miaupe', 'xp_lamiau'], 'rule': 'Propuesta: en el Podio, tus seleccionados pegan +10 %.'},
     {'id': 'set_pp_casa', 'name': 'La Casa Siempre Gana', 'cats': ['lp_pozomayor', 'lp_bolita', 'lp_catarata', 'lp_ojoserpiente', 'lp_asmanga', 'lp_cantadora', 'lp_unadeoro', 'lp_monodorado', 'lp_desborde', 'lp_sinfrenos'], 'rule': 'Propuesta: el medidor de LA CASA TE DEBE se llena un 10 % más rápido (se imprime en Reglas de la casa).'},
     {'id': 'set_pp_amuletos', 'name': 'Amuletos de la Mesa', 'cats': ['mp_trebol', 'mp_malasuerte', 'mp_comodin', 'mp_doblon'], 'rule': 'Colección: la buena, la mala y la que quema.'},
     {'id': 'set_pp_despues', 'name': 'Lo que Quedó Después', 'cats': ['mp_brasanaranja', 'mp_vigilia', 'mp_tintagris', 'mp_grafito'], 'rule': 'Colección.'},
+    # tanda 2 (DISEÑO-2, 2026-10-29): sets nuevos, todos «Colección» (sin balance)
+    {'id': 'set_pp_leyendas', 'name': 'Leyendas de la Abuela', 'cats': ['xp_sombreronron', 'xp_gatejo', 'xp_maullorona'], 'rule': 'Colección: las que te contaban para que no salieras de noche.'},
+    {'id': 'set_pp_piramides', 'name': 'Pirámides', 'cats': ['xp_bastet', 'xp_cleogatra', 'xp_quetzalgatl'], 'rule': 'Colección: dos ríos, dos desiertos, tres pirámides y ningún elevador.'},
+    {'id': 'set_pp_historia', 'name': 'Clase de Historia', 'cats': ['xp_cleogatra', 'xp_bonapata', 'xp_leonardo', 'xp_miauton', 'xp_miauzart', 'xp_gatoneta'], 'rule': 'Colección: entra en el examen del viernes.'},
+    {'id': 'set_pp_museo', 'name': 'Sala del Museo', 'cats': ['xp_perla', 'xp_leonardo', 'x_vangato', 'e_gatoconda', 'c_gritito'], 'rule': 'Colección: no toque las obras.'},
+    {'id': 'set_pp_videoclub', 'name': 'Noche de Videoclub', 'cats': ['xp_pobregatito', 'xp_felinamente', 'xp_gorrimiau', 'xp_docmiauwn'], 'rule': 'Colección: rebobínala antes de devolverla.'},
     {'id': 'set_pp_copa', 'name': 'Copa Fuera de la Caja', 'cats': ['hp_vencidas', 'hp_kidcapa', 'hp_shinai', 'hp_pergamino', 'hp_bgirl', 'hp_retiaria', 'hp_mascaradeoro', 'hp_combo'], 'rule': 'Propuesta: en el Podio, tus gatos empiezan cada duelo con 25 de barra.'},
 ]
 
@@ -161,7 +168,8 @@ def obtain_line(j, COPA):
     if p['source'].startswith('podio:'):
         ch = COPA[p['source'][6:]]
         return f"Podio · `{p['source']}` · reto {ch['order']} de la Copa Fuera de la Caja (×{ch['mult']:.2f} sobre tu liga) · campeón {ch['trainer']}"
-    s = f"Fase 1: `{p['source']}` ({SRC_SHORT[p['source']]}), peso {p['weight']}{' ★ estrella de su mesa' if p.get('star') else ''} · vitrina propuesta: {VENUE_ES[p['vitrina']]}"
+    vit = 'sin vitrina (tanda 2: solo su mesa grande)' if p.get('tanda') else f"vitrina propuesta: {VENUE_ES[p['vitrina']]}"
+    s = f"Fase 1: `{p['source']}` ({SRC_SHORT[p['source']]}), peso {p['weight']}{' ★ estrella de su mesa' if p.get('star') else ''} · {vit}"
     return s
 
 
@@ -199,7 +207,8 @@ def sheet_md(c, j, COPA, LOCK_NAME, memb):
 
 
 GROUPS = [('Anime y manga', 'md_anime'), ('Literatura', 'md_libros'), ('Caricaturas, historieta y animación', 'md_caricaturas'),
-          ('Cómics y videojuegos', 'md_comics_juegos'), ('Cine, series e historia', 'md_pantalla'), ('Música y deporte (personas reales)', 'md_musica_deporte')]
+          ('Cómics y videojuegos', 'md_comics_juegos'), ('Cine, series e historia', 'md_pantalla'), ('Música y deporte (personas reales)', 'md_musica_deporte'),
+          ('Tanda 2 · leyendas, mitos, historia, museo, ciencia, clásica, anime, píxel, pantalla, telenovela, libros, pop y estadio', 'md_tanda2')]
 
 
 def group_of(c):
@@ -208,7 +217,7 @@ def group_of(c):
 
 
 def write_roster(DOCS, ROSTER, RESERVA, origs, J, COPA, PHASE1, LOCK_NAME, memb):
-    import md_anime, md_libros, md_caricaturas, md_comics_juegos, md_pantalla, md_musica_deporte  # noqa
+    import md_anime, md_libros, md_caricaturas, md_comics_juegos, md_pantalla, md_musica_deporte, md_tanda2  # noqa
     # agrupar por archivo de origen (el orden de ROSTER ya es por archivo)
     bounds = {}
     ids_by_mod = {}
@@ -228,7 +237,7 @@ def write_roster(DOCS, ROSTER, RESERVA, origs, J, COPA, PHASE1, LOCK_NAME, memb)
         src = j['post']['source']
         L.append(f"| {c['name']} (`{c['id']}`) | {RARITY_ES[c['rarity']]} | {esc(c['ep'])} | {EL_ES[c['el']]} · {ROLE_ES[c['role']]} | {SRC_SHORT.get(src, src)} |")
     L.append('')
-    L.append('## Multidimensionales (60)')
+    L.append(f'## Multidimensionales ({len(ROSTER)})')
     L.append('')
     for title, mod in GROUPS:
         ids = ids_by_mod[mod]
@@ -243,7 +252,7 @@ def write_roster(DOCS, ROSTER, RESERVA, origs, J, COPA, PHASE1, LOCK_NAME, memb)
         for c in origs:
             if c['rarity'] == rar:
                 L.append(sheet_md(c, J[c['id']], COPA, LOCK_NAME, memb))
-    L.append('## Reserva (16)')
+    L.append(f'## Reserva ({len(RESERVA)})')
     L.append('')
     L.append('Entran solo si la herramienta de imágenes bloquea dos veces a un titular (`arte-v2/01` §3.1) o si el dueño cambia uno. El campo «cubre» dice a quién reemplaza primero.')
     L.append('')
@@ -284,6 +293,7 @@ def write_briefs(DOCS, ROSTER, RESERVA, origs, J, LOCK_NAME):
     L.append('- **Alto** (superhéroes de las editoriales más litigiosas): Supermichi, Hierro Michi, Capitán Michimérica, Doctor Doomiau. Cada uno trae un disfraz casero o alternativo desde el primer intento (`plan_b_en`).')
     L.append('- **Medio-alto**: personajes con dueño muy protector o con estilo de render muy reconocible (Bob Esponja, Shrek, Gru, el Minion, Sonic, Wolverine, Michi-Wan).')
     L.append('- **Bajo**: dominio público (los 6 clásicos, María Antonieta), anime de los 80 y personajes muy genéricos.')
+    L.append('- **Tanda 2** (DISEÑO-2, 2026-10-29): medio-alto Miausagi (la marca tiene gato oficial: sin la luna en la frente, varita-juguete) y Capitán Gorrimiau (Disney: bucanero genérico, sin calaveras ni detalles del vestuario de la película); bajo las leyendas, los mitos, la historia y los cuadros de dominio público. Su cola va aparte: `lote-post-p3/COLA-tanda2.txt`.')
     open(os.path.join(DOCS, '02-arte-briefs.md'), 'w').write('\n'.join(L) + '\n')
 
 
@@ -334,7 +344,8 @@ def write_obtencion(DOCS, ROSTER, origs, J, COPA, PHASE1):
         sets.append(f"| **{s['name']}** (`{s['id']}`) | {', '.join(names.get(x, x) for x in s['cats'])} | {s['rule']} |")
     txt = OBTENCION.format(fase1='\n'.join(fase1), pools='\n'.join(pools), vitrinas='\n'.join(vit), copa='\n'.join(copa), sets='\n'.join(sets),
                            champs_ts=',\n'.join(f"  {{ id: '{ch['id']}', order: {ch['order']}, mult: {ch['mult']:.2f}, trainer: '{ch['trainer']}' }}" for ch in COPA.values()),
-                           n_md=len(ROSTER), n_orig=len(origs))
+                           n_md=len(ROSTER), n_orig=len(origs), n_t1=sum(1 for c in ROSTER if not c.get('tanda')), n_t2=sum(1 for c in ROSTER if c.get('tanda')),
+                           n_gacha=len(by_src['casino:gacha']))
     open(os.path.join(DOCS, '03-obtencion.md'), 'w').write(txt)
 
 
@@ -346,9 +357,9 @@ OBTENCION = """# 03 · Cómo se consiguen: la economía después de la Parte III
 
 ## 0. En una frase
 
-Cuando la Parte III termina («Continuará»), el Casino del Gato Negro y el Podio se llenan de gatos nuevos. Los **{n_md} Multidimensionales, 20 Míticos y 10 Legendarios** salen de dos lugares:
+Cuando la Parte III termina («Continuará»), el Casino del Gato Negro y el Podio se llenan de gatos nuevos. Los **{n_md} Multidimensionales ({n_t1} de la tanda 1 y {n_t2} de la tanda 2), 20 Míticos y 10 Legendarios** salen de dos lugares:
 - las cuatro mesas grandes (Portal, Tragamichis, La Caja y Modo Eterno);
-- la **vitrina** de cada una de las otras siete mesas.
+- la **vitrina** de cada una de las otras siete mesas (solo la tanda 1: las vitrinas se quedan en 8 gatos).
 
 Los **8 Heroicos** los pagan los ocho retos de la **Copa Fuera de la Caja** en el Podio, que siempre se ponen a la altura de tu liga.
 
@@ -391,6 +402,8 @@ Por qué esos números:
 - **Modo Eterno:** se arriesga todo, y el riesgo se paga.
 
 **Las 56 fichas de las siete vitrinas también viven en una mesa grande.** Su `post.source` es Portal Michi, Multiverso Holo, Tragamichis o La Caja. Así ningún gato queda en un callejón sin salida, y el validador de hoy los acepta.
+
+**Tanda 2 (DISEÑO-2, 2026-10-29; `05-tanda-2.md`).** Los {n_t2} Multidimensionales nuevos entran **solo a las mesas grandes**, repartidos en proporción a lo que ya tenía cada bolsa: Portal (todos) +5, Portal Michi +4, Multiverso Holo +4, Tragamichis +6, La Caja +3 y Modo Eterno +3, con 5 estrellas (peso 4). **No entran a las vitrinas**: el tiro de vitrina está pensado para 1 legendario, 2 míticos y 5 Multidimensionales, y la pantalla dice «vitrina de 8 gatos». La parte y la garantía de cada mesa **no cambian**: sale un gato del lote igual de seguido, solo que la bolsa es más grande. Su `post.vitrina` es el nombre de su mesa grande (`gacha`, `slot`, `caja` o `eterno`), que el validador ya acepta.
 
 ### 3.2 Bolsas de cada mesa grande
 
@@ -503,7 +516,7 @@ Lo aprobado ya está arriba, en §3–5. Queda abierto:
    - Tabla: común 50 %, raro 30 %, épico 13 %, legendario 4.5 %, mítico 1 % y **MULTIDIMENSIONAL 1.5 %**.
    - Garantías: Multidimensional seguro a los 70 tiros y mítico seguro a los 140.
    - El destacado cambia con tu progreso (el siguiente Multidimensional que te falta), nunca con la fecha.
-   - Los 19 gatos de `casino:gacha` pasarían ahí.
+   - Los {n_gacha} gatos de `casino:gacha` pasarían ahí.
 2. **Combos de pareja** (`post.pair`).
    - Grrrú + Miaunion: el rayo congela a dos y los plátanos congelan.
    - Heisenmiau + Pinkmiau, si entra la reserva: la nube pega doble.

@@ -4,10 +4,27 @@
  * silhouette (donuts, webs, a bat-signal…), the rarity reprints, and the color fill is the universe's payoff.
  * Everything is drawn here (no raster). `reduce` = Reducir movimiento (the universe arrives still);
  * `flashes` false = Reducir destellos (no strobes, no white flashes).
+ *
+ * ── FULL SCREEN, ANY ASPECT (rule since 2026-10-29) ──────────────────────────────────────────────────────────────
+ * The reveal covers the WHOLE real screen (16:9, 3:2, 4:3, 21:9, phones), not just the 1920×1080 design box. How:
+ *  • `c.back` (your scenery) is COVER-SCALED by the host: draw the background to the box — (0, 0, W, H), `cover()`,
+ *    `vgrad(g, 0, 0, W, H, …)`, `starfield(g, 0, 0, W, H, …)` — and it fills any screen. The box's edges may be cropped
+ *    (up to ~240 px left/right on 4:3, ~130 px top/bottom on 21:9), so in `back` keep the important bits (a moon, a
+ *    sign, a skyline's hero building) away from the edges, and a floor that must show stays above y ≈ H − 140.
+ *    You may move / rotate / scale `c.back` itself (a dutch tilt): the host scales a wrapper around it.
+ *    Since `back` scales and `fg` doesn't, a prop that must stand ON a floor goes in the same layer as that floor.
+ *  • `c.behind`, `c.fg` and the cat are NOT scaled: they live in the design box, which always shows whole (the payoff
+ *    word `cheer()`, `aside()`, `title()`, balloons, captions: anything readable goes here and stays visible).
+ *    Anything there that must cover the whole screen (a flash, a tint, an iris, a vignette, rain) must NOT use
+ *    `rect(0, 0, W, H)`: use `cover()` / `flashOf()` (they paint the real screen), or `viewIn(c, layer)` for the real
+ *    screen's rect in that layer (`fall()` and `drizzle()` already spread over it).
+ *  • Check a new universe at 21:9 (2100×900) and 4:3 (1600×1200) too, not only 16:9 (UI-FIX's headless harness,
+ *    session scratchpad `ui-fix/reveal.mjs <out> <tag> <WxH> <species…>`).
  */
 import { Container, Graphics } from 'pixi.js';
 import gsap from 'gsap';
-import { W, H } from '../../../core/App';
+import { W, H, game } from '../../../core/App';
+import { followView } from '../../../ui/screen';
 import { C, F } from '../../../ui/theme';
 import { poster } from '../../../ui/widgets';
 import { onomatopoeia, type Shaker } from '../../juice';
@@ -81,9 +98,48 @@ export function score(c: SigCtx, notes: [number, SfxName, number?][]) {
   for (const [t, n, p] of notes) later(c, t, () => sfx(n, p ?? 1));
 }
 
-/** a full-screen rectangle */
+/** how far full-screen paint runs past the screen's edge (the reveal's shake moves and tilts the root a little) */
+const BLEED = 80;
+
+/**
+ * a full-screen rectangle: the REAL screen (game.view, any aspect) plus the design box, with a bleed; it repaints
+ * itself on resize. Safe in any layer (in the cover-scaled `back` it simply overshoots).
+ */
 export function cover(color: number, alpha = 1) {
-  return new Graphics().rect(0, 0, W, H).fill({ color, alpha });
+  const g = new Graphics();
+  followView(g, (v) => {
+    const x0 = Math.min(0, v.x) - BLEED;
+    const y0 = Math.min(0, v.y) - BLEED;
+    const x1 = Math.max(W, v.x + v.w) + BLEED;
+    const y1 = Math.max(H, v.y + v.h) + BLEED;
+    g.clear().rect(x0, y0, x1 - x0, y1 - y0).fill({ color, alpha });
+  });
+  return g;
+}
+
+/**
+ * the real screen's rectangle in `layer`'s own coordinates: in `c.fg` / `c.behind` it's game.view (wider or taller
+ * than the box off 16:9); in the cover-scaled `c.back` it's the part of the box that shows. `bleed` grows it.
+ */
+export function viewIn(c: SigCtx, layer: Container = c.fg, bleed = 0) {
+  const v = game.view;
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const [x, y] of [
+    [v.x - bleed, v.y - bleed],
+    [v.x + v.w + bleed, v.y - bleed],
+    [v.x - bleed, v.y + v.h + bleed],
+    [v.x + v.w + bleed, v.y + v.h + bleed],
+  ]) {
+    const p = layer.destroyed ? { x, y } : layer.toLocal({ x, y }, game.root);
+    x0 = Math.min(x0, p.x);
+    y0 = Math.min(y0, p.y);
+    x1 = Math.max(x1, p.x);
+    y1 = Math.max(y1, p.y);
+  }
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
 
 /** the universe arrives: fades in (or is there at once on a duplicate / reduced motion) */
@@ -154,19 +210,21 @@ export function fall(
   for (let i = 0; i < o.n; i++) {
     later(c, (i / o.n) * o.over + Math.random() * 0.08, () => {
       const p = make(i);
-      const x = W / 2 + (Math.random() - 0.5) * (o.spread ?? W * 1.1);
-      p.position.set(x, -80 - Math.random() * 60);
+      // over the real screen (viewIn): the spread grows with it, the drop starts above its top and lands on its floor
+      const v = viewIn(c, layer);
+      const x = v.x + v.w / 2 + (Math.random() - 0.5) * (o.spread ?? W * 1.1) * (v.w / W);
+      p.position.set(x, v.y - 80 - Math.random() * 60);
       p.rotation = Math.random() * Math.PI * 2;
       layer.addChild(p);
       const dur = (o.dur ?? 1.4) * (0.8 + Math.random() * 0.4);
       const spin = (o.spin ?? 4) * (Math.random() < 0.5 ? -1 : 1);
       if (o.bounce) {
-        const floor = H - 40 - Math.random() * 60;
+        const floor = v.y + v.h - 40 - Math.random() * 60;
         gsap.to(p, { y: floor, duration: dur, ease: 'bounce.out' });
         gsap.to(p, { rotation: p.rotation + spin, duration: dur });
         gsap.to(p, { x: x + (Math.random() - 0.5) * 500, alpha: 0, delay: dur, duration: 0.6, ease: 'power1.in', onComplete: () => destroyTree(p) });
       } else {
-        gsap.to(p, { y: H + 120, x: x + (Math.random() - 0.5) * 240, rotation: p.rotation + spin, duration: dur, ease: 'power1.in', onComplete: () => destroyTree(p) });
+        gsap.to(p, { y: v.y + v.h + 120, x: x + (Math.random() - 0.5) * 240, rotation: p.rotation + spin, duration: dur, ease: 'power1.in', onComplete: () => destroyTree(p) });
       }
     });
   }
@@ -193,11 +251,14 @@ export function drizzle(c: SigCtx, layer: Container, make: () => Container, gap:
   const iv = window.setInterval(() => {
     if (!alive(c) || layer.destroyed) return window.clearInterval(iv);
     const p = make();
-    const x = Math.random() < 0.5 ? 60 + Math.random() * 520 : W - 60 - Math.random() * 520;
-    p.position.set(x, -60);
+    // the side bands of the real screen (viewIn), wider when the screen is
+    const v = viewIn(c, layer);
+    const band = 520 * Math.max(1, v.w / W);
+    const x = Math.random() < 0.5 ? v.x + 60 + Math.random() * band : v.x + v.w - 60 - Math.random() * band;
+    p.position.set(x, v.y - 60);
     p.rotation = Math.random() * 6;
     layer.addChild(p);
-    gsap.to(p, { y: H + 80, rotation: p.rotation + 3, duration: dur * (0.8 + Math.random() * 0.4), ease: 'none', onComplete: () => destroyTree(p) });
+    gsap.to(p, { y: v.y + v.h + 80, rotation: p.rotation + 3, duration: dur * (0.8 + Math.random() * 0.4), ease: 'none', onComplete: () => destroyTree(p) });
   }, gap * 1000);
 }
 

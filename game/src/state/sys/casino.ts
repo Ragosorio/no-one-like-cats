@@ -19,7 +19,7 @@ import { CATS, CatDef, catDef } from '../../data/content';
 import { adopt } from './cats';
 import { ACC_BY_ID, AccRarity, addAccessory, rollAccessory } from './accessories';
 import { registerPatch } from '../patches';
-import { poolableCat } from './multidim';
+import { isMultidim, isPostCat, poolableCat } from './multidim';
 import { rollPostCat, type PostTable } from './postp3';
 import { vitrinaOnBet, vitrinaQualifies, vitrinaSelloOnCandy } from './postVitrina';
 
@@ -575,7 +575,8 @@ export const SLOT_CHIP_STAKES = [10, 30, 100] as const;
 export const SLOT_CHIP_STAKE = SLOT_CHIP_STAKES[0];
 
 export type PrizeKind = 'gold' | 'food' | 'gems' | 'tickets' | 'chips' | 'orbs' | 'prisma' | 'scrap' | 'blueprint' | 'crystal' | 'accessory' | 'cat';
-export type PrizeTier = 'common' | 'rare' | 'epic' | 'legendary' | 'holo' | 'mythic';
+/** the tier a prize SHOWS (colour, frame, word); 'multidimensional' = a Multiverse cat of that rarity (catShowTier) */
+export type PrizeTier = 'common' | 'rare' | 'epic' | 'legendary' | 'holo' | 'mythic' | 'multidimensional';
 export interface Prize {
   kind: PrizeKind;
   n: number;
@@ -909,7 +910,21 @@ export function rollCatDef(rarities: RarityId[], weights?: number[], featured?: 
 export function rollCatPrize(rarities: RarityId[], weights: number[] | undefined, holoChance: number, featured?: string | null, featuredShare = 0.5, gacha = false): Prize {
   const def = rollCatDef(rarities, weights, featured, featuredShare, gacha);
   const holo = rand() < holoChance;
-  return { kind: 'cat', n: 1, ref: def.id, holo, tier: holo ? 'holo' : (def.rarity as PrizeTier) };
+  return { kind: 'cat', n: 1, ref: def.id, holo, tier: catShowTier(def, holo, def.rarity as PrizeTier) };
+}
+/**
+ * The tier a CAT prize shows (its colour, frame and word) — owner 2026-10-29: «cuando sale un multiversal debe reflejar su
+ * propia rareza (hoy sale dorado)». A table rolls a TIER (legendary, mythic…) and, after the Parte III, part of those come
+ * from its Multiverse pool (rollCatDef → rollPostCat): the cat that comes out is what shows, never the tier it was rolled
+ * from. HOLO stays HOLO (the foil look); a MULTIDIMENSIONAL shows its own rarity; a post legendary / mythic shows its own;
+ * any other cat keeps `fallback` (the table's tier, as always).
+ */
+export function catShowTier(def: CatDef | undefined | null, holo: boolean, fallback: PrizeTier): PrizeTier {
+  if (holo) return 'holo';
+  if (!def) return fallback;
+  if (isMultidim(def.rarity)) return 'multidimensional';
+  if (isPostCat(def) && (def.rarity === 'legendary' || def.rarity === 'mythic')) return def.rarity;
+  return fallback;
 }
 export function accPrize(r: AccRarity): Prize {
   return { kind: 'accessory', n: 1, ref: rollAccessory(r, rand).id, tier: r };

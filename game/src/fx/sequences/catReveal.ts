@@ -1,7 +1,7 @@
 import { ColorMatrixFilter, Container, Graphics, Sprite, Text, TilingSprite } from 'pixi.js';
 import { RGBSplitFilter, ShockwaveFilter } from 'pixi-filters';
 import gsap from 'gsap';
-import { W, H } from '../../core/App';
+import { W, H, game } from '../../core/App';
 import { C, F, RARITY, Rarity } from '../../ui/theme';
 import { txt, poster } from '../../ui/widgets';
 import { paperTexture, halftoneTexture, glowTexture } from '../../art/textures';
@@ -18,7 +18,7 @@ import { CatCard } from '../../panels/collection/CatCard';
 import { dnaIcon, killTree } from '../../panels/collection/ui';
 import { elementIcon } from '../../ui/elementIcon';
 import { rainbowTile } from '../../panels/collection/printTextures';
-import { screenRect } from '../../ui/screen';
+import { followView, screenRect } from '../../ui/screen';
 import { signatureOf } from './multiverse';
 import { SIG_LEN, plate, slam, type SigCtx } from './multiverse/kit';
 
@@ -65,6 +65,9 @@ export interface RevealOpts {
 }
 
 export type RevealResult = 'continue' | 'catdex' | 'repeat';
+
+/** how far the full-screen paper / blocks run past the real screen's edge (the shake moves and tilts the root) */
+const BLEED = 80;
 
 const RANK: Record<Rarity, number> = { common: 0, rare: 1, epic: 2, legendary: 3, multidimensional: 3, primordial: 4, mythic: 5, heroic: 5, divine: 6 };
 
@@ -114,13 +117,31 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     const dots = new TilingSprite({ texture: halftoneTexture(C.ink, 12, 2), width: W, height: H });
     dots.alpha = 0.06;
     stage.addChild(bg, print, dots);
+    // the poster takes the REAL screen (game.view: 3:2, 4:3, 21:9, phones…), not just the 1920×1080 box, with a
+    // bleed for the shake; the cat, the name and the UI stay in the box, which always shows whole
+    followView(stage, (v) => {
+      for (const t of [bg, print, dots]) {
+        t.position.set(v.x - BLEED, v.y - BLEED);
+        t.width = v.w + BLEED * 2;
+        t.height = v.h + BLEED * 2;
+      }
+    });
     const CY = H / 2 - 10;
     const circle = new Graphics().circle(0, 0, 300).fill(C.pink);
     circle.position.set(W / 2, CY);
-    const blockA = new Graphics().rect(0, 0, 360, H).fill(C.ink);
-    blockA.position.set(-360, 0);
-    const blockB = new Graphics().rect(0, 0, 300, H).fill(fxCol.main);
-    blockB.position.set(W, 0);
+    // the side blocks reach the real screen's edges (wider / taller than the box off 16:9)
+    const blockA = new Graphics();
+    const blockB = new Graphics();
+    let aLeft = -BLEED;
+    let bRight = W + BLEED;
+    followView(blockA, (v) => {
+      aLeft = Math.min(0, v.x) - BLEED;
+      bRight = Math.max(W, v.x + v.w) + BLEED;
+      blockA.clear().rect(aLeft, v.y - BLEED, 360 - aLeft, v.h + BLEED * 2).fill(C.ink);
+      if (!blockB.destroyed) blockB.clear().rect(0, v.y - BLEED, bRight - (W - 300), v.h + BLEED * 2).fill(fxCol.main);
+    });
+    blockA.position.set(aLeft - 360, 0);
+    blockB.position.set(bRight, 0);
     const serial = txt(o.kicker ?? `RESONANCIA Nº ${String(o.serial ?? 1).padStart(3, '0')}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 22, fill: C.ink });
     serial.position.set(390, 40);
     const coords = txt('47.4979° N · NO ONE LIKE CATS', { fontFamily: F.ui, fontSize: 18, fill: C.pinkHot });
@@ -190,7 +211,17 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       const back = new Container();
       const behind = new Container();
       const fg = new Container();
-      root.addChildAt(back, root.children.indexOf(bigRarity));
+      // the universe's scenery is drawn to the box and COVER-scaled to the real screen (any aspect: no bars, no game
+      // showing). A wrapper does it, so a universe may still move / tilt `back` itself. behind / fg / the cat stay in
+      // the box (always whole: readable words go there). Rule for universes: multiverse/kit.ts, top comment.
+      const backFrame = new Container();
+      backFrame.addChild(back);
+      followView(backFrame, (v) => {
+        const k = Math.max(v.w / W, v.h / H);
+        backFrame.scale.set(k);
+        backFrame.position.set(v.x + (v.w - W * k) / 2, v.y + (v.h - H * k) / 2);
+      });
+      root.addChildAt(backFrame, root.children.indexOf(bigRarity));
       root.addChildAt(behind, root.children.indexOf(glow));
       root.addChildAt(fg, root.children.indexOf(stampLayer));
       sctx = { root, back, behind, fg, circle, cat: catNode, CY, catY: CY - 10, shaker, reduce, flashes: !settings.reduceFlashes, short: dup };
@@ -199,7 +230,8 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     let skipped = false;
     let canSkip = false;
     const skipBtn = txt('SALTAR ›', { fontFamily: F.poster, fontSize: 30, fill: C.ink });
-    skipBtn.position.set(W - 170, H - 70);
+    // corner UI sits in the real screen's corners
+    followView(skipBtn, (v) => skipBtn.position.set(v.x + v.w - 170, v.y + v.h - 70));
     skipBtn.alpha = 0;
     root.addChild(skipBtn);
 
@@ -213,7 +245,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       dexText = poster(`${o.dex[0]}/${o.dex[2]}`, 64, C.ink);
       dexText.position.set(16, 22);
       dexSlot.addChild(box, lab, dexText);
-      dexSlot.position.set(W - 330, 36);
+      followView(dexSlot, (v) => dexSlot.position.set(v.x + v.w - 330, v.y + 36));
       dexSlot.alpha = 0;
       root.addChild(dexSlot);
     }
@@ -300,7 +332,10 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
             catNode.filters = [sil];
             bg.tint = 0xffffff;
           }, 70);
-          const sw = new ShockwaveFilter({ center: { x: W / 2, y: H / 2 }, amplitude: 30, wavelength: 160, speed: 900, radius: -1, brightness: 1.1 });
+          // the ripple's center is in pixels of the filtered area (the root's on-screen bounds): put it on the cat
+          const sc = root.toGlobal({ x: W / 2, y: CY });
+          const sb = root.getBounds();
+          const sw = new ShockwaveFilter({ center: { x: sc.x - Math.max(0, sb.x), y: sc.y - Math.max(0, sb.y) }, amplitude: 30, wavelength: 160, speed: 900, radius: -1, brightness: 1.1 });
           root.filters = [sw];
           gsap.to(sw, { time: 0.6, duration: 0.6, ease: 'none', onComplete: () => (root.filters = []) });
           speedLines(root, W / 2, CY, C.ink, 56, 0.6);
@@ -512,7 +547,9 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
           }
           case 'primordial': {
             bg.tint = 0x0b0b0d;
-            const n = new TilingSprite({ texture: noiseTile(), width: W, height: H });
+            const vv = game.view;
+            const n = new TilingSprite({ texture: noiseTile(), width: vv.w + BLEED * 2, height: vv.h + BLEED * 2 });
+            n.position.set(vv.x - BLEED, vv.y - BLEED);
             n.tint = fxCol.main;
             n.alpha = 0.25;
             n.blendMode = 'add';
@@ -644,7 +681,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
     const tDone = (dup ? 1.4 : 4.6) + extra + mutExtra + bigBeat + sigT;
     const hint = txt('CLIC PARA CONTINUAR', { fontFamily: F.poster, fontSize: 28, fill: darkStage ? C.paper : C.ink });
     hint.anchor.set(0.5);
-    hint.position.set(W / 2, H - 38);
+    followView(hint, (v) => hint.position.set(W / 2, v.y + v.h - 38));
     hint.alpha = 0;
     root.addChild(hint);
     tl.to(hint, { alpha: 1, duration: 0.3, yoyo: true, repeat: -1 }, tDone);
@@ -662,7 +699,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
           const g = new Graphics().rect(6, 6, t.width + 36, t.height + 14).fill(C.ink).rect(0, 0, t.width + 36, t.height + 14).fill(C.pink).stroke({ width: 4, color: C.ink });
           t.position.set(18, 7);
           btn.addChild(g, t);
-          btn.position.set(W - btn.width - 60, H - 100);
+          btn.position.set(game.view.x + game.view.w - btn.width - 60, game.view.y + game.view.h - 100);
           btn.eventMode = 'static';
           btn.cursor = 'pointer';
           btn.on('pointertap', (e) => {
@@ -685,7 +722,7 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
           ar.position.set(28, (t.height + 14) / 2);
           t.position.set(52, 7);
           rb.addChild(g, ar, t);
-          rb.position.set(60, H - 100);
+          rb.position.set(game.view.x + 60, game.view.y + game.view.h - 100);
           rb.eventMode = 'static';
           rb.cursor = 'pointer';
           rb.on('pointertap', (e) => {
@@ -720,7 +757,8 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       // glitch bars in the mutation color
       if (!reduce) {
         const bars = new Graphics();
-        for (let i = 0; i < 9; i++) bars.rect(Math.random() * W * 0.3, Math.random() * H, W * (0.3 + Math.random() * 0.6), 6 + Math.random() * 26).fill({ color: i % 2 ? col : C.ink, alpha: 0.55 });
+        const v = game.view;
+        for (let i = 0; i < 9; i++) bars.rect(v.x + Math.random() * v.w * 0.3, v.y + Math.random() * v.h, v.w * (0.3 + Math.random() * 0.6), 6 + Math.random() * 26).fill({ color: i % 2 ? col : C.ink, alpha: 0.55 });
         root.addChild(bars);
         gsap.to(bars, { alpha: 0, duration: 0.45, onComplete: () => bars.destroy() });
       }
@@ -828,9 +866,9 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       foilSweep(root, 0xffd27a);
       for (let i = 0; i < 26; i++) {
         const cf = new Graphics().rect(-6, -10, 12, 20).fill(i % 3 ? 0xffc94a : C.red).stroke({ width: 2, color: C.ink });
-        cf.position.set(W / 2 + (Math.random() - 0.5) * 900, -40 - Math.random() * 200);
+        cf.position.set(W / 2 + (Math.random() - 0.5) * 900, game.view.y - 40 - Math.random() * 200);
         root.addChild(cf);
-        gsap.to(cf, { y: H + 60, x: cf.x + (Math.random() - 0.5) * 300, rotation: Math.random() * 12, duration: 1.6 + Math.random() * 1.2, delay: Math.random() * 0.4, ease: 'power1.in', onComplete: () => cf.destroy() });
+        gsap.to(cf, { y: game.view.y + game.view.h + 60, x: cf.x + (Math.random() - 0.5) * 300, rotation: Math.random() * 12, duration: 1.6 + Math.random() * 1.2, delay: Math.random() * 0.4, ease: 'power1.in', onComplete: () => cf.destroy() });
       }
       sfx('fanfare');
     }
@@ -869,10 +907,10 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       // pearl motes rising
       for (let i = 0; i < 40; i++) {
         const m = new Graphics().circle(0, 0, 3 + Math.random() * 6).fill([0xffffff, 0xf2cfe0, 0xcdeee6, 0xffe9b0][i % 4]);
-        m.position.set(W / 2 + (Math.random() - 0.5) * 1100, H + 20);
+        m.position.set(W / 2 + (Math.random() - 0.5) * 1100, game.view.y + game.view.h + 20);
         m.blendMode = 'add';
         root.addChild(m);
-        gsap.to(m, { y: -40, x: m.x + (Math.random() - 0.5) * 200, alpha: 0, duration: 2.4 + Math.random() * 1.8, delay: Math.random() * 1.2, ease: 'sine.out', onComplete: () => m.destroy() });
+        gsap.to(m, { y: game.view.y - 40, x: m.x + (Math.random() - 0.5) * 200, alpha: 0, duration: 2.4 + Math.random() * 1.8, delay: Math.random() * 1.2, ease: 'sine.out', onComplete: () => m.destroy() });
       }
       // iridescent hue drift on the pastel layer
       const cm = new ColorMatrixFilter();
@@ -994,8 +1032,8 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
       card.pivot.set(90, 120);
       card.position.set(W / 2, CY);
       root.addChild(card);
-      const tx = W - 330 + 135;
-      const ty = 36 + 52;
+      const tx = dexSlot.x + 135;
+      const ty = dexSlot.y + 52;
       gsap
         .timeline()
         .to(card, { x: tx, y: ty, rotation: 0.3, duration: 0.38, ease: 'power2.in' })
@@ -1046,18 +1084,19 @@ export async function playCatReveal(layer: Container, o: RevealOpts): Promise<Re
   });
 }
 
-/** foil sheen sweeping across the whole screen */
+/** foil sheen sweeping across the whole (real) screen */
 function foilSweep(layer: Container, tint: number) {
+  const v = game.view;
   const s = new Sprite(sheenTexture());
   s.anchor.set(0.5);
   s.width = 700;
-  s.height = H * 2.4;
+  s.height = v.h * 2.4;
   s.rotation = 0.45;
   s.tint = tint;
   s.blendMode = 'add';
-  s.position.set(-400, H / 2);
+  s.position.set(v.x - 400, v.y + v.h / 2);
   layer.addChild(s);
-  gsap.to(s, { x: W + 400, duration: 0.8, ease: 'power2.inOut', onComplete: () => s.destroy() });
+  gsap.to(s, { x: v.x + v.w + 400, duration: 0.8, ease: 'power2.inOut', onComplete: () => s.destroy() });
 }
 
 /** horizontal glitch bars flickering for `dur` seconds */
@@ -1074,9 +1113,10 @@ function glitchBurst(layer: Container, dur: number) {
       g.destroy();
       return;
     }
+    const v = game.view;
     for (let i = 0; i < 6; i++) {
-      const y = Math.random() * H;
-      g.rect(Math.random() * W * 0.4, y, W * (0.2 + Math.random() * 0.6), 4 + Math.random() * 22).fill({ color: i % 2 ? C.cyan : C.pinkHot, alpha: 0.55 });
+      const y = v.y + Math.random() * v.h;
+      g.rect(v.x + Math.random() * v.w * 0.4, y, v.w * (0.2 + Math.random() * 0.6), 4 + Math.random() * 22).fill({ color: i % 2 ? C.cyan : C.pinkHot, alpha: 0.55 });
     }
   }, 1000 / 24);
 }

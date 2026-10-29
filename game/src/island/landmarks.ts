@@ -553,6 +553,94 @@ export function laterSecretArt(n: number, done: boolean): SecretArt {
     g.circle(ctr.x, ctr.y - 4, 12).fill(0xff2e48);
     g.ellipse(ctr.x, ctr.y - 4, 3, 10).fill(0x000000);
     glow(c, ctr.x, ctr.y - 4, 0xff2e48, done ? 0.25 : 0.55, 0.7);
+  } else if (n === 13) {
+    // La Caja Sin Fondo: a huge open cardboard box, flaps up, a dark inside that goes on forever
+    isoBoxAt(g, 0.15, 0.15, 1.7, 1.7, 46, 0xb07a42, 0.02);
+    const top = ctr.y - 46;
+    g.poly([ctr.x, top - 48, ctr.x + 92, top, ctr.x, top + 48, ctr.x - 92, top]).fill(0x2a1a0e).stroke(INK);
+    g.poly([ctr.x - 60, top - 16, ctr.x, top + 14, ctr.x + 60, top - 16, ctr.x, top - 34]).fill({ color: 0x000000, alpha: 0.5 });
+    // flaps
+    g.poly([ctr.x - 92, top, ctr.x - 132, top - 46, ctr.x - 46, top - 92, ctr.x, top - 48]).fill(0xd9a868).stroke(INK);
+    g.poly([ctr.x + 92, top, ctr.x + 128, top - 50, ctr.x + 48, top - 88, ctr.x, top - 48]).fill(0xc8955a).stroke(INK);
+    // tape, arrows, a tiny pair of eyes in the dark
+    g.moveTo(ctr.x - 46, ctr.y - 8).lineTo(ctr.x - 46, ctr.y - 30).stroke({ width: 3, color: 0xe8402e });
+    g.poly([ctr.x - 54, ctr.y - 28, ctr.x - 46, ctr.y - 40, ctr.x - 38, ctr.y - 28]).fill(0xe8402e);
+    if (!done) {
+      g.circle(ctr.x - 8, top - 2, 3.2).fill(0xffe066);
+      g.circle(ctr.x + 8, top - 2, 3.2).fill(0xffe066);
+    }
+    glow(c, ctr.x, top - 4, 0xffe066, done ? 0.15 : 0.35, 0.5);
+  } else if (n === 14) {
+    // La Ficha de la Casa: a giant gold-rimmed chip standing on its edge (face-up once found)
+    isoBoxAt(g, 0.35, 0.35, 1.3, 1.3, 6, 0x5e2c18, 0.03);
+    if (!done) {
+      g.ellipse(ctr.x, ctr.y - 56, 18, 52).fill(0x8a0c20).stroke(INK);
+      g.ellipse(ctr.x + 6, ctr.y - 56, 18, 52).fill(0xc8102e).stroke(INK);
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2;
+        g.circle(ctr.x + 6 + Math.cos(a) * 13, ctr.y - 56 + Math.sin(a) * 40, 3).fill(0xffffff);
+      }
+      g.ellipse(ctr.x + 6, ctr.y - 56, 8, 26).stroke({ width: 3, color: 0xffd77a });
+    } else {
+      g.ellipse(ctr.x, ctr.y - 10, 56, 26).fill(0x8a0c20).stroke(INK);
+      g.ellipse(ctr.x, ctr.y - 16, 56, 26).fill(0xc8102e).stroke(INK);
+      for (let k = 0; k < 10; k++) {
+        const a = (k / 10) * Math.PI * 2;
+        g.ellipse(ctr.x + Math.cos(a) * 44, ctr.y - 16 + Math.sin(a) * 20, 5, 2.6).fill(0xffffff);
+      }
+      g.ellipse(ctr.x, ctr.y - 16, 26, 12).stroke({ width: 3, color: 0xffd77a });
+      g.star(ctr.x, ctr.y - 16, 5, 10, 4).fill(0xffd77a);
+    }
+    glow(c, ctr.x, ctr.y - 50, 0xffd77a, done ? 0.2 : 0.45, 0.6);
+  } else if (n === 15) {
+    // La Fuente de Azulejos: a tiled octagonal fountain, a cobalt jug pouring
+    g.ellipse(ctr.x, ctr.y - 6, 56, 26).fill(0xc4633c).stroke(INK);
+    g.ellipse(ctr.x, ctr.y - 16, 56, 26).fill(0xf5f0e2).stroke(INK);
+    for (let k = 0; k < 12; k++) {
+      const a = (k / 12) * Math.PI * 2;
+      g.circle(ctr.x + Math.cos(a) * 46, ctr.y - 16 + Math.sin(a) * 21, 4).fill(0x2a52b8);
+    }
+    g.ellipse(ctr.x, ctr.y - 18, 42, 18).fill(0x5cc8e0).stroke(THIN);
+    g.rect(ctr.x - 7, ctr.y - 70, 14, 52).fill(0xf5f0e2).stroke(INK);
+    g.poly([ctr.x - 7, ctr.y - 56, ctr.x + 7, ctr.y - 56, ctr.x + 7, ctr.y - 48, ctr.x - 7, ctr.y - 48]).fill(0x2a52b8);
+    g.ellipse(ctr.x, ctr.y - 72, 20, 8).fill(0x2a52b8).stroke(INK);
+    for (const dx of [-14, 0, 14]) g.moveTo(ctr.x + dx * 0.6, ctr.y - 72).quadraticCurveTo(ctr.x + dx * 1.8, ctr.y - 56, ctr.x + dx * 1.6, ctr.y - 22).stroke({ width: 3, color: 0xbff0ff, cap: 'round' });
+    if (!done) glow(c, ctr.x, ctr.y - 18, 0x5cc8e0, 0.5, 0.7);
+  } else if (n === 16) {
+    // El Ovillo sin Fin: a yarn ball as big as a house, needles stuck in it, a thread running off
+    g.ellipse(ctr.x, ctr.y - 2, 60, 22).fill({ color: C.ink, alpha: 0.16 });
+    g.moveTo(ctr.x - 80, ctr.y - 120).lineTo(ctr.x + 30, ctr.y - 40).stroke({ width: 6, color: 0xc8a070, cap: 'round' });
+    g.moveTo(ctr.x + 84, ctr.y - 116).lineTo(ctr.x - 24, ctr.y - 40).stroke({ width: 6, color: 0xc8a070, cap: 'round' });
+    g.circle(ctr.x - 80, ctr.y - 120, 6).fill(0xc8102e).stroke(THIN);
+    g.circle(ctr.x + 84, ctr.y - 116, 6).fill(0xc8102e).stroke(THIN);
+    const R = done ? 36 : 54;
+    g.circle(ctr.x, ctr.y - R, R).fill(0xe8a2b2).stroke(INK);
+    for (let k = 0; k < 6; k++) g.arc(ctr.x, ctr.y - R, R * (0.92 - k * 0.12), 0.3 + k * 0.8, 2.5 + k * 0.8).stroke({ width: 2, color: C.ink, alpha: 0.35 });
+    g.moveTo(ctr.x + R * 0.8, ctr.y - R * 0.4).bezierCurveTo(ctr.x + 90, ctr.y + 10, ctr.x + 40, ctr.y + 30, ctr.x + 100, ctr.y + 34).stroke({ width: 4, color: 0xe8a2b2, cap: 'round' });
+  } else if (n === 17) {
+    // La Almohada del Rey: a big tufted pillow with gold tassels, a tiny crown, a moon glow
+    const y = ctr.y - 24;
+    g.ellipse(ctr.x, ctr.y - 2, 70, 26).fill({ color: C.ink, alpha: 0.16 });
+    g.moveTo(ctr.x, y - 48)
+      .quadraticCurveTo(ctr.x + 50, y - 40, ctr.x + 84, y)
+      .quadraticCurveTo(ctr.x + 50, y + 22, ctr.x, y + 40)
+      .quadraticCurveTo(ctr.x - 50, y + 22, ctr.x - 84, y)
+      .quadraticCurveTo(ctr.x - 50, y - 40, ctr.x, y - 48)
+      .closePath()
+      .fill(0xd8cff4)
+      .stroke(INK);
+    for (const [dx, dy] of [
+      [0, -2],
+      [-34, -2],
+      [34, -2],
+      [0, -20],
+      [0, 16],
+    ])
+      g.circle(ctr.x + dx, y + dy, 3.5).fill(0xffe9a8).stroke(THIN);
+    for (const dx of [-84, 84]) g.poly([ctr.x + dx - 5, y, ctr.x + dx + 5, y, ctr.x + dx + 3, y + 16, ctr.x + dx - 3, y + 16]).fill(0xffd77a).stroke(THIN);
+    if (done) g.ellipse(ctr.x - 10, y - 8, 22, 9).fill({ color: 0x7464b0, alpha: 0.3 });
+    else g.poly([ctr.x - 14, y - 30, ctr.x - 14, y - 44, ctr.x - 7, y - 37, ctr.x, y - 48, ctr.x + 7, y - 37, ctr.x + 14, y - 44, ctr.x + 14, y - 30]).fill(0xffd77a).stroke(THIN);
+    glow(c, ctr.x, y - 20, 0xffe9a8, done ? 0.2 : 0.45, 0.7);
   } else if (n === 7) {
     g.moveTo(ctr.x - 50, ctr.y).bezierCurveTo(ctr.x - 56, ctr.y - 80, ctr.x + 56, ctr.y - 80, ctr.x + 50, ctr.y).closePath().fill(0xffd2dc).stroke(INK);
     for (let k = -3; k <= 3; k++) g.moveTo(ctr.x, ctr.y - 4).lineTo(ctr.x + k * 14, ctr.y - 60 + Math.abs(k) * 6).stroke({ width: 2, color: 0xff7ab8 });

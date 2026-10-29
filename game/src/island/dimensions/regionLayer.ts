@@ -14,7 +14,7 @@ import type { RegionLook } from './state';
 import { txt } from '../../ui/widgets';
 import { F } from '../../ui/theme';
 
-const STAMP: Record<string, number> = { home: 0x171317, forest: 0x2f7a34, cliff: 0x171317, volcano: 0xc8102e, ghost: 0x1f5f8f, ice: 0x2a62a8, ruins: 0xb0107a, reef: 0xc83a7a, cosmic: 0x5a2ab8, sakura: 0xc83a7a, desert: 0x7a5630, candy: 0xff2e88, void: 0xff2e48 };
+const STAMP: Record<string, number> = { home: 0x171317, forest: 0x2f7a34, cliff: 0x171317, volcano: 0xc8102e, ghost: 0x1f5f8f, ice: 0x2a62a8, ruins: 0xb0107a, reef: 0xc83a7a, cosmic: 0x5a2ab8, sakura: 0xc83a7a, desert: 0x7a5630, candy: 0xff2e88, void: 0xff2e48, carton: 0xe8402e, felt: 0x0f5a34, talavera: 0x2a52b8, yarn: 0xc8607a, pillow: 0x5a4aa0 };
 
 const DIRT = 0x9c7650;
 
@@ -36,8 +36,8 @@ function h2(a: number, b: number, s = 0) {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-const RIM_LIGHT: Partial<Record<string, number>> = { volcano: 0xff6a1a, ghost: 0x00e5ff, ruins: 0xff2e88, cosmic: 0x8a5cff, cliff: 0xf3eee3, void: 0xff2e48 };
-const FALL_SPEED: Record<string, number> = { water: 190, lava: 60, ink: 130, data: 240, neon: 150, ice: 0, prism: 160, stars: 55 };
+const RIM_LIGHT: Partial<Record<string, number>> = { volcano: 0xff6a1a, ghost: 0x00e5ff, ruins: 0xff2e88, cosmic: 0x8a5cff, cliff: 0xf3eee3, void: 0xff2e48, felt: 0xffd77a, pillow: 0xffe9a8 };
+const FALL_SPEED: Record<string, number> = { water: 190, lava: 60, ink: 130, data: 240, neon: 150, ice: 0, prism: 160, stars: 55, paper: 90, chips: 150, yarn: 22, feather: 34 };
 
 interface Fall {
   s: TilingSprite;
@@ -101,7 +101,24 @@ export class RegionLayer extends Container {
     return this.look === 'veil' || this.look === 'available';
   }
 
+  /** not in this save's world yet (a post-Parte III island before the gate): nothing drawn, nothing kept */
+  hide() {
+    if (this.look === 'hidden') return;
+    this.look = 'hidden';
+    for (const c of [this.back, this.lagoon, this.over, this.fx]) c.removeChildren().forEach((o) => o.destroy({ children: true }));
+    this.land.clear();
+    this.pat = [];
+    this.lagOv = [];
+    this.rockOv = [];
+    this.glow = null;
+    this.foam = [];
+    this.falls = [];
+    this.wisps = [];
+    this.visible = false;
+  }
+
   build(look: RegionLook) {
+    if (look === 'hidden') return this.hide();
     if (look === this.look) return;
     this.look = look;
     for (const c of [this.back, this.lagoon, this.over]) c.removeChildren().forEach((o) => o.destroy({ children: true }));
@@ -305,6 +322,45 @@ export class RegionLayer extends Container {
           g.rect(Math.round(x), y - 2, 2, l).fill({ color: r < 0.15 ? 0xff2e48 : 0xf3eee3, alpha: 0.8 });
           break;
         }
+        // ---- after the Parte III
+        case 'carton': {
+          // torn tape strips hanging off the box
+          const l = 12 + r2 * 44;
+          g.poly([x - 5, y - 3, x + 5, y - 3, x + 4 + r * 6, y + l, x - 6 + r * 6, y + l - 4]).fill({ color: 0xc89a5a, alpha: 0.9 }).stroke({ width: 1.5, color: d.ink, alpha: 0.6 });
+          break;
+        }
+        case 'felt': {
+          // gold tassels from the table's skirt
+          const l = 14 + r2 * 30;
+          g.moveTo(x, y - 2).lineTo(x, y + l).stroke({ width: 2, color: 0xd8b25a });
+          g.poly([x - 5, y + l, x + 5, y + l, x + 3, y + l + 12, x - 3, y + l + 12]).fill(0xffd77a).stroke({ width: 1.5, color: d.ink });
+          break;
+        }
+        case 'talavera': {
+          // little terracotta pots hanging on cords, with a trailing plant
+          const l = 18 + r2 * 50;
+          g.moveTo(x, y - 2).lineTo(x, y + l).stroke({ width: 1.5, color: 0x5a2210 });
+          g.poly([x - 7, y + l, x + 7, y + l, x + 5, y + l + 10, x - 5, y + l + 10]).fill(r < 0.2 ? 0x2a52b8 : 0xc86c44).stroke({ width: 1.5, color: d.ink });
+          g.moveTo(x - 4, y + l + 2).quadraticCurveTo(x - 10, y + l + 16, x - 6, y + l + 26).stroke({ width: 2, color: 0x3f8a3f, cap: 'round' });
+          break;
+        }
+        case 'yarn': {
+          // loose threads, some with a pompom
+          const l = 24 + r2 * 80;
+          const col = [0xe8a2b2, 0xf4e6d4, 0xf2c14e, 0x8fb8a8][Math.floor(r2 * 4)];
+          g.moveTo(x, y - 3).bezierCurveTo(x + 10, y + l * 0.35, x - 10, y + l * 0.7, x + 3, y + l).stroke({ width: 2.5, color: col, cap: 'round' });
+          if (r < 0.22) g.circle(x + 3, y + l + 5, 6).fill(col).stroke({ width: 1.5, color: d.ink });
+          break;
+        }
+        case 'pillow': {
+          // cloud wisps and a dangling star
+          if (r < 0.15) {
+            const l = 30 + r2 * 70;
+            g.moveTo(x, y - 2).lineTo(x, y + l).stroke({ width: 1.5, color: 0xf4f0ff, alpha: 0.8 });
+            g.star(x, y + l + 8, 5, 8, 3.5).fill(0xffe066).stroke({ width: 1.5, color: d.ink });
+          } else g.circle(x, y + 4 + r2 * 10, 6 + r2 * 8).fill({ color: 0xffffff, alpha: 0.85 });
+          break;
+        }
         case 'cliff': {
           // construction lines converging to a vanishing point far below (technical drawing)
           const vx = this.profile.cx;
@@ -354,7 +410,7 @@ export class RegionLayer extends Container {
         m.alpha = 0.9;
         this.back.addChild(m);
       }
-      this.falls.push({ s, speed: FALL_SPEED[d.fall.kind] ?? 150, stepped: d.fall.kind === 'ink', acc: 0 });
+      this.falls.push({ s, speed: FALL_SPEED[d.fall.kind] ?? 150, stepped: d.fall.kind === 'ink' || d.fall.kind === 'paper', acc: 0 });
     }
   }
 
@@ -375,6 +431,11 @@ export class RegionLayer extends Container {
       desert: [0xfff4d0, 0xe8c48a, 0.9],
       candy: [0xffffff, 0xffc4df, 0.95],
       void: [0x2a2730, 0x0b0a0e, 0.8],
+      carton: [0xfff4d6, 0xe2b878, 0.9],
+      felt: [0x2a5a40, 0x0d3a24, 0.7],
+      talavera: [0xffffff, 0xcfeaf2, 0.95],
+      yarn: [0xffffff, 0xf4c9d2, 0.95],
+      pillow: [0xffffff, 0xd6cef0, 0.95],
     };
     const [top, belly, alpha] = sealed ? [0xf6efe2, 0xd9cdb8, 0.95] : (tint[d.id] ?? tint.home);
     for (let i = 0; i < n; i++) {

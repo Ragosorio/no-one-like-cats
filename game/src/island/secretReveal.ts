@@ -51,6 +51,11 @@ const KICKER: Record<number, string> = {
   6: 'SILENCIO EN LA ORQUESTA',
   7: 'ESPEJITO, ESPEJITO',
   8: 'EL FARO ARDE',
+  13: 'CAJA DENTRO DE CAJA',
+  14: 'LA CASA PIERDE',
+  15: 'DESEOS AL FONDO',
+  16: 'HILO SIN FIN',
+  17: 'CINCO MINUTITOS',
 };
 
 function unlockLine(u?: string) {

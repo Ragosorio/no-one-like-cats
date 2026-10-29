@@ -1,7 +1,8 @@
 /**
  * Ajustes › VOLVER A VER — the prologue, then the Parte II scenes this island has already seen, in story order,
- * each one a spoiler-safe title on a paper strip. Tap → the scene plays again (src/cine/replay.ts): nothing is saved,
- * no prize is paid twice, and the world goes back to whatever the story says when it ends.
+ * each one a spoiler-safe title on a paper strip; each part's songs (♪) come after its scenes (app/p3Songs.ts ›
+ * replayEntries). Tap → the scene plays again (src/cine/replay.ts): nothing is saved, no prize is paid twice, and the
+ * world goes back to whatever the story says when it ends.
  */
 import { Container, Graphics } from 'pixi.js';
 import { Modal } from '../ui/modal';
@@ -14,18 +15,20 @@ import { ScrollBox } from './collection/ui';
 // MOMENTOS MUSICALES already completed (src/momentos): replays can be left from their pause menu
 import { seenMomentos } from '../momentos/registry';
 import { seenFilms, replayFilm } from '../app/stageIntro';
+import { reachedP3Songs, replayEntries } from '../app/p3Songs';
 import { asMemory } from '../ui/story/ghost';
 import '../momentos/songs';
 
 export function openReplays() {
-  // the prologue is always there (it used to be its own button: VER PRÓLOGO)
-  const list: { id: string; title: string }[] = [
-    { id: '__prologo', title: 'Prólogo' },
-    ...seenScenes(),
-    ...seenMomentos(G.s as unknown as { ext?: Record<string, unknown> }).map((x) => ({ id: `momento:${x.id}`, title: `♪ ${x.title}` })),
-    // Parte III: the films already watched (app/stageIntro.ts › seenFilms: `film:<id>` in ext.gateras.seen)
-    ...seenFilms().map((x) => ({ id: x.id, title: `▶ ${x.title}` })),
-  ];
+  // the prologue is always there (it used to be its own button: VER PRÓLOGO); then each part as Part II taught it:
+  // its scenes, then its songs (♪). Parte III: the films already watched (app/stageIntro.ts › seenFilms: `film:<id>` in
+  // ext.gateras.seen), then its songs — DRUNCK's Momento and the song films (app/p3Songs.ts, P3-CINE)
+  const list = replayEntries({
+    scenes: seenScenes(),
+    momentos: seenMomentos(G.s as unknown as { ext?: Record<string, unknown> }),
+    films: seenFilms(),
+    songs: reachedP3Songs(),
+  });
   const rows = Math.max(1, list.length);
   const ROW = 78;
   const h = Math.min(940, 230 + rows * ROW);

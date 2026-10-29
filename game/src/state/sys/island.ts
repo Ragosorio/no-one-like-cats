@@ -5,7 +5,8 @@
  */
 import { G, Habitat, FarmPlot } from '../game';
 import { Emitter } from '../../core/events';
-import { EXPANSIONS, catDef } from '../../data/content';
+import { EXPANSIONS, catDef, type ExpansionDef } from '../../data/content';
+import { postP3Unlocked } from './postp3';
 import {
   BAL,
   crop,
@@ -48,7 +49,8 @@ function wcfg(role: 'banker' | 'farmer' | 'builder' | 'voyager') {
 
 // ---------------------------------------------------------------- regions
 export function regionsUnlocked(): string[] {
-  return [HOME, ...G.s.expansions.cleared.map((n) => EXPANSIONS[n - 1].id)];
+  // (an expansion number this build doesn't know — a hand-edited save — is skipped, never a crash)
+  return [HOME, ...G.s.expansions.cleared.map((n) => EXPANSIONS[n - 1]?.id).filter((id): id is string => !!id)];
 }
 /** @deprecated habitats are placed freely now; kept for old callers (legacy plot count) */
 export function habitatPlots(region: string) {
@@ -75,7 +77,7 @@ export function totalFarmPlots() {
 // ---------------------------------------------------------------- bonuses from expansions
 export function expansionBonus(key: string) {
   let v = 0;
-  for (const n of G.s.expansions.cleared) v += EXPANSIONS[n - 1].balance.bonus[key] ?? 0;
+  for (const n of G.s.expansions.cleared) v += EXPANSIONS[n - 1]?.balance.bonus[key] ?? 0;
   return v;
 }
 export function builders() {
@@ -415,15 +417,36 @@ function ensureFarmPlots() {
 }
 
 // ---------------------------------------------------------------- expansions
+/** an island of the post-Parte III ring (data/postp3/islas.json) */
+export function isPostExpansion(e: ExpansionDef | undefined | null) {
+  return e?.gate === 'postp3';
+}
+/**
+ * Not in this save's world yet: a post-Parte III island before postP3Unlocked(). Invisible on the map (no veil, no price,
+ * no label, no light), out of every list and suggestion, and it can't be bought. One bought or cleared stays visible
+ * whatever the gate says later (a story replay resets missions, never the land you paid for).
+ */
+export function expansionHidden(n: number) {
+  const e = EXPANSIONS[n - 1];
+  if (!e || !isPostExpansion(e)) return !e;
+  if (G.s.expansions.cleared.includes(n) || G.s.expansions.bought.includes(n)) return false;
+  return !postP3Unlocked(G.s);
+}
+/** the expansions this save can see (in order: the ones the player can know about) */
+export function visibleExpansions() {
+  return EXPANSIONS.filter((e) => !expansionHidden(e.n));
+}
+/** a hidden island reads 'locked' (callers that list expansions skip it with expansionHidden / visibleExpansions) */
 export function expansionState(n: number): 'locked' | 'available' | 'clearing' | 'cleared' {
   if (G.s.expansions.cleared.includes(n)) return 'cleared';
   if (G.s.expansions.bought.includes(n)) return 'clearing';
   const e = EXPANSIONS[n - 1];
+  if (!e || expansionHidden(n)) return 'locked';
   return G.s.kl >= e.balance.kl ? 'available' : 'locked';
 }
 export function buyExpansion(n: number) {
   const e = EXPANSIONS[n - 1];
-  if (expansionState(n) !== 'available' || buildersBusy() >= builders()) return false;
+  if (!e || expansionHidden(n) || expansionState(n) !== 'available' || buildersBusy() >= builders()) return false;
   if (!G.spend({ gold: e.balance.cost })) return false;
   G.s.expansions.bought.push(n);
   G.startTimer('expansion', String(n), e.balance.clear_s * 1000, `Limpiando ${e.name}`, 'mission');

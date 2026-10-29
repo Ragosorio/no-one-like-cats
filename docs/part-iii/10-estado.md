@@ -455,3 +455,39 @@ Efectos sobre las partidas:
 
 **Estado:** publicado en vivo el 2026-10-28 (c4cfa3c), deploy verde y humo del sitio en vivo sin errores.
 
+
+## 13. Sin pantallas de carga: el mundo se transforma; las canciones en «Volver a ver» (2026-10-29)
+
+**Lo que pidió el dueño:** «la parte tres no me gusta la pantalla de carga, me gustaba más la parte dos que el entorno se convertía en lo que se iba a hacer, además no hay como "canciones" a las que volver a reproducir cuando debería de existir igual que en la parte dos».
+
+Lo hizo el agente P3-CINE (`docs/post-p3/agentes/P3-CINE.md`).
+
+**La transformación** (`game/src/film/morph.ts`). Una película que arranca desde una pantalla del juego (la Carta, la isla, una batalla) ya no muestra el cartel «PELÍCULA» con la cuenta regresiva. El mundo toma el estilo de la película:
+
+| Estilo | Lo que pasa en pantalla |
+|---|---|
+| Van Gogh | Azul con pinceladas amarillas en remolino |
+| Da Vinci | Sepia con trama de tinta y el círculo de proporción |
+| Noir | Blanco y negro con lluvia |
+| Tele (La Borracha, el Cómic) | Líneas de barrido y estática |
+| Cine mudo | Sepia con rayas y grano |
+| Ukiyo-e | Índigo con olas que suben |
+| Saul Bass | Dos tonos con barras |
+
+- La cámara se acerca al nodo de la Carta y los bordes se cierran en el oscuro de la película. Las películas abren desde negro, así que el corte no se ve.
+- Dura al menos 1,25 s. La película se arma y su canción se decodifica detrás.
+- Si la espera pasa de 3 s, aparece un hilo fino al pie de la pantalla, en el color de la película, que muestra que avanza. El cartel viejo solo sale como respaldo si a los 12 s la película no está lista (un equipo muy lento).
+- **Precarga:**
+  - La tarjeta de una etapa calienta su película mientras se lee, también las de plantilla.
+  - Los flujos calientan su siguiente película durante las líneas o una elección.
+- **Presentación → batalla:** el último cuadro se sostiene, la batalla se arma debajo y el cuadro se funde en ella. Se acabaron el destello de la Carta y el telón de bloques.
+- **El final** conserva sus cortes secos («La caída», el golpe) y todo lo de §12: cuadros sostenidos, silencio y la isla callada en el duelo.
+
+**Las canciones** (`game/src/app/p3Songs.ts`).
+- «Volver a ver» lista ♪ EM%EN, OH SHIT, Daria, No wey, DISTOR, NO G@ME NO LIF€, xti es amor y SADIE, cada una con su película de canción. DRUNCK sigue siendo Momento.
+- El orden de la lista es: escenas de la Parte II, sus ♪, ▶ películas de la Parte III y sus ♪.
+- Solo aparecen las canciones alcanzadas, y ninguna película sale dos veces.
+- **Fonoteca:** esas 8 canciones se quedaban en «???» para siempre. Ahora:
+  - entran al ver su película;
+  - durante el duelo entran calladas, sin disco ni jingle;
+  - una partida que ya las vio las recibe después de cargar, con un solo aviso.

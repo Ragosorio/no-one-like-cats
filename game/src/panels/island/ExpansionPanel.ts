@@ -7,7 +7,7 @@ import { Button, txt } from '../../ui/widgets';
 import { icon } from '../../ui/icons';
 import { G } from '../../state/game';
 import { EXPANSIONS } from '../../data/content';
-import { builders, buildersBusy, buyExpansion, expansionState } from '../../state/sys/island';
+import { builders, buildersBusy, buyExpansion, expansionHidden, expansionState } from '../../state/sys/island';
 import { checkMissions } from '../../state/sys/missions';
 import { secretInfo } from '../../state/sys/secrets';
 import { fmt, fmtDuration } from '../../core/format';
@@ -41,6 +41,11 @@ const BIOME_NAME: Record<string, string> = {
   desert: 'Desierto',
   candy: 'Caramelo',
   void: 'Vacío',
+  carton: 'Cartón',
+  felt: 'Tapete',
+  talavera: 'Talavera',
+  yarn: 'Tejido',
+  pillow: 'Siesta',
 };
 const BIOME_DECOR: Record<string, DecorKind[]> = {
   forest: ['pine', 'mushroom', 'tree'],
@@ -55,11 +60,17 @@ const BIOME_DECOR: Record<string, DecorKind[]> = {
   desert: ['cactus', 'palm', 'column'],
   candy: ['lollipop', 'mushroom', 'lollipop'],
   void: ['crystal', 'column', 'star'],
+  carton: ['box', 'tape', 'box'],
+  felt: ['chips', 'dice', 'card'],
+  talavera: ['pot', 'marigold', 'picado'],
+  yarn: ['yarn', 'button', 'spool'],
+  pillow: ['cushion', 'cloudpuff', 'star'],
 };
 
 export function openExpansionPanel(n: number, onBought?: () => void) {
   const e = EXPANSIONS[n - 1];
-  if (!e) return;
+  // a post-Parte III island before the gate doesn't exist for this save (no card, no price)
+  if (!e || expansionHidden(n)) return;
   const st = expansionState(n);
   const m = new Modal(e.name, 1260, 720, { subtitle: `EXPANSIÓN ${n} · ${(BIOME_NAME[e.biome] ?? e.biome).toUpperCase()}`, band: C.ink });
   // ---- left: biome swatch postcard
@@ -121,7 +132,9 @@ export function openExpansionPanel(n: number, onBought?: () => void) {
   const bonus = Object.entries(e.balance.bonus)
     .map(([k, v]) => BONUS_TXT[k]?.(v) ?? `${k} ${v}`)
     .join(' · ');
-  const plots = txt(`Espacio para ~${regionRoom(e.id)} hábitats · ${e.balance.farm_plots} de pesca${bonus ? ` · ${bonus}` : ''}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink, wordWrap: true, wordWrapWidth: m.innerW - x0 });
+  // the big yards too (a tier 7+ habitat stands on 5×5): what the late game really asks of new land
+  const big = regionRoom(e.id, 5);
+  const plots = txt(`Espacio para ~${regionRoom(e.id)} hábitats${big >= 2 ? ` (~${big} de los grandes, tier 7+)` : ''} · ${e.balance.farm_plots} de pesca${bonus ? ` · ${bonus}` : ''}`, { fontFamily: F.ui, fontWeight: '700', fontSize: 18, fill: C.ink, wordWrap: true, wordWrapWidth: m.innerW - x0 });
   plots.position.set(x0, y + 38);
   m.body.addChild(h2, plots);
   y += 50 + plots.height + 14;

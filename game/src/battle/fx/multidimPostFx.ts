@@ -241,6 +241,8 @@ async function pre(ctx: UltCtx, e: UltEv) {
   const y = e.y;
   const mx = me?.x ?? x - 600;
   const my = me?.y ?? y;
+  // (tanda 2's words go under the stamp's band, which covers y≈196–404 of the stage while it reads)
+  const low = Math.max(480, my + 50);
   const dir = mx < x ? 1 : -1;
   switch (id) {
     case 'xp_gomitas': {
@@ -845,6 +847,193 @@ async function pre(ctx: UltCtx, e: UltEv) {
       sfx('whoosh', 1.2);
       break;
     }
+    // ---------------------------------------------------------------- tanda 2 (agent PODERES-3)
+    case 'xp_sombreronron': {
+      const hat = new Graphics().ellipse(0, 18, 120, 26).fill(0x1b1b2f).stroke({ width: 6, color: INK }).roundRect(-46, -60, 92, 80, 18).fill(0x1b1b2f).stroke({ width: 6, color: INK });
+      popAt(ctx, hat, mx, my - 30, 1.1);
+      gsap.to(hat, { y: my - 170, duration: 0.3, yoyo: true, repeat: 2 });
+      bang(ctx, mx, low, '¡QUIETO, QUE TE TRENZO!', 0xe6c34a, 56);
+      sfx('paper', 0.9);
+      break;
+    }
+    case 'xp_gatejo': {
+      const w = popAt(ctx, catHead(30, 0xf4f1ea, 0x7fb2e5), mx - 40, my - 140, 1.1);
+      const k = popAt(ctx, catHead(30, 0x111111, 0xff6b35), mx + 40, my - 140, 1.1);
+      gsap.to(w, { x: mx - 120, duration: 0.5 });
+      gsap.to(k, { x: x, y: y - 120, duration: fast ? 0.05 : 0.7, ease: 'power2.in' });
+      bang(ctx, mx, low, '¡NADIE ANDA SOLO!', 0xf4f1ea, 64);
+      sfx('sting', 0.8);
+      break;
+    }
+    case 'xp_maullorona': {
+      veil(ctx, 0x1b2a4a, 0.4, 1.4);
+      for (let i = 0; i < 5; i++) later(ctx, fast ? 10 : i * 120, () => ctx.fxp.burst(mx + (i - 2) * 30, my - 120, { count: 6, tint: [0x7fb2e5, 0xe8f1f8], speed: [60, 140], gravity: 500 }));
+      bang(ctx, mx, low, '¡AAAY, MIS GATITOS!', 0xc9d6e8, 64);
+      sfx('splash', 0.8);
+      break;
+    }
+    case 'xp_quetzalgatl': {
+      speedLines(ctx.wfx, (mx + x) / 2, my - 100, 0x2bb3a3, 40, 0.7);
+      for (let i = 0; i < 6; i++) later(ctx, fast ? 10 : i * 90, () => ctx.fxp.burst(mx + dir * i * 90, my - 150 - (i % 2) * 40, { count: 5, tint: [0x2bb3a3, 0xc8102e, 0xe6c34a], speed: [120, 300], gravity: 40, angle: dir > 0 ? [-0.3, 0.3] : [Math.PI - 0.3, Math.PI + 0.3] }));
+      bang(ctx, mx, low, '¡EL VIENTO TIENE PLUMAS!', 0x2bb3a3, 60);
+      sfx('whoosh', 1.3);
+      break;
+    }
+    case 'xp_bastet': {
+      const disc = new Graphics().circle(0, 0, 70).fill({ color: 0xe6c34a, alpha: 0.9 }).stroke({ width: 8, color: INK });
+      popAt(ctx, disc, mx, my - 30, 1.3);
+      gsap.to(disc.scale, { x: 1.2, y: 1.2, duration: 0.4, yoyo: true, repeat: 1 });
+      bang(ctx, mx, low, '¡AQUÍ NADIE ENTRA!', 0xe6c34a, 60);
+      sfx('shield', 1.0);
+      break;
+    }
+    case 'xp_cleogatra': {
+      const pearl = new Graphics().circle(0, 0, 34).fill(0xf5f0e1).stroke({ width: 6, color: INK }).circle(-10, -10, 8).fill(0xffffff);
+      popAt(ctx, pearl, mx, my - 30, 1.2);
+      gsap.to(pearl, { y: my - 90, duration: 0.5, yoyo: true, repeat: 1, ease: 'sine.inOut' });
+      bang(ctx, mx, low, '¿APOSTAMOS?', 0xf5f0e1, 70);
+      sfx('coin', 1.0);
+      break;
+    }
+    case 'xp_bonapata': {
+      const flag = new Graphics().rect(0, -90, 6, 100).fill(INK).rect(6, -90, 26, 50).fill(0x1f3a93).rect(32, -90, 26, 50).fill(0xffffff).rect(58, -90, 26, 50).fill(0xc8102e).stroke({ width: 3, color: INK });
+      popAt(ctx, flag, mx, my - 80, 1.2);
+      bang(ctx, mx, low, '¡A CONQUISTAR!', 0x1f3a93, 70);
+      sfx('fanfare', 0.7);
+      break;
+    }
+    case 'xp_leonardo': {
+      const page = new Graphics().rect(-90, -60, 180, 120).fill(0xe8d3a8).stroke({ width: 5, color: 0xb5543a });
+      for (let i = 0; i < 4; i++) page.moveTo(-70, -36 + i * 22).lineTo(70 - i * 12, -36 + i * 22).stroke({ width: 3, color: 0xb5543a });
+      popAt(ctx, page, mx, my - 30, 1.3);
+      word(ctx, mx, low, 'CODEX', 0xb5543a, 54, F.serif, 1.2);
+      sfx('pencil', 1.0);
+      break;
+    }
+    case 'xp_perla': {
+      const win = new Graphics().rect(-70, -90, 140, 180).fill({ color: 0xf2d27a, alpha: 0.35 }).stroke({ width: 8, color: 0x6b4f2a }).moveTo(0, -90).lineTo(0, 90).moveTo(-70, 0).lineTo(70, 0).stroke({ width: 5, color: 0x6b4f2a });
+      popAt(ctx, win, mx - dir * 120, my - 30, 1.4);
+      flash(ctx.overlay, 0xf2d27a, fl ? 0.25 : 0.05, 0.5);
+      bang(ctx, mx, low, 'LUZ DE VENTANA', 0xf2d27a, 56);
+      sfx('levelup', 0.6);
+      break;
+    }
+    case 'xp_miauton': {
+      const apple = new Graphics().circle(0, 0, 40).fill(0xc0392b).stroke({ width: 6, color: INK }).rect(-3, -54, 6, 18).fill(0x6b4f2a).ellipse(14, -50, 14, 7).fill(0x3e8e41);
+      popAt(ctx, apple, x, -120, 1.0);
+      gsap.to(apple, { y: y - 30, duration: fast ? 0.05 : 0.6, ease: 'power2.in' });
+      bang(ctx, mx, low, '¡EUREKA… DIGO, GRAVEDAD!', 0xc0392b, 56);
+      sfx('boom', 0.6);
+      break;
+    }
+    case 'xp_miauzart': {
+      for (let i = 0; i < 3; i++) later(ctx, fast ? 10 : i * 160, () => onomatopoeia(ctx.wfx, mx + dir * (60 + i * 80), low - i * 30, '♪', { color: 0xe8c7a0, size: 70 }));
+      bang(ctx, mx, low, '¡BRAVO! ¡OTRA!', 0xe8c7a0, 66);
+      sfx('fanfare', 0.6);
+      break;
+    }
+    case 'xp_miausagi': {
+      const moon = new Graphics().circle(0, 0, 80).fill({ color: 0xfff3b0, alpha: 0.9 }).stroke({ width: 6, color: INK });
+      popAt(ctx, moon, x, 170, 1.4);
+      veil(ctx, 0x2a1b4a, 0.35, 1.3);
+      bang(ctx, mx, low, '¡EN EL NOMBRE DE LA LUNA… Y LA AMISTAD!', 0xf7a1c4, 46);
+      sfx('reveal', 1.1);
+      break;
+    }
+    case 'xp_tanjimiau': {
+      speedLines(ctx.wfx, x, y, 0x3a7bd5, 50, 0.6);
+      bang(ctx, mx, low, '¡RESPIRACIÓN DEL AGUA!', 0x3a7bd5, 60);
+      sfx('splash', 1.1);
+      break;
+    }
+    case 'xp_tetrimiau': {
+      const cols = [0x8a4dff, 0x2bb3a3, 0xf2a33a, 0xd62839];
+      for (let i = 0; i < 4; i++) {
+        const blk = new Graphics().rect(-30, -30, 60, 60).fill(cols[i]).stroke({ width: 5, color: INK });
+        popAt(ctx, blk, x + (i - 1.5) * 70, -80 - i * 40, 1.0);
+        gsap.to(blk, { y: y - 20, duration: fast ? 0.05 : 0.5 + i * 0.08, ease: 'power1.in' });
+      }
+      sfx('tick', 1.0);
+      break;
+    }
+    case 'xp_laracroqueta': {
+      const rope = new Graphics().moveTo(mx, my - 40).lineTo(x, y - 60).stroke({ width: 6, color: 0x8a5a2b });
+      fleeting(ctx, rope, 0.8);
+      bang(ctx, mx, low, '¡ESTO VA PARA EL MUSEO!', 0xc49a3c, 58);
+      sfx('coin', 1.2);
+      break;
+    }
+    case 'xp_pobregatito': {
+      flash(ctx.overlay, 0xc8102e, fl ? 0.2 : 0.05, 0.3);
+      bang(ctx, mx, low, '¡AAAAH! (CASA ARMADA)', 0xc8102e, 62);
+      sfx('alarm', 0.6);
+      break;
+    }
+    case 'xp_felinamente': {
+      const book = new Graphics().rect(-70, -50, 140, 100).fill(0xf7a1c4).stroke({ width: 6, color: INK }).rect(-60, -40, 10, 80).fill(0xe6c34a);
+      popAt(ctx, book, x, -100, 1.0);
+      gsap.to(book, { y: y - 40, duration: fast ? 0.05 : 0.5, ease: 'power2.in' });
+      bang(ctx, mx, low, '¡OBJECIÓN!', 0xf7a1c4, 80);
+      sfx('hit', 1.0);
+      break;
+    }
+    case 'xp_gorrimiau': {
+      const comp = new Graphics().circle(0, 0, 50).fill(0xe8d3a8).stroke({ width: 7, color: 0x8a5a2b }).moveTo(0, 0).lineTo(dir * 38, -12).stroke({ width: 6, color: 0xc8102e });
+      popAt(ctx, comp, mx, my - 30, 1.3);
+      gsap.to(comp, { rotation: dir * 6, duration: fast ? 0.05 : 1.0, ease: 'power2.out' });
+      bang(ctx, mx, low, '¡ESA ES LA DIRECCIÓN!', 0xc49a3c, 58);
+      sfx('tick', 0.8);
+      break;
+    }
+    case 'xp_docmiauwn': {
+      veil(ctx, 0x0b1a3a, 0.4, 1.2);
+      const t1 = new Graphics().moveTo(mx - 160, my - 60).lineTo(mx + 160, my - 60).stroke({ width: 6, color: 0xff8c1a }).moveTo(mx - 160, my - 40).lineTo(mx + 160, my - 40).stroke({ width: 6, color: 0xff8c1a });
+      fleeting(ctx, t1, 0.9);
+      bang(ctx, mx, low, '¡GRAN MICHI SCOTT!', 0xff8c1a, 64);
+      sfx('zap', 1.0);
+      break;
+    }
+    case 'xp_pinkmiau': {
+      const fl2 = new Graphics().moveTo(-14, -50).lineTo(14, -50).lineTo(14, -20).lineTo(40, 40).lineTo(-40, 40).lineTo(-14, -20).closePath().fill({ color: 0xf7a1c4, alpha: 0.85 }).stroke({ width: 6, color: INK });
+      popAt(ctx, fl2, mx, my - 30, 1.1);
+      bang(ctx, mx, low, '¡SÍ, CIENCIA!', 0xf7a1c4, 66);
+      sfx('charge', 0.8);
+      break;
+    }
+    case 'xp_miauty': {
+      const sheet = new Graphics().rect(-80, -60, 160, 120).fill(0xf5f0e1).stroke({ width: 5, color: 0x6b4f2a });
+      for (let i = 0; i < 5; i++) sheet.moveTo(-60, -40 + i * 20).lineTo(60, -40 + i * 20).stroke({ width: 2, color: 0x6b4f2a });
+      popAt(ctx, sheet, mx, my - 30, 1.2);
+      bang(ctx, mx, low, '¡LAS CUENTAS CLARAS!', 0x6b4f2a, 58);
+      sfx('paper', 1.0);
+      break;
+    }
+    case 'xp_michincipe': {
+      const box = new Graphics().rect(-60, -40, 120, 80).fill(0xf2c94c).stroke({ width: 6, color: INK }).circle(-25, 0, 6).fill(INK).circle(0, 0, 6).fill(INK).circle(25, 0, 6).fill(INK);
+      popAt(ctx, box, mx, my - 30, 1.3);
+      word(ctx, mx, low, 'ADENTRO ESTÁ LO QUE NECESITAS', 0xf2c94c, 34, F.serif, 1.3);
+      sfx('reveal', 0.8);
+      break;
+    }
+    case 'xp_garjona': {
+      for (let i = 0; i < 3; i++) later(ctx, fast ? 10 : i * 200, () => word(ctx, mx + (i - 1) * 140, low - i * 20, ['Y LA HISTORIA…', '…SIGUE…', '…Y SIGUE'][i], 0xd4a017, 34, F.serif, 1.0));
+      sfx('purr', 0.8);
+      break;
+    }
+    case 'xp_shakimiau': {
+      ctx.shaker.add(fast ? 0.3 : 1.2);
+      bang(ctx, mx, low, '¡EL SUELO BAILA CONMIGO!', 0xe0a030, 60);
+      sfx('bigboom', 0.7);
+      break;
+    }
+    case 'xp_miaucol': {
+      const ball = new Graphics().circle(0, 0, 30).fill(0xe0702a).stroke({ width: 5, color: INK }).moveTo(-30, 0).lineTo(30, 0).moveTo(0, -30).lineTo(0, 30).stroke({ width: 3, color: INK });
+      popAt(ctx, ball, mx, my - 30, 1.1);
+      gsap.to(ball, { x: x, y: y - 40, duration: fast ? 0.05 : 0.9, ease: 'power1.inOut' });
+      bang(ctx, mx, low, '¡DESDE LA LÍNEA!', 0xce1141, 70);
+      sfx('whoosh', 1.0);
+      break;
+    }
     default: {
       sparkles(ctx.wfx, x, y, color, 16, 160);
       break;
@@ -1403,6 +1592,162 @@ function beat(ctx: UltCtx, e: UltEv) {
     // ---- Lamiau
     case 'mdpCurl':
       onomatopoeia(ctx.wfx, x, y - 100, '¡POR LA POPA!', { color: 0xffd23f, size: 60 });
+      break;
+    // ---------------------------------------------------------------- tanda 2 (agent PODERES-3)
+    case 'mdpBraid':
+      sparkles(ctx.wfx, x, y - 60, 0xc8102e, 12, 140);
+      break;
+    case 'mdpPin':
+      bang(ctx, x, y - 50, `LISTÓN ${n}/3`, 0xc8102e, 44);
+      spark(ctx, x, y, [0xc8102e, 0xe6c34a, 0x2bb3a3], 14, 160);
+      sfx('pencil', 1.1);
+      break;
+    case 'mdpBraidClose':
+    case 'mdpPinBlow':
+      bang(ctx, x, y - 80, '¡TRENZADO!', 0xe6c34a, 90);
+      spark(ctx, x, y, [0xc8102e, 0xe6c34a, 0x2bb3a3], 30, 300);
+      sfx('bigboom', 0.7);
+      break;
+    case 'mdpGuard':
+      sparkles(ctx.wfx, x, y - 40, 0xf4f1ea, 12, 120);
+      sfx('shield', 0.6);
+      break;
+    case 'mdpBite':
+      bang(ctx, x, y - 70, '¡ÑAM!', 0xff6b35, 70);
+      sfx('nyam', 0.9);
+      break;
+    case 'mdpTear':
+      spark(ctx, x, y - 20, [0x7fb2e5, 0xe8f1f8], 10, 400);
+      if (n === 7) bang(ctx, x, y - 90, '¡BUAAA!', 0x7fb2e5, 80);
+      sfx('splash', 0.5);
+      break;
+    case 'mdpWind':
+      speedLines(ctx.wfx, x, y - 60, 0x2bb3a3, 36, 0.5);
+      break;
+    case 'mdpFeather':
+      sparkles(ctx.wfx, x, y - 30, 0x2bb3a3, 10, 120);
+      label('SELLADO', 0x2bb3a3, 24, 90, 1.0);
+      break;
+    case 'mdpGuardian':
+      sparkles(ctx.wfx, x, y - 60, 0xe6c34a, 20, 220);
+      break;
+    case 'mdpSun':
+      bang(ctx, x, y - 90, n ? `¡${n} RAYOS!` : '¡SOL!', 0xe6c34a, 90);
+      if (fl) flash(ctx.overlay, 0xfff2a0, 0.4, 0.3);
+      ctx.shaker.add(0.8);
+      sfx('bigboom', 0.8);
+      break;
+    case 'mdpWager':
+      sparkles(ctx.wfx, x, y - 60, 0xf5f0e1, 12, 140);
+      break;
+    case 'mdpPearlWin':
+      bang(ctx, x, y - 100, '¡GANÉ LA APUESTA!', 0xf5f0e1, 76);
+      spark(ctx, x, y, [0xf5f0e1, 0x9fd8ff, 0xffffff], 30, 300);
+      sfx('fanfare', 0.7);
+      break;
+    case 'mdpPearlLose':
+      bang(ctx, x, y - 90, 'PERLA DE CONSOLACIÓN', 0xf5f0e1, 48);
+      sfx('coin', 0.6);
+      break;
+    case 'mdpConquest':
+      sparkles(ctx.wfx, x, y - 80, 0x1f3a93, 16, 200);
+      sfx('levelup', 0.5);
+      break;
+    case 'mdpMachine':
+    case 'mdpInvention':
+      sparkles(ctx.wfx, x, y - 50, 0xb5543a, 10, 120);
+      break;
+    case 'mdpPearl':
+      sparkles(ctx.wfx, x, y - 60, 0xf5f0e1, 14, 140);
+      label('+2 ESCUDOS (LA PERLA)', 0xf5f0e1, 24, 110, 1.1);
+      break;
+    case 'mdpWindow':
+    case 'mdpLight':
+      sparkles(ctx.wfx, x, y - 60, 0xf2d27a, 22, 260);
+      sfx('purr', 0.5);
+      break;
+    case 'mdpApple':
+      bang(ctx, x, y - 70, '¡PLONK!', 0xc0392b, 80);
+      break;
+    case 'mdpEncore':
+      label('EL PÚBLICO PIDE OTRA', 0xe8c7a0, 28, 160);
+      break;
+    case 'mdpEncoreHit':
+      bang(ctx, x, y - 90, '¡ENCORE!', 0xe8c7a0, 90);
+      sfx('fanfare', 0.6);
+      break;
+    case 'mdpMoon':
+      bang(ctx, x, y - 90, `¡LUNA LLENA x${n}!`, 0xf7a1c4, 72);
+      if (fl) flash(ctx.overlay, 0xfff3b0, 0.3, 0.3);
+      sfx('reveal', 0.9);
+      break;
+    case 'mdpDragon':
+      spark(ctx, x, y, [0x3a7bd5, 0xbfe3ff, 0xffffff], 10, 120);
+      break;
+    case 'mdpLine':
+      bang(ctx, x, y - 80, '¡LÍNEA!', 0x8a4dff, 100);
+      ctx.shaker.add(0.9);
+      sfx('levelup', 0.8);
+      break;
+    case 'mdpRaid':
+      label('CEGADO', 0xc49a3c, 26, 110, 1.0);
+      sfx('coin', 0.8);
+      break;
+    case 'mdpTrapSet':
+      sparkles(ctx.wfx, x, y, 0xc8102e, 6, 60);
+      break;
+    case 'mdpTrap':
+      bang(ctx, x, y - 70, ['¡LATA!', '¡AUCH, CALIENTE!', '¡CARRITOS!', '¡LA PLANCHA!'][n] ?? '¡TRAMPA!', 0xc8102e, 66);
+      sfx('hit', 1.0);
+      break;
+    case 'mdpTrapHit':
+      spark(ctx, x, y - 30, [0xc8102e, 0xf2c94c], 16, 240);
+      break;
+    case 'mdpBook':
+      bang(ctx, x, y - 80, '¡SE ACEPTA!', 0xf7a1c4, 70);
+      sfx('hit', 0.9);
+      break;
+    case 'mdpObjection':
+      bang(ctx, x, y - 90, '¡OBJECIÓN ACEPTADA!', 0xf7a1c4, 62);
+      sfx('crit', 0.8);
+      break;
+    case 'mdpCompass':
+      sparkles(ctx.wfx, x, y - 60, 0xc49a3c, 12, 140);
+      break;
+    case 'mdpCompassBend':
+      sparkles(ctx.wfx, x, y, 0xc49a3c, 8, 90);
+      break;
+    case 'mdpPast':
+      spark(ctx, x, y, [0xff8c1a, 0x9fd8ff], 12, 160);
+      break;
+    case 'mdpBolt':
+      bang(ctx, x, y - 90, '¡1.21 GIGAMIAUS!', 0xff8c1a, 64);
+      if (fl) flash(ctx.overlay, 0xbfe3ff, 0.4, 0.2);
+      sfx('zap', 1.0);
+      break;
+    case 'mdpLab':
+      spark(ctx, x, y - 30, [0xf7a1c4, 0xffffff, n ? 0x4fc3f7 : 0xf7a1c4], 18, 160);
+      break;
+    case 'mdpBalance':
+      bang(ctx, x, y - 90, n ? '¡CUADRADO!' : '¡INTERESES!', 0x6b4f2a, 76);
+      sfx('paper', 1.0);
+      break;
+    case 'mdpBox':
+      bang(ctx, x, y - 90, ['', '¡CURITAS!', '¡SIN ESCUDOS!', '¡BEEE!'][n] ?? '¡LA CAJA!', 0xf2c94c, 76);
+      sfx('pop', 0.9);
+      break;
+    case 'mdpMarked':
+      label('MARCADO: TUS TIROS x1.25', 0xd4a017, 26, 120);
+      break;
+    case 'mdpQuake':
+      bang(ctx, x, y - 100, '¡TERREMOTO!', 0xe0a030, 100);
+      ctx.shaker.add(1.4);
+      sfx('bigboom', 1.0);
+      break;
+    case 'mdpDunk':
+      bang(ctx, x, y - 90, n ? `¡CLAVADA! x${n} ANILLOS` : '¡CLAVADA!', 0xce1141, 80);
+      ctx.shaker.add(1.0);
+      sfx('bigboom', 0.9);
       break;
     default:
       break;

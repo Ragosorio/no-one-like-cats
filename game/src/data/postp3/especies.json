@@ -1375,7 +1375,10 @@
       "post": {
         "source": "casino:gacha",
         "weight": 10,
-        "vitrina": "gacha"
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_historia"
+        ]
       }
     },
     {
@@ -8395,6 +8398,2157 @@
         "vitrina": "gacha",
         "sets": [
           "set_pp_festival"
+        ]
+      }
+    },
+    {
+      "id": "xp_tetrimiau",
+      "name": "Tetrimiau",
+      "epithet": "el que Completa Filas",
+      "art": {
+        "slug": "tetrimiau_block_cat",
+        "tint": null,
+        "aura": [
+          "#ff7f6b",
+          "#7fd1b9",
+          "#e6c34a"
+        ]
+      },
+      "elements": [
+        "earth"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "tanque",
+      "worker": null,
+      "trait": "impaciente",
+      "battleForm": {
+        "name": "TETRIMIAU — LINE CLEAR FORM",
+        "cry": "FOUR LINES AT ONCE!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.tanque.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Pieza en L",
+          "cry": "Esa no cabe. Esa tampoco.",
+          "archetype": "roca",
+          "element": "earth",
+          "dmg": 66,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": null,
+          "statusTurns": 0,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una pieza en L que cae recta, encaja y aplasta."
+        },
+        "ultimate": {
+          "name": "LINE CLEAR! (ライン消去)",
+          "effect": "Cuatro piezas caen sobre su barco y completan una fila: la fila con más celdas de su barco DESAPARECE (solo aguantan, como pilares, las celdas que sostienen algo), y lo que estaba justo arriba se golpea al caer. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Acomoda todo. La comida, los juguetes y a los demás gatos.",
+        "star3": "★3: su tiro explota un poco más grande.",
+        "star5": "★5: LINE CLEAR! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir en la Tragamichis con fichas, en las líneas de GATO NEGRO.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Cuerpo cuadradito de piezas de colores de cuatro cuadros y una pieza que le cae en la cabeza.",
+      "lore": "Nació en una pantalla verde donde las piezas caen sin parar. Lleva años acomodándolas y nunca se acaban. Dice que el secreto es no desesperarse. Se desespera.",
+      "balanceName": "Tetrimiau",
+      "origin": "pixel",
+      "post": {
+        "source": "casino:slot",
+        "weight": 10,
+        "vitrina": "slot",
+        "sets": [
+          "set_pp_consola"
+        ]
+      }
+    },
+    {
+      "id": "xp_laracroqueta",
+      "name": "Lara Croqueta",
+      "epithet": "la Saqueadora de Alacenas",
+      "art": {
+        "slug": "laracroqueta_raider_cat",
+        "tint": null,
+        "aura": [
+          "#2bb3a3",
+          "#8b5a2b",
+          "#d62839"
+        ]
+      },
+      "elements": [
+        "nature"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "francotirador",
+      "worker": null,
+      "trait": "callejero",
+      "battleForm": {
+        "name": "LARA CROQUETA — PANTRY RAIDER FORM",
+        "cry": "EVERY TOMB HAS A SNACK!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.francotirador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Doble Puntito Rojo",
+          "cry": "¿Lo ves? Ahora ya no lo ves.",
+          "archetype": "haz",
+          "element": "light",
+          "dmg": 34,
+          "radius": 0.9,
+          "projectiles": 2,
+          "spreadDeg": 6,
+          "bounces": 0,
+          "pierce": 1,
+          "status": "cegado",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Dos puntitos rojos de puntero láser: el gato que los ve se distrae y queda Cegado."
+        },
+        "ultimate": {
+          "name": "RELIC RAID! (遺物の略奪)",
+          "effect": "Se cuelga de su barco con el gancho y saquea la alacena: le quita barra a cada gato suyo y la reparte entre tu tripulación. Antes de irse, le apunta con los dos punteros al gato que más barra tenía. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Ha explorado cien tumbas y nunca ha tirado nada. Bueno, una o dos cosas. De una repisa. A propósito.",
+        "star3": "★3: suelta un proyectil más.",
+        "star5": "★5: RELIC RAID! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el PORTAL MICHI te da un gato legendario o mítico.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Trenza larguísima, playera turquesa, short café y dos punteros láser en las fundas de los muslos.",
+      "lore": "Recorre templos olvidados, salta abismos y mueve palancas de piedra con una trenza que nunca se despeina. Dice que busca reliquias antiguas. La verdad es que busca alacenas: no hay tumba en el mundo sin una lata de atún escondida, y ella las ha encontrado todas.",
+      "balanceName": "Lara Croqueta",
+      "origin": "pixel",
+      "post": {
+        "source": "casino:gacha:michi",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_consola"
+        ]
+      }
+    },
+    {
+      "id": "xp_pobregatito",
+      "name": "Mi Pobre Gatito",
+      "epithet": "el de las Trampas de Navidad",
+      "art": {
+        "slug": "pobregatito_scream_cat",
+        "tint": null,
+        "aura": [
+          "#d62839",
+          "#ffd23f",
+          "#2e7d5b"
+        ]
+      },
+      "elements": [
+        "ice"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "controlador",
+      "worker": null,
+      "trait": "travieso",
+      "battleForm": {
+        "name": "MI POBRE GATITO — HOME DEFENSE FORM",
+        "cry": "THIS IS MY BOX! I HAVE TO DEFEND IT!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.controlador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Bola de Nieve con Sorpresa",
+          "cry": "¡Feliz Navidad! Cuidado con el escalón… y con la cubeta.",
+          "archetype": "carambano",
+          "element": "ice",
+          "dmg": 68,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "congelado",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una bola de nieve con una canica escondida adentro: deja Congelado."
+        },
+        "ultimate": {
+          "name": "HOME TRAPS! (おうちトラップ)",
+          "effect": "Arma la casa: esconde cuatro trampas en celdas de tu barco que el rival no ve. Cuando un tiro suyo toca una celda con trampa, no hace daño y la trampa le pega al que disparó: lata de pintura, perilla caliente, carritos de juguete o la plancha. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Se quedó solo en casa una Navidad y no extrañó a nadie. Bueno, un poquito. A la hora de cenar.",
+        "star3": "★3: Congelado dura un turno más.",
+        "star5": "★5: HOME TRAPS! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir del Gato Misterioso de La Caja cuando trae un legendario.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Las dos patas en los cachetes, la boca en «O», suéter rojo y una lata de pintura amarrada a una cuerda.",
+      "lore": "Su familia salió de vacaciones y se les olvidó en casa, con toda la Navidad para él solo. Comió helado, vio películas que no debía y, cuando dos ladrones quisieron entrar, convirtió la casa en una trampa gigante. Los ladrones todavía no se recuperan. Él sí: ya se terminó el helado.",
+      "balanceName": "Mi Pobre Gatito",
+      "origin": "pantalla",
+      "post": {
+        "source": "casino:caja",
+        "weight": 10,
+        "vitrina": "caja",
+        "sets": [
+          "set_pp_videoclub"
+        ]
+      }
+    },
+    {
+      "id": "xp_felinamente",
+      "name": "Felinamente Rubia",
+      "epithet": "la Abogada de Rosa",
+      "art": {
+        "slug": "felinamente_pink_cat",
+        "tint": null,
+        "aura": [
+          "#ff6fb5",
+          "#ffd23f",
+          "#ffffff"
+        ]
+      },
+      "elements": [
+        "magic"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "soporte",
+      "worker": null,
+      "trait": "presumido",
+      "battleForm": {
+        "name": "FELINAMENTE RUBIA — PINK COUNSEL FORM",
+        "cry": "OBJECTION! ALSO: CUTE SHOES."
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.soporte.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Libro de Leyes",
+          "cry": "Me leí todo el código civil entre manicura y manicura. Con brillito.",
+          "archetype": "runa",
+          "element": "magic",
+          "dmg": 60,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "maldito",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un libro de leyes forrado de rosa que cae abierto justo en el artículo exacto y deja Maldito."
+        },
+        "ultimate": {
+          "name": "OBJECTION SUSTAINED! (異議を認めます)",
+          "effect": "Arma una objeción: durante sus 3 turnos siguientes, el primer estado que le pongan a un gato tuyo se anula y se les regresa a TODOS sus gatos. Y abre el caso con un libro de leyes gigante sobre el gato suyo que más estados te haya puesto. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Estudió leyes en la mejor escuela del país sin dejar de usar rosa ni un solo día. Los libros también terminaron forrados de rosa: no tuvieron opción.",
+        "star3": "★3: Maldito dura un turno más.",
+        "star5": "★5: OBJECTION SUSTAINED! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir en la Tragamichis con fichas, en las líneas de GATO NEGRO.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Todo rosa, melena rubia brillante, un libro de leyes gordo y una gatita chiquita asomándose del bolso.",
+      "lore": "Todos creían que era pura melena y moños hasta que entró a la escuela de leyes más difícil del país y ganó su primer caso por saber algo que nadie más sabía: cómo se cuida un peinado. Nunca se quita el rosa. Su gatita va a todas las audiencias y nunca ha perdido una.",
+      "balanceName": "Felinamente Rubia",
+      "origin": "pantalla",
+      "post": {
+        "source": "casino:slot",
+        "weight": 10,
+        "vitrina": "slot",
+        "sets": [
+          "set_pp_videoclub"
+        ]
+      }
+    },
+    {
+      "id": "xp_pinkmiau",
+      "name": "Pinkmiau",
+      "epithet": "el Ayudante de Química",
+      "art": {
+        "slug": "pinkmiau_science_cat",
+        "tint": null,
+        "aura": [
+          "#4fc3f7",
+          "#ffd23f",
+          "#5b3a2a"
+        ]
+      },
+      "elements": [
+        "fire"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "invocador",
+      "worker": null,
+      "trait": "impaciente",
+      "battleForm": {
+        "name": "PINKMIAU — LAB PARTNER FORM",
+        "cry": "YO! IT BUBBLES, MICHI! IT BUBBLES!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.invocador.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Matraz Hirviendo",
+          "cry": "¡Goggles puestos! Esto va a burbujear.",
+          "archetype": "bola_rebote",
+          "element": "fire",
+          "dmg": 66,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "ardiendo",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un matraz que hierve con burbujas azules y deja Ardiendo."
+        },
+        "ultimate": {
+          "name": "LAB PARTNER! (実験の相棒)",
+          "effect": "Se pone los goggles y le pasa los frascos al profe: el resto de este turno y tus 2 siguientes, cada golpe de tu tripulación deja en su barco un estado más (Vapor) además del suyo. Si Heisenmiau está en tu tripulación, su química cuenta cada estado doble. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Tiene buen corazón y malas decisiones. Las dos cosas en cantidades industriales.",
+        "star3": "★3: Ardiendo dura un turno más.",
+        "star5": "★5: LAB PARTNER! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede ser el gato del premio del MODO ETERNO cuando ganas el 50/50.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Gorro tejido, sudadera enorme, goggles en la frente y un matraz azul que hace burbujas.",
+      "lore": "Era el peor alumno del profe de química y terminó de ayudante de laboratorio en una casa rodante en el desierto, haciendo caramelos de cristal azul. Grita mucho, se asusta más y tiene el corazón más grande del barco. Cuando algo burbujea, aplaude.",
+      "balanceName": "Pinkmiau",
+      "origin": "pantalla",
+      "post": {
+        "source": "casino:eterno",
+        "weight": 10,
+        "vitrina": "eterno",
+        "sets": [
+          "set_pp_series"
+        ]
+      }
+    },
+    {
+      "id": "xp_miauty",
+      "name": "Miauty la Fea",
+      "epithet": "la Secretaria Más Brillante",
+      "art": {
+        "slug": "miauty_glasses_cat",
+        "tint": null,
+        "aura": [
+          "#8b5a2b",
+          "#c9a66b",
+          "#3a7bd5"
+        ]
+      },
+      "elements": [
+        "crystal"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "tanque",
+      "worker": null,
+      "trait": "leal",
+      "battleForm": {
+        "name": "MIAUTY LA FEA — EXECUTIVE SECRETARY FORM",
+        "cry": "THE NUMBERS NEVER LIE… AND NEITHER DO I!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.tanque.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Carpetazo Contable",
+          "cry": "Con permiso, doctor: aquí están los números.",
+          "archetype": "bola_rebote",
+          "element": "crystal",
+          "dmg": 66,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "prisma",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una carpeta llena de cuentas perfectas que rebota en el escritorio y deja Prisma."
+        },
+        "ultimate": {
+          "name": "BALANCE SHEET! (帳簿の均衡)",
+          "effect": "Cuadra las cuentas: si a su barco le queda más vida que al tuyo (en proporción), le quita la mitad de la diferencia y con eso repara tu barco. Si vas ganando, cobra intereses: un carpetazo a su núcleo. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Lleva las cuentas de todo el barco en una libreta. Nunca se equivoca. Una vez se equivocó: era una mancha de café.",
+        "star3": "★3: Prisma dura un turno más.",
+        "star5": "★5: BALANCE SHEET! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir en la Tragamichis con fichas, en las líneas de GATO NEGRO.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Lentes enormes, brackets, fleco recto, chaleco de oficina y una carpeta llena de cuentas perfectas.",
+      "lore": "Era la secretaria más brillante de una empresa de modas donde nadie la volteaba a ver. Ella sola cuadraba las cuentas, salvaba la empresa y aguantaba los chismes de la oficina con una sonrisa llena de brackets. Al final todos entendieron lo que ella supo siempre: sin ella, esa empresa no duraba ni una semana.",
+      "balanceName": "Miauty la Fea",
+      "origin": "telenovela",
+      "post": {
+        "source": "casino:slot",
+        "weight": 10,
+        "vitrina": "slot",
+        "sets": [
+          "set_pp_latino"
+        ]
+      }
+    },
+    {
+      "id": "xp_garjona",
+      "name": "Ricardo Garjona",
+      "epithet": "el Trovador Chapín",
+      "art": {
+        "slug": "garjona_trova_cat",
+        "tint": null,
+        "aura": [
+          "#3b2a1a",
+          "#2e7d5b",
+          "#e6c34a"
+        ]
+      },
+      "elements": [
+        "nature"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "soporte",
+      "worker": null,
+      "trait": "chismoso",
+      "battleForm": {
+        "name": "RICARDO GARJONA — STORYTELLER FORM",
+        "cry": "LET ME TELL YOU A STORY…"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.soporte.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Verso Largo",
+          "cry": "Te voy a contar una historia… que dura cuatro minutos.",
+          "archetype": "semilla",
+          "element": "nature",
+          "dmg": 60,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "enraizado",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un verso que se enreda en la madera y deja Enraizado."
+        },
+        "ultimate": {
+          "name": "THE STORY GOES ON! (物語は続く)",
+          "effect": "Cuenta una historia que no se acaba: todo lo bueno de tu lado (escudos, refuerzos, poderes con turnos y los estados que les pusiste) dura 2 turnos más. Y lo que cuenta se vuelve verdad: el gato suyo que más daño te hizo queda Revelado y Marcado. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Cuenta historias de todos los gatos del puerto. Todos se reconocen. Ninguno lo admite.",
+        "star3": "★3: Enraizado dura un turno más.",
+        "star5": "★5: THE STORY GOES ON! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir en la Tragamichis con fichas, en las líneas de GATO NEGRO.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Sombrero de ala corta, barba y una guitarra que cuenta historias largas.",
+      "lore": "Salió de Guatemala con una guitarra y una libreta y le cantó al mundo entero historias de gente común. En el barco narra en versos todo lo que pasa. La tripulación ya no puede tener secretos.",
+      "balanceName": "Ricardo Garjona",
+      "origin": "p3d_pop",
+      "post": {
+        "source": "casino:slot",
+        "weight": 10,
+        "vitrina": "slot",
+        "sets": [
+          "set_pp_festival"
+        ]
+      }
+    },
+    {
+      "id": "xp_miaucol",
+      "name": "Miaucol Yordan",
+      "epithet": "el que Vuela desde la Línea",
+      "art": {
+        "slug": "miaucol_dunk_cat",
+        "tint": null,
+        "aura": [
+          "#d62839",
+          "#111111",
+          "#ffffff"
+        ]
+      },
+      "elements": [
+        "gravity"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "demoledor",
+      "worker": null,
+      "trait": "rencoroso",
+      "battleForm": {
+        "name": "MIAUCOL YORDAN — HANG TIME FORM",
+        "cry": "SIX RINGS AND A NAP!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.demoledor.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Clavada Flotante",
+          "cry": "Me quedo en el aire lo que yo quiera.",
+          "archetype": "orbe_gravitatorio",
+          "element": "gravity",
+          "dmg": 82,
+          "radius": 1.6,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "flotando",
+          "statusTurns": 2,
+          "gravityMul": 0.6,
+          "speedMul": 1,
+          "special": "Un balón que sube, se queda colgado en el aire un segundo de más y cae a plomo. Deja Flotando."
+        },
+        "ultimate": {
+          "name": "DUNK FROM THE LINE! (フリースローダンク)",
+          "effect": "Despega desde la línea de tiro libre y clava sobre su núcleo pasando por encima de todo. Pega más por cada gato suyo que tu tripulación ya noqueó en la batalla: un anillo por cada uno, hasta seis. Sin anillos, el clavado además deja Aturdido a su gato con más barra. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Perdió una vez en el patio de la escuela. Desde entonces no ha dejado de ganar, ni de acordarse.",
+        "star3": "★3: Flotando dura un turno más.",
+        "star5": "★5: DUNK FROM THE LINE! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el PORTAL MICHI te da un gato legendario o mítico.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Jersey rojo con el 23, muñequeras, la lengua de fuera y un salto que parece que nunca baja.",
+      "lore": "Dicen que de chiquito no lo dejaron entrar al equipo de la escuela y que desde ese día no se le quitaron las ganas de ganar. Despega desde la línea de tiro libre, se queda en el aire más de lo que permite la física y clava. Seis anillos, seis siestas de campeón. No necesariamente en ese orden.",
+      "balanceName": "Miaucol Yordan",
+      "origin": "estadio",
+      "post": {
+        "source": "casino:gacha:michi",
+        "weight": 4,
+        "vitrina": "gacha",
+        "star": true
+      }
+    },
+    {
+      "id": "xp_cleogatra",
+      "name": "Cleogatra",
+      "epithet": "la que Llegó Enrollada",
+      "art": {
+        "slug": "cleogatra_rug_cat",
+        "tint": null,
+        "aura": [
+          "#e6c34a",
+          "#1b5e9e",
+          "#2bb3a3"
+        ]
+      },
+      "elements": [
+        "crystal"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "asediador",
+      "worker": null,
+      "trait": "presumido",
+      "battleForm": {
+        "name": "CLEOGATRA — QUEEN OF THE NILE FORM",
+        "cry": "I ARRIVED ROLLED IN A RUG. BOW ANYWAY."
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.asediador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Perla al Vinagre",
+          "cry": "Apuesto a que no la esquivas.",
+          "archetype": "bola_rebote",
+          "element": "crystal",
+          "dmg": 64,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "prisma",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una perla que cae en un chorrito de vinagre, se disuelve brillando y deja Prisma."
+        },
+        "ultimate": {
+          "name": "THE PEARL WAGER! (真珠の賭け)",
+          "effect": "Apuesta su perla más grande: durante 2 turnos se cuenta el daño. Si tu tripulación le hizo más daño a su barco que ellos al tuyo, gana la apuesta: la perla se disuelve sobre sus 3 mejores módulos con un golpe enorme y tu tripulación gana barra. Si pierde, la perla regresa a su pata y les cae en el núcleo de consolación. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Habla nueve idiomas. En los nueve dice lo mismo: «sírvanme primero».",
+        "star3": "★3: Prisma dura un turno más.",
+        "star5": "★5: THE PEARL WAGER! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el Portal te da un gato legendario o mítico (cualquier estandarte).",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Melena negra con flequillo recto, diadema de cobra, delineado largo y una alfombra enrollada bajo el brazo.",
+      "lore": "Para colarse al palacio sin que la vieran se hizo enrollar en una alfombra. Le funcionó tan bien que ahora entra así a todos lados. Una vez apostó que podía dar la cena más cara del mundo y disolvió una perla en vinagre. Ganó la apuesta. La cena sabía horrible.",
+      "balanceName": "Cleogatra",
+      "origin": "historia",
+      "post": {
+        "source": "casino:gacha",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_piramides",
+          "set_pp_historia"
+        ]
+      }
+    },
+    {
+      "id": "xp_miausagi",
+      "name": "Miausagi",
+      "epithet": "la de los Chongos de Luna",
+      "art": {
+        "slug": "miausagi_moon_cat",
+        "tint": null,
+        "aura": [
+          "#ffd23f",
+          "#3a7bd5",
+          "#ff6f91"
+        ]
+      },
+      "elements": [
+        "cosmic"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "artillero",
+      "worker": null,
+      "trait": "dormilon",
+      "battleForm": {
+        "name": "MIAUSAGI — MOONLIGHT GUARDIAN FORM",
+        "cry": "THE MOON WAS A BOWL ALL ALONG!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.artillero.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Diadema Bumerán",
+          "cry": "¡Llegué tarde, pero llegué!",
+          "archetype": "bola_rebote",
+          "element": "cosmic",
+          "dmg": 74,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 1,
+          "pierce": 0,
+          "status": "ingravido",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Su diadema sale girando como disco, rebota una vez y regresa; deja Ingrávido."
+        },
+        "ultimate": {
+          "name": "FULL MOON UNITY! (満月の絆)",
+          "effect": "Levanta su varita y llama a sus amigas: un rayo de luna llena cae sobre su barco, más grande y más fuerte por cada elemento distinto que haya en tu tripulación. Y por la amistad, cada gato tuyo gana barra. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Llora, come y llega tarde. Luego salva el mundo. En ese orden, siempre.",
+        "star3": "★3: Ingrávido dura un turno más.",
+        "star5": "★5: FULL MOON UNITY! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el PORTAL MICHI te da un gato legendario o mítico.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Dos chongos con coletas larguísimas, uniforme de marinerita y una varita de juguete con un cascabel de luna.",
+      "lore": "Era una gatita normal, floja y comelona, hasta que le dieron una varita y le dijeron que era la guardiana de la luna. Se transforma entre listones y brillitos, pelea por el amor y por la última croqueta, y llora a gritos cuando pierde. Sus amigas siempre llegan. Ella, tarde.",
+      "balanceName": "Miausagi",
+      "origin": "p3d_anime",
+      "post": {
+        "source": "casino:gacha:michi",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_shonen"
+        ]
+      }
+    },
+    {
+      "id": "xp_tanjimiau",
+      "name": "Tanjimiau",
+      "epithet": "el de la Caja a la Espalda",
+      "art": {
+        "slug": "tanjimiau_box_cat",
+        "tint": null,
+        "aura": [
+          "#2e7d5b",
+          "#1b1b1b",
+          "#d62839"
+        ]
+      },
+      "elements": [
+        "water"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "demoledor",
+      "worker": null,
+      "trait": "leal",
+      "battleForm": {
+        "name": "TANJIMIAU — WATER BREATH FORM",
+        "cry": "BREATHE… AND PURR!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.demoledor.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Corte de Agua",
+          "cry": "Huele a que vas a fallar.",
+          "archetype": "torpedo",
+          "element": "water",
+          "dmg": 82,
+          "radius": 1.6,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "mojado",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un corte que fluye como río y deja Mojado."
+        },
+        "ultimate": {
+          "name": "FLOWING DRAGON! (流れる龍)",
+          "effect": "Respira hondo y suelta un dragón de agua que le da la vuelta a su barco por el borde, celda por celda, y cada celda que toca le pega más que la anterior. Al final, la caja se abre tantito: su hermanita patea la última celda. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Huele las emociones. Casi siempre huele hambre. La suya.",
+        "star3": "★3: Mojado dura un turno más.",
+        "star5": "★5: FLOWING DRAGON! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el PORTAL MICHI te da un gato legendario o mítico.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Haori a cuadros verde y negro y una caja de madera a la espalda que a veces se mueve sola.",
+      "lore": "Carga a su hermanita en una caja de madera por todo el mundo buscando una cura. Es el gato más amable que vas a conocer: hasta a sus rivales les pide perdón antes de cortarlos.",
+      "balanceName": "Tanjimiau",
+      "origin": "p3d_anime",
+      "post": {
+        "source": "casino:gacha:michi",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_shonen"
+        ]
+      }
+    },
+    {
+      "id": "xp_gorrimiau",
+      "name": "Capitán Gorrimiau",
+      "epithet": "el de la Brújula que Apunta al Atún",
+      "art": {
+        "slug": "gorrimiau_compass_cat",
+        "tint": null,
+        "aura": [
+          "#5b3a2a",
+          "#c8102e",
+          "#e6c34a"
+        ]
+      },
+      "elements": [
+        "shadow"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "francotirador",
+      "worker": null,
+      "trait": "callejero",
+      "battleForm": {
+        "name": "CAPITÁN GORRIMIAU — CURSED SWASHBUCKLER FORM",
+        "cry": "THE COMPASS SAYS TUNA!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.francotirador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Trabucazo de Corcho",
+          "cry": "Tengo un plan. Bueno, tengo media brújula.",
+          "archetype": "sombra",
+          "element": "shadow",
+          "dmg": 84,
+          "radius": 0.9,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 1,
+          "status": "maldito",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un tapón de corcho disparado desde un trabuco viejo que zigzaguea como mareado y deja Maldito."
+        },
+        "ultimate": {
+          "name": "THE COMPASS SAYS TUNA! (羅針盤はマグロを指す)",
+          "effect": "Abre la brújula que no apunta al norte, sino a lo que más quieres: el resto de este turno y tus 2 siguientes, cada tiro de tu tripulación se curva en el aire hacia el gato suyo con más barra. Si ese gato cae, el capitán se queda con su barra. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Nunca ha ganado una pelea limpia. Nunca ha perdido una tampoco. Nadie entiende cómo.",
+        "star3": "★3: Maldito dura un turno más.",
+        "star5": "★5: THE COMPASS SAYS TUNA! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede ser el gato del premio del MODO ETERNO cuando ganas el 50/50.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Tricornio con pañuelo rojo, rastas con cuentas, ojos delineados y una brújula que apunta a una lata de atún.",
+      "lore": "Es el capitán pirata más raro de los siete mares: camina como si el barco se moviera aunque esté en tierra, habla en acertijos y siempre escapa en el último segundo. Su brújula no apunta al norte: apunta a lo que más quieres. La suya, siempre, a una lata de atún.",
+      "balanceName": "Capitán Gorrimiau",
+      "origin": "pantalla",
+      "post": {
+        "source": "casino:eterno",
+        "weight": 10,
+        "vitrina": "eterno",
+        "sets": [
+          "set_pp_videoclub"
+        ]
+      }
+    },
+    {
+      "id": "xp_docmiauwn",
+      "name": "Doc Miauwn",
+      "epithet": "el que Arregla el Pasado",
+      "art": {
+        "slug": "docmiauwn_time_cat",
+        "tint": null,
+        "aura": [
+          "#ffffff",
+          "#3a7bd5",
+          "#ffd23f"
+        ]
+      },
+      "elements": [
+        "storm"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "asediador",
+      "worker": null,
+      "trait": "impaciente",
+      "battleForm": {
+        "name": "DOC MIAUWN — TIME TRAVELER FORM",
+        "cry": "GREAT SCRATCH!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.asediador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Rayo de la Torre",
+          "cry": "¡Uno punto veintiún gigamiaus!",
+          "archetype": "rayo",
+          "element": "storm",
+          "dmg": 64,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "cargado",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un rayo que cae justo a la hora exacta, como si ya supiera cuándo, y deja Cargado."
+        },
+        "ultimate": {
+          "name": "FIX THE PAST! (過去を直せ)",
+          "effect": "Viaja al pasado y arregla tus errores: los tiros de tu tripulación que fallaron en esta batalla regresan del pasado, uno tras otro, y esta vez pegan en su barco, en el punto más cercano a donde iban. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Inventó una máquina del tiempo y la usa sobre todo para llegar a la hora de la comida.",
+        "star3": "★3: Cargado dura un turno más.",
+        "star5": "★5: FIX THE PAST! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir del Gato Misterioso de La Caja cuando trae un legendario.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Pelo blanco disparado, bata de laboratorio, goggles en la frente y un aparato en forma de Y que brilla.",
+      "lore": "Es el científico más despeinado de la ciudad. Convirtió un coche plateado en máquina del tiempo y, para encenderla, necesita que un rayo le caiga a la torre del reloj justo a la hora exacta. Ha cambiado el pasado tres veces. Las tres fue para no tirar un vaso de la mesa.",
+      "balanceName": "Doc Miauwn",
+      "origin": "pantalla",
+      "post": {
+        "source": "casino:caja",
+        "weight": 4,
+        "vitrina": "caja",
+        "star": true,
+        "sets": [
+          "set_pp_videoclub"
+        ]
+      }
+    },
+    {
+      "id": "xp_michincipe",
+      "name": "El Michíncipe",
+      "epithet": "el del Asteroide de Bolsillo",
+      "art": {
+        "slug": "michincipe_asteroid_cat",
+        "tint": null,
+        "aura": [
+          "#ffd23f",
+          "#2e7d5b",
+          "#3a7bd5"
+        ]
+      },
+      "elements": [
+        "cosmic"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "invocador",
+      "worker": null,
+      "trait": "curioso",
+      "battleForm": {
+        "name": "EL MICHÍNCIPE — LITTLE ASTEROID FORM",
+        "cry": "DRAW ME A BOX!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.invocador.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Atardecer de Bolsillo",
+          "cry": "Lo esencial es invisible a los bigotes.",
+          "archetype": "orbe_gravitatorio",
+          "element": "cosmic",
+          "dmg": 66,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "ingravido",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un atardecer chiquito que rueda por el aire y deja Ingrávido. Él ve cuarenta y cuatro al día."
+        },
+        "ultimate": {
+          "name": "THE SHEEP IN THE BOX! (箱の中の羊)",
+          "effect": "Dibuja una caja con tres agujeritos: adentro está exactamente lo que necesitas. Si tu tripulación está muy herida, la cura; si ellos tienen escudos o barreras, se los quita; si no, el borrego sale a toda velocidad y embiste su núcleo. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Cuida una sola rosa como si fuera la única del universo. Para él, lo es. A los baobabs les tiene cero paciencia.",
+        "star3": "★3: Ingrávido dura un turno más.",
+        "star5": "★5: THE SHEEP IN THE BOX! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir del Gato Misterioso de La Caja cuando trae un legendario.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Bufanda dorada al viento, un asteroide del tamaño de una pelota y una rosa bajo una campana de vidrio.",
+      "lore": "Vive en un asteroide tan chiquito que le da la vuelta en tres pasos y ve el atardecer cuarenta y cuatro veces en un día moviendo su silla. Cuida una rosa, barre sus volcanes y arranca los baobabs antes de que crezcan. Un día le pidió a un piloto que le dibujara un borrego. El piloto dibujó una caja. Fue perfecto.",
+      "balanceName": "El Michíncipe",
+      "origin": "p3d_libros",
+      "post": {
+        "source": "casino:caja",
+        "weight": 10,
+        "vitrina": "caja"
+      }
+    },
+    {
+      "id": "xp_shakimiau",
+      "name": "Shakimiau",
+      "epithet": "la que Hace Temblar el Escenario",
+      "art": {
+        "slug": "shakimiau_quake_cat",
+        "tint": null,
+        "aura": [
+          "#e6c34a",
+          "#d9482b",
+          "#3a7bd5"
+        ]
+      },
+      "elements": [
+        "earth"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "demoledor",
+      "worker": null,
+      "trait": "presumido",
+      "battleForm": {
+        "name": "SHAKIMIAU — SEISMIC DANCE FORM",
+        "cry": "THE GROUND DANCES WITH ME!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.demoledor.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Paso Sísmico",
+          "cry": "Esto se baila así.",
+          "archetype": "roca",
+          "element": "earth",
+          "dmg": 82,
+          "radius": 1.6,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": null,
+          "statusTurns": 0,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un paso de baile que hace temblar la madera."
+        },
+        "ultimate": {
+          "name": "SEISMIC DANCE! (地震ダンス)",
+          "effect": "Baila tan fuerte que tiembla el mar: cada celda de su barco recibe un golpecito y TODA celda que quede por debajo del 30 % de su vida se derrumba (menos las que sostienen algo). Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Baila tan bien que los cañones del barco se mueven solos.",
+        "star3": "★3: su tiro explota un poco más grande.",
+        "star5": "★5: SEISMIC DANCE! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir en la Tragamichis con fichas, en las líneas de GATO NEGRO.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Melena rubia muy ondulada, cinturón de monedas, pulseras doradas y un baile que hace temblar el piso.",
+      "lore": "Llegó de una costa caribeña con una voz enorme y un baile que nadie había visto, y puso a bailar al mundo entero. Dicen que cuando baila, los sismógrafos de tres países se ponen nerviosos. Es verdad. Lo comprobamos.",
+      "balanceName": "Shakimiau",
+      "origin": "p3d_pop",
+      "post": {
+        "source": "casino:slot",
+        "weight": 4,
+        "vitrina": "slot",
+        "star": true,
+        "sets": [
+          "set_pp_festival"
+        ]
+      }
+    },
+    {
+      "id": "xp_sombreronron",
+      "name": "El Sombreronrón",
+      "epithet": "el que Trenza Bigotes",
+      "art": {
+        "slug": "sombreronron_braid_cat",
+        "tint": null,
+        "aura": [
+          "#1b1b2f",
+          "#c8102e",
+          "#e6c34a"
+        ]
+      },
+      "elements": [
+        "magic"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "asediador",
+      "worker": null,
+      "trait": "travieso",
+      "battleForm": {
+        "name": "EL SOMBRERONRÓN — MIDNIGHT SERENADE FORM",
+        "cry": "HOLD STILL, I'M BRAIDING!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.asediador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Trencita Encantada",
+          "cry": "¿Me dejas peinarte? No era pregunta.",
+          "archetype": "runa",
+          "element": "magic",
+          "dmg": 64,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "enraizado",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un listón encantado que vuela girando y trenza lo que toca: deja Enraizado."
+        },
+        "ultimate": {
+          "name": "MIDNIGHT BRAID! (真夜中の三つ編み)",
+          "effect": "Trenza la medianoche: tus próximos 3 impactos (de cualquier gato tuyo, este turno y los 2 siguientes) clavan un listón en su barco. Con el tercero la trenza se cierra: toda celda suya dentro del triángulo de los tres listones recibe un golpe y queda Enraizada, y los gatos de adentro amanecen con los bigotes trenzados (no ganan barra un turno). Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Le trenza los bigotes a todo gato que se duerma cerca. Despiertan elegantísimos y furiosos.",
+        "star3": "★3: Enraizado dura un turno más.",
+        "star5": "★5: MIDNIGHT BRAID! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir en la Tragamichis con fichas, en las líneas de GATO NEGRO.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Un gatito chiquito bajo un sombrero enorme, con una guitarrita y los bigotes llenos de trencitas.",
+      "lore": "Sale a medianoche por los callejones empedrados con un sombrero más grande que él y una guitarra chiquita. Cuando un gato le cae bien, le canta bajo la ventana y le trenza los bigotes mientras duerme. Dicen que la única forma de que se vaya es cortarse las trenzas. Nadie quiere: quedan preciosas.",
+      "balanceName": "El Sombreronrón",
+      "origin": "leyendas",
+      "post": {
+        "source": "casino:slot",
+        "weight": 10,
+        "vitrina": "slot",
+        "sets": [
+          "set_pp_leyendas"
+        ]
+      }
+    },
+    {
+      "id": "xp_gatejo",
+      "name": "El Gatejo",
+      "epithet": "el que te Acompaña de Noche",
+      "art": {
+        "slug": "gatejo_twospirit_cat",
+        "tint": null,
+        "aura": [
+          "#f4f1ea",
+          "#111111",
+          "#ff6b35"
+        ]
+      },
+      "elements": [
+        "void"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "invocador",
+      "worker": null,
+      "trait": "leal",
+      "battleForm": {
+        "name": "EL GATEJO — TWO SPIRITS FORM",
+        "cry": "NOBODY WALKS ALONE TONIGHT!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.invocador.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Mordida de Neblina",
+          "cry": "Tranquilo. Te acompaño hasta tu casa.",
+          "archetype": "borrado",
+          "element": "void",
+          "dmg": 66,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "vacio",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un mordisco de neblina que sale de la noche y deja Borrado lo que toca."
+        },
+        "ultimate": {
+          "name": "TWO CADEJOS! (二匹のカデホ)",
+          "effect": "Se parte en dos: el Gatejo blanco cuida a cada gato tuyo que esté solo (sin otro camarote tuyo pegado) y le da 2 escudos; el Gatejo negro va por cada gato suyo que esté solo, le muerde fuerte y lo deja Maldito. Si de un lado nadie está solo, ese espíritu va con el más débil. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "De noche camina detrás de cualquier gato que ande solo. A los buenos los cuida. A los malos también, pero viéndolos feo.",
+        "star3": "★3: Borrado dura un turno más.",
+        "star5": "★5: TWO CADEJOS! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el MULTIVERSO HOLO te da un gato legendario o mítico.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Mitad blanco y mitad negro, un ojo azul y otro de brasa, y una cadena rota que suena cuando te sigue.",
+      "lore": "Es dos espíritus en un solo gato. El blanco acompaña a los que vuelven tarde a casa y los deja en la puerta sanos y salvos. El negro le sale al paso al que anda en malos pasos. Nadie sabe cuál de los dos le va a tocar. Él tampoco: depende de qué lado se despierte.",
+      "balanceName": "El Gatejo",
+      "origin": "leyendas",
+      "post": {
+        "source": "casino:gacha:holo",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_leyendas"
+        ]
+      }
+    },
+    {
+      "id": "xp_maullorona",
+      "name": "La Maullorona",
+      "epithet": "la que Busca a sus Gatitos",
+      "art": {
+        "slug": "maullorona_veil_cat",
+        "tint": null,
+        "aura": [
+          "#e8f1f8",
+          "#3a5a8c",
+          "#c9d6e8"
+        ]
+      },
+      "elements": [
+        "water"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "francotirador",
+      "worker": null,
+      "trait": "miedoso",
+      "battleForm": {
+        "name": "LA MAULLORONA — RIVER VEIL FORM",
+        "cry": "MY KITTENS! WHERE ARE MY KITTENS?"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.francotirador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Lagrimón",
+          "cry": "¡Aaay, mis gatitos!… ah, no, ahí están.",
+          "archetype": "torpedo",
+          "element": "water",
+          "dmg": 84,
+          "radius": 0.9,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 1,
+          "status": "mojado",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una lágrima del tamaño de un melón que cae con todo el sentimiento y deja Mojado."
+        },
+        "ultimate": {
+          "name": "WEEPING RIVER! (嘆きの川)",
+          "effect": "Llora un río: siete lagrimones caen uno por uno sobre sus gatos, cada uno sobre el que tenga menos vida en ese momento, y pegan más mientras más herido esté. Si uno cae, el siguiente lagrimón sigue buscando. Todo lo que tocan queda Mojado. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Llora tanto que el barco nunca necesita que lo trapeen.",
+        "star3": "★3: Mojado dura un turno más.",
+        "star5": "★5: WEEPING RIVER! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el MULTIVERSO HOLO te da un gato legendario o mítico.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Velo blanco larguísimo, vestido que le tapa las patas y unos ojos llenos de lagrimones… tierna, no de miedo.",
+      "lore": "Recorre la orilla de los ríos de noche llorando a todo pulmón porque no encuentra a sus gatitos. Siempre están jugando a las escondidas dentro de una caja. Siempre. Cada noche los encuentra, los abraza y se le olvida contarlos. Al día siguiente, otra vez.",
+      "balanceName": "La Maullorona",
+      "origin": "leyendas",
+      "post": {
+        "source": "casino:gacha:holo",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_leyendas"
+        ]
+      }
+    },
+    {
+      "id": "xp_quetzalgatl",
+      "name": "Quetzalgatl",
+      "epithet": "el Gato Emplumado",
+      "art": {
+        "slug": "quetzalgatl_feather_cat",
+        "tint": null,
+        "aura": [
+          "#1f8a5b",
+          "#c8102e",
+          "#e6c34a"
+        ]
+      },
+      "elements": [
+        "storm"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "controlador",
+      "worker": null,
+      "trait": "curioso",
+      "battleForm": {
+        "name": "QUETZALGATL — FEATHERED WIND FORM",
+        "cry": "THE WIND HAS FEATHERS TODAY!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.controlador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Soplo Emplumado",
+          "cry": "El viento es mío. Las plumas también.",
+          "archetype": "rafaga",
+          "element": "storm",
+          "dmg": 68,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "corriente",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un soplo de viento lleno de plumas que empuja de lado su siguiente tiro."
+        },
+        "ultimate": {
+          "name": "FEATHERED WIND! (羽毛の風)",
+          "effect": "El viento se vuelve suyo: el resto de este turno y tus 3 siguientes sopla con toda su fuerza de tu barco hacia el de ellos, a favor de tus tiros y en contra de los suyos. Y cinco plumas caen en sus cañones: quedan Sellados un turno. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Le enseñó a la humanidad a cultivar maíz. A los gatos les enseñó a tirarlo de la mesa.",
+        "star3": "★3: Corriente dura un turno más.",
+        "star5": "★5: FEATHERED WIND! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el Portal te da un gato legendario o mítico (cualquier estandarte).",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Una cola larguísima de plumas verdes como serpiente, gorguera de plumas y colores de códice antiguo.",
+      "lore": "Era una serpiente con plumas de quetzal que traía el viento, barría el camino a la lluvia y regaló el maíz. En este universo es gato y conserva la cola de serpiente emplumada, que usa sobre todo para tumbar vasos. Cuando sopla, hasta los cañones se despeinan.",
+      "balanceName": "Quetzalgatl",
+      "origin": "mitos",
+      "post": {
+        "source": "casino:gacha",
+        "weight": 4,
+        "vitrina": "gacha",
+        "star": true,
+        "sets": [
+          "set_pp_piramides"
+        ]
+      }
+    },
+    {
+      "id": "xp_bastet",
+      "name": "Bastet",
+      "epithet": "la Señora del Hogar",
+      "art": {
+        "slug": "bastet_sun_cat",
+        "tint": null,
+        "aura": [
+          "#111111",
+          "#e6c34a",
+          "#2a4fa0"
+        ]
+      },
+      "elements": [
+        "light"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "tanque",
+      "worker": null,
+      "trait": "leal",
+      "battleForm": {
+        "name": "BASTET — GUARDIAN OF THE HOME FORM",
+        "cry": "THIS HOME IS PROTECTED!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.tanque.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Rayo de Sistro",
+          "cry": "Esta casa no se toca.",
+          "archetype": "haz",
+          "element": "light",
+          "dmg": 66,
+          "radius": 1.3,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "cegado",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un rayo de sol que suena a sistro y deja Cegado."
+        },
+        "ultimate": {
+          "name": "HOME GUARDIAN! (家の守護神)",
+          "effect": "Protege la casa: durante sus 3 turnos siguientes ninguna celda tuya baja del 30 % de su vida (los golpes se quedan en la raya). Cada golpe que choca con la raya alimenta el disco de sol, y al final el sol cae sobre su núcleo con todo lo juntado. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Era diosa antes de que existieran los sillones. Igual prefiere los sillones.",
+        "star3": "★3: Cegado dura un turno más.",
+        "star5": "★5: HOME GUARDIAN! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el Portal te da un gato legendario o mítico (cualquier estandarte).",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Gata negra esbelta, collar de oro y lapislázuli, un arete de oro y un disco de sol sobre la cabeza.",
+      "lore": "La adoraban en una ciudad entera hace miles de años y cuidaba los hogares de las cosas feas. Sigue haciéndolo. Ahora además exige que le rasquen la barbilla. Siempre lo exigió.",
+      "balanceName": "Bastet",
+      "origin": "mitos",
+      "post": {
+        "source": "casino:gacha",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_piramides"
+        ]
+      }
+    },
+    {
+      "id": "xp_bonapata",
+      "name": "Napoleón Bonapata",
+      "epithet": "el que Conquistó el Sillón",
+      "art": {
+        "slug": "bonapata_bicorne_cat",
+        "tint": null,
+        "aura": [
+          "#1f3a8a",
+          "#c8102e",
+          "#e6c34a"
+        ]
+      },
+      "elements": [
+        "fire"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "artillero",
+      "worker": null,
+      "trait": "bravucon",
+      "battleForm": {
+        "name": "NAPOLEÓN BONAPATA — GRAND ARMY FORM",
+        "cry": "I'M NOT SHORT! THE BOX IS JUST TALL!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.artillero.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Bala de Cañón Imperial",
+          "cry": "¡Artillería, fuego! …y luego siesta.",
+          "archetype": "bola_rebote",
+          "element": "fire",
+          "dmg": 74,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 1,
+          "pierce": 0,
+          "status": "ardiendo",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una bala de cañón de las de antes que rebota una vez y deja Ardiendo."
+        },
+        "ultimate": {
+          "name": "GRAND CONQUEST! (大征服)",
+          "effect": "Clava su bandera: el resto de este turno y tus 2 siguientes, cada celda suya que tu tripulación destruya se vuelve territorio conquistado, y cada territorio sube el daño de toda tu tripulación hasta el final de la batalla. Abre la campaña con un bicornio de fuego donde apuntas. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Duerme cuatro horas al día. Las otras veinte también, pero dice que es estrategia.",
+        "star3": "★3: Ardiendo dura un turno más.",
+        "star5": "★5: GRAND CONQUEST! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede ser el gato del premio del MODO ETERNO cuando ganas el 50/50.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Bicornio negro de lado, una pata metida en el chaleco y una caja de cartón para verse más alto.",
+      "lore": "Empezó como oficial de artillería y terminó conquistando media Europa, o eso cuenta él. En este universo conquistó el sillón, la cama y la caja más grande de la casa. Le dicen bajito y se ofende muchísimo: en su época medía lo normal. Ahora mide lo que mide la caja.",
+      "balanceName": "Napoleón Bonapata",
+      "origin": "historia",
+      "post": {
+        "source": "casino:eterno",
+        "weight": 10,
+        "vitrina": "eterno",
+        "sets": [
+          "set_pp_historia"
+        ]
+      }
+    },
+    {
+      "id": "xp_leonardo",
+      "name": "Leonardo da Michi",
+      "epithet": "el que Inventó Todo Antes",
+      "art": {
+        "slug": "leonardo_codex_cat",
+        "tint": null,
+        "aura": [
+          "#8b5a2b",
+          "#c0392b",
+          "#f2e1c9"
+        ]
+      },
+      "elements": [
+        "time"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "invocador",
+      "worker": null,
+      "trait": "curioso",
+      "battleForm": {
+        "name": "LEONARDO DA MICHI — RENAISSANCE GENIUS FORM",
+        "cry": "I DREW THIS FIVE HUNDRED YEARS AGO!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.invocador.hp",
+        "recarga": 2,
+        "shot": {
+          "name": "Boceto Volador",
+          "cry": "Lo diseñé hace siglos. Hoy por fin funciona.",
+          "archetype": "reloj",
+          "element": "time",
+          "dmg": 66,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": null,
+          "statusTurns": 0,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un boceto que se dobla solo en avioncito, vuela recto y explota en tinta sepia."
+        },
+        "ultimate": {
+          "name": "CODEX OF INVENTIONS! (発明の手稿)",
+          "effect": "Abre su cuaderno y le inventa una máquina a cada gato tuyo según lo que hace: el próximo tiro de cada uno sale mejorado (más proyectiles, perforación, radio, rebotes, estados más largos, curas, escudos o un tiro repetido). Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Escribe al revés, como en espejo, para que nadie le copie las ideas. Ni él las entiende.",
+        "star3": "★3: su tiro explota un poco más grande.",
+        "star5": "★5: CODEX OF INVENTIONS! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el MULTIVERSO HOLO te da un gato legendario o mítico.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Barba larga y blanca, boina, alas de madera y lona en la espalda y un cuaderno lleno de bocetos.",
+      "lore": "Pintaba, esculpía, diseñaba máquinas voladoras y estudiaba cómo se mueve todo, colas incluidas. En este universo pintó la sonrisa más famosa del museo y todavía no le cuenta a nadie de qué se reía la modelo. Sus inventos funcionan… con quinientos años de retraso.",
+      "balanceName": "Leonardo da Michi",
+      "origin": "historia",
+      "post": {
+        "source": "casino:gacha:holo",
+        "weight": 4,
+        "vitrina": "gacha",
+        "star": true,
+        "sets": [
+          "set_pp_historia",
+          "set_pp_museo"
+        ]
+      }
+    },
+    {
+      "id": "xp_perla",
+      "name": "La Michi de la Perla",
+      "epithet": "la que Voltea a Verte",
+      "art": {
+        "slug": "perla_turban_cat",
+        "tint": null,
+        "aura": [
+          "#1b3f8b",
+          "#e6c34a",
+          "#f4f1ea"
+        ]
+      },
+      "elements": [
+        "light"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "soporte",
+      "worker": null,
+      "trait": "curioso",
+      "battleForm": {
+        "name": "LA MICHI DE LA PERLA — WINDOW LIGHT FORM",
+        "cry": "DID SOMEONE SAY MY NAME?"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.soporte.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Destello de Perla",
+          "cry": "¿Me llamaste?",
+          "archetype": "haz",
+          "element": "light",
+          "dmg": 60,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "cegado",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Un destello de luz de ventana que rebota en la perla y deja Cegado."
+        },
+        "ultimate": {
+          "name": "SOFT WINDOW LIGHT! (窓辺の光)",
+          "effect": "Abre la ventana: durante tus 4 turnos siguientes entra a tu barco una luz suave que, al empezar cada uno, cura a todos tus gatos y repara tus celdas. Y la perla se cuelga de tu gato más herido y le da escudos. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Posa tan quieta que el polvo le cae encima en cámara lenta.",
+        "star3": "★3: Cegado dura un turno más.",
+        "star5": "★5: SOFT WINDOW LIGHT! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el Portal te da un gato legendario o mítico (cualquier estandarte).",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Turbante azul y amarillo, un arete de perla enorme y una mirada por encima del hombro que te atrapa.",
+      "lore": "Lleva más de trescientos años volteando a ver a quien pasa. Nadie sabe su nombre, ni qué estaba a punto de decir, ni de dónde sacó una perla de ese tamaño. Ella no lo cuenta. En el museo es la única que no se queja de la luz: la trajo de su casa.",
+      "balanceName": "La Michi de la Perla",
+      "origin": "pinceles",
+      "post": {
+        "source": "casino:gacha",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_museo"
+        ]
+      }
+    },
+    {
+      "id": "xp_miauton",
+      "name": "Isaac Miauton",
+      "epithet": "el que Entendió la Manzana",
+      "art": {
+        "slug": "miauton_apple_cat",
+        "tint": null,
+        "aura": [
+          "#2b2420",
+          "#c0392b",
+          "#7fb2e5"
+        ]
+      },
+      "elements": [
+        "gravity"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "controlador",
+      "worker": null,
+      "trait": "curioso",
+      "battleForm": {
+        "name": "ISAAC MIAUTON — LAW OF GRAVITY FORM",
+        "cry": "WHAT GOES UP MUST COME DOWN… ON YOU!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.controlador.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Manzanazo",
+          "cry": "Para cada acción hay una siesta igual y opuesta.",
+          "archetype": "orbe_gravitatorio",
+          "element": "gravity",
+          "dmg": 68,
+          "radius": 1.2,
+          "projectiles": 1,
+          "spreadDeg": 0,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "flotando",
+          "statusTurns": 2,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Una manzana que cae en una curva perfecta, calculada, y deja Flotando."
+        },
+        "ultimate": {
+          "name": "LAW OF GRAVITY! (万有引力の法則)",
+          "effect": "Una manzana gigante cae sobre lo más alto de su barco y la gravedad cambia: durante sus 2 turnos siguientes sus tiros pesan el doble y se quedan cortos, y los de tu tripulación pesan la mitad y vuelan rectos y lejos. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Descubrió la gravedad cuando le cayó una manzana. Los gatos la descubren todos los días tirando cosas de la mesa.",
+        "star3": "★3: Flotando dura un turno más.",
+        "star5": "★5: LAW OF GRAVITY! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el MULTIVERSO HOLO te da un gato legendario o mítico.",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Peluca de rizos largos, una manzana a punto de caerle en la cabeza y un prisma que hace arcoíris.",
+      "lore": "Estaba tomando la siesta bajo un manzano cuando una manzana le cayó en la cabeza y, en vez de enojarse, entendió por qué todo se cae. Desde entonces explica con fórmulas por qué los gatos tiran cosas de la mesa. Los gatos dicen que es investigación. Él les cree.",
+      "balanceName": "Isaac Miauton",
+      "origin": "ciencia",
+      "post": {
+        "source": "casino:gacha:holo",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_historia"
+        ]
+      }
+    },
+    {
+      "id": "xp_miauzart",
+      "name": "Miauzart",
+      "epithet": "el Niño Prodigio",
+      "art": {
+        "slug": "miauzart_prodigy_cat",
+        "tint": null,
+        "aura": [
+          "#c0392b",
+          "#e6c34a",
+          "#f4f1ea"
+        ]
+      },
+      "elements": [
+        "sound"
+      ],
+      "rarity": "multidimensional",
+      "primordial": false,
+      "secret": false,
+      "role": "artillero",
+      "worker": null,
+      "trait": "presumido",
+      "battleForm": {
+        "name": "MIAUZART — CHILD PRODIGY FORM",
+        "cry": "BRAVO, BRAVISSIMO… MEOW!"
+      },
+      "economy": {
+        "goldBasePerS": "balance:rarities.gold_base_per_s.multidimensional",
+        "powerBase": "balance:rarities.power_base.multidimensional",
+        "foodMult": "balance:rarities.food_mult.multidimensional",
+        "goldMod": null,
+        "note": null,
+        "gambitMod": null
+      },
+      "combat": {
+        "hpBase": "roles.artillero.hp",
+        "recarga": 1,
+        "shot": {
+          "name": "Minueto Relámpago",
+          "cry": "Lo compuse a los cinco años. Ayer.",
+          "archetype": "onda",
+          "element": "sound",
+          "dmg": 26,
+          "radius": 1.2,
+          "projectiles": 3,
+          "spreadDeg": 12,
+          "bounces": 0,
+          "pierce": 0,
+          "status": "aturdido",
+          "statusTurns": 1,
+          "gravityMul": 1,
+          "speedMul": 1,
+          "special": "Tres notas de minueto en abanico que aturden a quien las oye."
+        },
+        "ultimate": {
+          "name": "BRAVO, ENCORE! (ブラボー・アンコール)",
+          "effect": "Un minueto de tres notas en abanico que aturde, y el público se pone de pie: la siguiente ulti de otro gato tuyo (en tus 3 turnos siguientes) se toca dos veces: se repite al instante, un poco más bajito. Una vez por batalla.",
+          "dmg": 100,
+          "meterCost": 100,
+          "usesPerBattle": 1,
+          "chargeTurns": 0,
+          "structureCap": 0.45
+        },
+        "limitation": null,
+        "passive": "Toca con los ojos vendados y las teclas tapadas. Los gatos le aplauden con la cola.",
+        "star3": "★3: suelta un proyectil más.",
+        "star5": "★5: BRAVO, ENCORE! se puede usar 2 veces por batalla."
+      },
+      "obtain": {
+        "source": "post:casino",
+        "how": "Después de la Parte III, en el Casino: puede salir cuando el Portal te da un gato legendario o mítico (cualquier estandarte).",
+        "balanceSource": "post:casino"
+      },
+      "hint": "Peluca blanca con moño, casaca roja bordada de oro, batuta en alto y un clavecín de juguete.",
+      "lore": "A los cinco años ya componía, a los seis daba conciertos para reyes y a los siete tocaba con las teclas tapadas con un paño. En este universo nació gato, así que además maúlla en el tono exacto. Dice que la música ya está escrita en su cabeza: solo la pasa en limpio entre siesta y siesta.",
+      "balanceName": "Miauzart",
+      "origin": "clasica",
+      "post": {
+        "source": "casino:gacha",
+        "weight": 10,
+        "vitrina": "gacha",
+        "sets": [
+          "set_pp_historia"
         ]
       }
     }

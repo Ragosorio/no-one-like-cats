@@ -19,7 +19,7 @@
 import { G } from '../state/game';
 import { beatSeen, markBeat } from '../state/ext/story';
 import { FLOW_KIT, type FlowResult } from './acto1Flow';
-import { playStoryFilm, resolveStoryFilm } from './stageIntro';
+import { playStoryFilm, preloadStoryFilm, resolveStoryFilm } from './stageIntro';
 
 const { lines, talk } = FLOW_KIT;
 
@@ -182,6 +182,61 @@ async function retry(): Promise<'go' | 'later'> {
   return choicePrompt<'go' | 'later'>(storyLayer(), { title1: '¿OTRA', title2: 'VEZ?', sub: 'Perder no cuesta nada: se vuelve a intentar.', tag: 'ACTIVIDAD', options: [{ label: '¡OTRA VEZ!', value: 'go', color: C.yellow }, { label: 'AHORA NO', value: 'later', color: C.paper }] });
 }
 
+/** the film a film step plays (its `alt` by the flag the story kept) */
+function filmIdOf(st: Extract<ActStep, { t: 'film' }>): string {
+  if (!st.alt) return st.film;
+  const neg = st.alt.flag.startsWith('!');
+  const on = G.has(neg ? st.alt.flag.slice(1) : st.alt.flag);
+  return (neg ? !on : on) ? st.alt.film : st.film;
+}
+/**
+ * (P3-CINE) the flow's NEXT film warms while the lines, a choice or the film before it play — never across a fight (a
+ * warm film waits at most 3 min) — so it starts on the transformation, not behind a loading screen (film/morph.ts)
+ */
+function warmAhead(steps: ActStep[], from: number) {
+  for (let j = from + 1; j < steps.length; j++) {
+    const s = steps[j];
+    if (beatSeen(s.key)) continue;
+    if (s.t === 'battle' || s.t === 'faro' || s.t === 'gate') return;
+    if (s.t === 'film' || s.t === 'dark') {
+      void preloadStoryFilm(s.t === 'film' ? filmIdOf(s) : s.film).catch(() => false);
+      return;
+    }
+  }
+}
+
+/** the film a flow opens with (its first step not seen yet is a film), or null — the Acto I's (code, not data) by hand */
+const ACTO1_OPENS: Record<string, { key: string; film: string }> = { h73_emen: { key: 'b73_emen', film: 'f06' } };
+export function openingFilmOf(flowId: string): string | null {
+  const f = ACT_FLOWS[flowId];
+  if (!f) {
+    const a = ACTO1_OPENS[flowId];
+    return a && !beatSeen(a.key) ? a.film : null;
+  }
+  const st = f.steps.find((x) => !beatSeen(x.key));
+  return st?.t === 'film' ? filmIdOf(st) : st?.t === 'dark' ? st.film : null;
+}
+/**
+ * (P3-CINE) a story fight was just won on the Carta: when its mission's close OPENS with a film (EM%EN, Daria, No wey,
+ * DISTOR…: the songs that close their fights), that film warms during the end card and the trip back to the Carta, so
+ * it starts on the transformation instead of behind a loading screen. Missions are checked every 0.7 s: call it ~1.5 s
+ * after the win.
+ */
+export async function warmAfterWin(): Promise<number> {
+  const { P3_ON_DONE, flowKey } = await import('../ui/story/gaterasScript');
+  let n = 0;
+  for (const id of G.s.missions.done) {
+    for (const ref of P3_ON_DONE[id] ?? []) {
+      if (ref.special !== 'flow' || !ref.flow || beatSeen(flowKey(ref.flow))) continue;
+      const film = openingFilmOf(ref.flow);
+      if (!film) continue;
+      n++;
+      void preloadStoryFilm(film, { after: 800 }).catch(() => false);
+    }
+  }
+  return n;
+}
+
 async function runStep(st: ActStep): Promise<'ok' | 'interrupted'> {
   switch (st.t) {
     case 'lines':
@@ -189,12 +244,7 @@ async function runStep(st: ActStep): Promise<'ok' | 'interrupted'> {
       await talk(lines(st.beat, st.idx));
       return 'ok';
     case 'film': {
-      let id = st.film;
-      if (st.alt) {
-        const neg = st.alt.flag.startsWith('!');
-        const on = G.has(neg ? st.alt.flag.slice(1) : st.alt.flag);
-        if (neg ? !on : on) id = st.alt.film;
-      }
+      const id = filmIdOf(st);
       const inp = st.input;
       const r = await playStoryFilm(
         id,
@@ -277,8 +327,9 @@ export async function playStoryFlow(id: string): Promise<FlowResult> {
   }
   if (performance.now() - laterAt < ACTS_TIMING.laterMs && f.steps.some((s) => s.t === 'battle' && !beatSeen(s.key))) return 'interrupted';
   let prev: ActStep['t'] | null = null;
-  for (const st of f.steps) {
+  for (const [i, st] of f.steps.entries()) {
     if (beatSeen(st.key)) continue;
+    if (st.t !== 'battle') warmAhead(f.steps, i);
     // story lines after a won activity fight are said back on the Carta, not over the battle's end screen; so is a choice
     // that follows a film (H90's photo after the karaoke) — a choice right after its fight (H84's endings) stays there
     if ((st.t === 'lines' || (st.t === 'choice' && prev === 'film')) && (await onBattleScene())) await home(homeOf());

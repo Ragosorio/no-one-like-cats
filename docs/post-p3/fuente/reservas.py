@@ -1,30 +1,12 @@
 from base import md
 
-# ============================================================ RESERVA (16)
+# ============================================================ RESERVA (10)
+# 2026-10-29 (DISEÑO-2, tanda 2): Tanjimiau, Tetrimiau, Bastet, Pinkmiau, Shakimiau y Ricardo Garjona pasaron a titulares (md_tanda2.py, mismos ids).
 # Entran solo si la herramienta de imágenes bloquea a un titular dos veces (01-reglas §3.1) o si el dueño cambia uno.
 # Regla de reemplazo: mismo grupo y, si se puede, misma mesa del casino (el campo `swap` dice a quién cubre primero).
 # 8 de los grupos originales (anime, literatura, caricatura, cómic, juego, mito) + 8 de los grupos nuevos (pantalla, música, deporte).
 
 R = dict(reserve=True, venue='gacha', w=10, sets=[])
-
-md(**R, id='xp_tanjimiau', name='Tanjimiau', ep='el de la Caja a la Espalda', med='Anime/manga', swap='cualquier anime',
-   src='Kimetsu no Yaiba / Demon Slayer (Koyoharu Gotōge; manga 2016–2020)', cat='retoma `r_tanjimiau` del catálogo v2',
-   risk='medio', planb='Aretes lisos; el haori a cuadros verde y negro y la caja de madera cargan.',
-   traits=['haori a cuadros verde y negro', 'caja de madera a la espalda', 'aretes de cartita con un sol propio', 'mancha roja en la frente (pelaje) y espada'],
-   el='water', role='invocador', trait='leal', form='TANJIMIAU — WATER BREATH FORM', fcry='BREATHE… AND PURR!',
-   shot=dict(name='Corte de Agua', cry='Huele a que vas a fallar.', special='Un corte que fluye como río y deja Mojado.'),
-   ult=('BOX SISTER!', '箱の中の妹', 'Abre la caja: sale su hermanita (una gatita brava) que pelea 2 turnos en tu tripulación: patea fuerte en cada turno tuyo y no se le puede pegar. Una vez por batalla.'),
-   pw='Su hermanita sale de la caja y pelea 2 turnos',
-   nums='Aliada temporal sin camarote: 2 turnos propios, 0.6·P al blanco de tu gato del turno (Tierra). No recibe daño.',
-   passive='Huele las emociones. Casi siempre huele hambre. La suya.', hint='Haori a cuadros verde y negro y una caja de madera a la espalda que a veces se mueve sola.',
-   lore='Carga a su hermanita en una caja de madera por todo el mundo buscando una cura. Es el gato más amable que vas a conocer: hasta a sus rivales les pide perdón antes de cortarlos.',
-   uni=('UNIVERSO DE LA RESPIRACIÓN', 'Un bosque de noche en grabado japonés; un dragón de agua en olas planas da la vuelta a la pantalla; la caja de madera se abre un poquito y asoma una patita.', '¡RESPIRA!'),
-   art=dict(fam='anime', slug='tanjimiau_box_cat', aura=['#2e7d5b', '#1b1b1b', '#d62839'],
-            ref_en='the kind demon-hunter boy in a green-and-black checkered haori who carries his sister in a wooden box, from a modern fantasy anime',
-            sig=['A green-and-black checkered haori jacket.', 'A wooden box carried on the back with straps.', 'Card-like earrings with an original sun design.', 'A red flame-like mark in the fur of the forehead, and a sword at the hip.'],
-            subject='a kind burgundy-brown cat in a green-and-black checkered haori, a wooden box strapped to the back, card-like earrings with a sun design, a red mark in the forehead fur, a sword at the hip',
-            coat='burgundy-brown short coat with a red flame-like mark on the forehead, warm red-brown eyes', pose='calm ready stance, one paw on the sword hilt',
-            prop='the checkered haori and the wooden box, readable at 64 px', pal=['#2E7D5B', '#1B1B1B', '#D62839', '#8C5A2B', '#F4E1C1']))
 
 md(**R, id='xp_lavimiau', name='Capitán Lavimiau', ep='el que Limpia Todo', med='Anime/manga', swap='cualquier anime',
    src='Shingeki no Kyojin / Attack on Titan (Hajime Isayama; manga 2009–2021) · Levi',
@@ -140,63 +122,6 @@ md(**R, id='xp_hambron', name='El Increíble Hambrón', ep='el que Tiene Hambre'
             coat='bright green short coat, dark green messy fur on top, green eyes', pose='smashing pose, both fists raised', prop='the giant fists and purple shorts, readable at 64 px',
             pal=['#5AA02C', '#6A3D9A', '#1B1530', '#C0C6CC', '#2E5E1A']))
 
-md(**R, id='xp_tetrimiau', name='Tetrimiau', ep='el que Completa Filas', med='Videojuego', swap='cualquier videojuego',
-   src='Tetris (Alekséi Pázhitnov, 1984)',
-   risk='medio', planb='Bloques en colores propios; las piezas de cuatro cuadros cargan.',
-   traits=['pelaje hecho de piezas de cuatro cuadros de colores', 'una pieza cayendo sobre la cabeza', 'cuerpo cuadradito', 'mirada de concentración'],
-   el='gravity', role='demoledor', trait='impaciente', form='TETRIMIAU — LINE CLEAR FORM', fcry='FOUR LINES AT ONCE!',
-   shot=dict(name='Pieza en L', cry='Esa no cabe. Esa tampoco.', special='Una pieza que cae recta y deja Flotando.'),
-   ult=('LINE CLEAR!', 'ライン消去', 'Cuatro piezas caen sobre su barco y completan una fila: la fila con más celdas de su barco DESAPARECE entera. Una vez por batalla.'),
-   pw='Borra entera la fila más llena de su barco',
-   nums='Elimina todas las celdas de la fila con más celdas (tope 45 %, jefe 18 %); luego chequeo de integridad.',
-   passive='Acomoda todo. La comida, los juguetes y a los demás gatos.', hint='Pelaje de piezas de colores de cuatro cuadros y una pieza que le cae en la cabeza.',
-   lore='Nació en una pantalla verde donde las piezas caen sin parar. Lleva años acomodándolas y nunca se acaban. Dice que el secreto es no desesperarse. Se desespera.',
-   uni=('UNIVERSO DE LAS PIEZAS', 'Una cuadrícula vertical; piezas de colores caen y encajan; una fila entera brilla y desaparece.', '¡LÍNEA!'),
-   art=dict(fam='pixel', slug='tetrimiau_block_cat', aura=['#00bcd4', '#ffd23f', '#d62839'],
-            ref_en='the falling four-square block puzzle of a classic video game, turned into a cat',
-            sig=['The fur is a mosaic of colored four-square block pieces (cyan, yellow, red, green, purple).', 'A single four-square block piece falling onto the head.', 'A squarish compact body.', 'A focused expression.'],
-            subject='a squarish compact cat whose fur is a mosaic of colored four-square block pieces, a block piece falling onto its head, focused expression',
-            coat='mosaic of colored four-square blocks, white eyes with black pupils', pose='sitting upright, eyes looking up at the falling piece', prop='the block pieces, readable at 64 px',
-            pal=['#00BCD4', '#FFD23F', '#D62839', '#4CAF50', '#7B2CBF']))
-
-md(**R, id='xp_bastet', name='Bastet', ep='la Señora del Hogar', med='Mito (Egipto antiguo)', swap='cualquiera (riesgo bajo)',
-   src='Bastet, diosa egipcia (mito antiguo; dominio público)', cat='retoma `x_bastet` del catálogo v2 (uno de los 4 huecos Multidimensionales dormidos)',
-   risk='bajo', planb='—',
-   traits=['gata negra esbelta', 'collar ancho de oro y lapislázuli', 'arete de oro', 'sistro y disco solar'],
-   el='light', role='soporte', trait='leal', form='BASTET — GUARDIAN OF THE HOME FORM', fcry='THIS HOME IS PROTECTED!',
-   shot=dict(name='Rayo de Sistro', cry='Esta casa no se toca.', special='Un rayo de sol que suena a sistro y deja Cegado.'),
-   ult=('HOME GUARDIAN!', '家の守護神', 'Protege la casa: el siguiente turno rival ningún gato tuyo puede bajar de 1 de vida y tus camarotes reciben la mitad; luego, un rayo de sol los deja Cegados a todos. Una vez por batalla.'),
-   pw='Un turno: nadie cae y tus camarotes reciben la mitad',
-   nums='Siguiente turno rival: vida mínima 1 para tus gatos, daño a camarotes ×0.5. Después: Cegado 1 a todos los gatos rivales.',
-   passive='Era diosa antes de que existieran los sillones. Igual prefiere los sillones.', hint='Gata negra esbelta, collar de oro y lapislázuli y un disco de sol.',
-   lore='La adoraban en una ciudad entera hace miles de años y cuidaba los hogares de las cosas feas. Sigue haciéndolo. Ahora además exige que le rasquen la barbilla. Siempre lo exigió.',
-   uni=('UNIVERSO DEL TEMPLO', 'Un templo de piedra con jeroglíficos de gatos; un disco solar se levanta detrás de la silueta; arena dorada.', '¡PROTEGIDOS!'),
-   art=dict(fam='mitos', slug='bastet_sun_cat', aura=['#111111', '#e6c34a', '#2a4fa0'],
-            ref_en='the ancient Egyptian cat goddess of the home, as in tomb paintings (public domain)',
-            sig=['A sleek black cat with an elegant upright posture.', 'A wide gold-and-lapis collar.', 'A gold earring.', 'A sistrum held in one paw and a small sun disk above the head.'],
-            subject='a sleek elegant black cat with a wide gold-and-lapis collar, a gold earring, holding a sistrum, a small sun disk above the head',
-            coat='sleek black coat, golden eyes', pose='regal upright stance', prop='the gold-and-lapis collar and the sun disk, readable at 64 px',
-            pal=['#111111', '#E6C34A', '#2A4FA0', '#C8102E', '#E8DCC2'], ev=['Treated with respect as an ancient myth; no religious symbol of a living religion.']))
-
-md(**R, id='xp_pinkmiau', name='Pinkmiau', ep='el Ayudante de Química', med='Serie de TV', swap='Heisenmiau o cualquier serie',
-   src='Breaking Bad (Vince Gilligan, AMC, 2008–2013) · Jesse Pinkman',
-   risk='medio', planb='Sin el gorro; sudadera enorme y cadenita cargan.',
-   traits=['gorro tejido (beanie)', 'sudadera enorme con capucha', 'pantalones aguados y cadenita', 'pose de «¡ciencia!» con los brazos arriba'],
-   el='fire', role='invocador', trait='impaciente', pair='xp_heisenmiau', form='PINKMIAU — LAB PARTNER FORM', fcry='YEAH, SCIENCE, MICHI!',
-   shot=dict(name='Matraz Hirviendo', cry='¡Sí, ciencia, michi!', special='Un matraz que hierve y deja Ardiendo.'),
-   ult=('THE RV!', 'キャンピングカー', 'Estaciona la casa rodante en tu cubierta: 3 turnos, al final de cada turno tuyo suelta una nube azul donde pegó tu gato. Si Heisenmiau está en tu tripulación, la nube pega el doble. Una vez por batalla.'),
-   pw='Casa rodante: 3 turnos suelta nubes azules (×2 con Heisenmiau)',
-   nums='Objeto persistente: 3 turnos propios, 0.3·P (Maldito + Vapor) al punto de impacto de tu gato. Combo con xp_heisenmiau: ×2.',
-   passive='Tiene buen corazón y malas decisiones. Las dos cosas en cantidades industriales.', hint='Gorro tejido, sudadera enorme y unas ganas de gritar «¡ciencia!».',
-   lore='Era el peor alumno del profe de química y terminó siendo su compañero de laboratorio en una casa rodante en el desierto. Grita mucho, se asusta más y tiene el corazón más grande del barco.',
-   uni=('UNIVERSO DE LA CASA RODANTE', 'El desierto al atardecer; una casa rodante vieja echa humo azul; la silueta salta con los brazos arriba.', '¡CIENCIA!'),
-   art=dict(fam='pantalla', slug='pinkmiau_science_cat', aura=['#4fc3f7', '#ffd23f', '#5b3a2a'],
-            ref_en='the young loud lab partner of a chemistry teacher turned kingpin, from a 2000s crime TV drama',
-            sig=['A knitted beanie hat.', 'A huge baggy hoodie.', 'Baggy trousers and a thin chain.', 'An excited "science!" pose with both arms up.'],
-            subject='a scruffy cat in a knitted beanie, a huge baggy hoodie, baggy trousers and a thin chain, both arms up in excitement',
-            coat='light grey short coat, blue eyes', pose='both arms up, excited', prop='the beanie and the huge hoodie, readable at 64 px',
-            pal=['#4FC3F7', '#FFD23F', '#5B3A2A', '#2B2B33', '#E8E8E8'], real=True))
-
 md(**R, id='xp_indianagarras', name='Indiana Garras', ep='el que Le Teme a los Pepinos', med='Cine', swap='Michi-Wan, Don Gatoleone o cualquier película',
    src='Indiana Jones (George Lucas y Steven Spielberg, 1981)', cat='retoma `r_indianagarras` del catálogo v2',
    risk='medio-alto', planb='Sin chamarra; sombrero fedora y látigo cargan.',
@@ -234,44 +159,6 @@ md(**R, id='xp_miauo', name='Miauo', ep='el Elegido', med='Cine', swap='cualquie
             subject='a sleek black cat in a long black trench coat and small oval semi-transparent sunglasses, leaning back in a dodge pose, a few green abstract code strokes near the coat',
             coat='sleek black coat, green eyes', pose='backward-leaning dodge, hind paws on the baseline', prop='the trench coat and the dodge silhouette, readable at 64 px',
             pal=['#111111', '#39FF14', '#2B2B33', '#8A8F98', '#0B3D0B'], ev=["Never an actor's likeness; no letters in the code."]))
-
-md(**R, id='xp_shakimiau', name='Shakimiau', ep='la de las Caderas Sísmicas', med='Música (persona real)', swap='cualquier músico',
-   src='Shakira (cantante colombiana, 1977)', cat='retoma `x_shakimiau` del catálogo v2',
-   risk='medio', planb='Sin cinturón de monedas; la melena rubia ondulada y la pose de baile cargan.',
-   traits=['melena larga rubia ondulada', 'cinturón de monedas de danza (recatado)', 'pies descalzos', 'pose de baile con la cadera'],
-   el='earth', role='demoledor', trait='presumido', form='SHAKIMIAU — SEISMIC DANCE FORM', fcry='THE GROUND DANCES WITH ME!',
-   shot=dict(name='Caderazo', cry='Esto se baila así.', special='Un golpe de cadera que hace temblar la madera.'),
-   ult=('HIP QUAKE!', '腰の大地震', 'Un caderazo que hace temblar el mar: cada celda de su barco recibe un poquito y TODA celda que quede por debajo del 30 % de su vida se derrumba. Una vez por batalla.'),
-   pw='Terremoto: derrumba toda celda que quede bajo el 30 %',
-   nums='0.1·P a cada celda rival; luego, toda celda con vida < 30 % se destruye (tope 45 %, jefe 18 %).',
-   passive='Baila tan bien que los cañones del barco se mueven solos.', hint='Melena rubia ondulada, cinturón de monedas y unas caderas que causan sismos.',
-   lore='Llegó descalza de una costa caribeña y puso a bailar al mundo entero. Dicen que sus caderas son detectadas por los sismógrafos. Es verdad. Lo comprobamos.',
-   uni=('UNIVERSO SÍSMICO', 'Un escenario sobre arena; las ondas del baile hacen temblar todo; monedas brillan; la ola sube.', '¡QUE TIEMBLE!'),
-   art=dict(fam='pop', slug='shakimiau_quake_cat', aura=['#e6c34a', '#d9482b', '#3a7bd5'],
-            ref_en='a world-famous Colombian pop singer known for her long wavy blonde hair and her dancing',
-            sig=['Long wavy blonde hair-like fur.', 'A modest belly-dance coin belt over a long flowing skirt.', 'Bare paws.', 'A dynamic hip-dance pose.'],
-            subject='a dancing cat with long wavy blonde fur, a modest coin belt over a long flowing skirt, bare paws, in a dynamic hip-dance pose',
-            coat='warm tan coat with long wavy blonde fur, brown eyes', pose='hip-dance pose, arms raised gracefully', prop='the wavy blonde mane and the coin belt, readable at 64 px',
-            pal=['#E6C34A', '#D9482B', '#3A7BD5', '#FFFFFF', '#8B4A2B'], mni=['Nothing suggestive: modest outfit.'], real=True))
-
-md(**R, id='xp_garjona', name='Ricardo Garjona', ep='el Trovador Chapín', med='Música (persona real)', swap='cualquier músico',
-   src='Ricardo Arjona (cantautor guatemalteco, 1964)', cat='retoma `e_garjona` del catálogo v2 (guiño chapín)',
-   risk='medio', planb='Sin el sombrero; la guitarra acústica y la barba cargan.',
-   traits=['sombrero de ala corta', 'barba de pelaje', 'guitarra acústica', 'saco oscuro y mirada de quien cuenta una historia'],
-   el='nature', role='soporte', trait='chismoso', form='RICARDO GARJONA — STORYTELLER FORM', fcry='LET ME TELL YOU A STORY…',
-   shot=dict(name='Verso Largo', cry='Te voy a contar una historia… que dura cuatro minutos.', special='Un verso que se enreda en la madera.'),
-   ult=('TROVA STORY!', '語り歌', 'Cuenta una historia cantada: 3 turnos, al empezar cada turno tuyo tu tripulación se cura un 10 % y gana barra, y el gato rival que más daño hizo queda Revelado. Una vez por batalla.'),
-   pw='3 turnos: tu tripulación se cura 10 % y gana barra cada turno',
-   nums='3 turnos propios: +10 % de vida y +10 de barra a cada gato tuyo. Revelado al gato rival con más daño hecho.',
-   passive='Cuenta historias de todos los gatos del puerto. Todos se reconocen. Ninguno lo admite.', hint='Sombrero, barba y una guitarra que cuenta historias largas.',
-   lore='Salió de Guatemala con una guitarra y una libreta y le cantó al mundo entero historias de gente común. En el barco narra todo lo que pasa en versos. La tripulación ya no puede tener secretos.',
-   uni=('UNIVERSO DEL TROVADOR', 'Un callejón empedrado con volcanes al fondo; una luz de farol; las palabras se vuelven pájaros.', '¡QUÉ HISTORIA!'),
-   art=dict(fam='pop', slug='garjona_trova_cat', aura=['#3b2a1a', '#2e7d5b', '#e6c34a'],
-            ref_en='a famous Guatemalan singer-songwriter known for storytelling songs, a hat and an acoustic guitar',
-            sig=['A short-brimmed hat.', 'A neat beard of fur.', 'An acoustic guitar held ready.', 'A dark jacket over an open-collar shirt.'],
-            subject='a storyteller cat in a short-brimmed hat with a neat beard of fur, a dark jacket over an open-collar shirt, holding an acoustic guitar',
-            coat='brown coat with a neat beard, warm brown eyes', pose='storytelling pose, guitar ready', prop='the hat and the guitar, readable at 64 px',
-            pal=['#3B2A1A', '#2E7D5B', '#E6C34A', '#F2E1C9', '#1B1B2F'], real=True))
 
 md(**R, id='xp_memiauochoa', name='Memiau Ochoa', ep='el Muro de los Mundiales', med='Fútbol (persona real)', swap='cualquier futbolista',
    src='Guillermo «Memo» Ochoa (portero mexicano, 1985)',

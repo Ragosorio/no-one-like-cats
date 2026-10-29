@@ -24,6 +24,7 @@ import type { FilmDef, SkipMode } from './types';
 import { gateTimes, segueOf, skipMode, timeBase, toMomentoDef, trackMapOf, validateFilm, type GateAt } from './timeline';
 import { FilmStage } from './stage';
 import { BareLoader, FilmLoader } from './loader';
+import { WorldMorph } from './morph';
 import { getFilm } from './registry';
 import { pauseTextureGC, type GcHost } from './texturegc';
 import './films';
@@ -341,9 +342,11 @@ function dropWarm(w: Warm) {
  * cut. `after` (ms): start a little later (the film on screen first settles its own opening). Resolves true when ready.
  * A warm film nobody plays is dropped after WARM_TTL_MS. Idempotent per id (a different `seen` rebuilds it).
  */
-export function preloadFilm(id: string, o: { seen?: boolean; after?: number } = {}): Promise<boolean> {
-  const def = getFilm(id);
+export function preloadFilm(idOrDef: string | FilmDef, o: { seen?: boolean; after?: number } = {}): Promise<boolean> {
+  // (P3-CINE) a def object too: a stage's briefing film built from its data (the template) warms under its own id
+  const def = typeof idOrDef === 'string' ? getFilm(idOrDef) : idOrDef;
   if (!def) return Promise.resolve(false);
+  const id = def.id;
   const seen = !!o.seen;
   const had = warm.get(id);
   if (had && had.seen === seen && !had.dropped) return had.ready.then((b) => !!b);
@@ -486,14 +489,32 @@ export interface PlayHandOff {
   bare?: boolean;
   /** the caller takes its song over when it ends (FilmDef.keep is honoured only then: a replay never leaves it looping) */
   keep?: boolean;
+  /**
+   * (P3-CINE) start on a hard CUT: no transformation of the world first, even when the film is warm (the finale's
+   * blow cuts into the breakfast). Cold, it then waits behind the old loading screen.
+   */
+  cut?: boolean;
+  /** (P3-CINE) where the world leans while it transforms (design coords); default the scene's `filmFocus()` or the middle */
+  focus?: [number, number] | null;
+}
+
+/** where the current scene says a film comes from (the stage on the Carta…): its optional `filmFocus()` */
+function sceneFocus(): [number, number] | null {
+  try {
+    const sc = scenes.current as unknown as { filmFocus?: () => [number, number] | null } | null;
+    return sc?.filmFocus?.() ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function playFilm(idOrDef: string | FilmDef, o: PlayFilmOpts & PlayHandOff = {}): Promise<FilmResult | null> {
   const def = typeof idOrDef === 'string' ? getFilm(idOrDef) : idOrDef;
   if (!def || playing) return null;
   const seen = !!o.seen;
-  // a warm one (same skip rule) starts on the cut; any other warm copy of it goes
-  let w = typeof idOrDef === 'string' && !o.scrub ? (warm.get(def.id) ?? null) : null;
+  // a warm one (same skip rule) starts on the cut; any other warm copy of it goes. (P3-CINE) A def object finds the
+  // copy warmed under its id too (a briefing film from the template: the same stage data builds the same film)
+  let w = !o.scrub ? (warm.get(def.id) ?? null) : null;
   if (w && w.seen !== seen) {
     dropWarm(w);
     w = null;
@@ -510,9 +531,14 @@ export async function playFilm(idOrDef: string | FilmDef, o: PlayFilmOpts & Play
   const prev = held;
   // this film claims the held frame: it stays up however long this one takes to be ready (no timeout)
   if (prev) clearTimeout(prev.timer);
-  const needLoader = !w?.built && !prev;
+  // (P3-CINE) the owner: «no me gusta la pantalla de carga, me gustaba más la parte dos que el entorno se convertía en
+  // lo que se iba a hacer». From a game screen the WORLD becomes the film (film/morph.ts) while it is built and its song
+  // decoded — warm or not; the titled loading screen is only its fallback on a slow device. Not over a held frame (it
+  // is the film's own cover), not for a continuation (bare: plain black), not on a hard cut, not on the dev pages.
+  const morph = !prev && !o.bare && !o.cut && !o.scrub && !o.standalone && !!scenes.current ? new WorldMorph({ world: scenes.sceneLayer, host: game.root, view: () => game.view, focus: o.focus ?? sceneFocus() }, def, settings.reduceMotion) : null;
+  const needLoader = !morph && !w?.built && !prev;
   const mkLoader = () => (o.bare ? new BareLoader(game.root, game.view) : new FilmLoader(game.root, game.view, def.title, def.loader?.style ?? 'default', def.loader?.caption ?? 'PELÍCULA', settings.reduceMotion));
-  const loader = needLoader ? mkLoader() : null;
+  const loader = morph ?? (needLoader ? mkLoader() : null);
   let built: Built | null = null;
   let soloed = false;
   let segueRef: string | null = null;
@@ -556,6 +582,13 @@ export async function playFilm(idOrDef: string | FilmDef, o: PlayFilmOpts & Play
       soloed = false;
     }
     segueRef = b.segueRef;
+    // (P3-CINE) the transformation closes once the film can really start — its song decoded too —, so any wait is the
+    // world changing, never a black screen
+    let audioEarly: boolean | null = null;
+    if (morph) {
+      audioEarly = joined || !b.music ? false : await Promise.race([b.audioReady, new Promise<boolean>((res) => setTimeout(() => res(false), 9000))]);
+      await morph.close();
+    }
     playing = run;
     // a carried song: crossfaded at the same file position to its thinner mix (FilmDef.carry.to)
     if (carry && def.carry?.to) {
@@ -578,7 +611,7 @@ export async function playFilm(idOrDef: string | FilmDef, o: PlayFilmOpts & Play
       prev.gc();
     }
     if (import.meta.env.DEV) installDev(run, def);
-    const withAudio = joined || !b.music ? false : await Promise.race([b.audioReady, new Promise<boolean>((res) => setTimeout(() => res(false), 9000))]);
+    const withAudio = audioEarly ?? (joined || !b.music ? false : await Promise.race([b.audioReady, new Promise<boolean>((res) => setTimeout(() => res(false), 9000))]));
     if (loader) await loader.hide();
     const stopGates = o.scrub ? null : watchGates(run, gateTimes(def));
     const stopTouches = o.scrub ? null : watchTouches(run);

@@ -37,12 +37,11 @@
 import { G } from '../game';
 import { BAL, newHabitatCost, purrPoolCapMin } from '../econ';
 import { CATS, catDef } from '../../data/content';
-import { builders, globalGoldMult, nextHabitatCost, expansionState } from './island';
+import { builders, globalGoldMult, nextHabitatCost, expansionState, visibleExpansions } from './island';
 import { hasHabitatSpace, roomForHabitats } from '../../island/placement';
 import { adopt, collState, ownsSpecies, prismaShopLeft, starNeed, starMax } from './cats';
 import { buyGemSlot, gemSlotInfo } from './resonance';
 import { isP3Cat, isPostCat } from './multidim';
-import { EXPANSIONS } from '../../data/content';
 
 // ---------------------------------------------------------------- tunables (documented above)
 export const ORB_PACK = 5;
@@ -131,11 +130,13 @@ export function hasFreePlot() {
 }
 /** first expansion you could buy (or the next locked one) to get more plots */
 export function nextExpansion() {
-  for (const e of EXPANSIONS) {
+  // only what this save can know about (a post-Parte III island before the gate is skipped: state/sys/island.ts)
+  const list = visibleExpansions();
+  for (const e of list) {
     const st = expansionState(e.n);
     if (st === 'available' || st === 'clearing') return { e, st };
   }
-  for (const e of EXPANSIONS) if (expansionState(e.n) === 'locked') return { e, st: 'locked' as const };
+  for (const e of list) if (expansionState(e.n) === 'locked') return { e, st: 'locked' as const };
   return null;
 }
 /** gold/s a tier-1 habitat of `el` would make with up to `cap` of your homeless cats of that element */

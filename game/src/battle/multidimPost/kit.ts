@@ -115,6 +115,8 @@ export interface MdpState {
   stun0: Map<CatState, number>;
   /** Grrrú's frozen cats (chips; the freeze itself is a stun + frozen cabin) */
   frozen: Map<CatState, Timer>;
+  /** tanda 2 (agent PODERES-3): the second batch's rules (kitD.ts), created the first time one of them needs it */
+  d: import('./kitD').DState | null;
 }
 
 const STATE = new WeakMap<Battle, MdpState>();
@@ -180,6 +182,7 @@ export function S(b: Battle): MdpState {
       frozen: new Map(),
       selfStun: new Map(),
       stun0: new Map(),
+      d: null,
     };
     STATE.set(b, s);
   }

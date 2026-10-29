@@ -21,7 +21,7 @@ import { G } from '../game';
 import { type CatDef } from '../../data/content';
 import { POST_VITRINA, VITRINA_TABLES, type VitrinaTable } from '../../data/postp3/reglas';
 import { postCats, postP3Unlocked } from './postp3';
-import { addChips, cs, grantPrize, persist, rand, type Cur, type Granted, type PrizeTier } from './casino';
+import { addChips, catShowTier, cs, grantPrize, persist, rand, type Cur, type Granted, type PrizeTier } from './casino';
 
 export const isVitrinaTable = (t: unknown): t is VitrinaTable => typeof t === 'string' && Object.prototype.hasOwnProperty.call(VITRINA_TABLES, t);
 export const VITRINAS = Object.keys(VITRINA_TABLES) as VitrinaTable[];
@@ -98,7 +98,8 @@ export function vitrinaOnBet(t: string, cur: Cur, qualifies: boolean, n = 1, rnd
 // ------------------------------------------------------------------ a throw
 type CatRarity = 'legendary' | 'mythic' | 'multidimensional';
 const CAT_RARITIES: CatRarity[] = ['legendary', 'mythic', 'multidimensional'];
-const tierOf = (r: string): PrizeTier => (r === 'legendary' ? 'legendary' : 'mythic');
+/** a showcase cat shows its own rarity (a Multidimensional never wears the mythic red nor the legendary gold) */
+const tierOf = (c: CatDef): PrizeTier => catShowTier(c, false, c.rarity === 'legendary' ? 'legendary' : 'mythic');
 function pickBy<T>(list: T[], w: (x: T) => number, rnd: () => number): T {
   const tot = list.reduce((s, x) => s + w(x), 0);
   let r = rnd() * tot;
@@ -146,7 +147,7 @@ export function vitrinaThrow(t: VitrinaTable, via: VitrinaGranted['via'], rnd: (
     if (!r) g = consolation(pool, true, rnd);
     else {
       const c = pickBy(lackOf(r), weightOf, rnd);
-      g = grantPrize({ kind: 'cat', n: 1, ref: c.id, tier: tierOf(c.rarity) });
+      g = grantPrize({ kind: 'cat', n: 1, ref: c.id, tier: tierOf(c) });
       gotCat = true;
       gotMd = c.rarity === 'multidimensional';
     }
@@ -172,7 +173,7 @@ export function vitrinaSparkPick(t: VitrinaTable, species: string): VitrinaGrant
   const c = vitrinaPool(t).find((x) => x.id === species && !owns(x.id));
   if (!c) return null;
   set(KEY.s(t), get(KEY.s(t)) - POST_VITRINA.pity.spark);
-  const g = grantPrize({ kind: 'cat', n: 1, ref: c.id, tier: tierOf(c.rarity) });
+  const g = grantPrize({ kind: 'cat', n: 1, ref: c.id, tier: tierOf(c) });
   if (c.rarity === 'multidimensional') set(KEY.md(t), 0);
   set(KEY.c(t), 0);
   persist();

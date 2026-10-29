@@ -124,6 +124,17 @@ export function createFx(L: RegionLayer, sky: SkyCtx): DimFx | null {
       return prismFx(L);
     case 'void':
       return voidFx(L);
+    // ---- after the Parte III
+    case 'carton':
+      return gentleFx(L, [0xfff4d6, 0xf0dcb4, 0xffffff], 2);
+    case 'felt':
+      return marqueeFx(L);
+    case 'talavera':
+      return gentleFx(L, [0xffffff, 0xbff0ff, 0xf2c14e], 3);
+    case 'yarn':
+      return gentleFx(L, [0xffffff, 0xf4e6d4, 0xf4c9d2], 3);
+    case 'pillow':
+      return gentleFx(L, [0xfff4c8, 0xffe066, 0xffffff], 4);
   }
   return null;
 }
@@ -139,6 +150,32 @@ function gentleFx(L: RegionLayer, tints: number[], rate: number): DimFx {
       acc += dt;
       if (acc > 0.42) {
         acc = 0;
+        RegionLayer.frame(L.lagOv, ++f);
+      }
+      glints.tick(dt);
+    },
+    destroy() {
+      glints.destroy();
+    },
+  };
+}
+/** TAPETE: the table's rim is a casino marquee — two sets of bulbs chase each other, gold glints on the felt */
+function marqueeFx(L: RegionLayer): DimFx {
+  const a = edgeGlow(L, 0xffd77a, (i) => i % 2 === 0, 10, 3);
+  const b = edgeGlow(L, 0xffc94a, (i) => i % 2 === 1, 10, 3);
+  const glints = new Glints(L, [0xffd77a, 0xfff4c8, 0xffffff], 4, 0.4);
+  let acc = 0;
+  let on = false;
+  let f = 0;
+  return {
+    tick(dt) {
+      acc += dt;
+      if (acc > 0.42) {
+        acc = 0;
+        on = !on;
+        // chase on twos: the cozy rule (no strobing): one set bright, the other dim
+        a.alpha = on ? 0.95 : 0.3;
+        b.alpha = on ? 0.3 : 0.95;
         RegionLayer.frame(L.lagOv, ++f);
       }
       glints.tick(dt);

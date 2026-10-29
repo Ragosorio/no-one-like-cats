@@ -77,3 +77,81 @@ Nada: QA terminado (2026-10-29). Servidores 5211 y 5291 detenidos; `qa-post-head
 
 ## Última actualización
 2026-10-29 03:00
+
+---
+
+# Ronda 2 (2026-10-29): todo lo hecho desde 8c5b17c
+
+## Qué estoy haciendo
+Nada: ronda 2 terminada (2026-10-29 13:20). Servidores detenidos (5211), Chrome cerrado, dist borrado, entradas
+`qa-post*` quitadas de `.claude/launch.json`. Arneses en `<scratchpad>/qa-post/h/` (queue*.sh, reveal2, eterno2,
+eternoOld, gsim2, islands, findcoords, prodnav…); resultados en `<scratchpad>/qa-post/ronda2/`.
+
+## Hecho (ronda 2)
+- **Suite:** `tsc` limpio; `vitest run --maxWorkers=2`: 89 archivos, 1562 pasan, 2 saltadas (p3Balance.sim, como siempre).
+- **Partidas:** las 28 de `game/test-saves` cargan; 25 sin pérdida, las 3 `rupturas-*` con el reinicio de la Parte II
+  de siempre (igual que ronda 1). Antes del final: 0/123 en el Catdex, pools 0, Copa vacía, las 5 islas ocultas
+  (`lllll`), estandartes `michi,holo,cofre` (sin MULTIVERSO). **`rupturas-raro` ya no abre el lote** (bug 2 de la ronda 1
+  cerrado). Partida post nueva (h93-final → «Continuará» por el código del juego): 123 rumores, pools 24/44/44/30/11/10
+  (= `05` §3), Copa 8, 0 pérdidas. m2-postboss2 dio 4 avisos «GSAP target null» (sin error; ver abajo).
+- **Eterno viejo trabado** (forma de antes: pot `{cur, amount, doublings}` sin `extra`, `locked`): al abrir el casino se
+  resuelve: GANAR → fichas 4000×2 + 9000 = 17000, oro ×2, gato especial (Capitán Gorrimiau); PERDER → todo a 0 y nada
+  más tocado. 0 errores, 0 pérdidas fuera de lo que el 50/50 apuesta.
+- **Tanda 2 por flujos reales, 10 revelaciones con su universo, 0 errores:** PORTAL MICHI → Miausagi (K), Quetzalgatl
+  (J), Miaucol (L); MULTIVERSO HOLO → Miauton (K); MULTIVERSO DESBORDADO ×1 → Gatejo (J), Tetrimiau (K); ×10 →
+  Shakimiau (L); La Caja → Doc Miauwn (L), El Michíncipe (K); Modo Eterno ganado → Napoleón Bonapata (J).
+- **SISTEMA-2:** Eterno por la mesa real: botín con drops (36 boletos, 21 gemas, pescaditos, oro) ×16; ganar suma todo;
+  perder deja todo en 0. Estandarte: no existe antes del final (h93-final), sí después («85 MULTIDIMENSIONALES
+  ADENTRO»); aviso de MADAME NOIR 4 globos, una sola vez (segunda visita: nada). ×1/×10 del MULTIVERSO y ×10 del PORTAL
+  MICHI: lo Multidimensional sale con su color/palabra, no dorado. Sim de 5000 tiros del MULTIVERSO: 294/294
+  legendarios-míticos son MD; hueco máx. 31 (panel: 36), medio 17 (esperado 18,4); mítico máx. 140 (=140); épico ≤ 8; gato
+  ≤ 5; frecuencias por gato = `multiversoOdds` (z máx. 2,4 en 85); «MD que te falta» solo da faltantes.
+- **Batallas tanda 2** (`?stage=5-4`, 5 tripulaciones): 15 poderes disparan (Sombreronrón, Gatejo, Maullorona, Miauton,
+  Miauzart, Miausagi, Mi Pobre Gatito, Felinamente, Gorrimiau, Doc Miauwn, Pinkmiau + Heisenmiau, Shakimiau, Tetrimiau,
+  Garjona): 0 errores, 0 softlocks; fichas del HUD legibles (LISTONES 0/3, GRAVEDAD ×0.5, TRAMPAS ×4, MARCADO…). Solo
+  encimes pasajeros de palabras de golpe («¡GLUGLU!», «¡SINERGIA DESCUBIERTA!») sobre el tooltip, como antes.
+- **Catdex** (los 123 registrados): rejilla MD de 104 cartas (19 P3 + 85 post), estática (tickers/tweens no suben), 10
+  detalles vivos, 0 errores nuevos. Vértices: máx. por detalle post 14 076 (Bonapata), 0 de 85 pasan 25k. Memoria, 15
+  ciclos: heap +1,31 MB/ciclo (últimos 5: +0,74), ArrayBuffers +0,29 MB/ciclo, texturas 2437→2439 y batchers
+  1101→1103 planos. Ronda 1: +1,25 / +0,16; HEAD c4cfa3c: +1,04 / +0,71. Acotado; los Graphics retenidos siguen el mismo
+  mecanismo de HEAD (~6,5 por carta MD al abrir la rejilla, ahora 104 cartas).
+- **Build** (`npm run build` con `VITE_ART_BASE_FULL` de CI): OK, dist 370 MB, 0 raster, 283 completos fuera; dist
+  borrado enseguida (el disco bajó a 4,4 GB). Sin raster en el repo; los 50 SVG nuevos sin scripts ni `<image>`.
+- **Islas:** antes del final las 5 ocultas (estado `locked`, `buyExpansion(13)` = false); después, las 5 `available`
+  selladas con su precio; comprar la 13 cobra 750B y pasa a `clearing`; panel de la 14 sin textos fuera. «Sin casa»:
+  en las dos partidas había lugar (`move`); el caso «TERRENO · 750B» lo cubre `islasPost.test.ts`. Rendimiento (perf de
+  ISLAS-POST en 5211, 3 alternancias): ocultas 56,5–60 fps, heap ~256 MB, 352 texturas (250 MB); las 5 abiertas + 10
+  hábitats 55,9–60 fps, heap ~350 MB, 404 texturas (282 MB). Graphics más grande de isla nueva: 20 356 v (Siesta); el de
+  41 391 v es el de siempre (también en HEAD).
+- **Muelle:** 14 muelles a 2000×1300 y 1280×720: 0 textos fuera, 0 encimados, 0 errores.
+- **Pantalla completa:** 7 revelaciones a 1500×1000 (3:2) y 2100×900 (21:9) (Homiau P3, Sherlock C, Gomitas E,
+  Sombreronrón J, Perla K, Pobre Gatito L y un legendario): todas llenan la pantalla, cierran, 0 errores, 0 tweens
+  sobrantes. Un primer cuadro lento (hasta 0,56 s a 21:9 en Sherlock/Sombreronrón: subida de texturas), p99 19 ms.
+- **P3-CINE:** h75-acto2: 2 arranques de película (superhéroes 1 y 2) con TRANSFORMACIÓN, 0 cargadores; final
+  (h93-final → H93): f31_luz con transformación, sin cargador. «Volver a ver»: 104 filas, ♪ de la Parte III en 96–104;
+  ♪ EM%EN reprodujo f06 con `emen` (arranque 7,0 s en dev frío) y ♪ XTI ES AMOR f30 con `xti` (2,8 s); vuelta limpia;
+  0 errores. Fonoteca: las 8 canciones desbloqueadas tras cargar.
+- **Película fría en producción** (no se pudo rehacer dist por disco: se midió en la versión PUBLICADA, 8c5b17c, mismo
+  motor de películas, servida desde GitHub Pages con caché vacío): «Volver a ver» → ▶ KARAOKE: el cargador se ve
+  ~3,6 s y la película aparece entre 4,0 y 5,5 s después del toque (dev frío: 11–13 s según P3-CINE). Con la
+  transformación nueva (mínimo 1,25 s, respaldo a los 12 s) el morph cubriría ~4–5 s en frío; nunca llega al respaldo.
+- **Guarda del arte:** nolc-arte 122/122 idénticos; nolc-arte-2 publicado con 136 (404,1 MB, desde 8c5b17c) + **25
+  nuevos sin publicar (60,1 MB)** → avisos, no error. Total al publicar: **161 archivos, 464,3 MB** (< 950).
+
+- **Textos tanda 2 / aviso / islas:** español latino; sin letras de canciones; nada sexual; el aviso nombra a
+  Luzterna («la tristeza por Luzterna») pero solo existe después del final (verificado). Marcados para el dueño (no
+  tocados): Mi Pobre Gatito «Feliz Navidad, gato inmundo… y quédate con el cambio» (casi literal de la película) y
+  «THIS IS MY BOX! I HAVE TO DEFEND IT!»; Felinamente «¿Qué? ¿Como si fuera difícil?» (frase famosa de la película);
+  El Michíncipe «Lo esencial es invisible a los bigotes» y «DRAW ME A BOX!» (libro aún protegido en EE. UU.); Miausagi
+  «IN THE NAME OF THE FULL BOWL!»; Doc Miauwn «GREAT SCRATCH!» y «1.21 gigamiaus» (+ un auto plateado tipo DeLorean en
+  su universo); Pinkmiau «burbujas azules, michi» / «¡CIENCIA!» (eco de Breaking Bad). La línea `sf` (sin filtro) del
+  casino «¡MULTIDIMENSIONAL, A HUEVO!» solo sale con el tono SIN FILTRO, como «No mames» de antes.
+
+## Bugs ronda 2
+- **Arreglados:** ninguno (nada chico y obvio que tocar).
+- **Abiertos:** (1) MULTIVERSO HOLO sigue rompiendo su garantía impresa (bug 1 de la ronda 1): 4000 tiros → 45,5 % del
+  Multiverso, hasta 4 legendarios/míticos seguidos sin uno (el panel dice 3). PORTAL MICHI bien (58,5 %, máx. 2).
+  (2) m2-postboss2 dio 4 avisos «GSAP target null not found» en la primera pasada; al repetirla, 0: no se reproduce.
+
+## Falta (ronda 2)
+Nada de QA. Al publicar: ver «Al publicar» (ronda 1) + publicar nolc-arte-2 con los 25 nuevos (161 archivos, 464,3 MB).

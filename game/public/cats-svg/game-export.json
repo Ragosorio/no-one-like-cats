@@ -1097,6 +1097,119 @@
     "sabrina_bangs_cat": {
       "bytesIn": 4367869,
       "bytesOut": 3206588
+    },
+    "tetrimiau_block_cat": {
+      "bytesIn": 2892672,
+      "bytesOut": 2074837
+    },
+    "pinkmiau_science_cat": {
+      "bytesIn": 4876682,
+      "bytesOut": 3574450
+    },
+    "garjona_trova_cat": {
+      "bytesIn": 4283884,
+      "bytesOut": 3140748
+    },
+    "laracroqueta_raider_cat": {
+      "bytesIn": 4993030,
+      "bytesOut": 3572026
+    },
+    "pobregatito_scream_cat": {
+      "bytesIn": 5242565,
+      "bytesOut": 3840982
+    },
+    "felinamente_pink_cat": {
+      "bytesIn": 4241142,
+      "bytesOut": 3113431
+    },
+    "miauty_glasses_cat": {
+      "bytesIn": 4172436,
+      "bytesOut": 3070687
+    },
+    "miaucol_dunk_cat": {
+      "bytesIn": 3409491,
+      "bytesOut": 2484493
+    },
+    "tanjimiau_box_cat": {
+      "bytesIn": 5181418,
+      "bytesOut": 3799408
+    },
+    "cleogatra_rug_cat": {
+      "bytesIn": 4741374,
+      "bytesOut": 3487910
+    },
+    "miausagi_moon_cat": {
+      "bytesIn": 2549817,
+      "bytesOut": 1802352,
+      "preset": "balanced-color-preserved"
+    },
+    "shakimiau_quake_cat": {
+      "bytesIn": 2215541,
+      "bytesOut": 1592462,
+      "preset": "balanced-color-preserved"
+    },
+    "gorrimiau_compass_cat": {
+      "bytesIn": 2516433,
+      "bytesOut": 1778340,
+      "preset": "balanced-color-preserved"
+    },
+    "docmiauwn_time_cat": {
+      "bytesIn": 5567543,
+      "bytesOut": 4065412
+    },
+    "michincipe_asteroid_cat": {
+      "bytesIn": 2155725,
+      "bytesOut": 1517147,
+      "preset": "balanced-color-preserved"
+    },
+    "bastet_sun_cat": {
+      "bytesIn": 3389500,
+      "bytesOut": 2462927
+    },
+    "sombreronron_braid_cat": {
+      "bytesIn": 2178423,
+      "bytesOut": 1534405,
+      "preset": "balanced-color-preserved"
+    },
+    "gatejo_twospirit_cat": {
+      "bytesIn": 3338073,
+      "bytesOut": 2369475,
+      "preset": "balanced-color-preserved"
+    },
+    "maullorona_veil_cat": {
+      "bytesIn": 2025782,
+      "bytesOut": 1463601,
+      "preset": "balanced-color-preserved"
+    },
+    "quetzalgatl_feather_cat": {
+      "bytesIn": 3039141,
+      "bytesOut": 2177298,
+      "preset": "balanced-color-preserved"
+    },
+    "bonapata_bicorne_cat": {
+      "bytesIn": 1284403,
+      "bytesOut": 908281,
+      "preset": "balanced-color-preserved"
+    },
+    "leonardo_codex_cat": {
+      "bytesIn": 2562143,
+      "bytesOut": 1845375,
+      "preset": "balanced-color-preserved"
+    },
+    "perla_turban_cat": {
+      "bytesIn": 1520920,
+      "bytesOut": 1079024,
+      "preset": "balanced-color-preserved"
+    },
+    "miauton_apple_cat": {
+      "bytesIn": 2326367,
+      "bytesOut": 1642028,
+      "preset": "balanced-color-preserved"
+    },
+    "miauzart_prodigy_cat": {
+      "bytesIn": 2463386,
+      "bytesOut": 1746962,
+      "preset": "balanced-color-preserved"
     }
   }
 }

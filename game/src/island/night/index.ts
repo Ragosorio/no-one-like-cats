@@ -577,7 +577,7 @@ export class IslandNight {
             const s = isoToScreen(t.gx, t.gy);
             spots.push({ x: s.x, y: s.y - 30, color: d.accent, r: 170, kind: 'dim', flicker: d.id === 'volcano' ? 0.7 : 0 });
           }
-        } else spots.push({ x: p.cx, y: p.cy - 120, color: d.accent, r: 200, kind: 'dim' });
+        } else if (lk !== 'hidden') spots.push({ x: p.cx, y: p.cy - 120, color: d.accent, r: 200, kind: 'dim' });
       }
     this.lights.setSpots(spots);
   }

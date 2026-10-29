@@ -22,6 +22,9 @@ import gaterasEspecies from './gateras/especies.json';
 // After the Parte III — the cats that only show up once it's over (state/sys/postp3.ts): appended AFTER the box cats, so
 // no Catdex number moves; checked on load (data/postp3/validate.ts). Shipped empty: nothing changes until cats land
 import postEspecies from './postp3/especies.json';
+// After the Parte III — the islands that spilled out of the boxes: expansions 13+ of the SAME archipelago, appended after
+// Part I's 12 (EXPANSIONS[n - 1] stays true). Hidden until postP3Unlocked() (state/sys/island.ts expansionHidden)
+import postIslas from './postp3/islas.json';
 import { validatePostCats } from './postp3/validate';
 import { ContentConflict } from './mergeContent';
 import { P3_MULTIDIM } from '../state/sys/multidim';
@@ -39,6 +42,7 @@ const raw = mergeContent(base as unknown as Record<string, unknown>, rupturasEsp
   gaterasHistoria as Record<string, unknown>,
   p3Especies as Record<string, unknown>,
   { cats: postCats } as Record<string, unknown>,
+  postIslas as Record<string, unknown>,
 );
 {
   // a bad post cat stops the game in dev and in the tests (like a content conflict); in production it's only a warning
@@ -247,6 +251,8 @@ export interface ExpansionDef {
   opensDesign: string;
   secret: { name: string; condition: string; content: string; reward: string };
   visual: string;
+  /** 'postp3': an island of the post-Parte III ring (data/postp3/islas.json) — invisible before postP3Unlocked() */
+  gate?: 'postp3';
 }
 export interface BeatDef {
   id: string;

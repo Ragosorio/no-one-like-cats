@@ -13,6 +13,41 @@ Nada: **mis 18 Multidimensionales están integrados** y la cola de Codex termin�
 - **Modelo:** solo `gpt-5.6-luna` con `model_reasoning_effort=max`, fijado en `gen.sh` por el coordinador (el `gpt-6-luna` que se pidió primero no existe para esta cuenta: error 400 `model_not_found`). Prueba: `lote-post-p3/revision/prueba-luna.jpg`.
 - **Cola Luna:** 79 + 2 de prueba. Salieron 79; 2 bloqueados (xp_esponja y xp_gatogro, ambos míos) pasaron con plan B en v2. 0 reservas usadas.
 
+## Tanda 2 (2026-10-29)
+- **Encargo** (coordinador, pedido del dueño): 25 Multidimensionales más, preparados por DISEÑO-2. Están en `COLA-tanda2.txt` y en el seguimiento con estado PENDIENTE.
+  - Yo pinto los 25 con `gpt-5.6-luna` en max.
+  - Llevo hasta el juego estos 13: xp_sombreronron, xp_gatejo, xp_maullorona, xp_quetzalgatl, xp_bastet, xp_cleogatra, xp_bonapata, xp_leonardo, xp_perla, xp_miauton, xp_miauzart, xp_miausagi y xp_tanjimiau.
+  - ARTE-POST-B hace los otros 12.
+  - **No se corre `postp3-sync`** hasta que DISEÑO-2 termine el roster: integro solo el arte. Los tests de arte pueden quejarse mientras tanto.
+- **Estado** (29-oct, 10:35): **mis 13 están en el juego.** Cada uno tiene completo, lite, manifiestos, rig con su copia MAI, pin al sitio 1, sync hecho y títeres revisados en catlive.
+
+| id | Gato | slug | Completo (preset · MB) | Lite | Intento |
+|---|---|---|---|---|---|
+| xp_sombreronron | El Sombreronrón | `sombreronron_braid_cat` | balanced · 1,53 | 711 KB | v1 |
+| xp_gatejo | El Gatejo | `gatejo_twospirit_cat` | balanced · 2,37 | 1023 KB | v1 |
+| xp_maullorona | La Maullorona | `maullorona_veil_cat` | balanced · 1,46 | 695 KB | v1 |
+| xp_quetzalgatl | Quetzalgatl | `quetzalgatl_feather_cat` | balanced · 2,18 | 1030 KB | v1 |
+| xp_bastet | Bastet | `bastet_sun_cat` | high · 2,46 | 433 KB | v1 |
+| xp_cleogatra | Cleogatra | `cleogatra_rug_cat` | high · 3,49 | 601 KB | v2 (la v1 tenía la pata cortada por el borde) |
+| xp_bonapata | Napoleón Bonapata | `bonapata_bicorne_cat` | balanced · 0,91 | 426 KB | v1 |
+| xp_leonardo | Leonardo da Michi | `leonardo_codex_cat` | balanced · 1,85 | 859 KB | v1 (MAI colapsó con lanczos3; se repitió con mitchell) |
+| xp_perla | La Michi de la Perla | `perla_turban_cat` | balanced · 1,08 | 536 KB | v1 |
+| xp_miauton | Isaac Miauton | `miauton_apple_cat` | balanced · 1,64 | 718 KB | v1 |
+| xp_miauzart | Miauzart | `miauzart_prodigy_cat` | balanced · 1,75 | 762 KB | v1 |
+| xp_miausagi | Miausagi | `miausagi_moon_cat` | balanced · 1,80 | 809 KB | v1 (sin plan B) |
+| xp_tanjimiau | Tanjimiau | `tanjimiau_box_cat` | high · 3,80 | 637 KB | v1 |
+
+  - **Totales:** completo 26,3 MB y lite 9,2 MB. Los 25 se pintaron con Luna, sin bloqueos ni copias cruzadas.
+  - **Detalles:**
+    - p11 se reanudó a mano tras el EINTR de MAI (`scratchpad/post/p11-reanudar.sh`).
+    - Los 9 de p11 que pedían balanced entraron primero en high y se cambiaron por el balanced con `integrar.py --force` (mismo slug).
+    - **Miauton:** la manzana se deformaba en catlive al mirar a un lado. Ahora la cabeza es más baja y la manzana va con pin + float; lo revisé con overlay, sin volver a catlive.
+  - **Archivos:**
+    - títeres: `revision/titeres-catlive-4.jpg` (la fila de Miauton muestra el rig anterior);
+    - hojas de contacto rehechas a las 10:45: `md-a.jpg` (36/36), `md-b.jpg` (49/49), `miticos.jpg` (20/20), `legendarios.jpg` (10/10) y `heroicos.jpg` (8/8). El seguimiento da 123 titulares aprobados y 1 retirado (Miaurlina); disco libre 6,8 GB.
+  - **Contexto:** la máquina estuvo sobrecargada (swap llenando el disco). Todo lo pesado pasó por `scratchpad/briefs/pesado.sh`, con pausas cuando había menos de 6 GB libres. Ya no tengo servidores ni Chrome abiertos.
+  - **Nunca** correr `generar.py --arte-todo`: borraría las correcciones a mano.
+
 ## Progreso
 - **2026-10-28 23:20 · mis 18 xp en el juego** (tandas de 11 y 7, avisadas al coordinador):
 
@@ -140,4 +175,4 @@ Todo se corre desde `~/Desktop/No one - raster (fuera del repo)/arte-nuevo/`:
 - **Hojas:** `node lote-post-p3/herramientas/contacto.mjs`.
 
 ## Última actualización
-2026-10-28 23:25
+2026-10-29 10:40

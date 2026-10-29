@@ -20,7 +20,7 @@
 import { G } from '../state/game';
 import { beatSeen, markBeat } from '../state/ext/story';
 import { say, storyLayer, type Line } from '../ui/dialog';
-import { playStoryFilm } from './stageIntro';
+import { playStoryFilm, preloadStoryFilm } from './stageIntro';
 
 /** timings (tests set them to 0) */
 export const ACTO1_TIMING = { quietMs: 5500 };
@@ -70,8 +70,14 @@ async function film(key: string, id: string, beat: string, idx?: readonly number
 }
 
 // ------------------------------------------------------------------ H70 · Borrón
+/** (P3-CINE) warm a film the flow will play after its lines / choice (film/morph.ts: no loading screen) */
+function warm(id: string, key: string) {
+  if (!beatSeen(key)) void preloadStoryFilm(id).catch(() => false);
+}
+
 async function h70(): Promise<FlowResult> {
   const L = ACTO1_LINES.b70_doneria;
+  warm('f02', 'b70_sombras');
   if (!(await step('b70_doneria', () => talk(lines('b70_doneria', L.intro))))) return 'interrupted';
   const ok = await step('b70_donas', async () => {
     let pick = donaChoice();
@@ -162,6 +168,7 @@ async function h74Lista(): Promise<FlowResult> {
   return (await step('b74_lista', () => talk(lines('b74_lista')))) ? 'done' : 'interrupted';
 }
 async function h74Aviso(): Promise<FlowResult> {
+  warm('f08', 'b74_ohshit');
   // the warning in SILENCE (only the neon hums): OH SHIT starts from it
   const ok = await step('b74_aviso', () => quiet(() => talk(lines('b74_aviso')), false));
   if (!ok) return 'interrupted';

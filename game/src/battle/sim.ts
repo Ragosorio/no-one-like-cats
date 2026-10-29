@@ -37,7 +37,7 @@ import { ULTS, ultBudgetFrac, ultTicks } from './ults';
 // Parte III · the MULTIDIMENSIONAL powers (player side only; rules and the 25 powers in multidim.ts)
 import { MD_TUNE, MD_ULTS, mdAff, mdAfterFire, mdAfterHit, mdAtkMul, mdCatMul, mdCellMul, mdChain, mdDodge, mdEaten, mdEcho, mdExtraShots, mdOn, mdPaths, mdShot, mdSilenced, mdStartTurn } from './multidim';
 // after the Parte III: the post Multidimensional powers' rules (battle/multidimPost/hooks.ts, re-exported by multidim.ts)
-import { mdAbsorb, mdAfterShot, mdAltPaths, mdBench, mdFire, mdHitAdjust, mdImpact, mdMeterMul } from './multidim';
+import { mdAbsorb, mdAfterShot, mdAltPaths, mdBench, mdFire, mdFloor, mdHitAdjust, mdImpact, mdMeterMul } from './multidim';
 import { cataInit, cataStart, cataCrack, sealOpen } from './cataclysm';
 import type { CataCfg, CataId, CataState } from './cataclysm';
 // Parte II · Oleada 3: SINCRO — an explicit player input, never the music itself (rules in sincro.ts)
@@ -1929,6 +1929,8 @@ export class Battle {
   }
   /** apply structure damage to a cell (Gea HEART OF STONE keeps module cells at 1 hp) */
   hurtCell(side: number, c: Cell, dmg: number) {
+    // a post power (Bastet, tanda 2): that side's cells don't go under 30 % for a while
+    dmg = mdFloor(this, side, c, dmg);
     c.hp -= dmg;
     if (c.hp <= 0 && c.module !== undefined && this.sides[side].buffs.stone > 0) c.hp = 1;
   }

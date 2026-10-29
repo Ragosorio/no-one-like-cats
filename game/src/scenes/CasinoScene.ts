@@ -20,7 +20,7 @@ import { G } from '../state/game';
 import { CANDY, chips, ensureGambitOpen, owed, prefs, syncChips, tickets } from '../state/sys/casino';
 import { CP, Bubble, ChatFeed, Host, Marquee, ResPill, block, clickable, halftone, heading, label, neon, killDeep } from '../panels/casino/kit';
 import { GAMES, GAME_BY_ID, GROUPS, isGame } from '../panels/casino/games/registry';
-import { settleAbandoned } from '../state/sys/casino/eterno';
+import { potHasAny, settleAbandoned } from '../state/sys/casino/eterno';
 import { chatLines, hostLine, Ev } from '../panels/casino/lines';
 import type { CasinoCtx, CasinoTab, CasinoView, PillKind } from '../panels/casino/ctx';
 import { lounge } from '../panels/casino/lounge';
@@ -110,7 +110,7 @@ export class CasinoScene extends Scene {
         // past the lock there's no escape: the 50/50 was drawn now, with the saved botín
         const msg =
           ab.r === 'win'
-            ? `La máquina del ETERNO explotó mientras no estabas… y GANASTE: todo lo tuyo ×2${ab.pot?.amount ? ' + el botín' : ''}${ab.prize ? ` + ${ab.prize.label}` : ''}.`
+            ? `La máquina del ETERNO explotó mientras no estabas… y GANASTE: todo lo tuyo ×2${potHasAny(ab.pot) ? ' + el botín' : ''}${ab.prize ? ` + ${ab.prize.label}` : ''}.`
             : ab.r === 'loss'
               ? 'La máquina del ETERNO explotó mientras no estabas… y la moneda cayó del otro lado: oro, gemas, pescaditos, boletos y fichas en 0.'
               : 'La máquina del ETERNO se apagó sola cuando te fuiste (antes de quedarse sin frenos): no hubo 50/50, no perdiste ni ganaste nada.';
@@ -120,6 +120,26 @@ export class CasinoScene extends Scene {
         this.refresh();
       }
     }, 650);
+    // after the Parte III, once: Madame Noir announces the MULTIVERSO DESBORDADO banner (panels/casino/multiversoAviso.ts)
+    window.setTimeout(() => void this.maybeAviso(), ab ? 3200 : 1400);
+  }
+
+  /** the MULTIVERSO's one-time notice (only past the Parte III; never during an ETERNO or a pull) */
+  private async maybeAviso() {
+    if (this.destroyed) return;
+    const m = await import('../panels/casino/multiversoAviso');
+    if (this.destroyed || !m.avisoDue()) return;
+    if (this.busyFlag || this.eterno) {
+      window.setTimeout(() => void this.maybeAviso(), 1500);
+      return;
+    }
+    stopVoice();
+    await m.showMultiversoAviso(this.topLayer, {
+      onGo: () => void this.go('gacha', 'multiverso'),
+      speak: (t) => {
+        speak(t, { pitch: 1.08, rate: 1.04 });
+      },
+    });
   }
 
   /** switch tab (also used by openCasino/openGacha when already inside) */
@@ -536,7 +556,7 @@ export class CasinoScene extends Scene {
     if (Math.random() > p) return;
     const now = performance.now();
     // never stack lines faster than ~1.2 s (except big moments)
-    const big = ev === 'jackpot' || ev === 'winBig' || ev === 'gachaHolo' || ev === 'gachaLegend' || ev === 'poor';
+    const big = ev === 'jackpot' || ev === 'winBig' || ev === 'gachaHolo' || ev === 'gachaLegend' || ev === 'gachaMultidim' || ev === 'poor';
     if (!big && now - this.lastSay < 1200) return;
     this.lastSay = now;
     const line = hostLine(ev);

@@ -7,6 +7,7 @@ import type { Battle, PathPoint, ShotPath } from '../sim';
 import type { Cell } from '../ship';
 import type { CatState, StatusId } from '../types';
 import type { UltCtx } from '../ults';
+import { chemCombo } from './kitD';
 import { clamp, collapse, cut, landing, normal, shipSpan, shipTop } from '../ults';
 import {
   CAT_K,
@@ -247,18 +248,21 @@ function xp_heisenmiau(b: Battle, o: UltCtx): ShotPath[] {
     .filter((c) => Object.keys(c.status).some((k) => k !== 'voided'))
     .sort((a, z) => (g ? Math.hypot(a.x - g.x, a.y - g.y) - Math.hypot(z.x - g.x, z.y - g.y) : 0) || a.y - z.y || a.x - z.x);
   let n = 0;
+  // with Pinkmiau's lab (tanda 2, agent PODERES-3) every status counts twice, max 6 per cell
+  const twice = chemCombo(b, o.side);
   for (const c of lit) {
     const ids = (Object.keys(c.status) as StatusId[]).filter((k) => k !== 'voided');
     if (!ids.length || c.hp <= 0) continue;
     for (const k of ids) delete c.status[k];
     if (!hurtable(b, enemy, c)) continue;
     const q = b.cellCenter(enemy, c.x, c.y);
-    const d = cut(b, enemy, c, o.atk * PW(o) * 0.3 * ids.length * DMG_K, o.events, 0, at);
-    if (d > 0 && n < 24) fx(o.events, 'mdpChem', enemy, q.x, q.y, { n: ids.length, path: 0, at });
+    const count = twice ? Math.min(6, ids.length * 2) : ids.length;
+    const d = cut(b, enemy, c, o.atk * PW(o) * 0.3 * count * DMG_K, o.events, 0, at);
+    if (d > 0 && n < 24) fx(o.events, 'mdpChem', enemy, q.x, q.y, { n: count, path: 0, at });
     n++;
   }
   collapse(b, enemy, o.events, 0, at);
-  info(o.events, n ? `¡QUÍMICA PURA! ${n} CELDAS DETONADAS` : 'NADA QUE COCINAR (SOLO EL MATRAZ)', t.x, t.y - 170, 0x4fc3f7, 0, at);
+  info(o.events, n ? `¡QUÍMICA PURA! ${n} CELDAS DETONADAS${twice ? ' (x2 CON PINKMIAU)' : ''}` : 'NADA QUE COCINAR (SOLO EL MATRAZ)', t.x, t.y - 170, 0x4fc3f7, 0, at);
   return [p];
 }
 

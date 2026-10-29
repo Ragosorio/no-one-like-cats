@@ -46,7 +46,7 @@ import { mareoChips } from '../battle/mareo';
 import { rondaChips } from '../battle/ronda';
 import { barChips } from '../battle/barRules';
 // Parte III · the MULTIDIMENSIONAL powers: their chips, their cut-in color (battle/multidim.ts, battle/fx/multidimFx.ts)
-import { mdBench, mdChips, mdExtraShots, mdOn } from '../battle/multidim';
+import { mdAimShot, mdBench, mdChips, mdExtraShots, mdOn } from '../battle/multidim';
 import { mdColor, mdStampUp } from '../battle/fx/multidimFx';
 import { MareoFx, mareoProjectile } from '../battle/mareoFx';
 // Parte II · Oleada 2: the sky layer (rules battle/cielo.ts, look battle/fx/cieloFx.ts)
@@ -1225,7 +1225,7 @@ export class BattleScene extends Scene {
     this.aimReadout.visible = false;
     if (this.phase === 'aim') {
       const o = this.sim.muzzle(0, this.selected);
-      const paths = this.sim.buildPaths(this.currentShot(), o, this.mareoFx ? this.mareoFx.aimAngle(this.aim.angle, true) : this.aim.angle, this.aim.power, this.sim.wind, 0);
+      const paths = this.sim.buildPaths(mdAimShot(this.sim, 0, this.currentShot()), o, this.mareoFx ? this.mareoFx.aimAngle(this.aim.angle, true) : this.aim.angle, this.aim.power, this.sim.wind, 0);
       this.lastShot = { angle: this.aim.angle, power: this.aim.power, pts: paths[0]?.points ?? [], shooter: this.selected };
     }
     const bc = this.selected ? this.catViews.get(this.selected) : undefined;
@@ -1245,7 +1245,8 @@ export class BattleScene extends Scene {
   }
 
   drawAim() {
-    const shot = this.currentShot();
+    // (a post power can change how YOUR shot flies — Miauton's gravity: the guide shows it)
+    const shot = mdAimShot(this.sim, 0, this.currentShot());
     const o = this.sim.muzzle(0, this.selected);
     // MAREO: the guide sways — it shows the arc the shot takes if you let go now
     const paths = this.sim.buildPaths(shot, o, this.mareoFx ? this.mareoFx.aimAngle(this.aim.angle) : this.aim.angle, this.aim.power, this.sim.wind, 0);

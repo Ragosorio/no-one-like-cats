@@ -33,8 +33,27 @@
   - **Rig nuevo:** la cabeza [340,172,125,135] cubre el sombrero y el matraz va como pin [165,180,52,105].
   - **Integración:** `integrar.py --only=xp_heisenmiau --force`. Tests de arte 24/24, postp3-sync sin cambios y títere revisado en catlive (5221, ya detenido). UNIVERSOS-G tiene que volver a medir los onCat de su revelación.
 
+## Tanda 2 (2026-10-29)
+Encargo: revisar → plan B (máx. 2) → vectorizar (corridas b5…) → elegir → rig → `integrar.py --only=<ids>` → catlive. Mis 12 son xp_tetrimiau, xp_laracroqueta, xp_pobregatito, xp_felinamente, xp_gorrimiau, xp_docmiauwn, xp_pinkmiau, xp_miauty, xp_michincipe, xp_garjona, xp_shakimiau y xp_miaucol. Los pinta la cola `COLA-tanda2.txt` de ARTE-POST.
+- **postp3-sync:** al principio no tocaba correrlo (DISEÑO-2 no había terminado el roster). Desde que DISEÑO-2 terminó, lo corro con lock.sh después de cada ola.
+- **Revisión:** `verificar-copias.sh` limpio. 11 pasaron en v1.
+  - **Plan B de xp_shakimiau:** la v1 tenía un top tipo brasier, el ombligo al aire, una abertura en la falda y mirada sensual, contra su propio «modest / nothing suggestive». La v2 trae blusa de manga larga, la panza cubierta, falda larga sin abertura y ojos abiertos.
+  - Pinkmiau lleva el mismo matraz Erlenmeyer que Heisenmiau: nada de drogas ni bolsitas.
+  - Tetrimiau tiene un bloque amarillo en la mejilla algo picudo, pero pasa.
+- **Vectorizado** (b5, por `briefs/pesado.sh`):
+  - MAI colapsó con lanczos3 en garjona, pobregatito y shakimiau, y se repitió solo con mitchell.
+  - Balanced (b5) para gorrimiau, michincipe y shakimiau. Docmiauwn se quedó en high (4,07 MB): su balanced daba MAE 11,4.
+- **Rigs:**
+  - La pieza que cae de Tetrimiau es un `float`.
+  - Van como pines: la pata y la carpeta de Miauty, el libro de Felinamente, el control y el artefacto de Docmiauwn, el balón de Miaucol, el matraz de Pinkmiau, la brújula y la pata alzada de Gorrimiau y el antebrazo de Shakimiau.
+  - Los sombreros, gorros y goggles en la cabeza van dentro de la elipse.
+- **Integrados (12/12)**, con `integrar.py --only=…` + postp3-sync + tests de arte 24/24:
+  - ola 1 (8): xp_miauty, xp_felinamente, xp_garjona, xp_laracroqueta, xp_miaucol, xp_pinkmiau, xp_pobregatito, xp_tetrimiau;
+  - ola 2 (4): xp_docmiauwn, xp_gorrimiau, xp_michincipe, xp_shakimiau.
+- **Máquina saturada** (carga hasta 441, swap de unos 11 GB, disco de 4 a 6 GB): el coordinador bajó el guardia de disco a 6 GB y todo lo pesado va por `pesado.sh`. Borré mis capturas y el perfil de Chrome del scratchpad.
+
 ## Falta
-Nada de mi lista.
+Nada. Los títeres de los 12 de la tanda 2 se revisaron en catlive con los 10 estados (por `pesado.sh`, servidor 5221 ya detenido; hojas `t2tit1.jpg` y `t2tit2.jpg` en `<scratchpad>/post-b/rev/`): sin roturas, la pieza de Tetrimiau flota sola y los props sostenidos se quedan quietos.
 
 ## Cómo retomar
 - **Estado:** `node lote-post-p3/herramientas/seg.mjs list | grep xp_`.
@@ -43,4 +62,4 @@ Nada de mi lista.
 - **Mis hojas** de revisión, rejillas y overlays: `<scratchpad>/post-b/rev/`.
 
 ## Última actualización
-2026-10-29 06:20
+2026-10-29 10:20

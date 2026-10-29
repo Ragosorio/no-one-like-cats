@@ -9,6 +9,7 @@
 import type { Battle } from '../sim';
 import type { CatState } from '../types';
 import { alive, dirOf, left, on, peek } from './kit';
+import { dChips, dWorth } from './hudD';
 
 // ------------------------------------------------------------------ AI
 /** is THIS the moment for that post power? (your auto-aim and the honest estimate; never asked for the enemy) */
@@ -122,7 +123,8 @@ export function mdpWorth(b: Battle, c: CatState): boolean {
     case 'xp_miaupe':
       return !st?.counter;
     default:
-      return true;
+      // tanda 2 (agent PODERES-3): hudD.ts
+      return dWorth(b, c) ?? true;
   }
 }
 
@@ -138,7 +140,10 @@ export function mdpChips(b: Battle): [MdpChip[], MdpChip[]] {
   const st = peek(b);
   const e: MdpChip[] = [];
   const p: MdpChip[] = [];
-  if (!st) return [e, p];
+  if (!st) {
+    dChips(b, e, p);
+    return [e, p];
+  }
   const W = 0xffffff;
   if (on(st.rubber[0])) p.push({ text: `DE HULE (${left(st.rubber[0])})`, color: 0xd62839, ink: W, hot: true });
   const clones = st.clones.filter((k) => k.side === 0).length;
@@ -184,5 +189,7 @@ export function mdpChips(b: Battle): [MdpChip[], MdpChip[]] {
   for (const [c, t] of st.exposed) if (c.side === 1 && !c.ko && on(t)) e.push({ text: `EXPUESTO: ${c.def.name.toUpperCase()}`, color: 0xffe14a, hot: true });
   if (st.unmask?.side === 1) e.push({ text: 'SIN BARRERAS', color: 0x8b5a2b, ink: W, hot: true });
   if (st.flips?.side === 1) e.push({ text: 'POZOS AL REVÉS', color: 0xd96c9e });
+  // tanda 2 (agent PODERES-3): hudD.ts
+  dChips(b, e, p);
   return [e, p];
 }

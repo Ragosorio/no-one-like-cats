@@ -36,7 +36,7 @@ Nada: el lote está terminado (2026-10-28). Espera la revisión del dueño y las
 4. Que el agente de arte corra la cola.
 
 ## Cómo retomar
-- Cambiar un gato: editar su ficha en `fuente/*.py` → `cd docs/post-p3/fuente && python3 generar.py` (docs + JSON + validación) → `python3 generar.py --arte` (actualiza SOLO las entradas `lote-post-p3` del manifest, locks y prompts).
+- Cambiar un gato: editar su ficha en `fuente/*.py` → `cd docs/post-p3/fuente && python3 generar.py` (docs + JSON + validación) → `python3 generar.py --arte` (desde 2026-10-29, DISEÑO-2: solo las entradas de la tanda 2; el modo viejo es `--arte-todo` y borraría las `corrections_en` que pusieron los agentes de arte: no usarlo).
 - La validación de `generar.py` revisa:
   - ids, nombres y slugs contra las 155 especies y `cats-svg`;
   - las refs `balance:`, los roles, los rasgos y los elementos;

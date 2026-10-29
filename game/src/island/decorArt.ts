@@ -262,6 +262,224 @@ export function decorArt(kind: DecorKind, v: number): Container {
       g.star(0, -6, 5, 12, 5).fill(v < 0.5 ? 0xffa94a : C.yellow).stroke(INK);
       break;
     }
+    default:
+      postDecor(g, kind, v, s);
   }
   return c;
+}
+
+/** an iso box (cardboard, dice, cushion): footprint half-width `hw`, height `ht`, base at y0 */
+function isoBox(g: Graphics, hw: number, ht: number, y0: number, top: number, left: number, right: number) {
+  const hh = hw / 2;
+  g.poly([-hw, y0 - hh, 0, y0, 0, y0 - ht, -hw, y0 - hh - ht]).fill(left).stroke(INK);
+  g.poly([hw, y0 - hh, 0, y0, 0, y0 - ht, hw, y0 - hh - ht]).fill(right).stroke(INK);
+  g.poly([0, y0 - ht - hw, hw, y0 - hh - ht, 0, y0 - ht, -hw, y0 - hh - ht]).fill(top).stroke(INK);
+}
+
+/** after the Parte III (data/postp3/islas.json): CARTÓN, TAPETE, TALAVERA, TEJIDO, SIESTA */
+function postDecor(g: Graphics, kind: DecorKind, v: number, s: number) {
+  switch (kind) {
+    case 'box': {
+      shadow(g, 26);
+      const K = 0xd9a868;
+      const L = 0xb07a42;
+      const R = 0x8f5c2e;
+      const hw = 20 * s;
+      if (v < 0.36) {
+        isoBox(g, hw, 22 * s, 0, K, L, R);
+        // tape along the top seam + a red arrow on the side
+        g.moveTo(-hw * 0.5, -22 * s - hw * 0.75).lineTo(hw * 0.5, -22 * s - hw * 0.25).stroke({ width: 5, color: 0xc89a5a });
+        g.moveTo(hw * 0.5, -6 * s).lineTo(hw * 0.5, -16 * s).stroke({ width: 2, color: 0xe8402e });
+        g.poly([hw * 0.5 - 4, -14 * s, hw * 0.5, -20 * s, hw * 0.5 + 4, -14 * s]).fill(0xe8402e);
+      } else if (v < 0.7) {
+        // open box, flaps up (a cat's favourite)
+        isoBox(g, hw, 20 * s, 0, 0x4a2e14, L, R);
+        const y = -20 * s;
+        g.poly([-hw, y - hw / 2, -hw * 1.5, y - hw * 1.2, -hw * 0.6, y - hw * 1.5, 0, y - hw]).fill(K).stroke(THIN);
+        g.poly([hw, y - hw / 2, hw * 1.5, y - hw * 1.2, hw * 0.6, y - hw * 1.5, 0, y - hw]).fill(0xc8955a).stroke(THIN);
+      } else {
+        // a stack: big box, a smaller one on top, a bit turned
+        isoBox(g, hw, 18 * s, 0, K, L, R);
+        isoBox(g, hw * 0.7, 14 * s, -18 * s - hw * 0.12, K, L, R);
+        g.moveTo(-hw * 0.35, -32 * s - hw * 0.6).lineTo(hw * 0.35, -32 * s - hw * 0.25).stroke({ width: 4, color: 0xc89a5a });
+      }
+      break;
+    }
+    case 'tape': {
+      shadow(g, 16);
+      // the roll: side band + top ring in one outline (kept light: few curves, no stacked strokes)
+      g.rect(-16, -10, 32, 4).fill(0xc89a5a);
+      g.ellipse(0, -6, 16, 8).fill(0xc89a5a).stroke(THIN);
+      g.ellipse(0, -10, 16, 8).fill(0xd9ae6e).stroke(THIN);
+      g.ellipse(0, -10, 7, 3.5).fill(0x8f5c2e);
+      g.poly([14, -9, 27, -3, 25, 1, 13, -5]).fill(0xd9ae6e);
+      break;
+    }
+    case 'chips': {
+      shadow(g, 18);
+      const cols = [0xc8102e, 0x1f5fbf, 0x171317, 0x2fa860, 0xffc94a];
+      const n = 3 + Math.floor(v * 3);
+      const h = n * 5;
+      // the stack as one body (side stripes per chip) + the top chip's face: a few shapes, not one per chip
+      g.rect(-14, -4 - h, 28, h).fill(cols[Math.floor(v * 10) % cols.length]);
+      for (let i = 0; i < n; i++) g.rect(-14, -4 - h + i * 5 + 2, 28, 1.6).fill({ color: i % 2 ? 0xffffff : cols[(i + 2) % cols.length], alpha: 0.85 });
+      g.ellipse(0, -4, 14, 6).fill(cols[Math.floor(v * 10) % cols.length]);
+      g.moveTo(-14, -4).lineTo(-14, -4 - h).moveTo(14, -4).lineTo(14, -4 - h).stroke(THIN);
+      g.ellipse(0, -4 - h, 14, 6).fill(cols[(Math.floor(v * 10) + 1) % cols.length]).stroke(THIN);
+      g.ellipse(0, -4 - h, 8, 3.4).fill({ color: 0xffffff, alpha: 0.35 });
+      if (v > 0.6) {
+        // a second, shorter gold stack
+        g.rect(12, -6, 20, 8).fill(0xffc94a);
+        g.ellipse(22, 2, 10, 4.5).fill(0xffc94a);
+        g.ellipse(22, -6, 10, 4.5).fill(0xffd77a).stroke(THIN);
+      }
+      break;
+    }
+    case 'dice': {
+      shadow(g, 18);
+      const hw = 15 * s;
+      isoBox(g, hw, 22 * s, 0, 0xfffaf0, 0xe8e0d0, 0xd8cfbd);
+      const top = -22 * s - hw / 2;
+      const pip = (x: number, y: number) => g.circle(x, y, 2.4).fill(v < 0.5 ? C.ink : 0xc8102e);
+      // five on top, two and three on the sides
+      pip(0, top);
+      pip(-hw * 0.45, top - hw * 0.12);
+      pip(hw * 0.45, top + hw * 0.12);
+      pip(-hw * 0.05, top - hw * 0.32);
+      pip(hw * 0.05, top + hw * 0.32);
+      pip(-hw * 0.65, -12 * s);
+      pip(-hw * 0.35, -6 * s);
+      for (const k of [0, 1, 2]) pip(hw * (0.3 + k * 0.2), -16 * s + k * 5 - hw * 0.1);
+      break;
+    }
+    case 'card': {
+      shadow(g, 14, 5);
+      const tilt = (v - 0.5) * 0.5;
+      const red = v < 0.5;
+      const w2 = 15;
+      const h2 = 42 * s;
+      g.poly([-w2, 0, w2, 3, w2, -h2 + 3, -w2, -h2]).fill(0xfffaf0).stroke(INK);
+      g.poly([-w2 + 4, -3, w2 - 4, 0, w2 - 4, -h2 + 6, -w2 + 4, -h2 + 3]).stroke({ width: 1.5, color: red ? 0xc8102e : C.ink, alpha: 0.6 });
+      const cy = -h2 / 2;
+      if (red) g.poly([0, cy - 9, 7, cy, 0, cy + 9, -7, cy]).fill(0xc8102e);
+      else g.poly([0, cy - 9, 8, cy + 2, 3, cy + 4, 4, cy + 9, -4, cy + 9, -3, cy + 4, -8, cy + 2]).fill(C.ink);
+      g.rotation = tilt;
+      break;
+    }
+    case 'pot': {
+      shadow(g, 18);
+      // the plant first (behind the rim): an agave or a round cactus
+      if (v < 0.5) for (const a of [-1.2, -0.6, 0, 0.6, 1.2]) g.poly([0, -28, Math.sin(a) * 22, -28 - Math.cos(a) * 30, Math.sin(a) * 6, -30]).fill(0x5f9e7a).stroke(THIN);
+      else {
+        g.circle(0, -38, 14).fill(0x6fb35a).stroke(INK);
+        g.circle(0, -54, 5).fill(0xff4f8b).stroke(THIN);
+      }
+      // glazed pot: white with a cobalt band and dots
+      g.poly([-16, -30, 16, -30, 12, 0, -12, 0]).fill(0xf5f0e2).stroke(INK);
+      g.ellipse(0, -30, 17, 6).fill(0xf5f0e2).stroke(INK);
+      g.ellipse(0, -30, 12, 4).fill(0x6a3b2a);
+      g.poly([-15, -22, 15, -22, 14, -15, -14, -15]).fill(0x2a52b8);
+      for (const x of [-9, 0, 9]) g.circle(x, -8, 2.4).fill(0xf2c14e).stroke({ width: 1, color: 0x2a52b8 });
+      break;
+    }
+    case 'marigold': {
+      shadow(g, 20);
+      // the bush as one leafy blob, then three pompom flowers (cempasúchil orange) with a lighter heart
+      g.ellipse(0, -11, 19, 11).fill(0x4f9a4a).stroke(THIN);
+      const cols = [0xff8a1a, 0xffb02e, 0xff6a1a];
+      for (const [x, y, r, i] of [
+        [-9, -18, 7, 0],
+        [9, -19, 7.5, 1],
+        [0, -26, 8, 2],
+      ] as const) {
+        g.circle(x, y, r).fill(cols[i]).stroke(THIN);
+        g.circle(x, y, r * 0.45).fill(0xffd36a);
+      }
+      break;
+    }
+    case 'picado': {
+      shadow(g, 12);
+      g.rect(-2.5, -70, 5, 70).fill(0x8a5a2e).stroke(INK);
+      g.moveTo(0, -66).quadraticCurveTo(22, -56, 44, -64).stroke({ width: 1.5, color: C.ink });
+      const cols = [0xff4f8b, 0xffc94a, 0x2fbf8a, 0x8a5cff];
+      for (let i = 0; i < 3; i++) {
+        const x = 8 + i * 13;
+        const y = -64 + Math.sin(((i + 0.5) / 3) * Math.PI) * 6;
+        g.poly([x - 6, y, x + 6, y, x + 6, y + 14, x + 3, y + 12, x, y + 14, x - 3, y + 12, x - 6, y + 14]).fill(cols[(i + Math.floor(v * 4)) % 4]).stroke({ width: 1.2, color: C.ink });
+        g.circle(x, y + 6, 1.8).fill(0xffffff);
+      }
+      break;
+    }
+    case 'yarn': {
+      shadow(g, 20);
+      const col = [0xe8a2b2, 0xf2c14e, 0x8fb8a8, 0xf4e6d4][Math.floor(v * 4)];
+      const R = 16 * s;
+      // needles behind
+      g.moveTo(-R * 1.3, -R * 2.2).lineTo(R * 0.6, -R * 0.4).stroke({ width: 3, color: 0xc8a070, cap: 'round' });
+      g.moveTo(R * 1.3, -R * 2.1).lineTo(-R * 0.5, -R * 0.4).stroke({ width: 3, color: 0xc8a070, cap: 'round' });
+      g.circle(-R * 1.3, -R * 2.2, 3).fill(0xc8102e);
+      g.circle(R * 1.3, -R * 2.1, 3).fill(0xc8102e);
+      g.circle(0, -R, R).fill(col).stroke(INK);
+      for (let k = 0; k < 4; k++) g.arc(0, -R, R * (0.9 - k * 0.12), 0.4 + k * 0.7, 2.4 + k * 0.7).stroke({ width: 1.6, color: C.ink, alpha: 0.35 });
+      // a loose end
+      g.moveTo(R * 0.8, -R * 0.4).quadraticCurveTo(R * 1.6, 2, R * 2.2, -2).stroke({ width: 2.4, color: col, cap: 'round' });
+      break;
+    }
+    case 'button': {
+      shadow(g, 18, 7);
+      const col = [0xf2c14e, 0xe8a2b2, 0x8fb8a8, 0x8a5cff][Math.floor(v * 4)];
+      g.ellipse(0, -3, 17, 8).fill(col).stroke(INK);
+      g.ellipse(0, -4, 12, 5.5).stroke({ width: 1.5, color: C.ink, alpha: 0.4 });
+      for (const [x, y] of [
+        [-4, -6],
+        [4, -6],
+        [-4, -2],
+        [4, -2],
+      ])
+        g.ellipse(x, y, 1.8, 1.1).fill(C.ink);
+      break;
+    }
+    case 'spool': {
+      shadow(g, 14);
+      const col = [0xe8a2b2, 0xf2c14e, 0x8fb8a8][Math.floor(v * 3)];
+      g.ellipse(0, -2, 13, 5).fill(0xc8a070).stroke(INK);
+      g.rect(-9, -30, 18, 28).fill(col).stroke(INK);
+      for (let k = 0; k < 5; k++) g.moveTo(-9, -26 + k * 5).lineTo(9, -24 + k * 5).stroke({ width: 1, color: C.ink, alpha: 0.3 });
+      g.ellipse(0, -30, 13, 5).fill(0xd8b080).stroke(INK);
+      g.ellipse(0, -30, 3, 1.5).fill(0x6a3b2a);
+      break;
+    }
+    case 'cushion': {
+      shadow(g, 22);
+      const col = [0xd8cff4, 0xf4c9d2, 0xfff4c8, 0xc8e0f4][Math.floor(v * 4)];
+      const hw = 22 * s;
+      const y = -6;
+      // a puffy diamond: curved edges, a tuft button in the middle, corner tassels
+      g.moveTo(0, y - hw * 0.62)
+        .quadraticCurveTo(hw * 0.6, y - hw * 0.5, hw, y)
+        .quadraticCurveTo(hw * 0.6, y + hw * 0.18, 0, y + hw * 0.5)
+        .quadraticCurveTo(-hw * 0.6, y + hw * 0.18, -hw, y)
+        .quadraticCurveTo(-hw * 0.6, y - hw * 0.5, 0, y - hw * 0.62)
+        .closePath()
+        .fill(col)
+        .stroke(INK);
+      g.ellipse(0, y + hw * 0.5 - 2, hw * 0.55, 4).fill({ color: 0x7464b0, alpha: 0.25 });
+      g.circle(0, y - 2, 3).fill(0xffe9a8).stroke(THIN);
+      for (const x of [-hw, hw]) g.circle(x, y + 2, 3).fill(0xffe066).stroke({ width: 1, color: C.ink });
+      break;
+    }
+    case 'cloudpuff': {
+      shadow(g, 22);
+      for (const [x, y, r] of [
+        [-12, -12, 11],
+        [10, -12, 12],
+        [0, -20, 13],
+      ] as const)
+        g.circle(x * s, y * s, r * s).fill(0xffffff).stroke(INK);
+      g.rect(-14 * s, -12 * s, 26 * s, 10 * s).fill(0xffffff);
+      g.moveTo(-22 * s, -3).lineTo(22 * s, -3).stroke({ width: 3, color: C.ink });
+      g.ellipse(-4 * s, -24 * s, 4 * s, 2.5 * s).fill({ color: 0xd8cff4, alpha: 0.8 });
+      break;
+    }
+  }
 }

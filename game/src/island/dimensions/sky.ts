@@ -6,12 +6,13 @@
 import { Texture } from 'pixi.js';
 import { bake, canvas, rgba, rng, dropBaked } from './bake';
 import type { DimDef, DimId } from './defs';
+import { PAINT_POST } from './skyPost';
 
 type G2 = CanvasRenderingContext2D;
 export const SKY = 1024;
 
 /** dimensions that own a backdrop (home lives in the base void) */
-export const HAS_SKY: Record<DimId, boolean> = { home: false, forest: true, cliff: true, volcano: true, ghost: true, ice: true, ruins: true, reef: true, cosmic: true, sakura: true, desert: true, candy: true, void: true };
+export const HAS_SKY: Record<DimId, boolean> = { home: false, forest: true, cliff: true, volcano: true, ghost: true, ice: true, ruins: true, reef: true, cosmic: true, sakura: true, desert: true, candy: true, void: true, carton: true, felt: true, talavera: true, yarn: true, pillow: true };
 export const SKY_FRAMES: Partial<Record<DimId, number>> = { cliff: 2 };
 
 export function skyTex(d: DimDef, sealed: boolean, frame = 0): Texture {
@@ -249,6 +250,8 @@ function spark(g: G2, x: number, y: number, s: number, c: number, a = 1) {
 
 // --------------------------------------------------------------------------------- painters
 const PAINT: Partial<Record<DimId, (g: G2, w: number, h: number, f: number) => void>> = {
+  // ---- after the Parte III (skyPost.ts)
+  ...PAINT_POST,
   // ---- post-story ring
   sakura: (g, w, h) => {
     const r = rng(41);

@@ -59,6 +59,8 @@ import { ultimaVezDue } from '../state/sys/gaterasWorld';
 import { cartaAvailable } from '../state/sys/gateras';
 import { STANDINS } from '../film/standins';
 import '../ui/story/gaterasCines';
+// Parte III's songs: «Volver a ver» ♪ rows and the Fonoteca catch-up after a load (P3-CINE)
+import './p3Songs';
 
 // ------------------------------------------------------------------ beat plan (M1: b01–b11 · M2: zones 2–3)
 interface BeatRef {

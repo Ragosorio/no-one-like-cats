@@ -5,7 +5,7 @@
 import { G, Habitat, OwnedCat } from '../game';
 import { BAL, habitatTier } from '../econ';
 import { EXPANSIONS, catDef } from '../../data/content';
-import { buildersBusy, builders, expansionState, habitatCapacity, house, nextHabitatCost } from '../sys/island';
+import { buildersBusy, builders, expansionHidden, expansionState, habitatCapacity, house, nextHabitatCost } from '../sys/island';
 import { hasHabitatSpace } from '../../island/placement';
 import { readyExpeditions, expeditions } from '../sys/workforce';
 import { ctaVisible } from './island';
@@ -35,6 +35,8 @@ export function homeFixFor(c: OwnedCat): HomeFix {
   });
   if (up) return { kind: 'upgrade', habitat: up, element: up.element };
   for (const e of EXPANSIONS) {
+    // a post-Parte III island before the gate doesn't exist for this save (no hint, not even «abre en Reino …»)
+    if (expansionHidden(e.n)) continue;
     const st = expansionState(e.n);
     if (st === 'cleared') continue;
     if (st === 'available') return { kind: 'expand', n: e.n, cost: e.balance.cost, affordable: G.s.gold >= e.balance.cost };

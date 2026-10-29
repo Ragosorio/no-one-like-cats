@@ -36,7 +36,9 @@ type Shot = import('../src/battle/types').ShotDef;
 // ---- the roster's Multidimensionals (the ones not synced yet are injected for this file only)
 const ROSTER = JSON.parse(readFileSync(fileURLToPath(new URL('../../docs/post-p3/04-roster.json', import.meta.url)), 'utf8')) as { cats: (CatDef & { post: { power: { name: string } } })[] };
 const POST = ROSTER.cats.filter((c) => c.rarity === 'multidimensional');
-const IDS = POST.map((c) => c.id);
+/** every post Multidimensional (both batches) / this file's: the first 60 (tanda 2 lives in multidimPostT2.test.ts) */
+const ALL = POST.map((c) => c.id);
+const IDS = POST.filter((c) => (c.post as { tanda?: number }).tanda !== 2).map((c) => c.id);
 const undo = injectPostCats(POST.filter((c) => !CAT_BY_ID.has(c.id)).map((c) => JSON.parse(JSON.stringify(c)) as CatDef));
 afterAll(() => undo());
 
@@ -117,8 +119,8 @@ const st = (b: Battle) => K.peek(b)!;
 describe('the 60 post Multidimensional powers: data', () => {
   it('every roster Multidimensional has its power, and nothing else is registered as post', () => {
     expect(IDS.length).toBe(60);
-    expect([...MDP_IDS].sort()).toEqual([...IDS].sort());
-    for (const id of IDS) {
+    expect([...MDP_IDS].sort()).toEqual([...ALL].sort());
+    for (const id of ALL) {
       expect(MDP_UNIVERSE[id], id).toBeTruthy();
       expect(typeof MD.MD_ULTS[id], id).toBe('function');
       expect(ULTS[id], id).toBeUndefined();
@@ -136,10 +138,10 @@ describe('the 60 post Multidimensional powers: data', () => {
       expect(c.combat.ultimate.usesPerBattle, c.id).toBe(1);
       expect(c.combat.star5, c.id).toMatch(/2 veces por batalla/);
     }
-    // 85 names, all different
+    // 25 + 60 + 25 names (the Parte III and both post batches), all different
     const names = Object.values(MULTIDIM_POWERS).map((p) => p.name);
     expect(new Set(names).size).toBe(names.length);
-    expect(names.length).toBe(85);
+    expect(names.length).toBe(25 + ALL.length);
   });
 });
 

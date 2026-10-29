@@ -1,7 +1,7 @@
 # 01 · Roster post-Parte III
 
 > ⚠️ SPOILERS de la Parte III. Generado por `fuente/generar.py` desde la fuente única (`fuente/*.py`): no editar a mano.
-> **60 Multidimensionales**, **20 Míticos**, **10 Legendarios**, **8 Heroicos** y **16 Multidimensionales de reserva**. ★ = la estrella (el más difícil) de su mesa.
+> **85 Multidimensionales**, **20 Míticos**, **10 Legendarios**, **8 Heroicos** y **10 Multidimensionales de reserva**. ★ = la estrella (el más difícil) de su mesa.
 > Los números de combate siguen la calibración medida en las 155 especies (MD: daño de tiro 50–86, ulti 100, una vez por batalla, tope 45 % / jefe 18 %; mítico: tope 40 %; legendario y heroico: 35 %). Cada poder MD trae su línea de «números para PODERES».
 
 ## Índice
@@ -68,6 +68,31 @@
 | Gatistiano Ronaldo (`xp_gatistiano`) | MD | Cristiano Ronaldo | Fuego · Demoledor | Portal Michi |
 | Miaupé (`xp_miaupe`) | MD | Kylian Mbappé | Tormenta · Francotirador | Portal Michi |
 | Lamiau Yamal (`xp_lamiau`) | MD | Lamine Yamal | Gravedad · Artillero | Portal Michi |
+| El Sombreronrón (`xp_sombreronron`) | MD | El Sombrerón | Magia · Asediador | Tragamichis |
+| El Gatejo (`xp_gatejo`) | MD | El Cadejo | Vacío · Invocador | Multiverso Holo |
+| La Maullorona (`xp_maullorona`) | MD | La Llorona | Agua · Francotirador | Multiverso Holo |
+| Quetzalgatl (`xp_quetzalgatl`) ★ | MD | Quetzalcóatl, la serpiente emplumada | Tormenta · Controlador | Portal (todos) |
+| Bastet (`xp_bastet`) | MD | Bastet, diosa egipcia | Luz · Tanque | Portal (todos) |
+| Cleogatra (`xp_cleogatra`) | MD | Cleopatra VII, reina de Egipto | Cristal · Asediador | Portal (todos) |
+| Napoleón Bonapata (`xp_bonapata`) | MD | Napoleón Bonaparte | Fuego · Artillero | Modo Eterno |
+| Leonardo da Michi (`xp_leonardo`) ★ | MD | Leonardo da Vinci | Tiempo · Invocador | Multiverso Holo |
+| La Michi de la Perla (`xp_perla`) | MD | La joven de la perla | Luz · Soporte | Portal (todos) |
+| Isaac Miauton (`xp_miauton`) | MD | Isaac Newton | Gravedad · Controlador | Multiverso Holo |
+| Miauzart (`xp_miauzart`) | MD | Wolfgang Amadeus Mozart | Sonido · Artillero | Portal (todos) |
+| Miausagi (`xp_miausagi`) | MD | Sailor Moon / Bishōjo Senshi Sailor Moon | Cósmico · Artillero | Portal Michi |
+| Tanjimiau (`xp_tanjimiau`) | MD | Kimetsu no Yaiba / Demon Slayer | Agua · Demoledor | Portal Michi |
+| Tetrimiau (`xp_tetrimiau`) | MD | Tetris | Tierra · Tanque | Tragamichis |
+| Lara Croqueta (`xp_laracroqueta`) | MD | Tomb Raider · Lara Croft | Naturaleza · Francotirador | Portal Michi |
+| Mi Pobre Gatito (`xp_pobregatito`) | MD | Mi pobre angelito / Home Alone | Hielo · Controlador | La Caja |
+| Felinamente Rubia (`xp_felinamente`) | MD | Legalmente rubia / Legally Blonde | Magia · Soporte | Tragamichis |
+| Capitán Gorrimiau (`xp_gorrimiau`) | MD | Piratas del Caribe · el capitán Jack Sparrow | Sombra · Francotirador | Modo Eterno |
+| Doc Miauwn (`xp_docmiauwn`) ★ | MD | Volver al futuro / Back to the Future · el Doc Emmett Brown | Tormenta · Asediador | La Caja |
+| Pinkmiau (`xp_pinkmiau`) | MD | Breaking Bad | Fuego · Invocador | Modo Eterno |
+| Miauty la Fea (`xp_miauty`) | MD | Yo soy Betty, la fea | Cristal · Tanque | Tragamichis |
+| El Michíncipe (`xp_michincipe`) | MD | El principito / Le Petit Prince | Cósmico · Invocador | La Caja |
+| Ricardo Garjona (`xp_garjona`) | MD | Ricardo Arjona | Naturaleza · Soporte | Tragamichis |
+| Shakimiau (`xp_shakimiau`) ★ | MD | Shakira | Tierra · Demoledor | Tragamichis |
+| Miaucol Yordan (`xp_miaucol`) ★ | MD | Michael Jordan | Gravedad · Demoledor | Portal Michi |
 | Píxel Muerto (`mp_pixelmuerto`) | Mítico | el que Se Quedó Pegado | Tormenta · Francotirador | Tragamichis |
 | Doblón (`mp_doblon`) | Mítico | la Moneda que Quema | Fuego · Artillero | Tragamichis |
 | Mala Suerte (`mp_malasuerte`) | Mítico | la Gata Negra del Casino | Sombra · Asediador | Multiverso Holo |
@@ -107,7 +132,7 @@
 | Máscara de Oro (`hp_mascaradeoro`) | Heroico | el Luchador de la Pantalla | Luz · Demoledor | podio:copa_pantalla |
 | Combo Infinito (`hp_combo`) | Heroico | el Campeón de la Maquinita | Sombra · Artillero | podio:copa_pixel |
 
-## Multidimensionales (60)
+## Multidimensionales (85)
 
 ## MD · Anime y manga (10)
 
@@ -984,7 +1009,7 @@
 - **Pista:** Una peluca blanca altísima con un barquito encima, un vestido pastel enorme y un pastel en la pata.
 - **Lore:** Fue reina de un palacio tan grande que se perdía en él. Le inventaron una frase sobre pasteles y se volvió famosa por eso. Ella prefiere las croquetas. Su peluca es tan alta que tiene clima propio.
 - **Universo de la revelación (2,2 s):** **UNIVERSO DEL PALACIO** — Un salón de espejos dorado con candelabros; una torre de pasteles crece capa por capa hasta el techo; macarons de colores caen como confeti; la peluca de la silueta crece hasta salirse de la pantalla. **Remate:** «¡QUE COMAN CROQUETAS!»
-- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · vitrina propuesta: Portal «Multiverso Desbordado»
+- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · vitrina propuesta: Portal «Multiverso Desbordado» · sets: set_pp_historia
 - **Arte:** `gatoneta_cake_cat` · estilo PINCELES · prompt `prompts/lote-post-p3/xp_gatoneta.md`
 
 ## MD · Música y deporte (personas reales) (12)
@@ -1204,6 +1229,459 @@
 - **Universo de la revelación (2,2 s):** **UNIVERSO DEL BARRIO** — Una cancha de barrio con malla y muros pintados que se transforma en un estadio gigante rojo y amarillo; un balón curvo dibuja una órbita alrededor del disco; tres patitas hacen la seña del barrio. **Remate:** «¡DEL BARRIO AL MUNDO!»
 - **Cómo se consigue:** Fase 1: `casino:gacha:michi` (Portal Michi), peso 10 · vitrina propuesta: Plinko «La Cascada» · sets: set_pp_seleccion
 - **Arte:** `lamiau_curl_cat` · estilo ESTADIO · prompt `prompts/lote-post-p3/xp_lamiau.md`
+
+## MD · Tanda 2 · leyendas, mitos, historia, museo, ciencia, clásica, anime, píxel, pantalla, telenovela, libros, pop y estadio (25)
+
+### El Sombreronrón · `xp_sombreronron`
+*el que Trenza Bigotes* · **Multidimensional** · Magia · Asediador · rasgo Travieso
+
+- **Referencia:** El Sombrerón (leyenda popular de Guatemala y Centroamérica; dominio público) — Leyenda guatemalteca.
+- **Rasgos icónicos:** gatito chiquito bajo un sombrero negro enorme, más ancho que él; guitarrita de madera colgada al frente; bigotes trenzados con listoncitos de colores; botas negras con espuelas de plata y hebilla grande.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin las espuelas ni la hebilla: el sombrero enorme, la guitarrita y los bigotes trenzados cargan.
+- **Forma de batalla:** EL SOMBRERONRÓN — MIDNIGHT SERENADE FORM · «HOLD STILL, I'M BRAIDING!»
+- **Tiro:** Trencita Encantada — «¿Me dejas peinarte? No era pregunta.» · runa · Magia · daño 64 · radio 1.3 · Enraizado 2. Un listón encantado que vuela girando y trenza lo que toca: deja Enraizado. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **MIDNIGHT BRAID! (真夜中の三つ編み)** — Trenza la medianoche: tus próximos 3 impactos (de cualquier gato tuyo, este turno y los 2 siguientes) clavan un listón en su barco. Con el tercero la trenza se cierra: toda celda suya dentro del triángulo de los tres listones recibe un golpe y queda Enraizada, y los gatos de adentro amanecen con los bigotes trenzados (no ganan barra un turno). Una vez por batalla.
+  - *En una línea (Catdex):* Tres listones: lo que quede dentro del triángulo, trenzado
+  - *Números para PODERES (`battle/multidim.ts`):* Ventana: el resto de este turno y tus 2 siguientes; 1 listón por impacto de tiro de gato o ulti tuya en su barco (los cañones no cuentan). Con 3 listones: 0.4·P a cada celda suya cuyo centro quede dentro del triángulo o en su borde (tope 45 %, jefe 18 %) + Enraizado 2; gatos en camarotes adentro: +0 de barra en su siguiente turno. Si la ventana se acaba con 1–2 listones: 0.4·P en cada listón (radio 1). PODERES-3: si el triángulo no deja ninguna celda adentro (listones casi en línea), también pega en cada listón.
+- **Pasiva:** Le trenza los bigotes a todo gato que se duerma cerca. Despiertan elegantísimos y furiosos. · **★3: Enraizado dura un turno más.** · **★5: MIDNIGHT BRAID! se puede usar 2 veces por batalla.**
+- **Pista:** Un gatito chiquito bajo un sombrero enorme, con una guitarrita y los bigotes llenos de trencitas.
+- **Lore:** Sale a medianoche por los callejones empedrados con un sombrero más grande que él y una guitarra chiquita. Cuando un gato le cae bien, le canta bajo la ventana y le trenza los bigotes mientras duerme. Dicen que la única forma de que se vaya es cortarse las trenzas. Nadie quiere: quedan preciosas.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA LEYENDA** — Medianoche en un callejón empedrado con arcos coloniales y un volcán dormido al fondo; suena una guitarrita; por la calle avanza solo un sombrero gigante, de puntitas; se detiene, se levanta tantito y asoman dos ojos que brillan. **Remate:** «¡QUIETO, QUE TE TRENZO!»
+- **Cómo se consigue:** Fase 1: `casino:slot` (Tragamichis), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_leyendas
+- **Arte:** `sombreronron_braid_cat` · estilo MITOS · prompt `prompts/lote-post-p3/xp_sombreronron.md`
+
+### El Gatejo · `xp_gatejo`
+*el que te Acompaña de Noche* · **Multidimensional** · Vacío · Invocador · rasgo Leal
+
+- **Referencia:** El Cadejo (leyenda popular de Centroamérica y el sur de México; dominio público) — Leyenda centroamericana.
+- **Rasgos icónicos:** gato quimera: cara y cuerpo partidos por la mitad, blanco y negro; un ojo azul suave (lado blanco) y uno color brasa (lado negro); pelaje largo y greñudo, como de perro callejero; cadena rota colgando de una pata y jirones de neblina en las patas.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin la cadena rota: la cara mitad blanca y mitad negra y los ojos de dos colores cargan.
+- **Forma de batalla:** EL GATEJO — TWO SPIRITS FORM · «NOBODY WALKS ALONE TONIGHT!»
+- **Tiro:** Mordida de Neblina — «Tranquilo. Te acompaño hasta tu casa.» · borrado · Vacío · daño 66 · radio 1.2 · Borrado 2. Un mordisco de neblina que sale de la noche y deja Borrado lo que toca. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **TWO CADEJOS! (二匹のカデホ)** — Se parte en dos: el Gatejo blanco cuida a cada gato tuyo que esté solo (sin otro camarote tuyo pegado) y le da 2 escudos; el Gatejo negro va por cada gato suyo que esté solo, le muerde fuerte y lo deja Maldito. Si de un lado nadie está solo, ese espíritu va con el más débil. Una vez por batalla.
+  - *En una línea (Catdex):* Cuida a tus gatos solos y muerde a los suyos que estén solos
+  - *Números para PODERES (`battle/multidim.ts`):* Solo = ningún otro camarote del mismo lado comparte borde con el suyo. Tuyos solos: +2 escudos (máx. 3). Suyos solos: 0.55·P directo al gato + Maldito 2 (capitán jefe: 0.3·P). Si de un lado no hay ninguno solo, ese lado usa a su gato vivo con menor fracción de vida.
+- **Pasiva:** De noche camina detrás de cualquier gato que ande solo. A los buenos los cuida. A los malos también, pero viéndolos feo. · **★3: Borrado dura un turno más.** · **★5: TWO CADEJOS! se puede usar 2 veces por batalla.**
+- **Pista:** Mitad blanco y mitad negro, un ojo azul y otro de brasa, y una cadena rota que suena cuando te sigue.
+- **Lore:** Es dos espíritus en un solo gato. El blanco acompaña a los que vuelven tarde a casa y los deja en la puerta sanos y salvos. El negro le sale al paso al que anda en malos pasos. Nadie sabe cuál de los dos le va a tocar. Él tampoco: depende de qué lado se despierte.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL CAMINO DE NOCHE** — Un camino de tierra entre milpas bajo la luna llena; un farol tiembla; se oye una cadena que se arrastra; en la neblina se encienden dos ojos, uno azul y uno color brasa; la silueta sale partida en blanco y negro. **Remate:** «¡NADIE ANDA SOLO!»
+- **Cómo se consigue:** Fase 1: `casino:gacha:holo` (Multiverso Holo), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_leyendas
+- **Arte:** `gatejo_twospirit_cat` · estilo MITOS · prompt `prompts/lote-post-p3/xp_gatejo.md`
+
+### La Maullorona · `xp_maullorona`
+*la que Busca a sus Gatitos* · **Multidimensional** · Agua · Francotirador · rasgo Miedoso
+
+- **Referencia:** La Llorona (leyenda popular de México y Centroamérica; dominio público) — Leyenda latinoamericana.
+- **Rasgos icónicos:** gata blanca pálida con un velo blanco larguísimo; vestido blanco largo que le tapa las patas; ojos enormes llenos de lagrimones (tierna, no de miedo); pañuelo de encaje empapado en la pata.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin las lágrimas dibujadas: el velo larguísimo, el vestido blanco y el pañuelo cargan.
+- **Forma de batalla:** LA MAULLORONA — RIVER VEIL FORM · «MY KITTENS! WHERE ARE MY KITTENS?»
+- **Tiro:** Lagrimón — «¡Aaay, mis gatitos!… ah, no, ahí están.» · torpedo · Agua · daño 84 · radio 0.9 · perfora 1 · Mojado 2. Una lágrima del tamaño de un melón que cae con todo el sentimiento y deja Mojado. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **WEEPING RIVER! (嘆きの川)** — Llora un río: siete lagrimones caen uno por uno sobre sus gatos, cada uno sobre el que tenga menos vida en ese momento, y pegan más mientras más herido esté. Si uno cae, el siguiente lagrimón sigue buscando. Todo lo que tocan queda Mojado. Una vez por batalla.
+  - *En una línea (Catdex):* Siete lagrimones que buscan siempre al gato más herido
+  - *Números para PODERES (`battle/multidim.ts`):* 7 golpes en secuencia, cada uno al gato suyo vivo con menor fracción de vida en ese momento: 0.1·P + 0.5·P × (fracción de vida que le falta) + Mojado 2. Ignora escudos solo si el gato está bajo 25 % de vida. Capitán jefe: el bono por vida faltante va a la mitad.
+- **Pasiva:** Llora tanto que el barco nunca necesita que lo trapeen. · **★3: Mojado dura un turno más.** · **★5: WEEPING RIVER! se puede usar 2 veces por batalla.**
+- **Pista:** Velo blanco larguísimo, vestido que le tapa las patas y unos ojos llenos de lagrimones… tierna, no de miedo.
+- **Lore:** Recorre la orilla de los ríos de noche llorando a todo pulmón porque no encuentra a sus gatitos. Siempre están jugando a las escondidas dentro de una caja. Siempre. Cada noche los encuentra, los abraza y se le olvida contarlos. Al día siguiente, otra vez.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL RÍO** — Un río ancho bajo la luna, con carrizos y luciérnagas; un velo blanco flota sobre el agua; un «¡aaay!» le da la vuelta a la pantalla; las lágrimas caen y hacen círculos; tres gatitos asoman de una caja en la orilla. **Remate:** «¡AHÍ ESTÁN!»
+- **Cómo se consigue:** Fase 1: `casino:gacha:holo` (Multiverso Holo), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_leyendas
+- **Arte:** `maullorona_veil_cat` · estilo MITOS · prompt `prompts/lote-post-p3/xp_maullorona.md`
+
+### Quetzalgatl · `xp_quetzalgatl` ★
+*el Gato Emplumado* · **Multidimensional** · Tormenta · Controlador · rasgo Curioso
+
+- **Referencia:** Quetzalcóatl, la serpiente emplumada (mito mexica y mesoamericano; dominio público) — Mito mexica.
+- **Rasgos icónicos:** cola larguísima cubierta de plumas verdes de quetzal, como serpiente; gorguera de plumas verdes y rojas en el cuello; pelaje jade con escamas turquesa dibujadas como en un códice; pectoral de caracol cortado en espiral y orejeras de jade.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin pectoral ni orejeras: la cola de plumas verdes, la gorguera y los colores de códice cargan.
+- **Forma de batalla:** QUETZALGATL — FEATHERED WIND FORM · «THE WIND HAS FEATHERS TODAY!»
+- **Tiro:** Soplo Emplumado — «El viento es mío. Las plumas también.» · rafaga · Tormenta · daño 68 · radio 1.2 · Corriente 1. Un soplo de viento lleno de plumas que empuja de lado su siguiente tiro. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **FEATHERED WIND! (羽毛の風)** — El viento se vuelve suyo: el resto de este turno y tus 3 siguientes sopla con toda su fuerza de tu barco hacia el de ellos, a favor de tus tiros y en contra de los suyos. Y cinco plumas caen en sus cañones: quedan Sellados un turno. Una vez por batalla.
+  - *En una línea (Catdex):* El viento a tu favor 3 turnos y plumas que sellan cañones
+  - *Números para PODERES (`battle/multidim.ts`):* Viento: fuerza máxima del escenario en dirección de tu barco al suyo, el resto de este turno y tus 3 siguientes (y los 3 suyos de en medio); tus tiros pegan ×1.15. Al terminar vuelve el viento que había. Plumas: sus 5 cañones vivos más cercanos a tu barco, Sellados 1 turno suyo. Jefe: sin plumas.
+- **Pasiva:** Le enseñó a la humanidad a cultivar maíz. A los gatos les enseñó a tirarlo de la mesa. · **★3: Corriente dura un turno más.** · **★5: FEATHERED WIND! se puede usar 2 veces por batalla.**
+- **Pista:** Una cola larguísima de plumas verdes como serpiente, gorguera de plumas y colores de códice antiguo.
+- **Lore:** Era una serpiente con plumas de quetzal que traía el viento, barría el camino a la lluvia y regaló el maíz. En este universo es gato y conserva la cola de serpiente emplumada, que usa sobre todo para tumbar vasos. Cuando sopla, hasta los cañones se despeinan.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL CÓDICE** — Una pirámide escalonada pintada como página de códice, en rojo, jade y oro; el viento pasa las páginas solo; una cola enorme cubierta de plumas verdes le da la vuelta a la pantalla como serpiente; remolinos de plumas. **Remate:** «¡QUE SOPLE!»
+- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 4 ★ estrella de su mesa · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_piramides
+- **Arte:** `quetzalgatl_feather_cat` · estilo MITOS · prompt `prompts/lote-post-p3/xp_quetzalgatl.md`
+
+### Bastet · `xp_bastet`
+*la Señora del Hogar* · **Multidimensional** · Luz · Tanque · rasgo Leal
+
+- **Referencia:** Bastet, diosa egipcia (mito antiguo; dominio público) — Mito (Egipto antiguo). (promovida de la reserva (tanda 1); retoma `x_bastet` del catálogo v2.)
+- **Rasgos icónicos:** gata negra esbelta, sentada muy derecha, como estatua de templo; collar ancho de oro y lapislázuli; arete de oro en una oreja; disco de sol dorado sobre la cabeza y sistro en la pata.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin el sistro: la silueta esbelta de estatua, el collar ancho y el disco de sol cargan.
+- **Forma de batalla:** BASTET — GUARDIAN OF THE HOME FORM · «THIS HOME IS PROTECTED!»
+- **Tiro:** Rayo de Sistro — «Esta casa no se toca.» · haz · Luz · daño 66 · radio 1.3 · Cegado 1. Un rayo de sol que suena a sistro y deja Cegado. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **HOME GUARDIAN! (家の守護神)** — Protege la casa: durante sus 3 turnos siguientes ninguna celda tuya baja del 30 % de su vida (los golpes se quedan en la raya). Cada golpe que choca con la raya alimenta el disco de sol, y al final el sol cae sobre su núcleo con todo lo juntado. Una vez por batalla.
+  - *En una línea (Catdex):* Tu barco no baja del 30 % y el sol cobra cada golpe
+  - *Números para PODERES (`battle/multidim.ts`):* Sus 3 turnos siguientes: ninguna celda tuya baja del 30 % de su vida máxima (las que ya estaban por debajo se quedan donde están; tampoco el Borrado ni las celdas sueltas pasan del piso). Cada golpe recortado por el piso = 1 rayo. Al terminar su 3.er turno: 0.15·P × rayos (máx. 1.5·P) a su núcleo y Cegado 1 a sus gatos (tope 45 %, jefe 18 %).
+- **Pasiva:** Era diosa antes de que existieran los sillones. Igual prefiere los sillones. · **★3: Cegado dura un turno más.** · **★5: HOME GUARDIAN! se puede usar 2 veces por batalla.**
+- **Pista:** Gata negra esbelta, collar de oro y lapislázuli, un arete de oro y un disco de sol sobre la cabeza.
+- **Lore:** La adoraban en una ciudad entera hace miles de años y cuidaba los hogares de las cosas feas. Sigue haciéndolo. Ahora además exige que le rasquen la barbilla. Siempre lo exigió.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL TEMPLO** — Un templo de piedra con columnas pintadas de gatos; un disco solar se levanta detrás de la silueta; la arena dorada sube en espiral; la puerta del templo se cierra sola y brilla. **Remate:** «¡PROTEGIDOS!»
+- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_piramides
+- **Arte:** `bastet_sun_cat` · estilo MITOS · prompt `prompts/lote-post-p3/xp_bastet.md`
+
+### Cleogatra · `xp_cleogatra`
+*la que Llegó Enrollada* · **Multidimensional** · Cristal · Asediador · rasgo Presumido
+
+- **Referencia:** Cleopatra VII, reina de Egipto (69–30 a. C.; personaje histórico, dominio público) — Historia (Egipto ptolemaico).
+- **Rasgos icónicos:** melena negra lacia con flequillo recto, como peluca egipcia; diadema de oro con una cobrita al frente; delineado negro largo en los ojos; alfombra enrollada bajo el brazo y una perla enorme en la otra pata.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin la alfombra: la melena negra con flequillo recto, la diadema de cobra y el delineado cargan.
+- **Forma de batalla:** CLEOGATRA — QUEEN OF THE NILE FORM · «I ARRIVED ROLLED IN A RUG. BOW ANYWAY.»
+- **Tiro:** Perla al Vinagre — «Apuesto a que no la esquivas.» · bola_rebote · Cristal · daño 64 · radio 1.3 · Prisma 2. Una perla que cae en un chorrito de vinagre, se disuelve brillando y deja Prisma. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **THE PEARL WAGER! (真珠の賭け)** — Apuesta su perla más grande: durante 2 turnos se cuenta el daño. Si tu tripulación le hizo más daño a su barco que ellos al tuyo, gana la apuesta: la perla se disuelve sobre sus 3 mejores módulos con un golpe enorme y tu tripulación gana barra. Si pierde, la perla regresa a su pata y les cae en el núcleo de consolación. Una vez por batalla.
+  - *En una línea (Catdex):* Apuesta 2 turnos de daño: si ganas, golpe enorme y barra
+  - *Números para PODERES (`battle/multidim.ts`):* Cuenta desde que la lanza hasta el final de su 2.º turno siguiente: daño de tu lado a sus celdas y gatos contra el suyo a los tuyos (la cuenta se ve en el HUD). Gana: 1.6·P repartido en sus 3 módulos de más valor (tope 45 %, jefe 18 %) + Prisma 2 en ellos + 30 de barra a cada gato tuyo. Pierde o empata: 0.5·P a su núcleo.
+- **Pasiva:** Habla nueve idiomas. En los nueve dice lo mismo: «sírvanme primero». · **★3: Prisma dura un turno más.** · **★5: THE PEARL WAGER! se puede usar 2 veces por batalla.**
+- **Pista:** Melena negra con flequillo recto, diadema de cobra, delineado largo y una alfombra enrollada bajo el brazo.
+- **Lore:** Para colarse al palacio sin que la vieran se hizo enrollar en una alfombra. Le funcionó tan bien que ahora entra así a todos lados. Una vez apostó que podía dar la cena más cara del mundo y disolvió una perla en vinagre. Ganó la apuesta. La cena sabía horrible.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL NILO** — Un salón de palacio junto al Nilo, con columnas de papiro y antorchas; dos guardias felinos dejan una alfombra enrollada en el piso; la alfombra se desenrolla de golpe hacia la cámara y la silueta sale dando una vuelta, con una perla que brilla. **Remate:** «¡LLEGÓ LA REINA!»
+- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_piramides, set_pp_historia
+- **Arte:** `cleogatra_rug_cat` · estilo MITOS · prompt `prompts/lote-post-p3/xp_cleogatra.md`
+
+### Napoleón Bonapata · `xp_bonapata`
+*el que Conquistó el Sillón* · **Multidimensional** · Fuego · Artillero · rasgo Bravucón
+
+- **Referencia:** Napoleón Bonaparte (1769–1821; personaje histórico, dominio público) — Historia (Francia, siglo XIX).
+- **Rasgos icónicos:** bicornio negro enorme puesto de lado; una pata metida dentro del chaleco (la pose famosa); casaca azul con charreteras doradas y chaleco blanco; parado muy derecho sobre una caja de cartón para verse más alto.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin la caja: el bicornio de lado, la pata metida en el chaleco y la casaca azul cargan.
+- **Forma de batalla:** NAPOLEÓN BONAPATA — GRAND ARMY FORM · «I'M NOT SHORT! THE BOX IS JUST TALL!»
+- **Tiro:** Bala de Cañón Imperial — «¡Artillería, fuego! …y luego siesta.» · bola_rebote · Fuego · daño 74 · radio 1.2 · rebota 1 · Ardiendo 2. Una bala de cañón de las de antes que rebota una vez y deja Ardiendo. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **GRAND CONQUEST! (大征服)** — Clava su bandera: el resto de este turno y tus 2 siguientes, cada celda suya que tu tripulación destruya se vuelve territorio conquistado, y cada territorio sube el daño de toda tu tripulación hasta el final de la batalla. Abre la campaña con un bicornio de fuego donde apuntas. Una vez por batalla.
+  - *En una línea (Catdex):* Cada celda que destruyas en 3 turnos te sube el daño
+  - *Números para PODERES (`battle/multidim.ts`):* Apertura: 0.7·P, radio 1.5, Ardiendo 2. Ventana: el resto de este turno y tus 2 siguientes. Cada celda suya destruida en la ventana (por cualquier fuente tuya) = +4 % de daño a toda tu tripulación hasta el final de la batalla (máx. +40 %). Jefe: +2 % por celda (máx. +20 %).
+- **Pasiva:** Duerme cuatro horas al día. Las otras veinte también, pero dice que es estrategia. · **★3: Ardiendo dura un turno más.** · **★5: GRAND CONQUEST! se puede usar 2 veces por batalla.**
+- **Pista:** Bicornio negro de lado, una pata metida en el chaleco y una caja de cartón para verse más alto.
+- **Lore:** Empezó como oficial de artillería y terminó conquistando media Europa, o eso cuenta él. En este universo conquistó el sillón, la cama y la caja más grande de la casa. Le dicen bajito y se ofende muchísimo: en su época medía lo normal. Ahora mide lo que mide la caja.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL IMPERIO** — Un campo de batalla pintado al óleo con nubes doradas; redoblan los tambores; un caballo blanco se encabrita en silueta; la cámara baja y descubre que la silueta está parada sobre una caja de cartón; la bandera sube. **Remate:** «¡CONQUISTADO!»
+- **Cómo se consigue:** Fase 1: `casino:eterno` (Modo Eterno), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_historia
+- **Arte:** `bonapata_bicorne_cat` · estilo PINCELES · prompt `prompts/lote-post-p3/xp_bonapata.md`
+
+### Leonardo da Michi · `xp_leonardo` ★
+*el que Inventó Todo Antes* · **Multidimensional** · Tiempo · Invocador · rasgo Curioso
+
+- **Referencia:** Leonardo da Vinci (1452–1519; inventor y pintor, dominio público) — Historia (Renacimiento).
+- **Rasgos icónicos:** barba larga, blanca y ondulada de pelaje; boina suave oscura y túnica larga; alas de máquina voladora de madera y lona en la espalda; cuaderno de bocetos y pluma en las patas.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin las alas: la barba larga y blanca, la boina y el cuaderno de bocetos cargan.
+- **Forma de batalla:** LEONARDO DA MICHI — RENAISSANCE GENIUS FORM · «I DREW THIS FIVE HUNDRED YEARS AGO!»
+- **Tiro:** Boceto Volador — «Lo diseñé hace siglos. Hoy por fin funciona.» · reloj · Tiempo · daño 66 · radio 1.2. Un boceto que se dobla solo en avioncito, vuela recto y explota en tinta sepia. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **CODEX OF INVENTIONS! (発明の手稿)** — Abre su cuaderno y le inventa una máquina a cada gato tuyo según lo que hace: el próximo tiro de cada uno sale mejorado (más proyectiles, perforación, radio, rebotes, estados más largos, curas, escudos o un tiro repetido). Una vez por batalla.
+  - *En una línea (Catdex):* Una máquina para cada gato: su próximo tiro sale mejorado
+  - *Números para PODERES (`battle/multidim.ts`):* El próximo tiro de cada gato tuyo en tus 2 turnos siguientes (si no dispara, se pierde): artillero +2 proyectiles; francotirador perfora +2; demoledor radio ×1.5; asediador +2 rebotes; controlador su estado +2 turnos; soporte además cura 15 % a tu gato más herido; tanque +2 escudos para sí; invocador su tiro se repite al 50 %. Además, ahora: 3 bocetos de 0.35·P a 3 celdas al azar de su cubierta (sin estado).
+- **Pasiva:** Escribe al revés, como en espejo, para que nadie le copie las ideas. Ni él las entiende. · **★3: su tiro explota un poco más grande.** · **★5: CODEX OF INVENTIONS! se puede usar 2 veces por batalla.**
+- **Pista:** Barba larga y blanca, boina, alas de madera y lona en la espalda y un cuaderno lleno de bocetos.
+- **Lore:** Pintaba, esculpía, diseñaba máquinas voladoras y estudiaba cómo se mueve todo, colas incluidas. En este universo pintó la sonrisa más famosa del museo y todavía no le cuenta a nadie de qué se reía la modelo. Sus inventos funcionan… con quinientos años de retraso.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL GENIO** — Un taller del Renacimiento con bocetos sepia en todas las paredes; una máquina voladora de madera y lona cuelga del techo; los dibujos se arman solos en el aire, engranaje por engranaje; la máquina bate las alas y despega. **Remate:** «¡FUNCIONA!»
+- **Cómo se consigue:** Fase 1: `casino:gacha:holo` (Multiverso Holo), peso 4 ★ estrella de su mesa · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_historia, set_pp_museo
+- **Arte:** `leonardo_codex_cat` · estilo PINCELES · prompt `prompts/lote-post-p3/xp_leonardo.md`
+
+### La Michi de la Perla · `xp_perla`
+*la que Voltea a Verte* · **Multidimensional** · Luz · Soporte · rasgo Curioso
+
+- **Referencia:** La joven de la perla (Johannes Vermeer, c. 1665; dominio público) — Pintura (Países Bajos, c. 1665).
+- **Rasgos icónicos:** turbante azul ultramar con una cola de tela amarilla; arete con una perla grande y brillante; mirada por encima del hombro, con la boquita apenas abierta; saco ocre con cuello blanco.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin el cuello blanco: el turbante azul y amarillo, la perla y la mirada por encima del hombro cargan.
+- **Forma de batalla:** LA MICHI DE LA PERLA — WINDOW LIGHT FORM · «DID SOMEONE SAY MY NAME?»
+- **Tiro:** Destello de Perla — «¿Me llamaste?» · haz · Luz · daño 60 · radio 1.2 · Cegado 1. Un destello de luz de ventana que rebota en la perla y deja Cegado. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **SOFT WINDOW LIGHT! (窓辺の光)** — Abre la ventana: durante tus 4 turnos siguientes entra a tu barco una luz suave que, al empezar cada uno, cura a todos tus gatos y repara tus celdas. Y la perla se cuelga de tu gato más herido y le da escudos. Una vez por batalla.
+  - *En una línea (Catdex):* Luz de ventana: cura y repara a todo tu barco 4 turnos
+  - *Números para PODERES (`battle/multidim.ts`):* Al empezar tus 4 turnos siguientes: +8 % de vida máxima a cada gato tuyo vivo y +5 % a cada celda tuya no Borrada (no revive ni rearma módulos). Perla: tu gato con menor fracción de vida al lanzarla, +2 escudos (máx. 3).
+- **Pasiva:** Posa tan quieta que el polvo le cae encima en cámara lenta. · **★3: Cegado dura un turno más.** · **★5: SOFT WINDOW LIGHT! se puede usar 2 veces por batalla.**
+- **Pista:** Turbante azul y amarillo, un arete de perla enorme y una mirada por encima del hombro que te atrapa.
+- **Lore:** Lleva más de trescientos años volteando a ver a quien pasa. Nadie sabe su nombre, ni qué estaba a punto de decir, ni de dónde sacó una perla de ese tamaño. Ella no lo cuenta. En el museo es la única que no se queja de la luz: la trajo de su casa.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA VENTANA** — Un fondo oscuro, profundísimo; una ventana se abre a la izquierda y una luz de mañana barre la pantalla; brilla una perla; la silueta voltea despacito por encima del hombro. **Remate:** «¿ME HABLABAS?»
+- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_museo
+- **Arte:** `perla_turban_cat` · estilo PINCELES · prompt `prompts/lote-post-p3/xp_perla.md`
+
+### Isaac Miauton · `xp_miauton`
+*el que Entendió la Manzana* · **Multidimensional** · Gravedad · Controlador · rasgo Curioso
+
+- **Referencia:** Isaac Newton (1643–1727; físico y matemático, dominio público) — Ciencia (Inglaterra, siglo XVII).
+- **Rasgos icónicos:** peluca larga de rizos castaños (pelaje); una manzana roja a punto de caerle en la cabeza; casaca oscura con corbata blanca de encaje; prisma de vidrio en la pata que hace un arcoíris chiquito.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin el prisma: la peluca larga de rizos, la manzana cayendo y la casaca oscura cargan.
+- **Forma de batalla:** ISAAC MIAUTON — LAW OF GRAVITY FORM · «WHAT GOES UP MUST COME DOWN… ON YOU!»
+- **Tiro:** Manzanazo — «Para cada acción hay una siesta igual y opuesta.» · orbe_gravitatorio · Gravedad · daño 68 · radio 1.2 · Flotando 2. Una manzana que cae en una curva perfecta, calculada, y deja Flotando. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **LAW OF GRAVITY! (万有引力の法則)** — Una manzana gigante cae sobre lo más alto de su barco y la gravedad cambia: durante sus 2 turnos siguientes sus tiros pesan el doble y se quedan cortos, y los de tu tripulación pesan la mitad y vuelan rectos y lejos. Una vez por batalla.
+  - *En una línea (Catdex):* Sus tiros pesan el doble y los tuyos la mitad, 2 turnos
+  - *Números para PODERES (`battle/multidim.ts`):* Manzana: 0.9·P en su celda más alta, rebota 1 vez hacia abajo (0.45·P), Flotando 2. Gravedad: el resto de este turno y tus 2 siguientes, tus tiros gravedad ×0.5; sus 2 turnos siguientes, sus tiros (gatos y cañones) gravedad ×2 (jefe: ×1.5). La IA rival apunta como si nada: no corrige por el cambio.
+- **Pasiva:** Descubrió la gravedad cuando le cayó una manzana. Los gatos la descubren todos los días tirando cosas de la mesa. · **★3: Flotando dura un turno más.** · **★5: LAW OF GRAVITY! se puede usar 2 veces por batalla.**
+- **Pista:** Peluca de rizos largos, una manzana a punto de caerle en la cabeza y un prisma que hace arcoíris.
+- **Lore:** Estaba tomando la siesta bajo un manzano cuando una manzana le cayó en la cabeza y, en vez de enojarse, entendió por qué todo se cae. Desde entonces explica con fórmulas por qué los gatos tiran cosas de la mesa. Los gatos dicen que es investigación. Él les cree.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL MANZANO** — Un jardín inglés al atardecer con un manzano enorme; una manzana se desprende y cae en cámara lenta, dibujando su curva con trazos de luz; un rayo de sol pasa por un prisma y se abre en arcoíris; ¡tonc! **Remate:** «¡TODO SE CAE!»
+- **Cómo se consigue:** Fase 1: `casino:gacha:holo` (Multiverso Holo), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_historia
+- **Arte:** `miauton_apple_cat` · estilo PINCELES · prompt `prompts/lote-post-p3/xp_miauton.md`
+
+### Miauzart · `xp_miauzart`
+*el Niño Prodigio* · **Multidimensional** · Sonido · Artillero · rasgo Presumido
+
+- **Referencia:** Wolfgang Amadeus Mozart (1756–1791; compositor, dominio público) — Música clásica (Austria, siglo XVIII).
+- **Rasgos icónicos:** gatito con peluca blanca empolvada y coleta con moño negro; casaca roja con bordados dorados y chorrera de encaje; batuta en alto, dirigiendo; clavecín de juguete bajo el brazo.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin el clavecín de juguete: la peluca blanca con moño, la casaca roja bordada y la batuta cargan.
+- **Forma de batalla:** MIAUZART — CHILD PRODIGY FORM · «BRAVO, BRAVISSIMO… MEOW!»
+- **Tiro:** Minueto Relámpago — «Lo compuse a los cinco años. Ayer.» · onda · Sonido · daño 26 · radio 1.2 · 3 proyectiles · Aturdido 1. Tres notas de minueto en abanico que aturden a quien las oye. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **BRAVO, ENCORE! (ブラボー・アンコール)** — Un minueto de tres notas en abanico que aturde, y el público se pone de pie: la siguiente ulti de otro gato tuyo (en tus 3 turnos siguientes) se toca dos veces: se repite al instante, un poco más bajito. Una vez por batalla.
+  - *En una línea (Catdex):* La siguiente ulti de tu tripulación se toca dos veces
+  - *Números para PODERES (`battle/multidim.ts`):* Minueto: 3 × 0.3·P en abanico de 30°, Aturdido 1 al gato del camarote que toque la tercera. Encore: la siguiente ulti de otro gato tuyo en tus 3 turnos siguientes se repite al terminar, al 60 % (daño y golpes; los efectos con turnos no se duplican: se renuevan con su duración completa). Si esa ulti es un poder Multidimensional, se repite solo su daño directo. Cada repetición respeta su propio tope.
+- **Pasiva:** Toca con los ojos vendados y las teclas tapadas. Los gatos le aplauden con la cola. · **★3: suelta un proyectil más.** · **★5: BRAVO, ENCORE! se puede usar 2 veces por batalla.**
+- **Pista:** Peluca blanca con moño, casaca roja bordada de oro, batuta en alto y un clavecín de juguete.
+- **Lore:** A los cinco años ya componía, a los seis daba conciertos para reyes y a los siete tocaba con las teclas tapadas con un paño. En este universo nació gato, así que además maúlla en el tono exacto. Dice que la música ya está escrita en su cabeza: solo la pasa en limpio entre siesta y siesta.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL SALÓN DE CONCIERTOS** — Un salón rococó con candelabros y espejos dorados; un clavecín se toca solo; las velas se encienden de una en una al compás; un público de pelucas blancas se pone de pie; lluvia de pétalos. **Remate:** «¡BRAVO, MICHI!»
+- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_historia
+- **Arte:** `miauzart_prodigy_cat` · estilo PINCELES · prompt `prompts/lote-post-p3/xp_miauzart.md`
+
+### Miausagi · `xp_miausagi`
+*la de los Chongos de Luna* · **Multidimensional** · Cósmico · Artillero · rasgo Dormilón
+
+- **Referencia:** Sailor Moon / Bishōjo Senshi Sailor Moon (Naoko Takeuchi; manga 1991–1997, anime de Toei) — Anime/manga.
+- **Rasgos icónicos:** dos chongos redondos con coletas larguísimas (pelaje rubio); uniforme de marinerita: cuello azul y moño rojo grande, falda a la rodilla; varita de juguete para gato con un cascabel de media luna; diadema dorada lisa y botas rojas.
+- **Riesgo de moderación:** medio-alto. **Plan B:** Uniforme en colores propios (cuello lila y moño rosa en vez de azul y rojo): los dos chongos con coletas larguísimas y la varita-juguete cargan.
+- **Forma de batalla:** MIAUSAGI — MOONLIGHT GUARDIAN FORM · «THE MOON WAS A BOWL ALL ALONG!»
+- **Tiro:** Diadema Bumerán — «¡Llegué tarde, pero llegué!» · bola_rebote · Cósmico · daño 74 · radio 1.2 · rebota 1 · Ingrávido 2. Su diadema sale girando como disco, rebota una vez y regresa; deja Ingrávido. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **FULL MOON UNITY! (満月の絆)** — Levanta su varita y llama a sus amigas: un rayo de luna llena cae sobre su barco, más grande y más fuerte por cada elemento distinto que haya en tu tripulación. Y por la amistad, cada gato tuyo gana barra. Una vez por batalla.
+  - *En una línea (Catdex):* Rayo de luna: más fuerte por cada elemento de tu tripulación
+  - *Números para PODERES (`battle/multidim.ts`):* E = elementos distintos entre tus gatos vivos (máx. 5). Rayo en la celda apuntada: 0.4·P × (1 + 0.25·E), radio 1.5 + 0.4·E (tope 45 %, jefe 18 %), Ingrávido 1. Amistad: +15 de barra a cada gato tuyo (+25 si E = 5).
+- **Pasiva:** Llora, come y llega tarde. Luego salva el mundo. En ese orden, siempre. · **★3: Ingrávido dura un turno más.** · **★5: FULL MOON UNITY! se puede usar 2 veces por batalla.**
+- **Pista:** Dos chongos con coletas larguísimas, uniforme de marinerita y una varita de juguete con un cascabel de luna.
+- **Lore:** Era una gatita normal, floja y comelona, hasta que le dieron una varita y le dijeron que era la guardiana de la luna. Se transforma entre listones y brillitos, pelea por el amor y por la última croqueta, y llora a gritos cuando pierde. Sus amigas siempre llegan. Ella, tarde.
+- **Universo de la revelación (2,2 s):** **UNIVERSO LUNAR** — Una ciudad de noche con una luna llena gigante; listones rosas y estrellitas giran en espiral alrededor de la silueta en plena transformación; dos coletas larguísimas ondean; una varita con cascabel de media luna tintinea. **Remate:** «¡LA LUNA ERA UN PLATO!»
+- **Cómo se consigue:** Fase 1: `casino:gacha:michi` (Portal Michi), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_shonen
+- **Arte:** `miausagi_moon_cat` · estilo ANIME_V2 · prompt `prompts/lote-post-p3/xp_miausagi.md`
+
+### Tanjimiau · `xp_tanjimiau`
+*el de la Caja a la Espalda* · **Multidimensional** · Agua · Demoledor · rasgo Leal
+
+- **Referencia:** Kimetsu no Yaiba / Demon Slayer (Koyoharu Gotōge; manga 2016–2020) — Anime/manga. (promovido de la reserva (tanda 1); retoma `r_tanjimiau` del catálogo v2.)
+- **Rasgos icónicos:** haori a cuadros verde y negro; caja de madera a la espalda (a veces se mueve sola); aretes de cartita con un pececito propio; marca roja en la frente (pelaje) y espada de vaina negra.
+- **Riesgo de moderación:** medio. **Plan B:** Aretes lisos y sin espada: el haori a cuadros verde y negro y la caja de madera cargan.
+- **Forma de batalla:** TANJIMIAU — WATER BREATH FORM · «BREATHE… AND PURR!»
+- **Tiro:** Corte de Agua — «Huele a que vas a fallar.» · torpedo · Agua · daño 82 · radio 1.6 · Mojado 2. Un corte que fluye como río y deja Mojado. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **FLOWING DRAGON! (流れる龍)** — Respira hondo y suelta un dragón de agua que le da la vuelta a su barco por el borde, celda por celda, y cada celda que toca le pega más que la anterior. Al final, la caja se abre tantito: su hermanita patea la última celda. Una vez por batalla.
+  - *En una línea (Catdex):* Dragón de agua por el borde de su barco que pega más y más
+  - *Números para PODERES (`battle/multidim.ts`):* Recorre las celdas del borde exterior de su barco (desde la proa, por arriba, en el sentido del reloj), hasta 16: la celda k recibe 0.05·P + 0.015·P × k (k = 1…16) + Mojado 1 (tope 45 %, jefe 18 %). Si el borde tiene menos de 16 celdas vivas, da otra vuelta. Patada de la hermanita: la última celda tocada recibe otra vez su golpe ×2.
+- **Pasiva:** Huele las emociones. Casi siempre huele hambre. La suya. · **★3: Mojado dura un turno más.** · **★5: FLOWING DRAGON! se puede usar 2 veces por batalla.**
+- **Pista:** Haori a cuadros verde y negro y una caja de madera a la espalda que a veces se mueve sola.
+- **Lore:** Carga a su hermanita en una caja de madera por todo el mundo buscando una cura. Es el gato más amable que vas a conocer: hasta a sus rivales les pide perdón antes de cortarlos.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA RESPIRACIÓN** — Un bosque de noche en grabado japonés; un dragón de agua en olas planas le da la vuelta a la pantalla; la caja de madera se abre tantito y asoma una patita. **Remate:** «¡RESPIRA!»
+- **Cómo se consigue:** Fase 1: `casino:gacha:michi` (Portal Michi), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_shonen
+- **Arte:** `tanjimiau_box_cat` · estilo ANIME_V2 · prompt `prompts/lote-post-p3/xp_tanjimiau.md`
+
+### Tetrimiau · `xp_tetrimiau`
+*el que Completa Filas* · **Multidimensional** · Tierra · Tanque · rasgo Impaciente
+
+- **Referencia:** Tetris (Alekséi Pázhitnov, 1984) — Videojuego. (promovido de la reserva (tanda 1).)
+- **Rasgos icónicos:** cuerpo cuadradito armado con piezas de cuatro cuadros; una pieza de cuatro cuadros cayéndole en la cabeza; colores propios: coral, menta, mostaza, lila y cielo; mirada de concentración total.
+- **Riesgo de moderación:** medio. **Plan B:** Más bloques sueltos y menos piezas: las piezas de cuatro cuadros en colores propios y el cuerpo cuadradito cargan.
+- **Forma de batalla:** TETRIMIAU — LINE CLEAR FORM · «FOUR LINES AT ONCE!»
+- **Tiro:** Pieza en L — «Esa no cabe. Esa tampoco.» · roca · Tierra · daño 66 · radio 1.3. Una pieza en L que cae recta, encaja y aplasta. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **LINE CLEAR! (ライン消去)** — Cuatro piezas caen sobre su barco y completan una fila: la fila con más celdas de su barco DESAPARECE (solo aguantan, como pilares, las celdas que sostienen algo), y lo que estaba justo arriba se golpea al caer. Una vez por batalla.
+  - *En una línea (Catdex):* Borra la fila más llena; lo de arriba se golpea al caer
+  - *Números para PODERES (`battle/multidim.ts`):* La fila con más celdas vivas (empate: la más baja) se destruye (tope 45 %, jefe 18 %; si el núcleo está en esa fila, pierde la mitad de lo que le queda y no se destruye). Una celda cuya caída dejaría colgando algo se queda como pilar (PODERES-3: el barco no baja sus filas como en el juego; sin esto, borrar una fila de en medio tiraba la mitad del barco gratis). Las celdas justo encima de cada celda borrada reciben 0.15·P. Luego, chequeo de integridad.
+- **Pasiva:** Acomoda todo. La comida, los juguetes y a los demás gatos. · **★3: su tiro explota un poco más grande.** · **★5: LINE CLEAR! se puede usar 2 veces por batalla.**
+- **Pista:** Cuerpo cuadradito de piezas de colores de cuatro cuadros y una pieza que le cae en la cabeza.
+- **Lore:** Nació en una pantalla verde donde las piezas caen sin parar. Lleva años acomodándolas y nunca se acaban. Dice que el secreto es no desesperarse. Se desespera.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LAS PIEZAS** — Una cuadrícula vertical sobre negro; piezas de colores caen, giran y encajan; una fila entera parpadea y desaparece en un destello; todo baja un piso. **Remate:** «¡LÍNEA!»
+- **Cómo se consigue:** Fase 1: `casino:slot` (Tragamichis), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_consola
+- **Arte:** `tetrimiau_block_cat` · estilo PIXEL · prompt `prompts/lote-post-p3/xp_tetrimiau.md`
+
+### Lara Croqueta · `xp_laracroqueta`
+*la Saqueadora de Alacenas* · **Multidimensional** · Naturaleza · Francotirador · rasgo Callejero
+
+- **Referencia:** Tomb Raider · Lara Croft (Core Design, 1996) — Videojuego.
+- **Rasgos icónicos:** trenza larguísima de pelaje castaño; playera turquesa sin mangas y short café de exploradora; dos fundas en los muslos con punteros láser; mochila chica, guantes sin dedos y botas de montaña.
+- **Riesgo de moderación:** medio. **Plan B:** Sin los punteros en las fundas: la trenza larguísima, la playera turquesa con short café y la mochila cargan.
+- **Forma de batalla:** LARA CROQUETA — PANTRY RAIDER FORM · «EVERY TOMB HAS A SNACK!»
+- **Tiro:** Doble Puntito Rojo — «¿Lo ves? Ahora ya no lo ves.» · haz · Luz · daño 34 · radio 0.9 · 2 proyectiles · perfora 1 · Cegado 1. Dos puntitos rojos de puntero láser: el gato que los ve se distrae y queda Cegado. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **RELIC RAID! (遺物の略奪)** — Se cuelga de su barco con el gancho y saquea la alacena: le quita barra a cada gato suyo y la reparte entre tu tripulación. Antes de irse, le apunta con los dos punteros al gato que más barra tenía. Una vez por batalla.
+  - *En una línea (Catdex):* Saquea: le quita barra a cada gato suyo y te la da a ti
+  - *Números para PODERES (`battle/multidim.ts`):* A cada gato suyo: −25 de barra (−40 si la tenía llena; capitán jefe: −15). Lo robado se reparte entre tus gatos vivos, primero al de menos barra (máx. 100 c/u). Punteros: 2 × 0.4·P al gato suyo que más barra tenía antes del saqueo, Cegado 1.
+- **Pasiva:** Ha explorado cien tumbas y nunca ha tirado nada. Bueno, una o dos cosas. De una repisa. A propósito. · **★3: suelta un proyectil más.** · **★5: RELIC RAID! se puede usar 2 veces por batalla.**
+- **Pista:** Trenza larguísima, playera turquesa, short café y dos punteros láser en las fundas de los muslos.
+- **Lore:** Recorre templos olvidados, salta abismos y mueve palancas de piedra con una trenza que nunca se despeina. Dice que busca reliquias antiguas. La verdad es que busca alacenas: no hay tumba en el mundo sin una lata de atún escondida, y ella las ha encontrado todas.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA TUMBA** — Un templo de piedra en la selva hecho de polígonos planos; una trampa de picos se activa y la silueta salta en voltereta con la trenza ondeando; aterriza frente a un pedestal con una lata dorada. **Remate:** «¡SAQUEADO!»
+- **Cómo se consigue:** Fase 1: `casino:gacha:michi` (Portal Michi), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_consola
+- **Arte:** `laracroqueta_raider_cat` · estilo PIXEL · prompt `prompts/lote-post-p3/xp_laracroqueta.md`
+
+### Mi Pobre Gatito · `xp_pobregatito`
+*el de las Trampas de Navidad* · **Multidimensional** · Hielo · Controlador · rasgo Travieso
+
+- **Referencia:** Mi pobre angelito / Home Alone (John Hughes y Chris Columbus, 1990) — Cine (comedia familiar).
+- **Rasgos icónicos:** las dos patas en los cachetes y la boca abierta en una «O» de grito; suéter rojo tejido de cuello alto; fleco rubio en forma de casquito; una lata de pintura amarrada a una cuerda a sus pies (trampa lista).
+- **Riesgo de moderación:** medio. **Plan B:** Pose con las patas arriba junto a la cara, sin tocarla: la boca en «O», el suéter rojo, el fleco rubio y la lata de pintura cargan.
+- **Forma de batalla:** MI POBRE GATITO — HOME DEFENSE FORM · «THIS IS MY BOX! I HAVE TO DEFEND IT!»
+- **Tiro:** Bola de Nieve con Sorpresa — «¡Feliz Navidad! Cuidado con el escalón… y con la cubeta.» · carambano · Hielo · daño 68 · radio 1.2 · Congelado 1. Una bola de nieve con una canica escondida adentro: deja Congelado. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **HOME TRAPS! (おうちトラップ)** — Arma la casa: esconde cuatro trampas en celdas de tu barco que el rival no ve. Cuando un tiro suyo toca una celda con trampa, no hace daño y la trampa le pega al que disparó: lata de pintura, perilla caliente, carritos de juguete o la plancha. Una vez por batalla.
+  - *En una línea (Catdex):* Cuatro trampas escondidas castigan al que te dispara
+  - *Números para PODERES (`battle/multidim.ts`):* 4 trampas en tus celdas de más valor sin trampa (camarotes con gato primero), invisibles para la vista previa y la IA rival; duran hasta activarse o 4 turnos suyos. Un impacto rival (gato, cañón o ulti) en una celda con trampa: daño ×0 en esa celda y su radio, y la trampa le pega al tirador (si fue un cañón, a ese cañón), en orden fijo: lata de pintura (Aturdido 1), perilla caliente (Ardiendo 2 y −30 de barra), carritos (su siguiente tiro sale desviado 20° y pega ×0.5) y plancha (0.45·P a su camarote). Una ulti activa la trampa pero respeta su propio tope.
+- **Pasiva:** Se quedó solo en casa una Navidad y no extrañó a nadie. Bueno, un poquito. A la hora de cenar. · **★3: Congelado dura un turno más.** · **★5: HOME TRAPS! se puede usar 2 veces por batalla.**
+- **Pista:** Las dos patas en los cachetes, la boca en «O», suéter rojo y una lata de pintura amarrada a una cuerda.
+- **Lore:** Su familia salió de vacaciones y se les olvidó en casa, con toda la Navidad para él solo. Comió helado, vio películas que no debía y, cuando dos ladrones quisieron entrar, convirtió la casa en una trampa gigante. Los ladrones todavía no se recuperan. Él sí: ya se terminó el helado.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA CASA SOLA** — Una casa de dos pisos de noche, nevando, con luces de Navidad; adentro, una lata de pintura baja columpiándose por la escalera; unos carritos ruedan por el piso; la silueta se pone las patas en los cachetes y grita. **Remate:** «¡AAAAH!… ¡JA!»
+- **Cómo se consigue:** Fase 1: `casino:caja` (La Caja), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_videoclub
+- **Arte:** `pobregatito_scream_cat` · estilo PANTALLA · prompt `prompts/lote-post-p3/xp_pobregatito.md`
+
+### Felinamente Rubia · `xp_felinamente`
+*la Abogada de Rosa* · **Multidimensional** · Magia · Soporte · rasgo Presumido
+
+- **Referencia:** Legalmente rubia / Legally Blonde (Robert Luketic, 2001; novela de Amanda Brown) — Cine (comedia).
+- **Rasgos icónicos:** todo rosa: saco y falda rosa chicle; melena rubia larga y brillante (pelaje); libro de leyes gordo con forro rosa; bolso rosa del que asoma una gatita chiquita con moño.
+- **Riesgo de moderación:** bajo-medio. **Plan B:** Sin el bolso con la gatita: todo el rosa, la melena rubia y el libro de leyes cargan.
+- **Forma de batalla:** FELINAMENTE RUBIA — PINK COUNSEL FORM · «OBJECTION! ALSO: CUTE SHOES.»
+- **Tiro:** Libro de Leyes — «Me leí todo el código civil entre manicura y manicura. Con brillito.» · runa · Magia · daño 60 · radio 1.2 · Maldito 2. Un libro de leyes forrado de rosa que cae abierto justo en el artículo exacto y deja Maldito. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **OBJECTION SUSTAINED! (異議を認めます)** — Arma una objeción: durante sus 3 turnos siguientes, el primer estado que le pongan a un gato tuyo se anula y se les regresa a TODOS sus gatos. Y abre el caso con un libro de leyes gigante sobre el gato suyo que más estados te haya puesto. Una vez por batalla.
+  - *En una línea (Catdex):* Objeción: el estado que te pongan se les regresa a todos
+  - *Números para PODERES (`battle/multidim.ts`):* Golpe: 0.7·P al gato suyo que más estados le ha puesto a tu lado en la batalla (si nadie: al de más barra), Revelado 2. Objeción: sus 3 turnos siguientes; el primer estado nuevo sobre un gato tuyo se anula y se aplica igual (mismo estado y turnos) a cada gato suyo vivo; luego se gasta. Si en esos 3 turnos no te ponen ninguno, al final: Maldito 2 a su gato más fuerte.
+- **Pasiva:** Estudió leyes en la mejor escuela del país sin dejar de usar rosa ni un solo día. Los libros también terminaron forrados de rosa: no tuvieron opción. · **★3: Maldito dura un turno más.** · **★5: OBJECTION SUSTAINED! se puede usar 2 veces por batalla.**
+- **Pista:** Todo rosa, melena rubia brillante, un libro de leyes gordo y una gatita chiquita asomándose del bolso.
+- **Lore:** Todos creían que era pura melena y moños hasta que entró a la escuela de leyes más difícil del país y ganó su primer caso por saber algo que nadie más sabía: cómo se cuida un peinado. Nunca se quita el rosa. Su gatita va a todas las audiencias y nunca ha perdido una.
+- **Universo de la revelación (2,2 s):** **UNIVERSO ROSA** — Una sala de tribunal toda rosa, con columnas de mármol; el mazo del juez golpea; los papeles vuelan en cámara lenta; la silueta se levanta con un libro de leyes forrado de rosa y una gatita asoma del bolso. **Remate:** «¡OBJECIÓN!»
+- **Cómo se consigue:** Fase 1: `casino:slot` (Tragamichis), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_videoclub
+- **Arte:** `felinamente_pink_cat` · estilo PANTALLA · prompt `prompts/lote-post-p3/xp_felinamente.md`
+
+### Capitán Gorrimiau · `xp_gorrimiau`
+*el de la Brújula que Apunta al Atún* · **Multidimensional** · Sombra · Francotirador · rasgo Callejero
+
+- **Referencia:** Piratas del Caribe · el capitán Jack Sparrow (Disney, 2003); giro mayor: un bucanero excéntrico genérico — Cine (aventura).
+- **Rasgos icónicos:** tricornio de cuero sobre un pañuelo rojo; rastas de pelaje con cuentas y monedas colgando; ojos delineados de negro y bigote trenzado en dos puntas; brújula abierta en la pata que apunta a una lata de atún.
+- **Riesgo de moderación:** medio-alto. **Plan B:** Sin las rastas con cuentas: el tricornio con pañuelo rojo, los ojos delineados y la brújula cargan.
+- **Forma de batalla:** CAPITÁN GORRIMIAU — CURSED SWASHBUCKLER FORM · «THE COMPASS SAYS TUNA!»
+- **Tiro:** Trabucazo de Corcho — «Tengo un plan. Bueno, tengo media brújula.» · sombra · Sombra · daño 84 · radio 0.9 · perfora 1 · Maldito 2. Un tapón de corcho disparado desde un trabuco viejo que zigzaguea como mareado y deja Maldito. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **THE COMPASS SAYS TUNA! (羅針盤はマグロを指す)** — Abre la brújula que no apunta al norte, sino a lo que más quieres: el resto de este turno y tus 2 siguientes, cada tiro de tu tripulación se curva en el aire hacia el gato suyo con más barra. Si ese gato cae, el capitán se queda con su barra. Una vez por batalla.
+  - *En una línea (Catdex):* Tus tiros se curvan hacia su gato con más barra 3 turnos
+  - *Números para PODERES (`battle/multidim.ts`):* Ventana: el resto de este turno y tus 2 siguientes, tiros de gato y cañones. Blanco = el camarote del gato suyo con más barra en ese momento (si nadie tiene barra: el núcleo). Cada tiro corrige su trayectoria hasta 2.5 celdas hacia ese blanco (las paredes lo detienen igual). Si ese gato cae por un tiro tuyo: Gorrimiau +50 de barra.
+- **Pasiva:** Nunca ha ganado una pelea limpia. Nunca ha perdido una tampoco. Nadie entiende cómo. · **★3: Maldito dura un turno más.** · **★5: THE COMPASS SAYS TUNA! se puede usar 2 veces por batalla.**
+- **Pista:** Tricornio con pañuelo rojo, rastas con cuentas, ojos delineados y una brújula que apunta a una lata de atún.
+- **Lore:** Es el capitán pirata más raro de los siete mares: camina como si el barco se moviera aunque esté en tierra, habla en acertijos y siempre escapa en el último segundo. Su brújula no apunta al norte: apunta a lo que más quieres. La suya, siempre, a una lata de atún.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL MAR MALDITO** — Un barco de velas negras y rotas sale de la neblina; olas y relámpagos; la silueta se balancea colgada de una cuerda del mástil; una brújula se abre en primer plano y su aguja gira loca hasta clavarse en una lata de atún. **Remate:** «¡ATÚN A LA VISTA!»
+- **Cómo se consigue:** Fase 1: `casino:eterno` (Modo Eterno), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_videoclub
+- **Arte:** `gorrimiau_compass_cat` · estilo PANTALLA · prompt `prompts/lote-post-p3/xp_gorrimiau.md`
+
+### Doc Miauwn · `xp_docmiauwn` ★
+*el que Arregla el Pasado* · **Multidimensional** · Tormenta · Asediador · rasgo Impaciente
+
+- **Referencia:** Volver al futuro / Back to the Future · el Doc Emmett Brown (Robert Zemeckis, 1985) — Cine (ciencia ficción).
+- **Rasgos icónicos:** pelo blanco disparado en todas direcciones (pelaje); bata blanca de laboratorio y goggles en la frente; control remoto con antena en una pata; aparato en forma de Y que brilla, bajo el brazo.
+- **Riesgo de moderación:** medio. **Plan B:** Sin el aparato en Y: el pelo blanco disparado, la bata de laboratorio, los goggles y el control cargan.
+- **Forma de batalla:** DOC MIAUWN — TIME TRAVELER FORM · «GREAT SCRATCH!»
+- **Tiro:** Rayo de la Torre — «¡Uno punto veintiún gigamiaus!» · rayo · Tormenta · daño 64 · radio 1.3 · Cargado 1. Un rayo que cae justo a la hora exacta, como si ya supiera cuándo, y deja Cargado. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **FIX THE PAST! (過去を直せ)** — Viaja al pasado y arregla tus errores: los tiros de tu tripulación que fallaron en esta batalla regresan del pasado, uno tras otro, y esta vez pegan en su barco, en el punto más cercano a donde iban. Una vez por batalla.
+  - *En una línea (Catdex):* Tus tiros fallados de la batalla regresan y esta vez pegan
+  - *Números para PODERES (`battle/multidim.ts`):* Cada tiro de gato o cañón tuyo de esta batalla que cayó al agua sin tocar su barco (máx. 10, los más recientes) se repite ahora, en orden: 0.25·P al punto de su barco más cercano a donde iba, con su elemento y su estado (tope 45 %, jefe 18 %). Con menos de 3 fallados: además un rayo de 0.6·P a su núcleo (Cargado).
+- **Pasiva:** Inventó una máquina del tiempo y la usa sobre todo para llegar a la hora de la comida. · **★3: Cargado dura un turno más.** · **★5: FIX THE PAST! se puede usar 2 veces por batalla.**
+- **Pista:** Pelo blanco disparado, bata de laboratorio, goggles en la frente y un aparato en forma de Y que brilla.
+- **Lore:** Es el científico más despeinado de la ciudad. Convirtió un coche plateado en máquina del tiempo y, para encenderla, necesita que un rayo le caiga a la torre del reloj justo a la hora exacta. Ha cambiado el pasado tres veces. Las tres fue para no tirar un vaso de la mesa.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA TORRE DEL RELOJ** — Una plaza de noche con una torre del reloj; las manecillas avanzan; un rayo cae en la torre y baja por un cable; un coche plateado de puertas de ala pasa a toda velocidad y deja dos rayas de fuego paralelas en el piso. **Remate:** «¡JUSTO A TIEMPO!»
+- **Cómo se consigue:** Fase 1: `casino:caja` (La Caja), peso 4 ★ estrella de su mesa · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_videoclub
+- **Arte:** `docmiauwn_time_cat` · estilo PANTALLA · prompt `prompts/lote-post-p3/xp_docmiauwn.md`
+
+### Pinkmiau · `xp_pinkmiau`
+*el Ayudante de Química* · **Multidimensional** · Fuego · Invocador · rasgo Impaciente
+
+- **Referencia:** Breaking Bad (Vince Gilligan, AMC, 2008–2013) · Jesse Pinkman — Serie de TV. (promovido de la reserva (tanda 1); versión familiar: matraz y goggles.)
+- **Rasgos icónicos:** gorro tejido (beanie); sudadera enorme con capucha y pantalones aguados; goggles de laboratorio en la frente; matraz de química con líquido azul que burbujea, el otro brazo arriba de emoción.
+- **Riesgo de moderación:** medio. **Plan B:** Sin el gorro: la sudadera enorme, los goggles y el matraz azul cargan.
+- **Forma de batalla:** PINKMIAU — LAB PARTNER FORM · «YO! IT BUBBLES, MICHI! IT BUBBLES!»
+- **Tiro:** Matraz Hirviendo — «¡Goggles puestos! Esto va a burbujear.» · bola_rebote · Fuego · daño 66 · radio 1.2 · Ardiendo 2. Un matraz que hierve con burbujas azules y deja Ardiendo. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **LAB PARTNER! (実験の相棒)** — Se pone los goggles y le pasa los frascos al profe: el resto de este turno y tus 2 siguientes, cada golpe de tu tripulación deja en su barco un estado más (Vapor) además del suyo. Si Heisenmiau está en tu tripulación, su química cuenta cada estado doble. Una vez por batalla.
+  - *En una línea (Catdex):* Cada golpe deja un estado extra; con Heisenmiau, doble
+  - *Números para PODERES (`battle/multidim.ts`):* Matraz de apertura: 0.5·P, radio 1.5, Ardiendo 2 + Vapor 2. Ventana: el resto de este turno y tus 2 siguientes; cada impacto tuyo que toca su barco (gatos, cañones, ultis) agrega Vapor 2 a las celdas que toca, además de su estado propio. Combo con xp_heisenmiau: durante la ventana y 2 turnos más, PURE CHEMISTRY cuenta cada estado ×2 (máx. 6 por celda).
+  - *Pareja:* combina con `xp_heisenmiau`.
+- **Pasiva:** Tiene buen corazón y malas decisiones. Las dos cosas en cantidades industriales. · **★3: Ardiendo dura un turno más.** · **★5: LAB PARTNER! se puede usar 2 veces por batalla.**
+- **Pista:** Gorro tejido, sudadera enorme, goggles en la frente y un matraz azul que hace burbujas.
+- **Lore:** Era el peor alumno del profe de química y terminó de ayudante de laboratorio en una casa rodante en el desierto, haciendo caramelos de cristal azul. Grita mucho, se asusta más y tiene el corazón más grande del barco. Cuando algo burbujea, aplaude.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA CASA RODANTE** — El desierto al atardecer; una casa rodante vieja echa humo azul por la ventana; la puerta se abre de golpe y la silueta sale con los goggles puestos y los brazos arriba; burbujas azules suben al cielo. **Remate:** «¡CIENCIA!»
+- **Cómo se consigue:** Fase 1: `casino:eterno` (Modo Eterno), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_series
+- **Arte:** `pinkmiau_science_cat` · estilo PANTALLA · prompt `prompts/lote-post-p3/xp_pinkmiau.md`
+
+### Miauty la Fea · `xp_miauty`
+*la Secretaria Más Brillante* · **Multidimensional** · Cristal · Tanque · rasgo Leal
+
+- **Referencia:** Yo soy Betty, la fea (Fernando Gaitán, RCN, 1999–2001) — Telenovela colombiana.
+- **Rasgos icónicos:** lentes enormes de armazón grueso; brackets en una sonrisa enorme; fleco recto y melena corta esponjada (pelaje); blusa beige de cuello grande, chaleco café y una carpeta llena de papeles.
+- **Riesgo de moderación:** bajo. **Plan B:** Sin los brackets (sonrisa cerrada): los lentes enormes, el fleco y el chaleco de oficina con la carpeta cargan.
+- **Forma de batalla:** MIAUTY LA FEA — EXECUTIVE SECRETARY FORM · «THE NUMBERS NEVER LIE… AND NEITHER DO I!»
+- **Tiro:** Carpetazo Contable — «Con permiso, doctor: aquí están los números.» · bola_rebote · Cristal · daño 66 · radio 1.3 · Prisma 2. Una carpeta llena de cuentas perfectas que rebota en el escritorio y deja Prisma. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **BALANCE SHEET! (帳簿の均衡)** — Cuadra las cuentas: si a su barco le queda más vida que al tuyo (en proporción), le quita la mitad de la diferencia y con eso repara tu barco. Si vas ganando, cobra intereses: un carpetazo a su núcleo. Una vez por batalla.
+  - *En una línea (Catdex):* Cuadra las cuentas: les quita la ventaja y repara tu barco
+  - *Números para PODERES (`battle/multidim.ts`):* D = fracción de vida de su barco − fracción de vida del tuyo. Si D > 0: cada celda suya pierde D/2 de su vida máxima (tope 45 %, jefe 18 %) y cada celda tuya no Borrada gana D/2 de la suya (no revive módulos). Si D ≤ 0: 0.8·P a su núcleo («intereses») y Revelado 2.
+- **Pasiva:** Lleva las cuentas de todo el barco en una libreta. Nunca se equivoca. Una vez se equivocó: era una mancha de café. · **★3: Prisma dura un turno más.** · **★5: BALANCE SHEET! se puede usar 2 veces por batalla.**
+- **Pista:** Lentes enormes, brackets, fleco recto, chaleco de oficina y una carpeta llena de cuentas perfectas.
+- **Lore:** Era la secretaria más brillante de una empresa de modas donde nadie la volteaba a ver. Ella sola cuadraba las cuentas, salvaba la empresa y aguantaba los chismes de la oficina con una sonrisa llena de brackets. Al final todos entendieron lo que ella supo siempre: sin ella, esa empresa no duraba ni una semana.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA OFICINA** — Una oficina de los noventa con computadoras grandotas y un pasillo de pasarela; los teléfonos suenan; un montón de papeles vuela y cae en orden perfecto sobre un escritorio chiquito; la silueta se acomoda los lentes y sonríe con brackets. **Remate:** «¡CUENTAS CLARAS!»
+- **Cómo se consigue:** Fase 1: `casino:slot` (Tragamichis), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_latino
+- **Arte:** `miauty_glasses_cat` · estilo VECINDAD · prompt `prompts/lote-post-p3/xp_miauty.md`
+
+### El Michíncipe · `xp_michincipe`
+*el del Asteroide de Bolsillo* · **Multidimensional** · Cósmico · Invocador · rasgo Curioso
+
+- **Referencia:** El principito / Le Petit Prince (Antoine de Saint-Exupéry, 1943; todavía protegido en algunos países: nada de copiar sus acuarelas) — Literatura (Francia, 1943).
+- **Rasgos icónicos:** bufanda dorada larguísima que ondea al viento; traje verde sencillo con botas y cinturón; parado en un asteroide chiquito, del tamaño de una pelota; una rosa roja bajo una campana de vidrio a sus pies.
+- **Riesgo de moderación:** medio. **Plan B:** Sin la rosa en la campana: la bufanda dorada al viento, el traje verde y el asteroide chiquito cargan.
+- **Forma de batalla:** EL MICHÍNCIPE — LITTLE ASTEROID FORM · «DRAW ME A BOX!»
+- **Tiro:** Atardecer de Bolsillo — «Lo esencial es invisible a los bigotes.» · orbe_gravitatorio · Cósmico · daño 66 · radio 1.2 · Ingrávido 2. Un atardecer chiquito que rueda por el aire y deja Ingrávido. Él ve cuarenta y cuatro al día. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **THE SHEEP IN THE BOX! (箱の中の羊)** — Dibuja una caja con tres agujeritos: adentro está exactamente lo que necesitas. Si tu tripulación está muy herida, la cura; si ellos tienen escudos o barreras, se los quita; si no, el borrego sale a toda velocidad y embiste su núcleo. Una vez por batalla.
+  - *En una línea (Catdex):* Una caja que trae justo lo que tu barco necesita
+  - *Números para PODERES (`battle/multidim.ts`):* La primera que aplique, en este orden (el HUD muestra cuál saldría): (1) vida total de tu tripulación < 50 %: +30 % de vida a cada gato tuyo y le quita 1 estado malo a cada uno; (2) ellos tienen escudos de gato, barreras, refuerzos o vidas extra: se los quita todos (barreras apagadas 2 turnos suyos) y 0.4·P a cada módulo que los tenía; (3) si no: embestida de 1.4·P a su núcleo que ignora escudos, Ingrávido 1 (tope 45 %, jefe 18 %).
+- **Pasiva:** Cuida una sola rosa como si fuera la única del universo. Para él, lo es. A los baobabs les tiene cero paciencia. · **★3: Ingrávido dura un turno más.** · **★5: THE SHEEP IN THE BOX! se puede usar 2 veces por batalla.**
+- **Pista:** Bufanda dorada al viento, un asteroide del tamaño de una pelota y una rosa bajo una campana de vidrio.
+- **Lore:** Vive en un asteroide tan chiquito que le da la vuelta en tres pasos y ve el atardecer cuarenta y cuatro veces en un día moviendo su silla. Cuida una rosa, barre sus volcanes y arranca los baobabs antes de que crezcan. Un día le pidió a un piloto que le dibujara un borrego. El piloto dibujó una caja. Fue perfecto.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL ASTEROIDE** — Un cielo azul de acuarela lleno de estrellas; un asteroide chiquito gira con tres volcanes de juguete y una rosa bajo una campana; un zorro mira desde una estrella; una bufanda dorada larguísima ondea de lado a lado de la pantalla. **Remate:** «¡DIBÚJAME UNA CAJA!»
+- **Cómo se consigue:** Fase 1: `casino:caja` (La Caja), peso 10 · sin vitrina (tanda 2: solo su mesa grande)
+- **Arte:** `michincipe_asteroid_cat` · estilo LIBROS_V2 · prompt `prompts/lote-post-p3/xp_michincipe.md`
+
+### Ricardo Garjona · `xp_garjona`
+*el Trovador Chapín* · **Multidimensional** · Naturaleza · Soporte · rasgo Chismoso
+
+- **Referencia:** Ricardo Arjona (cantautor guatemalteco, 1964) — Música (persona real). (promovido de la reserva (tanda 1); retoma `e_garjona` del catálogo v2 (guiño chapín).)
+- **Rasgos icónicos:** sombrero de ala corta; barba corta de pelaje y mirada de quien cuenta una historia; guitarra acústica lista para tocar; saco oscuro sobre camisa abierta.
+- **Riesgo de moderación:** medio. **Plan B:** Sin el sombrero: la guitarra acústica, la barba y el saco oscuro cargan.
+- **Forma de batalla:** RICARDO GARJONA — STORYTELLER FORM · «LET ME TELL YOU A STORY…»
+- **Tiro:** Verso Largo — «Te voy a contar una historia… que dura cuatro minutos.» · semilla · Naturaleza · daño 60 · radio 1.2 · Enraizado 2. Un verso que se enreda en la madera y deja Enraizado. (recarga 1)
+- **Ulti = PODER MULTIDIMENSIONAL:** **THE STORY GOES ON! (物語は続く)** — Cuenta una historia que no se acaba: todo lo bueno de tu lado (escudos, refuerzos, poderes con turnos y los estados que les pusiste) dura 2 turnos más. Y lo que cuenta se vuelve verdad: el gato suyo que más daño te hizo queda Revelado y Marcado. Una vez por batalla.
+  - *En una línea (Catdex):* Todo lo bueno de tu lado dura 2 turnos más
+  - *Números para PODERES (`battle/multidim.ts`):* Ahora: +2 turnos a cada efecto con turnos de tu lado (escudos temporales, refuerzos, relojes de poderes MD propios, ventanas de ulti) y a cada estado que tu lado puso en su barco o en sus gatos. Estrofa: 3 × 0.35·P a sus 3 camarotes con más barra (Enraizado 1). El gato suyo con más daño hecho: Revelado 3 y Marcado 3 (tus tiros a él ×1.25).
+- **Pasiva:** Cuenta historias de todos los gatos del puerto. Todos se reconocen. Ninguno lo admite. · **★3: Enraizado dura un turno más.** · **★5: THE STORY GOES ON! se puede usar 2 veces por batalla.**
+- **Pista:** Sombrero de ala corta, barba y una guitarra que cuenta historias largas.
+- **Lore:** Salió de Guatemala con una guitarra y una libreta y le cantó al mundo entero historias de gente común. En el barco narra en versos todo lo que pasa. La tripulación ya no puede tener secretos.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DEL TROVADOR** — Un callejón empedrado con arcos coloniales y volcanes al fondo; luz de farol; la silueta rasguea y las palabras de la historia se vuelven pájaros de papel que salen volando. **Remate:** «¡QUÉ HISTORIA!»
+- **Cómo se consigue:** Fase 1: `casino:slot` (Tragamichis), peso 10 · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_festival
+- **Arte:** `garjona_trova_cat` · estilo POP_V2 · prompt `prompts/lote-post-p3/xp_garjona.md`
+
+### Shakimiau · `xp_shakimiau` ★
+*la que Hace Temblar el Escenario* · **Multidimensional** · Tierra · Demoledor · rasgo Presumido
+
+- **Referencia:** Shakira (cantante colombiana, 1977) — Música (persona real). (promovida de la reserva (tanda 1); retoma `x_shakimiau` del catálogo v2; epíteto nuevo (antes «Caderas Sísmicas»).)
+- **Rasgos icónicos:** melena rubia larga y muy ondulada (pelaje); cinturón de monedas de danza sobre una falda larga (recatado); pulseras de monedas doradas; pose de baile con los brazos en alto.
+- **Riesgo de moderación:** medio. **Plan B:** Sin el cinturón de monedas: la melena rubia muy ondulada y la pose de baile cargan.
+- **Forma de batalla:** SHAKIMIAU — SEISMIC DANCE FORM · «THE GROUND DANCES WITH ME!»
+- **Tiro:** Paso Sísmico — «Esto se baila así.» · roca · Tierra · daño 82 · radio 1.6. Un paso de baile que hace temblar la madera. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **SEISMIC DANCE! (地震ダンス)** — Baila tan fuerte que tiembla el mar: cada celda de su barco recibe un golpecito y TODA celda que quede por debajo del 30 % de su vida se derrumba (menos las que sostienen algo). Una vez por batalla.
+  - *En una línea (Catdex):* Terremoto: derrumba toda celda que quede bajo el 30 %
+  - *Números para PODERES (`battle/multidim.ts`):* 0.1·P a cada celda rival; luego, toda celda con vida < 30 % se destruye, de arriba abajo (tope 45 %, jefe 18 %; el núcleo nunca pierde más de la mitad de lo que le quedaba; PODERES-3: una celda cuya caída dejaría colgando algo aguanta, para que el derrumbe no hunda el barco gratis).
+- **Pasiva:** Baila tan bien que los cañones del barco se mueven solos. · **★3: su tiro explota un poco más grande.** · **★5: SEISMIC DANCE! se puede usar 2 veces por batalla.**
+- **Pista:** Melena rubia muy ondulada, cinturón de monedas, pulseras doradas y un baile que hace temblar el piso.
+- **Lore:** Llegó de una costa caribeña con una voz enorme y un baile que nadie había visto, y puso a bailar al mundo entero. Dicen que cuando baila, los sismógrafos de tres países se ponen nerviosos. Es verdad. Lo comprobamos.
+- **Universo de la revelación (2,2 s):** **UNIVERSO SÍSMICO** — Un escenario sobre la arena de una playa caribeña al atardecer; la silueta baila y cada paso manda ondas que hacen temblar todo; monedas que brillan; una ola gigante sube al ritmo y se queda congelada en la cresta. **Remate:** «¡QUE TIEMBLE!»
+- **Cómo se consigue:** Fase 1: `casino:slot` (Tragamichis), peso 4 ★ estrella de su mesa · sin vitrina (tanda 2: solo su mesa grande) · sets: set_pp_festival
+- **Arte:** `shakimiau_quake_cat` · estilo POP_V2 · prompt `prompts/lote-post-p3/xp_shakimiau.md`
+
+### Miaucol Yordan · `xp_miaucol` ★
+*el que Vuela desde la Línea* · **Multidimensional** · Gravedad · Demoledor · rasgo Rencoroso
+
+- **Referencia:** Michael Jordan (basquetbolista estadounidense, 1963) — Básquetbol (persona real).
+- **Rasgos icónicos:** jersey rojo de básquet sin escudo, con el 23; muñequeras blancas y short largo rojo; la lengua de fuera en pleno despegue; balón de básquet en alto, saltando desde una pata.
+- **Riesgo de moderación:** medio. **Plan B:** Sin número en el jersey: el jersey rojo, la lengua de fuera y el despegue con el balón cargan.
+- **Forma de batalla:** MIAUCOL YORDAN — HANG TIME FORM · «SIX RINGS AND A NAP!»
+- **Tiro:** Clavada Flotante — «Me quedo en el aire lo que yo quiera.» · orbe_gravitatorio · Gravedad · daño 82 · radio 1.6 · Flotando 2 · gravedad ×0.6. Un balón que sube, se queda colgado en el aire un segundo de más y cae a plomo. Deja Flotando. (recarga 2)
+- **Ulti = PODER MULTIDIMENSIONAL:** **DUNK FROM THE LINE! (フリースローダンク)** — Despega desde la línea de tiro libre y clava sobre su núcleo pasando por encima de todo. Pega más por cada gato suyo que tu tripulación ya noqueó en la batalla: un anillo por cada uno, hasta seis. Sin anillos, el clavado además deja Aturdido a su gato con más barra. Una vez por batalla.
+  - *En una línea (Catdex):* Clavada al núcleo: pega más por cada gato suyo que noqueaste
+  - *Números para PODERES (`battle/multidim.ts`):* Clavado: 0.9·P + 0.35·P × anillos (máx. 6) a su núcleo, por encima de las paredes (no lo frenan las celdas de enfrente), ignora 1 escudo (tope 45 %, jefe 18 %). Anillos = gatos suyos noqueados por tu lado en esta batalla. Con 0 anillos: además Aturdido 1 al gato suyo con más barra.
+- **Pasiva:** Perdió una vez en el patio de la escuela. Desde entonces no ha dejado de ganar, ni de acordarse. · **★3: Flotando dura un turno más.** · **★5: DUNK FROM THE LINE! se puede usar 2 veces por batalla.**
+- **Pista:** Jersey rojo con el 23, muñequeras, la lengua de fuera y un salto que parece que nunca baja.
+- **Lore:** Dicen que de chiquito no lo dejaron entrar al equipo de la escuela y que desde ese día no se le quitaron las ganas de ganar. Despega desde la línea de tiro libre, se queda en el aire más de lo que permite la física y clava. Seis anillos, seis siestas de campeón. No necesariamente en ese orden.
+- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA DUELA** — Una cancha de básquet bajo reflectores con la afición en sombras; la silueta corre, despega desde la línea de tiro libre y se queda flotando en cámara lenta con la lengua de fuera; flashes de cámaras; el aro tiembla. **Remate:** «¡CLAVADA!»
+- **Cómo se consigue:** Fase 1: `casino:gacha:michi` (Portal Michi), peso 4 ★ estrella de su mesa · sin vitrina (tanda 2: solo su mesa grande)
+- **Arte:** `miaucol_dunk_cat` · estilo ESTADIO · prompt `prompts/lote-post-p3/xp_miaucol.md`
 
 ## Míticos (20) · dos por mesa del casino
 
@@ -1667,28 +2145,9 @@
 - **Cómo se consigue:** Podio · `podio:copa_pixel` · reto 8 de la Copa Fuera de la Caja (×1.45 sobre tu liga) · campeón EL CAMPEÓN DE LAS FICHAS · sets: set_pp_copa
 - **Arte:** `combo_arcade_cat` · estilo casa (STYLE_LOCK + referencias) · prompt `prompts/lote-post-p3/hp_combo.md`
 
-## Reserva (16)
+## Reserva (10)
 
 Entran solo si la herramienta de imágenes bloquea dos veces a un titular (`arte-v2/01` §3.1) o si el dueño cambia uno. El campo «cubre» dice a quién reemplaza primero.
-
-### (reserva) Tanjimiau · `xp_tanjimiau`
-*el de la Caja a la Espalda* · **Multidimensional** · Agua · Invocador · rasgo Leal
-
-- **Referencia:** Kimetsu no Yaiba / Demon Slayer (Koyoharu Gotōge; manga 2016–2020) — Anime/manga. (retoma `r_tanjimiau` del catálogo v2.)
-- **Rasgos icónicos:** haori a cuadros verde y negro; caja de madera a la espalda; aretes de cartita con un sol propio; mancha roja en la frente (pelaje) y espada.
-- **Riesgo de moderación:** medio. **Plan B:** Aretes lisos; el haori a cuadros verde y negro y la caja de madera cargan.
-- **Forma de batalla:** TANJIMIAU — WATER BREATH FORM · «BREATHE… AND PURR!»
-- **Tiro:** Corte de Agua — «Huele a que vas a fallar.» · torpedo · Agua · daño 66 · radio 1.2 · Mojado 2. Un corte que fluye como río y deja Mojado. (recarga 2)
-- **Ulti = PODER MULTIDIMENSIONAL:** **BOX SISTER! (箱の中の妹)** — Abre la caja: sale su hermanita (una gatita brava) que pelea 2 turnos en tu tripulación: patea fuerte en cada turno tuyo y no se le puede pegar. Una vez por batalla.
-  - *En una línea (Catdex):* Su hermanita sale de la caja y pelea 2 turnos
-  - *Números para PODERES (`battle/multidim.ts`):* Aliada temporal sin camarote: 2 turnos propios, 0.6·P al blanco de tu gato del turno (Tierra). No recibe daño.
-- **Pasiva:** Huele las emociones. Casi siempre huele hambre. La suya. · **★3: Mojado dura un turno más.** · **★5: BOX SISTER! se puede usar 2 veces por batalla.**
-- **Pista:** Haori a cuadros verde y negro y una caja de madera a la espalda que a veces se mueve sola.
-- **Lore:** Carga a su hermanita en una caja de madera por todo el mundo buscando una cura. Es el gato más amable que vas a conocer: hasta a sus rivales les pide perdón antes de cortarlos.
-- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA RESPIRACIÓN** — Un bosque de noche en grabado japonés; un dragón de agua en olas planas da la vuelta a la pantalla; la caja de madera se abre un poquito y asoma una patita. **Remate:** «¡RESPIRA!»
-- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · vitrina propuesta: Portal «Multiverso Desbordado»
-- **Arte:** `tanjimiau_box_cat` · estilo ANIME_V2 · prompt `prompts/lote-post-p3/xp_tanjimiau.md`
-- **Cubre:** cualquier anime
 
 ### (reserva) Capitán Lavimiau · `xp_lavimiau`
 *el que Limpia Todo* · **Multidimensional** · Gravedad · Francotirador · rasgo Rencoroso
@@ -1804,64 +2263,6 @@ Entran solo si la herramienta de imágenes bloquea dos veces a un titular (`arte
 - **Arte:** `hambron_smash_cat` · estilo SUPERHEROES_V2 · prompt `prompts/lote-post-p3/xp_hambron.md`
 - **Cubre:** cualquier superhéroe
 
-### (reserva) Tetrimiau · `xp_tetrimiau`
-*el que Completa Filas* · **Multidimensional** · Gravedad · Demoledor · rasgo Impaciente
-
-- **Referencia:** Tetris (Alekséi Pázhitnov, 1984) — Videojuego.
-- **Rasgos icónicos:** pelaje hecho de piezas de cuatro cuadros de colores; una pieza cayendo sobre la cabeza; cuerpo cuadradito; mirada de concentración.
-- **Riesgo de moderación:** medio. **Plan B:** Bloques en colores propios; las piezas de cuatro cuadros cargan.
-- **Forma de batalla:** TETRIMIAU — LINE CLEAR FORM · «FOUR LINES AT ONCE!»
-- **Tiro:** Pieza en L — «Esa no cabe. Esa tampoco.» · orbe_gravitatorio · Gravedad · daño 82 · radio 1.6 · Flotando 2. Una pieza que cae recta y deja Flotando. (recarga 2)
-- **Ulti = PODER MULTIDIMENSIONAL:** **LINE CLEAR! (ライン消去)** — Cuatro piezas caen sobre su barco y completan una fila: la fila con más celdas de su barco DESAPARECE entera. Una vez por batalla.
-  - *En una línea (Catdex):* Borra entera la fila más llena de su barco
-  - *Números para PODERES (`battle/multidim.ts`):* Elimina todas las celdas de la fila con más celdas (tope 45 %, jefe 18 %); luego chequeo de integridad.
-- **Pasiva:** Acomoda todo. La comida, los juguetes y a los demás gatos. · **★3: Flotando dura un turno más.** · **★5: LINE CLEAR! se puede usar 2 veces por batalla.**
-- **Pista:** Pelaje de piezas de colores de cuatro cuadros y una pieza que le cae en la cabeza.
-- **Lore:** Nació en una pantalla verde donde las piezas caen sin parar. Lleva años acomodándolas y nunca se acaban. Dice que el secreto es no desesperarse. Se desespera.
-- **Universo de la revelación (2,2 s):** **UNIVERSO DE LAS PIEZAS** — Una cuadrícula vertical; piezas de colores caen y encajan; una fila entera brilla y desaparece. **Remate:** «¡LÍNEA!»
-- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · vitrina propuesta: Portal «Multiverso Desbordado»
-- **Arte:** `tetrimiau_block_cat` · estilo PIXEL · prompt `prompts/lote-post-p3/xp_tetrimiau.md`
-- **Cubre:** cualquier videojuego
-
-### (reserva) Bastet · `xp_bastet`
-*la Señora del Hogar* · **Multidimensional** · Luz · Soporte · rasgo Leal
-
-- **Referencia:** Bastet, diosa egipcia (mito antiguo; dominio público) — Mito (Egipto antiguo). (retoma `x_bastet` del catálogo v2 (uno de los 4 huecos Multidimensionales dormidos).)
-- **Rasgos icónicos:** gata negra esbelta; collar ancho de oro y lapislázuli; arete de oro; sistro y disco solar.
-- **Riesgo de moderación:** bajo. **Plan B:** —
-- **Forma de batalla:** BASTET — GUARDIAN OF THE HOME FORM · «THIS HOME IS PROTECTED!»
-- **Tiro:** Rayo de Sistro — «Esta casa no se toca.» · haz · Luz · daño 60 · radio 1.2 · Cegado 1. Un rayo de sol que suena a sistro y deja Cegado. (recarga 1)
-- **Ulti = PODER MULTIDIMENSIONAL:** **HOME GUARDIAN! (家の守護神)** — Protege la casa: el siguiente turno rival ningún gato tuyo puede bajar de 1 de vida y tus camarotes reciben la mitad; luego, un rayo de sol los deja Cegados a todos. Una vez por batalla.
-  - *En una línea (Catdex):* Un turno: nadie cae y tus camarotes reciben la mitad
-  - *Números para PODERES (`battle/multidim.ts`):* Siguiente turno rival: vida mínima 1 para tus gatos, daño a camarotes ×0.5. Después: Cegado 1 a todos los gatos rivales.
-- **Pasiva:** Era diosa antes de que existieran los sillones. Igual prefiere los sillones. · **★3: Cegado dura un turno más.** · **★5: HOME GUARDIAN! se puede usar 2 veces por batalla.**
-- **Pista:** Gata negra esbelta, collar de oro y lapislázuli y un disco de sol.
-- **Lore:** La adoraban en una ciudad entera hace miles de años y cuidaba los hogares de las cosas feas. Sigue haciéndolo. Ahora además exige que le rasquen la barbilla. Siempre lo exigió.
-- **Universo de la revelación (2,2 s):** **UNIVERSO DEL TEMPLO** — Un templo de piedra con jeroglíficos de gatos; un disco solar se levanta detrás de la silueta; arena dorada. **Remate:** «¡PROTEGIDOS!»
-- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · vitrina propuesta: Portal «Multiverso Desbordado»
-- **Arte:** `bastet_sun_cat` · estilo MITOS · prompt `prompts/lote-post-p3/xp_bastet.md`
-- **Cubre:** cualquiera (riesgo bajo)
-
-### (reserva) Pinkmiau · `xp_pinkmiau`
-*el Ayudante de Química* · **Multidimensional** · Fuego · Invocador · rasgo Impaciente
-
-- **Referencia:** Breaking Bad (Vince Gilligan, AMC, 2008–2013) · Jesse Pinkman — Serie de TV.
-- **Rasgos icónicos:** gorro tejido (beanie); sudadera enorme con capucha; pantalones aguados y cadenita; pose de «¡ciencia!» con los brazos arriba.
-- **Riesgo de moderación:** medio. **Plan B:** Sin el gorro; sudadera enorme y cadenita cargan.
-- **Forma de batalla:** PINKMIAU — LAB PARTNER FORM · «YEAH, SCIENCE, MICHI!»
-- **Tiro:** Matraz Hirviendo — «¡Sí, ciencia, michi!» · bola_rebote · Fuego · daño 66 · radio 1.2 · Ardiendo 2. Un matraz que hierve y deja Ardiendo. (recarga 2)
-- **Ulti = PODER MULTIDIMENSIONAL:** **THE RV! (キャンピングカー)** — Estaciona la casa rodante en tu cubierta: 3 turnos, al final de cada turno tuyo suelta una nube azul donde pegó tu gato. Si Heisenmiau está en tu tripulación, la nube pega el doble. Una vez por batalla.
-  - *En una línea (Catdex):* Casa rodante: 3 turnos suelta nubes azules (×2 con Heisenmiau)
-  - *Números para PODERES (`battle/multidim.ts`):* Objeto persistente: 3 turnos propios, 0.3·P (Maldito + Vapor) al punto de impacto de tu gato. Combo con xp_heisenmiau: ×2.
-  - *Pareja:* combina con `xp_heisenmiau`.
-- **Pasiva:** Tiene buen corazón y malas decisiones. Las dos cosas en cantidades industriales. · **★3: Ardiendo dura un turno más.** · **★5: THE RV! se puede usar 2 veces por batalla.**
-- **Pista:** Gorro tejido, sudadera enorme y unas ganas de gritar «¡ciencia!».
-- **Lore:** Era el peor alumno del profe de química y terminó siendo su compañero de laboratorio en una casa rodante en el desierto. Grita mucho, se asusta más y tiene el corazón más grande del barco.
-- **Universo de la revelación (2,2 s):** **UNIVERSO DE LA CASA RODANTE** — El desierto al atardecer; una casa rodante vieja echa humo azul; la silueta salta con los brazos arriba. **Remate:** «¡CIENCIA!»
-- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · vitrina propuesta: Portal «Multiverso Desbordado»
-- **Arte:** `pinkmiau_science_cat` · estilo PANTALLA · prompt `prompts/lote-post-p3/xp_pinkmiau.md`
-- **Cubre:** Heisenmiau o cualquier serie
-
 ### (reserva) Indiana Garras · `xp_indianagarras`
 *el que Le Teme a los Pepinos* · **Multidimensional** · Naturaleza · Controlador · rasgo Miedoso
 
@@ -1899,44 +2300,6 @@ Entran solo si la herramienta de imágenes bloquea dos veces a un titular (`arte
 - **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · vitrina propuesta: Portal «Multiverso Desbordado»
 - **Arte:** `miauo_code_cat` · estilo PANTALLA · prompt `prompts/lote-post-p3/xp_miauo.md`
 - **Cubre:** cualquier película
-
-### (reserva) Shakimiau · `xp_shakimiau`
-*la de las Caderas Sísmicas* · **Multidimensional** · Tierra · Demoledor · rasgo Presumido
-
-- **Referencia:** Shakira (cantante colombiana, 1977) — Música (persona real). (retoma `x_shakimiau` del catálogo v2.)
-- **Rasgos icónicos:** melena larga rubia ondulada; cinturón de monedas de danza (recatado); pies descalzos; pose de baile con la cadera.
-- **Riesgo de moderación:** medio. **Plan B:** Sin cinturón de monedas; la melena rubia ondulada y la pose de baile cargan.
-- **Forma de batalla:** SHAKIMIAU — SEISMIC DANCE FORM · «THE GROUND DANCES WITH ME!»
-- **Tiro:** Caderazo — «Esto se baila así.» · roca · Tierra · daño 82 · radio 1.6. Un golpe de cadera que hace temblar la madera. (recarga 2)
-- **Ulti = PODER MULTIDIMENSIONAL:** **HIP QUAKE! (腰の大地震)** — Un caderazo que hace temblar el mar: cada celda de su barco recibe un poquito y TODA celda que quede por debajo del 30 % de su vida se derrumba. Una vez por batalla.
-  - *En una línea (Catdex):* Terremoto: derrumba toda celda que quede bajo el 30 %
-  - *Números para PODERES (`battle/multidim.ts`):* 0.1·P a cada celda rival; luego, toda celda con vida < 30 % se destruye (tope 45 %, jefe 18 %).
-- **Pasiva:** Baila tan bien que los cañones del barco se mueven solos. · **★3: su tiro explota un poco más grande.** · **★5: HIP QUAKE! se puede usar 2 veces por batalla.**
-- **Pista:** Melena rubia ondulada, cinturón de monedas y unas caderas que causan sismos.
-- **Lore:** Llegó descalza de una costa caribeña y puso a bailar al mundo entero. Dicen que sus caderas son detectadas por los sismógrafos. Es verdad. Lo comprobamos.
-- **Universo de la revelación (2,2 s):** **UNIVERSO SÍSMICO** — Un escenario sobre arena; las ondas del baile hacen temblar todo; monedas brillan; la ola sube. **Remate:** «¡QUE TIEMBLE!»
-- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · vitrina propuesta: Portal «Multiverso Desbordado»
-- **Arte:** `shakimiau_quake_cat` · estilo POP_V2 · prompt `prompts/lote-post-p3/xp_shakimiau.md`
-- **Cubre:** cualquier músico
-
-### (reserva) Ricardo Garjona · `xp_garjona`
-*el Trovador Chapín* · **Multidimensional** · Naturaleza · Soporte · rasgo Chismoso
-
-- **Referencia:** Ricardo Arjona (cantautor guatemalteco, 1964) — Música (persona real). (retoma `e_garjona` del catálogo v2 (guiño chapín).)
-- **Rasgos icónicos:** sombrero de ala corta; barba de pelaje; guitarra acústica; saco oscuro y mirada de quien cuenta una historia.
-- **Riesgo de moderación:** medio. **Plan B:** Sin el sombrero; la guitarra acústica y la barba cargan.
-- **Forma de batalla:** RICARDO GARJONA — STORYTELLER FORM · «LET ME TELL YOU A STORY…»
-- **Tiro:** Verso Largo — «Te voy a contar una historia… que dura cuatro minutos.» · semilla · Naturaleza · daño 60 · radio 1.2 · Enraizado 2. Un verso que se enreda en la madera. (recarga 1)
-- **Ulti = PODER MULTIDIMENSIONAL:** **TROVA STORY! (語り歌)** — Cuenta una historia cantada: 3 turnos, al empezar cada turno tuyo tu tripulación se cura un 10 % y gana barra, y el gato rival que más daño hizo queda Revelado. Una vez por batalla.
-  - *En una línea (Catdex):* 3 turnos: tu tripulación se cura 10 % y gana barra cada turno
-  - *Números para PODERES (`battle/multidim.ts`):* 3 turnos propios: +10 % de vida y +10 de barra a cada gato tuyo. Revelado al gato rival con más daño hecho.
-- **Pasiva:** Cuenta historias de todos los gatos del puerto. Todos se reconocen. Ninguno lo admite. · **★3: Enraizado dura un turno más.** · **★5: TROVA STORY! se puede usar 2 veces por batalla.**
-- **Pista:** Sombrero, barba y una guitarra que cuenta historias largas.
-- **Lore:** Salió de Guatemala con una guitarra y una libreta y le cantó al mundo entero historias de gente común. En el barco narra todo lo que pasa en versos. La tripulación ya no puede tener secretos.
-- **Universo de la revelación (2,2 s):** **UNIVERSO DEL TROVADOR** — Un callejón empedrado con volcanes al fondo; una luz de farol; las palabras se vuelven pájaros. **Remate:** «¡QUÉ HISTORIA!»
-- **Cómo se consigue:** Fase 1: `casino:gacha` (Portal (todos)), peso 10 · vitrina propuesta: Portal «Multiverso Desbordado»
-- **Arte:** `garjona_trova_cat` · estilo POP_V2 · prompt `prompts/lote-post-p3/xp_garjona.md`
-- **Cubre:** cualquier músico
 
 ### (reserva) Memiau Ochoa · `xp_memiauochoa`
 *el Muro de los Mundiales* · **Multidimensional** · Tierra · Tanque · rasgo Leal

@@ -27,9 +27,16 @@ export const GRID = 52;
  * keep the old bound (GRID) so their coastline — and every plot/pen planned on it — never moves.
  */
 export const GRID_EXT = 64;
+/**
+ * After the Parte III (expansions 13+, data/postp3/islas.json): a third ring further out. Regions 9–12 keep GRID_EXT and
+ * 1–8 keep GRID, so no older coastline (nor any plot or pen planned on it) moves when the new ring is added.
+ */
+export const GRID_POST = 88;
 /** last expansion number of the original archipelago (its regions clip at GRID) */
 export const LEGACY_REGIONS = 8;
-export const gridOf = (r: { n?: number }) => ((r.n ?? 0) > LEGACY_REGIONS ? GRID_EXT : GRID);
+/** last expansion number of the post-story ring (its regions clip at GRID_EXT) */
+export const EXT_REGIONS = 12;
+export const gridOf = (r: { n?: number }) => ((r.n ?? 0) > EXT_REGIONS ? GRID_POST : (r.n ?? 0) > LEGACY_REGIONS ? GRID_EXT : GRID);
 /** content regions are spread around home so every expansion is its own island (sea channels between) */
 export const SPREAD = 1.65;
 export const HOME_ID = 'home';
@@ -84,9 +91,10 @@ export function generateArchipelago(regions: RegionDef[], seed = 7): Map<string,
       for (const [dx, dy] of N4) if (tiles.has(key(t.gx + dx, t.gy + dy))) n++;
       if (n <= 1) tiles.delete(key(t.gx, t.gy));
     }
-  // fill 1-tile holes
-  for (let gy = 1; gy < GRID_EXT - 1; gy++)
-    for (let gx = 1; gx < GRID_EXT - 1; gx++) {
+  // fill 1-tile holes (up to the outermost ring's bound: the old rings never reach past GRID_EXT, so nothing of theirs changes)
+  const limAll = Math.max(...regions.map(gridOf), GRID_EXT);
+  for (let gy = 1; gy < limAll - 1; gy++)
+    for (let gx = 1; gx < limAll - 1; gx++) {
       if (tiles.has(key(gx, gy))) continue;
       const ns = N4.map(([dx, dy]) => tiles.get(key(gx + dx, gy + dy))).filter(Boolean) as Tile[];
       if (ns.length >= 4) tiles.set(key(gx, gy), { gx, gy, region: ns[0].region });

@@ -27,6 +27,11 @@ import { mdOn } from '../multidim';
 import { ultsA } from './powersA';
 import { ultsB, banana } from './powersB';
 import { ultsC, bare } from './powersC';
+// tanda 2 (agent PODERES-3): 25 more powers and their rules
+import { ultsD } from './powersD';
+import { ultsE } from './powersE';
+import { dAfterFire, dAfterShot, dCatMul, dFire, dFloor, dHome, dPrep, dShot, dTallies, dTrap } from './rulesD';
+import { D } from './kitD';
 import {
   CELL,
   MdpState,
@@ -54,7 +59,7 @@ import {
 
 /** the 60 powers, by species (a function: safe to call while the import cycle with multidim.ts is still loading) */
 export function postUlts(): Record<string, UltFn> {
-  return { ...ultsA(), ...ultsB(), ...ultsC() } as unknown as Record<string, UltFn>;
+  return { ...ultsA(), ...ultsB(), ...ultsC(), ...ultsD(), ...ultsE() } as unknown as Record<string, UltFn>;
 }
 /** what the post powers did this battle (player side): md_<species> casts and a few counters */
 export function mdpFeats(b: Battle): Record<string, number> {
@@ -68,8 +73,10 @@ const dealtTo = (evs: BattleEvent[], side: number) => evs.reduce((a, e) => a + (
 // ------------------------------------------------------------------ fire()
 /** fire(), once per shot: who fires, and the attack multipliers of the post rules */
 export function mdFire(b: Battle, side: 0 | 1, cat: CatState | undefined, ult: boolean, cannonId: number | undefined, ev: BattleEvent[]): number {
-  const st = peek(b);
+  // the tanda-2 tallies that start before any cast (Doc Miauwn, Felinamente, Garjona) open the state at the first shot
+  const st = peek(b) ?? (dTallies(b) ? S(b) : undefined);
   if (!st) return 1;
+  if (!st.d && dTallies(b)) st.d = D(b);
   st.ctx = { side, cat, ult, kind: cannonId !== undefined ? 'cannon' : cat ? (ult ? 'ult' : 'cat') : 'part', cannonId, ev0: ev.length, caught: false, remate: false };
   if (on(st.chill[side])) for (const c of b.sides[side].cats) st.stun0.set(c, c.stunned);
   let m = 1;
@@ -108,6 +115,8 @@ export function mdFire(b: Battle, side: 0 | 1, cat: CatState | undefined, ult: b
       info(ev, '¡Y EL REMATE! x3', p.x, p.y - 100, 0xf2a33a);
     }
   }
+  // tanda 2: the wind, the conquest, the toy cars (rulesD.ts)
+  if (st.d) m *= dFire(b, st, st.d, side, cat, ult, cannonId, ev);
   return m;
 }
 
@@ -169,6 +178,12 @@ export function mdAltPaths(b: Battle, side: 0 | 1, cat: CatState | undefined, ul
     feat(b, enemy, 'md_offer');
     return [p];
   }
+  // ---- tanda 2: Leonardo's machine for this shot, the toy cars' swerve (rulesD.ts)
+  const prep = st.d ? dPrep(b, st.d, side, cat, cannonId, shot, origin, angle, power, wind, ev) : null;
+  if (prep) {
+    shot = prep.shot;
+    angle = prep.angle;
+  }
   // ---- the shots of a crew with portals / a deduced volley / the high ground (then maybe stored by the stopped time)
   let paths: ShotPath[] | null = null;
   const mk = st.marks;
@@ -199,7 +214,11 @@ export function mdAltPaths(b: Battle, side: 0 | 1, cat: CatState | undefined, ul
     });
     return shown;
   }
+  // ---- tanda 2: Gorrimiau's compass bends it; a changed shot is built here
+  if (!paths && st.d) paths = dHome(b, st.d, side, cat, cannonId, shot, origin, angle, power, wind, ev);
+  if (!paths && prep?.force) paths = b.buildPaths(shot, origin, angle, power, wind, side);
   if (paths) b.resolvePaths(side, shot, atk, paths, ev);
+  if (paths && prep?.after) paths.push(...prep.after(paths, atk, ev));
   return paths;
 }
 
@@ -241,7 +260,7 @@ export function mdAfterShot(b: Battle, side: 0 | 1, cat: CatState | undefined, u
   if (!st) {
     // the tallies that start before any cast (Yugi, Michimpostor) open the state the first time they matter
     if (side === 0 && cat && !ult && cat.def.catId === 'xp_yugi' && mdOn(b, cat)) return yugi(b, S(b), cat, ev, 0);
-    if (side === 1 && cat && crew(b, 0, 'xp_michimpostor')) S(b);
+    if ((side === 1 && cat && crew(b, 0, 'xp_michimpostor')) || dTallies(b)) S(b);
     else return [];
     return mdAfterShot(b, side, cat, ult, cannonId, shot, atk, paths, ev);
   }
@@ -393,6 +412,8 @@ export function mdAfterShot(b: Battle, side: 0 | 1, cat: CatState | undefined, u
     out.push(p);
     feat(b, enemy, 'md_counter');
   }
+  // tanda 2: the braid, the misses log, the tallies, the objection, the lab, the conquest, the encore (rulesD.ts)
+  if (st.d || dTallies(b)) out.push(...dAfterShot(b, st.d ?? D(b), side, cat, ult, cannonId, shot, paths, mine, ev, offset()));
   // Post Maulone's chill: what their shot did to your crew comes right off; what your own shot did to you stays
   if (on(st.chill[side]))
     for (const c of b.sides[side].cats) if (c.stunned > (st.stun0.get(c) ?? 0)) st.selfStun.set(c, c.stunned);
@@ -460,6 +481,8 @@ export function mdImpact(b: Battle, attSide: number, shot: ShotDef, x: number, y
   if (ctx?.caught) return gone('…', 0xf7a1c4, 'mdpCaught');
   // the rest only stop what actually reaches the defender's ship
   if (!hit || hit.side !== def) return null;
+  // tanda 2: Mi Pobre Gatito's traps (rulesD.ts)
+  if (st.d?.traps && dTrap(b, st, st.d, attSide, shot, x, y, hit.cell, ev, path, at)) return false;
   const ca = st.catch;
   if (ca && ca.side === def && ca.t.now && !ca.by.ko && ctx && (ctx.kind === 'cat' || ctx.kind === 'ult')) {
     st.catch = null;
@@ -601,9 +624,22 @@ export function mdMeterMul(b: Battle, side: number): number {
 // ------------------------------------------------------------------ the hooks multidim.ts forwards
 /** mdShot(): the Miauknd's night — the statuses your shots leave them last twice as long */
 export function mdpShot(b: Battle, side: number, shot: ShotDef): ShotDef {
-  const nt = peek(b)?.night;
+  const st = peek(b);
+  if (!st) return shot;
+  // tanda 2: Isaac Miauton's gravity
+  if (st.d?.gravity) shot = dShot(b, side, shot);
+  const nt = st.night;
   if (!nt || nt.side === side || !nt.t.now || !shot.statuses?.length) return shot;
   return { ...shot, statuses: shot.statuses.map((s) => ({ ...s, turns: s.turns * 2 })) };
+}
+/** the aim preview of YOUR shot: Isaac Miauton's lighter gravity shows in the guide (their AI never sees theirs) */
+export function mdAimShot(b: Battle, side: number, shot: ShotDef): ShotDef {
+  const g = peek(b)?.d?.gravity;
+  return g && g.side === side ? dShot(b, side, shot) : shot;
+}
+/** hurtCell(): Bastet's 30 % floor (tanda 2) */
+export function mdFloor(b: Battle, side: number, c: Cell, dmg: number): number {
+  return peek(b)?.d?.guard ? dFloor(b, side, c, dmg) : dmg;
 }
 /** mdCellMul(): Sherlock's marked points (a sure critical) and Blumiau's clues (×1.5, found) */
 export function mdpCellMul(b: Battle, side: number, c: Cell, mult: number): number {
@@ -648,6 +684,8 @@ export function mdpCatMul(b: Battle, c: CatState): number {
   if (sh && on(sh.t)) m *= sh.take;
   if (on(st.love.get(c)?.t)) m *= 1.25;
   if (on(st.exposed.get(c))) m *= 1.5;
+  // tanda 2: Garjona's MARKED
+  if (st.d) m *= dCatMul(b, st, st.d, c);
   return m;
 }
 /** mdAfterHit(): Hierro Michi's upgrade protocol, Garritas' healing factor (+10 meter per blow) */
@@ -680,6 +718,8 @@ export function mdpAfterFire(b: Battle, side: number, cat: CatState | undefined,
   for (const [c, ex] of st.exile) if (on(ex.t)) c.ultCharge = ex.meter;
   if (st.decree) clampHeal(b, st.decree);
   chillOff(b, st, side);
+  // tanda 2: braided whiskers gain no meter
+  if (st.d) dAfterFire(b, st.d);
   void ult;
 }
 

@@ -99,6 +99,37 @@ import { gatistiano } from './gatistiano';
 import { romiau } from './romiau';
 import { partymichi } from './partymichi';
 // fin UNIVERSOS-I imports
+// UNIVERSOS-J (2026-10-29): post-Parte III cats, tanda 2 («leyendas, mitos e historia»)
+import { sombreronron } from './sombreronron';
+import { gatejo } from './gatejo';
+import { maullorona } from './maullorona';
+import { quetzalgatl } from './quetzalgatl';
+import { bastet } from './bastet';
+import { cleogatra } from './cleogatra';
+import { bonapata } from './bonapata';
+import { leonardo } from './leonardo';
+// fin UNIVERSOS-J imports
+// UNIVERSOS-K (2026-10-29): post-Parte III cats, tanda 2 («museo, ciencia, clásica, anime, videojuegos y libros»)
+import { perla } from './perla';
+import { miauton } from './miauton';
+import { miauzart } from './miauzart';
+import { miausagi } from './miausagi';
+import { tanjimiau } from './tanjimiau';
+import { tetrimiau } from './tetrimiau';
+import { laracroqueta } from './laracroqueta';
+import { michincipe } from './michincipe';
+// fin UNIVERSOS-K imports
+// UNIVERSOS-L (2026-10-29): post-Parte III cats, tanda 2 («cine, series, telenovela, pop y deporte»)
+import { pobregatito } from './pobregatito';
+import { felinamente } from './felinamente';
+import { gorrimiau } from './gorrimiau';
+import { docmiauwn } from './docmiauwn';
+import { pinkmiau } from './pinkmiau';
+import { miauty } from './miauty';
+import { garjona } from './garjona';
+import { shakimiau } from './shakimiau';
+import { miaucol } from './miaucol';
+// fin UNIVERSOS-L imports
 
 export const SIGNATURES: Record<string, Signature> = {
   x_homiau: homiau,
@@ -200,6 +231,37 @@ export const SIGNATURES: Record<string, Signature> = {
   xp_romiau: romiau,
   xp_partymichi: partymichi,
   // fin UNIVERSOS-I
+  // UNIVERSOS-J
+  xp_sombreronron: sombreronron,
+  xp_gatejo: gatejo,
+  xp_maullorona: maullorona,
+  xp_quetzalgatl: quetzalgatl,
+  xp_bastet: bastet,
+  xp_cleogatra: cleogatra,
+  xp_bonapata: bonapata,
+  xp_leonardo: leonardo,
+  // fin UNIVERSOS-J
+  // UNIVERSOS-K
+  xp_perla: perla,
+  xp_miauton: miauton,
+  xp_miauzart: miauzart,
+  xp_miausagi: miausagi,
+  xp_tanjimiau: tanjimiau,
+  xp_tetrimiau: tetrimiau,
+  xp_laracroqueta: laracroqueta,
+  xp_michincipe: michincipe,
+  // fin UNIVERSOS-K
+  // UNIVERSOS-L
+  xp_pobregatito: pobregatito,
+  xp_felinamente: felinamente,
+  xp_gorrimiau: gorrimiau,
+  xp_docmiauwn: docmiauwn,
+  xp_pinkmiau: pinkmiau,
+  xp_miauty: miauty,
+  xp_garjona: garjona,
+  xp_shakimiau: shakimiau,
+  xp_miaucol: miaucol,
+  // fin UNIVERSOS-L
 };
 
 export function signatureOf(species?: string): Signature | null {

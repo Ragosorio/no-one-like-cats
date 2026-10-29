@@ -16,24 +16,59 @@ import { sfx } from '../../core/audio';
 import { onomatopoeia, floatText } from '../../fx/juice';
 import { penArt } from '../../island/buildingArt';
 import { bar, costTag, heading, wrapText } from './ui';
+import { ScrollBox } from '../collection/ui';
+import { game } from '../../core/App';
 
 function regionName(id: string) {
   return id === 'home' ? 'Isla' : (EXPANSIONS.find((e) => e.id === id)?.name ?? id);
 }
 
+/** a dock card at scale 1 (its art and text are laid out in this box; the grid scales it) */
+const CARD_W = 330;
+const CARD_H = 506;
+/** gap between cards; the card's ink shadow (8) lives inside it */
+const GAP = 22;
+
+/**
+ * The dock grid: how many columns and how big. The cards fill the panel's width; the scale aims at text that reads on
+ * this screen (`eff` = real pixels per panel unit: small windows get bigger cards, big ones get more columns) and one
+ * whole row always fits in `availH` (the rest scrolls). Few docks don't grow past 1.5×.
+ */
+export function dockGrid(n: number, availW: number, availH: number, eff: number) {
+  const fit = (s: number) => Math.max(1, Math.min(Math.max(1, n), Math.floor((availW + GAP) / (CARD_W * s + GAP))));
+  const target = Math.max(0.8, Math.min(1.5, 0.8 / Math.max(0.05, eff)));
+  let cols = Math.max(1, Math.min(Math.max(1, n), Math.round((availW + GAP) / (CARD_W * target + GAP))));
+  let s = Math.min(1.5, (availW - (cols - 1) * GAP) / (cols * CARD_W), (availH - 16) / (CARD_H + 8));
+  s = Math.max(0.35, s);
+  // the height capped the scale (short screens): more columns fit at that size
+  cols = fit(s);
+  return { cols, s, rows: Math.ceil(Math.max(1, n) / cols) };
+}
+
 export function openDock(focusId?: string) {
   const farms = G.s.farms.filter((f) => regionsUnlocked().includes(f.region));
-  const cols = Math.min(4, Math.max(2, farms.length));
-  const cardW = 330;
-  const w = Math.max(1200, cols * (cardW + 22) + 56);
-  const rowsN = Math.ceil(farms.length / cols);
-  const h = Math.min(1040, 230 + rowsN * 520);
+  // the panel takes the real screen (game.view), not the 1920×1080 box; on phones it's laid out smaller so
+  // Modal.fitToView can blow it up to its usual ≥ 0.5 real px per unit
+  const v = game.view;
+  const kp = Math.max(1, 0.5 / Math.max(0.01, game.scale));
+  const maxW = Math.min(2400, Math.floor(v.w / kp - 60));
+  const maxH = Math.floor(v.h / kp - 50);
+  const stripsH = (G.s.momentum > 1.005 ? 60 : 0) + 64;
+  const gutter = 16; // the scrollbar's lane
+  const grid = dockGrid(farms.length, maxW - 56 - gutter, maxH - 130 - stripsH, game.scale * kp);
+  const gridW = grid.cols * CARD_W * grid.s + (grid.cols - 1) * GAP;
+  const gridH = grid.rows * (CARD_H * grid.s + GAP) + 8;
+  const w = Math.max(1200, Math.min(maxW, Math.ceil(gridW + 56 + gutter + 8)));
+  const h = Math.max(Math.min(640, maxH), Math.min(maxH, Math.ceil(130 + stripsH + gridH)));
   const m = new Modal('Muelle de Pesca', w, h, { band: C.oceanNoir, subtitle: 'La comida cuesta oro. Los gatos comen. Mucho.' });
   const content = new Container();
   m.body.addChild(content);
   const lives: (() => void)[] = [];
+  let list: ScrollBox | null = null;
+  let firstRender = true;
 
   const render = () => {
+    const keepScroll = list?.scrollY ?? 0;
     content.removeChildren().forEach((c) => c.destroy({ children: true }));
     lives.length = 0;
     let y = 0;
@@ -57,8 +92,9 @@ export function openDock(focusId?: string) {
       const g = new Graphics().rect(5, 5, m.innerW, 50).fill(C.ink).rect(0, 0, m.innerW, 50).fill(on ? 0x7fd8ff : unlocked ? C.paper : C.paperDark).stroke({ width: 3, color: C.ink });
       const t = txt(unlocked ? 'MAR DE PESCADOS AUTOMÁTICO' : `MAR DE PESCADOS AUTOMÁTICO · REINO ${kl}`, { fontFamily: F.poster, fontSize: 26, fill: C.ink });
       t.position.set(16, 8);
-      const sub = txt(unlocked ? (on ? 'Las cosechas listas (y la pesca de tus gatos) van solas al Silo.' : 'Apagado: cosechas a mano (¿nostalgia?).') : 'Ya aprendiste a pescar. Pronto lo hará la máquina.', { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: C.ink });
-      sub.position.set(t.x + t.width + 18, 17);
+      const sub = txt(unlocked ? (on ? 'Las cosechas listas (y la pesca de tus gatos) van solas al Silo.' : 'Apagado: cosechas a mano (¿nostalgia?).') : 'Ya aprendiste a pescar. Pronto lo hará la máquina.', { fontFamily: F.ui, fontWeight: '700', fontSize: 17, fill: C.ink });
+      sub.position.set(t.x + t.width + 18, 15);
+      if (sub.x + sub.width > m.innerW - 100) sub.scale.set(Math.max(0.5, (m.innerW - 100 - sub.x) / sub.width));
       const tb = new Graphics().roundRect(0, 0, 70, 34, 17).fill(on ? C.green : C.paperDark).stroke({ width: 3, color: C.ink });
       tb.circle(on ? 53 : 17, 17, 12).fill(C.paper).stroke({ width: 2.5, color: C.ink });
       tb.position.set(m.innerW - 86, 8);
@@ -86,23 +122,34 @@ export function openDock(focusId?: string) {
       content.addChild(b);
       y += 64;
     }
+    // the docks: a grid sized to the panel (dockGrid); past the panel's height they scroll (wheel / drag / bar)
+    const box = new ScrollBox(m.innerW, Math.max(80, m.innerH + 14 - y), C.ink);
+    box.y = y;
+    content.addChild(box);
+    list = box;
+    const { cols, s } = grid;
+    const cw = CARD_W * s;
+    const step = CARD_H * s + GAP;
     const perRow = Math.min(cols, farms.length);
-    const x0 = (m.innerW - (perRow * (cardW + 22) - 22)) / 2;
+    const x0 = Math.max(0, (m.innerW - gutter - (perRow * (cw + GAP) - GAP)) / 2);
+    let focusY = -1;
     farms.forEach((f0, i) => {
-      const card = plotCard(f0.id, cardW, render, lives, m);
-      card.position.set(x0 + (i % cols) * (cardW + 22), y + Math.floor(i / cols) * 520);
-      content.addChild(card);
+      const card = plotCard(f0.id, CARD_W, render, lives, m, () => box.wasDrag);
+      card.scale.set(s);
+      card.position.set(x0 + (i % cols) * (cw + GAP), 8 + Math.floor(i / cols) * step);
+      box.content.addChild(card);
       if (f0.id === focusId) {
-        const ring = new Graphics().rect(-6, -6, cardW + 12, 512).stroke({ width: 5, color: C.pinkHot });
-        card.addChild(ring);
-        gsap.to(ring, { alpha: 0, duration: 0.5, yoyo: true, repeat: 3 });
+        focusY = card.y;
+        if (firstRender) {
+          const ring = new Graphics().rect(-6, -6, CARD_W + 12, CARD_H + 16).stroke({ width: 5, color: C.pinkHot });
+          card.addChild(ring);
+          gsap.to(ring, { alpha: 0, duration: 0.5, yoyo: true, repeat: 3 });
+        }
       }
     });
-    // many pens (expansions): shrink to fit instead of spilling out of the panel
-    content.scale.set(1);
-    const k = Math.min(1, (m.innerH + 10) / Math.max(1, content.height));
-    content.scale.set(k);
-    content.x = (m.innerW * (1 - k)) / 2;
+    box.setContentHeight(8 + Math.ceil(farms.length / cols) * step);
+    box.scrollTo(firstRender && focusY >= 0 ? focusY - 8 : keepScroll, false);
+    firstRender = false;
   };
   render();
   let acc = 0;
@@ -118,25 +165,27 @@ export function openDock(focusId?: string) {
   return m;
 }
 
-function plotCard(fid: string, cw: number, rerender: () => void, lives: (() => void)[], m: Modal): Container {
+function plotCard(fid: string, cw: number, rerender: () => void, lives: (() => void)[], m: Modal, dragged: () => boolean): Container {
   const f = farm(fid)!;
   const idx = G.s.farms.filter((x) => x.region === f.region).indexOf(f) + 1;
   const card = new Container();
-  const ch = 496;
+  const ch = CARD_H;
   const bg = new Graphics().rect(8, 8, cw, ch).fill(C.ink).rect(0, 0, cw, ch).fill(0xe6eef2).stroke({ width: 4, color: C.ink, alignment: 1 });
-  bg.rect(0, 0, cw, 54).fill(C.river).stroke({ width: 4, color: C.ink, alignment: 1 });
+  bg.rect(0, 0, cw, 64).fill(C.river).stroke({ width: 4, color: C.ink, alignment: 1 });
+  // title on top, the region on its own line under it (side by side, long names ran into the title)
   const title = txt(`PARCELA ${idx} · NV ${f.level}`, { fontFamily: F.poster, fontSize: 30, fill: C.paper });
-  title.position.set(14, 6);
+  title.position.set(14, 0);
+  if (title.width > cw - 28) title.scale.set((cw - 28) / title.width);
   const reg = txt(regionName(f.region).toUpperCase(), { fontFamily: F.bebas, fontSize: 18, fill: C.mint, letterSpacing: 2 });
-  reg.anchor.set(1, 0);
-  reg.position.set(cw - 12, 16);
+  reg.position.set(15, 38);
+  if (reg.width > cw - 28) reg.scale.set((cw - 28) / reg.width);
   card.addChild(bg, title, reg);
   // pen illustration
   const pen = penArt(f.level, 2, 2);
-  pen.position.set(cw / 2, 74);
+  pen.position.set(cw / 2, 100);
   pen.scale.set(0.76);
   card.addChild(pen);
-  let y = 210;
+  let y = 220;
   const tmr = f.busy ? G.timerFor('farm_upgrade', f.id) : f.crop && !f.ready ? G.timerFor('crop', f.id) : null;
   if (f.busy && tmr) {
     const h = heading(`Mejorando a Nv ${f.level + 1}`, 22);
@@ -151,14 +200,18 @@ function plotCard(fid: string, cw: number, rerender: () => void, lives: (() => v
     const ft = costTag('food', food, true, 30);
     ft.position.set(14, y + 42);
     const b = new Button('¡COSECHAR!', () => {
+      if (dragged()) return;
       const ff = farm(fid);
       if (!ff) return;
       const n = harvest(ff);
       if (n > 0) {
         checkMissions();
         sfx('splash');
-        onomatopoeia(m.panel, card.x + 28 + cw / 2, card.y + 108 + 150, '¡SPLASH!', { size: 76, color: 0x7fd8ff });
-        floatText(m.panel, card.x + 28 + cw / 2, card.y + 108 + 260, `+${fmt(n)}`, { color: 0x7fd8ff, size: 46 });
+        // the card is scaled and scrolled: where it sits on the panel
+        const a = m.panel.toLocal(card.toGlobal({ x: cw / 2, y: 150 }));
+        const b2 = m.panel.toLocal(card.toGlobal({ x: cw / 2, y: 260 }));
+        onomatopoeia(m.panel, a.x, a.y, '¡SPLASH!', { size: 76, color: 0x7fd8ff });
+        floatText(m.panel, b2.x, b2.y, `+${fmt(n)}`, { color: 0x7fd8ff, size: 46 });
       }
       rerender();
     }, { w: cw - 28, h: 72, size: 38, color: C.yellow });
@@ -170,16 +223,16 @@ function plotCard(fid: string, cw: number, rerender: () => void, lives: (() => v
     h.position.set(14, y);
     card.addChild(h);
     addTimer(card, tmr, 14, y + 40, cw - 28, lives, rerender);
-    const ft = txt(`→ ${fmt(farmYield(f.crop, f.level, foodBonus()))} pescaditos`, { fontFamily: F.ui, fontWeight: '700', fontSize: 17, fill: C.ink });
+    const ft = txt(`→ ${fmt(farmYield(f.crop, f.level, foodBonus()))} pescaditos`, { fontFamily: F.ui, fontWeight: '700', fontSize: 19, fill: C.ink });
     ft.position.set(14, y + 128);
     card.addChild(ft);
   } else {
     const h = heading('Vacía', 22);
     h.position.set(14, y);
     const last = f.lastCrop ? crop(f.lastCrop) : null;
-    const tip = wrapText(last ? `Última receta: ${last.name}` : 'Elige qué pescar. Lo corto rinde si juegas, lo largo si te vas.', cw - 28, 15);
-    tip.position.set(14, y + 38);
-    const b = new Button('SEMBRAR', () => openCropPicker(fid, rerender), { w: cw - 28, h: 72, size: 38, color: C.mint });
+    const tip = wrapText(last ? `Última receta: ${last.name}` : 'Elige qué pescar. Lo corto rinde si juegas, lo largo si te vas.', cw - 28, 16);
+    tip.position.set(14, y + 36);
+    const b = new Button('SEMBRAR', () => !dragged() && openCropPicker(fid, rerender), { w: cw - 28, h: 72, size: 38, color: C.mint });
     b.position.set(14, y + 96);
     card.addChild(h, tip, b);
   }
@@ -190,6 +243,7 @@ function plotCard(fid: string, cw: number, rerender: () => void, lives: (() => v
   if (f.level < BAL.farms.upgrade.max_level) {
     const cost = farmUpgradeCost(f.level + 1);
     const ub = new Button(`MEJORAR`, () => {
+      if (dragged()) return;
       const ff = farm(fid);
       if (!ff || !canUpgradeFarm(ff)) {
         sfx('error');
@@ -204,8 +258,9 @@ function plotCard(fid: string, cw: number, rerender: () => void, lives: (() => v
     ub.position.set(14, by);
     const ct = costTag('gold', cost, G.s.gold >= cost, 20);
     ct.position.set(176, by + 2);
-    const tt = txt(`${fmtDuration(farmUpgradeTimeMs(f.level + 1))} · +30% pesca`, { fontFamily: F.ui, fontSize: 13, fill: C.ink });
-    tt.position.set(178, by + 30);
+    const tt = txt(`${fmtDuration(farmUpgradeTimeMs(f.level + 1))} · +30% pesca`, { fontFamily: F.ui, fontWeight: '700', fontSize: 15, fill: C.ink });
+    tt.position.set(176, by + 30);
+    if (tt.width > cw - 176 - 10) tt.scale.set((cw - 186) / tt.width);
     card.addChild(ub, ct, tt);
   }
   // repeat recipe toggle (Reino 9)
@@ -219,14 +274,16 @@ function plotCard(fid: string, cw: number, rerender: () => void, lives: (() => v
     tb.circle(on ? 48 : 16, 16, 11).fill(C.paper).stroke({ width: 2.5, color: C.ink });
   };
   draw();
-  const tl = txt(unlocked ? 'REPETIR RECETA' : `REPETIR RECETA · REINO ${rk}`, { fontFamily: F.bebas, fontSize: 20, fill: C.ink, letterSpacing: 1 });
-  tl.position.set(76, 4);
+  const tl = txt(unlocked ? 'REPETIR RECETA' : `REPETIR RECETA · REINO ${rk}`, { fontFamily: F.bebas, fontSize: 22, fill: C.ink, letterSpacing: 1 });
+  tl.position.set(76, 3);
+  if (tl.width > cw - 28 - 76) tl.scale.set((cw - 104) / tl.width);
   tog.addChild(tb, tl);
   tog.position.set(14, by + 58);
   tog.alpha = unlocked ? 1 : 0.45;
   tog.eventMode = 'static';
   tog.cursor = unlocked ? 'pointer' : 'not-allowed';
   tog.on('pointertap', () => {
+    if (dragged()) return;
     const ff = farm(fid);
     if (!ff) return;
     if (!unlocked) {

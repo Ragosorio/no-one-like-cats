@@ -40,11 +40,17 @@ const KIND: Record<number, { kind: SecretKind; clicks?: number; minLevel?: numbe
   10: { kind: 'clicks', clicks: 15, hint: 'Despierta a la esfinge a golpecitos: 15 clics.' },
   11: { kind: 'open', hint: 'Asómate a la fuente de chocolate (con cuidado).' },
   12: { kind: 'open', hint: 'Mira al ojo. Él ya te está mirando.' },
+  // after the Parte III (data/postp3/islas.json)
+  13: { kind: 'open', hint: 'Asómate a la caja más grande del mundo.' },
+  14: { kind: 'clicks', clicks: 21, hint: 'Voltea la ficha gigante: 21 golpecitos.' },
+  15: { kind: 'open', hint: 'Asómate a la fuente del patio.' },
+  16: { kind: 'clicks', clicks: 30, hint: 'Desenreda el ovillo gigante: 30 jaloncitos.' },
+  17: { kind: 'open', hint: 'Acuéstate en la almohada más suave del mar. Cinco minutitos.' },
 };
 
 export function secretInfo(n: number): SecretInfo {
   const e = EXPANSIONS[n - 1];
-  const k = KIND[n];
+  const k = KIND[n] ?? { kind: 'open' as const, hint: '' };
   const cleared = G.s.expansions.cleared.includes(n);
   const done = G.s.expansions.secrets.includes(n);
   const gateOk = G.s.kl >= (k.klGate ?? 0);
@@ -120,6 +126,12 @@ const REWARDS: Record<number, SecretReward> = {
   10: { gems: 3, text: 'La esfinge bosteza, te hace un acertijo, se le olvida y te paga 30 cristales de Tierra para que te vayas.', crystals: { element: 'earth', n: 30 } },
   11: { gems: 3, text: 'Del chocolate sale un gato. Ronronea tan fuerte que te regala 2 horas de Ronroneo.', purr: 120 },
   12: { gems: 5, text: 'El ojo parpadea. Detrás hay otro mar. El Capítulo 2 ya sabe que existes.', unlock: 'story:capitulo2' },
+  // after the Parte III
+  13: { gems: 4, text: 'Adentro hay otra caja. Y adentro, otra. Al fondo, un gato dormido abre un ojo y te pasa 2 horas de Ronroneo.', purr: 120 },
+  14: { gems: 4, text: 'Era una ficha de la casa. La casa no la extraña: te deja 20 Orbes Prisma y un guiño de crupier.', prisma: 20 },
+  15: { gems: 4, text: 'En el fondo de la fuente brillaban 40 cristales de Agua. Alguien pidió muchos deseos.', crystals: { element: 'water', n: 40 } },
+  16: { gems: 5, text: 'Jalaste y jalaste… y al final del hilo había un gato con 3 horas de Ronroneo enredadas.', purr: 180 },
+  17: { gems: 6, text: 'Cinco minutitos se volvieron dos horas. Despiertas con 30 Orbes Prisma pegados en la mejilla.', prisma: 30 },
 };
 export function secretReward(n: number) {
   return REWARDS[n];

@@ -14,6 +14,7 @@ import { collapse, cut, shipSpan, shipTop } from '../ults';
 import { mdOn } from '../multidim';
 import { spreadCells } from './powersA';
 import { chillOff, clampHeal, crew, frac, tail } from './hooks';
+import { dStartTurn } from './turnD';
 import { CELL, DMG_K, MdpState, S, alive, bleed, dash, dirOf, drawn, feat, fx, heal, info, isBossCaptain, lastAt, left, line, lob, moduleNear, on, peek, queue, tick, withBudget } from './kit';
 
 // ------------------------------------------------------------------ startTurn()
@@ -243,6 +244,8 @@ export function mdpStartTurn(b: Battle, side: 0 | 1, ev: BattleEvent[]) {
       r.stale = false;
     } else if (r.loose > 0) r.stale = true;
   }
+  // tanda 2 (agent PODERES-3): its clocks and the blows at a turn's start (turnD.ts)
+  if (st.d) dStartTurn(b, st, side, ev);
 }
 
 function snapshot(b: Battle, st: MdpState) {

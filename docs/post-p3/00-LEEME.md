@@ -10,6 +10,21 @@
 
 Ampliaciones posteriores del dueño, por el coordinador: Multidimensionales «pueden ser 50 si quieres pero tienen que ser diferentes, icónicos» (y luego ~60), con su lista obligatoria; **Mia Khalifa queda fuera** (su fama viene de contenido adulto) y en su lugar entra **Sabrina Carpenter**.
 
+## Tanda 2 (2026-10-29, agente DISEÑO-2)
+
+El dueño pidió: «haz otros 25 multidimensionales con más referencias de otras cosas más diferentes». Todo está en **`05-tanda-2.md`**.
+- **Qué entra:**
+  - Leyendas: Sombrerón, Cadejo y Llorona.
+  - Mitos: Quetzalcóatl y Bastet.
+  - Historia: Cleopatra, Napoleón y Leonardo.
+  - Museo, ciencia y clásica: La joven de la perla, Newton y Mozart.
+  - Anime y píxel: Sailor Moon, Tanjiro, Tetris y Lara Croft.
+  - Cine y series: Mi pobre angelito, Legalmente rubia, un capitán pirata, Doc y Jesse.
+  - Betty la fea, El principito, Arjona, Shakira y Jordan.
+- **Reserva:** 6 de los 25 se promovieron (mismos ids) y quedan 10 de reserva.
+- **Dónde salen:** solo de las 4 mesas grandes. Las vitrinas se quedan en 8 y el balance no cambia.
+- **Cómo regenerarla:** con `generar.py`. **`--arte` ahora solo toca las entradas de la tanda 2** y conserva las correcciones de arte hechas a mano. `--arte-todo` es el modo viejo: no usarlo.
+
 ## El lote en números
 
 | Rareza | Cuántos | De dónde |
@@ -59,7 +74,8 @@ Cada Multidimensional trae:
 ```bash
 cd "docs/post-p3/fuente"
 python3 generar.py          # 01, 02, 03 (tablas), 04 + validación (ids, nombres, slugs, refs, contrato de SISTEMA)
-python3 generar.py --arte   # además: entradas lote-post-p3 del manifest (solo esas), locks y prompts
+python3 generar.py --arte   # además: SOLO las entradas de la tanda 2 en el manifest y sus prompts (con lock.sh; conserva las correcciones a mano)
+# python3 generar.py --arte-todo  # modo viejo: reescribe las 114 entradas del lote y borra sus corrections_en. NO usarlo.
 ```
 
 Para cambiar un gato, se edita su ficha en `fuente/` y se regenera; los cuatro documentos y el arte quedan iguales entre sí.
@@ -102,3 +118,12 @@ Para cambiar un gato, se edita su ficha en `fuente/` y se regenera; los cuatro d
   - el remate de Kagebunyan es «¡MIL CLONES, MIL MIAUS!»;
   - los gritos y ultis que copiaban muletillas tal cual se reescribieron con giro (regla 01 §«La frase célebre»).
 - **Segunda tanda posible:** los 16 de reserva (Pinkmiau, Ricardo Garjona…) y más comedias juveniles, si el dueño la pide.
+
+**2026-10-29 (tarde): segunda publicación.** Entran juntos:
+- **Tanda 2:** 25 Multidimensionales más (`05-tanda-2.md`), con arte, poderes (PODERES-3) y universos (J/K/L).
+- **Casino (SISTEMA-2):** el botín del Modo Eterno suelta boletos y más; el banner MULTIVERSO DESBORDADO con el aviso de Madame Noir; el Multidimensional sale con su propio color.
+- **5 islas nuevas** (ISLAS-POST).
+- **Pantalla:** Muelle de Pesca con tarjetas grandes y revelaciones a pantalla completa (UI-FIX).
+- **Parte III:** sin pantalla de carga y con sus canciones ♪ en Volver a ver (P3-CINE).
+
+QA-POST ronda 2 pasó. Antes de subir se reescribieron las líneas que copiaban frases de película casi tal cual: Pobre Gatito, Felinamente, Pinkmiau, Miausagi y Doc Miauwn.

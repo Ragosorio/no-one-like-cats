@@ -6,7 +6,8 @@
  *   EternoRun.run()      0–20 s  CALENTANDO: normal paid rounds on the current table, top speed at 15 s, the
  *                                 machine overheats; ENFRIAR stops it (no 50/50, no reward).
  *                        20–40 s SIN FRENOS · LA SUERTE ETERNA: no stopping; every round is a WIN that goes into
- *                                 the BOTÍN, and the botín DOUBLES every 4 s (×2 ×4 ×8 ×16) with a big slam.
+ *                                 the BOTÍN, and the botín DOUBLES every 4 s (×2 ×4 ×8 ×16) with a big slam. Rounds
+ *                                 also DROP boletos, gems, pescaditos or gold into it («+3 BOLETOS»; ETERNO.drops).
  *                        40 s    resolveEterno() is applied and SAVED first; then the explosion, the coin and the
  *                                 win (every balance ×2 + botín + cat) or loss (all to 0) sequence.
  * Respects settings.reduceMotion (no vibration, light shake, few particles) and reduceFlashes.
@@ -26,7 +27,7 @@ import { screenRect } from '../../ui/screen';
 import { glowTexture, sparkTexture } from '../../art/textures';
 import { Particles } from '../../fx/particles';
 import { flash, floatText, onomatopoeia, sparkles } from '../../fx/juice';
-import { AT_RISK, AT_RISK_NAME, ETERNO, ETERNO_EXTRA, EternoField, EternoRecord, addLuck, atRisk, doublePot, eternoRoll, eternoState, extraAtRisk, lockEterno, luckyMult, resolveEterno, startEterno, stopEterno } from '../../state/sys/casino/eterno';
+import { AT_RISK, AT_RISK_NAME, ETERNO, ETERNO_EXTRA, EternoDrop, EternoField, EternoPot, EternoRecord, addDrop, addLuck, atRisk, doublePot, eternoRoll, eternoState, extraAtRisk, lockEterno, luckyDrop, luckyMult, potHasAny, potTotals, resolveEterno, startEterno, stopEterno } from '../../state/sys/casino/eterno';
 import type { Granted } from '../../state/sys/casino';
 import type { AutoHost } from './auto';
 import { gapFor } from './auto';
@@ -40,6 +41,17 @@ import { postOdds, shareText } from '../../state/sys/postp3';
 import { csfx } from './sfx';
 
 const AREA = { x: 336, y: 96, w: 1100, h: 984 };
+/** a drop, in words and colour («+3 BOLETOS») */
+const DROP_NAME: Record<EternoField, (n: number) => string> = {
+  tickets: (n) => (n === 1 ? 'BOLETO' : 'BOLETOS'),
+  gems: (n) => (n === 1 ? 'GEMA' : 'GEMAS'),
+  food: () => 'PESCADITOS',
+  gold: () => 'ORO',
+  chips: () => 'FICHAS',
+};
+const DROP_COL: Record<EternoField, number> = { tickets: 0x7fe0ff, gems: 0xff7ab8, food: 0x9ff0c8, gold: 0xffc94a, chips: 0xff7ab8 };
+/** the drops row's order (boletos first: what the owner asked for) */
+const DROP_ORDER: EternoField[] = ['tickets', 'gems', 'food', 'gold', 'chips'];
 const HUD = { x: 1446, y: 676, w: 440, h: 360 };
 
 // ------------------------------------------------------------------ confirmation
@@ -55,7 +67,7 @@ export function openEternoConfirm(onConfirm: () => void) {
     y += t.height + gap;
   };
   add(T(`0–${ETERNO.lockAt} s · CALENTANDO: la máquina juega sola, cada vez más rápido (a tope en ${ETERNO.rampSeconds} s). Cada tirada se paga y se cobra como siempre. Aquí todavía la puedes ENFRIAR.`, 21));
-  add(T(`${ETERNO.lockAt}–${ETERNO.seconds} s · SIN FRENOS: ya no se puede parar. LA SUERTE ETERNA: TODAS las tiradas ganan (gratis) y van a tu BOTÍN, que se DUPLICA cada ${ETERNO.doubleEvery} s (×2, ×4, ×8, ×16…).`, 21, 0x9a3a00));
+  add(T(`${ETERNO.lockAt}–${ETERNO.seconds} s · SIN FRENOS: ya no se puede parar. LA SUERTE ETERNA: TODAS las tiradas ganan (gratis) y van a tu BOTÍN, que se DUPLICA cada ${ETERNO.doubleEvery} s (×2, ×4, ×8, ×16…). El botín junta la moneda de la mesa y, de vez en cuando, también caen BOLETOS, GEMAS, PESCADITOS u ORO (en los jackpots, más): todo se duplica con él.`, 21, 0x9a3a00));
   add(T(`A los ${ETERNO.seconds} s EXPLOTA: volado 50/50 honesto (azar criptográfico; nadie lo mueve, ni la casa).`, 21, C.inkBlue));
   // win box
   const win = new Container();
@@ -64,7 +76,7 @@ export function openEternoConfirm(onConfirm: () => void) {
   const po = postOdds({ game: 'eterno' });
   const poTxt = po ? ` Después de la Parte III, ${shareText(po.share)} de esos gatos viene del Multiverso${po.left ? ` (garantizado en ${po.left})` : ''}.` : '';
   const wt = T(
-    `SI GANAS: TODO lo tuyo se multiplica ×${ETERNO.winMultiplier} (oro, gemas, pescaditos, boletos y fichas), te llevas el BOTÍN entero y 1 gato especial: legendario (${Math.round(ETERNO.reward.legendary * 100)}%), legendario HOLO (${Math.round(ETERNO.reward.holo * 100)}%) o MÍTICO (${Math.round(ETERNO.reward.mythic * 100)}%; si aún no puedes tener uno, legendario HOLO).${poTxt}`,
+    `SI GANAS: TODO lo tuyo se multiplica ×${ETERNO.winMultiplier} (oro, gemas, pescaditos, boletos y fichas), te llevas el BOTÍN entero (con todo lo que juntó: la moneda de la mesa, boletos, gemas, pescaditos y oro) y 1 gato especial: legendario (${Math.round(ETERNO.reward.legendary * 100)}%), legendario HOLO (${Math.round(ETERNO.reward.holo * 100)}%) o MÍTICO (${Math.round(ETERNO.reward.mythic * 100)}%; si aún no puedes tener uno, legendario HOLO).${poTxt}`,
     22,
     C.ink,
     { wordWrapWidth: 1130 },
@@ -85,7 +97,7 @@ export function openEternoConfirm(onConfirm: () => void) {
   const r = atRisk();
   const risk = new Container();
   const rb = new Graphics();
-  const rt = T('SI PIERDES, te quedas en 0 de esto (y el botín se va):', 24, CP.paper, { wordWrapWidth: 1130 });
+  const rt = T('SI PIERDES, te quedas en 0 de esto (y el botín se va, con todo lo que juntó):', 24, CP.paper, { wordWrapWidth: 1130 });
   rt.position.set(18, 12);
   risk.addChild(rb, rt);
   let ry = 12 + rt.height + 10;
@@ -233,6 +245,9 @@ export class EternoRun {
   private potMulT!: Text;
   private potShown = 0;
   private potCur: EternoField = 'chips';
+  /** the drops row under the main number (boletos, gems, pescaditos, gold) */
+  private potExtra = new Container();
+  private potExtraKey = '';
 
   constructor(private env: EternoEnv) {}
 
@@ -360,8 +375,11 @@ export class EternoRun {
       const m = luckyMult();
       const won = this.potCur === 'gold' ? stake * m : Math.max(1, Math.round(stake * m));
       addLuck(this.id, won);
+      // the extras: a boleto, a gem, pescaditos or gold may drop into the botín too (more on a jackpot)
+      const drop = luckyDrop(m >= ETERNO.luck.jackpotMult[0]);
+      if (drop) addDrop(this.id, drop);
       this.rounds++;
-      this.luckyFx(won, m);
+      this.luckyFx(won, m, drop);
       // a touch faster as the end nears
       const k = (t - ETERNO.lockAt) / (ETERNO.seconds - ETERNO.lockAt);
       await this.sleepOrStop(1000 / (ETERNO.luck.perSecond * (1 + k)));
@@ -395,7 +413,8 @@ export class EternoRun {
     const b = this.potBox;
     b.position.set(AREA.x + AREA.w / 2, AREA.y + 70);
     const W0 = 720;
-    const bg = new Graphics().roundRect(-W0 / 2 + 8, 8, W0, 150, 14).fill(CP.ink).roundRect(-W0 / 2, 0, W0, 150, 14).fill(0x2a1a00).stroke({ width: 5, color: CP.yellow });
+    const H0 = 206;
+    const bg = new Graphics().roundRect(-W0 / 2 + 8, 8, W0, H0, 14).fill(CP.ink).roundRect(-W0 / 2, 0, W0, H0, 14).fill(0x2a1a00).stroke({ width: 5, color: CP.yellow });
     const lbl = label('BOTÍN ETERNO · TODO GANA', 18, CP.yellow, { letterSpacing: 3 });
     lbl.anchor.set(0.5, 0);
     lbl.position.set(0, 10);
@@ -407,7 +426,14 @@ export class EternoRun {
     this.potMulT = neon('x1', 54, 0xff3b1f);
     this.potMulT.anchor.set(1, 0.5);
     this.potMulT.position.set(W0 / 2 - 22, 92);
-    b.addChild(bg, lbl, ic, this.potT, this.potMulT);
+    // what else the botín holds (the drops): one icon + amount per currency, under the main number
+    const sep = new Graphics().rect(-W0 / 2 + 24, 150, W0 - 48, 2).fill({ color: CP.yellow, alpha: 0.35 });
+    const hint = label('TAMBIÉN CAEN BOLETOS, GEMAS, PESCADITOS Y ORO', 14, CP.softPink, { letterSpacing: 2 });
+    hint.anchor.set(0.5, 0.5);
+    hint.position.set(0, 178);
+    hint.label = 'potHint';
+    this.potExtra.position.set(0, 178);
+    b.addChild(bg, lbl, ic, this.potT, this.potMulT, sep, hint, this.potExtra);
     this.env.hud.addChild(b);
     gsap.from(b, { y: b.y - 220, duration: 0.45, ease: 'back.out(1.7)' });
   }
@@ -417,9 +443,39 @@ export class EternoRun {
     const maxW = 470;
     this.potT.scale.set(this.potT.width / this.potT.scale.x > maxW ? maxW / (this.potT.width / this.potT.scale.x) : 1);
   }
+  private potNow(): EternoPot | undefined {
+    return eternoState().open?.pot;
+  }
+  /** the drops row: every currency (other than the table's) the botín holds, icon + amount, centred */
+  private drawPotExtra() {
+    const box = this.potExtra;
+    if (box.destroyed) return;
+    const tot = potTotals(this.potNow());
+    const keys = DROP_ORDER.filter((k) => k !== this.potCur && tot[k] > 0);
+    const key = keys.map((k) => `${k}:${fmt(tot[k])}`).join('|');
+    if (key === this.potExtraKey) return;
+    this.potExtraKey = key;
+    for (const ch of box.removeChildren()) ch.destroy({ children: true });
+    const hint = box.parent?.getChildByLabel('potHint');
+    if (hint) hint.visible = !keys.length;
+    let x = 0;
+    for (const k of keys) {
+      const ic = curIcon(k === 'food' ? 'food' : k, 28);
+      ic.position.set(x + 14, 0);
+      const t = txt(fmt(tot[k]), { fontFamily: F.poster, fontSize: 30, fill: CP.paper, stroke: { color: CP.ink, width: 4, join: 'round' } });
+      t.anchor.set(0, 0.5);
+      t.position.set(x + 34, 0);
+      box.addChild(ic, t);
+      x += 34 + t.width + 26;
+    }
+    const w = Math.max(0, x - 26);
+    for (const ch of box.children) ch.x -= w / 2;
+    if (w > 660) box.scale.set(660 / w);
+    else box.scale.set(1);
+  }
 
-  /** one lucky round: coins out of the table, a floating +X, the botín counts up */
-  private luckyFx(won: number, mult: number) {
+  /** one lucky round: coins out of the table, a floating +X, the botín counts up (and a drop shows as it lands) */
+  private luckyFx(won: number, mult: number, drop: EternoDrop | null = null) {
     const cx = AREA.x + 160 + Math.random() * (AREA.w - 320);
     const cy = AREA.y + 380 + Math.random() * 380;
     const jackpot = mult >= ETERNO.luck.jackpotMult[0];
@@ -430,9 +486,22 @@ export class EternoRun {
       onomatopoeia(this.env.hud, cx, cy - 120, '¡JACKPOT!', { size: 110, color: 0xff3b1f });
       this.env.ctx.marquee.burst(900, 'rainbow');
     } else csfx.coin(1 + Math.random() * 0.6);
+    if (drop) this.dropFx(drop, jackpot);
     const to = this.potAmount();
     gsap.to(this, { potShown: to, duration: 0.25, ease: 'power1.out', onUpdate: () => this.drawPot() });
     if (this.potT && !this.potT.destroyed) gsap.fromTo(this.potT.scale, { x: this.potT.scale.x * 1.08, y: this.potT.scale.y * 1.08 }, { x: this.potT.scale.x, y: this.potT.scale.y, duration: 0.18 });
+  }
+
+  /** a drop lands in the botín: «+3 BOLETOS» in its colour, its own coins, and the drops row updates */
+  private dropFx(d: EternoDrop, jackpot: boolean) {
+    // just under the botín, above the payouts' numbers, so it reads on its own
+    const cx = AREA.x + 260 + Math.random() * (AREA.w - 520);
+    const cy = AREA.y + 330 + Math.random() * 90;
+    const word = DROP_NAME[d.field](d.n);
+    floatText(this.env.hud, cx, cy, `+${fmt(d.n)} ${word}`, { color: DROP_COL[d.field], size: jackpot ? 80 : 64, rise: 90, dur: 1.2, rot: (Math.random() - 0.5) * 0.12 });
+    if (!this.reduce) coinFountain(this.env.ctx.particles, cx, cy, d.field === 'food' ? 'food' : d.field, jackpot ? 12 : 6, 0.9);
+    csfx.coin(1.5);
+    this.drawPotExtra();
   }
 
   /** ×2: the botín doubles with a slam, a rising chord, a coin storm */
@@ -457,6 +526,7 @@ export class EternoRun {
       gsap.fromTo(this.potMulT.scale, { x: 1.8, y: 1.8 }, { x: 1, y: 1, duration: 0.4, ease: 'back.out(3)' });
     }
     gsap.to(this, { potShown: this.potAmount(), duration: 0.6, ease: 'power2.out', onUpdate: () => this.drawPot() });
+    this.drawPotExtra();
     this.env.chatEv('winBig', 2);
     await this.wait(700);
   }
@@ -738,7 +808,8 @@ export class EternoRun {
     t1.anchor.set(0.5);
     t1.position.set(W / 2, 140);
     if (t1.width > W - 120) t1.scale.set((W - 120) / t1.width);
-    const t2 = heading(`TODO LO TUYO x${ETERNO.winMultiplier}${rec.pot?.amount ? ' + EL BOTÍN' : ''}${prize ? ' + UN GATO' : ''}`, 46, CP.paper);
+    const potTot = potTotals(rec.pot);
+    const t2 = heading(`TODO LO TUYO x${ETERNO.winMultiplier}${potHasAny(rec.pot) ? ' + EL BOTÍN' : ''}${prize ? ' + UN GATO' : ''}`, 46, CP.paper);
     t2.anchor.set(0.5);
     t2.position.set(W / 2, 250);
     if (t2.width > W - 160) t2.scale.set((W - 160) / t2.width);
@@ -762,7 +833,7 @@ export class EternoRun {
       ic.position.set(0, 28);
       const t = txt(`${AT_RISK_NAME[k]}: ${fmt(before[k])}`, { fontFamily: F.poster, fontSize: 50, fill: CP.paper, stroke: { color: CP.ink, width: 6, join: 'round' } });
       t.position.set(40, 0);
-      const extra = rec.pot && rec.pot.cur === k && rec.pot.amount ? `  x${ETERNO.winMultiplier} + BOTÍN` : `  x${ETERNO.winMultiplier}`;
+      const extra = potTot[k] > 0 ? `  x${ETERNO.winMultiplier} + ${fmt(potTot[k])} DEL BOTÍN` : `  x${ETERNO.winMultiplier}`;
       const tag = txt(extra, { fontFamily: F.poster, fontSize: 34, fill: CP.yellow });
       tag.position.set(560, 12);
       row.addChild(ic, t, tag);
@@ -800,7 +871,7 @@ export class EternoRun {
     if (prize) await revealCats(this.env.hud, [{ ...prize, isNew: prize.isNew ?? true }], { only: () => true });
   }
 
-  private async lossSeq(lost: Record<EternoField, number>, pot?: { cur: EternoField; amount: number; doublings: number }) {
+  private async lossSeq(lost: Record<EternoField, number>, pot?: EternoPot) {
     const { ctx } = this.env;
     const layer = new Container();
     this.env.hud.addChild(layer);
@@ -833,23 +904,44 @@ export class EternoRun {
       rows.push({ t, v: lost[k], k });
       gsap.to(row, { alpha: 1, duration: 0.2, delay: 0.9 + i * 0.12 });
     });
-    if (pot?.amount) {
+    // the botín: one line with every currency it held (the table's first), all ticking down together
+    const potTot = potTotals(pot);
+    const potKeys = pot ? [pot.cur, ...DROP_ORDER.filter((k) => k !== pot.cur)].filter((k) => potTot[k] > 0) : [];
+    const hasPot = potKeys.length > 0;
+    let potRow: { t: Text; f: { v: number }; line: (f: number) => string } | null = null;
+    if (pot && hasPot) {
       const pr = new Container();
       const ic = curIcon(pot.cur === 'food' ? 'food' : pot.cur, 40);
       ic.position.set(0, 24);
-      const pt = txt(`BOTÍN x${2 ** pot.doublings}: ${fmt(pot.amount)}`, { fontFamily: F.poster, fontSize: 44, fill: 0xbdbdbd });
+      const head = `BOTÍN x${2 ** pot.doublings}: `;
+      const line = (f: number) => head + potKeys.map((k) => `${fmt(potTot[k] * f)} ${AT_RISK_NAME[k].toUpperCase()}`).join(' · ');
+      const pt = txt(line(1), { fontFamily: F.poster, fontSize: 44, fill: 0xbdbdbd });
       pt.position.set(36, 0);
+      const maxW = W / 2 + 260 - 80;
+      if (pt.width > maxW) pt.scale.set(maxW / pt.width);
       pr.addChild(ic, pt);
-      pr.position.set(W / 2 - 260, 400 + AT_RISK.length * 66);
+      pr.position.set(W / 2 - 260 - (potKeys.length > 1 ? 160 : 0), 400 + AT_RISK.length * 66);
       pr.alpha = 0;
       layer.addChild(pr);
-      rows.push({ t: pt, v: pot.amount, k: pot.cur, name: `BOTÍN x${2 ** pot.doublings}` });
+      potRow = { t: pt, f: { v: 1 }, line };
       gsap.to(pr, { alpha: 1, duration: 0.2, delay: 0.9 + AT_RISK.length * 0.12 });
     }
     this.env.say('eternoLoss');
     this.env.chatEv('eternoLoss', 4);
     await this.wait(1500);
     ctx.unfreeze();
+    const puffAt = (t: Text) => {
+      t.style.fill = 0xd02020;
+      audio.voice({ wave: 'noise', freq: 0.8, to: 0.2, dur: 0.3, vol: 0.15, lp: 1200 });
+      const puff = new Sprite(glowTexture(64));
+      puff.anchor.set(0.5);
+      puff.tint = 0x777777;
+      puff.alpha = 0.6;
+      puff.position.set(t.parent!.x + t.x + t.width + 30, t.parent!.y + 26);
+      layer.addChild(puff);
+      gsap.to(puff, { alpha: 0, y: puff.y - 70, duration: 0.9 });
+      gsap.to(puff.scale, { x: 2.5, y: 2.5, duration: 0.9 });
+    };
     for (const r of rows) {
       const o = { v: r.v };
       gsap.to(o, {
@@ -860,28 +952,33 @@ export class EternoRun {
           if (!r.t.destroyed) r.t.text = `${r.name ?? AT_RISK_NAME[r.k]}: ${fmt(o.v)}`;
         },
         onComplete: () => {
-          if (r.t.destroyed) return;
-          r.t.style.fill = 0xd02020;
-          audio.voice({ wave: 'noise', freq: 0.8, to: 0.2, dur: 0.3, vol: 0.15, lp: 1200 });
-          const puff = new Sprite(glowTexture(64));
-          puff.anchor.set(0.5);
-          puff.tint = 0x777777;
-          puff.alpha = 0.6;
-          puff.position.set(r.t.parent!.x + r.t.x + r.t.width + 30, r.t.parent!.y + 26);
-          layer.addChild(puff);
-          gsap.to(puff, { alpha: 0, y: puff.y - 70, duration: 0.9 });
-          gsap.to(puff.scale, { x: 2.5, y: 2.5, duration: 0.9 });
+          if (!r.t.destroyed) puffAt(r.t);
         },
       });
       await this.wait(240);
     }
+    if (potRow) {
+      const { t, f, line } = potRow;
+      gsap.to(f, {
+        v: 0,
+        duration: 0.7,
+        ease: 'power2.in',
+        onUpdate: () => {
+          if (!t.destroyed) t.text = line(f.v);
+        },
+        onComplete: () => {
+          if (!t.destroyed) puffAt(t);
+        },
+      });
+      await this.wait(300);
+    }
     await this.wait(700);
     const safe = label('Tus gatos, barcos, hábitats y progreso siguen intactos. Las fichas y boletos se vuelven a ganar peleando.', 26, CP.paper, { wordWrap: true, wordWrapWidth: 1100, align: 'center' });
     safe.anchor.set(0.5, 0);
-    safe.position.set(W / 2, pot?.amount ? 830 : 760);
+    safe.position.set(W / 2, hasPot ? 830 : 760);
     layer.addChild(safe);
     gsap.from(safe, { alpha: 0, duration: 0.4 });
-    await this.tapToContinue(layer, pot?.amount ? 920 : 860);
+    await this.tapToContinue(layer, hasPot ? 920 : 860);
     this.restoreView();
     gsap.to(layer, { alpha: 0, duration: 0.3, onComplete: () => layer.destroy({ children: true }) });
     await this.wait(320);

@@ -6,6 +6,9 @@
  *       legendario → GOLD MACHINE: rings re-ink in gold, white-gold core, crown rays, cracks, heavy shake, fanfare
  *       holo       → gold machine + rainbow foil slices + RGB split
  *       mítico     → CRIMSON SINGULARITY: black core full of stars, red rings, glitch slices, the screen inverts
+ *       multidim.  → OTHER BOXES (owner 2026-10-29: a Multidimensional shows its OWN rarity, never the gold): the
+ *                    machine re-inks in the Multidimensional teal and pink, open boxes tumble out of the core, the
+ *                    five boxes' slices and «¡¿MULTIDIMENSIONAL?!» — telegraphed by Pull.look, not the drawn tier
  *     "¡SE ESCAPÓ!": a legendary silhouette climbs out of the portal and runs away (it leaves a RASTRO).
  *  3. every cat worth it (épico+ or new) gets the full Pokémon-style cat reveal STRAIGHT out of the portal —
  *     no card flip first. Each one gets a beam in its own tier colour before its reveal.
@@ -24,7 +27,8 @@ import { sfx } from '../../core/audio';
 import { Shaker, flash, onomatopoeia, sparkles, speedLines } from '../juice';
 import { Particles } from '../particles';
 import type { Pull, Banner, Tier } from '../../state/sys/gacha';
-import { TIER_ORDER } from '../../state/sys/gacha';
+import { LOOK_ORDER, TIER_ORDER, lookRank } from '../../state/sys/gacha';
+import { MD, MD_DIMS, MD_GLOW_COL } from '../../panels/casino/mdLook';
 import { catDef } from '../../data/content';
 import { catArt, catRank, prizeCard, RevealPlan, revealCats, TIER_COL } from '../../panels/casino/prizes';
 import { CP, killDeep } from '../../panels/casino/kit';
@@ -44,7 +48,7 @@ export interface SummonOpts {
   auto?: boolean;
   /** which cats get the full reveal (default: épico+ or new) */
   reveal?: RevealPlan;
-  onEvent?: (ev: 'epic' | 'legend' | 'holo' | 'mythic' | 'meh' | 'escape' | 'first') => void;
+  onEvent?: (ev: 'epic' | 'legend' | 'holo' | 'mythic' | 'multidim' | 'meh' | 'escape' | 'first') => void;
 }
 
 const rank = (t: Tier) => TIER_ORDER.indexOf(t);
@@ -57,18 +61,23 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
     layer.addChild(root);
     const shaker = new Shaker(root, 26, 0.02);
     const particles = new Particles();
+    // how big the moment is: the drawn tier (rank); what colour it wears: the best LOOK (a Multiverse cat's own rarity)
     const best = pulls.reduce((m, p) => Math.max(m, rank(p.tier)), 0);
-    const bestTier = TIER_ORDER[best];
+    const bestTier = LOOK_ORDER[pulls.reduce((m, p) => Math.max(m, lookRank(p.look ?? p.tier)), 0)];
     const mythic = bestTier === 'mythic';
+    const multid = bestTier === 'multidimensional';
     const golden = best >= 3;
     const escaped = best < 3 ? pulls.find((p) => p.escaped)?.escaped : undefined;
     const reduce = settings.reduceMotion;
     const timers: number[] = [];
     const later = (fn: () => void, t: number) => timers.push(window.setTimeout(() => !root.destroyed && fn(), t));
+    // the endless spins (rune ring, ink ring, dashes, the mythic's stars): kept here so EVERY way out kills them
+    const loops: gsap.core.Tween[] = [];
+    const loop = (t: gsap.core.Tween) => (loops.push(t), t);
     // --- dim + halftone
     const dim = screenRect(CP.night);
     dim.alpha = 0;
-    const tint = screenRect(mythic ? 0x2a0006 : GOLD);
+    const tint = screenRect(mythic ? 0x2a0006 : multid ? MD : GOLD);
     tint.alpha = 0;
     const dots = new TilingSprite({ texture: halftoneTexture(b.accent, 18, 2.6), width: W, height: H });
     dots.alpha = 0;
@@ -148,7 +157,7 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
     portal.scale.set(0);
     root.addChild(portal);
     gsap.to(swirl, { rotation: Math.PI * 6, duration: 4 * k, ease: 'power1.in' });
-    gsap.to(dashes, { rotation: Math.PI * 2, duration: 6, ease: 'none', repeat: -1 });
+    loop(gsap.to(dashes, { rotation: Math.PI * 2, duration: 6, ease: 'none', repeat: -1 }));
     // energy motes sucked into the portal
     for (let i = 0; i < (reduce || speed > 1 ? 10 : 46); i++) {
       const m = new Graphics().circle(0, 0, 3 + Math.random() * 5).fill([b.accent, b.accent2, CP.paper][i % 3]);
@@ -165,8 +174,8 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
     root.addChild(title, particles);
     csfx.portal();
     gsap.to(portal.scale, { x: 1, y: 1, duration: 0.7 * k, ease: 'back.out(1.5)' });
-    gsap.to(runes, { rotation: Math.PI * 2, duration: 9, ease: 'none', repeat: -1 });
-    gsap.to(ringA, { rotation: -Math.PI * 2, duration: 14, ease: 'none', repeat: -1 });
+    loop(gsap.to(runes, { rotation: Math.PI * 2, duration: 9, ease: 'none', repeat: -1 }));
+    loop(gsap.to(ringA, { rotation: -Math.PI * 2, duration: 14, ease: 'none', repeat: -1 }));
     gsap.to(title, { alpha: 1, duration: 0.2, delay: 0.3 * k });
     let fr = 0;
     const iv = window.setInterval(() => {
@@ -177,11 +186,24 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
       ringB.rotation = fr % 2 ? 0.02 : -0.02;
     }, 1000 / 12);
 
-    // the layer can be destroyed under us (leaving the casino mid-summon): stop every loop, never touch it again
-    root.once('destroyed', () => {
+    // ONE teardown for every way out — CONTINUAR, the auto-play's close, or the layer destroyed under us (leaving the casino
+    // mid-summon, a reveal that never hands back): the endless spins, the timers, the interval and every tween on the
+    // machine die here. On 'destroyed' root's children are already detached, so the machine is walked by reference.
+    let tornDown = false;
+    const teardown = () => {
+      if (tornDown) return;
+      tornDown = true;
       window.clearInterval(iv);
       for (const t of timers) window.clearTimeout(t);
+      for (const t of loops) t.kill();
+      loops.length = 0;
+      killDeep(portal);
+      for (const o of [burst, title, dim, tint, dots]) killDeep(o);
       shaker.destroy();
+    };
+    root.once('destroyed', () => {
+      teardown();
+      resolve();
     });
 
     let phase = 0;
@@ -213,12 +235,42 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
             for (let i = 0; i < 60; i++) stars.circle((Math.random() - 0.5) * 360, (Math.random() - 0.5) * 360, Math.random() * 2.6 + 0.6).fill({ color: 0xffffff, alpha: 0.4 + Math.random() * 0.6 });
             stars.mask = coreMask;
             portal.addChildAt(stars, portal.getChildIndex(coreDots) + 1);
-            gsap.to(stars, { rotation: Math.PI * 2, duration: 12, ease: 'none', repeat: -1 });
+            loop(gsap.to(stars, { rotation: Math.PI * 2, duration: 12, ease: 'none', repeat: -1 }));
             if (!settings.reduceFlashes) {
               root.filters = [new RGBSplitFilter({ red: { x: -22, y: 0 }, green: { x: 0, y: 12 }, blue: { x: 22, y: -10 } })];
               later(() => (root.filters = []), 700 * k);
             }
             glitchSlices([MYTHIC, CP.ink, 0xffffff]);
+          } else if (multid) {
+            // OTHER BOXES: teal rings, a pink-white core, open boxes tumbling out of it, the five boxes' slices
+            drawMachine(MD, 0x05252b, 0xffeef6, MD_GLOW_COL, CP.cyan);
+            drawBurst(MD, 0.18);
+            gsap.to(tint, { alpha: 0.16, duration: 0.3 * k });
+            for (const t of runeTxt) t.style.fill = MD_GLOW_COL;
+            coreDots.texture = halftoneTexture(MD_GLOW_COL, 14, 3);
+            const boxes = new Container();
+            for (let i = 0; i < (reduce ? 5 : 11); i++) {
+              const bx = new Graphics();
+              const sz = 26 + Math.random() * 34;
+              const col = MD_DIMS[i % MD_DIMS.length];
+              bx.rect(-sz / 2, -sz / 2, sz, sz).fill(col).stroke({ width: 4, color: CP.ink });
+              bx.poly([-sz / 2, -sz / 2, -sz * 0.85, -sz * 0.95, -sz * 0.05, -sz / 2]).fill(MD_GLOW_COL).stroke({ width: 3, color: CP.ink });
+              bx.poly([sz / 2, -sz / 2, sz * 0.85, -sz * 0.95, sz * 0.05, -sz / 2]).fill(MD).stroke({ width: 3, color: CP.ink });
+              bx.rotation = Math.random() * Math.PI * 2;
+              bx.scale.set(0.1);
+              boxes.addChild(bx);
+              const a = (i / 11) * Math.PI * 2 + Math.random() * 0.4;
+              const r = 230 + Math.random() * 200;
+              gsap.to(bx, { x: Math.cos(a) * r, y: Math.sin(a) * r, rotation: bx.rotation + (Math.random() - 0.5) * 6, duration: 1.1 * k + 0.2, ease: 'power2.out' });
+              gsap.to(bx.scale, { x: 1, y: 1, duration: 0.4 * k + 0.1, ease: 'back.out(2)' });
+              gsap.to(bx, { alpha: 0, delay: 0.9 * k + 0.2, duration: 0.5 });
+            }
+            portal.addChild(boxes);
+            if (!settings.reduceFlashes) {
+              root.filters = [new RGBSplitFilter({ red: { x: -14, y: 0 }, green: { x: 0, y: 8 }, blue: { x: 14, y: -6 } })];
+              later(() => (root.filters = []), 500 * k);
+            }
+            glitchSlices([...MD_DIMS, MD, MD_GLOW_COL]);
           } else if (golden) {
             drawMachine(GOLD, 0x3a2400, 0xfff3c4, GOLD, 0xffffff);
             drawBurst(GOLD, 0.18);
@@ -249,12 +301,13 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
                 cracks.lineTo(Math.cos(a) * r, Math.sin(a) * r);
               }
             }
-            cracks.stroke({ width: 4, color: mythic ? MYTHIC : 0xffffff, alpha: 0.9 });
+            cracks.stroke({ width: 4, color: mythic ? MYTHIC : multid ? MD_GLOW_COL : 0xffffff, alpha: 0.9 });
             shaker.add(0.6);
             sfx('boom', mythic ? 0.7 : 1);
             if (!reduce) speedLines(root, PX, PY, CP.ink, 60, 0.6 * k);
-            flash(root, mythic ? MYTHIC : GOLD, 0.8, 0.35);
-            onomatopoeia(root, PX + 330, PY - 220, mythic ? '¡¿MÍTICO?!' : bestTier === 'holo' ? '¡¿QUÉEE?!' : '¡DORADO!', { size: 120, color: mythic ? MYTHIC : bestTier === 'holo' ? CP.cyan : CP.yellow, dur: 1.2 * k + 0.3 });
+            flash(root, mythic ? MYTHIC : multid ? MD : GOLD, 0.8, 0.35);
+            const word = mythic ? '¡¿MÍTICO?!' : multid ? '¡¿MULTIDIMENSIONAL?!' : bestTier === 'holo' ? '¡¿QUÉEE?!' : '¡DORADO!';
+            onomatopoeia(root, multid ? PX + 250 : PX + 330, PY - 220, word, { size: multid ? 96 : 120, color: mythic ? MYTHIC : multid ? MD_GLOW_COL : bestTier === 'holo' ? CP.cyan : CP.yellow, dur: 1.2 * k + 0.3 });
           } else if (best >= 2) {
             flash(root, CP.pink, 0.45, 0.3);
             shaker.add(0.25);
@@ -265,7 +318,7 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
             o.onEvent?.('first');
           }
           csfx.beam(Math.min(4, best));
-          particles.burst(PX, PY, { count: speed > 1 ? 20 : 30 + best * 15, tint: [TIER_COL[bestTier], 0xffffff], speed: [300, 900], life: [0.5, 1.2], gravity: 300, scale: [0.3, 0.9] });
+          particles.burst(PX, PY, { count: speed > 1 ? 20 : 30 + best * 15, tint: multid ? [MD, MD_GLOW_COL, 0xffffff] : [TIER_COL[bestTier], 0xffffff], speed: [300, 900], life: [0.5, 1.2], gravity: 300, scale: [0.3, 0.9] });
           gsap.to(title, { alpha: 0, duration: 0.2 });
           later(res, (golden ? 650 : best >= 2 ? 350 : 150) * k);
         }, tChange);
@@ -318,7 +371,8 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
     const revealList = pulls.filter((p) => p.got.kind === 'cat' && (plan.only ? plan.only(p.got) : true));
     const reveals = async () => {
       phase = 2;
-      revealList.sort((a, c) => catRank(a.got) - catRank(c.got));
+      // the biggest last; among equals, by what it shows (a Multidimensional after a legendary or a HOLO foil)
+      revealList.sort((a, c) => catRank(a.got) - catRank(c.got) || lookRank(a.look ?? a.tier) - lookRank(c.look ?? c.tier));
       for (const p of revealList) {
         if (root.destroyed) return;
         // a beam in this cat's tier colour shoots out of the machine…
@@ -365,17 +419,22 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
         const tx = gx0 + col * (cw + gapX) + cw / 2;
         const ty = 150 + row * (ch + gapY) + ch / 2 + (rows === 1 && !big ? 150 : 0);
         const r = rank(p.tier);
+        const look = p.look ?? p.tier;
+        const lc = TIER_COL[look] ?? GOLD;
         gsap.to(c, { x: tx, y: ty, rotation: (Math.random() - 0.5) * 0.06, duration: 0.42 * k, delay: i * 0.06 * k, ease: 'back.out(1.4)', onStart: () => csfx.cardFly() });
         gsap.to(c.scale, { x: 1, y: 1, duration: 0.42 * k, delay: i * 0.06 * k, ease: 'back.out(1.6)' });
         if (r >= 1) {
           const glow = new Graphics();
-          for (let j = 0; j < 3; j++) glow.rect(-6 - j * 5, -6 - j * 5, cw + 12 + j * 10, ch + 12 + j * 10).stroke({ width: 4, color: TIER_COL[p.tier], alpha: 0.5 - j * 0.14 });
+          for (let j = 0; j < 3; j++) glow.rect(-6 - j * 5, -6 - j * 5, cw + 12 + j * 10, ch + 12 + j * 10).stroke({ width: 4, color: look === 'multidimensional' && j === 1 ? MD_GLOW_COL : lc, alpha: 0.5 - j * 0.14 });
           c.addChildAt(glow, 0);
         }
         later(
           () => {
-            sparkles(root, tx, ty, TIER_COL[p.tier], 4 + r * 3, 80 + r * 30);
-            if (r >= 2) onomatopoeia(root, tx, ty - ch / 2 - 10, p.tier === 'mythic' ? '¡MÍTICO!' : p.tier === 'holo' ? '¡HOLO!' : p.tier === 'legendary' ? '¡LEGENDARIO!' : '¡ÉPICO!', { size: big ? 90 : 52, color: TIER_COL[p.tier], dur: 0.9 * k + 0.2 });
+            sparkles(root, tx, ty, lc, 4 + r * 3, 80 + r * 30);
+            if (look === 'multidimensional') {
+              sparkles(root, tx, ty, MD_GLOW_COL, 6 + r * 2, 100 + r * 30);
+              onomatopoeia(root, tx, ty - ch / 2 - 10, big ? '¡MULTIDIMENSIONAL!' : '¡MULTI!', { size: big ? 76 : 50, color: MD_GLOW_COL, dur: 0.9 * k + 0.2 });
+            } else if (r >= 2) onomatopoeia(root, tx, ty - ch / 2 - 10, look === 'mythic' ? '¡MÍTICO!' : look === 'holo' ? '¡HOLO!' : look === 'legendary' ? '¡LEGENDARIO!' : '¡ÉPICO!', { size: big ? 90 : 52, color: lc, dur: 0.9 * k + 0.2 });
             if (p.pity) stamp(root, tx, ty + ch / 2 - 18, p.pity === 'mythic' ? 'GARANTÍA MÍTICA' : p.pity === 'legendary' ? 'GARANTÍA' : 'GARANTÍA ÉPICA', CP.cyan, big ? 34 : 22, 0.06);
             if (p.tier === 'holo' || p.got.holo) {
               const s = holoSheen(cw - 8, ch - 8, 0.8);
@@ -387,7 +446,7 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
         );
       });
       const mx = best;
-      const ev = mythic ? 'mythic' : pulls.some((p) => p.tier === 'holo') ? 'holo' : mx >= 3 ? 'legend' : mx >= 2 ? 'epic' : 'meh';
+      const ev = mythic ? 'mythic' : multid ? 'multidim' : pulls.some((p) => p.tier === 'holo') ? 'holo' : mx >= 3 ? 'legend' : mx >= 2 ? 'epic' : 'meh';
       if (!(ev === 'meh' && escaped)) o.onEvent?.(ev);
       if (o.auto) {
         later(close, (n === 1 ? 900 : 1500) * k + 300);
@@ -415,14 +474,18 @@ export function playSummon(layer: Container, pulls: Pull[], b: Banner, o: Summon
       closed = true;
       phase = 5;
       window.clearInterval(iv);
+      // the spins stop now (not after the fade: if the layer goes away during it, nothing is left running)
+      for (const t of loops) t.kill();
+      loops.length = 0;
       gsap.to(root, {
         alpha: 0,
         duration: 0.25 * k,
         onComplete: () => {
-          for (const t of timers) window.clearTimeout(t);
-          shaker.destroy();
-          killDeep(root);
-          root.destroy({ children: true });
+          teardown();
+          if (!root.destroyed) {
+            killDeep(root);
+            root.destroy({ children: true });
+          }
           resolve();
         },
       });

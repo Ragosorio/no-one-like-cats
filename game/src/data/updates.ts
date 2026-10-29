@@ -20,6 +20,22 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-29-mas-cajas',
+    date: '2026-10-29',
+    title: 'Más cajas, más islas',
+    luzterna: 'Gordo, dicen que el casino conectó más cajas y que el mar escupió islas nuevas. Yo no pregunto. Tú termina tu historia y luego me cuentas qué hay.',
+    items: [
+      { tag: 'NUEVO', text: 'Al terminar la Parte III llegan 25 Multidimensionales más, de cosas muy distintas: leyendas, mitos, historia, museo, ciencia, música clásica, telenovela, cine, anime, videojuegos y básquet. Cada uno con su mundo, su carta y su poder.' },
+      { tag: 'NUEVO', text: 'Al terminar la Parte III, el Portal abre el MULTIVERSO DESBORDADO: ahí todo lo legendario sale Multidimensional, con sus probabilidades y garantía a la vista.' },
+      { tag: 'NUEVO', text: 'Al terminar la Parte III, tu archipiélago crece: llegan cinco islas nuevas, con terreno de sobra para tus gatos nuevos. Antes, ni se asoman.' },
+      { tag: 'NUEVO', text: 'MODO ETERNO: cuando ya no se puede enfriar, las tiradas de suerte también sueltan boletos, gemas, pescaditos y oro al botín.' },
+      { tag: 'NUEVO', text: 'Volver a ver: las canciones de la Parte III ya están, con ♪, igual que las de la Parte II. Y la Fonoteca guarda las canciones de sus películas.' },
+      { tag: 'CAMBIO', text: 'Las películas de la Parte III ya no tienen pantalla de carga: el lugar donde estás se transforma en la película.' },
+      { tag: 'CAMBIO', text: 'Las revelaciones llenan toda la pantalla, sea cual sea su forma. Y un Multidimensional sale con su propio color, no dorado.' },
+      { tag: 'ARREGLO', text: 'El Muelle de Pesca ya no se ve chiquito: sus tarjetas usan todo el panel.' },
+    ],
+  },
+  {
     id: '2026-10-29-despues-de-la-parte-iii',
     date: '2026-10-29',
     title: 'Después de la Parte III: 98 gatos nuevos',

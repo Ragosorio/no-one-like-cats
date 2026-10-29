@@ -6,6 +6,9 @@
  *  - auto-play (AutoHost): x1/x2 play the summon (compressed), x10 / ETERNO show a results strip and only stop
  *    for the reveal of NEW legendary+ cats.
  * The summon itself lives in fx/sequences/gachaSummon.ts.
+ * After the Parte III a fourth tab, MULTIVERSO DESBORDADO (state/sys/gacha.ts MULTIVERSO): its poster is the Multiverse —
+ * teal and pink, a tunnel of open boxes, three Multidimensionals of its pool floating out of it (their SVG paintings).
+ * Results show what came out (Pull.look): a Multidimensional in its own colour, never the legendary gold.
  */
 import { Container, Graphics, Text, TilingSprite } from 'pixi.js';
 import gsap from 'gsap';
@@ -17,13 +20,17 @@ import { catDef } from '../../data/content';
 import { elementIcon } from '../../ui/elementIcon';
 import { halftoneTexture } from '../../art/textures';
 import {
-  BANNERS,
   Banner,
+  LOOK_NAME,
+  MD_COLOR,
+  MD_GLOW,
+  activeBanners,
+  lookRank,
+  tierLabelOf,
   GachaMode,
   MODES,
   PayWith,
   Pull,
-  TIER_NAME,
   TIER_ORDER,
   banner,
   canPull,
@@ -38,6 +45,8 @@ import {
   rankOf,
 } from '../../state/sys/gacha';
 import { AutoSpeed, gachaCats, prefs, tickets } from '../../state/sys/casino';
+import { multiversoPool } from '../../state/sys/postp3';
+import { MD_DIMS, mdGem, mdStripe } from './mdLook';
 import { CP, CButton, Seg, block, clickable, curIcon, heading, label, ticketIcon } from './kit';
 import { TIER_COL, catArt, catRank, revealCats, revealPlanFor } from './prizes';
 import { drawAccessory } from './accessoryArt';
@@ -61,7 +70,7 @@ export class GachaView extends Container implements CasinoView, AutoHost {
   private poster = new Container();
   private controls = new Container();
   private turboBox = new Container();
-  private turbo: { t: Text; chips: Graphics; log: Pull['tier'][]; pulls: number; epic: number; legend: number; fresh: number; last: number } | null = null;
+  private turbo: { t: Text; chips: Graphics; log: Pull['look'][]; pulls: number; epic: number; legend: number; md: number; fresh: number; last: number } | null = null;
   private busy = false;
   private anim: gsap.core.Tween[] = [];
 
@@ -101,21 +110,35 @@ export class GachaView extends Container implements CasinoView, AutoHost {
 
   private buildTabs() {
     this.clear(this.tabs);
-    BANNERS.forEach((bn, i) => {
+    const list = activeBanners();
+    // three tabs fill the poster's width; after the Parte III the MULTIVERSO makes four (narrower, names fit)
+    const gap = list.length > 3 ? 12 : 19;
+    const w = Math.floor((PW - (list.length - 1) * gap) / list.length);
+    list.forEach((bn, i) => {
       const on = bn.id === this.b.id;
       const c = new Container();
-      const w = 336;
       const h = 80;
-      c.position.set(X0 + i * (w + 19), on ? 104 : 110);
+      c.position.set(X0 + i * (w + gap), on ? 104 : 110);
       const g = new Graphics();
       if (on) g.rect(7, 7, w, h).fill(bn.accent);
       g.rect(0, 0, w, h).fill(on ? CP.paper : 0x24132a).stroke({ width: 4, color: on ? CP.ink : 0x4a3150, alignment: 1 });
       g.rect(0, 0, 14, h).fill(bn.accent);
       const t = heading(bn.name, 32, on ? CP.ink : CP.paper);
       t.position.set(28, 6);
+      // the MULTIVERSO's tab wears its gem on the right: its name stops before it
+      const room = w - (bn.multiverse ? 66 : 40);
+      if (t.width > room) t.scale.set(room / t.width);
       const k = label(bn.kicker, 13, on ? CP.ink : CP.softPink, { letterSpacing: 1 });
       k.position.set(30, 50);
+      if (k.width > w - 40) k.scale.set((w - 40) / k.width);
       c.addChild(g, t, k);
+      if (bn.multiverse) {
+        // the Multiverse's tab: the five boxes along its edge and the box gem
+        mdStripe(g, 14, h - 8, w - 14, 8);
+        const gem = mdGem(26);
+        gem.position.set(w - 18, 18);
+        c.addChild(gem);
+      }
       // the hot window shows on the tab too
       const pl = pityLeft(bn);
       if (pl.hot) {
@@ -130,6 +153,7 @@ export class GachaView extends Container implements CasinoView, AutoHost {
         if (!modesFor(bn).includes(this.mode)) this.mode = 'normal';
         this.save();
         this.build();
+        if (bn.multiverse) this.ctx.say('multiverso', 0.8);
       });
       this.tabs.addChild(c);
     });
@@ -162,6 +186,7 @@ export class GachaView extends Container implements CasinoView, AutoHost {
     art.addChild(circle);
     if (b.id === 'michi') this.artMichi(art, X0 + PW * 0.72, y0 + ph * 0.48, hot);
     else if (b.id === 'holo') this.artHolo(art, X0 + PW * 0.72, y0 + ph * 0.5);
+    else if (b.multiverse) this.artMultiverso(art, X0 + PW * 0.72, y0 + ph * 0.48);
     else this.artCofre(art, X0 + PW * 0.72, y0 + ph * 0.53);
     // title block
     const dark = b.id !== 'cofre';
@@ -207,8 +232,8 @@ export class GachaView extends Container implements CasinoView, AutoHost {
       this.anim.push(gsap.to(r, { y: y - 4, duration: 0.5, yoyo: true, repeat: -1, ease: 'sine.inOut' }));
     };
     if (hot) ribbon(`RACHA CALIENTE · LEGENDARIO x2.5 · ${pl.hot} ${pl.hot === 1 ? 'TIRO' : 'TIROS'}`, GOLD, y0 + 22);
-    else if (pl.beginner) ribbon(`SUERTE DE PRINCIPIANTE · LEGENDARIO SEGURO EN ${pl.legendary}`, CP.cyan, y0 + 22);
-    else if (b.hasCats && pl.legendary <= 5) ribbon(`¡YA CASI! LEGENDARIO SEGURO EN ${pl.legendary}`, CP.yellow, y0 + 22);
+    else if (pl.beginner) ribbon(`SUERTE DE PRINCIPIANTE · ${b.multiverse ? 'MULTIDIMENSIONAL' : 'LEGENDARIO'} SEGURO EN ${pl.legendary}`, CP.cyan, y0 + 22);
+    else if (b.hasCats && pl.legendary <= 5) ribbon(`¡YA CASI! ${b.multiverse ? 'MULTIDIMENSIONAL' : 'LEGENDARIO'} SEGURO EN ${pl.legendary}`, CP.yellow, y0 + 22);
     // odds strip (the NEXT pull, in the selected mode — ramps included)
     const odds = modeOdds(b, this.mode);
     const tiers = TIER_ORDER.filter((t) => odds[t] > 0 || (this.mode === 'normal' && b.tiers[t] > 0));
@@ -216,8 +241,8 @@ export class GachaView extends Container implements CasinoView, AutoHost {
     tiers.forEach((t, i) => {
       const c = new Container();
       c.position.set(X0 + 20 + i * sw, y0 + ph - 62);
-      const g = new Graphics().rect(0, 0, sw - 8, 46).fill(TIER_COL[t]).stroke({ width: 3, color: CP.ink });
-      const name = this.mode !== 'normal' && t === 'common' ? 'NADA' : TIER_NAME[t];
+      const g = new Graphics().rect(0, 0, sw - 8, 46).fill(b.tierCol?.[t] ?? TIER_COL[t]).stroke({ width: 3, color: CP.ink });
+      const name = this.mode !== 'normal' && t === 'common' ? 'NADA' : tierLabelOf(b, t);
       const tt = heading(`${name} ${fmtP(odds[t])}`, tiers.length > 5 ? 19 : 24, CP.ink);
       tt.position.set(8, 9);
       if (tt.width > sw - 20) tt.scale.set((sw - 20) / tt.width);
@@ -286,6 +311,63 @@ export class GachaView extends Container implements CasinoView, AutoHost {
     this.anim.push(gsap.to(a, { y: y - 12, duration: 1.8, yoyo: true, repeat: -1, ease: 'sine.inOut' }));
   }
 
+  /** the Multiverse: a tunnel of open boxes in its colours, and three Multidimensionals of its pool floating out of it */
+  private artMultiverso(c: Container, x: number, y: number) {
+    const tunnel = new Graphics();
+    const N = 9;
+    for (let i = N; i >= 1; i--) {
+      const r = 34 + i * 26;
+      const a = i * 0.21;
+      const pts: number[] = [];
+      for (let j = 0; j < 4; j++) pts.push(Math.cos(a + (j * Math.PI) / 2) * r, Math.sin(a + (j * Math.PI) / 2) * r);
+      tunnel.poly(pts).fill({ color: i % 2 ? 0x0b2a30 : 0x12363d }).stroke({ width: 6, color: MD_DIMS[i % MD_DIMS.length] });
+    }
+    tunnel.circle(0, 0, 40).fill(MD_GLOW);
+    tunnel.position.set(x, y);
+    c.addChild(tunnel);
+    this.anim.push(gsap.to(tunnel, { rotation: Math.PI * 2, duration: 40, ease: 'none', repeat: -1 }));
+    const ring = new Graphics();
+    ring.circle(0, 0, 238).stroke({ width: 12, color: CP.ink });
+    ring.circle(6, -4, 252).stroke({ width: 5, color: MD_GLOW, alpha: 0.7 });
+    ring.circle(-6, 4, 252).stroke({ width: 5, color: MD_COLOR, alpha: 0.7 });
+    ring.position.set(x, y);
+    c.addChild(ring);
+    // three of its cats: the stars first, the ones you don't have first (their SVG paintings)
+    const pool = [...multiversoPool()].sort((a, b) => Number(!!b.post?.star) - Number(!!a.post?.star) || Number(G.s.catdex[a.id] === 'registered') - Number(G.s.catdex[b.id] === 'registered') || a.id.localeCompare(b.id));
+    const pick = pool.slice(0, 3);
+    const pos = [
+      [-165, 70, 240],
+      [165, 70, 240],
+      [0, -10, 310],
+    ];
+    pick.forEach((d, i) => {
+      const a = catArt(d.id, pos[i][2]);
+      a.position.set(x + pos[i][0], y + pos[i][1]);
+      c.addChild(a);
+      this.anim.push(gsap.to(a, { y: a.y - 12, rotation: i === 2 ? 0 : (i ? 0.05 : -0.05), duration: 1.7 + i * 0.35, yoyo: true, repeat: -1, ease: 'sine.inOut' }));
+    });
+    // a few open boxes drifting around the edge: «el casino logró conectar más cajas»
+    for (let i = 0; i < 6; i++) {
+      const bx = new Graphics();
+      const sz = 30 + (i % 3) * 10;
+      bx.rect(-sz / 2, -sz / 2, sz, sz).fill(MD_DIMS[i % MD_DIMS.length]).stroke({ width: 4, color: CP.ink });
+      bx.poly([-sz / 2, -sz / 2, -sz * 0.85, -sz * 0.95, -sz * 0.05, -sz / 2]).fill(MD_GLOW).stroke({ width: 3, color: CP.ink });
+      bx.poly([sz / 2, -sz / 2, sz * 0.85, -sz * 0.95, sz * 0.05, -sz / 2]).fill(MD_COLOR).stroke({ width: 3, color: CP.ink });
+      const a = (i / 6) * Math.PI * 2 + 0.3;
+      bx.position.set(x + Math.cos(a) * 285, y + Math.sin(a) * 215);
+      bx.rotation = a;
+      c.addChild(bx);
+      this.anim.push(gsap.to(bx, { rotation: a + 0.5, y: bx.y - 10, duration: 1.4 + (i % 3) * 0.4, yoyo: true, repeat: -1, ease: 'sine.inOut' }));
+    }
+    const tag = label(`${pool.length} MULTIDIMENSIONALES ADENTRO`, 15, CP.ink);
+    const tb = new Graphics().rect(0, 0, tag.width + 20, 26).fill(MD_GLOW).stroke({ width: 3, color: CP.ink });
+    tag.position.set(10, 3);
+    const tc = new Container();
+    tc.addChild(tb, tag);
+    tc.position.set(x - (tag.width + 20) / 2, y + 200);
+    c.addChild(tc);
+  }
+
   private artCofre(c: Container, x: number, y: number) {
     const ch = new Graphics();
     ch.roundRect(-170, -40, 340, 170, 12).fill(0x7a3a20).stroke({ width: 6, color: CP.ink });
@@ -325,8 +407,8 @@ export class GachaView extends Container implements CasinoView, AutoHost {
       c.addChild(t, g);
     };
     bar(y, `ÉPICO o mejor garantizado en ${pl.epic} ${pl.epic === 1 ? 'tiro' : 'tiros'}`, po.e / b.epicPity, CP.pink);
-    bar(y + 54, `LEGENDARIO o mejor a más tardar en ${pl.legendary} ${pl.legendary === 1 ? 'tiro' : 'tiros'}${caps.beginner ? ' (principiante)' : ''}`, po.l / caps.hard, pl.hot ? GOLD : CP.yellow);
-    const extra = [b.catPity ? `GATO en ${pl.cat}` : '', b.mythicPity ? `MÍTICO a más tardar en ${pl.mythic}` : '', pl.hot ? `RACHA CALIENTE: ${pl.hot}` : ''].filter(Boolean).join(' · ');
+    bar(y + 54, `${b.multiverse ? 'MULTIDIMENSIONAL' : 'LEGENDARIO o mejor'} a más tardar en ${pl.legendary} ${pl.legendary === 1 ? 'tiro' : 'tiros'}${caps.beginner ? ' (principiante)' : ''}`, po.l / caps.hard, b.multiverse ? MD_COLOR : pl.hot ? GOLD : CP.yellow);
+    const extra = [b.catPity ? `GATO en ${pl.cat}` : '', b.mythicPity ? `${b.multiverse ? 'MD QUE TE FALTA' : 'MÍTICO'} a más tardar en ${pl.mythic}` : '', pl.hot ? `RACHA CALIENTE: ${pl.hot}` : ''].filter(Boolean).join(' · ');
     if (extra) {
       const e = label(extra, 14, pl.hot ? GOLD : CP.softPink);
       e.position.set(X0, y + 106);
@@ -479,7 +561,7 @@ export class GachaView extends Container implements CasinoView, AutoHost {
       auto,
       reveal: auto ? revealPlanFor(speed) : undefined,
       onEvent: (e) => {
-        const map = { epic: 'gachaEpic', legend: 'gachaLegend', holo: 'gachaHolo', mythic: 'gachaMythic', meh: 'gachaMeh', escape: 'escape', first: 'firstLegend' } as const;
+        const map = { epic: 'gachaEpic', legend: 'gachaLegend', holo: 'gachaHolo', mythic: 'gachaMythic', multidim: 'gachaMultidim', meh: 'gachaMeh', escape: 'escape', first: 'firstLegend' } as const;
         const big = e !== 'meh' && e !== 'epic';
         if (auto && !big && speed > 1) return;
         this.ctx.say(map[e]);
@@ -510,7 +592,7 @@ export class GachaView extends Container implements CasinoView, AutoHost {
     const chips = new Graphics();
     chips.position.set(X0 + 16, 712);
     box.addChild(bg, h, t, chips);
-    this.turbo = { t, chips, log: [], pulls: 0, epic: 0, legend: 0, fresh: 0, last: Date.now() };
+    this.turbo = { t, chips, log: [], pulls: 0, epic: 0, legend: 0, md: 0, fresh: 0, last: Date.now() };
     return this.turbo;
   }
   private hideTurbo() {
@@ -525,20 +607,26 @@ export class GachaView extends Container implements CasinoView, AutoHost {
       const r = rankOf(p.tier);
       if (r >= 2) tb.epic++;
       if (r >= 3) tb.legend++;
+      if (p.look === 'multidimensional') tb.md++;
       if (p.got.kind === 'cat' && p.got.isNew) tb.fresh++;
-      tb.log.push(p.tier);
+      tb.log.push(p.look ?? p.tier);
     }
     if (tb.log.length > 40) tb.log.splice(0, tb.log.length - 40);
-    tb.t.text = `${tb.pulls} tiros · ÉPICO+ ${tb.epic} · LEGENDARIO+ ${tb.legend} · gatos nuevos ${tb.fresh}`;
+    tb.t.text = `${tb.pulls} tiros · ÉPICO+ ${tb.epic} · LEGENDARIO+ ${tb.legend}${tb.md ? ` · ${LOOK_NAME.multidimensional} ${tb.md}` : ''} · gatos nuevos ${tb.fresh}`;
     const g = tb.chips.clear();
-    tb.log.forEach((t, i) => g.rect(i * 22, 0, 18, 30).fill(TIER_COL[t]).stroke({ width: 2, color: CP.ink }));
+    tb.log.forEach((t, i) => {
+      g.rect(i * 22, 0, 18, 30).fill(TIER_COL[t] ?? CP.paper).stroke({ width: 2, color: CP.ink });
+      // a Multidimensional: its glow across the middle of its chip
+      if (t === 'multidimensional') g.rect(i * 22 + 2, 12, 14, 6).fill(MD_GLOW);
+    });
     this.ctx.unfreeze();
     const escaped = res.find((p) => p.escaped);
     if (escaped) this.ctx.say('escape');
     const best = res.reduce((m, p) => Math.max(m, rankOf(p.tier)), 0);
+    const bestLook = res.reduce((m, p) => Math.max(m, lookRank(p.look ?? p.tier)), 0);
     if (best >= 3) {
       sfx('fanfare');
-      this.ctx.say(best >= 5 ? 'gachaMythic' : 'gachaLegend', 0.6);
+      this.ctx.say(bestLook >= lookRank('mythic') ? 'gachaMythic' : bestLook === lookRank('multidimensional') ? 'gachaMultidim' : 'gachaLegend', 0.6);
     }
     // only NEW legendary+ cats interrupt x10 (with a fast, self-closing reveal)
     await revealCats(this.ctx.top, res.map((p) => p.got), revealPlanFor(10));

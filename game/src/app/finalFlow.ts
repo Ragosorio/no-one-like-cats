@@ -246,7 +246,8 @@ async function h93Siege(): Promise<FlowResult> {
   // flame goes out (K6, FilmDef.carry); from there on the quiet holds (the night of H94 has no music either)
   const ok = await step('b93_caida', async () => {
     if (!beatSeen('b94_noche')) warmFilm('f33_noche', 6000);
-    const r = await playStoryFilm('f32_caida', () => talk(lines('b93_caida')), undefined, { hold: true, next: () => quietOn(0.05) });
+    // (P3-CINE) the win cuts straight to it (cut: no transformation of the battle first; it was warmed during the fight)
+    const r = await playStoryFilm('f32_caida', () => talk(lines('b93_caida')), undefined, { hold: true, cut: true, next: () => quietOn(0.05) });
     if (r === 'interrupted') return 'interrupted';
     quietOn(1.5);
     // the film ends on the Bitácora's card (K11): the director doesn't show it a second time
@@ -311,7 +312,8 @@ async function h94(): Promise<FlowResult> {
   if (!desayuno) return 'interrupted';
   // F34 (2/2): the blow — it rides the theme that is still playing (FilmDef.join: no restart), quieter, and cuts it
   // dry at its end; its last frame holds until the stroke is up (no loading screen: the death runs on the cut)
-  if (!(await filmStep('b94_golpe', 'f34_golpe', 'b94_amanecer', A.golpe, { hold: true }))) return 'interrupted';
+  // (P3-CINE) a hard cut into the blow: no transformation of the world first (film/morph.ts) — it comes in the middle
+  if (!(await filmStep('b94_golpe', 'f34_golpe', 'b94_amanecer', A.golpe, { hold: true, cut: true }))) return 'interrupted';
   // F34 (3/3): the stroke — «…Entonces la luz primero.», «te mato—», «…Ah.» (CINE split it off F34 2/3, whose music
   // stops dry at A8). QA-P3: it was never played. Only before SADIE (an old save past SADIE never sees it after); its
   // fallback lines only when F34 (2/3) was a film (else golpe's fallback already said them)

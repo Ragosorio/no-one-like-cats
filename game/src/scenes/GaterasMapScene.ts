@@ -1448,7 +1448,16 @@ export class GaterasMapScene extends Scene {
     const def = node ? gateraBattleDef(n.dim, node) : undefined;
     if (!node || !def) return;
     this.selected = { dim: n.dim, node };
-    const card = new GateraCard(n.dim, node, def, n.state, { onClose: () => this.closeCard(), onSail: () => this.sail() });
+    this.selectedNode = n;
+    // (P3-CINE) its presentation film warms while the card is read: ZARPAR then goes straight into the transformation
+    void import('../app/stageIntro').then((m) => m.warmStageFilm(n.dim, /^\d+$/.test(node) ? Number(node) : node)).catch(() => undefined);
+    const card = new GateraCard(n.dim, node, def, n.state, {
+      onClose: () => {
+        this.closeCard();
+        void import('../app/stageIntro').then((m) => m.dropStageFilm()).catch(() => undefined);
+      },
+      onSail: () => this.sail(),
+    });
     const gp = this.toLocal(n.getGlobalPosition());
     const rr = n.r * this.cam.s;
     const right = gp.x < W / 2;
@@ -1470,8 +1479,18 @@ export class GaterasMapScene extends Scene {
     this.card = null;
     c.hide();
   }
+  /** (P3-CINE) the node the boat sails from: the film's transformation leans into it (film/index.ts › sceneFocus) */
+  private selectedNode: GNode | null = null;
+  private sailNode: GNode | null = null;
+  filmFocus(): [number, number] | null {
+    const n = this.sailNode;
+    if (!n || n.destroyed || !this.parent) return null;
+    const p = this.parent.toLocal(n.getGlobalPosition());
+    return [p.x, p.y];
+  }
   /** ZARPAR on the selected stage ({ dim, node }) */
   private sail() {
+    this.sailNode = this.selectedNode;
     const sel = this.selected;
     this.closeCard();
     if (sel) void startGateraBattle(sel.dim, /^\d+$/.test(sel.node) ? Number(sel.node) : sel.node);
