@@ -1,6 +1,8 @@
 /**
  * El Podio — lobby: the league ladder (5 rivals, the last one is the champion), your cat vs the rival
  * (both alive on the stage), their 4 power cards, element matchup, cross-mode bonuses, cat picker and ¡A PELEAR!
+ * After the Parte III: the COPA FUERA DE LA CAJA, a row of its own (the tab over the ladder): eight challenges in order,
+ * anchored to your league, each paying its Heroico once (state/sys/podio.ts copa*).
  */
 import { Container, Graphics, Text } from 'pixi.js';
 import gsap from 'gsap';
@@ -43,7 +45,13 @@ import {
   settleBank,
   suggestCats,
   xpNeed,
+  copaAnchor,
+  copaOpen,
+  copaOutlook,
+  copaRival,
 } from '../state/sys/podio';
+import { copaChallenges } from '../state/sys/postp3';
+import { POST_CHAMPIONS, POST_COPA } from '../data/postp3/reglas';
 
 /**
  * What actually raises this cat's Podio cap: feeding it on the island — unless the cat already sits at
@@ -58,8 +66,11 @@ export function podioCapAdvice(cat: OwnedCat): string {
 }
 
 export interface LobbyOpts {
-  onFight: (uid: string, lg: number, bout: number) => void;
+  /** `copa` = a challenge of the Copa Fuera de la Caja (its champion id) instead of the ladder's (lg, bout) */
+  onFight: (uid: string, lg: number, bout: number, copa?: string) => void;
   onExit: () => void;
+  /** open on this Copa challenge (its row shown) */
+  copa?: string;
   /** open on this rival (a past league being browsed); default: your frontier */
   lg?: number;
   bout?: number;
@@ -104,6 +115,9 @@ export class Lobby extends Container {
   private page = 0;
   private body = new Container();
   private cats: BattleCat[] = [];
+  /** the Copa challenge picked (its row is shown); null = the ladder */
+  private copa: string | null = null;
+  private view: 'ladder' | 'copa' = 'ladder';
 
   constructor(private o: LobbyOpts) {
     super();
@@ -114,15 +128,19 @@ export class Lobby extends Container {
       this.lg = o.lg;
       this.bout = o.bout;
     }
+    if (o.copa && copaRival(o.copa)) {
+      this.copa = o.copa;
+      this.view = 'copa';
+    }
     const owned = G.s.cats;
-    const r = rivalAt(this.lg, this.bout);
+    const r = this.rival;
     this.selUid = owned.some((c) => c.uid === p.pick) ? p.pick : suggestCats(r)[0]?.uid ?? owned[0]?.uid ?? '';
     this.addChild(this.body);
     this.build();
   }
 
   get rival(): RivalDef {
-    return rivalAt(this.lg, this.bout);
+    return (this.copa && copaRival(this.copa)) || rivalAt(this.lg, this.bout);
   }
   get cat(): OwnedCat | undefined {
     return G.s.cats.find((c) => c.uid === this.selUid);
@@ -139,7 +157,9 @@ export class Lobby extends Container {
     const cat = this.cat;
     if (cat) settleBank(cat);
     this.buildTop();
-    this.buildLadder();
+    if (this.view === 'copa') this.buildCopa();
+    else this.buildLadder();
+    this.buildCopaTab();
     if (cat) this.buildMine(cat, r);
     this.buildRival(r);
     this.buildStage(cat, r);
@@ -314,6 +334,101 @@ export class Lobby extends Container {
     this.body.addChild(c);
   }
 
+  // ------------------------------------------------------------------ after the Parte III: the Copa Fuera de la Caja
+  /** the switch over the ladder: ESCALAFÓN · COPA (only once the Copa has a challenge) */
+  private buildCopaTab() {
+    if (!copaOpen()) return;
+    const list = copaChallenges();
+    const won = list.filter((c) => c.paid).length;
+    const tabs: [string, 'ladder' | 'copa'][] = [
+      ['ESCALAFÓN', 'ladder'],
+      [`${POST_COPA.name} · ${won}/${list.length}`, 'copa'],
+    ];
+    const c = new Container();
+    let x = 0;
+    for (const [label, v] of tabs) {
+      const on = this.view === v;
+      const t = txt(label, { fontFamily: F.bebas, fontSize: 24, fill: on ? C.ink : C.paper, letterSpacing: 2 });
+      t.position.set(14, 4);
+      const b = new Container();
+      b.addChild(new Graphics().rect(0, 0, t.width + 28, 36).fill(on ? C.yellow : C.ink).stroke({ width: 3, color: on ? C.ink : C.yellow, alignment: 1 }), t);
+      b.position.set(x, 0);
+      x += t.width + 36;
+      if (!on) {
+        b.eventMode = 'static';
+        b.cursor = 'pointer';
+        b.on('pointertap', () => {
+          sfx('click');
+          this.view = v;
+          this.copa = v === 'copa' ? (list.find((k) => k.state === 'next') ?? list[list.length - 1]).champion.id : null;
+          const sp = v === 'copa' ? list.map((k) => k.species) : [0, 1, 2, 3, 4].map((i) => rivalAt(this.lg, i).species);
+          void ensureCats(sp).then(() => {
+            if (this.destroyed) return;
+            this.o.onBrowse?.(this.rival);
+            this.build();
+          });
+        });
+      }
+      c.addChild(b);
+    }
+    // next to ← ISLA (the arena's own title owns the top center)
+    c.position.set(250, 44);
+    this.body.addChild(c);
+  }
+
+  /** the Copa's row: the challenges in order — the paid ones (rematch), the next one, the sealed ones after it */
+  private buildCopa() {
+    const list = copaChallenges();
+    const c = new Container();
+    const gap = 96;
+    const n = list.length;
+    c.addChild(new Graphics().moveTo(0, 0).lineTo(gap * Math.max(0, n - 1), 0).stroke({ width: 6, color: C.ink }));
+    list.forEach((ch, i) => {
+      const sel = ch.champion.id === this.copa;
+      const size = 74;
+      const node = new Container();
+      node.addChild(catPortrait(ch.species, size, { ring: sel ? C.yellow : ch.state === 'next' ? C.pinkHot : C.ink, grayscale: ch.state === 'sealed' }));
+      if (ch.state === 'sealed') {
+        // its silhouette and its box, nothing more
+        const veil = new Graphics().circle(0, 0, size / 2).fill({ color: C.ink, alpha: 0.72 });
+        const q = txt('?', { fontFamily: F.poster, fontSize: 38, fill: C.paper });
+        q.anchor.set(0.5);
+        node.addChild(veil, q);
+      } else if (ch.paid) {
+        const tick = new Graphics().circle(size / 2 - 6, -size / 2 + 6, 14).fill(C.green).stroke({ width: 3, color: C.ink });
+        tick.moveTo(size / 2 - 13, -size / 2 + 6).lineTo(size / 2 - 8, -size / 2 + 11).lineTo(size / 2, -size / 2 + 1).stroke({ width: 4, color: C.paper });
+        node.addChild(tick);
+      }
+      const lab = txt(`RETO ${ch.champion.order}`, { fontFamily: F.bebas, fontSize: 20, fill: sel ? C.yellow : C.paper, letterSpacing: 2, stroke: { color: C.ink, width: 5 } });
+      lab.anchor.set(0.5, 0);
+      lab.y = size / 2 + 4;
+      const sub = txt(ch.state === 'paid' ? 'REVANCHA' : `×${ch.champion.mult.toFixed(2)}`, { fontFamily: F.bebas, fontSize: 17, fill: ch.state === 'next' ? C.yellow : C.paper, letterSpacing: 1, stroke: { color: C.ink, width: 4 } });
+      sub.anchor.set(0.5, 0);
+      sub.y = size / 2 + 26;
+      node.addChild(lab, sub);
+      node.x = i * gap;
+      if (ch.state !== 'sealed') {
+        node.eventMode = 'static';
+        node.cursor = 'pointer';
+        node.on('pointertap', () => {
+          sfx('click');
+          this.copa = ch.champion.id;
+          this.o.onBrowse?.(this.rival);
+          this.build();
+        });
+      }
+      if (sel) gsap.to(node.scale, { x: 1.08, y: 1.08, duration: 0.6, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+      c.addChild(node);
+    });
+    const note = txt(`CADA RETO SE MIDE CON EL CAMPEÓN DE TU LIGA (${league(copaAnchor()).name}) · PAGA SU HEROICO UNA VEZ · PERDER NO CUESTA NADA`, { fontFamily: F.bebas, fontSize: 18, fill: C.paper, letterSpacing: 1, stroke: { color: C.ink, width: 4 } });
+    note.anchor.set(0.5, 0);
+    note.position.set((gap * Math.max(0, n - 1)) / 2, 100);
+    if (note.width > 720) note.scale.set(720 / note.width);
+    c.addChild(note);
+    c.position.set(W / 2 - (gap * Math.max(0, n - 1)) / 2, 150);
+    this.body.addChild(c);
+  }
+
   // ------------------------------------------------------------------ your cat
   private buildMine(cat: OwnedCat, r: RivalDef) {
     const def = catDef(cat.species);
@@ -420,13 +535,15 @@ export class Lobby extends Container {
     const pw = 560;
     const c = new Container();
     const cat = this.cat;
-    const out = cat ? duelOutlook(cat, this.lg, this.bout) : null;
+    const out = cat ? (this.copa ? copaOutlook(cat, this.copa) : duelOutlook(cat, this.lg, this.bout)) : null;
     const kind = out?.kind ?? (isReplay(this.lg, this.bout) ? 'repeat' : 'frontier');
     c.addChild(panel(pw, 610, r.champion ? 0xfff0c8 : C.paper));
     const head = new Graphics().rect(0, 0, pw, 46).fill(kind === 'first' ? C.pinkHot : r.champion ? C.red : C.ink);
     const who = cat ? cat.name.toUpperCase() : 'TU GATO';
-    const title =
-      kind === 'first'
+    const reto = r.copa ? POST_CHAMPIONS.find((k) => k.id === r.copa) : null;
+    const title = reto
+      ? `${POST_COPA.name} · RETO ${reto.order} DE ${copaChallenges().length}${kind === 'repeat' ? ' · REVANCHA' : ''}`
+      : kind === 'first'
         ? `${r.champion ? 'CAMPEÓN' : `RIVAL ${this.bout + 1}`} · PRIMERA VEZ DE ${who}`
         : kind === 'repeat'
           ? `${r.champion ? 'CAMPEÓN' : `RIVAL ${this.bout + 1}`} · REVANCHA`
@@ -527,7 +644,7 @@ export class Lobby extends Container {
     t.position.set(16, 6);
     c.addChild(t);
     const sel = this.cat;
-    if (sel) {
+    if (sel && !this.copa) {
       const p = ps();
       const past = pendingFor(sel.uid).filter((x) => isReplay(x.lg, x.bout));
       const label = past.length
@@ -569,7 +686,7 @@ export class Lobby extends Container {
         b.position.set(136, 20 + k * 28);
         card.addChild(b);
       });
-      if (!catBeat(cat.uid, this.lg, this.bout)) {
+      if (!this.copa && !catBeat(cat.uid, this.lg, this.bout)) {
         // this cat has never beaten this rival: full XP + orbs
         const tag = new Container();
         const tt = txt('+XP', { fontFamily: F.bebas, fontSize: 18, fill: C.paper, letterSpacing: 1 });
@@ -613,7 +730,7 @@ export class Lobby extends Container {
     const fight = new Button('¡A PELEAR!', () => {
       if (!cat) return;
       ps().pick = cat.uid;
-      this.o.onFight(cat.uid, this.lg, this.bout);
+      this.o.onFight(cat.uid, this.lg, this.bout, this.copa ?? undefined);
     }, { w: 360, h: 150, color: C.pinkHot, textColor: C.paper, size: 58, disabled: !cat });
     fight.position.set(W - 30 - 370, H - 206);
     gsap.to(fight.face, { y: -4, duration: 0.5, yoyo: true, repeat: -1, ease: 'sine.inOut' });
@@ -637,6 +754,11 @@ function rewardLine(o: DuelOutlook, cat: OwnedCat, lg: number): string {
   const mult = o.catchup > 1.01 ? ` (x${o.catchup.toFixed(1)} por ir atrás)` : '';
   const orbs = o.orbs ? `${o.orbs} orbe${o.orbs > 1 ? 's' : ''} de ${name}` : 'sin orbes (liga vieja)';
   const cap = o.capped ? (o.keepXp ? ' En su tope: la XP se guarda.' : ' En su tope: no sube.') : '';
+  // the Copa Fuera de la Caja (state/sys/podio.ts copaOutlook)
+  if (o.copa) {
+    if (o.prize) return `SI GANAS: ¡${catDef(o.prize).name.toUpperCase()} (${RARITY[catDef(o.prize).rarity].name}) A TU ISLA! ${o.gems} Ojos de Gato, ${o.orbs} orbes y +${o.xp} XP. Perder no cuesta nada.${cap}`;
+    return `SI GANAS: +${o.xp} XP de revancha${mult}, ${orbs} y oro de revancha. Su Heroico ya es tuyo.${cap}`;
+  }
   if (o.kind === 'frontier') {
     if (o.firstChampion) {
       const pz = o.prize ? `¡${catDef(o.prize).name.toUpperCase()} (${RARITY[catDef(o.prize).rarity].name}) A TU ISLA! ` : '';

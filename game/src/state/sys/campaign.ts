@@ -18,7 +18,7 @@ import { battleCatFrom } from '../../battle/catShots';
 import { activeFormId } from './forms';
 import { bareSpecies } from './missionGoals';
 import { weaponShot } from '../../battle/weapons';
-import { isP3Cat } from './multidim';
+import { isP3Cat, isPostCat } from './multidim';
 import type { BattleSpec, BattleResult, BattleIntro } from '../../scenes/BattleScene';
 import type { BossConfig, StageRules } from '../../battle/sim';
 import type { ShotDef } from '../../battle/types';
@@ -214,7 +214,7 @@ function bossCrew(zone: number): string[] {
   if (zone === 6) return ['r_astral', 'r_arcanito', 'r_solar'];
   const els = b.elements.length ? b.elements : ZONES[zone - 1].elements;
   // (never a cat of the Parte III boxes: El Gritito is a Sonido common — multidim.ts isP3Cat)
-  const crewIds = CATS.filter((c) => c.rarity === 'common' && !isP3Cat(c) && els.includes(c.elements[0])).map((c) => c.id);
+  const crewIds = CATS.filter((c) => c.rarity === 'common' && !isP3Cat(c) && !isPostCat(c) && els.includes(c.elements[0])).map((c) => c.id);
   return [captain, ...crewIds.slice(0, 2)];
 }
 

@@ -19,18 +19,38 @@ import gaterasHistoria from './gateras/historia.json';
 // Parte III — its collectible cats (GATOS-DATOS: docs/part-iii/mecanicas-v2/05-gatos-coleccionables.md). Appended AFTER
 // every older species, so no Catdex number moves. A MULTIDIMENSIONAL only merges with the flag on (state/sys/multidim.ts)
 import gaterasEspecies from './gateras/especies.json';
+// After the Parte III — the cats that only show up once it's over (state/sys/postp3.ts): appended AFTER the box cats, so
+// no Catdex number moves; checked on load (data/postp3/validate.ts). Shipped empty: nothing changes until cats land
+import postEspecies from './postp3/especies.json';
+import { validatePostCats } from './postp3/validate';
+import { ContentConflict } from './mergeContent';
 import { P3_MULTIDIM } from '../state/sys/multidim';
+// (balance.json through econ, never as a bare JSON import: scripts/verify-missions.ts merges every `./*.json` import here)
+import { BAL } from '../state/econ';
 
 const p3Especies = {
   ...gaterasEspecies,
   cats: (gaterasEspecies.cats as { rarity: string }[]).filter((c) => P3_MULTIDIM.on || c.rarity !== 'multidimensional'),
 };
+const postCats = (postEspecies.cats as { rarity: string }[]).filter((c) => P3_MULTIDIM.on || c.rarity !== 'multidimensional');
 const raw = mergeContent(base as unknown as Record<string, unknown>, rupturasEspecies as Record<string, unknown>,
   rupturasHistoria as Record<string, unknown>,
   ...([especiesO2, historiaO2, especiesO3, historiaO3, especiesO4, historiaO4] as Record<string, unknown>[]),
   gaterasHistoria as Record<string, unknown>,
   p3Especies as Record<string, unknown>,
+  { cats: postCats } as Record<string, unknown>,
 );
+{
+  // a bad post cat stops the game in dev and in the tests (like a content conflict); in production it's only a warning
+  const problems = validatePostCats(postCats as Parameters<typeof validatePostCats>[0], {
+    balance: BAL as unknown as Record<string, unknown>,
+    roles: (raw as { roles: { id: string }[] }).roles.map((r) => r.id),
+    elements: (raw as { elements: { id: string }[] }).elements.map((e) => e.id),
+  });
+  const env = (import.meta as { env?: { DEV?: boolean; MODE?: string } }).env;
+  if (problems.length && (!env || env.DEV || env.MODE === 'test')) throw new ContentConflict(problems.join('\n'));
+  for (const p of problems) console.warn('[content]', p);
+}
 // materials[] is an id-keyed array, so a module can't reach into a material's `mult`: a new element brings its hull
 // multipliers as `materialMult[element][material]` (rupturas/especies.json) and they're folded in here — only where
 // Part I has no value (append-only, like the merge)
@@ -103,6 +123,23 @@ export interface CatDef {
   origin?: string;
   /** Parte III: how it is collected — data, not code (state/sys/p3cats.ts; docs/part-iii/mecanicas-v2/05-gatos-coleccionables.md) */
   p3?: P3Source;
+  /** after the Parte III: its table and its weight there (state/sys/postp3.ts; data/postp3/reglas.ts) */
+  post?: PostSource;
+}
+/**
+ * Where a post-Parte III cat comes from (data/postp3/especies.json), only once the Parte III is over:
+ *   source   `casino:<game>[:<sub>]` (that table's Multiverse pool) or `podio:<champion>` (data/postp3/reglas.ts)
+ *   weight   its relative weight inside that pool (2 = twice as often as a 1)
+ */
+export interface PostSource {
+  source: string;
+  weight: number;
+  /** its showcase on one of the coin tables (data/postp3/reglas.ts VITRINA_TABLES), or its big table's name */
+  vitrina?: string;
+  /** the showcase's star */
+  star?: boolean;
+  /** the Catdex sets it belongs to (not loaded yet) */
+  sets?: string[];
 }
 /**
  * Where a Parte III cat comes from (mecanicas-v2/02-loop.md §4): never the Portal, the Casino nor the Resonance.

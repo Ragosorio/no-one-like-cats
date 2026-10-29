@@ -61,6 +61,6 @@ export function plinkoDrop(cur: Cur, tier: PlinkoTier, stake: number, rng: Rng =
   const path = plinkoPath(rng);
   const slot = slotOf(path);
   const mult = PLINKO_TABLES[tier][slot];
-  const s = settle('plinko', cur, stake, payout(stake, mult), `PLINKO x${mult}`);
+  const s = settle('plinko', cur, stake, payout(stake, mult), `PLINKO x${mult}`, { maxMult: PLINKO_MATH[tier].max });
   return { ...s, tier, path, slot, mult };
 }

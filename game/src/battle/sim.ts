@@ -36,6 +36,8 @@ import { lateBossInit, lateBossStart, lateEnterPhase, wardIntercept, lateCellMul
 import { ULTS, ultBudgetFrac, ultTicks } from './ults';
 // Parte III · the MULTIDIMENSIONAL powers (player side only; rules and the 25 powers in multidim.ts)
 import { MD_TUNE, MD_ULTS, mdAff, mdAfterFire, mdAfterHit, mdAtkMul, mdCatMul, mdCellMul, mdChain, mdDodge, mdEaten, mdEcho, mdExtraShots, mdOn, mdPaths, mdShot, mdSilenced, mdStartTurn } from './multidim';
+// after the Parte III: the post Multidimensional powers' rules (battle/multidimPost/hooks.ts, re-exported by multidim.ts)
+import { mdAbsorb, mdAfterShot, mdAltPaths, mdBench, mdFire, mdHitAdjust, mdImpact, mdMeterMul } from './multidim';
 import { cataInit, cataStart, cataCrack, sealOpen } from './cataclysm';
 import type { CataCfg, CataId, CataState } from './cataclysm';
 // Parte II · Oleada 3: SINCRO — an explicit player input, never the music itself (rules in sincro.ts)
@@ -743,6 +745,8 @@ export class Battle {
   cannons(side: number) {
     // DUELO LIMPIO (Itō): one shot per turn, no volleys (actRules.ts)
     if (dueloLimpio(this)) return [];
+    // a post Multidimensional power: stopped time / the truce (multidimPost)
+    if (mdBench(this, side)) return [];
     // the flying gargoyle's ship no longer fires
     if (this.boss?.flying && this.cfg.boss?.side === side) return [];
     return this.sides[side].ship.modules.filter((m) => {
@@ -767,6 +771,7 @@ export class Battle {
 
   // ---------- availability
   shooters(side: number) {
+    if (mdBench(this, side)) return [];
     const list = this.sides[side].cats.filter((c) => !c.ko && c.stunned <= 0 && c.cooldown <= 0);
     // phase 3 gargoyle: only the flying gargoyle acts
     if (this.boss?.flying && this.cfg.boss?.side === side) return list.filter((c) => this.isFlying(c));
@@ -1277,6 +1282,8 @@ export class Battle {
     // Multidimensional powers: Super Siamés ×1.5, the eras (FEARLESS ×1.3, RED, REPUTATION), frightened ghosts ×0.5
     atk *= mdAtkMul(this, side, cat);
     shot = mdShot(this, side, shot);
+    // …and the post ones: who fires, the high ground, the pill, the upgrades, the assist, the punchline
+    atk *= mdFire(this, side, cat, ult && !!cat, cannonId, events);
     // Eclipse: the next cat shot of this side hits ×2
     if (cat && s.buffs.empower > 0) {
       atk *= 2;
@@ -1308,7 +1315,11 @@ export class Battle {
       const frac = mdPower ? (vsBoss ? MD_TUNE.bossFrac : MD_TUNE.frac) : vsBoss ? 0.15 : ultBudgetFrac(cat.def.ultKey ?? cat.def.catId, cat.def.stars);
       this.budget = { side: 1 - side, left: Math.round((foe.ship.initialMax?.[0] ?? 0) * frac) };
     }
-    if (special) {
+    // post powers: portals, the deduced volley, the offer, the barrel / the cake, the stopped time (multidimPost)
+    const alt = mdAltPaths(this, side, cat, ult && !!cat, cannonId, shot, atk, origin, angle, power, windNow, events);
+    if (alt) {
+      paths = alt;
+    } else if (special) {
       paths = special(this, { side, cat: cat!, shot, atk, origin, angle, power, wind: windNow, events });
     } else {
       paths = this.buildPaths(shot, origin, angle, power, windNow, side);
@@ -1318,6 +1329,8 @@ export class Battle {
       // EL FLOW (Gato Malo): every cat shot brings its echo
       if (cat && !ult) paths.push(...mdEcho(this, side, shot, atk, origin, angle, power, windNow, paths.length, events));
     }
+    // …and their extra shots: the copy, the banana, the counter, the clones, the catch thrown back, the solved case
+    paths.push(...mdAfterShot(this, side, cat, ult && !!cat, cannonId, shot, atk, paths, events));
     scAfterFire(this, side, shot, atk, events);
     umAfterFire(this, side, shot, events);
     this.budget = null;
@@ -1611,6 +1624,13 @@ export class Battle {
 
   // ---------- damage resolution
   resolveImpact(attSide: number, shot: ShotDef, atk: number, x: number, y: number, ev: BattleEvent[], path: number, at: number, final: boolean) {
+    // post Multidimensional powers: caught, swallowed by a clone, rubber, the high ground — or the undercover's decoy
+    const pre = mdImpact(this, attSide, shot, x, y, ev, path, at);
+    if (pre === false) return;
+    if (pre) {
+      x = pre.x;
+      y = pre.y;
+    }
     // the sky: a floating islet took this one (cielo.ts)
     if (skyIsletImpact(this, attSide, shot, atk, x, y, ev, path, at)) return;
     // FASES: a planetoid / cloud bank took this one, or a hull shield absorbed it (fases.ts)
@@ -1899,6 +1919,8 @@ export class Battle {
 
   /** ultimate damage cap (see fire): clamp a structure hit on the capped side */
   cap(side: number, dmg: number) {
+    // a post power's sugar heart swallows structure damage first
+    dmg = mdAbsorb(this, side, dmg);
     const b = this.budget;
     if (!b || b.side !== side) return dmg;
     const d = Math.max(0, Math.min(dmg, b.left));
@@ -2154,7 +2176,9 @@ export class Battle {
     // Parte 2: a sound wave stuns (then the cat is SORDO for a while)
     if (p2PostHitCat(this, c, el, 1 - c.side)) stunned = true;
     // Multidimensional powers: frightened ghosts ×2, a THREAT ×1.5, La Gatoconda's sfumato ×0.5
-    const real = Math.round(dmg * aff * iceBreak * p2m * (c.exposed && !direct ? 1.5 : 1) * (c.def.limitation === 'glass' ? 3 : 1) * mdCatMul(this, c));
+    let real = Math.round(dmg * aff * iceBreak * p2m * (c.exposed && !direct ? 1.5 : 1) * (c.def.limitation === 'glass' ? 3 : 1) * mdCatMul(this, c));
+    // post powers: the sugar heart, the rings, the alloy, Michimérica stepping in
+    real = mdHitAdjust(this, c, real, ev, path, at);
     c.hp -= real;
     c.ultCharge = Math.min(1, c.ultCharge + 0.15 * this.meterMul(c.side));
     const revived = c.hp <= 0 ? this.koOrRevive(c) : false;
@@ -2169,7 +2193,7 @@ export class Battle {
   meterMul(side: number) {
     const arc = this.sides[side].ship.modules.find((m) => m.kind === 'arcane' && !m.tag);
     // La Borracha · Karaoke: the singers' ultimates fill slower (mareo.ts)
-    return (arc && arc.alive ? 1 : 0.8) * mareoMeterMul(this, side);
+    return (arc && arc.alive ? 1 : 0.8) * mareoMeterMul(this, side) * mdMeterMul(this, side);
   }
 
   /** returns true if the cat used a second life */

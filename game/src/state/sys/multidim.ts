@@ -48,5 +48,11 @@ export const poolable = (r: string | undefined | null) => !isMultidim(r);
  * read it without the save: they never come out of the Portal, the Casino, the Resonance, the cat shop nor the Podio.
  */
 export const isP3Cat = (def: { obtain?: { source?: string } } | undefined | null) => !!def?.obtain?.source?.startsWith('p3:');
-/** may this species come out of a random pool (Portal, Casino, Resonance)? never a Multidimensional nor a Parte III cat */
-export const poolableCat = (def: { rarity: string; obtain?: { source?: string } }) => poolable(def.rarity) && !isP3Cat(def);
+/**
+ * A cat of AFTER the Parte III (data/postp3/especies.json: a `post` block, `obtain.source` 'post:…'). Pure on the data:
+ * it never enters the generic pools (Portal, Casino, Resonance, cat shop, the Podio's rivals); only its own table's
+ * Multiverse pool or its Podio champion give it, once the Parte III is over (state/sys/postp3.ts).
+ */
+export const isPostCat = (def: { obtain?: { source?: string }; post?: unknown } | undefined | null) => !!def?.post || !!def?.obtain?.source?.startsWith('post:');
+/** may this species come out of a random pool (Portal, Casino, Resonance)? never a Multidimensional, a Parte III cat nor a post cat */
+export const poolableCat = (def: { rarity: string; obtain?: { source?: string }; post?: unknown }) => poolable(def.rarity) && !isP3Cat(def) && !isPostCat(def);

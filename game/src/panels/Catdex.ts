@@ -15,7 +15,8 @@ import { CATS, CONTENT, catDef } from '../data/content';
 import { G } from '../state/game';
 import { BAL } from '../state/econ';
 import { canStarUp, checkSets, collState, dexStatus, dexVisible, setsCompleted, starNeed, takeSetCelebrations } from '../state/sys/cats';
-import { P3_MULTIDIM, isMultidim, isP3Cat } from '../state/sys/multidim';
+import { P3_MULTIDIM, isMultidim, isP3Cat, isPostCat } from '../state/sys/multidim';
+import { postWhereText } from '../state/sys/postp3';
 import { playPendingSets } from './collection/setPoster';
 import {
   dexCount,
@@ -991,7 +992,11 @@ class DetailSheet extends Container {
     stamp.position.set(X + RW - 420, top + 10);
     this.addChild(stamp);
     let y = top + 10;
-    if (isP3Cat(def)) {
+    if (isPostCat(def)) {
+      // after the Parte III: it never resonates — the rumor says which table gives it (state/sys/postp3.ts)
+      y = this.section('DÓNDE SALE', postWhereText(def), X, y, colW + 120, { size: 20 });
+      y = this.section('DESPUÉS DE LA PARTE III', 'No sale de la Resonancia ni de la tienda: viene del Multiverso, y solo después de la Parte III.', X, y, colW + 120, { color: C.ink });
+    } else if (isP3Cat(def)) {
       // Parte III: a box cat never resonates — the rumor says where it is (its source: data/gateras/especies.json)
       y = this.section('CÓMO SE CONSIGUE', possibleParents(def), X, y, colW + 120, { size: 20 });
       y = this.section('FUERA DE LA CAJA', 'No sale de la Resonancia, del Casino ni del Portal: viene de otra caja y llega por la historia.', X, y, colW + 120, { color: C.ink });
@@ -1028,6 +1033,9 @@ class DetailSheet extends Container {
       y += 110;
       const h = hintFor(def);
       if (h) y = this.section('PISTA', h, X, y, RW - 200, { italic: true, size: 26, color: C.violet });
+    } else if (isPostCat(def)) {
+      // after the Parte III: a sealed post cat (no table names it yet)
+      y = this.section('DESPUÉS DE LA PARTE III', 'Viene del Multiverso, pero todavía no sale en ninguna mesa.', X, y, RW - 200, { size: 22 });
     } else if (isP3Cat(def)) {
       // Parte III: a sealed box cat (no silhouette: it would spoil who it is)
       y = this.section('FUERA DE LA CAJA', 'Vive en otra caja. Lo vas a conocer en el camino: la historia, un rescate o una actividad de la Carta te lo presentan.', X, y, RW - 200, { size: 22 });

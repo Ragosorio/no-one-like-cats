@@ -6,7 +6,7 @@
 import { CATS, CatDef } from '../data/content';
 import { BAL, RarityId, catLevelForPower, catLevelMax } from '../state/econ';
 import PB from '../data/podio.json';
-import { isP3Cat } from '../state/sys/multidim';
+import { isP3Cat, isPostCat } from '../state/sys/multidim';
 
 export interface LeagueDef {
   n: number;
@@ -94,6 +94,8 @@ export interface RivalDef {
   /** target combat power */
   power: number;
   seed: number;
+  /** a challenge of the Copa Fuera de la Caja (its champion id), not a rival of the ladder (state/sys/podio.ts copaRival) */
+  copa?: string;
 }
 
 /** target power of a bout */
@@ -112,15 +114,16 @@ export function rival(lg: number, bout: number, islandSeed: number, elements: st
   const champion = bout >= PB.ladder.bouts_per_league - 1;
   const seed = hash(islandSeed ^ (lg * 97 + bout * 13 + 7));
   const okEl = (c: CatDef) => c.elements.every((e) => elements.includes(e));
-  // Parte III: the cats of the boxes never train in the Podio (their rivals stay exactly what they were: multidim.ts isP3Cat)
-  const okSecret = (c: CatDef) => (!c.secret || owned.has(c.id)) && !isP3Cat(c);
+  // Parte III: the cats of the boxes never train in the Podio (their rivals stay exactly what they were: multidim.ts isP3Cat);
+  // nor do the post-Parte III cats (only their Copa champion brings one: state/sys/podio.ts copaRival)
+  const okSecret = (c: CatDef) => (!c.secret || owned.has(c.id)) && !isP3Cat(c) && !isPostCat(c);
   // past the VACÍO, the trainers bring Heroicos (from VACÍO II) and Divinos (from VACÍO VI) — only the ones
   // you already have (a cat is a card: their copy plays by your copy's rules)
   const okRarity = (c: CatDef) =>
     lgd.rarities.includes(c.rarity) || (owned.has(c.id) && ((c.rarity === 'heroic' && lg >= 9) || (c.rarity === 'divine' && lg >= 13)));
   let pool = CATS.filter((c) => okRarity(c) && okEl(c) && okSecret(c));
   if (pool.length < 2) pool = CATS.filter((c) => lgd.rarities.includes(c.rarity) && okSecret(c));
-  if (!pool.length) pool = CATS.filter((c) => c.rarity === 'common' && !isP3Cat(c));
+  if (!pool.length) pool = CATS.filter((c) => c.rarity === 'common' && !isP3Cat(c) && !isPostCat(c));
   // a prize league's champion fights WITH the cat it pays (beat Zarpa to win Zarpa)
   const prizeId = champion ? (PB.champion_prizes as unknown as Record<string, string>)[String(lg)] : undefined;
   const def = (prizeId && CATS.find((c) => c.id === prizeId)) || pool[seed % pool.length];

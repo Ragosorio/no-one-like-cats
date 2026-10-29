@@ -5,6 +5,9 @@
  * the power's name (tests/multidimPowers.test.ts keeps the three in step). Design and numbers:
  * docs/part-iii/mecanicas-v2/07-poderes-multidimensionales.md. Text: Latin American Spanish, the player's voice («tú»).
  */
+// after the Parte III: the 60 post Multidimensionals (agent PODERES-2; registered ahead of their species)
+import { MULTIDIM_POWERS_POST } from './multidimPowersPost';
+
 export interface MultidimPower {
   /** the power's name, e.g. «DONUT OF DESTINY!» (the ultimate's shout) */
   name: string;
@@ -143,6 +146,8 @@ export const MULTIDIM_POWERS: Record<string, MultidimPower> = {
     short: 'Nada es gratis: lo que te rompan en 2 turnos, lo pagan',
     text: 'Tres monedas koban que rebotan, su pata llama a la suerte (+20 % de barra a tu tripulación) y NADA ES GRATIS: sus próximos 2 turnos, todo lo que rompan de tu lado se anota en su libreta. Después pagan el 80 % en sus mejores módulos (hasta un cuarto de su barco), si ella sigue en pie.',
   },
+  // ---- after the Parte III (data/multidimPowersPost.ts)
+  ...MULTIDIM_POWERS_POST,
 };
 
 export function multidimPower(species: string): MultidimPower | null {

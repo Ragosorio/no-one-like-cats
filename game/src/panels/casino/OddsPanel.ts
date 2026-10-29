@@ -26,20 +26,32 @@ import {
   owed,
 } from '../../state/sys/casino';
 import { BEGINNER, ESCAPE, GachaMode, HOT, LUMEN_SHARE, MODES, banner, expectedPulls, modeOdds, modesFor, pityCaps, pityLeft, rampTable, ratesTable, TIER_NAME } from '../../state/sys/gacha';
-import { CP, Seg, symbolSprite } from './kit';
+import { CP, Seg, clickable, symbolSprite } from './kit';
 import { TIER_COL } from './prizes';
+import { drawPostOdds, openPostOdds, postNote } from './postOdds';
+import { addVitrinaTab } from './vitrina';
+import { anyVitrinaLive } from '../../state/sys/postVitrina';
+import { POST_VITRINA } from '../../data/postp3/reglas';
+import type { Granted } from '../../state/sys/casino';
+import { postOdds, shareText } from '../../state/sys/postp3';
+import type { PostGame } from '../../data/postp3/reglas';
 
 const T = (s: string, size = 20, fill: number = C.ink, extra: Record<string, unknown> = {}) => txt(s, { fontFamily: F.ui, fontWeight: '700', fontSize: size, fill, ...extra });
 const P = (s: string, size = 30, fill: number = C.ink) => txt(s, { fontFamily: F.poster, fontSize: size, fill });
 const pct = (p: number) => (p >= 0.1 ? `${(p * 100).toFixed(1)}%` : p >= 0.01 ? `${(p * 100).toFixed(2)}%` : `${(p * 100).toFixed(3)}%`);
 const clear = (c: Container) => c.removeChildren().forEach((x) => x.destroy({ children: true }));
 
-export function openOdds(kind: 'slot' | 'roulette' | 'gacha' | 'rules', cur: Cur = 'gold', _stake = 0, bannerId?: string, sub: SlotTier | GachaMode = 0 as SlotTier) {
+/** `onVitrina`: after the Parte III, the roulette's VITRINA tab presents a throw with it (panels/casino/vitrina.ts) */
+export function openOdds(kind: 'slot' | 'roulette' | 'gacha' | 'rules', cur: Cur = 'gold', _stake = 0, bannerId?: string, sub: SlotTier | GachaMode = 0 as SlotTier, onVitrina?: (g: Granted) => void) {
   const title = kind === 'slot' ? 'Tabla de pagos' : kind === 'roulette' ? 'Ruleta: probabilidades' : kind === 'gacha' ? 'Probabilidades del portal' : 'Reglas de la casa';
   const m = new Modal(title, 1500, 900, { subtitle: 'TODO A LA VISTA · SIN LETRA CHIQUITA' });
-  const b = m.body;
+  const b = new Container();
+  m.body.addChild(b);
   if (kind === 'slot') slotOdds(b, cur, typeof sub === 'number' ? sub : 0);
-  else if (kind === 'roulette') rouletteOdds(b);
+  else if (kind === 'roulette') {
+    rouletteOdds(b);
+    if (onVitrina) addVitrinaTab(m, b, 'roulette', onVitrina);
+  }
   else if (kind === 'gacha') gachaOdds(b, bannerId, typeof sub === 'string' ? sub : 'normal');
   else rules(b);
   m.open();
@@ -50,12 +62,18 @@ export function openOdds(kind: 'slot' | 'roulette' | 'gacha' | 'rules', cur: Cur
 function slotOdds(root: Container, cur: Cur, tier0: SlotTier) {
   const b = new Container();
   root.addChild(b);
+  // after the Parte III: the MULTIVERSO tab (the post cats of the GATO NEGRO lines: state/sys/postp3.ts)
+  const post = !!postOdds({ game: 'slot' });
   const tabs = new Seg<number>(
-    SLOT_TIER_NAME.map((n, i) => ({ v: i, label: `RIESGO ${n}` })),
+    [...SLOT_TIER_NAME.map((n, i) => ({ v: i, label: `RIESGO ${n}` })), ...(post ? [{ v: 3, label: 'MULTIVERSO' }] : [])],
     tier0,
-    (v) => draw(v as SlotTier),
+    (v) => (v === 3 ? drawPost() : draw(v as SlotTier)),
     { w: 190, h: 40, size: 20, color: CP.pink, gap: 8 },
   );
+  const drawPost = () => {
+    clear(b);
+    drawPostOdds(b, { game: 'slot' }, 1420, 740);
+  };
   tabs.position.set(0, 4);
   root.addChild(tabs);
   b.position.set(0, 60);
@@ -131,7 +149,8 @@ function slotOdds(root: Container, cur: Cur, tier0: SlotTier) {
       b.addChild(n);
     });
   };
-  draw(tier0);
+  if ((tier0 as number) === 3 && post) drawPost();
+  else draw(Math.min(2, tier0) as SlotTier);
 }
 
 // ------------------------------------------------------------------ roulette
@@ -218,6 +237,15 @@ function gachaOdds(root: Container, id: string | undefined, mode0: GachaMode) {
     st.position.set(0, y0);
     b.addChild(st);
     y0 += 34;
+    // after the Parte III: this banner's Multiverse (state/sys/postp3.ts) — one line here, the whole table one tap away
+    const pn = bn.hasCats ? postNote({ game: 'gacha', sub: bn.id }) : null;
+    if (pn) {
+      const pl = T(`${pn}  ›  VER LOS GATOS DEL MULTIVERSO`, 16, C.inkBlue);
+      pl.position.set(0, y0 - 8);
+      b.addChild(pl);
+      clickable(pl, () => openPostOdds({ game: 'gacha', sub: bn.id }));
+      y0 += 22;
+    }
     const table = ratesTable(bn, mode);
     let x = 0;
     const colW = Math.floor(1440 / Math.max(4, table.length));
@@ -311,6 +339,16 @@ function rules(b: Container) {
     'Mesas: Plinko, Duelo de Dados, Mayor o Menor, Bingo Exprés, Rasca y Gana y Cajas Misteriosas. Cada una trae su TABLA DE PAGOS con la probabilidad exacta de cada resultado y su retorno (94–97%).',
     'Cada tirada de la Tragamichis y la Ruleta es independiente. En el Portal, en cambio, las garantías sí se acumulan: mientras más tiras sin legendario, más cerca está.',
   ];
+  // after the Parte III: which tables give the Multiverse's cats, and how (state/sys/postp3.ts)
+  const live = (['gacha', 'slot', 'caja', 'eterno'] as PostGame[]).map((g) => postOdds({ game: g, sub: g === 'gacha' ? 'michi' : undefined }) ?? (g === 'gacha' ? postOdds({ game: g, sub: 'holo' }) : null)).filter((o) => !!o);
+  if (anyVitrinaLive())
+    lines.push(
+      `DESPUÉS DE LA PARTE III · VITRINAS: Plinko, Dados, Mayor o Menor, Bingo, Rasca, Cajas y la Ruleta tienen su vitrina de 8 gatos. Cada apuesta de ${POST_VITRINA.minChips} fichas o más (o de ¼ del tope en oro) tiene ${(POST_VITRINA.chance * 100).toFixed(1)}% de abrirla, aparte de la apuesta. Un gato a más tardar cada ${POST_VITRINA.pity.cat} tiros, un Multidimensional cada ${POST_VITRINA.pity.md}, y a los ${POST_VITRINA.pity.spark} eliges. LA CASA TE DEBE también paga un Sello (${POST_VITRINA.sellos.perThrow} = un tiro). Todo en la pestaña VITRINA de cada mesa.`,
+    );
+  if (live.length)
+    lines.push(
+      `DESPUÉS DE LA PARTE III: el Multiverso se cuela en ${live.map((o) => `${o!.place} (${shareText(o!.share)} de sus legendarios o míticos)`).join(', ')}. Las probabilidades de esas mesas no cambian: solo cuál gato sale. Cada una trae su tabla MULTIVERSO con la probabilidad de cada gato y su garantía.`,
+    );
   let y = 0;
   for (const n of lines) {
     const t = T('·  ' + n, 22, C.ink, { wordWrap: true, wordWrapWidth: 1400, lineHeight: 29 });
@@ -318,4 +356,7 @@ function rules(b: Container) {
     b.addChild(t);
     y += t.height + 14;
   }
+  // after the Parte III the list runs past the panel (its body is ~760 tall under the band): shrink it to fit
+  const maxH = 760;
+  if (y - 14 > maxH) b.scale.set(maxH / (y - 14));
 }

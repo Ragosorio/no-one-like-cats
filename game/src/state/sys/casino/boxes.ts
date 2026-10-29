@@ -64,6 +64,6 @@ export function boxesPick(i: number): PickResult | null {
   }
   const total = s.picked.reduce((a, k) => a + s.contents[k], 0);
   cs().boxes = null;
-  const st = settle('boxes', s.cur, s.stake, payout(s.stake, total), `CAJAS x${+total.toFixed(2)}`);
+  const st = settle('boxes', s.cur, s.stake, payout(s.stake, total), `CAJAS x${+total.toFixed(2)}`, { maxMult: BOX_MATH[s.tier].max });
   return { box: i, value, done: { ...st, total, contents: s.contents, picked: s.picked } };
 }

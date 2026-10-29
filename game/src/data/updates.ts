@@ -20,6 +20,20 @@ export interface UpdateNote {
 
 export const UPDATES: UpdateNote[] = [
   {
+    id: '2026-10-29-despues-de-la-parte-iii',
+    date: '2026-10-29',
+    title: 'Después de la Parte III: 98 gatos nuevos',
+    luzterna: 'Dicen que cuando se acaba una historia, el casino se pone generoso, gordo. Yo de finales no sé nada. Tú termina la tuya y luego me cuentas.',
+    items: [
+      { tag: 'NUEVO', text: 'Al terminar la Parte III llegan 98 gatos nuevos: 60 Multidimensionales, 20 míticos, 10 legendarios y 8 heroicos. Antes de eso, ni se asoman.' },
+      { tag: 'NUEVO', text: 'Salen en el casino: el Portal, la tragamonedas, La Caja y el Eterno guardan su parte del Multiverso, con garantía. Cada mesa enseña sus probabilidades exactas.' },
+      { tag: 'NUEVO', text: 'VITRINAS en las otras 7 mesas: cada una exhibe 8 gatos y, con apuestas grandes, a veces se abre. Las rachas malas también te acercan: cuando la casa te debe, te paga en sellos.' },
+      { tag: 'NUEVO', text: 'La COPA FUERA DE LA CAJA, en el Podio: 8 campeones a la medida de tu liga, y cada uno te da un gato heroico la primera vez que le ganas.' },
+      { tag: 'NUEVO', text: 'Cada Multidimensional nuevo llega con su propio mundo al revelarse, su carta única en el Catdex y un poder propio que cambia la pelea.' },
+      { tag: 'ARREGLO', text: 'Las Reglas de la casa ya no se salen de su recuadro.' },
+    ],
+  },
+  {
     id: '2026-10-28-cartas-y-poderes',
     date: '2026-10-28',
     title: 'Cartas y Poderes Multidimensionales',

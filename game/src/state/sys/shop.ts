@@ -41,7 +41,7 @@ import { builders, globalGoldMult, nextHabitatCost, expansionState } from './isl
 import { hasHabitatSpace, roomForHabitats } from '../../island/placement';
 import { adopt, collState, ownsSpecies, prismaShopLeft, starNeed, starMax } from './cats';
 import { buyGemSlot, gemSlotInfo } from './resonance';
-import { isP3Cat } from './multidim';
+import { isP3Cat, isPostCat } from './multidim';
 import { EXPANSIONS } from '../../data/content';
 
 // ---------------------------------------------------------------- tunables (documented above)
@@ -264,7 +264,7 @@ export function buyOrbsGems(species: string) {
 /** commons of discovered elements, not secret; `owned` ones are shown but can't be bought */
 export function catOffers() {
   // Parte III: a cat of the boxes is never sold (El Gritito is a common): it comes from the story (multidim.ts isP3Cat)
-  return CATS.filter((c) => c.rarity === 'common' && !c.secret && !isP3Cat(c) && c.elements.every((e) => G.s.elements.includes(e))).map((c) => ({
+  return CATS.filter((c) => c.rarity === 'common' && !c.secret && !isP3Cat(c) && !isPostCat(c) && c.elements.every((e) => G.s.elements.includes(e))).map((c) => ({
     def: c,
     owned: ownsSpecies(c.id),
   }));
@@ -274,7 +274,7 @@ export function catPrice() {
 }
 export function buyCat(species: string) {
   const def = catDef(species);
-  if (def.rarity !== 'common' || def.secret || isP3Cat(def) || ownsSpecies(species)) return null;
+  if (def.rarity !== 'common' || def.secret || isP3Cat(def) || isPostCat(def) || ownsSpecies(species)) return null;
   if (!def.elements.every((e) => G.s.elements.includes(e))) return null;
   if (!G.spend({ gold: catPrice() })) return null;
   const r = adopt(species, { free: true });

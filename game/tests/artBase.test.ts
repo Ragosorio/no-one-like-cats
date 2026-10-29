@@ -94,16 +94,21 @@ describe('with an art base', () => {
       expect(sites[k].has(f)).toBe(true);
       expect(sites[1 - k].has(f)).toBe(false);
     }
-    // every file published before the second site existed stays on site 0 (pinned: its URL never moves) …
-    const pinned = (f: string) => PINNED_SHARD.has(shardKey(f));
-    for (const f of files) expect(sites[pinned(f) ? 0 : 1].has(f)).toBe(true);
+    // every file published before the second site existed stays on site 0 (pinned: its URL never moves); art pinned to
+    // site 1 (the post-Parte III batch, ARTE-POST 2026-10-28) stays there even when a third site opens …
+    const pin = (f: string) => PINNED_SHARD.get(shardKey(f));
+    const pinned = (f: string) => pin(f) === 0;
+    for (const f of files) expect(sites[pin(f) ?? 1].has(f)).toBe(true);
     expect(files.filter(pinned).length).toBeGreaterThanOrEqual(245); // the 122 cats (lite + full) + Luzterna of 2026-10-13
+    expect([...PINNED_SHARD.values()].every((k) => k === 0 || k === 1)).toBe(true);
     // … and new art (a slug that isn't pinned) goes to the newest site
     expect(shardFor('p3_nuevo_gato_cat', 2)).toBe(1);
     expect(resolveArtUrl('cats-svg/p3_nuevo_gato_cat.svg', cfg)).toBe('https://a.io/2/cats-svg/p3_nuevo_gato_cat.svg');
     expect(resolveArtUrl('cats-svg/lite/p3_nuevo_gato_cat.svg', cfg)).toBe('https://a.io/2/cats-svg/lite/p3_nuevo_gato_cat.svg');
     // a pinned file keeps exactly today's URL when a site is added
-    for (const s of SLUGS.filter((k) => PINNED_SHARD.has(k))) expect(resolveArtUrl(`cats-svg/${s}.svg`, artConfig('', 'https://a.io/1/,https://a.io/2/'))).toBe(`https://a.io/1/cats-svg/${s}.svg`);
+    for (const s of SLUGS.filter((k) => PINNED_SHARD.get(k) === 0)) expect(resolveArtUrl(`cats-svg/${s}.svg`, artConfig('', 'https://a.io/1/,https://a.io/2/'))).toBe(`https://a.io/1/cats-svg/${s}.svg`);
+    // a file pinned to site 1 keeps its URL when a third site is added
+    for (const s of SLUGS.filter((k) => PINNED_SHARD.get(k) === 1)) expect(resolveArtUrl(`cats-svg/${s}.svg`, artConfig('', 'https://a.io/1/,https://a.io/2/,https://a.io/3/'))).toBe(`https://a.io/2/cats-svg/${s}.svg`);
     // with one site nothing changes at all
     expect(shardFor('p3_nuevo_gato_cat', 1)).toBe(0);
     // a full-only site never carries lite/story

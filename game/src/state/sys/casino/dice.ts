@@ -127,7 +127,7 @@ export function duelDecide(choice: -1 | 0 | 1, rng: Rng = defaultRng): RoundResu
     const won = d.me >= DICE.need;
     cs().duel = null;
     res.won = won;
-    res.done = settle('dice', d.cur, d.stake, won ? payout(d.stake, DICE.mult) : 0, `DADOS ${d.me}-${d.cat}`);
+    res.done = settle('dice', d.cur, d.stake, won ? payout(d.stake, DICE.mult) : 0, `DADOS ${d.me}-${d.cat}`, { maxMult: DICE.mult });
   } else {
     d.round++;
     d.dice = [die(rng), die(rng)];

@@ -8,6 +8,7 @@
  *   - every bet is settled (paid, recorded, saved) the moment it is resolved; animations only present it.
  */
 import { Cur, GameId, Granted, MIN_GOLD_STAKE, MiniPrefs, canPay, creditWin, goldStakeCap, nice, payBet, prefs, rand, recordBet, stakeFor } from '../casino';
+import { vitrinaOnBet, vitrinaQualifies } from '../postVitrina';
 
 export type Rng = () => number;
 export const defaultRng: Rng = rand;
@@ -45,11 +46,20 @@ export interface Settled {
 export function pay(cur: Cur, stake: number) {
   payBet(cur, stake);
 }
-/** credit the payout, write the history line and fill / pay the LA CASA TE DEBE meter (saves) */
-export function settle(g: GameId, cur: Cur, stake: number, payout: number, label: string): Settled {
+/**
+ * Credit the payout, write the history line and fill / pay the LA CASA TE DEBE meter (saves). `vit` = the table's biggest
+ * multiplier (its gold cap) and, for Bingo, the stake per card and the cards: after the Parte III, each bet that counts
+ * rolls the table's Momento Vitrina apart (state/sys/postVitrina.ts); its throws ride along in `candy`.
+ */
+export function settle(g: GameId, cur: Cur, stake: number, payout: number, label: string, vit?: { maxMult: number; unit?: number; n?: number }): Settled {
   const p = Math.max(0, Math.floor(payout));
   creditWin(cur, p);
   const candy = recordBet(g, cur, stake, p, label);
+  if (vit) {
+    // gold counts from ¼ of the table's cap: the second option of its stake list (the only one, when the cap is tiny)
+    const opts = miniStakes('gold', vit.maxMult);
+    candy.push(...vitrinaOnBet(g, cur, vitrinaQualifies(cur, vit.unit ?? stake, opts[1] ?? opts[0] ?? Infinity), vit.n ?? 1));
+  }
   return { cur, stake, payout: p, candy };
 }
 export function payout(stake: number, mult: number) {

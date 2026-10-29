@@ -3,16 +3,21 @@
  * own universe in the reveal, and every universe belongs to a real Multidimensional cat.
  * 2026-10-28: every reference cat became Multidimensional (the owner). PENDING lists the ones whose universe is still
  * being built; each one leaves the list the moment its universe is registered — it ends empty.
+ * After the Parte III (data/postp3/especies.json, SISTEMA 2026-10-28): a post Multidimensional is checked the same way —
+ * its id goes into PENDING when its species lands without a universe, and leaves it when the universe is registered.
+ * Until then the reveal plays the plain one (catReveal: signatureOf → null) and its card the generic tunnel of boxes.
  */
 import { describe, expect, it } from 'vitest';
 
 const ESP = (await import('../src/data/gateras/especies.json')).default as { cats: { id: string; rarity: string }[] };
+const POST = (await import('../src/data/postp3/especies.json')).default as { cats: { id: string; rarity: string }[] };
 const { SIGNATURES } = await import('../src/fx/sequences/multiverse');
 
-const PENDING: string[] = [];
+const PENDING: string[] = [
+];
 
 describe('each Multidimensional cat brings its universe to the reveal', () => {
-  const multi = ESP.cats.filter((c) => c.rarity === 'multidimensional').map((c) => c.id);
+  const multi = [...ESP.cats, ...POST.cats].filter((c) => c.rarity === 'multidimensional').map((c) => c.id);
   it('every universe belongs to a Multidimensional cat; every Multidimensional cat has one (or is still PENDING)', () => {
     for (const id of Object.keys(SIGNATURES)) expect(multi, id).toContain(id);
     const missing = multi.filter((id) => !SIGNATURES[id]);

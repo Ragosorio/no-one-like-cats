@@ -113,6 +113,14 @@ export class PlinkoView extends MiniGame {
     this.hint.anchor.set(1, 0);
     this.hint.position.set(1420, 150);
     b.addChild(this.hint);
+    this.onVitrinaBadge(this.vitrinaShown);
+  }
+
+  /** after the Parte III the VITRINA badge owns the top right: the hint goes to one line under it */
+  protected override onVitrinaBadge(shown: boolean) {
+    if (!this.hint || this.hint.destroyed) return;
+    this.hint.text = shown ? 'Toca ¡SUELTA! varias veces: caen varias croquetas a la vez.' : 'Toca ¡SUELTA! varias veces:\ncaen varias croquetas a la vez.';
+    this.hint.position.set(1420, shown ? 166 : 150);
   }
 
   private drawSlots() {

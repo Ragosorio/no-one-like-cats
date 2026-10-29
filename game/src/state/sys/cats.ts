@@ -18,7 +18,8 @@ import {
   starMult,
   starOrbs,
 } from '../econ';
-import { isP3Cat } from './multidim';
+import { isP3Cat, isPostCat } from './multidim';
+import { postDexStatus, postP3Unlocked } from './postp3';
 
 export function catsOwned() {
   return G.s.cats;
@@ -217,6 +218,8 @@ export function dexStatus(species: string): DexStatus {
   const s = G.s.catdex[species];
   if (s) return s;
   const def = catDef(species);
+  // after the Parte III: a RUMOR while its table names it (its odds are on view), else a sealed card (state/sys/postp3.ts)
+  if (isPostCat(def)) return postDexStatus(def);
   // Parte III: a box cat is a sealed card until the story (or its orbs) names it — never a silhouette that spoils it
   if (def.secret || isP3Cat(def)) return 'unknown';
   return def.elements.every((e) => G.s.elements.includes(e)) ? 'silhouette' : 'unknown';
@@ -227,6 +230,8 @@ export function dexStatus(species: string): DexStatus {
  */
 export function dexVisible(species: string): boolean {
   const def = catDef(species);
+  // after the Parte III: a post cat only once it's over (or once it's known) — before, the Catdex is exactly what it was
+  if (isPostCat(def)) return !!G.s.catdex[species] || postP3Unlocked();
   if (!isP3Cat(def)) return true;
   return !!G.s.catdex[species] || !!G.s.ext?.gateras || G.s.missions.done.includes('H66');
 }

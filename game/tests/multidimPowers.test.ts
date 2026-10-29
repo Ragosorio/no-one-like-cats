@@ -7,12 +7,16 @@
  *   · a power is YOUR crew's only: the same cat on the enemy side plays exactly as before (the whole battle replays
  *     identically with the powers switched off), so no story battle (élites, captains, rosters) changes;
  *   · determinism (same seed → same battle) and the AI uses them (the estimate fires them).
+ * After the Parte III (data/postp3/especies.json, SISTEMA 2026-10-28): a post Multidimensional goes through every check
+ * here once its power lands; until then its id sits in PENDING (it fights with its generic ultimate, on both sides).
  */
 import { describe, expect, it } from 'vitest';
 import ESP from '../src/data/gateras/especies.json';
+import POSTESP from '../src/data/postp3/especies.json';
 
 const { ROLE_BY_ID, catDef, CAT_BY_ID } = await import('../src/data/content');
 const { MULTIDIM_POWERS, multidimPower } = await import('../src/data/multidimPowers');
+const { MDP_IDS } = await import('../src/data/multidimPowersPost');
 const MD = await import('../src/battle/multidim');
 const { makeBattle, autoBattle } = await import('../src/battle/autoplay');
 const { battleCatFrom } = await import('../src/battle/catShots');
@@ -23,7 +27,16 @@ type Spec = import('../src/scenes/BattleScene').BattleSpec;
 type Battle = import('../src/battle/sim').Battle;
 type Ev = import('../src/battle/sim').BattleEvent;
 
-const SPECIES = (ESP as { cats: { id: string; rarity: string }[] }).cats.filter((c) => c.rarity === 'multidimensional').map((c) => c.id);
+const P3_SPECIES = (ESP as { cats: { id: string; rarity: string }[] }).cats.filter((c) => c.rarity === 'multidimensional').map((c) => c.id);
+/** the post-Parte III Multidimensionals (data/postp3/especies.json) */
+const POST_MD = (POSTESP as { cats: { id: string; rarity: string }[] }).cats.filter((c) => c.rarity === 'multidimensional').map((c) => c.id);
+/**
+ * PENDING: post Multidimensionals whose power hasn't landed yet. A new id lands here with its species and leaves the
+ * moment its power is written (data/multidimPowers.ts + battle/multidim.ts MD_ULTS). It ends empty.
+ */
+const PENDING: string[] = [];
+/** every Multidimensional with its power: the Parte III's 25 + the post ones already out of PENDING */
+const SPECIES = [...P3_SPECIES, ...POST_MD.filter((id) => !PENDING.includes(id))];
 /** the ones that also sail as enemies (regiones.json): their numbers must not move */
 const ENEMY_MD = ['l_emiau', 'e_estambre', 'l_bigoton', 'e_sirsimon', 'e_ovillo'];
 
@@ -78,8 +91,10 @@ function playRound(b: Battle, seed = 5) {
 const AI = await import('../src/battle/ai');
 
 describe('the 25 Multidimensional powers: data', () => {
-  it('there are 25 Multidimensional species', () => {
-    expect(SPECIES.length).toBe(25);
+  it('there are 25 Multidimensional species in the Parte III; a post one has its power or is PENDING', () => {
+    expect(P3_SPECIES.length).toBe(25);
+    expect(PENDING.filter((id) => !POST_MD.includes(id)), 'PENDING is only for post Multidimensionals').toEqual([]);
+    expect(PENDING.filter((id) => multidimPower(id) || MD.MD_ULTS[id]), 'remove these from PENDING').toEqual([]);
   });
   it('every one has its Catdex text and its battle power (and nothing else does)', () => {
     for (const id of SPECIES) {
@@ -92,10 +107,15 @@ describe('the 25 Multidimensional powers: data', () => {
       // a power is NOT a generic signature: no entry in ULTS (the enemy side keeps the generic ultimate)
       expect(ULTS[id], id).toBeUndefined();
     }
-    expect(Object.keys(MULTIDIM_POWERS).sort()).toEqual([...SPECIES].sort());
-    expect(Object.keys(MD.MD_ULTS).sort()).toEqual([...SPECIES].sort());
+    // a post power lands ahead of its species (data/multidimPowersPost.ts, PODERES-2): the ones whose species is in are
+    // checked here, the rest by tests/multidimPost.test.ts — and no other key may sneak in
+    const listed = (ids: string[]) => ids.filter((id) => P3_SPECIES.includes(id) || POST_MD.includes(id)).sort();
+    expect(listed(Object.keys(MULTIDIM_POWERS))).toEqual([...SPECIES].sort());
+    expect(listed(Object.keys(MD.MD_ULTS))).toEqual([...SPECIES].sort());
+    expect(Object.keys(MD.MD_ULTS).filter((id) => !P3_SPECIES.includes(id) && !MDP_IDS.includes(id))).toEqual([]);
+    expect(Object.keys(MULTIDIM_POWERS).filter((id) => !P3_SPECIES.includes(id) && !MDP_IDS.includes(id))).toEqual([]);
     // the names are unique
-    expect(new Set(SPECIES.map((id) => multidimPower(id)!.name)).size).toBe(25);
+    expect(new Set(SPECIES.map((id) => multidimPower(id)!.name)).size).toBe(SPECIES.length);
   });
   it('the ultimate the game shows (CatPanel, Elegir tripulación, the cut-in) is the power: same name, and it says what it does', () => {
     for (const id of SPECIES) {

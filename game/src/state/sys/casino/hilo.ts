@@ -86,7 +86,7 @@ export function hiloGuess(side: Side, rng: Rng = defaultRng): GuessResult | null
   if (h.seen.length > 30) h.seen.splice(0, h.seen.length - 30);
   if (!right) {
     cs().hilo = null;
-    const s = settle('hilo', h.cur, h.stake, 0, `RACHA ${h.steps}`);
+    const s = settle('hilo', h.cur, h.stake, 0, `RACHA ${h.steps}`, { maxMult: HILO.cap });
     return { from, card: next, right, mult: 0, done: { ...s, mult: 0, capped: false } };
   }
   h.steps++;
@@ -100,7 +100,7 @@ export function hiloGuess(side: Side, rng: Rng = defaultRng): GuessResult | null
 }
 function cashOut(h: Hand, capped: boolean) {
   cs().hilo = null;
-  const s = settle('hilo', h.cur, h.stake, payout(h.stake, h.mult), `RACHA ${h.steps} x${h.mult}`);
+  const s = settle('hilo', h.cur, h.stake, payout(h.stake, h.mult), `RACHA ${h.steps} x${h.mult}`, { maxMult: HILO.cap });
   return { ...s, mult: h.mult, capped };
 }
 /** cash out the pot (needs at least one right guess) */

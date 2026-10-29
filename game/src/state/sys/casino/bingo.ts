@@ -110,6 +110,7 @@ export function bingoPlay(cur: Cur, stake: number, cards: number[][], rng: Rng =
   });
   const won = res.reduce((s, c) => s + c.win, 0);
   const best = Math.max(...res.map((c) => c.lines.length));
-  const s = settle('bingo', cur, total, won, best ? `BINGO ${best === 8 ? 'LLENO' : `${best} LÍN.`}` : 'BINGO NADA');
+  // each card is a bet of its own for the Momento Vitrina (state/sys/postVitrina.ts)
+  const s = settle('bingo', cur, total, won, best ? `BINGO ${best === 8 ? 'LLENO' : `${best} LÍN.`}` : 'BINGO NADA', { maxMult: BINGO_MATH.max, unit: stake, n: cards.length });
   return { ...s, balls, cards: res };
 }

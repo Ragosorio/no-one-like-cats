@@ -659,6 +659,444 @@
     "ito_threads_cat": {
       "bytesIn": 3537156,
       "bytesOut": 2566728
+    },
+    "unzarpazo_bored_cat": {
+      "bytesIn": 3135459,
+      "bytesOut": 2284050
+    },
+    "pegaso_bronze_cat": {
+      "bytesIn": 6408166,
+      "bytesOut": 4699927
+    },
+    "michiatom_striker_cat": {
+      "bytesIn": 5130973,
+      "bytesOut": 3749089
+    },
+    "mazingato_robot_cat": {
+      "bytesIn": 5025113,
+      "bytesOut": 3711559
+    },
+    "miaunya_telepath_cat": {
+      "bytesIn": 4143490,
+      "bytesOut": 3034674
+    },
+    "gatote_lance_cat": {
+      "bytesIn": 5060398,
+      "bytesOut": 3650349
+    },
+    "sherlock_deerstalker_cat": {
+      "bytesIn": 2443360,
+      "bytesOut": 1730768,
+      "preset": "balanced-color-preserved"
+    },
+    "frankengato_patch_cat": {
+      "bytesIn": 2731081,
+      "bytesOut": 1899720,
+      "preset": "balanced-color-preserved"
+    },
+    "gatula_cape_cat": {
+      "bytesIn": 2551090,
+      "bytesOut": 1814704,
+      "preset": "balanced-color-preserved"
+    },
+    "ahab_harpoon_cat": {
+      "bytesIn": 3084779,
+      "bytesOut": 2180380,
+      "preset": "balanced-color-preserved"
+    },
+    "pinomichi_wood_cat": {
+      "bytesIn": 5228450,
+      "bytesOut": 3820487
+    },
+    "barril_barrel_cat": {
+      "bytesIn": 4007209,
+      "bytesOut": 2961595
+    },
+    "miaubody_bowtie_cat": {
+      "bytesIn": 3148323,
+      "bytesOut": 2294048
+    },
+    "gemichi_twin_cat": {
+      "bytesIn": 3867441,
+      "bytesOut": 2812536
+    },
+    "gatoleone_rose_cat": {
+      "bytesIn": 3458586,
+      "bytesOut": 2529140
+    },
+    "gatoneta_cake_cat": {
+      "bytesIn": 3192149,
+      "bytesOut": 2243716,
+      "preset": "balanced-color-preserved"
+    },
+    "daftmiau_helmet_cat": {
+      "bytesIn": 4026622,
+      "bytesOut": 2964941
+    },
+    "gomitas_rubber_cat": {
+      "bytesIn": 2043095,
+      "bytesOut": 1449161,
+      "preset": "balanced-color-preserved"
+    },
+    "kagebunyan_clone_cat": {
+      "bytesIn": 2042573,
+      "bytesOut": 1450591,
+      "preset": "balanced-color-preserved"
+    },
+    "gatojo_pose_cat": {
+      "bytesIn": 4573116,
+      "bytesOut": 3346345
+    },
+    "ryumiau_notebook_cat": {
+      "bytesIn": 2672260,
+      "bytesOut": 1866040,
+      "preset": "balanced-color-preserved"
+    },
+    "michipulin_red_cat": {
+      "bytesIn": 4472218,
+      "bytesOut": 3273405
+    },
+    "condorgato_ruff_cat": {
+      "bytesIn": 3668742,
+      "bytesOut": 2666754
+    },
+    "rick_portal_cat": {
+      "bytesIn": 4245795,
+      "bytesOut": 3097077
+    },
+    "miaang_airbender_cat": {
+      "bytesIn": 4115359,
+      "bytesOut": 3012561
+    },
+    "miauby_mystery_cat": {
+      "bytesIn": 2899916,
+      "bytesOut": 2105362
+    },
+    "blumiau_clue_cat": {
+      "bytesIn": 3845687,
+      "bytesOut": 2808151
+    },
+    "michimpostor_bean_cat": {
+      "bytesIn": 3551114,
+      "bytesOut": 2620621
+    },
+    "miaufalda_globe_cat": {
+      "bytesIn": 3063314,
+      "bytesOut": 2238951
+    },
+    "persafalsa_disguise_cat": {
+      "bytesIn": 5092928,
+      "bytesOut": 3735052
+    },
+    "hermiaune_bookworm_cat": {
+      "bytesIn": 2701212,
+      "bytesOut": 1914399,
+      "preset": "balanced-color-preserved"
+    },
+    "lunalovegata_spectre_cat": {
+      "bytesIn": 5939811,
+      "bytesOut": 4365208
+    },
+    "miaunce_telekinesis_cat": {
+      "bytesIn": 4343379,
+      "bytesOut": 3150553
+    },
+    "heisenmiau_chemist_cat": {
+      "bytesIn": 4627121,
+      "bytesOut": 3378749
+    },
+    "miauki_ballad_cat": {
+      "bytesIn": 5033987,
+      "bytesOut": 3698043
+    },
+    "miautentacion_twotone_cat": {
+      "bytesIn": 4207767,
+      "bytesOut": 3079138
+    },
+    "miauknd_redsuit_cat": {
+      "bytesIn": 3949262,
+      "bytesOut": 2885997
+    },
+    "miaussi_ten_cat": {
+      "bytesIn": 4794303,
+      "bytesOut": 3502846
+    },
+    "miaupe_sprint_cat": {
+      "bytesIn": 2520999,
+      "bytesOut": 1840536
+    },
+    "lamiau_curl_cat": {
+      "bytesIn": 4123822,
+      "bytesOut": 3006482
+    },
+    "michiercoles_cello_cat": {
+      "bytesIn": 4647550,
+      "bytesOut": 3370524
+    },
+    "vencidas_armwrestle_cat": {
+      "bytesIn": 4097224,
+      "bytesOut": 2875851,
+      "preset": "balanced-color-preserved"
+    },
+    "kidcapa_sidekick_cat": {
+      "bytesIn": 3867432,
+      "bytesOut": 2742200,
+      "preset": "balanced-color-preserved"
+    },
+    "shinai_kendo_cat": {
+      "bytesIn": 4012880,
+      "bytesOut": 2807286,
+      "preset": "balanced-color-preserved"
+    },
+    "pergamino_knight_cat": {
+      "bytesIn": 4163401,
+      "bytesOut": 2930713,
+      "preset": "balanced-color-preserved"
+    },
+    "retiaria_net_cat": {
+      "bytesIn": 4155649,
+      "bytesOut": 2900540,
+      "preset": "balanced-color-preserved"
+    },
+    "mascaradeoro_luchador_cat": {
+      "bytesIn": 3379572,
+      "bytesOut": 2390119,
+      "preset": "balanced-color-preserved"
+    },
+    "combo_arcade_cat": {
+      "bytesIn": 3880523,
+      "bytesOut": 2743214,
+      "preset": "balanced-color-preserved"
+    },
+    "yugi_duel_cat": {
+      "bytesIn": 5731512,
+      "bytesOut": 4196225
+    },
+    "esponja_sponge_cat": {
+      "bytesIn": 4362228,
+      "bytesOut": 3192866
+    },
+    "gatogro_swamp_cat": {
+      "bytesIn": 4299764,
+      "bytesOut": 3172694
+    },
+    "grru_freezeray_cat": {
+      "bytesIn": 3978257,
+      "bytesOut": 2929960
+    },
+    "miaunion_goggle_cat": {
+      "bytesIn": 4459725,
+      "bytesOut": 3298706
+    },
+    "ssssmichi_blocky_cat": {
+      "bytesIn": 3469524,
+      "bytesOut": 2542183
+    },
+    "zoomic_speed_cat": {
+      "bytesIn": 4691218,
+      "bytesOut": 3367585
+    },
+    "pozomayor_jackpot_cat": {
+      "bytesIn": 10555752,
+      "bytesOut": 7746024
+    },
+    "bolita_roulette_cat": {
+      "bytesIn": 4023626,
+      "bytesOut": 2850020,
+      "preset": "balanced-color-preserved"
+    },
+    "catarata_waterfall_cat": {
+      "bytesIn": 4975865,
+      "bytesOut": 3490870,
+      "preset": "balanced-color-preserved"
+    },
+    "ojoserpiente_dice_cat": {
+      "bytesIn": 4174690,
+      "bytesOut": 2910425,
+      "preset": "balanced-color-preserved"
+    },
+    "asmanga_cardsharp_cat": {
+      "bytesIn": 4111796,
+      "bytesOut": 2890298,
+      "preset": "balanced-color-preserved"
+    },
+    "cantadora_bingo_cat": {
+      "bytesIn": 4723116,
+      "bytesOut": 3307994,
+      "preset": "balanced-color-preserved"
+    },
+    "monodorado_gift_cat": {
+      "bytesIn": 4127354,
+      "bytesOut": 2899812,
+      "preset": "balanced-color-preserved"
+    },
+    "desborde_overflow_cat": {
+      "bytesIn": 10135405,
+      "bytesOut": 7323592
+    },
+    "unadeoro_claw_cat": {
+      "bytesIn": 4303323,
+      "bytesOut": 3004262,
+      "preset": "balanced-color-preserved"
+    },
+    "sinfrenos_rush_cat": {
+      "bytesIn": 10361806,
+      "bytesOut": 7536455
+    },
+    "bgirl_disco_cat": {
+      "bytesIn": 3150638,
+      "bytesOut": 2238209,
+      "preset": "balanced-color-preserved"
+    },
+    "garritas_claws_cat": {
+      "bytesIn": 2315427,
+      "bytesOut": 1640616,
+      "preset": "balanced-color-preserved"
+    },
+    "supermichi_cape_cat": {
+      "bytesIn": 2129575,
+      "bytesOut": 1521450,
+      "preset": "balanced-color-preserved"
+    },
+    "hierromichi_armor_cat": {
+      "bytesIn": 6625874,
+      "bytesOut": 4895583
+    },
+    "michimerica_shield_cat": {
+      "bytesIn": 2173538,
+      "bytesOut": 1559881,
+      "preset": "balanced-color-preserved"
+    },
+    "doomiau_mask_cat": {
+      "bytesIn": 2578106,
+      "bytesOut": 1858102,
+      "preset": "balanced-color-preserved"
+    },
+    "hannah_wig_cat": {
+      "bytesIn": 4624894,
+      "bytesOut": 3399827
+    },
+    "michiwan_laser_cat": {
+      "bytesIn": 4436189,
+      "bytesOut": 3247017
+    },
+    "romiau_bachata_cat": {
+      "bytesIn": 4173118,
+      "bytesOut": 3045378
+    },
+    "postmaulone_chill_cat": {
+      "bytesIn": 5092009,
+      "bytesOut": 3717071
+    },
+    "partymichi_zebra_cat": {
+      "bytesIn": 4772081,
+      "bytesOut": 3528617
+    },
+    "gatistiano_jump_cat": {
+      "bytesIn": 4319841,
+      "bytesOut": 3169288
+    },
+    "pixelmuerto_glitch_cat": {
+      "bytesIn": 4150666,
+      "bytesOut": 2892165,
+      "preset": "balanced-color-preserved"
+    },
+    "doblon_coin_cat": {
+      "bytesIn": 4016930,
+      "bytesOut": 2808737,
+      "preset": "balanced-color-preserved"
+    },
+    "malasuerte_omen_cat": {
+      "bytesIn": 3605930,
+      "bytesOut": 2492279,
+      "preset": "balanced-color-preserved"
+    },
+    "trompo_spin_cat": {
+      "bytesIn": 4489639,
+      "bytesOut": 3134342,
+      "preset": "balanced-color-preserved"
+    },
+    "gotera_drip_cat": {
+      "bytesIn": 7709132,
+      "bytesOut": 5578222
+    },
+    "granizo_hail_cat": {
+      "bytesIn": 4750247,
+      "bytesOut": 3307256,
+      "preset": "balanced-color-preserved"
+    },
+    "basalto_stone_die_cat": {
+      "bytesIn": 4059166,
+      "bytesOut": 2873558,
+      "preset": "balanced-color-preserved"
+    },
+    "revancha_rematch_cat": {
+      "bytesIn": 3580568,
+      "bytesOut": 2502547,
+      "preset": "balanced-color-preserved"
+    },
+    "comodin_joker_cat": {
+      "bytesIn": 3666042,
+      "bytesOut": 2588437,
+      "preset": "balanced-color-preserved"
+    },
+    "tintagris_underline_cat": {
+      "bytesIn": 4089643,
+      "bytesOut": 2856482,
+      "preset": "balanced-color-preserved"
+    },
+    "coro_choir_cat": {
+      "bytesIn": 4296771,
+      "bytesOut": 3012425,
+      "preset": "balanced-color-preserved"
+    },
+    "doblaje_dub_cat": {
+      "bytesIn": 4117416,
+      "bytesOut": 2883053,
+      "preset": "balanced-color-preserved"
+    },
+    "trebol_clover_cat": {
+      "bytesIn": 4539765,
+      "bytesOut": 3159889,
+      "preset": "balanced-color-preserved"
+    },
+    "vineta_panel_cat": {
+      "bytesIn": 8547622,
+      "bytesOut": 6232850
+    },
+    "rendija_peek_cat": {
+      "bytesIn": 4296137,
+      "bytesOut": 3009775,
+      "preset": "balanced-color-preserved"
+    },
+    "matrioska_nested_cat": {
+      "bytesIn": 2555162,
+      "bytesOut": 1837645,
+      "preset": "balanced-color-preserved"
+    },
+    "brasanaranja_beacon_cat": {
+      "bytesIn": 4529727,
+      "bytesOut": 3159742,
+      "preset": "balanced-color-preserved"
+    },
+    "vigilia_eyes_cat": {
+      "bytesIn": 4699342,
+      "bytesOut": 3281711,
+      "preset": "balanced-color-preserved"
+    },
+    "grafito_pencil_cat": {
+      "bytesIn": 4046049,
+      "bytesOut": 2825056,
+      "preset": "balanced-color-preserved"
+    },
+    "bucle_loop_cat": {
+      "bytesIn": 4171120,
+      "bytesOut": 2933487,
+      "preset": "balanced-color-preserved"
+    },
+    "sabrina_bangs_cat": {
+      "bytesIn": 4367869,
+      "bytesOut": 3206588
     }
   }
 }

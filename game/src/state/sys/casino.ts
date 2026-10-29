@@ -20,6 +20,8 @@ import { adopt } from './cats';
 import { ACC_BY_ID, AccRarity, addAccessory, rollAccessory } from './accessories';
 import { registerPatch } from '../patches';
 import { poolableCat } from './multidim';
+import { rollPostCat, type PostTable } from './postp3';
+import { vitrinaOnBet, vitrinaQualifies, vitrinaSelloOnCandy } from './postVitrina';
 
 export type Cur = 'gold' | 'gems' | 'chips';
 export type GameId = 'slot' | 'roulette' | 'gacha' | 'caja' | 'plinko' | 'dice' | 'scratch' | 'boxes' | 'bingo' | 'hilo' | 'eterno';
@@ -417,6 +419,8 @@ export function recordBet(g: GameId, cur: Cur, stake: number, win: number, r: st
       c.owed = 0;
       stat('candy');
       candy.push(grantPrize({ kind: 'tickets', n: CANDY.tickets, tier: 'rare' }), grantPrize({ kind: 'chips', n: CANDY.chips, tier: 'common' }));
+      // after the Parte III, a Sello for the showcases too (state/sys/postVitrina.ts; nothing while none is open)
+      vitrinaSelloOnCandy();
     }
   }
   stat(`spins_${g}`);
@@ -725,7 +729,7 @@ export function spinSlot(cur: Cur, tier: SlotTier): SlotResult | null {
     payout = Math.round(wins.reduce((s, w) => s + w.mult * lineBet, 0));
     creditWin('gold', payout);
   } else {
-    for (const w of wins) prizes.push(...chipLinePrizes(w.sym, tier));
+    for (const w of wins) prizes.push(...withPostTable({ game: 'slot' }, () => chipLinePrizes(w.sym, tier)));
   }
   const granted = prizes.map(grantPrize);
   const jackpot = wins.some((w) => w.sym === 'neko');
@@ -822,6 +826,9 @@ export function spinRoulette(cur: Cur, bet: RouletteBet, stake: number): Roulett
   const pt = win ? plenoTickets(cur, bet, stake) : 0;
   if (pt) bonus.push(grantPrize({ kind: 'tickets', n: pt, tier: 'epic' }));
   bonus.push(...recordBet('roulette', cur, stake, payout, `${pocket} ${color === 'red' ? 'ROJO' : color === 'black' ? 'NEGRO' : 'GATO'}`));
+  // after the Parte III: the Momento Vitrina, apart from the bet (gold counts from ¼ of the cap: the second stake option)
+  const goldOpts = rouletteStakes('gold', bet);
+  bonus.push(...vitrinaOnBet('roulette', cur, vitrinaQualifies(cur, stake, goldOpts[1] ?? goldOpts[0] ?? Infinity)));
   return { cur, stake, bet, pocket, color, win, payout, bonus };
 }
 
@@ -860,10 +867,31 @@ export function catsOfRarity(r: RarityId, gacha = false): CatDef[] {
 }
 /** cats you don't own weigh x3 (the casino wants your collection to grow) */
 export const UNOWNED_WEIGHT = 3;
+/** the table whose prize is being rolled (withPostTable): its legendary / mythic cats may come from its Multiverse pool */
+let postTable: PostTable | null = null;
+/**
+ * Roll a table's prizes as table `t` (after the Parte III: state/sys/postp3.ts). Its printed odds never change: only
+ * which LEGENDARY / MYTHIC cat comes out. Before the gate, or with an empty pool, it is exactly the plain roll.
+ */
+export function withPostTable<T>(t: PostTable, fn: () => T): T {
+  const prev = postTable;
+  postTable = t;
+  try {
+    return fn();
+  } finally {
+    postTable = prev;
+  }
+}
 /** pick a cat of one of the rarities (falls back to the closest available rarity) */
 export function rollCatDef(rarities: RarityId[], weights?: number[], featured?: string | null, featuredShare = 0.5, gacha = false): CatDef {
   const order: RarityId[] = ['common', 'rare', 'epic', 'legendary', 'mythic'];
   const r = weights ? weighted(rarities, (x) => weights[rarities.indexOf(x)]) : pick(rarities);
+  // after the Parte III: a legendary / mythic cat of a table with a Multiverse pool may come from it, before any featured
+  // cat (its share and its guarantee: data/postp3/reglas.ts). With no pool, nothing is drawn and no counter moves
+  if (postTable && (r === 'legendary' || r === 'mythic')) {
+    const post = rollPostCat(postTable, rand);
+    if (post) return post;
+  }
   let list = catsOfRarity(r, gacha);
   let i = order.indexOf(r);
   while (!list.length && i > 0) list = catsOfRarity(order[--i], gacha);
@@ -890,6 +918,8 @@ export function accPrize(r: AccRarity): Prize {
 // ------------------------------------------------------------------ granting
 export interface Granted extends Prize {
   label: string;
+  /** a throw of a table's showcase (state/sys/postVitrina.ts): which one */
+  vitrina?: string;
   /** cat prizes */
   isNew?: boolean;
   orbs?: number;
@@ -997,7 +1027,7 @@ export function buyCaja(id: string): Granted | null {
   if (!it || chips() < it.cost) return null;
   addChips(-it.cost, 'caja');
   stat('caja_buys');
-  const g = grantPrize(it.prize());
+  const g = grantPrize(withPostTable({ game: 'caja' }, () => it.prize()));
   cs().hist!.unshift({ g: 'caja', cur: 'chips', stake: it.cost, win: 0, r: it.name.toUpperCase() });
   if (cs().hist!.length > 40) cs().hist!.length = 40;
   return g;

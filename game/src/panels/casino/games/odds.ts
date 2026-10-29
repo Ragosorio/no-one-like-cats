@@ -3,6 +3,9 @@ import { Container, Graphics } from 'pixi.js';
 import { Modal } from '../../../ui/modal';
 import { C, F } from '../../../ui/theme';
 import { txt } from '../../../ui/widgets';
+import type { Granted } from '../../../state/sys/casino';
+import type { VitrinaTable } from '../../../data/postp3/reglas';
+import { addVitrinaTab } from '../vitrina';
 
 export interface OddsSpec {
   title: string;
@@ -18,9 +21,12 @@ export interface OddsSpec {
 export const pct = (p: number) => (p <= 0 ? '0%' : p >= 0.1 ? `${(p * 100).toFixed(1)}%` : p >= 0.01 ? `${(p * 100).toFixed(2)}%` : p >= 0.0001 ? `${(p * 100).toFixed(3)}%` : `${(p * 100).toFixed(5)}%`);
 export const oneIn = (p: number) => (p > 0 ? `1 en ${p >= 0.5 ? (1 / p).toFixed(1) : Math.round(1 / p).toLocaleString('en-US')}` : '—');
 
-export function openMiniOdds(spec: OddsSpec) {
+/** `vit`: after the Parte III, the table's VITRINA tab (a button in the title band switches the body) */
+export function openMiniOdds(spec: OddsSpec, vit?: { table: VitrinaTable; onGranted: (g: Granted) => void }) {
   const m = new Modal(spec.title, 1500, 900, { subtitle: spec.subtitle ?? 'TODO A LA VISTA · SIN LETRA CHIQUITA' });
-  const b = m.body;
+  const b = new Container();
+  m.body.addChild(b);
+  if (vit) addVitrinaTab(m, b, vit.table, vit.onGranted);
   const T = (s: string, size = 20, fill: number = C.ink, extra: Record<string, unknown> = {}) => txt(s, { fontFamily: F.ui, fontWeight: '700', fontSize: size, fill, ...extra });
   const head = new Container();
   spec.cols.forEach((c) => {

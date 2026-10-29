@@ -28,7 +28,8 @@ export interface RevealPlan {
   /** close by itself N s after it ends (auto-play) */
   autoClose?: number;
 }
-const rankT: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3, holo: 4, mythic: 5 };
+// a MULTIDIMENSIONAL (the Multiverse pools after the Parte III: state/sys/postp3.ts) reveals like a legendary
+const rankT: Record<string, number> = { common: 0, rare: 1, epic: 2, legendary: 3, holo: 4, mythic: 5, multidimensional: 3 };
 export const tierRank = (t?: string) => rankT[t ?? 'common'] ?? 0;
 /** reveal plan for an auto-play speed: x1 = new or épico+ · x2 = new épico+ or any legendary+ · x10 / ETERNO = only NEW legendary+ (faster, self-closing) */
 export function revealPlanFor(speed: number): RevealPlan {

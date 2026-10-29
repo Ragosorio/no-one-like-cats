@@ -22,6 +22,9 @@ import { settings } from '../../core/settings';
 import { signatureOf } from '../../fx/sequences/multiverse';
 import { multidimPower } from '../../data/multidimPowers';
 import { ERAS } from '../multidim';
+// after the Parte III: the 60 post powers' set pieces and beats (fx/multidimPostFx.ts, agent PODERES-2)
+import { MDP_UNIVERSE } from '../../data/multidimPowersPost';
+import { mdpAt, mdpPre } from './multidimPostFx';
 import type { BattleEvent } from '../sim';
 import type { UltCtx } from '../ultFx';
 
@@ -61,15 +64,16 @@ const UNIVERSE: Record<string, { color: number; tag: string }> = {
 export function mdColor(species: string): number {
   const sig = signatureOf(species);
   if (sig && sig.frame !== 0xffffff) return sig.frame;
-  return UNIVERSE[species]?.color ?? RARITY.multidimensional.color;
+  return UNIVERSE[species]?.color ?? MDP_UNIVERSE[species]?.color ?? RARITY.multidimensional.color;
 }
 export function mdTag(species: string): string {
-  return signatureOf(species)?.tag ?? UNIVERSE[species]?.tag ?? 'MULTIVERSO';
+  return signatureOf(species)?.tag ?? UNIVERSE[species]?.tag ?? MDP_UNIVERSE[species]?.tag ?? 'MULTIVERSO';
 }
-const light = (c: number) => 0.299 * ((c >> 16) & 255) + 0.587 * ((c >> 8) & 255) + 0.114 * (c & 255) > 150;
+const luma = (c: number) => 0.299 * ((c >> 16) & 255) + 0.587 * ((c >> 8) & 255) + 0.114 * (c & 255);
+const light = (c: number) => luma(c) > 150;
 
 /** the caster's view (world coords), from its species */
-function caster(ctx: UltCtx, species: string) {
+export function caster(ctx: UltCtx, species: string) {
   const c = ctx.sim.sides[0].cats.find((k) => k.def.catId === species) ?? ctx.sim.sides[1].cats.find((k) => k.def.catId === species);
   if (!c) return null;
   const v = ctx.catViews.get(c.def.uid);
@@ -82,7 +86,7 @@ function catAt(ctx: UltCtx, uid?: string) {
   return v && !v.destroyed ? { v, p: ctx.wfx.toLocal(v.getGlobalPosition()) } : null;
 }
 /** a world-layer node that fades out after `hold` seconds */
-function fleeting<T extends Container>(ctx: UltCtx, node: T, hold = 1.2, fade = 0.4, layer: Container = ctx.wfx): T {
+export function fleeting<T extends Container>(ctx: UltCtx, node: T, hold = 1.2, fade = 0.4, layer: Container = ctx.wfx): T {
   layer.addChild(node);
   gsap.to(node, {
     alpha: 0,
@@ -97,7 +101,7 @@ function fleeting<T extends Container>(ctx: UltCtx, node: T, hold = 1.2, fade = 
   });
   return node;
 }
-function veil(ctx: UltCtx, color: number, alpha: number, hold = 1, fade = 0.5) {
+export function veil(ctx: UltCtx, color: number, alpha: number, hold = 1, fade = 0.5) {
   const g = new Graphics().rect(-400, -300, 2720, 1680).fill(color);
   g.alpha = 0;
   ctx.overlay.addChildAt(g, 0);
@@ -107,6 +111,12 @@ function veil(ctx: UltCtx, color: number, alpha: number, hold = 1, fade = 0.5) {
 }
 
 /** THE STAMP: the power's name in its universe's color, the MULTIDIMENSIONAL badge and the universe's tag */
+/** the stamp on screen right now (BattleScene keeps its own labels clear of it: an instant power's volley comes early) */
+let liveStamp: Container | null = null;
+/** is a Multidimensional stamp crossing the screen? (the band sits at y 196–404 of the 1920×1080 overlay) */
+export function mdStampUp(): boolean {
+  return !!liveStamp && !liveStamp.destroyed && liveStamp.alpha > 0.15;
+}
 function stampBanner(ctx: UltCtx, species: string) {
   const p = multidimPower(species);
   if (!p) return;
@@ -119,7 +129,9 @@ function stampBanner(ctx: UltCtx, species: string) {
   // the multiverse's crossing stripes (the reveal's pink / teal)
   band.rect(-1400, -92, 2800, 6).fill(RARITY.multidimensional.glow).rect(-1400, 86, 2800, 6).fill(RARITY.multidimensional.color);
   band.rotation = -0.05;
-  const t = poster(p.name, 108, ink === INK ? C.paper : color, { stroke: { color: INK, width: 14 } });
+  // the name in the band's own color, outlined — but a near-black band (a noir universe: Condorgato, Gatoleone, Gatojo,
+  // Grrrú, Miaupé…) would swallow it whole: paper, then
+  const t = poster(p.name, 108, ink === INK || luma(color) < 64 ? C.paper : color, { stroke: { color: INK, width: 14 } });
   t.anchor.set(0.5);
   t.rotation = -0.05;
   t.y = -18;
@@ -146,6 +158,7 @@ function stampBanner(ctx: UltCtx, species: string) {
   c.addChild(band, t, s, badge, tag);
   c.position.set(960, 300);
   ctx.overlay.addChild(c);
+  liveStamp = c;
   gsap.from(band.scale, { x: 0, duration: 0.22, ease: 'power3.out' });
   gsap.from(t.scale, { x: t.scale.x * 2.6, y: t.scale.y * 2.6, duration: 0.26, ease: 'back.out(2)' });
   gsap.from(badge, { y: -300, duration: 0.3, delay: 0.1, ease: 'back.out(2)' });
@@ -187,7 +200,7 @@ function web(r: number, color = 0xffffff) {
   g.stroke({ width: 3, color });
   return g;
 }
-function bat(w: number) {
+export function bat(w: number) {
   const g = new Graphics();
   const h = w * 0.42;
   g.poly([0, -h * 0.35, w * 0.12, -h * 0.6, w * 0.16, -h * 0.25, w * 0.5, -h * 0.5, w * 0.36, 0, w * 0.28, h * 0.35, w * 0.12, h * 0.1, 0, h * 0.5, -w * 0.12, h * 0.1, -w * 0.28, h * 0.35, -w * 0.36, 0, -w * 0.5, -h * 0.5, -w * 0.16, -h * 0.25, -w * 0.12, -h * 0.6]).fill(INK);
@@ -208,10 +221,12 @@ function coin(r: number) {
   g.rect(-r * 0.25, -r * 0.15, r * 0.5, r * 0.3).stroke({ width: 3, color: 0x8a5a10 });
   return g;
 }
-function word(ctx: UltCtx, x: number, y: number, text: string, color: number, size = 64, font: string = F.comic, hold = 1.1) {
+export function word(ctx: UltCtx, x: number, y: number, text: string, color: number, size = 64, font: string = F.comic, hold = 1.1) {
   const t = txt(text, { fontFamily: font, fontSize: size, fill: color, stroke: { color: INK, width: Math.max(4, size / 9), join: 'round' } });
   t.anchor.set(0.5);
-  t.position.set(x, y);
+  // a long line written over a ship near the edge stays whole on screen (the 1920-wide stage)
+  const half = t.width / 2 + 24;
+  t.position.set(half * 2 < 1920 ? Math.max(half, Math.min(1920 - half, x)) : 960, y);
   fleeting(ctx, t, hold, 0.35);
   gsap.from(t.scale, { x: 0.2, y: 0.2, duration: 0.2, ease: 'back.out(3)' });
   return t;
@@ -606,6 +621,10 @@ export async function mdPre(ctx: UltCtx, e: UltEv) {
       sfx('coin');
       break;
     }
+    default:
+      // after the Parte III: the post Multidimensionals' own set pieces
+      await mdpPre(ctx, e);
+      break;
   }
   await wait(fast ? 200 : 750);
 }
@@ -613,6 +632,7 @@ export async function mdPre(ctx: UltCtx, e: UltEv) {
 // ------------------------------------------------------------------ at impact time
 /** the beats inside each power ('md…' events other than the stamp) */
 export function mdAt(ctx: UltCtx, e: UltEv) {
+  if (e.fx.startsWith('mdp')) return mdpAt(ctx, e);
   const fl = !settings.reduceFlashes;
   switch (e.fx) {
     case 'mdHop':

@@ -23,6 +23,8 @@ import { CP, CButton, Seg, block, chipIcon, clickable, curIcon, heading, label, 
 import { coinFountain, flyLoot, stamp, winBanner } from '../fx';
 import { csfx } from '../sfx';
 import { openMiniOdds, OddsSpec } from './odds';
+import { anyVitrinaLive, isVitrinaTable } from '../../../state/sys/postVitrina';
+import { ensureVitrinaArt, openVitrina, presentVitrina, vitrinaBadge } from '../vitrina';
 
 export const BOARD = { x: 350, y: 200, w: 1080, h: 680, cx: 890 } as const;
 const CY = 900;
@@ -54,6 +56,9 @@ export abstract class MiniGame extends Container implements CasinoView, AutoHost
   protected disposed = false;
   private tickFns: ((t: Ticker) => void)[] = [];
   private timers: number[] = [];
+  /** after the Parte III: the showcase's badge and the reveal of its throws, one after another (autoSettle waits) */
+  private vitBadge: Container | null = null;
+  private vitShow: Promise<void> = Promise.resolve();
 
   constructor(
     protected ctx: CasinoCtx,
@@ -69,6 +74,43 @@ export abstract class MiniGame extends Container implements CasinoView, AutoHost
     kick.position.set(376, 176);
     this.addChild(title, kick, this.board, this.ctrl, this.fxl);
     this.buildControls();
+    this.buildVitrina();
+  }
+
+  // ---------------------------------------------------------------- after the Parte III: the showcase (panels/casino/vitrina.ts)
+  private buildVitrina() {
+    this.vitBadge?.destroy({ children: true });
+    this.vitBadge = null;
+    const t = this.cfg.id;
+    if (!isVitrinaTable(t)) return;
+    const b = vitrinaBadge(t, () => openVitrina(t, (g) => this.showVitrina([g], 1, 0)));
+    this.onVitrinaBadge(!!b);
+    if (!b) return;
+    b.position.set(1130, 100);
+    this.addChildAt(b, this.children.indexOf(this.fxl));
+    this.vitBadge = b;
+    void ensureVitrinaArt(t).then((did) => did && !this.disposed && this.buildVitrina());
+  }
+  /** the badge took (or left) the top right: a table with a hint there moves it (PlinkoView) */
+  protected onVitrinaBadge(_shown: boolean) {}
+  protected get vitrinaShown() {
+    return !!this.vitBadge;
+  }
+  /**
+   * A showcase's throws on screen, over the board, after the table's own moment (`after` ms; 0 when it comes from the
+   * VITRINA tab) — queued: two Momentos never overlap.
+   */
+  protected showVitrina(items: Granted[], speed = 1, after?: number) {
+    if (!items.length) return;
+    this.vitShow = this.vitShow
+      .then(() => (this.disposed ? undefined : presentVitrina(this.ctx, items, BOARD, speed, { after })))
+      .catch((e) => console.warn('[vitrina]', e))
+      .then(() => {
+        if (!this.disposed) this.buildVitrina();
+      });
+  }
+  autoSettle() {
+    return this.vitShow;
   }
 
   // ---------------------------------------------------------------- to implement
@@ -165,7 +207,10 @@ export abstract class MiniGame extends Container implements CasinoView, AutoHost
     obT.position.set(125, 5);
     ob.addChild(obBg, obT);
     ob.position.set(1168, CY + 120);
-    clickable(ob, () => openMiniOdds(this.odds()));
+    clickable(ob, () => {
+      const t = this.cfg.id;
+      openMiniOdds(this.odds(), isVitrinaTable(t) ? { table: t, onGranted: (g) => this.showVitrina([g], 1, 0) } : undefined);
+    });
     c.addChild(this.playBtn, ob);
   }
   /** tier changed (rebuild the board if it depends on it) */
@@ -289,14 +334,17 @@ export abstract class MiniGame extends Container implements CasinoView, AutoHost
     });
   }
 
-  /** LA CASA TE DEBE paid on this bet: a boleto + fichas fly to the pills */
-  candy(candy: Granted[], at: { x: number; y: number }, speed = 1) {
+  /** LA CASA TE DEBE paid on this bet: a boleto + fichas fly to the pills (+ a Momento Vitrina's throws, after the Parte III) */
+  candy(all: Granted[], at: { x: number; y: number }, speed = 1) {
+    this.showVitrina(all.filter((g) => g.vitrina), speed);
+    const candy = all.filter((g) => !g.vitrina);
     if (!candy.length) return;
     this.ctx.refresh();
     if (speed >= INSTANT_SPEED) return;
     this.ctx.say('candy', speed > 1 ? 0.3 : 1);
     csfx.winSmall();
-    const t = stamp(this.fxl, at.x, at.y - 120, 'LA CASA TE DEBÍA UNA', CP.cyan, 48, -0.06);
+    // after the Parte III it also paid a Sello for the showcases (state/sys/postVitrina.ts)
+    const t = stamp(this.fxl, at.x, at.y - 120, anyVitrinaLive() ? 'LA CASA TE DEBÍA UNA · +1 SELLO' : 'LA CASA TE DEBÍA UNA', CP.cyan, 48, -0.06);
     flyLoot(this.ctx.fx, 'tickets', at, this.ctx.pillPos('tickets'), 3);
     gsap.to(t, { alpha: 0, delay: 1.0 / Math.max(1, speed), duration: 0.25, onComplete: () => t.destroy() });
   }

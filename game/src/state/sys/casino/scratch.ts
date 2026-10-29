@@ -81,6 +81,6 @@ export function scratchBuy(cur: Cur, stake: number, rng: Rng = defaultRng): Scra
   const o = scratchOutcome(rng);
   const cells = scratchLayout(o?.sym ?? null, rng);
   const mult = o?.mult ?? 0;
-  const s = settle('scratch', cur, stake, payout(stake, mult), o ? `RASCA x${mult}` : 'RASCA NADA');
+  const s = settle('scratch', cur, stake, payout(stake, mult), o ? `RASCA x${mult}` : 'RASCA NADA', { maxMult: SCRATCH_MATH.max });
   return { ...s, cells, win: o?.sym ?? null, mult };
 }

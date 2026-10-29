@@ -20,7 +20,7 @@
  */
 import { G } from '../../game';
 import { RarityId } from '../../econ';
-import { Granted, catsOfRarity, cs, grantPrize, rand, rollCatPrize } from '../casino';
+import { Granted, catsOfRarity, cs, grantPrize, rand, rollCatPrize, withPostTable } from '../casino';
 
 export const ETERNO = {
   /** session length (seconds of real time) */
@@ -272,7 +272,8 @@ export function resolveEterno(id: string, roll: number): EternoResolution | null
     const ex = extraAtRisk();
     if (Object.keys(ex).length) rec.extra = ex;
     for (const x of ETERNO_EXTRA) if (ex[x.key]) x.set(ex[x.key] * m);
-    rec.prize = grantPrize(eternoPrize());
+    // after the Parte III the special cat may come from the Multiverse (state/sys/postp3.ts)
+    rec.prize = grantPrize(withPostTable({ game: 'eterno' }, () => eternoPrize()));
   } else {
     e.losses++;
     const lost = atRisk();

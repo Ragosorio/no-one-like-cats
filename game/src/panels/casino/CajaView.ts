@@ -5,7 +5,9 @@ import { F } from '../../ui/theme';
 import { txt } from '../../ui/widgets';
 import { sfx } from '../../core/audio';
 import { CAJA, CHIPS, buyCaja, chips } from '../../state/sys/casino';
-import { CP, CButton, block, chipIcon, heading, label, neon, halftone } from './kit';
+import { CP, CButton, block, chipIcon, clickable, heading, label, neon, halftone } from './kit';
+import { openPostOdds } from './postOdds';
+import { postOdds, shareText } from '../../state/sys/postp3';
 import { presentPrizes, prizeArt } from './prizes';
 import type { CasinoCtx, CasinoView } from './ctx';
 
@@ -73,6 +75,19 @@ export class CajaView extends Container implements CasinoView {
       btn.position.set(18, ch - 84);
       btn.disabled = !afford;
       c.addChild(n, d, btn);
+      // after the Parte III: the Gato Misterioso may come from the Multiverse (state/sys/postp3.ts) — its odds one tap away
+      const po = it.id === 'cat' ? postOdds({ game: 'caja' }) : null;
+      if (po) {
+        const pt = label(`MULTIVERSO: ${shareText(po.share)} legendarios ›`, 14, CP.paper);
+        const pb = new Graphics().rect(-8, -4, pt.width + 16, pt.height + 8).fill(CP.ink).stroke({ width: 2, color: CP.yellow });
+        const tag = new Container();
+        tag.addChild(pb, pt);
+        // inside the card, whatever the share reads like
+        tag.scale.set(Math.min(1, (cw - 40) / (pt.width + 16)));
+        tag.position.set(16, 12);
+        clickable(tag, () => openPostOdds({ game: 'caja' }));
+        c.addChild(tag);
+      }
       this.grid.addChild(c);
     });
   }

@@ -8,7 +8,7 @@
  * league champion pays extra.
  */
 import { G, OwnedCat } from '../game';
-import { RarityId, catPower } from '../econ';
+import { RarityId, catLevelForPower, catLevelMax, catPower } from '../econ';
 import { CAT_BY_ID, ROLE_BY_ID, affinityMult, catDef } from '../../data/content';
 import PB from '../../data/podio.json';
 import { registerPatch } from '../patches';
@@ -20,6 +20,8 @@ import { defaultPodio, PodioCatState, PodioState } from '../../podio/types';
 import { powerLevels, powersOf } from '../../podio/powers';
 import { RivalDef, league, rival } from '../../podio/ladder';
 import type { FighterInit } from '../../podio/engine';
+import { POST_COPA } from '../../data/postp3/reglas';
+import { copaChallenges, markPostChampionPaid, type CopaChallenge } from './postp3';
 
 export const PODIO_FLAG = 'podio_unlocked';
 export const SPEEDS = [0.5, 1, 2, 4] as const;
@@ -350,6 +352,8 @@ export function nextPrize(): { league: number; species: string } | null {
 }
 /** give a champion's prize cat (a duplicate becomes orbs, like everywhere else) */
 function grantPrize(species: string) {
+  // a Copa champion's Heroico: its flag first (state/sys/postp3.ts), so it is never paid twice
+  markPostChampionPaid(species);
   const r = adopt(species);
   G.count('podio_prizes');
   G.count(`podio_prize_${catDef(species).rarity}`);
@@ -379,6 +383,8 @@ export interface DuelOutlook {
   prize: string | null;
   /** the cat can't grow right now (level cap) */
   capped: boolean;
+  /** a challenge of the Copa Fuera de la Caja (copaOutlook) */
+  copa?: boolean;
 }
 
 export function duelOutlook(c: OwnedCat, lg: number, bout: number, won = true): DuelOutlook {
@@ -508,6 +514,133 @@ export function applyDuel(c: OwnedCat, lg: number, bout: number, won: boolean, p
     xp,
     league: lg,
     bout,
+    ko: won && ko,
+  };
+}
+
+// ------------------------------------------------------------------ after the Parte III: the Copa Fuera de la Caja
+/**
+ * (docs/post-p3/03-obtencion.md §5) Eight challenges in a row of their own in the lobby, never a league of the ladder (its
+ * rivals don't move). They open in order (state/sys/postp3.ts copaChallenges); each champion fights WITH the Heroico it
+ * pays, at your frontier league champion's power × its `mult` (never below league POST_COPA.minAnchorLeague: climb and
+ * the Copa climbs with you), and pays it ONCE (`postchamp_<id>`, plus orbs_champion, champion_gems and the first-win XP);
+ * then it can be fought again for that league's replay rewards, never the cat. Losing costs nothing, retries are free.
+ */
+export function copaOpen(): boolean {
+  return podioUnlocked() && copaChallenges().length > 0;
+}
+/** the league the Copa is measured against right now */
+export function copaAnchor(): number {
+  return Math.max(POST_COPA.minAnchorLeague, ps().league);
+}
+export function copaChallenge(id: string): CopaChallenge | null {
+  return copaChallenges().find((c) => c.champion.id === id) ?? null;
+}
+/** the champion of a challenge you can fight (the next one, or one already paid); null when sealed or not there */
+export function copaRival(id: string): RivalDef | null {
+  const ch = copaChallenge(id);
+  if (!ch || ch.state === 'sealed' || !podioUnlocked()) return null;
+  const lg = copaAnchor();
+  const owned = new Set(Object.entries(G.s.catdex).filter(([, v]) => v === 'registered').map(([k]) => k));
+  // the anchor league's champion (its stars, Podio level, power with champion_mult), with the Heroico and × mult
+  const r = rival(lg, POST_COPA.bout, islandSeed() ^ (ch.champion.order * 7919), G.s.elements, owned);
+  const def = catDef(ch.species);
+  const power = r.power * ch.champion.mult;
+  const level = Math.max(1, Math.min(catLevelMax(), Math.round(catLevelForPower(def.rarity, r.stars, power))));
+  return { ...r, species: ch.species, def, champion: true, power, level, trainer: ch.champion.trainer ?? r.trainer, taunt: ch.champion.line ?? r.taunt, copa: ch.champion.id };
+}
+/** what a Copa duel pays this cat (the lobby shows exactly this; applyCopaDuel pays it) */
+export function copaOutlook(c: OwnedCat, id: string, won = true): DuelOutlook | null {
+  const ch = copaChallenge(id);
+  if (!ch) return null;
+  const R = PB.rewards;
+  const X = PB.xp;
+  const lg = copaAnchor();
+  const first = won && !ch.paid;
+  const mult = !won ? R.loss_mult : ch.paid ? R.replay_mult : 1;
+  const growth = Math.pow(R.gold_league_growth, lg - 1);
+  const gold = Math.round(Math.max(R.gold_min * growth, G.goldPerSec * R.gold_income_seconds) * G.s.momentum * mult);
+  const food = Math.round(Math.max(R.food_min * growth, G.foodPerSec * R.food_income_seconds) * mult);
+  const catchup = won ? catchupMult(c.uid) : 1;
+  const xp = Math.round(won ? winXp(lg) * (ch.paid ? X.replay_mult : 1) * catchup : X.loss);
+  const st = peekCat(c.uid);
+  return {
+    kind: ch.paid ? 'repeat' : 'frontier',
+    champion: true,
+    firstChampion: first,
+    gold,
+    food,
+    gems: first ? R.champion_gems : 0,
+    gemChance: 0,
+    orbs: !won ? 0 : first ? R.orbs_champion : R.orbs_replay,
+    xp,
+    keepXp: first,
+    catchup,
+    prize: first ? ch.species : null,
+    capped: st.lvl >= levelCap(c) && st.lvl < PB.levels.max,
+    copa: true,
+  };
+}
+/** pay a finished Copa duel: like applyDuel, but the ladder never moves (no league, no bout, no champion crowned) */
+export function applyCopaDuel(c: OwnedCat, id: string, won: boolean, perfect: boolean, ko = false): PodioLoot {
+  const p = ps();
+  const o = copaOutlook(c, id, won)!;
+  const lg = copaAnchor();
+  let vault = 0;
+  let timers = 0;
+  const off = G.on('purr', (e) => {
+    for (const a of e.applied) {
+      if (a.timer) timers += a.minutes;
+      else vault += a.minutes;
+    }
+  });
+  let total = 0;
+  try {
+    total += G.purr(o.firstChampion ? 'victory' : 'defeat', 'combat');
+    if (o.firstChampion && perfect) total += G.purr('perfect_extra', 'combat');
+    if (o.firstChampion) total += G.purr('catdex_set', 'combat');
+  } finally {
+    off();
+  }
+  const xp = addPodioXp(c, o.xp, o.keepXp);
+  G.xp(won ? 'victory' : 'defeat', undefined, PB.rewards.kingdom_xp_mult * (o.firstChampion ? 1 : 0.5));
+  if (won) G.bump('victory');
+  if (o.gold) G.add('gold', o.gold, 'podio');
+  if (o.food) G.add('food', o.food, 'podio');
+  if (o.gems) G.add('gems', o.gems, 'podio');
+  if (o.orbs) G.addOrbs(c.species, o.orbs);
+  const st = catState(c.uid);
+  if (won) {
+    st.wins++;
+    p.stats.wins++;
+    if (perfect) p.stats.perfects++;
+    G.count('feature_podio_win');
+    G.count('podio_copa_wins');
+    countCrewWins([c.uid], ko ? c.uid : undefined);
+  } else {
+    st.losses++;
+    p.stats.losses++;
+  }
+  G.count('podio_duels');
+  const prize = o.prize ? grantPrize(o.prize) : null;
+  G.save();
+  return {
+    prize,
+    won,
+    kind: o.kind,
+    catchup: o.catchup,
+    replay: !o.firstChampion,
+    champion: true,
+    firstChampion: o.firstChampion,
+    leagueUp: false,
+    gold: o.gold,
+    food: o.food,
+    gems: o.gems,
+    orbs: o.orbs ? { species: c.species, n: o.orbs } : null,
+    purr: { total, vault, timers, gold: Math.max(0, total - vault - timers) },
+    xp,
+    league: lg,
+    bout: POST_COPA.bout,
     ko: won && ko,
   };
 }

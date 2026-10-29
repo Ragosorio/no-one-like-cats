@@ -803,6 +803,496 @@
       "bytes": 433855,
       "paths": 4606,
       "premultipliedRgbMae": 9.7353
+    },
+    "unzarpazo_bored_cat": {
+      "bytes": 426267,
+      "paths": 4672,
+      "premultipliedRgbMae": 7.967
+    },
+    "pegaso_bronze_cat": {
+      "bytes": 784389,
+      "paths": 8285,
+      "premultipliedRgbMae": 11.4674
+    },
+    "michiatom_striker_cat": {
+      "bytes": 588340,
+      "paths": 6407,
+      "premultipliedRgbMae": 9.1611
+    },
+    "mazingato_robot_cat": {
+      "bytes": 664209,
+      "paths": 6993,
+      "premultipliedRgbMae": 8.7904
+    },
+    "miaunya_telepath_cat": {
+      "bytes": 513374,
+      "paths": 5347,
+      "premultipliedRgbMae": 8.5251
+    },
+    "gatote_lance_cat": {
+      "bytes": 540155,
+      "paths": 6256,
+      "premultipliedRgbMae": 9.3824
+    },
+    "sherlock_deerstalker_cat": {
+      "bytes": 677964,
+      "paths": 7046,
+      "premultipliedRgbMae": 8.3402
+    },
+    "frankengato_patch_cat": {
+      "bytes": 700847,
+      "paths": 7097,
+      "premultipliedRgbMae": 8.0913
+    },
+    "gatula_cape_cat": {
+      "bytes": 724710,
+      "paths": 7059,
+      "premultipliedRgbMae": 6.4592
+    },
+    "ahab_harpoon_cat": {
+      "bytes": 862819,
+      "paths": 8917,
+      "premultipliedRgbMae": 8.0486
+    },
+    "pinomichi_wood_cat": {
+      "bytes": 544158,
+      "paths": 5802,
+      "premultipliedRgbMae": 8.7066
+    },
+    "barril_barrel_cat": {
+      "bytes": 510031,
+      "paths": 5146,
+      "premultipliedRgbMae": 8.0508
+    },
+    "miaubody_bowtie_cat": {
+      "bytes": 388813,
+      "paths": 4489,
+      "premultipliedRgbMae": 12.3155
+    },
+    "gemichi_twin_cat": {
+      "bytes": 481202,
+      "paths": 5205,
+      "premultipliedRgbMae": 10.6957
+    },
+    "gatoleone_rose_cat": {
+      "bytes": 419910,
+      "paths": 4367,
+      "premultipliedRgbMae": 6.5951
+    },
+    "gatoneta_cake_cat": {
+      "bytes": 936623,
+      "paths": 9366,
+      "premultipliedRgbMae": 7.8757
+    },
+    "daftmiau_helmet_cat": {
+      "bytes": 531256,
+      "paths": 5309,
+      "premultipliedRgbMae": 11.3908
+    },
+    "gomitas_rubber_cat": {
+      "bytes": 694230,
+      "paths": 7366,
+      "premultipliedRgbMae": 8.6023
+    },
+    "kagebunyan_clone_cat": {
+      "bytes": 687793,
+      "paths": 7389,
+      "premultipliedRgbMae": 8.6409
+    },
+    "gatojo_pose_cat": {
+      "bytes": 567564,
+      "paths": 5897,
+      "premultipliedRgbMae": 7.4113
+    },
+    "ryumiau_notebook_cat": {
+      "bytes": 780869,
+      "paths": 8866,
+      "premultipliedRgbMae": 4.6546
+    },
+    "michipulin_red_cat": {
+      "bytes": 526441,
+      "paths": 5722,
+      "premultipliedRgbMae": 8.151
+    },
+    "condorgato_ruff_cat": {
+      "bytes": 448740,
+      "paths": 4982,
+      "premultipliedRgbMae": 7.9537
+    },
+    "rick_portal_cat": {
+      "bytes": 569992,
+      "paths": 6360,
+      "premultipliedRgbMae": 12.7919
+    },
+    "miaang_airbender_cat": {
+      "bytes": 598355,
+      "paths": 6897,
+      "premultipliedRgbMae": 9.6221
+    },
+    "miauby_mystery_cat": {
+      "bytes": 382037,
+      "paths": 4201,
+      "premultipliedRgbMae": 7.187
+    },
+    "blumiau_clue_cat": {
+      "bytes": 451940,
+      "paths": 5063,
+      "premultipliedRgbMae": 8.4754
+    },
+    "michimpostor_bean_cat": {
+      "bytes": 469742,
+      "paths": 4905,
+      "premultipliedRgbMae": 6.7836
+    },
+    "miaufalda_globe_cat": {
+      "bytes": 342953,
+      "paths": 4013,
+      "premultipliedRgbMae": 8.6283
+    },
+    "persafalsa_disguise_cat": {
+      "bytes": 589329,
+      "paths": 5788,
+      "premultipliedRgbMae": 8.5904
+    },
+    "hermiaune_bookworm_cat": {
+      "bytes": 755620,
+      "paths": 7618,
+      "premultipliedRgbMae": 5.6025
+    },
+    "lunalovegata_spectre_cat": {
+      "bytes": 669834,
+      "paths": 6647,
+      "premultipliedRgbMae": 10.4657
+    },
+    "miaunce_telekinesis_cat": {
+      "bytes": 577952,
+      "paths": 6459,
+      "premultipliedRgbMae": 8.3043
+    },
+    "heisenmiau_chemist_cat": {
+      "bytes": 581815,
+      "paths": 5720,
+      "premultipliedRgbMae": 7.2764
+    },
+    "miauki_ballad_cat": {
+      "bytes": 612005,
+      "paths": 5957,
+      "premultipliedRgbMae": 8.3898
+    },
+    "miautentacion_twotone_cat": {
+      "bytes": 544910,
+      "paths": 5370,
+      "premultipliedRgbMae": 8.5113
+    },
+    "miauknd_redsuit_cat": {
+      "bytes": 505000,
+      "paths": 5241,
+      "premultipliedRgbMae": 5.84
+    },
+    "miaussi_ten_cat": {
+      "bytes": 629919,
+      "paths": 6484,
+      "premultipliedRgbMae": 8.5628
+    },
+    "miaupe_sprint_cat": {
+      "bytes": 332170,
+      "paths": 3684,
+      "premultipliedRgbMae": 6.8541
+    },
+    "lamiau_curl_cat": {
+      "bytes": 535857,
+      "paths": 5823,
+      "premultipliedRgbMae": 8.2941
+    },
+    "michiercoles_cello_cat": {
+      "bytes": 548796,
+      "paths": 5624,
+      "premultipliedRgbMae": 5.9966
+    },
+    "vencidas_armwrestle_cat": {
+      "bytes": 1089589,
+      "paths": 10536,
+      "premultipliedRgbMae": 9.1457
+    },
+    "kidcapa_sidekick_cat": {
+      "bytes": 1074326,
+      "paths": 10485,
+      "premultipliedRgbMae": 9.2963
+    },
+    "shinai_kendo_cat": {
+      "bytes": 1028464,
+      "paths": 10655,
+      "premultipliedRgbMae": 10.1991
+    },
+    "pergamino_knight_cat": {
+      "bytes": 1111994,
+      "paths": 11000,
+      "premultipliedRgbMae": 9.9984
+    },
+    "retiaria_net_cat": {
+      "bytes": 1082731,
+      "paths": 11228,
+      "premultipliedRgbMae": 10.1741
+    },
+    "mascaradeoro_luchador_cat": {
+      "bytes": 942198,
+      "paths": 9311,
+      "premultipliedRgbMae": 8.849
+    },
+    "combo_arcade_cat": {
+      "bytes": 1059356,
+      "paths": 10487,
+      "premultipliedRgbMae": 9.0835
+    },
+    "yugi_duel_cat": {
+      "bytes": 702457,
+      "paths": 7408,
+      "premultipliedRgbMae": 10.151
+    },
+    "esponja_sponge_cat": {
+      "bytes": 512688,
+      "paths": 5624,
+      "premultipliedRgbMae": 10.3026
+    },
+    "gatogro_swamp_cat": {
+      "bytes": 538945,
+      "paths": 5685,
+      "premultipliedRgbMae": 6.5371
+    },
+    "grru_freezeray_cat": {
+      "bytes": 508450,
+      "paths": 5456,
+      "premultipliedRgbMae": 7.3578
+    },
+    "miaunion_goggle_cat": {
+      "bytes": 505911,
+      "paths": 5340,
+      "premultipliedRgbMae": 8.9239
+    },
+    "ssssmichi_blocky_cat": {
+      "bytes": 519514,
+      "paths": 4749,
+      "premultipliedRgbMae": 3.3396
+    },
+    "zoomic_speed_cat": {
+      "bytes": 710223,
+      "paths": 6449,
+      "premultipliedRgbMae": 4.7737
+    },
+    "pozomayor_jackpot_cat": {
+      "bytes": 1084366,
+      "paths": 10002,
+      "premultipliedRgbMae": 12.2974
+    },
+    "bolita_roulette_cat": {
+      "bytes": 1109701,
+      "paths": 10489,
+      "premultipliedRgbMae": 7.6342
+    },
+    "catarata_waterfall_cat": {
+      "bytes": 1303083,
+      "paths": 12949,
+      "premultipliedRgbMae": 10.4977
+    },
+    "ojoserpiente_dice_cat": {
+      "bytes": 1087150,
+      "paths": 11331,
+      "premultipliedRgbMae": 9.9458
+    },
+    "asmanga_cardsharp_cat": {
+      "bytes": 1068460,
+      "paths": 10773,
+      "premultipliedRgbMae": 9.5762
+    },
+    "cantadora_bingo_cat": {
+      "bytes": 1211909,
+      "paths": 11992,
+      "premultipliedRgbMae": 8.7016
+    },
+    "monodorado_gift_cat": {
+      "bytes": 1058142,
+      "paths": 10302,
+      "premultipliedRgbMae": 9.7833
+    },
+    "desborde_overflow_cat": {
+      "bytes": 1081279,
+      "paths": 10590,
+      "premultipliedRgbMae": 11.0218
+    },
+    "unadeoro_claw_cat": {
+      "bytes": 1095022,
+      "paths": 10660,
+      "premultipliedRgbMae": 8.7831
+    },
+    "sinfrenos_rush_cat": {
+      "bytes": 1165499,
+      "paths": 12320,
+      "premultipliedRgbMae": 11.3618
+    },
+    "bgirl_disco_cat": {
+      "bytes": 906582,
+      "paths": 8851,
+      "premultipliedRgbMae": 10.6407
+    },
+    "garritas_claws_cat": {
+      "bytes": 732078,
+      "paths": 7512,
+      "premultipliedRgbMae": 8.6471
+    },
+    "supermichi_cape_cat": {
+      "bytes": 696592,
+      "paths": 7169,
+      "premultipliedRgbMae": 8.6985
+    },
+    "hierromichi_armor_cat": {
+      "bytes": 801787,
+      "paths": 7874,
+      "premultipliedRgbMae": 11.1799
+    },
+    "michimerica_shield_cat": {
+      "bytes": 728425,
+      "paths": 7365,
+      "premultipliedRgbMae": 11.1079
+    },
+    "doomiau_mask_cat": {
+      "bytes": 868819,
+      "paths": 8537,
+      "premultipliedRgbMae": 8.8359
+    },
+    "hannah_wig_cat": {
+      "bytes": 579170,
+      "paths": 5793,
+      "premultipliedRgbMae": 10.8257
+    },
+    "michiwan_laser_cat": {
+      "bytes": 584326,
+      "paths": 6071,
+      "premultipliedRgbMae": 8.5403
+    },
+    "romiau_bachata_cat": {
+      "bytes": 517082,
+      "paths": 5412,
+      "premultipliedRgbMae": 9.2931
+    },
+    "postmaulone_chill_cat": {
+      "bytes": 666314,
+      "paths": 6769,
+      "premultipliedRgbMae": 10.8696
+    },
+    "partymichi_zebra_cat": {
+      "bytes": 633839,
+      "paths": 6081,
+      "premultipliedRgbMae": 13.1494
+    },
+    "gatistiano_jump_cat": {
+      "bytes": 567411,
+      "paths": 6000,
+      "premultipliedRgbMae": 7.0178
+    },
+    "pixelmuerto_glitch_cat": {
+      "bytes": 1214864,
+      "paths": 12129,
+      "premultipliedRgbMae": 8.1438
+    },
+    "doblon_coin_cat": {
+      "bytes": 1064723,
+      "paths": 10550,
+      "premultipliedRgbMae": 9.0853
+    },
+    "malasuerte_omen_cat": {
+      "bytes": 837720,
+      "paths": 8813,
+      "premultipliedRgbMae": 4.3294
+    },
+    "trompo_spin_cat": {
+      "bytes": 1124935,
+      "paths": 11501,
+      "premultipliedRgbMae": 9.3202
+    },
+    "gotera_drip_cat": {
+      "bytes": 841164,
+      "paths": 8539,
+      "premultipliedRgbMae": 10.5645
+    },
+    "granizo_hail_cat": {
+      "bytes": 1253044,
+      "paths": 12456,
+      "premultipliedRgbMae": 10.9673
+    },
+    "basalto_stone_die_cat": {
+      "bytes": 1077566,
+      "paths": 10099,
+      "premultipliedRgbMae": 9.0785
+    },
+    "revancha_rematch_cat": {
+      "bytes": 932514,
+      "paths": 9184,
+      "premultipliedRgbMae": 8.8563
+    },
+    "comodin_joker_cat": {
+      "bytes": 957853,
+      "paths": 9508,
+      "premultipliedRgbMae": 9.5027
+    },
+    "tintagris_underline_cat": {
+      "bytes": 1060396,
+      "paths": 11202,
+      "premultipliedRgbMae": 8.1432
+    },
+    "coro_choir_cat": {
+      "bytes": 1158685,
+      "paths": 11823,
+      "premultipliedRgbMae": 8.6101
+    },
+    "doblaje_dub_cat": {
+      "bytes": 1066318,
+      "paths": 10462,
+      "premultipliedRgbMae": 9.9614
+    },
+    "trebol_clover_cat": {
+      "bytes": 1150827,
+      "paths": 11253,
+      "premultipliedRgbMae": 10.3265
+    },
+    "vineta_panel_cat": {
+      "bytes": 948141,
+      "paths": 9333,
+      "premultipliedRgbMae": 11.6273
+    },
+    "rendija_peek_cat": {
+      "bytes": 1072603,
+      "paths": 10087,
+      "premultipliedRgbMae": 9.2643
+    },
+    "matrioska_nested_cat": {
+      "bytes": 822221,
+      "paths": 7627,
+      "premultipliedRgbMae": 8.7567
+    },
+    "brasanaranja_beacon_cat": {
+      "bytes": 1162952,
+      "paths": 11355,
+      "premultipliedRgbMae": 8.841
+    },
+    "vigilia_eyes_cat": {
+      "bytes": 1166209,
+      "paths": 11758,
+      "premultipliedRgbMae": 10.0989
+    },
+    "grafito_pencil_cat": {
+      "bytes": 1022494,
+      "paths": 10244,
+      "premultipliedRgbMae": 9.9302
+    },
+    "bucle_loop_cat": {
+      "bytes": 1103185,
+      "paths": 10807,
+      "premultipliedRgbMae": 8.4235
+    },
+    "sabrina_bangs_cat": {
+      "bytes": 567791,
+      "paths": 5499,
+      "premultipliedRgbMae": 7.7904
     }
   }
 }

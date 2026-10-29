@@ -28,10 +28,14 @@ import { Lobby } from '../podio/lobby';
 import { PodioResults } from '../podio/results';
 import { PowerDef, STATUS_DESC, STATUS_NAME } from '../podio/powers';
 import { KO_WORDS, SKIP_TEXT, START, pick } from '../podio/lines';
-import { SPEEDS, aiSkill, applyDuel, league, nextBout, playerFighter, ps, reachable, rivalAt, rivalFighter } from '../state/sys/podio';
+import { SPEEDS, aiSkill, applyCopaDuel, applyDuel, copaRival, league, nextBout, playerFighter, ps, reachable, rivalAt, rivalFighter } from '../state/sys/podio';
+import { copaChallenges } from '../state/sys/postp3';
+import { POST_COPA } from '../data/postp3/reglas';
 import type { RivalDef } from '../podio/ladder';
 
 const CAT_SIZE = 400;
+/** the Copa Fuera de la Caja's arena accent */
+const COPA_COLOR = 0xffc94a;
 
 export class PodioScene extends Scene {
   override bleed: number | null = 0x0d0b10;
@@ -127,27 +131,29 @@ export class PodioScene extends Scene {
   }
 
   // ================================================================== LOBBY
-  /** the ladder; `at` = a rival of a past league being browsed (rematches), default your frontier */
-  showLobby(at?: { lg: number; bout: number }) {
+  /** the ladder; `at` = a rival of a past league being browsed (rematches), default your frontier; `at.copa` = a Copa challenge */
+  showLobby(at?: { lg: number; bout: number; copa?: string }) {
     this.clearAll();
     const p = ps();
     const lg = at && reachable(at.lg, at.bout) ? at.lg : p.league;
     const bout = at && reachable(at.lg, at.bout) ? at.bout : p.bout;
-    const r = rivalAt(lg, bout);
-    this.setArena(r.def.elements[0], league(lg).name, league(lg).color);
+    const copa = at?.copa && copaRival(at.copa) ? at.copa : undefined;
+    const r = (copa && copaRival(copa)) || rivalAt(lg, bout);
+    this.setArena(r.def.elements[0], copa ? POST_COPA.name : league(lg).name, copa ? COPA_COLOR : league(lg).color);
     const dim = new Graphics().rect(-400, -200, W + 800, H + 400).fill({ color: C.ink, alpha: 0.35 });
     this.ui.addChild(dim);
-    void ensureCats([r.species, ...[0, 1, 2, 3, 4].map((i) => rivalAt(lg, i).species)]).then(() => {
+    void ensureCats([r.species, ...[0, 1, 2, 3, 4].map((i) => rivalAt(lg, i).species), ...copaChallenges().map((k) => k.species)]).then(() => {
       if (this.destroyed || this.duel) return;
       this.lobby?.destroy({ children: true });
       this.lobby = new Lobby({
         lg,
         bout,
-        onFight: (uid, flg, fbout) => void this.startDuel(uid, flg, fbout),
+        copa,
+        onFight: (uid, flg, fbout, fcopa) => void this.startDuel(uid, flg, fbout, fcopa),
         onExit: () => void goIsland(),
         onBrowse: (rv) => {
           if (this.destroyed || this.duel) return;
-          this.setArena(rv.def.elements[0], league(rv.league).name, league(rv.league).color);
+          this.setArena(rv.def.elements[0], rv.copa ? POST_COPA.name : league(rv.league).name, rv.copa ? COPA_COLOR : league(rv.league).color);
         },
       });
       this.ui.addChild(this.lobby);
@@ -165,10 +171,12 @@ export class PodioScene extends Scene {
   }
 
   // ================================================================== DUEL
-  async startDuel(uid: string, lg: number, bout: number) {
+  async startDuel(uid: string, lg: number, bout: number, copa?: string) {
     const cat = G.s.cats.find((c) => c.uid === uid);
     if (!cat) return;
-    const r = rivalAt(lg, bout);
+    // after the Parte III: a challenge of the Copa Fuera de la Caja (anchored to your league: state/sys/podio.ts copaRival)
+    const r = (copa && copaRival(copa)) || rivalAt(lg, bout);
+    lg = r.league;
     await ensureCats([cat.species, r.species]);
     if (this.destroyed) return;
     this.clearAll();
@@ -178,7 +186,7 @@ export class PodioScene extends Scene {
     this.superShown = 0;
     const seed = (Date.now() ^ (r.seed * 31)) >>> 0;
     const duel = (this.duel = new Duel(playerFighter(cat), rivalFighter(r), seed, aiSkill(lg, r.champion)));
-    this.setArena(r.def.elements[0], league(lg).name, league(lg).color);
+    this.setArena(r.def.elements[0], r.copa ? POST_COPA.name : league(lg).name, r.copa ? COPA_COLOR : league(lg).color);
     music.play(r.champion ? 'boss' : 'battle');
     // ---- the two cats
     for (const side of [0, 1] as const) {
@@ -752,14 +760,16 @@ export class PodioScene extends Scene {
       await this.wait(0.6);
     }
     // a K.O. (not the judges, not a forfeit) is the cat's final blow: H38 «¡A BABOR!» counts it
-    const loot = applyDuel(cat, r.league, r.bout, won, perfect, won && this.duel!.koBy === 0);
+    const loot = r.copa ? applyCopaDuel(cat, r.copa, won, perfect, won && this.duel!.koBy === 0) : applyDuel(cat, r.league, r.bout, won, perfect, won && this.duel!.koBy === 0);
     this.duel = null;
     if (run !== this.runId || this.destroyed) return;
     // a VACÍO champion's prize: the cat joins (reveal) and, the first time, Luzterna explains what it is
     if (loot.prize) await this.showPrize(loot.prize);
     if (run !== this.runId || this.destroyed) return;
-    const after = () => {
+    const after = (): { lg: number; bout: number; copa?: string } => {
       const p = ps();
+      // the Copa: after a win, its next challenge (or the same one, now a rematch); after a loss, the same one
+      if (r.copa) return { lg: p.league, bout: p.bout, copa: (won && copaChallenges().find((k) => k.state === 'next')?.champion.id) || r.copa };
       if (!won) return { lg: r.league, bout: r.bout };
       return loot.kind === 'frontier' ? { lg: p.league, bout: p.bout } : nextBout(r.league, r.bout);
     };
@@ -768,7 +778,7 @@ export class PodioScene extends Scene {
       // going there; a frontier win goes on to your new frontier). After a loss: the same rival.
       onNext: () => {
         const to = after();
-        void this.startDuel(cat.uid, to.lg, to.bout);
+        void this.startDuel(cat.uid, to.lg, to.bout, to.copa);
       },
       onLobby: () => this.showLobby(after()),
       onIsland: () => void goIsland(),

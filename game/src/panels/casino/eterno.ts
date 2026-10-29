@@ -32,9 +32,11 @@ import type { AutoHost } from './auto';
 import { gapFor } from './auto';
 import type { CasinoCtx } from './ctx';
 import type { Ev } from './lines';
-import { CP, CButton, ChatFeed, Marquee, curIcon, heading, label, neon } from './kit';
+import { CP, CButton, ChatFeed, Marquee, clickable, curIcon, heading, label, neon } from './kit';
+import { openPostOdds } from './postOdds';
 import { coinFountain, coinRain, stamp } from './fx';
 import { revealCats } from './prizes';
+import { postOdds, shareText } from '../../state/sys/postp3';
 import { csfx } from './sfx';
 
 const AREA = { x: 336, y: 96, w: 1100, h: 984 };
@@ -58,15 +60,26 @@ export function openEternoConfirm(onConfirm: () => void) {
   // win box
   const win = new Container();
   const wb = new Graphics();
+  // after the Parte III the special cat may come from the Multiverse (state/sys/postp3.ts): said here, before you light it
+  const po = postOdds({ game: 'eterno' });
+  const poTxt = po ? ` Después de la Parte III, ${shareText(po.share)} de esos gatos viene del Multiverso${po.left ? ` (garantizado en ${po.left})` : ''}.` : '';
   const wt = T(
-    `SI GANAS: TODO lo tuyo se multiplica ×${ETERNO.winMultiplier} (oro, gemas, pescaditos, boletos y fichas), te llevas el BOTÍN entero y 1 gato especial: legendario (${Math.round(ETERNO.reward.legendary * 100)}%), legendario HOLO (${Math.round(ETERNO.reward.holo * 100)}%) o MÍTICO (${Math.round(ETERNO.reward.mythic * 100)}%; si aún no puedes tener uno, legendario HOLO).`,
+    `SI GANAS: TODO lo tuyo se multiplica ×${ETERNO.winMultiplier} (oro, gemas, pescaditos, boletos y fichas), te llevas el BOTÍN entero y 1 gato especial: legendario (${Math.round(ETERNO.reward.legendary * 100)}%), legendario HOLO (${Math.round(ETERNO.reward.holo * 100)}%) o MÍTICO (${Math.round(ETERNO.reward.mythic * 100)}%; si aún no puedes tener uno, legendario HOLO).${poTxt}`,
     22,
     C.ink,
     { wordWrapWidth: 1130 },
   );
   wt.position.set(18, 12);
-  wb.rect(0, 0, 1170, wt.height + 24).fill(0xffe9a8).stroke({ width: 4, color: C.ink, alignment: 1 });
+  let wh = wt.height + 24;
   win.addChild(wb, wt);
+  if (po) {
+    const pl = T('VER LOS GATOS DEL MULTIVERSO Y SUS PROBABILIDADES ›', 17, C.inkBlue);
+    pl.position.set(18, wh - 6);
+    clickable(pl, () => openPostOdds({ game: 'eterno' }));
+    win.addChild(pl);
+    wh += pl.height + 4;
+  }
+  wb.rect(0, 0, 1170, wh).fill(0xffe9a8).stroke({ width: 4, color: C.ink, alignment: 1 });
   add(win, 14);
   // risk box: exact fields + current amounts
   const r = atRisk();

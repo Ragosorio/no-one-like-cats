@@ -7,6 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { PINNED_SHARD } from '../src/art/artShardPins';
 
 const at = (p: string) => new URL(`../${p}`, import.meta.url);
 const svgs = (dir: string) => new Set(readdirSync(at(dir)).filter((f) => f.endsWith('.svg')).map((f) => f.slice(0, -4)));
@@ -93,5 +94,44 @@ describe('Parte III arte v2 (35 paintings)', () => {
   it('Cerito: static and fur are the same drawing (same rig, same canvas) so a film can cross-fade them', () => {
     expect(RIGS.cerito_static_cat).toEqual(RIGS.cerito_fur_cat);
     for (const f of ['cerito_static_cat', 'cerito_fur_cat']) expect(readFileSync(at(`public/cats-svg/lite/${f}.svg`), 'utf8')).toMatch(/viewBox="0 0 240 240"/);
+  });
+});
+
+/** post-Parte III batch (ARTE-POST, docs/post-p3/agentes/ARTE-POST.md): every painting of the batch is pinned to art site 1 */
+const POST_ART = [...PINNED_SHARD].filter(([, k]) => k === 1).map(([s]) => s);
+describe('post-Parte III art (pinned to art site 1)', () => {
+  it('files, manifests and rigs are there; manifests match the files byte for byte', () => {
+    for (const s of POST_ART) {
+      expect(FULL.has(s) && LITE.has(s) && !!RIGS[s], s).toBe(true);
+      expect(s, s).not.toMatch(/_v\d+$|_bal$/);
+      expect(statSync(at(`public/cats-svg/${s}.svg`)).size, `${s} full`).toBe(EXPORT[s].bytesOut);
+      expect(statSync(at(`public/cats-svg/lite/${s}.svg`)).size, `${s} lite`).toBe(THUMBS[s].bytes);
+      expect(THUMBS[s].premultipliedRgbMae, `${s} lite MAE gate`).toBeLessThan(22);
+      expect([undefined, 'balanced-color-preserved'], s).toContain(EXPORT[s].preset);
+    }
+  });
+  it('pure vectors: no raster, no scripts', () => {
+    for (const s of POST_ART)
+      for (const f of [`public/cats-svg/${s}.svg`, `public/cats-svg/lite/${s}.svg`]) {
+        const src = readFileSync(at(f), 'utf8');
+        expect(/<image\b/i.test(src), f).toBe(false);
+        expect(/<script\b|\son[a-z]+\s*=|javascript:/i.test(src), f).toBe(false);
+      }
+  });
+  it('rigs are sane: ear bases inside the head, two eyes inside it, tail and props inside the painting', () => {
+    const inside = (x: number, y: number) => x >= 0 && x <= 700 && y >= 0 && y <= 700;
+    for (const s of POST_ART) {
+      const r = RIGS[s];
+      const [hx, hy, rx, ry] = r.head;
+      for (const [bx, by] of r.ears.slice(0, 2)) expect(Math.hypot((bx - hx) / rx, (by - hy) / ry), `${s} ear base`).toBeLessThanOrEqual(1);
+      expect(r.eyes.length, `${s} has two eyes`).toBe(2);
+      for (const e of r.eyes) {
+        expect(e[0] < e[2] && e[1] < e[3], `${s} eye box`).toBe(true);
+        expect(inside(e[0], e[1]) && inside(e[2], e[3]), `${s} eye`).toBe(true);
+        expect(Math.hypot(((e[0] + e[2]) / 2 - hx) / rx, ((e[1] + e[3]) / 2 - hy) / ry), `${s} eye in head`).toBeLessThan(1);
+      }
+      expect(r.tail && r.tail.pts.every(([x, y]) => inside(x, y)), `${s} tail`).toBe(true);
+      for (const [x, y] of [...r.floats, ...(r.pins ?? [])]) expect(inside(x, y), `${s} prop`).toBe(true);
+    }
   });
 });

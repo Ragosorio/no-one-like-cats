@@ -39,6 +39,8 @@ import { CP, CButton, Seg, block, chipIcon, clickable, curIcon, heading, label, 
 import { coinFountain, flyLoot, stamp, winBanner } from './fx';
 import { csfx } from './sfx';
 import { openOdds } from './OddsPanel';
+import { ensureVitrinaArt, openVitrina, presentVitrina, vitrinaBadge } from './vitrina';
+import type { Granted } from '../../state/sys/casino';
 import { lounge } from './lounge';
 import type { CasinoCtx, CasinoView } from './ctx';
 
@@ -69,6 +71,8 @@ export class RouletteView extends Container implements CasinoView, AutoHost {
   private spinning = false;
   private lastTickSeg = 0;
   private gemNote!: Text;
+  /** after the Parte III: the showcase's badge (panels/casino/vitrina.ts) */
+  private vitBadge: Container | null = null;
 
   constructor(private ctx: CasinoCtx) {
     super();
@@ -78,6 +82,23 @@ export class RouletteView extends Container implements CasinoView, AutoHost {
     this.buildWheel();
     this.buildBoard();
     this.refresh();
+    this.buildVitrina();
+  }
+
+  // ------------------------------------------------------------------ after the Parte III: the showcase
+  private buildVitrina() {
+    this.vitBadge?.destroy({ children: true });
+    this.vitBadge = vitrinaBadge('roulette', () => openVitrina('roulette', (g) => void this.showVitrina([g], 1, 0)));
+    if (!this.vitBadge) return;
+    this.vitBadge.position.set(1130, 74);
+    this.addChild(this.vitBadge);
+    void ensureVitrinaArt('roulette').then((did) => did && !this.destroyed && this.buildVitrina());
+  }
+  /** over the wheel, after the spin's own moment (`after` ms; 0 from the VITRINA tab) */
+  private async showVitrina(items: Granted[], speed: number, after?: number) {
+    if (!items.length || this.destroyed) return;
+    await presentVitrina(this.ctx, items, { x: CX - R - 46, y: CY - R - 46, w: (R + 46) * 2, h: (R + 46) * 2 }, speed, { after });
+    if (!this.destroyed) this.buildVitrina();
   }
 
   // ------------------------------------------------------------------ wheel
@@ -261,7 +282,7 @@ export class RouletteView extends Container implements CasinoView, AutoHost {
     ot.position.set(20, 6);
     od.addChild(ot);
     od.position.set(380, 990);
-    clickable(od, () => openOdds('roulette'));
+    clickable(od, () => openOdds('roulette', 'gold', 0, undefined, 0, (g) => void this.showVitrina([g], 1, 0)));
     this.addChild(od);
     this.net = label('', 18, CP.softPink);
     this.net.anchor.set(1, 0);
@@ -523,6 +544,8 @@ export class RouletteView extends Container implements CasinoView, AutoHost {
         gsap.to(t, { alpha: 0, delay: 1.1 / speed, duration: 0.25, onComplete: () => t.destroy() });
       }
     }
+    // a Momento Vitrina (after the Parte III): already applied; the run waits for its reveal
+    await this.showVitrina(r.bonus.filter((g) => g.vitrina), speed);
     if (!turbo) await new Promise((res) => window.setTimeout(res, 500 / speed));
     this.spinning = false;
     if (!auto) this.ctx.setBusy(false);

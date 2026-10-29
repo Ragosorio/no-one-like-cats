@@ -1,0 +1,156 @@
+# 02 · Briefs de arte del lote post-P3
+
+> ⚠️ SPOILERS. Generado por `fuente/generar.py`. Los prompts viven fuera del repo: `~/Desktop/No one - raster (fuera del repo)/arte-nuevo/prompts/lote-post-p3/<id>.md` (sección «## B. Final image prompt», la que extrae `gen.sh`).
+> **DISEÑO no generó ninguna imagen.** La cola la corre otro agente.
+
+## 1. Qué se agregó en arte-nuevo (solo agregar; nada se borró ni se sobrescribió)
+
+- **114 entradas** nuevas en `manifest.json`, todas con `folder: "lote-post-p3"`, `lote: "post"`, `coat_en` obligatorio y los campos v2 de referencia (`reference_en`, `signifiers_en`, `evoke_not_copy_en`, `style_of_en`, `rarity_treatment_en`, `referencia_es`). Extras para el equipo: `slug`, `riesgo_moderacion`, `plan_b_es`, `plan_b_en`, `reserva`, `post_source` (el compilador los ignora).
+- Respaldo del manifest previo: `_respaldos/manifest-antes-lote-post-p3-<fecha>.json`.
+- Prompts compilados con `node herramientas/compilar.mjs <id>` (uno por id; `comun.mjs` no conoce un lote «post», así que se compila por id).
+- Carpeta `lote-post-p3/` con `_crudos/` vacía (ahí copia Codex), `estilo/` (3 style locks nuevos) y `COLA.txt` (orden sugerido).
+- **Style locks nuevos** (en `lote-post-p3/estilo/`, no en `estilo/`, para no tocar los bloques fijos): **CARICATURA** (caricatura de TV de los 70–2010), **TIRA** (historieta latinoamericana de periódico) y **ESTADIO** (póster deportivo). El manifest los apunta con `style_lock: "../lote-post-p3/estilo/<LOCK>.txt"` (compilar.mjs lee la ruta relativa a `estilo/`). Si el director prefiere, se mueven a `estilo/dimensiones/` y se cambia la ruta.
+- Los originales (Míticos, Legendarios, Heroicos) usan el **estilo de la casa** (STYLE_LOCK + las 3 referencias), como los Heroicos y Divinos del lote C; su `element_dimensions` sale de la tabla del manifest.
+
+## 2. Cómo correrlo
+
+```bash
+cd "~/Desktop/No one - raster (fuera del repo)/arte-nuevo"
+# un gato:
+./_p3v2/gen.sh xp_gomitas 1
+# en olas (normaliza solo lo que sale):
+./_p3v2/cola.sh 03:00 4 $(grep -v "^#" lote-post-p3/COLA.txt | grep -v "^$" | grep -v "^R ")
+# revisión:
+node herramientas/validar.mjs <id>   # y la hoja de contacto v2 de _p3v2/herramientas/contacto-v2.mjs
+```
+
+**Si se bloquea** (`moderation_blocked`): no se insiste con la misma imagen. Se agrega a `corrections_en` el rasgo de `plan_b_en` (o la línea de «Plan B» de abajo, traducida) y se recompila; máximo 2 reintentos; si sigue, entra la reserva que cubra ese grupo (`01-roster` §Reserva). Los superhéroes van al final de la cola por eso.
+
+**Personas reales** (músicos, futbolistas): son gatos; nunca su cara; el `must_not_include_en` agrega «No real-person likeness…». Los futbolistas son los únicos con un glifo permitido: su número de selección (plan B: sin número).
+
+## 3. Tabla de briefs
+
+| id | Nombre | Rareza | Estilo | Riesgo | Rasgos que siempre se ven | Plan B |
+|---|---|---|---|---|---|---|
+| `xp_gomitas` | Gomitas D. Michi | MD | ANIME_V2 | medio | sombrero de paja con cinta roja; chaleco rojo abierto y short azul; una pata estirada como chicle; fajín amarillo y marquita bajo el ojo (pelaje) | Quitar la marquita bajo el ojo y el fajín amarillo; el sombrero de paja con cinta roja, el chaleco rojo y la pata estirada cargan la referencia. |
+| `xp_kagebunyan` | Kagebunyan | MD | ANIME_V2 | medio | mono naranja con hombros negros; banda en la frente con placa de emblema propio (espiral de pescado); pelaje rubio en picos; tres bigotes gruesos en cada mejilla (ya los traía) | Placa de la banda lisa (sin grabado) y pelaje más naranja; el mono naranja, los bigotes gruesos y la seña de manos cargan. |
+| `xp_gatojo` | Gatojo | MD | ANIME_V2 | bajo-medio | abrigo negro largo de cuello alto con cadena dorada; gorra fundida con el pelaje; pose imposible señalando al frente; bloques de color raros (verde agua, oro, violeta) | Sin gorra: el abrigo de cuello alto con cadena dorada y la pose torcida bastan. |
+| `xp_unzarpazo` | Un Zarpazo | MD | ANIME_V2 | bajo | gato esfinge pelón y brillante; traje amarillo de una pieza con cierre; guantes y botas rojas, capa blanca corta; cara de flojera total (dibujada más simple) | Sin la bolsa del súper; amarillo, capa blanca, guantes rojos y cabeza pelona bastan. |
+| `xp_pegaso` | Michi de Pegaso | MD | ANIME_V2 | bajo | armadura de bronce con alitas en los hombros; diadema alada en la frente; playera roja bajo la armadura; puño al frente rodeado de estrellas | Armadura más simple (peto y una hombrera); la diadema alada y el puño con estrellas cargan. |
+| `xp_michiatom` | Michi Atom | MD | ANIME_V2 | bajo | balón siempre pegado a la pata; playera blanca de cuello azul y short azul (sin número); fleco de anime enorme; pose de delantero decidido | Colores de playera propios (verde y blanco); balón al pie y fleco de anime cargan. |
+| `xp_mazingato` | Mazingato Z | MD | ANIME_V2 | bajo-medio | robot gigante negro y gris con peto rojo en V; la cabeza del gato asoma en una cabina de cristal; puño cohete que sale volando; aletas a los lados del casco | Aletas del casco menos marcadas; el peto rojo en V y el puño volador cargan. |
+| `xp_ryumiau` | Ryumiau | MD | ANIME_V2 | medio | alas de plumas negras rotas; libreta negra sin letras; manzana roja; sonrisa enorme y pelaje en picos | Sin alas: plumas en el pelaje, manzana roja y libreta negra bastan. |
+| `xp_miaunya` | Miaunya | MD | ANIME_V2 | bajo-medio | pelaje rosa; dos conitos negros junto a las orejas; vestido escolar negro con ribete dorado; sonrisita de «yo sé algo» | Vestido negro liso sin ribete dorado; los conitos negros y el pelaje rosa cargan. |
+| `xp_yugi` | Yugi Miauto | MD | ANIME_V2 | medio | pelaje tricolor en picos (negro, puntas magenta y fleco rubio); pirámide dorada invertida al cuello (con una huellita grabada); chaqueta escolar azul; disco de duelo en el brazo con cartas | Quitar el disco de duelo; los picos tricolor y la pirámide dorada cargan. |
+| `xp_gatote` | Don Gatote de la Mancha | MD | LIBROS_V2 | bajo | gato flaquísimo y alto con bigotes larguísimos de hidalgo; bacía de barbero de casco; lanza larguísima y escudo redondo; armadura vieja y abollada | — |
+| `xp_sherlock` | Sherlock Ronrones | MD | LIBROS_V2 | bajo | gorra de cazador de cuadros con orejeras; capa-abrigo de tweed (Inverness); lupa enorme; perfil delgado y afilado | — |
+| `xp_frankengato` | Frankengato | MD | LIBROS_V2 | bajo | pelaje de retazos de distintos gatos con costuras grandes; abrigo oscuro raído de mangas cortas; un rayito junto al hombro; botas pesadas y postura grande y tierna | — |
+| `xp_gatula` | Conde Gatula | MD | LIBROS_V2 | bajo | capa negra de cuello alto con forro rojo; dos colmillitos; pelaje negro peinado hacia atrás en pico de viuda; medallón rojo y un murcielaguito en el hombro | — |
+| `xp_ahab` | Capitán Ahabigotes | MD | LIBROS_V2 | bajo | pata trasera de marfil tallado; arpón con cuerda enrollada; abrigo largo de capitán ballenero; barba-melena gris salvaje y mirada obsesiva | — |
+| `xp_pinomichi` | Pinomichi | MD | LIBROS_V2 | bajo | cuerpo de madera tallada con articulaciones; nariz larga y puntiaguda de madera; gorrito alto de cono; cuellito blanco y pantalón corto de libro de 1883 | — |
+| `xp_michipulin` | El Michipulín Colorado | MD | VECINDAD | bajo-medio | traje rojo completo con capucha; dos antenitas amarillas con bolita; corazón amarillo en el pecho con una huellita (sin letras); mazo chillón amarillo y rojo | Corazón liso (sin huella); traje rojo, antenitas y mazo chillón cargan. |
+| `xp_barril` | El Michito del Barril | MD | VECINDAD | bajo-medio | sale de un barril de madera; playera de rayas verdes y cafés; pantalón con parches y tirantes; gorra de orejeras y torta | Gorra lisa sin cuadros; barril, playera de rayas y torta cargan. |
+| `xp_miaufalda` | Miaufalda | MD | TIRA | medio | melena negra esponjada y redonda; moño rojo grande; vestido rojo con cuellito blanco; globo terráqueo con curita | Vestido azul liso sin cuello; melena negra redonda, moño rojo y globo con curita cargan. |
+| `xp_condorgato` | Condorgato | MD | TIRA | medio | collarín de plumas blancas alrededor del cuello sobre pelaje negro; alitas de cóndor negras con puntas blancas; pantalón con un parche cuadrado y sandalias; pose orgullosa con las patas en la cintura | Reforzar alas de cóndor y el collarín blanco; quitar las sandalias. Si no se lee, alas más grandes. |
+| `xp_esponja` | Michi Esponja | MD | CARICATURA | medio-alto | cuerpo cuadrado amarillo con agujeritos de esponja; camisa blanca y corbata roja; short café cuadrado; dos dientes grandotes y una espátula | Gorro de cocinero + espátula + delantal; quitar la corbata y el short cuadrado; dejar el amarillo con agujeritos y el cuerpo cuadrado. |
+| `xp_rick` | Rick Michez | MD | CARICATURA | medio | pelaje gris-azul parado como científico loco; bata de laboratorio sobre camisa azul clara; pistola de portales con remolino verde; una sola ceja larga de pelaje | Sin la ceja única; bata blanca, pelaje parado gris-azul y la pistola de portales verde cargan. |
+| `xp_miaang` | Miaang | MD | CARICATURA | medio | gato esfinge pelón con una flecha azul en la cabeza; túnica de monje amarilla y naranja; bastón que se abre como planeador; en equilibrio sobre una esfera de aire | Bastón simple sin alas; la flecha azul y la túnica amarilla y naranja cargan. |
+| `xp_miauby` | Miauby-Doo | MD | CARICATURA | medio | grandote café con manchas negras (pelaje de gran danés); collar azul con medalla de diamante dorado con huellita; rodillas temblando; galleta en forma de pescado | Medalla redonda; reforzar las manchas y las piernas largas. |
+| `xp_blumiau` | Blumiau | MD | CARICATURA | medio | azul cielo con manchas azul oscuro; huellitas azules en el piso; forma redonda de recorte de papel; cuadernito verde de espiral | Sin cuaderno; las manchas azules y las huellas cargan. |
+| `xp_miaubody` | Mr. Miaubody | MD | CARICATURA | bajo-medio | gato blanco muy erguido y digno; lentes redondos de armazón negro; moño rojo; puntero de profesor | Sin el puntero; lentes redondos y moño rojo sobre un gato blanco muy erguido bastan. |
+| `xp_gatogro` | Gatogro | MD | CARICATURA | medio-alto | gato verde grandote y panzón; orejas en forma de trompetilla; chaleco café sobre túnica clara con cinturón; una cebolla en la pata | Orejas normales de gato con la punta en trompetilla chiquita; reforzar el verde, el chaleco y la cebolla. |
+| `xp_grru` | Grrrú | MD | CARICATURA | medio-alto | cabeza pelona en forma de huevo sobre cuerpo redondo y patitas flacas; bufanda de rayas gris y negra; abrigo negro largo de cuello alto; rayo congelante | Nariz normal de gato y abrigo sin cierre visible; bufanda de rayas, cabeza pelona y rayo congelante cargan. |
+| `xp_miaunion` | Miaunion | MD | CARICATURA | medio-alto | cuerpo amarillo en forma de cápsula; goggles plateados sobre los dos ojos; overol de mezclilla azul sin logo; un plátano | Goggles más simples de una sola correa y overol liso; el amarillo, la forma de cápsula y el plátano cargan. |
+| `xp_garritas` | Garritas | MD | SUPERHEROES_V2 | medio-alto | tres garras de metal en cada pata delantera; patillas de pelaje enormes; capucha amarilla con puntas negras junto a las orejas; traje amarillo y azul; agazapado | Traje café y beige de los 80, capucha sin aletas, emblema propio (huella con tres rayas); las garras de metal y las patillas cargan. |
+| `xp_supermichi` | Supermichi | MD | SUPERHEROES_V2 | alto | rizo negro en la frente; capa roja larga; traje azul con cinturón amarillo; emblema propio: diamante amarillo con huellita roja (nunca una letra); pose de despegue con el puño arriba | DISFRAZ CASERO desde el primer intento si el pulido se bloquea: mameluco azul tejido, una toalla roja de capa con broche de pinza y un emblema de cartón (diamante con huellita). El rizo en la frente y la pose de despegue cargan. |
+| `xp_hierromichi` | Hierro Michi | MD | SUPERHEROES_V2 | alto | armadura roja y dorada; círculo azul que brilla en el pecho, con una huellita (diseño propio); careta del casco levantada (se ve la cara de gato); guante con la palma brillando | La PRIMERA armadura, la de la cueva: chatarra gris remachada con el círculo azul; o roja sin los paneles dorados de la cara. |
+| `xp_michimerica` | Capitán Michimérica | MD | SUPERHEROES_V2 | alto | escudo redondo de anillos rojo y blanco con una huellita blanca al centro (nunca la estrella); capucha azul con alitas blancas (sin letra); traje azul con franjas rojas y blancas en la panza; postura firme con el escudo al frente | Escudo casero: la tapa de un bote de basura pintada con anillos y una huella; sudadera azul con capucha y alitas de cartón. |
+| `xp_doomiau` | Doctor Doomiau | MD | SUPERHEROES_V2 | alto | máscara de hierro remachada sobre el hocico (los ojos se ven); capucha y capa verde oscuro; guanteletes y botas de metal gris; pose arrogante con una chispa verde en el guante | Máscara casera de lata de sardinas con remaches y una capucha verde de toalla; el trono y los robots dobles quedan en el universo. |
+| `xp_ssssmichi` | Ssssmichi | MD | PIXEL | medio | cuerpo de cubos verdes en varios tonos; patrón de cuadros negros con ceño (en el pecho, no en la cara); cuatro patitas cuadradas; chispita de píxeles junto a la cola | Sin el patrón del pecho: el cuerpo de cubos verdes y el siseo cargan. |
+| `xp_michimpostor` | Michimpostor | MD | CARICATURA | bajo-medio | traje espacial rojo en forma de frijol; visor enorme azul cielo (se ve la cara de gato); mochilita rectangular; orejas asomándose por el casco | Visor más chico; la forma de frijol roja, la mochilita y el visor cargan. |
+| `xp_zoomic` | Zoomic | MD | PIXEL | medio-alto | pelaje azul cobalto en picos hacia atrás; tenis rojos con correa blanca y hebilla dorada; guantes blancos; anillo dorado | Tenis rojos sin hebilla y sin guantes; los picos azules hacia atrás y el anillo dorado cargan. |
+| `xp_hannah` | Hannah Michitana | MD | POP_V2 | medio | peluca rubia larguísima con fleco (se asoma el pelaje café); chaqueta corta de lentejuelas, cinturón ancho y botas; micrófono; sonrisa de estrella | Chaqueta lisa sin lentejuelas; la peluca rubia sobre el pelaje café carga todo. |
+| `xp_gemichi` | Gemichi | MD | PANTALLA | bajo-medio | uniforme blanco de esgrima con la careta bajo el brazo; florete delgado; media foto rota metida en el cinturón; pañoleta roja de campamento | Sin la foto rota; uniforme de esgrima, careta y pañoleta cargan. |
+| `xp_persafalsa` | Persa Falsa | MD | PANTALLA | bajo-medio | gata negra con un disfraz esponjado de persa blanca (se ven las costuras y las patas negras); peluca rubia con diadema pastel; conjunto rosa pastel de alta sociedad y bolsita sin marca; lentes oscuros en la cabeza | Sin la bolsita; disfraz de persa blanca con patas negras + peluca rubia bastan. |
+| `xp_hermiaune` | Hermiaune | MD | LIBROS_V2 | medio | melena café esponjadísima; túnica escolar negra con bufanda de rayas en colores propios (verde azulado y bronce); varita y una pila de libros; relojito de arena dorado colgado del cuello | Sin el reloj de arena; melena esponjada, pila de libros y varita cargan. |
+| `xp_lunalovegata` | Luna Lovegata | MD | LIBROS_V2 | medio | aretes de rábano; lentes enormes de colores en espiral (en la frente); revista agarrada al revés; pelaje rubio pálido larguísimo y collar de corchos | Sin los lentes; aretes de rábano, revista al revés y pelaje rubio largo cargan. |
+| `xp_miaunce` | Miaunce | MD | PANTALLA | medio | pelaje rapado casi al ras; vestido rosa con cuello blanco y chamarra azul; calcetas largas de rayas; pata extendida con poder y un waffle sin marca | Chamarra lisa sin cierre; rapado, vestido rosa de cuello blanco y waffle cargan. |
+| `xp_heisenmiau` | Heisenmiau | MD | PANTALLA | medio | sombrero negro chiquito de ala corta; lentes oscuros y barba de candado; matraz de química con líquido azul que burbujea; camisa verde y chamarra beige | Sin lentes oscuros; sombrero chiquito, barba de candado y cristales azules cargan. |
+| `xp_michiercoles` | Michiércoles | MD | PANTALLA | medio | dos trenzas negras; vestido negro con cuello blanco grande; mirada fija que no parpadea (sin sonrisa); violonchelo negro parado junto a ella, con el arco en la pata | Sin el chelo: las dos trenzas, el cuello blanco grande y la mirada fija cargan. |
+| `xp_michiwan` | Michi-Wan | MD | PANTALLA | medio-alto | túnica café con capucha sobre túnica crema; sable de luz que es un puntero láser; barbita blanca; postura serena | El sable se vuelve un puntero láser chico con su punto rojo (sin hoja de luz); túnica café con capucha y barbita cargan. |
+| `xp_gatoleone` | Don Gatoleone | MD | PANTALLA | bajo-medio | esmoquin negro con rosa roja en la solapa; pelaje gris peinado hacia atrás; acaricia un pescadito de peluche; anillo de oro y mirada pesada | Sin el anillo; esmoquin, rosa roja y pescadito de peluche cargan. |
+| `xp_gatoneta` | María Gatoñeta | MD | PINCELES | bajo | peluca empolvada altísima con lazos y un barquito encima; vestido rococó rosa pastel con miriñaque; pastel de tres pisos; abanico | — |
+| `xp_romiau` | Romiau Santos | MD | POP_V2 | medio | traje blanco impecable sobre camisa negra; lentes oscuros chiquitos; guitarra de requinto; rosa roja en el bolsillo y barba recortada | Sin lentes; traje blanco, requinto y rosa roja cargan. |
+| `xp_miauki` | El Miauki | MD | POP_V2 | medio | melena larga ondulada castaño rojizo hasta los hombros; barba corta; traje elegante oscuro con camisa abierta; micrófono pegado al pecho y mirada de balada | Traje claro en vez de oscuro; la melena larga ondulada carga todo. |
+| `xp_postmaulone` | Post Maulone | MD | POP_V2 | medio | marquitas como garabatos en el pelaje de la cara (estrellas, rayitos; nunca letras); barba y melena despeinadas; camisa estampada suelta; guitarra acústica colgada y medio sonrisa | Menos marcas en la cara; guitarra, barba despeinada y camisa estampada cargan. |
+| `xp_miautentacion` | Miautentación | MD | POP_V2 | medio | pelaje de la cabeza partido exacto en dos colores (negro y rubio); marquitas en la cara (estrellas y líneas, nunca letras); sudadera negra enorme; mirada introspectiva y micrófono abajo | Sin marcas en la cara; el pelaje partido exacto en dos colores carga todo. |
+| `xp_sabrina` | Sabrina Gatpenter | MD | POP_V2 | medio | melena rubia voluminosa con flequillo de cortinita; vestidito retro rosa pastel con brillos grandes (recatado); micrófono antiguo plateado; sonrisa traviesa y segura | Vestido pastel liso; el flequillo de cortinita rubio y el micrófono antiguo cargan. |
+| `xp_daftmiau` | Daft Miau | MD | POP_V2 | bajo-medio | casco de robot plateado con visor oscuro (los ojos brillan a través); el casco dorado de su compañero bajo el brazo; chamarra de cuero negra y guantes; postura quieta y robótica | Casco plateado más simple (visor liso); el casco dorado bajo el brazo y la chamarra de cuero cargan. |
+| `xp_partymichi` | Party Michi | MD | POP_V2 | medio | afro gigante y rizado; lentes de persiana (los ojos se ven entre las tiras); estampado de cebra; camiseta neón y pose de baile | Mallas lisas neón en vez de cebra; el afro gigante y los lentes de persiana cargan. |
+| `xp_miauknd` | The Miauknd | MD | POP_V2 | medio | traje rojo sobre camisa negra; guantes de cuero negros; pelaje negro peinado hacia atrás y bigotito; luz de neón roja-magenta de un lado | Sin el bigote; el traje rojo con guantes negros y la luz de neón cargan. |
+| `xp_miaussi` | Miaussi | MD | ESTADIO | medio | playera de rayas verticales celestes y blancas, short negro (sin escudos ni marcas); el 10; barba corta; balón pegado a la pata izquierda | Sin número en la playera; las rayas celestes y blancas, la barba y el balón en la zurda cargan. |
+| `xp_gatistiano` | Gatistiano Ronaldo | MD | ESTADIO | medio | playera roja con vivos verdes y short rojo (sin escudos ni marcas); el 7; pelaje corto bien peinado; pose de festejo: piernas abiertas, pecho afuera, brazos abiertos hacia abajo | Sin número; la pose de festejo y el rojo con verde cargan. |
+| `xp_miaupe` | Miaupé | MD | ESTADIO | medio | playera azul oscuro, short blanco y calcetas rojas (sin escudos ni marcas); el 10; cabeza casi rapada; festejo de brazos cruzados con las patas bajo las axilas | Sin número; el azul, la cabeza rapada y los brazos cruzados cargan. |
+| `xp_lamiau` | Lamiau Yamal | MD | ESTADIO | medio | playera roja con vivos amarillos y short azul marino (sin escudos ni marcas); el 19; pelo corto rizadito; zurdazo con el exterior del pie | Sin número; el rojo con amarillo, el pelo rizadito y el zurdazo de rosca cargan. |
+| `xp_tanjimiau` (R) | Tanjimiau | MD | ANIME_V2 | medio | haori a cuadros verde y negro; caja de madera a la espalda; aretes de cartita con un sol propio; mancha roja en la frente (pelaje) y espada | Aretes lisos; el haori a cuadros verde y negro y la caja de madera cargan. |
+| `xp_lavimiau` (R) | Capitán Lavimiau | MD | ANIME_V2 | medio-alto | capa verde corta (sin el emblema de alas); correas y cuchillas de equipo de maniobras; pañuelo blanco al cuello y pañuelo de limpiar en la cabeza; escoba | Capa verde sin emblema; las correas del equipo, el pañuelo y la escoba cargan. |
+| `xp_fantasmiau` (R) | El Fantasmiau de la Ópera | MD | LIBROS_V2 | bajo | media máscara blanca (el ojo se ve); capa negra de ópera con forro rojo; rosa roja; sombrero de copa | — |
+| `xp_sombremiau` (R) | El Sombremiau Loco | MD | LIBROS_V2 | bajo | sombrero de copa enorme con etiqueta (sin números); moño de cuadros; taza de té; mirada de loco | — |
+| `xp_gatopool` (R) | Gatopool | MD | SUPERHEROES_V2 | alto | traje rojo y negro con antifaz de ojos blancos; dos katanas de pescado a la espalda; cinturón de bolsitas; pose cómica hablándole al jugador | Sudadera roja con capucha y antifaz negro casero; katanas de pescado a la espalda. |
+| `xp_bravomiau` (R) | Johnny Bravomiau | MD | CARICATURA | medio | copete rubio gigante; lentes oscuros; camiseta negra ajustada y jeans azules; torso enorme sobre piernitas flacas | Copete más chico; lentes oscuros y torso enorme con piernas flacas cargan. |
+| `xp_hambron` (R) | El Increíble Hambrón | MD | SUPERHEROES_V2 | alto | gato verde enorme y musculoso; short morado rasgado; puños gigantes; cara de enojo (de hambre) | Pelaje gris (como en su primera aparición); short morado roto y puños enormes cargan. |
+| `xp_tetrimiau` (R) | Tetrimiau | MD | PIXEL | medio | pelaje hecho de piezas de cuatro cuadros de colores; una pieza cayendo sobre la cabeza; cuerpo cuadradito; mirada de concentración | Bloques en colores propios; las piezas de cuatro cuadros cargan. |
+| `xp_bastet` (R) | Bastet | MD | MITOS | bajo | gata negra esbelta; collar ancho de oro y lapislázuli; arete de oro; sistro y disco solar | — |
+| `xp_pinkmiau` (R) | Pinkmiau | MD | PANTALLA | medio | gorro tejido (beanie); sudadera enorme con capucha; pantalones aguados y cadenita; pose de «¡ciencia!» con los brazos arriba | Sin el gorro; sudadera enorme y cadenita cargan. |
+| `xp_indianagarras` (R) | Indiana Garras | MD | PANTALLA | medio-alto | sombrero fedora café; chamarra de cuero; látigo enrollado; morral de lona | Sin chamarra; sombrero fedora y látigo cargan. |
+| `xp_miauo` (R) | Miauo | MD | PANTALLA | medio | gabardina negra larga; lentes oscuros chiquitos; pose de esquivar inclinado hacia atrás; lluvia de código verde (sin letras) | Gabardina más corta; los lentes chiquitos y la pose de esquivar cargan. |
+| `xp_shakimiau` (R) | Shakimiau | MD | POP_V2 | medio | melena larga rubia ondulada; cinturón de monedas de danza (recatado); pies descalzos; pose de baile con la cadera | Sin cinturón de monedas; la melena rubia ondulada y la pose de baile cargan. |
+| `xp_garjona` (R) | Ricardo Garjona | MD | POP_V2 | medio | sombrero de ala corta; barba de pelaje; guitarra acústica; saco oscuro y mirada de quien cuenta una historia | Sin el sombrero; la guitarra acústica y la barba cargan. |
+| `xp_memiauochoa` (R) | Memiau Ochoa | MD | ESTADIO | medio | melena rizada esponjada; guantes de portero enormes; playera de portero verde intenso (sin escudos ni marcas); el 13 y una estirada | Sin número; el pelo rizado y los guantes enormes cargan. |
+| `xp_usainmiau` (R) | Usain Miaubolt | MD | ESTADIO | bajo-medio | uniforme de atletismo amarillo y verde; la pose del rayo (un brazo apuntando arriba en diagonal); zapatillas doradas; sonrisa de campeón | Sin número de corredor; la pose del rayo y los colores verde, amarillo y negro cargan. |
+| `mp_pixelmuerto` | Píxel Muerto | Mítico | casa | bajo | parche cuadrado de píxel brillante; chispas eléctricas; ojos verde neón | — |
+| `mp_doblon` | Doblón | Mítico | casa | bajo | doblón de oro en el pecho; llamas en el borde de la moneda; pañuelo pirata | — |
+| `mp_malasuerte` | Mala Suerte | Mítico | casa | bajo | negra brillante; collar de terciopelo rojo; dije de espejo roto | — |
+| `mp_trompo` | Trompo | Mítico | casa | bajo | cuerpo de trompo de madera; franjas pintadas; cuerda enrollada en la cola | — |
+| `mp_gotera` | Gotera | Mítico | casa | bajo | forma de gota; cubeta de lámina; gota que le cae en la cabeza | — |
+| `mp_granizo` | Granizo | Mítico | casa | bajo | cuerpo de bolitas de granizo; hielitos rebotando; sonrisa brava | — |
+| `mp_basalto` | Basalto | Mítico | casa | bajo | cuerpo cúbico de basalto; puntitos de dado; grietas naranjas | — |
+| `mp_revancha` | Revancha | Mítico | casa | bajo | cinta en la frente con dados; guantes sin dedos; pose de grito | — |
+| `mp_comodin` | Comodín | Mítico | casa | bajo | gorro de bufón con cascabeles; rombos de arlequín; carta en blanco | — |
+| `mp_tintagris` | Tinta Gris | Mítico | casa | bajo | pelaje de tinta gris; cola que termina en un subrayado; plumín al revés | — |
+| `mp_coro` | Coro | Mítico | casa | bajo | túnica de coro morada; cuello blanco; aros de sonido | — |
+| `mp_doblaje` | Doblaje | Mítico | casa | bajo | audífonos de cabina; micrófono de estudio; cinta de película al cuello | — |
+| `mp_trebol` | Trébol | Mítico | casa | bajo | mechones de trébol en las orejas; mancha de trébol en el pecho; trébol de cuatro hojas | — |
+| `mp_vineta` | Viñeta | Mítico | casa | bajo | marco de viñeta; globo de diálogo vacío; contorno de cómic | — |
+| `mp_rendija` | Rendija | Mítico | casa | bajo | se asoma por una rendija; caja de cartón; ojos que brillan | — |
+| `mp_matrioska` | Matrioska | Mítico | casa | bajo | cuerpo de muñeca matrioska; flores pintadas; una gatita idéntica asomándose | — |
+| `mp_brasanaranja` | Brasa Naranja | Mítico | casa | bajo | pelaje de brasas naranjas; haz de luz de faro detrás; flamita en la cola | — |
+| `mp_vigilia` | Vigilia | Mítico | casa | bajo | puntitos que brillan como ojos; azul noche; postura de guardia | — |
+| `mp_grafito` | Grafito | Mítico | casa | bajo | pelaje de grafito; cola de lápiz amarillo; borrador rosa en la punta | — |
+| `mp_bucle` | Bucle | Mítico | casa | bajo | cola en forma de infinito; relojito de bolsillo; enroscado | — |
+| `lp_pozomayor` | Pozo Mayor | Legendario | casa | bajo | pelaje de monedas de oro y gemas; montón de monedas a sus pies; ranura de moneda en la frente | — |
+| `lp_bolita` | Bolita | Legendario | casa | bajo | cuerpo redondo como bola de marfil; moño de crupier; casillas rojas y negras bajo las patas | — |
+| `lp_catarata` | Catarata | Legendario | casa | bajo | pelaje que cae como cascada; clavijas redondas en el pelo; espuma en las patas | — |
+| `lp_ojoserpiente` | Ojos de Serpiente | Legendario | casa | bajo | escamas de serpiente en el pelaje; dos dados con un punto; cola enrollada como serpiente | — |
+| `lp_asmanga` | As Bajo la Manga | Legendario | casa | bajo | mangas larguísimas; cartas saliendo de las mangas; chaleco de mago | — |
+| `lp_cantadora` | La Cantadora | Legendario | casa | bajo | suéter tejido; lentes con cadenita; tómbola de bingo | — |
+| `lp_unadeoro` | Uña de Oro | Legendario | casa | bajo | una uña gigante de oro; boleto plateado; brillos grandes | — |
+| `lp_monodorado` | Moño Dorado | Legendario | casa | bajo | cuerpo de caja de regalo; moño dorado gigante; listón alrededor | — |
+| `lp_desborde` | Desborde | Legendario | casa | bajo | sale de una caja de cartón; una oreja de cómic; cola de píxeles y una pata en sepia | — |
+| `lp_sinfrenos` | Sin Frenos | Legendario | casa | bajo | goggles de carreras; bufanda volando hacia atrás; líneas de velocidad | — |
+| `hp_vencidas` | La Vencidas | Heroico | casa | bajo | antebrazos enormes; banda de campeona; malteada de fresa con popote de rayas | — |
+| `hp_kidcapa` | Kid Capa | Heroico | casa | bajo | capa demasiado grande; antifaz; medalla de campeón | — |
+| `hp_shinai` | Shinai | Heroico | casa | bajo | hakama azul; cinta roja; espada de bambú escarchada | — |
+| `hp_pergamino` | Dama Pergamino | Heroico | casa | bajo | armadura de páginas; lanza con punta de pluma; escudo de tapa de libro | — |
+| `hp_bgirl` | B-Girl Bigotes | Heroico | casa | bajo | casco de bola disco; tenis grandes; pose de freeze | — |
+| `hp_retiaria` | La Retiaria | Heroico | casa | bajo | red de enredaderas; tridente; hombrera de bronce y laureles | — |
+| `hp_mascaradeoro` | Máscara de Oro | Heroico | casa | bajo | máscara dorada de luchador; capa corta; cinturón de campeón | — |
+| `hp_combo` | Combo Infinito | Heroico | casa | bajo | gi negro con neón; guantes sin dedos; cinta neón | — |
+
+## 4. Riesgo por grupo
+
+Titulares: bajo: 10, bajo-medio: 11, medio: 28, medio-alto: 7, alto: 4.
+
+- **Alto** (superhéroes de las editoriales más litigiosas): Supermichi, Hierro Michi, Capitán Michimérica, Doctor Doomiau. Cada uno trae un disfraz casero o alternativo desde el primer intento (`plan_b_en`).
+- **Medio-alto**: personajes con dueño muy protector o con estilo de render muy reconocible (Bob Esponja, Shrek, Gru, el Minion, Sonic, Wolverine, Michi-Wan).
+- **Bajo**: dominio público (los 6 clásicos, María Antonieta), anime de los 80 y personajes muy genéricos.

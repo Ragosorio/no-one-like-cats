@@ -27,6 +27,78 @@ import { gataranaNoir } from './gataranaNoir';
 import { gataranaBlanca } from './gataranaBlanca';
 import { gatarana2099 } from './gatarana2099';
 import { gatemson } from './gatemson';
+// UNIVERSOS-C (2026-10-28): post-Parte III cats
+import { ahab } from './ahab';
+import { frankengato } from './frankengato';
+import { gatoneta } from './gatoneta';
+import { gatote } from './gatote';
+import { gatula } from './gatula';
+import { pinomichi } from './pinomichi';
+import { sherlock } from './sherlock';
+import { barril } from './barril';
+import { gatoleone } from './gatoleone';
+// UNIVERSOS-D (2026-10-28): post-Parte III cats
+import { michiatom } from './michiatom';
+import { pegaso } from './pegaso';
+import { unzarpazo } from './unzarpazo';
+import { mazingato } from './mazingato';
+import { miaunya } from './miaunya';
+import { daftmiau } from './daftmiau';
+import { gemichi } from './gemichi';
+import { miaubody } from './miaubody';
+// UNIVERSOS-E (2026-10-28): post-Parte III cats («anime y píxel»)
+import { gatojo } from './gatojo';
+import { michimpostor } from './michimpostor';
+import { gomitas } from './gomitas';
+import { kagebunyan } from './kagebunyan';
+import { miaang } from './miaang';
+import { ryumiau } from './ryumiau';
+import { yugi } from './yugi';
+import { ssssmichi } from './ssssmichi';
+import { zoomic } from './zoomic';
+// fin UNIVERSOS-E imports
+// UNIVERSOS-H (2026-10-28): post-Parte III cats («libros, cine y pop»)
+import { persafalsa } from './persafalsa';
+import { hermiaune } from './hermiaune';
+import { lunalovegata } from './lunalovegata';
+import { miaunce } from './miaunce';
+import { michiercoles } from './michiercoles';
+import { hannah } from './hannah';
+import { postmaulone } from './postmaulone';
+import { sabrina } from './sabrina';
+// fin UNIVERSOS-H imports
+// UNIVERSOS-G (2026-10-28): post-Parte III cats («superhéroes y pantalla»)
+import { heisenmiau } from './heisenmiau';
+import { miaufalda } from './miaufalda';
+import { garritas } from './garritas';
+import { supermichi } from './supermichi';
+import { hierromichi } from './hierromichi';
+import { michimerica } from './michimerica';
+import { doomiau } from './doomiau';
+import { michiwan } from './michiwan';
+// fin UNIVERSOS-G imports
+// UNIVERSOS-F (2026-10-28): post-Parte III cats («caricaturas y tiras»)
+import { michipulin } from './michipulin';
+import { condorgato } from './condorgato';
+import { rick } from './rick';
+import { miauby } from './miauby';
+import { blumiau } from './blumiau';
+import { esponja } from './esponja';
+import { gatogro } from './gatogro';
+import { grru } from './grru';
+import { miaunion } from './miaunion';
+// fin UNIVERSOS-F imports
+// UNIVERSOS-I (2026-10-28): post-Parte III cats («escenario y estadio»)
+import { miauki } from './miauki';
+import { miautentacion } from './miautentacion';
+import { miauknd } from './miauknd';
+import { miaussi } from './miaussi';
+import { miaupe } from './miaupe';
+import { lamiau } from './lamiau';
+import { gatistiano } from './gatistiano';
+import { romiau } from './romiau';
+import { partymichi } from './partymichi';
+// fin UNIVERSOS-I imports
 
 export const SIGNATURES: Record<string, Signature> = {
   x_homiau: homiau,
@@ -56,6 +128,78 @@ export const SIGNATURES: Record<string, Signature> = {
   r_gatarana_blanca: gataranaBlanca,
   r_gatarana_2099: gatarana2099,
   r_gatemson: gatemson,
+  // UNIVERSOS-C
+  xp_ahab: ahab,
+  xp_frankengato: frankengato,
+  xp_gatoneta: gatoneta,
+  xp_gatote: gatote,
+  xp_gatula: gatula,
+  xp_pinomichi: pinomichi,
+  xp_sherlock: sherlock,
+  xp_barril: barril,
+  xp_gatoleone: gatoleone,
+  // UNIVERSOS-D
+  xp_michiatom: michiatom,
+  xp_pegaso: pegaso,
+  xp_unzarpazo: unzarpazo,
+  xp_mazingato: mazingato,
+  xp_miaunya: miaunya,
+  xp_daftmiau: daftmiau,
+  xp_gemichi: gemichi,
+  xp_miaubody: miaubody,
+  // UNIVERSOS-E
+  xp_gatojo: gatojo,
+  xp_michimpostor: michimpostor,
+  xp_gomitas: gomitas,
+  xp_kagebunyan: kagebunyan,
+  xp_miaang: miaang,
+  xp_ryumiau: ryumiau,
+  xp_yugi: yugi,
+  xp_ssssmichi: ssssmichi,
+  xp_zoomic: zoomic,
+  // fin UNIVERSOS-E
+  // UNIVERSOS-H
+  xp_persafalsa: persafalsa,
+  xp_hermiaune: hermiaune,
+  xp_lunalovegata: lunalovegata,
+  xp_miaunce: miaunce,
+  xp_michiercoles: michiercoles,
+  xp_hannah: hannah,
+  xp_postmaulone: postmaulone,
+  xp_sabrina: sabrina,
+  // fin UNIVERSOS-H
+  // UNIVERSOS-G
+  xp_heisenmiau: heisenmiau,
+  xp_miaufalda: miaufalda,
+  xp_garritas: garritas,
+  xp_supermichi: supermichi,
+  xp_hierromichi: hierromichi,
+  xp_michimerica: michimerica,
+  xp_doomiau: doomiau,
+  xp_michiwan: michiwan,
+  // fin UNIVERSOS-G
+  // UNIVERSOS-F
+  xp_michipulin: michipulin,
+  xp_condorgato: condorgato,
+  xp_rick: rick,
+  xp_miauby: miauby,
+  xp_blumiau: blumiau,
+  xp_esponja: esponja,
+  xp_gatogro: gatogro,
+  xp_grru: grru,
+  xp_miaunion: miaunion,
+  // fin UNIVERSOS-F
+  // UNIVERSOS-I
+  xp_miauki: miauki,
+  xp_miautentacion: miautentacion,
+  xp_miauknd: miauknd,
+  xp_miaussi: miaussi,
+  xp_miaupe: miaupe,
+  xp_lamiau: lamiau,
+  xp_gatistiano: gatistiano,
+  xp_romiau: romiau,
+  xp_partymichi: partymichi,
+  // fin UNIVERSOS-I
 };
 
 export function signatureOf(species?: string): Signature | null {

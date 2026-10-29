@@ -46,8 +46,8 @@ import { mareoChips } from '../battle/mareo';
 import { rondaChips } from '../battle/ronda';
 import { barChips } from '../battle/barRules';
 // Parte III · the MULTIDIMENSIONAL powers: their chips, their cut-in color (battle/multidim.ts, battle/fx/multidimFx.ts)
-import { mdChips, mdExtraShots, mdOn } from '../battle/multidim';
-import { mdColor } from '../battle/fx/multidimFx';
+import { mdBench, mdChips, mdExtraShots, mdOn } from '../battle/multidim';
+import { mdColor, mdStampUp } from '../battle/fx/multidimFx';
 import { MareoFx, mareoProjectile } from '../battle/mareoFx';
 // Parte II · Oleada 2: the sky layer (rules battle/cielo.ts, look battle/fx/cieloFx.ts)
 import { skyAwake, skyChips } from '../battle/cielo';
@@ -1115,7 +1115,8 @@ export class BattleScene extends Scene {
     this.drawLastShot(1 / Math.max(0.5, Math.min(1.2, this.cam.z)));
     if (!avail.length) {
       // nobody can shoot: the cannons still fire
-      floatText(this.overlay, W / 2, H / 2, 'TUS GATOS ESTÁN FUERA… ¡CAÑONES, FUEGO!', { color: C.paper, size: 46 });
+      // (a post Multidimensional power can make the whole side sit the turn out: El Miauki's truce, Gatojo's stopped time)
+      floatText(this.overlay, W / 2, H / 2, mdBench(this.sim, 0) ? 'TREGUA: NADIE DISPARA ESTE TURNO' : 'TUS GATOS ESTÁN FUERA… ¡CAÑONES, FUEGO!', { color: C.paper, size: 46 });
       this.turnShooter = '';
       await wait(700);
       await this.autoVolley(0);
@@ -1508,7 +1509,8 @@ export class BattleScene extends Scene {
     const label = poster(side === 1 ? `ANDANADA DEL BARCO x${cannons.length}: ${names}` : cannons.length > 1 ? `¡ANDANADA x${cannons.length}!` : '¡CAÑONAZO!', side === 1 ? 40 : 54, C.paper, { stroke: { color: C.ink, width: 8 } });
     label.anchor.set(0.5);
     label.rotation = side === 0 ? -0.06 : 0.06;
-    label.position.set(gp.x + v.width / 2, Math.max(160, gp.y - 60));
+    // (an instant Multidimensional power ends while its stamp still crosses the screen: the label goes under the band)
+    label.position.set(gp.x + v.width / 2, mdStampUp() ? 470 : Math.max(160, gp.y - 60));
     this.overlay.addChild(label);
     gsap.from(label.scale, { x: 0.2, y: 0.2, duration: 0.18, ease: 'back.out(3)' });
     gsap.to(label, { alpha: 0, delay: 0.9, duration: 0.25, onComplete: () => label.destroy() });
@@ -2019,8 +2021,11 @@ export class BattleScene extends Scene {
         const now = performance.now();
         if (now - (this.infoAt.get(e.text) ?? -1e9) < 3500) break;
         this.infoAt.set(e.text, now);
-        const y = this.labels.place(e.x, e.y, e.text.length * 17, 40, 1300);
-        tagLabel(this.wfx, e.x, y, e.text, e.color);
+        // keep the whole tag on screen (as flt does): a long one over a module near the edge was cut in half
+        const iw = e.text.length * 17;
+        const ix = Math.max(iw / 2 + 24, Math.min(W - iw / 2 - 24, e.x));
+        const y = this.labels.place(ix, e.y, iw, 40, 1300);
+        tagLabel(this.wfx, ix, y, e.text, e.color);
         break;
       }
       case 'phase':

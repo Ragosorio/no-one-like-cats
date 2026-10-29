@@ -52,6 +52,8 @@ function load(name: string) {
 }
 const owned = (id: string) => G.s.cats.filter((c) => c.species === id).length;
 const P3IDS = ESP.cats.map((c) => c.id);
+/** the post-Parte III cats: invisible in every save of these tests (none finished the Parte III: state/sys/postp3.ts) */
+const POSTN = () => CATS.filter((c) => MD.isPostCat(c)).length;
 const done = (...ids: string[]) => {
   for (const id of ids) if (!G.s.missions.done.includes(id)) G.s.missions.done.push(id);
 };
@@ -61,7 +63,9 @@ describe('the data (data/gateras/especies.json)', () => {
     expect(P3IDS.length).toBe(35);
     expect(new Set(P3IDS).size).toBe(35);
     const at = CATS.findIndex((c) => c.id === P3IDS[0]);
-    expect(CATS.slice(at).map((c) => c.id)).toEqual(P3IDS);
+    expect(CATS.slice(at, at + P3IDS.length).map((c) => c.id)).toEqual(P3IDS);
+    // only the post-Parte III cats come after them (data/postp3/especies.json, appended last)
+    expect(CATS.slice(at + P3IDS.length).every((c) => MD.isPostCat(c))).toBe(true);
     expect(CATS.slice(0, at).some((c) => MD.isP3Cat(c))).toBe(false);
   });
 
@@ -158,7 +162,7 @@ describe('old saves get nothing', () => {
       expect(G.s.cats.filter((c) => P3IDS.includes(c.species))).toEqual([]);
       expect(Object.keys(G.s.flags).filter((k) => k.startsWith('p3cat_'))).toEqual([]);
       expect(Object.keys(G.s.catdex).filter((k) => P3IDS.includes(k))).toEqual([]);
-      expect(dexTotal()).toBe(CATS.length - P3IDS.length);
+      expect(dexTotal()).toBe(CATS.length - P3IDS.length - POSTN());
       expect(P3IDS.some((id) => dexVisible(id))).toBe(false);
       // the checks themselves never grant anything here
       expect(P3.checkP3Cats()).toEqual([]);
@@ -168,7 +172,7 @@ describe('old saves get nothing', () => {
     load('h69-acto1');
     expect(P3.p3Touched()).toBe(true);
     expect(G.s.cats.filter((c) => P3IDS.includes(c.species))).toEqual([]);
-    expect(dexTotal()).toBe(CATS.length);
+    expect(dexTotal()).toBe(CATS.length - POSTN());
     for (const id of P3IDS) expect(dexStatus(id), id).toBe('unknown');
   });
 });
@@ -315,8 +319,9 @@ describe('the reveal and the flag', () => {
     const o = MD.rarityOrder();
     expect(o.indexOf('multidimensional')).toBe(o.indexOf('legendary') + 1);
     expect(MD.categoryOrder().at(-1)).toBe('multidimensional');
-    expect(CATS.filter((c) => c.rarity === 'multidimensional').length).toBe(25);
+    // the Parte III's 25 (the post-Parte III ones have their own tests: tests/postp3.test.ts)
+    expect(CATS.filter((c) => c.rarity === 'multidimensional' && !MD.isPostCat(c)).length).toBe(25);
     // all from the Parte III (never the Portal, the Casino nor the Resonance); the ids never changed (saves keep them)
-    expect(CATS.filter((c) => c.rarity === 'multidimensional').every((c) => MD.isP3Cat(c))).toBe(true);
+    expect(CATS.filter((c) => c.rarity === 'multidimensional' && !MD.isPostCat(c)).every((c) => MD.isP3Cat(c))).toBe(true);
   });
 });

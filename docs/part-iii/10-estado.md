@@ -453,5 +453,5 @@ Efectos sobre las partidas:
 - El balance se queda como está por ahora.
 - Siguen abiertas las películas en silencio de los actos II–IV (`h85_oscuridad`), que aún dejan sonar la música del juego.
 
-**Estado:** publicado con el OK del dueño (ver el commit «feat(multidimensionales)»).
+**Estado:** publicado en vivo el 2026-10-28 (c4cfa3c), deploy verde y humo del sitio en vivo sin errores.
 

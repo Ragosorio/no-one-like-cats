@@ -30,6 +30,9 @@ import { clamp, collapse, cut, holdsShip, landing, normal, shipSpan, shipTop } f
 import type { UltCtx, UltFn } from './ults';
 import { lateCellMul } from './bossLate';
 import { p2Night, p2SetNight } from './multiverso';
+// after the Parte III: the 60 post Multidimensionals' powers and their rules (battle/multidimPost, agent PODERES-2)
+import { mdpAfterFire, mdpAfterHit, mdpCatMul, mdpCellMul, mdpChips, mdpDodge, mdpFeats, mdpShot, mdpStartTurn, mdpWorth, postUlts } from './multidimPost/hooks';
+export { mdAbsorb, mdAfterShot, mdAltPaths, mdBench, mdFire, mdHitAdjust, mdImpact, mdMeterMul } from './multidimPost/hooks';
 
 /** switches and caps (tests flip `on` to prove the enemy side is untouched) */
 export const MD_TUNE = {
@@ -142,7 +145,7 @@ function feat(b: Battle, side: number, k: string, n = 1) {
 }
 /** what the powers did this battle (player side): md_<species> casts and a few counters */
 export function mdFeats(b: Battle): Record<string, number> {
-  return { ...S(b).feats };
+  return { ...S(b).feats, ...mdpFeats(b) };
 }
 
 // ------------------------------------------------------------------ gate
@@ -927,6 +930,8 @@ export const MD_ULTS: Record<string, UltFn> = {
     o.events.push({ k: 'ultfx', fx: 'mdBook', side: o.side, x: me.x, y: me.y, path: 0, at: lastAt(paths[0]) });
     return paths;
   },
+  // ---------------------------------------------------------------- after the Parte III: the 60 post powers
+  ...postUlts(),
 };
 
 // ------------------------------------------------------------------ AI
@@ -971,7 +976,7 @@ export function mdWorth(b: Battle, c: CatState): boolean {
     case 'r_garbancito':
       return es.ship.modules.some((m) => m.kind === 'core' && m.alive);
     default:
-      return true;
+      return mdpWorth(b, c);
   }
 }
 
@@ -988,6 +993,7 @@ export function mdAtkMul(b: Battle, side: number, cat: CatState | undefined): nu
 }
 /** fire(): the shot itself — the RED era sets fire, REPUTATION curses (every shot of that side) */
 export function mdShot(b: Battle, side: number, shot: ShotDef): ShotDef {
+  shot = mdpShot(b, side, shot);
   const st = STATE.get(b);
   const era = st?.eras && st.eras.side === side ? ERAS[st.eras.now]?.id : undefined;
   if (era !== 'red' && era !== 'reputation') return shot;
@@ -1037,6 +1043,7 @@ export function mdEcho(b: Battle, side: number, shot: ShotDef, atk: number, orig
 }
 /** fire(), after the bookkeeping — Bigotón's refund, Maneki's book */
 export function mdAfterFire(b: Battle, side: number, cat: CatState | undefined, ult: boolean, ev: BattleEvent[]) {
+  mdpAfterFire(b, side, cat, ult, ev);
   const st = STATE.get(b);
   if (!st) return;
   if (cat && ult && st.refund.has(cat)) {
@@ -1069,6 +1076,7 @@ export function mdEaten(b: Battle, side: number, x: number, y: number) {
 }
 /** resolveImpact(): a cell's multiplier — RAINY NIGHT (everything super effective), Gatoconda's cabin (half) */
 export function mdCellMul(b: Battle, side: number, c: Cell, mult: number): number {
+  mult = mdpCellMul(b, side, c, mult);
   const st = STATE.get(b);
   if (!st) return mult;
   if (st.noir[side].now) mult = Math.max(mult, 1.5);
@@ -1078,6 +1086,7 @@ export function mdCellMul(b: Battle, side: number, c: Cell, mult: number): numbe
 }
 /** hitCat(): Garbancito can't be hit (nobody sees him) */
 export function mdDodge(b: Battle, c: CatState, ev: BattleEvent[], path: number, at: number): boolean {
+  if (mdpDodge(b, c, ev, path, at)) return true;
   const st = STATE.get(b);
   const t = st?.ghost.get(c);
   if (!t?.now) return false;
@@ -1093,8 +1102,8 @@ export function mdAff(b: Battle, c: CatState, aff: number): number {
 /** hitCat(): frightened ghosts ×2, a THREAT ×1.5, La Gatoconda in her sfumato ×0.5 */
 export function mdCatMul(b: Battle, c: CatState): number {
   const st = STATE.get(b);
-  if (!st) return 1;
-  let m = 1;
+  if (!st) return mdpCatMul(b, c);
+  let m = mdpCatMul(b, c);
   if (st.scared[c.side].now) m *= 2;
   if (st.threat.get(c)?.now) m *= 1.5;
   if (st.gaze.get(c)?.now) m *= 0.5;
@@ -1102,6 +1111,7 @@ export function mdCatMul(b: Battle, c: CatState): number {
 }
 /** hitCat(), after the damage: a sleeping cat wakes up; PANIC stuns on the first hit. Returns true if it stunned. */
 export function mdAfterHit(b: Battle, c: CatState, real: number, stunned: boolean, ev: BattleEvent[], path: number, at: number): boolean {
+  mdpAfterHit(b, c, real, ev, path, at);
   const st = STATE.get(b);
   if (!st || c.ko || real <= 0) return false;
   const sleep = st.asleep.get(c);
@@ -1147,6 +1157,7 @@ export function mdExtraShots(b: Battle, side: number): number {
 
 /** startTurn(): every clock of the powers, the eras, the transformation and the bill */
 export function mdStartTurn(b: Battle, side: 0 | 1, ev: BattleEvent[]) {
+  mdpStartTurn(b, side, ev);
   const st = STATE.get(b);
   if (!st) {
     if (side === 0) superCheck(b, ev);
@@ -1264,7 +1275,7 @@ export function mdChips(b: Battle): [MdChip[], MdChip[]] {
   const st = STATE.get(b);
   const e: MdChip[] = [];
   const p: MdChip[] = [];
-  if (!st) return [e, p];
+  if (!st) return mdpChips(b);
   if (st.luck[0] >= 0) p.push({ text: 'SUERTE DE SOFÁ', color: 0xffd90f });
   if (on(st.flow[0])) p.push({ text: `EL FLOW: ECO ${st.flow[0].next + (st.flow[0].now ? 1 : 0)}`, color: 0xff4fa3, hot: true });
   if (st.eras?.side === 0 && st.eras.now >= 0) p.push({ text: ERAS[st.eras.now].name, color: ERAS[st.eras.now].color, ink: st.eras.now === 3 || st.eras.now === 4 ? 0xffffff : undefined, hot: true });
@@ -1284,5 +1295,6 @@ export function mdChips(b: Battle): [MdChip[], MdChip[]] {
   for (const [c, t] of st.threat) if (on(t) && c.side === 1 && !c.ko) e.push({ text: `AMENAZA: ${c.def.name.toUpperCase()}`, color: 0xffe14a, hot: true });
   if (st.grabs.some((g) => g.side === 1)) e.push({ text: `ENREDADOS POR OVILLO x${st.grabs.filter((g) => g.side === 1).length}`, color: 0x7ab36a });
   if (b.wells.some((w) => w.kind === 'swirl' && w.owner === 0)) e.push({ text: 'NOCHE ESTRELLADA: SUS TIROS GIRAN', color: 0xf2c14e, hot: true });
-  return [e, p];
+  const [pe, pp] = mdpChips(b);
+  return [[...e, ...pe], [...p, ...pp]];
 }

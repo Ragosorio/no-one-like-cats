@@ -29,7 +29,7 @@ import { G } from '../game';
 import { RarityId } from '../econ';
 import { catDef } from '../../data/content';
 import { AccRarity } from './accessories';
-import { Granted, Prize, accPrize, catsOfRarity, cs, foodIncome, gachaCats, grantPrize, income, rand, rollCatPrize, weighted, addTickets } from './casino';
+import { Granted, Prize, accPrize, catsOfRarity, cs, foodIncome, gachaCats, grantPrize, income, rand, rollCatPrize, weighted, addTickets, withPostTable } from './casino';
 
 export type Tier = 'common' | 'rare' | 'epic' | 'legendary' | 'holo' | 'mythic';
 /** rank order (index ≥ 3 = "legendario o mejor") */
@@ -438,9 +438,10 @@ function pullOne(b: Banner, featured: string | null, mode: GachaMode): Pull {
       if (src) entry = src;
     }
   }
-  const prize = entry.make(featured);
+  // after the Parte III a legendary / mythic cat of this banner may come from its Multiverse pool (state/sys/postp3.ts)
+  const prize = withPostTable({ game: 'gacha', sub: b.id }, () => entry.make(featured));
   prize.tier = prize.holo ? 'holo' : tier === 'holo' ? 'legendary' : tier;
-  if (tier === 'mythic' && prize.kind === 'cat') prize.tier = catDef(prize.ref!).rarity === 'mythic' ? 'mythic' : 'holo';
+  if (tier === 'mythic' && prize.kind === 'cat') prize.tier = catDef(prize.ref!).rarity === 'mythic' || catDef(prize.ref!).rarity === 'multidimensional' ? 'mythic' : 'holo';
   const got = grantPrize(prize);
   // counters
   const wasHot = pity.hot > 0;

@@ -39,6 +39,8 @@ export interface AutoHost {
   autoStake(): { cur: 'gold' | 'gems' | 'chips' | 'tickets'; amount: number };
   /** the run ended (rebuild anything skipped while it ran) */
   onAutoStop?(): void;
+  /** something still on screen the run waits for (a Momento Vitrina's reveal: panels/casino/vitrina.ts) */
+  autoSettle?(): Promise<void>;
 }
 
 export const SPEEDS: { v: AutoSpeedChoice; label: string }[] = AUTO_SPEEDS.map((v) => ({ v, label: `x${v}` }));
@@ -176,6 +178,7 @@ export class AutoPanel extends Container {
           break;
         }
         const out = await h.autoStep(p.speed);
+        await h.autoSettle?.();
         if (!out.ok) {
           this.stop('poor');
           break;
